@@ -181,7 +181,8 @@ def _completion(registry, row, spec):
 def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, state_directory,
                              machine_shard_count=1, machine_shard_index=0, lane_count=2,
                              max_batches=16, executor_factory=None,
-                             worker_function=execute_training_job):
+                             worker_function=execute_training_job, completion_validator=None,
+                             dispatch_function=None, intake_only=False):
     """Append immutable batches; independently continue each private lane.
 
     Baselines must be registered; template jobs need not be. Exact duplicates
@@ -189,6 +190,11 @@ def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, 
     separate from the registry's sealed schema. Only this owner opens it. A
     restart verifies the latest completion/checkpoint of each populated lane;
     completed history remains durable without being rewritten or rescanned.
+    Optional owner callbacks may validate (never mutate) completion evidence
+    before any lane update, and supply a bounded dispatch transport. Defaults
+    preserve the original optimizer-only behavior and stream identity.
+    Explicit intake_only persists/verifies intake and recovered completions
+    without dispatching a new worker; max_batches bounds remain unchanged.
 
     An optimizer rejection consumes the batch and retains its prior parent.
     Failed/running attempts block that lane for explicit recovery. Resource
@@ -196,6 +202,22 @@ def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, 
     only newly finished and latest resume-verified rows, with global counters.
     """
     import duckdb
+    if type(intake_only) is not bool:
+        raise IncrementalTrainingError("intake_only must be a boolean")
+    if completion_validator is not None and not callable(completion_validator):
+        raise IncrementalTrainingError("completion validator must be callable")
+    if dispatch_function is not None and not callable(dispatch_function):
+        raise IncrementalTrainingError("dispatch function must be callable")
+
+    def verified_completion(row, spec):
+        result = _completion(registry, row, spec)
+        if completion_validator is not None:
+            prior = _sha(result)
+            completion_validator(registry, spec, result)
+            if _sha(result) != prior:
+                raise IncrementalTrainingError("completion validator mutated owner-verified evidence")
+        return result
+
     for name, value, maximum in (("machine_shard_count", machine_shard_count, 65536),
                                   ("lane_count", lane_count, 32), ("max_batches", max_batches, MAX_BATCHES)):
         if type(value) is not int or not 1 <= value <= maximum:
@@ -291,7 +313,7 @@ def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, 
                 if expected.to_dict() != row["job"]:
                     raise IncrementalTrainingError("persisted job differs from template")
                 _register_job(registry,directory,variant_id,spec)
-                verified = _completion(registry,row,spec)
+                verified = verified_completion(row,spec)
                 if verified != row["completed"] or verified["next_base_version_id"] != head:
                     raise IncrementalTrainingError("durable completion or lane head changed")
                 completed[row["batch_id"]] = verified
@@ -316,7 +338,7 @@ def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, 
                         _register_job(registry,directory,row["variant_id"],spec)
                         run = registry.get_run(spec.run_id)
                         if run["status"] == "completed":
-                            verified = _completion(registry,row,spec)
+                            verified = verified_completion(row,spec)
                             db.execute("BEGIN TRANSACTION")
                             try:
                                 db.execute("UPDATE batches SET completed=? WHERE batch_id=?", [_raw(verified).decode(),row["batch_id"]])
@@ -336,7 +358,7 @@ def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, 
                             blocked[lane] = {"batch_id":row["batch_id"],"run_id":spec.run_id,
                                              "status":run["status"],"recovery_required":True}
                             continue
-                    if len(dispatched)+len(selected) < max_batches and len(selected) < lane_count:
+                    if not intake_only and len(dispatched)+len(selected) < max_batches and len(selected) < lane_count:
                         selected.append((row,spec))
                 if not selected:
                     if recovered:
@@ -359,7 +381,7 @@ def run_incremental_training(registry, templates: Sequence[TrainingJobSpec], *, 
                             _write(path,spec.to_dict())
                         db.execute("UPDATE batches SET job=? WHERE batch_id=?",[_raw(spec.to_dict()).decode(),row["batch_id"]])
                     _register_job(registry,directory,row["variant_id"],spec)
-                report = coordinator.run_training_jobs(registry,[spec for _,spec in selected],
+                report = (dispatch_function or coordinator.run_training_jobs)(registry,[spec for _,spec in selected],
                     max_workers=min(lane_count,len(selected)),executor_factory=executor_factory,worker_function=worker_function)
                 reports.append(report)
                 dispatched.extend(spec.run_id for _,spec in selected)

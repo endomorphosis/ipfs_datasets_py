@@ -4061,8 +4061,18 @@ class AdaptiveModalAutoencoder:
         legal_ir_parallel_workers: Optional[int] = None,
         use_sample_memory: bool = True,
         profile_evaluation: bool = False,
+        reconstruction_objective: str = "safety_projected",
     ) -> AutoencoderEvaluation:
-        """Evaluate current encoder/decoder state against legal samples."""
+        """Evaluate legal samples; raw feature metrics explicitly bypass projection.
+
+        ``raw_decoder`` requires sample memory disabled. It measures learned
+        residual features relative to the input embedding, not an independent
+        semantic decoder and not a formalization or proof qualification.
+        """
+        if reconstruction_objective not in {"safety_projected", "raw_decoder"}:
+            raise ValueError("reconstruction_objective must be safety_projected or raw_decoder")
+        if reconstruction_objective == "raw_decoder" and use_sample_memory:
+            raise ValueError("raw_decoder requires use_sample_memory=False")
         evaluation_started = time.perf_counter() if profile_evaluation else 0.0
         sample_list = list(samples)
         if not sample_list:
@@ -4112,7 +4122,11 @@ class AdaptiveModalAutoencoder:
         decoded_vectors: List[List[float]] = []
 
         for sample in sample_list:
-            decoded = self.decode(self.encode(sample, use_sample_memory=use_sample_memory))
+            decoded = (
+                self._raw_decoder_for_objective(sample)
+                if reconstruction_objective == "raw_decoder"
+                else self.decode(self.encode(sample, use_sample_memory=use_sample_memory))
+            )
             decoded_embeddings[sample.sample_id] = decoded
             target_vectors.append(_runtime_embedding_vector(sample.embedding_vector))
             decoded_vectors.append(decoded)
@@ -6593,6 +6607,7 @@ class AdaptiveModalAutoencoder:
         progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
         projection_profiler: Optional[ProjectionProfiler] = None,
         projection_update_backend: str = "auto",
+        projection_reconstruction_objective: str = "safety_projected",
         accepted_patch_sink: Optional[
             Callable[[ModalAutoencoderStatePatch, Mapping[str, Any]], None]
         ] = None,
@@ -6610,7 +6625,15 @@ class AdaptiveModalAutoencoder:
         ``decoded_embedding_nonview`` skips four view-embedding maps;
         ``decoded_embedding_structural`` also skips slot, family-slot and
         feature maps. Both preserve full-head normalization and require zero
-        regularization. All acceptance metrics and guards are unchanged.
+        regularization. Their acceptance metrics and guards are unchanged.
+
+        ``projection_reconstruction_objective="raw_decoder"`` explicitly trains
+        and scores the learned decoder before its target-point safety projection.
+        It requires disjoint tuning samples and disables sample memory. Raw
+        residuals, hard-example ranking and candidate reconstruction/cosine
+        metrics share that objective; LegalIR losses and regression guards stay
+        in force. This is input-embedding-conditioned feature pretraining, not
+        independent semantic generation or a formalization qualification.
 
         ``accepted_patch_sink`` receives only committed, selected patches. Sink
         failure propagates after the state commit so callers cannot register an
@@ -6625,6 +6648,24 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
+        if projection_reconstruction_objective not in {"safety_projected", "raw_decoder"}:
+            raise ValueError("projection_reconstruction_objective must be safety_projected or raw_decoder")
+        raw_objective = projection_reconstruction_objective == "raw_decoder"
+        raw_update_kwargs = {"raw_decoder_objective": True} if raw_objective else {}
+        if raw_objective:
+            if not sample_list or not validation_list:
+                raise ValueError("raw_decoder requires training and disjoint validation samples")
+            for attribute in ("sample_id", "normalized_text"):
+                train_keys = {" ".join(str(getattr(row, attribute, "") or "").split()) for row in sample_list}
+                validation_keys = {" ".join(str(getattr(row, attribute, "") or "").split()) for row in validation_list}
+                if "" in train_keys or "" in validation_keys or train_keys & validation_keys:
+                    raise ValueError("raw_decoder requires nonempty identities and disjoint validation samples")
+                if attribute == "sample_id" and (len(train_keys) != len(sample_list) or len(validation_keys) != len(validation_list)):
+                    raise ValueError("raw_decoder requires unique sample IDs within each split")
+            for row in sample_list + validation_list:
+                self._validate_raw_embedding_vector(row.embedding_vector, label="target")
+            if precomputed_holdout_evaluation is not None or precomputed_training_evaluation is not None:
+                raise ValueError("raw_decoder cannot reuse precomputed evaluations without objective provenance")
         requested_candidate_order = normalize_projection_candidate_update_order(projection_candidate_update_order)
         if requested_candidate_order and set(requested_candidate_order) & {"decoded_embedding_nonview", "decoded_embedding_structural"} and float(l2_regularization) != 0.0:
             raise ValueError("support-preserving embedding operators require zero l2_regularization to preserve untouched view heads")
@@ -6723,6 +6764,8 @@ class AdaptiveModalAutoencoder:
                 "legacy_device, or python_sparse_batch"
             )
 
+        if raw_objective and normalized_update_backend == "cuda_resident":
+            raise ValueError("raw_decoder does not support cuda_resident; select python_sparse_batch")
         if (normalized_update_backend == "cuda_resident" and requested_candidate_order
                 and set(requested_candidate_order) & {"decoded_embedding_nonview", "decoded_embedding_structural"}):
             raise ValueError("support-preserving embedding operators do not support cuda_resident; select python_sparse_batch")
@@ -6747,6 +6790,8 @@ class AdaptiveModalAutoencoder:
             "legal_ir_parallel_workers": legal_ir_parallel_workers,
             "use_sample_memory": False,
         }
+        if raw_objective:
+            evaluation_kwargs["reconstruction_objective"] = "raw_decoder"
         if profiler is not None:
             evaluation_kwargs["profile_evaluation"] = True
         base_evaluation_kwargs: Dict[str, Any] = {
@@ -7031,9 +7076,10 @@ class AdaptiveModalAutoencoder:
             if optimizer_mode != "fixed" else None
         )
 
-        observe_preprojection = any(name in {"decoded_embedding_nonview", "decoded_embedding_structural"} for name, _targets in candidate_updates)
+        observe_preprojection = raw_objective or any(name in {"decoded_embedding_nonview", "decoded_embedding_structural"} for name, _targets in candidate_updates)
         preprojection_before = (
-            self.decoder_preprojection_metrics(target_samples, stop_requested=timed_out)
+            self._raw_decoder_evaluation_observation(before, target_samples)
+            if raw_objective else self.decoder_preprojection_metrics(target_samples, stop_requested=timed_out)
             if observe_preprojection else None
         )
 
@@ -7132,6 +7178,7 @@ class AdaptiveModalAutoencoder:
                     sample_list,
                     hard_example_fraction=hard_fraction,
                     objective_weights=objective_weights,
+                    **raw_update_kwargs,
                 )
             prescreen_before: Optional[AutoencoderEvaluation] = None
             if effective_prescreen_mode != "off" and update_samples:
@@ -7472,6 +7519,7 @@ class AdaptiveModalAutoencoder:
                             l2_regularization=l2_regularization,
                             profiler=profiler,
                             update_backend=normalized_update_backend,
+                            **raw_update_kwargs,
                         )
                         candidate_state: Optional[ModalAutoencoderStatePatch] = None
                         adaptive_step_report: Dict[str, Any] = {}
@@ -7962,6 +8010,7 @@ class AdaptiveModalAutoencoder:
                                 update_samples, update_targets=("decoded_embedding",),
                                 learning_rate=refinement_rate, l2_regularization=0.0,
                                 profiler=profiler, update_backend=normalized_update_backend,
+                                **raw_update_kwargs,
                             )
                             refinement_report["trainable_legal_ir_head_norms"] = update_norm_report
                             for norm_key in (
@@ -8186,9 +8235,10 @@ class AdaptiveModalAutoencoder:
 
         preprojection_observation = ({
             "before": preprojection_before,
-            "after": self.decoder_preprojection_metrics(target_samples, stop_requested=timed_out),
+            "after": (self._raw_decoder_evaluation_observation(best, target_samples)
+                      if raw_objective else self.decoder_preprojection_metrics(target_samples, stop_requested=timed_out)),
             "sample_scope": "tuning" if validation_list else "in_sample",
-            "changes_acceptance": False,
+            "changes_acceptance": raw_objective,
         } if observe_preprojection else None)
         projection_profile = profiler.summarize() if profiler is not None else {}
         cuda_residency = {
@@ -8207,6 +8257,9 @@ class AdaptiveModalAutoencoder:
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
             "candidate_update_order": [name for name, _targets in candidate_updates],
+            **({"projection_reconstruction_objective": "raw_decoder",
+                "reconstruction_objective_scope": "input_embedding_conditioned_residual_features",
+                "formalization_qualification": False} if raw_objective else {}),
             **({"decoder_preprojection_observation": preprojection_observation} if observe_preprojection else {}),
             "epoch_reports": epoch_reports,
             "evaluated_objective": {
@@ -8255,6 +8308,7 @@ class AdaptiveModalAutoencoder:
         l2_regularization: float,
         profiler: Optional[ProjectionProfiler] = None,
         update_backend: str = "native",
+        raw_decoder_objective: bool = False,
     ) -> Dict[str, Any]:
         """Apply a batch atomically and account only for its touched rows."""
 
@@ -8267,6 +8321,7 @@ class AdaptiveModalAutoencoder:
                 l2_regularization=l2_regularization,
                 profiler=profiler,
                 update_backend=update_backend,
+                **({"raw_decoder_objective": True} if raw_decoder_objective else {}),
             )
         transaction = self.state.transaction(label="projection-update-batch").begin()
         try:
@@ -8277,6 +8332,7 @@ class AdaptiveModalAutoencoder:
                 l2_regularization=l2_regularization,
                 profiler=profiler,
                 update_backend=update_backend,
+                **({"raw_decoder_objective": True} if raw_decoder_objective else {}),
             )
             transaction.commit()
             return report
@@ -8295,6 +8351,7 @@ class AdaptiveModalAutoencoder:
         l2_regularization: float,
         profiler: Optional[ProjectionProfiler] = None,
         update_backend: str = "native",
+        raw_decoder_objective: bool = False,
     ) -> Dict[str, Any]:
         """Apply compatible projection updates as one guarded optimizer batch.
 
@@ -8312,6 +8369,8 @@ class AdaptiveModalAutoencoder:
             raise StateTransactionConflictError(
                 "projection update batch requires an active state transaction"
             )
+        if raw_decoder_objective and normalized_backend == "cuda_resident":
+            raise ValueError("raw_decoder does not support cuda_resident")
         if (normalized_backend == "cuda_resident"
                 and set(target_tuple) & {"decoded_embedding_nonview", "decoded_embedding_structural"}):
             raise ValueError("support-preserving embedding operators do not support cuda_resident; select python_sparse_batch")
@@ -8417,6 +8476,7 @@ class AdaptiveModalAutoencoder:
                                     sample,
                                     learning_rate=learning_rate,
                                     update_sample_memory=False,
+                                    **({"raw_decoder_objective": True} if raw_decoder_objective else {}),
                                 )
                             elif update_target in {"decoded_embedding_nonview", "decoded_embedding_structural"}:
                                 self._nudge_decoded_embedding(
@@ -8425,6 +8485,7 @@ class AdaptiveModalAutoencoder:
                                     update_sample_memory=False,
                                     include_legal_ir_view_heads=False,
                                     include_combinatorial_heads=update_target != "decoded_embedding_structural",
+                                    **({"raw_decoder_objective": True} if raw_decoder_objective else {}),
                                 )
                             elif update_target == "legal_ir_view_logits":
                                 self._nudge_legal_ir_view_logits(
@@ -8471,6 +8532,7 @@ class AdaptiveModalAutoencoder:
         *,
         hard_example_fraction: float,
         objective_weights: Mapping[str, float],
+        raw_decoder_objective: bool = False,
     ) -> List[LegalSample]:
         if not samples:
             return []
@@ -8482,6 +8544,7 @@ class AdaptiveModalAutoencoder:
                     self._sample_training_objective(
                         sample,
                         objective_weights=objective_weights,
+                        **({"raw_decoder_objective": True} if raw_decoder_objective else {}),
                     ),
                     sample,
                 )
@@ -8498,13 +8561,15 @@ class AdaptiveModalAutoencoder:
         sample: LegalSample,
         *,
         objective_weights: Mapping[str, float],
+        raw_decoder_objective: bool = False,
     ) -> float:
         ce_weight = max(0.0, float(objective_weights.get("cross_entropy", 1.0)))
         rec_weight = max(0.0, float(objective_weights.get("reconstruction", 1.0)))
         cos_weight = max(0.0, float(objective_weights.get("cosine_gap", 1.0)))
         legal_weight = max(0.0, float(objective_weights.get("legal_ir", 1.0)))
 
-        decoded = self._decoded_for(sample, use_sample_memory=False)
+        decoded = (self._raw_decoder_for_objective(sample) if raw_decoder_objective
+                   else self._decoded_for(sample, use_sample_memory=False))
         reconstruction = mse_loss(sample.embedding_vector, decoded)
         cosine_gap = max(0.0, 1.0 - cosine_similarity(sample.embedding_vector, decoded))
         distribution = self._family_distribution(sample, use_sample_memory=False)
@@ -8649,6 +8714,53 @@ class AdaptiveModalAutoencoder:
             base,
             candidate,
         )
+
+    @staticmethod
+    def _validate_raw_embedding_vector(vector: Sequence[float], *, label: str) -> None:
+        if not len(vector) or not all(math.isfinite(float(value)) for value in vector):
+            raise ValueError(f"raw_decoder requires nonempty finite {label} embeddings")
+
+    def _raw_decoder_for_objective(self, sample: LegalSample) -> List[float]:
+        self._validate_raw_embedding_vector(sample.embedding_vector, label="target")
+        decoded = self._decoded_for(
+            sample, use_sample_memory=False, apply_reconstruction_projection=False,
+        )
+        self._validate_raw_embedding_vector(decoded, label="decoded")
+        if len(decoded) != len(sample.embedding_vector):
+            raise ValueError("raw_decoder output dimension must match its target embedding")
+        return decoded
+
+    @staticmethod
+    def _raw_decoder_evaluation_observation(
+        evaluation: AutoencoderEvaluation, samples: Sequence[LegalSample],
+    ) -> Dict[str, Any]:
+        # Reuse the exact evaluated state, avoiding a second deadline-sensitive
+        # decode after commit. Completeness is checked, never inferred from means.
+        metrics = []
+        for row in samples:
+            decoded = evaluation.decoded_embeddings.get(row.sample_id, ())
+            AdaptiveModalAutoencoder._validate_raw_embedding_vector(decoded, label="decoded")
+            if len(decoded) != len(row.embedding_vector):
+                raise ValueError("raw_decoder observation requires complete matching vectors")
+            cosine = cosine_similarity(row.embedding_vector, decoded)
+            reconstruction = mse_loss(row.embedding_vector, decoded)
+            if not math.isfinite(cosine) or not math.isfinite(reconstruction):
+                raise ValueError("raw_decoder observation requires finite metrics")
+            metrics.append({"sample_id": row.sample_id,
+                            "embedding_cosine_similarity": cosine,
+                            "reconstruction_loss": reconstruction})
+        if not metrics or evaluation.sample_count != len(samples):
+            raise ValueError("raw_decoder observation requires complete nonempty evaluation")
+        return {
+            "scope": "decoder_before_reconstruction_safety_projection",
+            "used_for_acceptance": True, "sample_memory_used": False,
+            "requested_sample_count": len(samples), "observed_sample_count": len(metrics),
+            "complete": True, "finite": True, "stopped_reason": None,
+            "embedding_cosine_similarity_mean": sum(row["embedding_cosine_similarity"] for row in metrics) / len(metrics),
+            "reconstruction_loss_mean": sum(row["reconstruction_loss"] for row in metrics) / len(metrics),
+            "sample_metrics": metrics,
+            "observation_source": "accepted_evaluation_decoded_vectors",
+        }
 
     def decoder_preprojection_metrics(
         self, samples: Sequence[LegalSample], *,
@@ -23245,6 +23357,7 @@ class AdaptiveModalAutoencoder:
         update_sample_memory: bool = True,
         include_legal_ir_view_heads: bool = True,
         include_combinatorial_heads: bool = True,
+        raw_decoder_objective: bool = False,
     ) -> None:
         # The opt-in nonview operator preserves the reader's LegalIR class
         # support. It retains the original normalization denominator so each
@@ -23252,7 +23365,10 @@ class AdaptiveModalAutoencoder:
         # The structural operator additionally excludes the three combinatorial
         # slot/feature maps; this is an explicit proposal scope, not a row mask.
         step = _clamp_learning_rate(learning_rate)
-        current = self._decoded_for(sample, use_sample_memory=update_sample_memory)
+        if raw_decoder_objective and update_sample_memory:
+            raise ValueError("raw_decoder requires sample-memory-free updates")
+        current = (self._raw_decoder_for_objective(sample) if raw_decoder_objective
+                   else self._decoded_for(sample, use_sample_memory=update_sample_memory))
         if len(current) != len(sample.embedding_vector):
             current = [0.0 for _ in sample.embedding_vector]
         error = self._embedding_training_error(sample.embedding_vector, current)
