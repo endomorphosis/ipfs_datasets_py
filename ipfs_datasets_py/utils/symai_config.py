@@ -273,6 +273,11 @@ def ensure_symai_config_for_import(*, force: bool = False) -> Optional[Path]:
     if "symai" not in sys.modules:
         original_prefix = sys.prefix
         try:
+            # SymbolicAI 1.14 annotates mp.pool.Pool without importing the
+            # stdlib submodule. A fresh interpreter must not depend on an
+            # unrelated parser or worker having imported it first.
+            import multiprocessing.pool  # noqa: F401
+
             sys.prefix = str(config_path.parent.parent)
             __import__("symai")
         except (Exception, SystemExit):
