@@ -303,6 +303,47 @@ def test_control_observation_locks_block_atomic_writers_then_release(tmp_path):
         fcntl.flock(writer, fcntl.LOCK_UN)
 
 
+@pytest.mark.parametrize("fault", ["missing", "readonly", "executable", "not_tmpfs", "host_mount", "oversize"])
+def test_private_shared_memory_refuses_unsafe_mounts(monkeypatch, fault):
+    mount = {"root": "/", "filesystem": "tmpfs", "options": ["rw", "noexec", "nosuid", "nodev"]}
+    host = {"path": "/dev/shm", "device": 1, "inode": 1}
+    observed = {**host, "device": 2}
+    size = source.SHARED_MEMORY_BYTES
+    if fault == "readonly":
+        mount["options"] = ["ro", "noexec", "nosuid", "nodev"]
+    elif fault == "executable":
+        mount["options"].remove("noexec")
+    elif fault == "not_tmpfs":
+        mount["filesystem"] = "ext4"
+    elif fault == "host_mount":
+        observed = host
+    elif fault == "oversize":
+        size *= 2
+    monkeypatch.setattr(source, "_mounts", lambda: {} if fault == "missing" else {"/dev/shm": mount})
+    monkeypatch.setattr(source, "_identity", lambda path: observed)
+    monkeypatch.setattr(source.os, "statvfs", lambda path: SimpleNamespace(f_frsize=1, f_blocks=size))
+    with pytest.raises(source.SourceSnapshotError):
+        source._private_shared_memory(host)
+
+
+def test_private_shared_memory_has_explicit_wrapper_memory_charge(monkeypatch):
+    mount = {"root": "/", "filesystem": "tmpfs", "options": ["rw", "noexec", "nosuid", "nodev"]}
+    monkeypatch.setattr(source, "_mounts", lambda: {"/dev/shm": mount})
+    monkeypatch.setattr(source, "_identity", lambda path: {"path": path, "device": 2, "inode": 1})
+    monkeypatch.setattr(source.os, "statvfs", lambda path: SimpleNamespace(f_frsize=4096, f_blocks=16384))
+    result = source._private_shared_memory({"device": 1, "inode": 1})
+    assert result["bytes"] == 64 * 1024 * 1024
+    assert result["charged_to"] == "wrapper_memory_mb=1024" and result["admitted"] is False
+
+
+def test_real_spawn_queue_lock_roundtrip_reaps_child():
+    result = source._spawn_semaphore_probe()
+    assert result["start_method"] == "spawn"
+    assert result["queue_roundtrip"] is result["lock_roundtrip"] is True
+    assert result["child_exitcode"] == 0 and result["admitted"] is False
+    assert not Path("/proc", str(result["child_pid"])).exists()
+
+
 @pytest.mark.parametrize("fail", [False, True])
 def test_preparation_reserves_before_capture_releases_success_and_retains_failure(tree, monkeypatch, fail):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
