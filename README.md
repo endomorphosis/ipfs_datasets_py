@@ -12,19 +12,9 @@ This is a model manager and wrapper for huggingface, looks up a index of models 
 
 setup.py
 
-In your python script
+TODO
 
-from transformers import AutoModelForSeq2SeqLM
-from ipfs_huggingface_bridge import AutoModelForSeq2SeqLM
-model = AutoModelForSeq2SeqLM.from_auto_download("google/t5_11b_trueteacher_and_anli")
-
-or 
-
-from transformers import AutoModelForSeq2SeqLM
-from ipfs_huggingface_bridge import AutoModelForSeq2SeqLM
-model = AutoModelForSeq2SeqLM.from_ipfs("QmWJr4M1VN5KpJjqCsJsJg7PDmFoqQYs1BKpYxcdMY1qkh")
-
-To scrape huggingface
+# To scrape huggingface
 
 interactive prompt:
 
