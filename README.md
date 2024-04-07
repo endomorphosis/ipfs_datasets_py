@@ -22,7 +22,7 @@ node scraper.js
 
 import a model:
 
-node scraper.js hf "modelname" (as defined in your .json files)
+node scraper.js hf "dataset" (as defined in your .json files)
 
 import all models 
 
