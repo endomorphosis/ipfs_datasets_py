@@ -1,0 +1,28 @@
+{
+	"name": "@huggingface_ipfs/scraper",
+	"version": "1.0.0",
+	"type": "module",
+	"bin": {
+		"scraper": "./scraper.js"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.315.0",
+		"@aws-sdk/lib-storage": "^3.315.0",
+		"@chainsafe/libp2p-gossipsub": "^13.0.0",
+		"@orbitdb/core": "^2.1.0",
+		"@orbitdb/quickstart": "^1.0.0",
+		"commander": "^11.0.0",
+		"crypto": "^1.0.1",
+		"deasync": "^0.1.29",
+		"debug": "^4.3.4",
+		"helia": "^4.1.0",
+		"ipfs-cluster-api": "^0.0.9",
+		"is-stream": "^3.0.0",
+		"nodejs": "^0.0.0",
+		"prompt-sync": "^4.2.0",
+		"prompt-sync-history": "^1.0.1",
+		"shutil": "^0.0.1",
+		"subprocess": "^0.3.0",
+		"sync-request": "6.1.0"
+	}
+}

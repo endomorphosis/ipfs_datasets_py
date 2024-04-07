@@ -1,0 +1,36 @@
+{
+  "name": "agwp2pdb",
+  "version": "1.0.0",
+  "description": "AGW P2P distributed database",
+  "main": "orbit.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "AGW",
+    "P2P",
+    "orbit"
+  ],
+  "author": "Karsten Ohme",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^11.1.0",
+    "@chainsafe/libp2p-noise": "^15.0.0",
+    "@helia/block-brokers": "^1.0.0",
+    "@libp2p/bootstrap": "^10.0.12",
+    "@libp2p/circuit-relay-v2": "^1.0.12",
+    "@libp2p/mdns": "^10.0.12",
+    "@libp2p/tcp": "^9.0.12",
+    "@libp2p/webrtc": "^4.0.16",
+    "@libp2p/websockets": "^8.0.12",
+    "@orbitdb/core": "^2.0.1",
+    "blockstore-level": "^1.1.7",
+    "bson": "^6.2.0",
+    "helia": "^3.0.1",
+    "libp2p": "^1.2.0",
+    "minimist": "^1.2.8",
+    "private-ip": "^3.0.2",
+    "uuid": "^9.0.1"
+  }
+}

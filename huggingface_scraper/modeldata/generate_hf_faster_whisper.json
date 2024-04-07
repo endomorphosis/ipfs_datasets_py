@@ -1,0 +1,56 @@
+{   
+    "faster-whisper-large-v3" : {
+        "modelName": "faster-whisper-large-v3",
+        "format": "hf",
+        "parameters": 1658931118,
+        "source": "https://huggingface.co/Systran/faster-whisper-large-v3"
+    },
+    "faster-whisper-medium" : {
+        "modelName": "faster-whisper-medium",
+        "format": "hf",
+        "parameters": 821412495,
+        "source": "https://huggingface.co/Systran/faster-whisper-medium"
+    },
+    "faster-whisper-base" : {
+        "modelName": "faster-whisper-base",
+        "format": "hf",
+        "parameters": 76021760,
+        "source": "https://huggingface.co/Systran/faster-whisper-base"
+    },
+    "faster-whisper-tiny" : {
+        "modelName": "faster-whisper-tiny",
+        "format": "hf",
+        "parameters": 39321600,
+        "source": "https://huggingface.co/Systran/faster-whisper-tiny"
+    },
+    "faster-whisper-small" : {
+        "modelName": "faster-whisper-small",
+        "format": "hf",
+        "parameters": 253755392,
+        "source": "https://huggingface.co/Systran/faster-whisper-small"
+    },
+    "faster-whisper-medium.en" : {
+        "modelName": "faster-whisper-medium.en",
+        "format": "hf",
+        "parameters": 821412495,
+        "source": "https://huggingface.co/Systran/faster-whisper-medium.en"
+    },
+    "faster-whisper-base.en" : {
+        "modelName": "faster-whisper-base.en",
+        "format": "hf",
+        "parameters": 76021760,
+        "source": "https://huggingface.co/Systran/faster-whisper-base.en"
+    },
+    "faster-whisper-tiny.en" : {
+        "modelName": "faster-whisper-tiny.en",
+        "format": "hf",
+        "parameters": 39321600,
+        "source": "https://huggingface.co/Systran/faster-whisper-tiny.en"
+    },
+    "faster-whisper-small.en" : {
+        "modelName": "faster-whisper-small.en",
+        "format": "hf",
+        "parameters": 253755392,
+        "source": "https://huggingface.co/Systran/faster-whisper-small.en"
+    }
+}

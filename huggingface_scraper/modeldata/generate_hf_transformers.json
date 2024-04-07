@@ -1,0 +1,82 @@
+{ 
+    "T0" : {
+        "modelName": "T0",
+        "format": "hf",
+        "parameters": 11811160064,
+        "source": "https://huggingface.co/bigscience/T0",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "T0_3B" : {
+        "modelName": "T0_3B",
+        "format": "hf",
+        "parameters": 3221225472,
+        "source": "https://huggingface.co/bigscience/T0_3B",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "T0p" : {
+        "modelName": "T0p",
+        "format": "hf",
+        "parameters": 11811160064,
+        "source": "https://huggingface.co/bigscience/T0p",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "T0pp" : {
+        "modelName": "T0pp",
+        "format": "hf",
+        "parameters": 11811160064,
+        "source": "https://huggingface.co/bigscience/T0pp",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "t5_11b_trueteacher_and_anli" : {
+        "modelName": "t5_11b_trueteacher_and_anli",
+        "format": "hf",
+        "parameters": 11811160064,
+        "source": "https://huggingface.co/google/t5_11b_trueteacher_and_anli",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "flan-t5-small" : {
+        "modelName": "flan-t5-small",
+        "format": "hf",
+        "parameters": 83886080,
+        "source": "https://huggingface.co/google/flan-t5-small",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "flan-t5-base" : {
+        "modelName": "flan-t5-base",
+        "format": "hf",
+        "parameters": 262144000,
+        "source": "https://huggingface.co/google/flan-t5-base",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "flan-t5-large" : {
+        "modelName": "flan-t5-large",
+        "format": "hf",
+        "parameters": 817889280,
+        "source": "https://huggingface.co/google/flan-t5-large",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "flan-t5-xxl" : {
+        "modelName": "flan-t5-xxl",
+        "format": "hf",
+        "parameters": 11811160064,
+        "source": "https://huggingface.co/google/flan-t5-xxl",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    },
+    "flan-t5-xl" : {
+        "modelName": "flan-t5-xl",
+        "format": "hf",
+        "parameters": 3221225472,
+        "source": "https://huggingface.co/google/flan-t5-xl",
+        "contextSize": 2048,
+        "templates": ["T5"]
+    }
+}

@@ -1,0 +1,171 @@
+{ 
+    "stablelm-zephyr-3b-GGUF" : {
+        "modelName": "stablelm-zephyr-3b-GGUF",
+        "format": "gguf",
+        "parameters": 3221225472,
+        "source": "https://huggingface.co/TheBloke/stablelm-zephyr-3b-GGUF",
+        "ropeScale": 1.0,
+        "contextSize": 4096,
+        "templates": ["Zephyr"]
+    },
+    "Airoboros-M-7B-3.1.2-GGUF" : {
+        "modelName": "Airoboros-M-7B-3.1.2-GGUF",
+        "format": "gguf",
+        "parameters": 75161927680,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Airoboros-M-7B-3.1.2-GGUF",
+        "templates" : ["llama-2", "Airoboros-Llama-2-Chat", "Llama-2-Chat", "MathJSON","Context-Instruction","CoT", "Agent/Function", "reWOO"],
+        "ropeScale": 1.0
+    },
+    "Airoboros-L2-13B-3.1.1-GGUF" : {
+        "modelName": "Airoboros-L2-13B-3.1.1-GGUF",
+        "format": "gguf",
+        "parameters": 13958643712,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Airoboros-L2-13B-3.1.1-GGUF",
+        "templates" : ["llama-2", "Airoboros-Llama-2-Chat", "Llama-2-Chat", "MathJSON","Context-Instruction","CoT", "Agent/Function", "reWOO"],
+        "ropeScale": 1.0
+    },
+    "Airoboros-c34B-3.1.2-GGUF" : {
+        "modelName": "Airoboros-c34B-3.1.2-GGUF",
+        "format": "gguf",
+        "parameters": 36507222016,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Airoboros-c34B-3.1.2-GGUF",
+        "templates" : ["llama-2", "Airoboros-Llama-2-Chat", "Llama-2-Chat", "MathJSON","Context-Instruction","CoT", "Agent/Function", "reWOO"],
+        "ropeScale": 1.0
+    },
+    "Airoboros-L2-70B-3.1.2-GGUF" : {
+        "modelName": "Airoboros-L2-70B-3.1.2-GGUF",
+        "format": "gguf",
+        "parameters": 75161927680,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Airoboros-L2-70B-3.1.2-GGUF",
+        "templates" : ["llama-2", "Airoboros-Llama- 2-Chat", "Llama-2-Chat", "MathJSON","Context-Instruction","CoT", "Agent/Function", "reWOO"],
+        "ropeScale": 1.0
+    },    
+    "samantha-mistral-instruct-7B-GGUF" : {
+        "modelName": "samantha-mistral-instruct-7B-GGUF",
+        "format": "gguf",
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/samantha-mistral-instruct-7B-GGUF",
+        "templates" : ["ChatML"],
+        "ropeScale": 1.0
+    }, 
+    "Mistral-7B-v0.1-GGUF" : {
+        "modelName": "Mistral-7B-v0.1-GGUF",
+        "format": "gguf",
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mistral-7B-v0.1-GGUF",
+        "templates" : ["Mistral"],
+        "ropeScale": 1.0
+    }, 
+    "Mistral-7B-Instruct-v0.2-GGUF" : {
+        "modelName": "Mistral-7B-Instruct-v0.2-GGUF",
+        "format": "gguf",
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF",
+        "templates" : ["Mistral"],
+        "ropeScale": 1.0
+    },
+    "Mixtral-8x7B-v0.1-GGUF" : {
+        "modelName": "Mixtral-8x7B-v0.1-GGUF",
+        "format": "gguf",
+        "experts": 8,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mixtral-8x7B-v0.1-GGUF",
+        "templates" : ["Mistral"],
+        "ropeScale": 1.0
+    },
+    "Mixtral-8x7B-Instruct-v0.1-GGUF" : {
+        "modelName": "Mixtral-8x7B-Instruct-v0.1-GGUF",
+        "format": "gguf",
+        "experts": 4,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF",
+        "templates" : ["Mistral"],
+        "ropeScale": 1.0
+    },
+    "Mixtral-Fusion-4x7B-Instruct-v0.1-GGUF" : {
+        "modelName": "Mixtral-Fusion-4x7B-Instruct-v0.1-GGUF",
+        "format": "gguf",
+        "experts": 4,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mixtral-Fusion-4x7B-Instruct-v0.1-GGUF",
+        "templates" : ["Mistral"],
+        "ropeScale": 1.0
+    },
+    "Fennec-Mixtral-8x7B-GGUF" : {
+        "modelName": "Fennec-Mixtral-8x7B-GGUF",
+        "format": "gguf",
+        "experts": 8,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Fennec-Mixtral-8x7B-GGUF",
+        "templates" : ["Llama-2-Chat"],
+        "ropeScale": 1.0
+    },
+    "Mixtral-8x7B-MoE-RP-Story-GGUF" : {
+        "modelName": "Mixtral-8x7B-MoE-RP-Story-GGUF",
+        "format": "gguf",
+        "experts": 8,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mixtral-8x7B-MoE-RP-Story-GGUF",
+        "templates" : ["Alpaca","Vicuna","ChatML","Llama-2 chat"],
+        "ropeScale": 1.0
+    },
+    "Mixtral-4x7B-DPO-RPChat-GGUF" : {
+        "modelName": "Mixtral-4x7B-DPO-RPChat-GGUF",
+        "format": "gguf",
+        "experts": 4,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Mixtral-4x7B-DPO-RPChat-GGUF",
+        "templates" : ["Alpaca"],
+        "ropeScale": 1.0
+    },
+    "Synthia-MoE-v3-Mixtral-8x7B-GGUF" : {
+        "modelName": "Synthia-MoE-v3-Mixtral-8x7B-GGUFF",
+        "format": "gguf",
+        "experts": 8,
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/Synthia-MoE-v3-Mixtral-8x7B-GGUF",
+        "templates" : ["Synthia-CoT"],
+        "ropeScale": 1.0
+    },
+    "law-LLM-13B-GGUF" : {
+        "modelName": "law-LLM-13B-GGUF",
+        "format": "gguf",
+        "parameters": 13958643712,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/law-LLM-13B-GGUF",
+        "templates" : ["LLaMA-2-Chat"],
+        "ropeScale": 1.0
+    },
+    "law-LLM-GGUF" : {
+        "modelName": "law-LLM-GGUF",
+        "format": "gguf",
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/TheBloke/law-LLM-GGUF",
+        "templates" : ["LLaMA-2-Chat"],
+        "ropeScale": 1.0
+    },
+    "cinematika-7b-v0.1" : {
+        "modelName": "cinematika-7b-v0.1",
+        "format": "llama_fp32",
+        "parameters": 7516192768,
+        "contextSize": 4096,
+        "source": "https://huggingface.co/jondurbin/cinematika-7b-v0.1",
+        "templates" : ["mistral-lite"],
+        "ropeScale": 1.0
+    }
+}

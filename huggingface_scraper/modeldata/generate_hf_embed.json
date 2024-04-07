@@ -1,0 +1,111 @@
+{   
+    "gte-tiny" : {
+        "modelName": "gte-tiny",
+        "format": "hf",
+        "parameters": 26843545,
+        "source": "https://huggingface.co/TaylorAI/gte-tiny",
+        "contextSize": 512,
+        "dimensions": 384,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "gte-large" : {
+        "modelName": "gte-large",
+        "format": "hf",
+        "parameters": 359703511,
+        "source": "https://huggingface.co/thenlper/gte-large",
+        "contextSize": 512,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "gte-base" : {
+        "modelName": "gte-base",
+        "format": "hf",
+        "parameters": 118111600,
+        "source": "https://huggingface.co/thenlper/gte-base",
+        "contextSize": 512,
+        "dimensions": 768,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "gte-small" : {
+        "modelName": "gte-small",
+        "format": "hf",
+        "parameters": 37580963,
+        "source": "https://huggingface.co/thenlper/gte-small",
+        "contextSize": 512,
+        "dimensions": 384,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "UAE-Large-V1" : {
+        "modelName": "UAE-Large-V1",
+        "format": "hf",
+        "parameters": 1421952942,
+        "source": "https://huggingface.co/WhereIsAI/UAE-Large-V1",
+        "contextSize": 512,
+        "dimensions": 1024,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "bge-large-en-v1.5" : {
+        "modelName": "bge-large-en-v1.5",
+        "format": "hf",
+        "parameters":1421952942,
+        "source": "https://huggingface.co/BAAI/bge-large-en-v1.5",
+        "contextSize": 512,
+        "dimensions": 1024,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "bge-base-en-v1.5" : {
+        "modelName": "bge-base-en-v1.5",
+        "format": "hf",
+        "parameters": 236223201 ,
+        "source": "https://huggingface.co/BAAI/bge-base-en-v1.5",
+        "contextSize": 512,
+        "dimensions": 768,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "bge-small-en-v1.5" : {
+        "modelName": "bge-small-en-v1.5",
+        "format": "hf",
+        "parameters": 80530636,
+        "source": "https://huggingface.co/BAAI/bge-small-en-v1.5",
+        "contextSize": 512,
+        "dimensions": 384,
+        "contentType": "text",
+        "templates": ["embed"]
+    },
+    "instructor-xl" : {
+        "modelName": "instructor-xl",
+        "format": "hf",
+        "parameters": 2684354560,
+        "source": "https://huggingface.co/hkunlp/instructor-xl",
+        "contextSize": 512,
+        "dimensions": 768,
+        "contentType": "text",
+        "templates": ["instruct-embed"]
+    },
+    "instructor-large" : {
+        "modelName": "instructor-large",
+        "format": "hf",
+        "parameters": 1421952942,
+        "source": "https://huggingface.co/hkunlp/instructor-large",
+        "contextSize": 512,
+        "dimensions": 768,
+        "contentType": "text",
+        "templates": ["instruct-embed"]
+    },
+    "instructor-base" : {
+        "modelName": "instructor-base",
+        "format": "hf",
+        "parameters": 236223201,
+        "source": "https://huggingface.co/hkunlp/instructor-base",
+        "contextSize": 512,
+        "dimensions": 768,
+        "contentType": "text",
+        "templates": ["instruct-embed"]
+    }
+}
