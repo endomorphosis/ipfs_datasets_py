@@ -30,21 +30,38 @@ class ipfs_cluster_service:
         pass
 
     def ipfs_cluster_service_start(self):
-        command = "systemctl start ipfs-cluster-service"
-        results = subprocess.check_output(command, shell=True)
-        results = results.decode()
+        if os.getuid() == 0:
+            command = "systemctl start ipfs-cluster-service"
+            results = subprocess.check_output(command, shell=True)
+            results = results.decode()
+        else:
+            # TODO: Update these commands!!!!
+            command = "ipfs-cluster-service daemon --bootstrap /ip4/167.99.96.231/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu"
+            results = subprocess.check_output(command, shell=True)
+            results = results.decode()
+        
         return results  
     
     def ipfs_cluster_service_stop(self):
-        command = "systemctl stop ipfs-cluster-service"
-        results = subprocess.check_output(command, shell=True)
-        results = results.decode()
+        if os.getuid() == 0:
+            command = "systemctl stop ipfs-cluster-service"
+            results = subprocess.check_output(command, shell=True)
+            results = results.decode()
+        else:
+            command = "ps -ef | grep ipfs-cluster-service | grep -v grep | awk '{print $2}' | xargs kill -9"
+            results = subprocess.check_output(command, shell=True)
+            results = results.decode()
         return results
     
     def ipfs_cluster_service_status(self):
-        command = "ipfs-cluster-service status"
-        results = subprocess.check_output(command, shell=True)
-        results = results.decode()
+        if os.getuid() == 0:
+            command = "ipfs-cluster-service status"
+            results = subprocess.check_output(command, shell=True)
+            results = results.decode()
+        else:
+            command = "ps -ef | grep ipfs-cluster-service | grep daemon | grep -v grep | wc -l"
+            results = subprocess.check_output(command, shell=True)
+            results = results.decode()
         return results
 
 if __name__ == "__main__":

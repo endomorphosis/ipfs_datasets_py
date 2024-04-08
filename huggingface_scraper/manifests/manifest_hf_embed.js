@@ -63,7 +63,7 @@ export default function hf_embed_calc(){
 
     let contextSize = multiple_choice_question("Enter a the context size length: ", contextSize_options)
 
-    let dimensions_options = [128,256,512,1024,2048]
+    let dimensions_options = [128,256,512,1024,2048,4096]
     
     let dimensions = multiple_choice_question("how many dimensions are there?", dimensions_options)
 

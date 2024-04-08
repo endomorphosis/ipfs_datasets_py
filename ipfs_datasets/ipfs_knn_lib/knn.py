@@ -11,12 +11,10 @@ import faiss
 import sqlite3
 import hashlib
 import math
-from hf_embed import HFEmbed
+from hf_embed import hf_embed as HFEmbed
 import random
-#from s3 import S3
-#from web3storage import Web3StorageAPI
-# NOTE depricate web3storage api, the v1 API no longer works.
-# Migrate to s3kit / ipfskit
+from s3_kit import s3_kit
+from ipfs_kit import ipfs_kit
 import hnswlib
 import pickle
 
@@ -84,8 +82,8 @@ class KNN:
                     pass
                 pass
 
-        self.s3 = S3(resources, meta)
-        self.web3 = Web3StorageAPI(resources, meta)
+        self.s3 = s3_kit(resources, meta)
+        self.ipfs_kit = ipfs_kit(resources, meta)
         self.openai = OpenAIAPI(resources, meta)
         self.datastore = {}
 
@@ -368,16 +366,22 @@ class KNN:
                     doc_index = documentdb["doc_index"]
                     doc_store = documentdb["doc_store"]
                     ## write these all to files to web3storage
-                    vector_index_cid = self.web3.upload("vector_index.json",  None, json.dumps(vector_index))
-                    vector_store_cid = self.web3.upload("vector_store.json",  None, json.dumps(vector_store))
-                    doc_index_cid = self.web3.upload("doc_index.json", None, json.dumps(doc_index))
-                    doc_store_cid = self.web3.upload("doc_store.json", None, json.dumps(doc_store))
+                    # vector_index_cid = self.web3.upload("vector_index.json",  None, json.dumps(vector_index))
+                    # vector_store_cid = self.web3.upload("vector_store.json",  None, json.dumps(vector_store))
+                    # doc_index_cid = self.web3.upload("doc_index.json", None, json.dumps(doc_index))
+                    # doc_store_cid = self.web3.upload("doc_store.json", None, json.dumps(doc_store))
+                    vector_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_store), **kwargs)
+                    vector_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_index), **kwargs)
+                    doc_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_index), **kwargs)
+                    doc_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_store), **kwargs)
+
                     metadata_json = {}
                     metadata_json["vector_index.json"] = vector_index_cid
                     metadata_json["vector_store.json"] = vector_store_cid
                     metadata_json["doc_index.json"] = doc_index_cid
                     metadata_json["doc_store.json"] = doc_store_cid
-                    metadata_cid = self.web3.upload("metadata.json", None,  json.dumps(metadata_json))
+                    metadata_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(metadata_json), **kwargs)
+                    #metadata_cid = self.web3.upload("metadata.json", None,  json.dumps(metadata_json))
                 pass
             return metadata_cid
         return False
@@ -576,7 +580,8 @@ class KNN:
                 s3uri =  "s3://"+bucket+"/"+dir+"/"+filename
                 document_dict["__data__"]["s3uri"] = "s3://"+bucket+"/"+dir+"/"+filename
             if dst == "web3":
-                web3uri = self.web3.upload(filename, None, text)
+                web3uri = self.ipfs_kit.ipfs_upload_object(document, **kwargs)
+                #web3uri = self.web3.upload(filename, None, text)
                 document_dict["__data__"]["web3storage"] = "https://" + web3uri + ".ipfs.w3s.link",
             document_index[filename] = document_dict
             nodetype = 1
@@ -1014,7 +1019,7 @@ class KNN:
         elif self.model == "instructor":
             return self.HFEmbed.embed(text, "instructor", None, text, **kwargs).tolist()
         elif self.model == "instructor-xl":
-            return self.HFEmbed.embed("instructor-xl", None, text, **kwaargs).tolist()
+            return self.HFEmbed.embed("instructor-xl", None, text, **kwargs).tolist()
         else:
             return "model not implemented"
 

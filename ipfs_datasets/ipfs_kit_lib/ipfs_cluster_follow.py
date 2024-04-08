@@ -31,9 +31,12 @@ class ipfs_cluster_follow:
         if "cluster_name" in kwargs:
             cluster_name = kwargs['cluster_name']
         try:
-            command1 = "systemctl start ipfs-cluster-follow"
-            results1 = subprocess.check_output(command1, shell=True)
-            results1 = results1.decode()
+            if os.getuid() == 0:
+                command1 = "systemctl start ipfs-cluster-follow"
+                results1 = subprocess.check_output(command1, shell=True)
+                results1 = results1.decode()
+            else:
+                results1 = "You need to be root to run this command"
         except Exception as e:
             results = str(e)
         finally:
@@ -71,9 +74,12 @@ class ipfs_cluster_follow:
         if "cluster_name" in kwargs:
             cluster_name = kwargs['cluster_name']
         try:
-            command1 = "systemctl stop ipfs-cluster-follow"
-            results1 = subprocess.check_output(command1, shell=True)
-            results1 = results1.decode()
+            if os.getuid() == 0:
+                command1 = "systemctl stop ipfs-cluster-follow"
+                results1 = subprocess.check_output(command1, shell=True)
+                results1 = results1.decode()
+            else:
+                results1 = "You need to be root to run this command"
         except Exception as e:
             results1 = str(e)
         finally:

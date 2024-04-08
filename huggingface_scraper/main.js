@@ -6,15 +6,15 @@ export class Scraper {
     constructor(s3_creds, hf_creds, mysql_creds, local_model_path, ipfs_path, collection_path) {
         this.env = process.env;
         if (s3_creds != undefined) {
-            process.env.s3_creds = s3_creds;
+            process.env.s3_creds = JSON.stringify(s3_creds);
             this.s3_creds = s3_creds;
         }
         if (hf_creds != undefined) {
-            process.env.hf_creds = hf_creds;
+            process.env.hf_creds = JSON.stringify(hf_creds);
             this.hf_creds = hf_creds;
         }
         if (mysql_creds != undefined) {
-            process.env.mysql_creds = mysql_creds;
+            process.env.mysql_creds = JSON.stringify(mysql_creds);
             this.mysql_creds = mysql_creds;
         }
         if (local_model_path != undefined) {
@@ -60,6 +60,10 @@ export class Scraper {
             //console.log("No command specified try -h or --help for help");
             let this_generate_manifest = new generate_manifest.Generate_Manifest();
             let this_manifest = this_generate_manifest.generate_from_prompt()
+            //remove keys 
+            delete this_manifest["s3_creds"];
+            delete this_manifest["hf_creds"];
+            delete this_manifest["mysql_creds"];
             console.log("--this_manifest--");
             console.log(this_manifest);
 //            console.log("--scraper class--");

@@ -349,26 +349,32 @@ class model_manager:
                         else:
                             raise Exception("No path in results or timeout")                              
                 else:
-                    with tempfile.TemporaryDirectory(dir="/tmp", delete=False) as tempdir:
-                        # Store results in tempdir?
+                    # Download folder
+                    with tempfile.TemporaryDirectory(dir="/tmp") as tempdir:
                         results = self.ipfs_kit.ipfs_get(cid = ipfs_src, path = tempdir)
                         
-                        # Check contents of tempdir
-                        if "path" in list(results.keys()):
-                            # Check what this returns if i have  
-                            results_file_name = results["path"]
-                            # Move to /.cache/huggingface/{CID}/
-                            shutil.move(results_file_name, filename_dst)
-                         
+                        if os.path.exists(filename_dst):
+                            pass
+                        else:
+                            os.mkdir(filename_dst)
+
+                        if filename_dst[-1] == "/":
+                            pass
+                        else:
+                            filename_dst = filename_dst + "/"
+
+                        for file in os.scandir(tempdir):
+                            if file.is_file():
+                                shutil.move(file.path, filename_dst + file.name)
+
                     return filename_dst
                     
-                    
-                    pass
             except Exception as e:
                 print("Exception thrown remove files")
-                if(os.path.exists(this_temp_file.name)):
-                    command = "rm "+this_temp_file.name
-                    os.system(command)
+                if(this_temp_file != None):
+                    if(os.path.exists(this_temp_file.name)):
+                        command = "rm "+this_temp_file.name
+                        os.system(command)
                 return e
             
         else:
@@ -1731,53 +1737,3 @@ class model_manager:
         self.evict_zombies()
         return self
     
-if __name__ == "__main__":
-    endpoint = "https://object.ord1.coreweave.com"
-    access_key = "OVEXCZJJQPUGXZOV"
-    secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10"
-    host_bucket = "%(bucket)s.object.ord1.coreweave.com"
-    bucket = "cloudkit-beta"
-    ipfs_src = "QmXBUkLywjKGTWNDMgxknk6FJEYu9fZaEepv3djmnEqEqD"
-    s3cfg = {
-        "endpoint": endpoint,
-        "accessKey": access_key,
-        "secretKey": secret_key,
-        "hostBucket": host_bucket,   
-        "bucket": bucket
-    }
-    cluster_name = "cloudkit_storage"
-    ipfs_path = "/storage/"
-    local_path = "/storage/cloudkit-models"
-    ipfs_path = "/storage/ipfs/"
-    ten_mins = 600
-    ten_hours = 36000
-    ten_days = 864000
-    never =  100000000
-    role = "worker"
-    cache = {
-        "local": "/storage/cloudkit-models/collection.json",
-        "s3": "s3://cloudkit-beta/collection.json",
-        "ipfs": "QmXBUkLywjKGTWNDMgxknk6FJEYu9fZaEepv3djmnEqEqD",
-        "https": "https://huggingface.co/endomorphosis/cloudkit-collection/resolve/main/collection.json"
-    }
-    timing = {
-        "local_time": ten_mins,
-        "s3_time": ten_hours,
-        "ipfsTime": ten_days,
-        "httpsTime": never,
-    }
-    meta = {
-        "s3cfg": s3cfg,
-        "ipfs_src": ipfs_src,
-        "timing": timing,
-        "cache": cache,
-        "role": role,
-        "cluster_name": cluster_name,
-        "ipfs_path": ipfs_path,
-        "local_path": local_path,
-        "ipfs_path": ipfs_path
-    }
-
-    models_manager = model_manager(None, meta= meta)
-    results = models_manager.test()
-    print(results)

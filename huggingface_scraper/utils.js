@@ -56,6 +56,10 @@ export function multiple_select_question(question,choices){
 
 export function folder_data(generate, manifest, build_path){
     let files 
+    let parent_dir = path.dirname(build_path)
+    if (!fs.existsSync(parent_dir)){
+        fs.mkdirSync(parent_dir)
+    }
     if (!fs.existsSync(build_path)){
         fs.mkdirSync(build_path)
     }
@@ -128,7 +132,7 @@ export function multiple_choice_question(question, choices){
 
 export function generate_cache_paths(generate, local_path){
 
-    let s3bucket_name = ''
+    let s3bucket_name = JSON.parse(process.env.s3_creds)["bucket"]
     let s3_path = 's3://' + s3bucket_name 
     let http_path = ''
     let ipfs_gateway = ''
@@ -212,12 +216,7 @@ export function generate_md5(source, this_path){
 
 
 export function upload_files_s3(files, this_s3_creds) {
-    if (!this_s3_creds) {
-        if (Object.keys(process.env).includes("s3_creds")){
-            this_s3_creds = process.env.s3_creds
-        }
-    }
-
+    const s3_creds = this_s3_creds
 
     function uploadFile(fileDict, index) {
         if (index >= Object.keys(fileDict).length) {
@@ -231,6 +230,14 @@ export function upload_files_s3(files, this_s3_creds) {
         }
         if(filekey.includes("@")){
             filekey = filekey.replace("@", "\\@")
+        }
+        if(bucket == undefined){
+            if (s3_creds != undefined){
+                bucket = s3_creds.bucket
+            }
+            else{
+                bucket = JSON.parse(process.env.s3_creds)["bucket"]
+            }
         }
 
         console.log(`fileDict ${filekey} to s3://${bucket}/`);
@@ -263,26 +270,48 @@ export function upload_files_s3(files, this_s3_creds) {
 
         }
     }
-    function uploadFileS3cmd(fileDict, index) {
+
+    function uploadFileS3cmd(fileDict, index, this_s3_creds) {
         if (index >= Object.keys(fileDict).length) {
             // All files have been processed
             return Promise.resolve();
         }
         let file = Object.keys(fileDict)[index]
         let filekey = fileDict[file]
+        let bucket
+        if(bucket == undefined){
+            bucket = JSON.parse(process.env.s3_creds)["bucket"]
+        }
+        if (this_s3_creds != undefined){
+            if (s3_creds != undefined){
+                this_s3_creds = s3_creds
+            }
+            else{
+                this_s3_creds = JSON.parse(process.env.s3_creds)
+            }
+        }
         if (filekey.startsWith('/')){
             filekey = filekey.slice(1)
         }
         if(filekey.includes("@")){
             filekey = filekey.replace("@", "\\@")
         }
+        // console.log("process.env")
+        // console.log(process.env)
+        // console.log(Object.keys(process.env))
+        // console.log("process.env.s3_creds:")
+        // console.log(JSON.parse(process.env.s3_creds))
+        // console.log(Object.keys(JSON.parse(process.env.s3_creds)))
+        // console.log("this_s3_creds:")
+        // console.log(this_s3_creds)
+        // console.log(Object.keys(this_s3_creds))
 
         console.log(`fileDict ${filekey} to s3://${bucket}/`);
         let reader
         if(!fs.existsSync(file)){
-            return uploadFileS3cmd(fileDict, index + 1); // Recursive call for the next file
+            return uploadFileS3cmd(fileDict, index + 1, this_s3_creds = this_s3_creds); // Recursive call for the next file
         }else if(fs.statSync(file).isDirectory()){
-            return uploadFileS3cmd(fileDict, index + 1); // Recursive call for the next file
+            return uploadFileS3cmd(fileDict, index + 1, this_s3_creds = this_s3_creds); // Recursive call for the next file
         }
         else {
 
@@ -293,10 +322,19 @@ export function upload_files_s3(files, this_s3_creds) {
             command += "--host="+this_s3_creds.endpoint + " "
             command += "put " + file + " s3://" + bucket + "/" + filekey
             console.log("command: ", command)
+            let results
             if(s3_creds != undefined){
-                let results = child_process.execSync(command);
-                console.log(`upload of ${filekey} complete`);
-                return uploadFileS3cmd(fileDict, index + 1); // Recursive call for the next file
+                try{
+                    results = child_process.execSync(command);
+                }
+                catch(error){
+                    console.log("error uploading file")
+                    console.log(error)
+                }
+                finally{
+                    console.log(`upload of ${filekey} complete`);
+                    return uploadFileS3cmd(fileDict, index + 1,this_s3_creds = this_s3_creds); // Recursive call for the next file                        
+                }
             }else{
                 return Promise.resolve();
             }
@@ -308,7 +346,7 @@ export function upload_files_s3(files, this_s3_creds) {
         throw "files is undefined"
     }
     if (this_s3_creds != undefined){
-        return uploadFileS3cmd(files, 0)
+        return uploadFileS3cmd(files, 0, this_s3_creds)
             .then(() => {
                 console.log("All files uploaded");
                 return files;

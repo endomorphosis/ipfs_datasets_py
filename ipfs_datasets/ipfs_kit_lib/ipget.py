@@ -42,7 +42,7 @@ class ipget:
         if not os.path.exists(os.path.dirname(kwargs['path'])):
             os.makedirs(os.path.dirname(kwargs['path']))
             
-        command = "export IPFS_PATH=" + self.ipfs_path + "ipfs/ && ipfs get " + kwargs['cid'] + " -o " + kwargs['path']
+        command = "export IPFS_PATH=" + self.ipfs_path + " && ipfs get " + kwargs['cid'] + " -o " + kwargs['path']
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         start_time = time.time()
@@ -50,6 +50,9 @@ class ipget:
 
         while True:
             if process.poll() is not None:
+                stdout, stderr = process.communicate()
+                stdout.decode()
+                stderr.decode()
                 break
 
             if time.time() - start_time > timeout:

@@ -14,27 +14,27 @@ export class process_manifest
     constructor(s3_creds, hf_creds, mysql_creds, local_model_path, ipfs_path, collection_path){
         this.env = process.env
         if (s3_creds != undefined){
-            this.env.s3_creds = s3_creds
+            process.env.s3_creds = JSON.stringify(s3_creds)
             this.s3_creds = s3_creds
         }
         if (hf_creds != undefined){
-            this.env.hf_creds = hf_creds
+            process.env.hf_creds = JSON.stringify(hf_creds)
             this.hf_creds = hf_creds
         }
         if (mysql_creds != undefined){
-            this.env.mysql_creds = mysql_creds
+            process.env.mysql_creds = JSON.stringify(mysql_creds)
             this.mysql_creds = mysql_creds
         }
         if (local_model_path != undefined){
-            this.env.local_model_path = local_model_path
+            process.env.local_model_path = local_model_path
             this.local_model_path = local_model_path
         }
         if (ipfs_path != undefined){
-            this.env.ipfs_path = ipfs_path
+            process.env.ipfs_path = ipfs_path
             this.ipfs_path = ipfs_path
         }
         if (collection_path != undefined){
-            this.env.collection_path = collection_path
+            process.env.collection_path = collection_path
             this.collection_path = collection_path
         }
         this.manifest = {}
@@ -56,47 +56,76 @@ export class process_manifest
     }
 
     process_prompted_manifest(manifest, folder){
-        console.log("process_manifest")
-        console.log("main(generate, manifest, folder)")
-        console.log("manifest: ", manifest)
-        console.log("folder: ", folder)
+        // console.log("process_manifest")
+        // console.log("main(generate, manifest, folder)")
+        // console.log("manifest: ", manifest)
+        // console.log("folder: ", folder)
         let collection_path = this.collection_path
         this.manifest = manifest
+        let generate = manifest
         this.folder = folder
+        let local_model_path = process.env.local_model_path
+        let build_path 
+        let dest_path
+        let s3_creds = this.s3_creds
+        let hf_creds = this.hf_creds
+        let mysql_creds = this.mysql_creds
+        delete manifest["s3_creds"];
+        delete manifest["hf_creds"];
+        delete manifest["mysql_creds"];
+        generate.s3_creds = s3_creds
+        generate.hf_creds = hf_creds
+        generate.mysql_creds = mysql_creds
+
+        console.log("local_model_path: ", local_model_path)
+        console.log("process.env.local_model_path: ", process.env.local_model_path)
+
         if(manifest.metadata.quantization != undefined && !manifest.id.includes(manifest.metadata.quantization)){
-            this.build_path = path.join("/tmp/build/", manifest.id + "-" + manifest.metadata.quantization) 
+            build_path = path.join("/tmp/build/", manifest.id + "-" + manifest.metadata.quantization) 
+            generate.build_path = path.join("/tmp/build/", manifest.id + "-" + manifest.metadata.quantization)
         }
         else{
-            this.build_path = path.join("/tmp/build/" , manifest.id) 
+            build_path = path.join("/tmp/build/" , manifest.id) 
+            generate.build_path = path.join("/tmp/build/" , manifest.id)
         }
         if (manifest.format != undefined){
             //this.build_path = this.build_path + "@" + this.generate.format
         }
-        this.build_path = path.resolve(this.build_path)
-        if(!fs.existsSync(this.build_path)){
-            fs.mkdirSync(this.build_path)
+        build_path = path.resolve(build_path)
+        generate.build_path = path.resolve(generate.build_path)
+        if(!fs.existsSync(build_path)){
+            fs.mkdirSync(build_path)
         }
-        let manifest_file = path.join(this.build_path, "manifest.json")
+
+        generate.destPath = local_model_path + manifest.id
+        this.generrate = generate
+        let manifest_file = path.join(build_path, "manifest.json")
         let collection = load_local_collection(this.collection_path)
         this.ipfsCluster = new ipfsClusterStatus(collection)
-        fs.writeFileSync(path.join(this.build_path, "manifest.json"), JSON.stringify(this.manifest))
-        let file_dict = package_model_data(this.generate, this.manifest, collection)
         if (Object.keys(generate).includes("build_path")){
-            this.build_path = generate.build_path
+            build_path = generate.build_path
         }
         if(Object.keys(generate).includes("destPath")){
-            this.dest_path = generate.destPath
+            dest_path = generate.destPath
         }
+        fs.writeFileSync(path.join(build_path, "manifest.json"), JSON.stringify(manifest))
+        let file_dict = package_model_data(generate, manifest, collection)
+        delete manifest["s3_creds"];
+        delete manifest["hf_creds"];
+        delete manifest["mysql_creds"];
+        console.log("process_prompted_manifest")
+        console.log("generate: ", generate)
+        manifest.folderData = generate.folderData
         //delete this.manifest.skill
-        fs.writeFileSync(path.join(this.build_path, "manifest.json"), JSON.stringify(this.manifest))
-        let cache = export_cache_locations(this.manifest, this.generate, file_dict)
-        manifest.folderData = folder_data(this.generate, this.manifest, this.build_path)
-        fs.writeFileSync(path.join(this.build_path, "manifest.json"), JSON.stringify(this.manifest))
-        let manifest_data = upload_manifest_files(this.manifest, this.generate, local_model_path, this.ipfsCluster)
-        manifest.folderData = folder_data(this.generate, this.manifest, this.dest_path)
-        fs.writeFileSync(path.join(this.dest_path, "manifest.json"), JSON.stringify(this.manifest))
-        let new_collection = update_collection(this.manifest, this.generate, manifest_data, collection_path)
-        fs.writeFileSync(path.join(this.dest_path, "manifest.json"), JSON.stringify(this.manifest))
+        fs.writeFileSync(path.join(build_path, "manifest.json"), JSON.stringify(manifest))
+        let cache = export_cache_locations(manifest, generate, file_dict)
+        manifest.folderData = folder_data(generate, manifest, build_path)
+        fs.writeFileSync(path.join(build_path, "manifest.json"), JSON.stringify(manifest))
+        let manifest_data = upload_manifest_files(manifest, generate, local_model_path, this.ipfsCluster)
+        manifest.folderData = folder_data(generate, manifest, dest_path)
+        fs.writeFileSync(path.join(dest_path, "manifest.json"), JSON.stringify(manifest))
+        let new_collection = update_collection(manifest, generate, manifest_data, collection_path)
+        fs.writeFileSync(path.join(dest_path, "manifest.json"), JSON.stringify(manifest))
         this.collection = collection
         return this            
     }
@@ -139,6 +168,7 @@ export class process_manifest
         //delete this.manifest.skill
         fs.writeFileSync(path.join(this.build_path, "manifest.json"), JSON.stringify(this.manifest))
         let cache = export_cache_locations(this.manifest, this.generate, file_dict)
+        manifest.cache = cache
         manifest.folderData = folder_data(this.generate, this.manifest, this.build_path)
         fs.writeFileSync(path.join(this.build_path, "manifest.json"), JSON.stringify(this.manifest))
         let manifest_data = upload_manifest_files(this.manifest, this.generate, local_model_path, this.ipfsCluster)
@@ -171,9 +201,29 @@ export function ipfsClusterStatus(collection){
 export function update_collection(manifest, generate, manifest_data, collection_path){
     let this_mysql_creds
     if (this_mysql_creds == undefined){
-        this_mysql_creds = mysql_creds
+        if (generate.mysql_creds != undefined){
+            this_mysql_creds = generate.mysql_creds
+        }
+        else{
+            this_mysql_creds = JSON.parse(process.env.mysql_creds)
+        }
     }
-    
+    let this_s3_creds
+    if (this_s3_creds == undefined){
+        if (generate.s3_creds != undefined){
+            this_s3_creds = generate.s3_creds
+        }
+        else{
+            this_s3_creds = JSON.parse(process.env.s3_creds)
+        }
+    }
+    let s3_bucket
+    if(s3_bucket == undefined){
+        if (this_s3_creds.bucket != undefined){
+            s3_bucket = this_s3_creds.bucket
+        }
+    }
+
     let collection 
     collection = load_local_collection(collection_path)
     let collection_type = typeof collection
@@ -231,7 +281,7 @@ export function update_collection(manifest, generate, manifest_data, collection_
         console.log(error)
     }
     try{
-        update_2 = update_collection_s3(collection, collection_path)
+        update_2 = update_collection_s3(collection, collection_path, this_s3_creds)
     }
     catch(error){
         console.log("update_collection_s3 failed")
@@ -455,14 +505,19 @@ export function collection_mysql_check(collection_model, mysql_model){
 }
 
 export function update_collection_s3(collection, this_collection_path, this_s3_creds){
-    if (this_s3_creds == undefined){
-        if(Object.keys(process.env).includes("s3_creds")){
-            this_s3_creds = JSON.parse(process.env.s3_creds)
-        }
-    }
     let file_list = {}
     file_list[this_collection_path] = '/collection.json'
-    return  upload_files_s3(file_list , this_s3_creds)
+    let results
+    try{
+        results = upload_files_s3(file_list , this_s3_creds)
+    }
+    catch (error){
+        console.log("upload_files_s3 failed")
+        console.log(error)
+    }
+    finally{
+        return results
+    }
 }
 
 export function update_collection_https(collection, this_collection_path, this_hf_creds){
@@ -793,6 +848,10 @@ export function export_cache_locations( manifest, generate, file_dict){
         let this_md5 = file_dict[this_file].md5
         let this_size = file_dict[this_file].size
         let this_url
+        let s3_creds = JSON.parse(process.env.s3_creds)
+        console.log("s3_creds: ", s3_creds)
+        let s3_bucket = JSON.parse(process.env.s3_creds)["bucket"]
+
         if (generate.converted == true ){
             this_url = "https://huggingface.co/endomorphosis/" + generate.id + "/resolve/main/" + this_file
         }
@@ -801,10 +860,10 @@ export function export_cache_locations( manifest, generate, file_dict){
         }
         let this_local
         if (generate.quantization != undefined){
-            this_local = generate.modelName + "-" + generate.quantization + this_file
+            this_local = generate.id + "-" + generate.quantization + this_file
         }
         else{
-            this_local = generate.modelName + this_file
+            this_local = generate.id + this_file
         }
         let this_s3
         if (generate.quantization != undefined){
@@ -983,6 +1042,10 @@ export function upload_manifest_files_ipfs(manifest, generate, ipfsCluster){
             }
         }
         let metadata = {}
+        // console.log("manifest.folderData")
+        // console.log(manifest.folderData)
+        // console.log("manifest.cache")
+        // console.log(manifest.cache)
         for (var file in Object.keys(manifest.folderData)){
             let this_file = Object.keys(manifest.folderData)[file]
             if (Object.keys(results_files).includes(this_file)){
@@ -1076,6 +1139,10 @@ export function upload_manifest_files(manifest, generate, local_path, ipfsCluste
 }
 
 export function import_hf(generate, manifest, build_path){
+    console.log("import_hf")
+    console.log("generate: ")
+    console.log(generate)
+
     let source_path = generate.source
     let dest_path = build_path
     console.log("build_path: " + build_path)
@@ -1277,7 +1344,7 @@ export function import_hf(generate, manifest, build_path){
             results_4 = results_4.toString()
         }
     }
-    else if(generate.format == "llama_fp32" || generate.format == "llama_fp16" || generate.format == "hf"){
+    else if(generate.format == "llama_fp32" || generate.format == "llama_fp16" || generate.format == "hf" || generate.format == "fp16" || generate.format == "fp32"){
         let command_1 = 'git lfs install ; git clone --depth 1 '
         let command_2 = 'git config --global --add safe.directory \'*\' ; git ls-files'
         let build_path = "/tmp/build/" + hf_model_name 
@@ -1372,7 +1439,7 @@ export function import_local(generate, manifest, build_path){
     let dest_path = build_path
     let file_structure = []
     // detect if file or directory
-    if (fs.v(source_path)){
+    if (fs.existsDir(source_path)){
         // copy directory
         file_structure.push("/")
         fs.copyDir(source_path, dest_path)
@@ -1443,6 +1510,14 @@ export function generate_file_list(generate, manifest, file_list){
 }
 
 export function import_source(generate, manifest, collection){
+    console.log("import source")
+    console.log("generate")
+    console.log(generate)
+    console.log("manifest")
+    console.log(manifest)
+    console.log("collection")
+    console.log(Object.keys(collection))
+
     let check_id = generate.id
     let check_pass = true
     let destPath = generate.destPath
@@ -1469,7 +1544,9 @@ export function import_source(generate, manifest, collection){
     else{
         check_pass = false
     }
-
+    // force import
+    // TODO: add fix this logic when prompting.
+    check_pass = false
     if (check_pass == false){
         if (generate.id == undefined){
             if (generate.modelName != undefined){
@@ -1486,6 +1563,8 @@ export function import_source(generate, manifest, collection){
                 }
             }
             else{
+                console.log(generate)
+
                 throw("generate.id is undefined and generate.modelName is undefined")
             }
         }

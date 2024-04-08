@@ -7,21 +7,21 @@ let ipfs_path
 let uid 
 let operating_system
 // detect operating sysem
-let s3_bucket = "huggingface-models"
-let s3_secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10"
-let s3_access_key = "OVEXCZJJQPUGXZOV"
-let s3_endpoint = "https://object.ord1.coreweave.com"
-let s3_host_bucket = "%(bucket)s.object.ord1.coreweave.com"
+let s3_bucket = ""
+let s3_secret_key = ""
+let s3_access_key = ""
+let s3_endpoint = ""
+let s3_host_bucket = ""
 
-let hf_account_name = "endomorphosis"
-let hf_user_key = "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"
-let hf_org_key = "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"
+let hf_account_name = ""
+let hf_user_key = ""
+let hf_org_key = ""
 let hf_org_name = "publicus"
 
-let mysql_host = "swissknife.mwni.io"
-let mysql_user = "swissknife"
-let mysql_password = "W5!LIGO[pRPO0SdH"
-let mysql_database = "swissknife"
+let mysql_host = ""
+let mysql_user = ""
+let mysql_password = ""
+let mysql_database = ""
 
 let mysql_creds = {
     "host": mysql_host,
