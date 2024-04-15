@@ -1,6 +1,6 @@
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
 
-class ipget {
+export class ipget {
     constructor(resources, meta = null) {
         if (meta !== null) {
             if ('config' in meta) {
@@ -25,7 +25,7 @@ class ipget {
             }
             if ('ipfs_path' in meta) {
                 if (meta['ipfs_path'] !== null) {
-                    this.ipfs_path = meta['ipfs_path'];
+                    this.ipfsPath = meta['ipfs_path'];
                 }
             }
             if (this.role === "leecher" || this.role === "worker" || this.role === "master") {
@@ -51,7 +51,7 @@ class ipget {
             fs.mkdirSync(path.dirname(kwargs.path), { recursive: true });
         }
         
-        const command = `export IPFS_PATH=${this.ipfs_path} && ipfs get ${kwargs.cid} -o ${kwargs.path}`;
+        const command = `export IPFS_PATH=${this.ipfsPath} && ipfs get ${kwargs.cid} -o ${kwargs.path}`;
         const process = exec(command);
 
         const start_time = Date.now();

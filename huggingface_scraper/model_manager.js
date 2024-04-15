@@ -1,32 +1,46 @@
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
-const ipfsClient = require('ipfs-http-client');
-const ipfs = ipfsClient('http://localhost:5001');
-const fs = require('fs');
-const crypto = require('crypto');
-const path = require('path');
-const util = require('util');
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import util from 'util';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+//from './s3_kit.js' import S3Kit;
+//import AWS from 'aws-sdk';
+//import { S3 } from 'aws-sdk';
+//import ipfsClient from 'ipfs-http-client';
+import * as test_fio from './test_fio.js';
+import * as s3_kit from './s3_kit.js';
+import * as ipfs_kit from './ipfs_kit.js';
+import * as install_ipfs from './ipfs_kit_lib/install_ipfs.js';
+import fsExtra from 'fs-extra';
+import crypto from 'crypto';
+import rimraf from 'rimraf';
+import _ from 'lodash';
+import * as temp_file from "./tmp_file.js";
+
+//const s3 = new AWS.S3();
+//const ipfs = ipfsClient('http://localhost:5001');
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 const stat = util.promisify(fs.stat);
 const moveFile = util.promisify(fs.rename);
-const rimraf = util.promisify(require('rimraf'));
-const _ = require('lodash');
+const rimrafAsync = util.promisify(rimraf);
+const tmpFile = new temp_file.TempFileManager()
 
 class ModelManager {
     constructor(resources = null, meta = null) {
-        let localPath = '/cloudkit_storage/';
+        let localPatAnonh
         this.models = {
             "s3_models": [],
             "ipfs_models": [],
             "local_models": [],
             "https_models": []
         };
+        this.ls_https_models = this.ls_https_models.bind(this);
+        this.ls_ipfs_models = this.ls_ipfs_models.bind(this);
+        this.ls_local_models = this.ls_local_models.bind(this);
+        this.ls_s3_models = this.ls_s3_models.bind(this);
+        this.tmpFile = tmpFile;
         this.ipfsCollection = {};
         this.s3Collection = {};
         this.localCollection = {};
@@ -38,6 +52,15 @@ class ModelManager {
         this.thisModel = null;
         this.thisModelName = null;
         this.s3cfg = null;
+        let username = os.userInfo().username;
+        let localPath
+        if (username === "root") {
+            this.localPath = "/root/";
+            localPath = this.localPath;
+        } else {
+            this.localPath = "/home/" + username;
+            localPath = this.localPath;
+        }
         if (meta !== null && typeof meta === 'object') {
             this.s3cfg = meta.s3cfg || null;
             this.ipfsSrc = meta.ipfs_src || null;
@@ -46,12 +69,27 @@ class ModelManager {
             this.modelHistory = meta.history || null;
             this.role = meta.role || null;
             this.clusterName = meta.cluster_name || null;
-            this.localPath = meta.local_path || (this.ipfsPath + "cloudkit-models/");
+            if (Object.keys(meta).includes("local_path")){
+                this.localPath = meta.local_path;
+            }
+            else {
+                this.localpath = path.join(localPath, ".cache/huggingface");
+                meta.local_path = path.join(localPath, ".cache/huggingface");
+            }
+            if (Object.keys(meta).includes("ipfs_path")){
+                this.ipfsPath = meta.ipfs_path || path.join(this.localPath  , ".cache/ipfs");
+                meta.ipfs_path = meta.ipfs_path || path.join(this.localPath  , ".cache/ipfs");
+            }
+            else{
+                this.ipfsPath = path.join(this.localPath, ".cache/ipfs");
+                meta.ipfs_path = path.join(this.localPath, ".cache/ipfs");
+            }
+            this.ipfsPath = meta.ipfs_path || (this.localPath + "/.cache/ipfs");
             this.s3cfg = meta.s3_cfg || null;
-            this.ipfsPath = meta.ipfs_path || (this.localPath + "ipfs/");
-        } else {
-            this.localPath = this.ipfsPath + "cloudkit-models/";
-            this.ipfsPath = "/root/ipfs/";
+        } 
+        else {
+            this.localPath = path.join(this.ipfsPath , "cloudkit-models");
+            // get the username of the current user and determine if its root
             this.s3cfg = null;
             this.role = "leecher";
             this.clusterName = "cloudkit_storage";
@@ -62,7 +100,7 @@ class ModelManager {
                 "https": "https://huggingface.co/endomorphosis/cloudkit-collection/resolve/main/collection.json"
             };
             meta = {
-                "local_path": this.localPath,
+                "local_path": this.localPath || localPath,
                 "ipfs_path": this.ipfsPath,
                 "s3_cfg": this.s3cfg,
                 "role": this.role,
@@ -73,10 +111,11 @@ class ModelManager {
 
         let homeDir = os.homedir();
         let homeDirFiles = fs.readdirSync(homeDir);
-        this.testFio = new TestFio(null);
-        this.s3Kit = new S3Kit(resources, meta);
-        this.ipfsKit = new IpfsKit(resources, meta);
-        this.installIpfs = new InstallIpfs(resources, meta);
+        this.testFio = new test_fio.TestFio();
+        this.s3Kit = new s3_kit.S3Kit(resources, meta);
+        let installIpfs = new install_ipfs.InstallIPFS(resources, meta);
+        this.ipfsKit = new ipfs_kit.IpfsKit(resources, meta);
+        this.installIpfs = installIpfs;
         let ipfsPath = this.ipfsPath;
         if (!fs.existsSync(this.ipfsPath)) {
             fs.mkdirSync(this.ipfsPath, { recursive: true });
@@ -85,7 +124,7 @@ class ModelManager {
             fs.mkdirSync(this.localPath, { recursive: true });
         }
         let ipfsPathFiles = fs.readdirSync(ipfsPath);
-        if (!homeDirFiles.includes('.ipfs') && !ipfsPathFiles.includes('ipfs') && fs.existsSync(ipfsPath)) {
+        if (!ipfsPathFiles.includes('ipfs') || !fs.existsSync(ipfsPath)) {
             this.installIpfs.installIpfsDaemon();
             this.installIpfs.installIpget();
             let stats = this.testFio.stats(this.ipfsPath);
@@ -93,25 +132,31 @@ class ModelManager {
                 diskStats: stats,
                 ipfsPath: this.ipfsPath,
             });
-        } else if (this.role === "master" && !homeDirFiles.includes('.ipfs-cluster-service')) {
-            this.installIpfs.installIpfsClusterService();
-            this.installIpfs.installIpfsClusterCtl();
-            this.installIpfs.configIpfsClusterService();
+        }            
+        if (this.role === "master" && !homeDirFiles.includes('.ipfs-cluster-service')) {
+            this.installIpfs.installIPFSClusterService();
+            this.installIpfs.installIPFSClusterCtl();
+            this.installIpfs.configIPFSClusterService();
             this.installIpfs.configIpfsClusterCtl();
         } else if (this.role === "worker" && !homeDirFiles.includes('.ipfs-cluster-follow')) {
-            this.installIpfs.installIpfsClusterService();
-            this.installIpfs.installIpfsClusterFollow();
-            this.installIpfs.configIpfsClusterService();
-            this.installIpfs.configIpfsClusterFollow();
+            this.installIpfs.installIPFSClusterService();
+            this.installIpfs.installIPFSClusterFollow();
+            this.installIpfs.configIPFSClusterService();
+            this.installIpfs.configIPFSClusterFollow();
         }
 
         this.ipfsKit.ipfsKitStop();
         this.ipfsKit.ipfsKitStart();
         let executeReady = false;
-        while (!executeReady) {
+        while (executeReady != true) {
             try {
                 let readyIpfsKit = this.ipfsKit.ipfsKitReady();
-                executeReady = readyIpfsKit;
+                if (Object.keys(readyIpfsKit).every(k => readyIpfsKit[k] === true) || readyIpfsKit === true){
+                    executeReady = true
+                }
+                else{
+                    executeReady = false
+                }
             } catch (e) {
                 executeReady = e.toString();
             }
@@ -132,20 +177,20 @@ class ModelManager {
         };
     }
 
-    call(method, kwargs) {
+    async call(method, kwargs) {
         switch (method) {
-            case "load_collection":
+            case "loadCollection":
                 return this.loadCollection(kwargs);
             case "download_model":
                 return this.downloadModel(kwargs);
-            case "load_collection_cache":
+            case "loadCollection_cache":
                 return this.loadCollectionCache(kwargs);
             case "auto_download":
                 return this.autoDownload(kwargs);
             case "ls_models":
-                return this.lsModels(kwargs);
+                return this.ls_models(kwargs);
             case "ls_s3_models":
-                return this.lsS3Models(kwargs);
+                return this.ls_s3_models(kwargs);
             case "check_local":
                 return this.checkLocal(kwargs);
             case "check_https":
@@ -176,7 +221,16 @@ class ModelManager {
         }
     
         try {
-            let thisTempFile = tmp.fileSync({ postfix: '.json', dir: '/tmp' });
+            let thisTempFile = await new Promise((resolve, reject) => {
+                this.tmpFile.createTempFile({  postfix: '.json', dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ name: path, fd, removeCallback: cleanupCallback });
+                    }
+                });
+            });
+    
             let results = await this.ipfsKit.ipfsGet(this.ipfsSrc, thisTempFile.name);
             if (results && results.length > 0) {
                 this.ipfsCollection = JSON.parse(fs.readFileSync(thisTempFile.name, 'utf8'));
@@ -188,7 +242,16 @@ class ModelManager {
         }
     
         try {
-            let thisTempFile = tmp.fileSync({ postfix: '.json', dir: '/tmp' });
+            let thisTempFile = await new Promise((resolve, reject) => {
+                tmpFile.createTempFile({  postfix: '.json', dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ name: path, fd, removeCallback: cleanupCallback });
+                    }
+                });
+            });
+    
             await this.s3Kit.s3DlFile('collection.json', thisTempFile.name, this.s3cfg["bucket"]);
             this.s3Collection = JSON.parse(fs.readFileSync(thisTempFile.name, 'utf8'));
         } catch (e) {
@@ -245,11 +308,30 @@ class ModelManager {
                 dstPath = path.join(dirname, filename);
             }
         }
+        try{
+            let thisTempFile = await new Promise((resolve, reject) => {
+                this.tmpFile.createTempFile({  postfix: suffix, dir: '/tmp' }, async (err, path, fd, cleanupCallback) => {                    
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                    } else {  
+                        let tmpFilename = path.split("/").pop();
+                        let command = `aria2c -x 16 ${httpsSrc} -d /tmp -o ${tmpFilename} --allow-overwrite=true`;          
+                        await execsync(command).then((results) => {
+                            console.log(results)
+                            resolve({ name: path, fd, removeCallback: cleanupCallback });
+                        }).catch((e) => {
+                            console.log(e);
+                            reject(e);
+                        });
+                    }   
+                });
+            });
+        }
+        catch(e){
+            console.log(e);
+        }
 
-        let thisTempFile = tmp.fileSync({ postfix: suffix, dir: '/tmp' });
-        let tmpFilename = thisTempFile.name.split("/").pop();
-        let command = `aria2c -x 16 ${httpsSrc} -d /tmp -o ${tmpFilename} --allow-overwrite=true`;
-        await exec(command);
 
         if (fs.existsSync(dstPath)) {
             let command2 = `rm ${dstPath}`;
@@ -281,7 +363,16 @@ class ModelManager {
         if (filenameDst.split(".").length > 1) {
             try {
                 let suffix = "." + filenameDst.split(".").pop();
-                let thisTempFile = tmp.fileSync({ postfix: suffix, dir: '/tmp' });
+                let thisTempFile = await new Promise((resolve, reject) => {
+                    tmpFile.createTempFile({  postfix: suffix, dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve({ name: path, fd, removeCallback: cleanupCallback });
+                        }
+                    });
+                });
+    
                 let thisFileKey = s3Src.split(s3cfg["bucket"] + "/")[1];
 
                 let params = {
@@ -325,8 +416,16 @@ class ModelManager {
             try {
                 if (!filenameDst.includes(".cache") && filenameDst.includes(".")) {
                     let suffix = "." + filenameDst.split(".").pop();
-                    let thisTempFile = tmp.fileSync({ postfix: suffix, dir: '/tmp' });
-
+                    let thisTempFile = await new Promise((resolve, reject) => {
+                        tmpFile.createTempFile({  postfix: suffix, dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve({ name: path, fd, removeCallback: cleanupCallback });
+                            }
+                        });
+                    });
+        
                     let results = await ipfs.get(ipfsSrc, { timeout: 10000 });
                     if (results.path) {
                         fs.renameSync(results.path, filenameDst);
@@ -635,49 +734,49 @@ class ModelManager {
         }
     }
 
-
     async loadCollectionCache(cache = {
         local: "/storage/cloudkit-models/collection.json",
         s3: "s3://cloudkit-beta/collection.json",
         ipfs: "QmXBUkLywjKGTWNDMgxknk6FJEYu9fZaEepv3djmnEqEqD",
         https: "https://huggingface.co/endomorphosis/cloudkit-collection/resolve/main/collection.json"
-    }) {
+    }){
         let timestamp_0 = Date.now();
         if (fs.existsSync(cache.local)) {
             let data = await readFile(cache.local);
             this.local_collection = JSON.parse(data);
         }
         try {
-            let https_download = await this.download_https(cache.https, '/tmp/collection.json');
-            if (fs.existsSync("./collection.json/collection.json")) {
-                await moveFile("./collection.json/collection.json", "/tmp/collection.json");
-                await rimraf("./collection.json");
-            }
-            if (fs.existsSync(https_download)) {
-                let data = await readFile(https_download);
+            let https_collection = await this.downloadHttps(cache.https, '/tmp/collection.json');
+            // if (fs.existsSync("./collection.json/collection.json")) {
+            //     await moveFile("./collection.json/collection.json", "/tmp/collection.json");
+            //     await rimraf("./collection.json");
+            // }
+            if (fs.existsSync(https_collection)) {
+                let data = await fs.readFileSync(cache.https, 'utf8');
                 this.https_collection = JSON.parse(data);
             } else if (fs.existsSync('/tmp/collection.json')) {
                 let data = await readFile('/tmp/collection.json');
                 this.https_collection = JSON.parse(data);
             }
         } catch (e) {
-            console.error(e);
+            console.log(e);
         }
         let timestamp_1 = Date.now();
         try {
-            let ipfs_download = await this.download_ipfs(cache.ipfs, '/tmp/collection.json');
+            let ipfs_download = await this.downloadIpfs(cache.ipfs, '/tmp/collection.json');
             let data = await readFile(ipfs_download);
             this.ipfs_collection = JSON.parse(data);
         } catch (e) {
-            console.error(e);
+            console.log(e);
         }
         let timestamp_2 = Date.now();
         try {
-            let s3_download = await this.download_s3(cache.s3, '/tmp/collection.json');
+            let s3_download = await this.downloadS3(cache.s3, '/tmp/collection.json');
+//            let s3_download = await this.download_s3(cache.s3, '/tmp/collection.json');
             let data = await readFile(s3_download);
             this.s3_collection = JSON.parse(data);
         } catch (e) {
-            console.error(e);
+            console.log(e);
         }
         let timestamp_3 = Date.now();
 
@@ -788,7 +887,16 @@ class ModelManager {
         // IPFS test
         try {
             ipfs_test = false;
-            let this_temp_file = tmp.fileSync({ postfix: '.md' });
+            let thisTempFile = await new Promise((resolve, reject) => {
+                tmpFile.createTempFile({ postfix: '.md' , dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ name: path, fd, removeCallback: cleanupCallback });
+                    }
+                });
+            });
+
             if ("/README.md" in Object.keys(this_model_manifest_cache["ipfs"])) {
                 let ipfs_test_file = await this.download_ipfs(this_model_manifest_cache["ipfs"]["/README.md"]["path"], this_temp_file.name);
                 let ipfs_test = fs.readFileSync(ipfs_test_file, 'utf8');
@@ -802,7 +910,15 @@ class ModelManager {
 
         // S3 test
         try {
-            let this_temp_file = tmp.fileSync({ postfix: '.md' });
+            let thisTempFile = await new Promise((resolve, reject) => {
+                tmp.createTempFile({ postfix: '.md' , dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ name: path, fd, removeCallback: cleanupCallback });
+                    }
+                });
+            });
             if ("/README.md" in Object.keys(this_model_manifest_cache["s3"])) {
                 let s3_test;
                 if (this_model_manifest_cache["s3"]["/README.md"]["url"].startsWith("s3://")) {
@@ -826,7 +942,15 @@ class ModelManager {
 
         // HTTPS test
         try {
-            let this_temp_file = tmp.fileSync({ postfix: '.md' });
+            let thisTempFile = await new Promise((resolve, reject) => {
+                tmpFile.createTempFile({ postfix: '.md' , dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ name: path, fd, removeCallback: cleanupCallback });
+                    }
+                });
+            });
             if ("/README.md" in Object.keys(this_model_manifest_cache["https"])) {
                 let https_url = this_model_manifest_cache["https"]["/README.md"]["url"];
                 let https_test_file = await this.download_https(https_url, this_temp_file.name);
@@ -927,7 +1051,7 @@ class ModelManager {
         }
     }
 
-    ls_models() {
+    async ls_models() {
         let ipfs_keys = [];
         let s3_keys = [];
         let local_keys = [];
@@ -950,7 +1074,7 @@ class ModelManager {
     }
 
 
-    ls_s3_models() {
+    async ls_s3_models() {
         let ls_models = this.ls_models();
         let s3_models = {};
         let timestamps = {};
@@ -973,18 +1097,17 @@ class ModelManager {
             this_collection = collections[newest];
         } else {
             for (let key in collections) {
-                if (!collections[key].hasOwnProperty('error')) {
+                if (Object.keys(collections).includes(key) && collections[key] != undefined && !collections[key].hasOwnProperty('error')) {
                     this_collection = collections[key];
+                    for (let model of ls_models) {
+                        if (this_collection.hasOwnProperty(model) && model !== "cache" && model !== "error") {
+                            let results = this.checkS3(this_collection[model]);
+                            if (results !== null && results !== false) {
+                                s3_models[model] = results;
+                            }
+                        }
+                    }            
                     break;
-                }
-            }
-        }
-
-        for (let model of ls_models) {
-            if (this_collection.hasOwnProperty(model) && model !== "cache" && model !== "error") {
-                let results = this.check_s3(this_collection[model]);
-                if (results !== null && results !== false) {
-                    s3_models[model] = results;
                 }
             }
         }
@@ -993,8 +1116,78 @@ class ModelManager {
         return s3_models;
     }
 
+    async ls_local_models(kwargs) {
+        let lsModels = this.ls_models();
+        let localModels = {};
+        let timestamps = {};
+    
+        if (typeof this.ipfsCollection === 'object' && 'cache' in this.ipfsCollection) {
+            if ('timestamp' in this.ipfsCollection.cache) {
+                let ipfsTimestamp = this.ipfsCollection.cache.timestamp;
+                timestamps.ipfs = ipfsTimestamp;
+            }
+        }
+        if (typeof this.s3Collection === 'object' && 'cache' in this.s3Collection) {
+            if ('timestamp' in this.s3Collection.cache) {
+                let s3Timestamp = this.s3Collection.cache.timestamp;
+                timestamps.s3 = s3Timestamp;
+            }
+        }
+        if (typeof this.localCollection === 'object' && 'cache' in this.localCollection) {
+            if ('timestamp' in this.localCollection.cache) {
+                let localTimestamp = this.localCollection.cache.timestamp;
+                timestamps.local = localTimestamp;
+            }
+        }
+        if (typeof this.httpsCollection === 'object' && 'cache' in this.httpsCollection) {
+            if ('timestamp' in this.httpsCollection.cache) {
+                let httpsTimestamp = this.httpsCollection.cache.timestamp;
+                timestamps.https = httpsTimestamp;
+            }
+        }
+    
+        let thisCollection;
+        if (Object.keys(timestamps).length !== 0) {
+            let newest = Object.keys(timestamps).reduce((a, b) => timestamps[a] > timestamps[b] ? a : b);
+            if (newest === 'local') {
+                thisCollection = this.localCollection;
+            } else if (newest === 's3') {
+                thisCollection = this.s3Collection;
+            } else if (newest === 'ipfs') {
+                thisCollection = this.ipfsCollection;
+            } else if (newest === 'https') {
+                thisCollection = this.httpsCollection;
+            }
+        } else {
+            if (!('error' in this.localCollection)) {
+                thisCollection = this.localCollection;
+            } else if (!('error' in this.s3Collection)) {
+                thisCollection = this.s3Collection;
+            } else if (!('error' in this.httpsCollection)) {
+                thisCollection = this.httpsCollection;
+            } else if (!('error' in this.ipfsCollection)) {
+                thisCollection = this.ipfsCollection;
+            }
+        }
+    
+        for (let model of lsModels) {
+            let collections = [thisCollection, this.localCollection, this.s3Collection, this.ipfsCollection, this.httpsCollection];
+            for (let collection of collections) {
+                if (model in collection && model !== 'cache' && model !== 'error') {
+                    let thisFolderData = collection[model].folderData;
+                    let results = this.checkLocal(collection[model]);
+                    if (results !== null && results !== false) {
+                        localModels[model] = results;
+                    }
+                }
+            }
+        }
+    
+        this.localModels = localModels;
+        return localModels;
+    }
 
-    ls_https_models() {
+    async ls_https_models() {
         let ls_models = this.ls_models();
         let https_models = {};
         let timestamps = {};
@@ -1017,7 +1210,7 @@ class ModelManager {
             this_collection = collections[newest];
         } else {
             for (let key in collections) {
-                if (!collections[key].hasOwnProperty('error')) {
+                if (Object.keys(collections).includes(key) && collections[key] != undefined && !collections[key].hasOwnProperty('error')) {
                     this_collection = collections[key];
                     break;
                 }
@@ -1032,11 +1225,16 @@ class ModelManager {
                 }
             } else {
                 for (let key in collections) {
-                    if (collections[key].hasOwnProperty(model) && model !== "cache" && model !== "error") {
-                        let results = this.check_https(collections[key][model]);
-                        if (results !== null && results !== false) {
-                            https_models[model] = results;
-                        }
+                    if (Object.keys(collections).includes(key) && collections[key] != undefined && !collections[key].hasOwnProperty('error')) {
+                        this_collection = collections[key];
+                        for (let model of ls_models) {
+                            if (this_collection.hasOwnProperty(model) && model !== "cache" && model !== "error") {
+                                let results = this.checkS3(this_collection[model]);
+                                if (results !== null && results !== false) {
+                                    s3_models[model] = results;
+                                }
+                            }
+                        }            
                         break;
                     }
                 }
@@ -1048,8 +1246,8 @@ class ModelManager {
     }
 
 
-    ls_ipfs_models() {
-        let ls_models = this.ls_models();
+    async ls_ipfs_models() {
+        let ls_models = await this.ls_models();
         let ipfs_models = {};
         let timestamps = {};
         let this_collection;
@@ -1071,9 +1269,17 @@ class ModelManager {
             this_collection = collections[newest];
         } else {
             for (let key in collections) {
-                if (!collections[key].hasOwnProperty('error')) {
+                if (Object.keys(collections).includes(key) && collections[key] != undefined && !collections[key].hasOwnProperty('error')) {
                     this_collection = collections[key];
-                    break;
+                    for (let model of ls_models) {
+                        if (this_collection.hasOwnProperty(model) && model !== "cache" && model !== "error") {
+                            let results = this.checkIpfs(this_collection[model]);
+                            if (results !== null && results !== false) {
+                                s3_models[model] = results;
+                            }
+                        }
+                    }            
+                    break;        
                 }
             }
         }
@@ -1101,388 +1307,437 @@ class ModelManager {
         return ipfs_models;
     }
 
+    async state(kwargs = {}) {
+        const timestamp = Date.now() / 1000;
+        const one_hour_ago = timestamp - 3600;
+        const one_day_ago = timestamp - 86400;
+        const ten_days_ago = timestamp - 8640000;
 
-  state(kwargs = {}) {
-    const timestamp = Date.now() / 1000;
-    const one_hour_ago = timestamp - 3600;
-    const one_day_ago = timestamp - 86400;
-    const ten_days_ago = timestamp - 8640000;
-
-    try {
-      if (fs.existsSync(path.join(this.ipfs_path, "state.json"))) {
-        const state_mtime = fs.statSync(path.join(this.ipfs_path, "state.json")).mtime.getTime() / 1000;
-        if (state_mtime > one_day_ago) {
-          this.last_update = state_mtime;
-          this.models = JSON.parse(fs.readFileSync(path.join(this.ipfs_path, "state.json"), 'utf8'));
-          this.last_update = timestamp;
-        }
-      } else {
-        execSync(`touch ${path.join(this.ipfs_path, "state.json")}`);
-      }
-    } catch (e) {
-      this.models = {};
-    }
-
-    const src = kwargs.src || "all";
-    if (src !== "all") {
-      // Your implementation here
-    } else {
-      if (this.last_update < ten_days_ago) {
-        // Your implementation here
-      }
-    }
-
-    // Your implementation here
-
-    const stringified_models = JSON.stringify(this.models);
-    const models_md5 = crypto.createHash('md5').update(stringified_models).digest('hex');
-    let state_json_md5;
-
-    try {
-      const state_json = JSON.parse(fs.readFileSync(path.join(this.ipfs_path, "state.json"), 'utf8'));
-      state_json_md5 = crypto.createHash('md5').update(JSON.stringify(state_json)).digest('hex');
-    } catch (e) {
-      fs.writeFileSync(path.join(this.ipfs_path, "state.json"), stringified_models);
-      state_json_md5 = crypto.createHash('md5').update(fs.readFileSync(path.join(this.ipfs_path, "state.json"), 'utf8')).digest('hex');
-    }
-
-    if (models_md5 !== state_json_md5) {
-      fs.writeFileSync(path.join(this.ipfs_path, "state.json"), stringified_models);
-    }
-
-    return this.models;
-  }
-
-
-  evict_local(model, kwargs = {}) {
-    const local_model_path = path.join(this.local_path, model);
-    if (fs.existsSync(local_model_path)) {
-      rimraf.sync(local_model_path);
-    }
-    return true;
-  }
-
-  async evict_s3(model, kwargs = {}) {
-    const s3_model_path = this.collection[model]["cache"]["s3"];
-    const s3_model_url = s3_model_path[0]["url"];
-    const s3_model_path_parts = s3_model_url.split("/");
-    const s3_model_bucket = s3_model_path_parts[2];
-    const s3_model_dir = s3_model_path_parts[3];
-    const results = await this.s3_kit.deleteObject({
-      Bucket: s3_model_bucket,
-      Key: s3_model_dir
-    }).promise();
-    return results;
-  }
-
-  async evict_models(kwargs = {}) {
-    const ls_models = this.ls_models();
-    const history = this.history();
-    const current_timestamp = Date.now() / 1000;
-  
-    for (const model of ls_models) {
-      if (this.models["local_models"].hasOwnProperty(model)) {
-        const this_model_timestamp = this.models["local_models"][model];
-        const this_history_timestamp = new Date(history[model]).getTime() / 1000;
-        if (current_timestamp - this_model_timestamp > this.timing["local_time"] && current_timestamp - this_history_timestamp > this.timing["local_time"]) {
-          await this.evict_local(model);
-          delete this.models["local_models"][model];
-        }
-      } else if (this.models["s3_models"].hasOwnProperty(model)) {
-        const this_model_timestamp = this.models["s3_models"][model];
-        const this_history_timestamp = new Date(history[model]).getTime() / 1000;
-        if (current_timestamp - this_model_timestamp > this.timing["s3_time"] && current_timestamp - this_history_timestamp > this.timing["s3_time"]) {
-          await this.evict_s3(model);
-          delete this.models["s3_models"][model];
-        }
-      }
-    }
-  
-    for (const model in this.models["local_models"]) {
-      if (!ls_models.includes(model)) {
-        await this.evict_local(model);
-        delete this.models["local_models"][model];
-      }
-    }
-  
-    for (const model in this.models["s3_models"]) {
-      if (!ls_models.includes(model)) {
-        await this.evict_s3(model);
-        delete this.models["s3_models"][model];
-      }
-    }
-  
-    const results = {
-      "s3_models": this.models["s3_models"],
-      "ipfs_models": this.models["ipfs_models"],
-      "local_models": this.models["local_models"],
-      "https_models": this.models["https_models"]
-    };
-  
-    return results;
-  }
-
-
-async check_history_models(kwargs = {}) {
-    const ls_models = this.ls_models();
-    const current_timestamp = Date.now() / 1000;
-    const history_json_path = path.join(this.ipfs_path, "history.json");
-  
-    if (Object.keys(this.history_models).length === 0) {
-      if (fs.existsSync(history_json_path)) {
         try {
-          this.history_models = JSON.parse(fs.readFileSync(history_json_path, 'utf8'));
+            if (fs.existsSync(path.join(this.ipfsPath, "state.json"))) {
+                const state_mtime = fs.statSync(path.join(this.ipfsPath, "state.json")).mtime.getTime() / 1000;
+                if (state_mtime > one_day_ago) {
+                    this.last_update = state_mtime;
+                    this.models = JSON.parse(fs.readFileSync(path.join(this.ipfsPath, "state.json"), 'utf8'));
+                    this.last_update = timestamp;
+                }
+            } else {
+                execSync(`touch ${path.join(this.ipfsPath, "state.json")}`);
+            }
         } catch (e) {
-          fs.writeFileSync(history_json_path, JSON.stringify({}));
+            this.models = {};
         }
-      }
-    }
-  
-    for (const model of ls_models) {
-      if (!this.history_models.hasOwnProperty(model)) {
-        this.history_models[model] = null;
-      }
-  
-      if (this.history_models[model] !== null) {
-        const this_model_timestamp = new Date(this.history[model]).getTime() / 1000;
-        if (current_timestamp - this_model_timestamp > 60) {
-          this.history_models[model] = null;
+        let src = kwargs.hasOwnProperty("src") ? kwargs["src"] : "all";
+
+        if (src !== "all") {
+            if (src === "s3") {
+                this.models["s3_models"] = this.ls_s3_models();
+            } else if (src === "ipfs") {
+                this.ipfs_pinset = this.ipfsKit.ipfsGetPinset();
+                this.models["ipfs_models"] = this.ls_ipfs_models();
+            } else if (src === "local") {
+                this.models["local_models"] = this.ls_local_models();
+            } else if (src === "https") {
+                this.models["https_models"] = this.ls_https_models();
+            }
+        } else {
+            if (this.last_update < ten_days_ago) {
+                this.loadCollection();
+                this.models["s3_models"] = this.ls_s3_models();
+                this.models["ipfs_models"] = this.ls_ipfs_models();
+                this.models["local_models"] = this.ls_local_models();
+                this.models["https_models"] = this.ls_https_models();
+                this.ipfs_pinset = this.ipfsKit.ipfsGetPinset();
+                this.last_update = timestamp;
+            }
         }
-      }
+        
+        if (this.models.hasOwnProperty("s3Models")) {
+            this.models["s3_models"] = this.models["s3Models"];
+            delete this.models["s3Models"];
+        }
+        if (this.models.hasOwnProperty("ipfsModels")) {
+            this.models["ipfs_models"] = this.models["ipfsModels"];
+            delete this.models["ipfsModels"];
+        }
+        if (this.models.hasOwnProperty("httpsModels")) {
+            this.models["https_models"] = this.models["httpsModels"];
+            delete this.models["httpsModels"];
+        }
+        if (this.models.hasOwnProperty("localModels")) {
+            this.models["local_models"] = this.models["localModels"];
+            delete this.models["localModels"];
+        }
+        
+        for (let model in this.collection) {
+            if (model !== "cache") {
+                let this_model = this.collection[model];
+                let cache = this_model["cache"];
+                if (cache.hasOwnProperty("ipfs")) {
+                    let ipfs = cache["ipfs"];
+                    for (let file in ipfs) {
+                        let this_file = ipfs[file];
+                        if (this_file.hasOwnProperty("path")) {
+                            let path = this_file["path"];
+                            if (!this.collection_pins.includes(path)) {
+                                if (this.ipfs_pinset["ipfs"].hasOwnProperty(path)) {
+                                    let pin_type = this.ipfs_pinset["ipfs"][path];
+                                    if (pin_type !== "indirect") {
+                                        this.collection_pins.push(path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        const stringified_models = JSON.stringify(this.models);
+        const models_md5 = crypto.createHash('md5').update(stringified_models).digest('hex');
+        let state_json_md5;
+
+        try {
+            const state_json = JSON.parse(fs.readFileSync(path.join(this.ipfsPath, "state.json"), 'utf8'));
+            state_json_md5 = crypto.createHash('md5').update(JSON.stringify(state_json)).digest('hex');
+        } catch (e) {
+            fs.writeFileSync(path.join(this.ipfsPath, "state.json"), stringified_models);
+            state_json_md5 = crypto.createHash('md5').update(fs.readFileSync(path.join(this.ipfsPath, "state.json"), 'utf8')).digest('hex');
+        }
+
+        if (models_md5 !== state_json_md5) {
+            fs.writeFileSync(path.join(this.ipfsPath, "state.json"), stringified_models);
+        }
+
+        return this.models;
     }
-  
-    for (const model in this.history_models) {
-      if (!ls_models.includes(model)) {
-        delete this.history_models[model];
-      }
+
+    async evict_local(model, kwargs = {}) {
+        const local_model_path = path.join(this.local_path, model);
+        if (fs.existsSync(local_model_path)) {
+            rimraf.sync(local_model_path);
+        }
+        return true;
     }
-  
-    const history_json_mtime = fs.existsSync(history_json_path) ? fs.statSync(history_json_path).mtime.getTime() / 1000 : null;
-    if (!history_json_mtime || current_timestamp - history_json_mtime > 60) {
-      fs.writeFileSync(history_json_path, JSON.stringify(this.history_models));
+
+    async evict_s3(model, kwargs = {}) {
+        const s3_model_path = this.collection[model]["cache"]["s3"];
+        const s3_model_url = s3_model_path[0]["url"];
+        const s3_model_path_parts = s3_model_url.split("/");
+        const s3_model_bucket = s3_model_path_parts[2];
+        const s3_model_dir = s3_model_path_parts[3];
+        const results = await this.s3_kit.deleteObject({
+            Bucket: s3_model_bucket,
+            Key: s3_model_dir
+        }).promise();
+        return results;
     }
-  
-    return this.history_models;
-  }
+
+    async evict_models(kwargs = {}) {
+        const ls_models = this.ls_models();
+        const history = this.history();
+        const current_timestamp = Date.now() / 1000;
+    
+        for (const model of ls_models) {
+            if (this.models["local_models"].hasOwnProperty(model)) {
+                const this_model_timestamp = this.models["local_models"][model];
+                const this_history_timestamp = new Date(history[model]).getTime() / 1000;
+                if (current_timestamp - this_model_timestamp > this.timing["local_time"] && current_timestamp - this_history_timestamp > this.timing["local_time"]) {
+                    await this.evict_local(model);
+                    delete this.models["local_models"][model];
+                }
+            } else if (this.models["s3_models"].hasOwnProperty(model)) {
+                const this_model_timestamp = this.models["s3_models"][model];
+                const this_history_timestamp = new Date(history[model]).getTime() / 1000;
+                if (current_timestamp - this_model_timestamp > this.timing["s3_time"] && current_timestamp - this_history_timestamp > this.timing["s3_time"]) {
+                    await this.evict_s3(model);
+                    delete this.models["s3_models"][model];
+                }
+            }
+        }
+    
+        for (const model in this.models["local_models"]) {
+            if (!ls_models.includes(model)) {
+                await this.evict_local(model);
+                delete this.models["local_models"][model];
+            }
+        }
+    
+        for (const model in this.models["s3_models"]) {
+            if (!ls_models.includes(model)) {
+                await this.evict_s3(model);
+                delete this.models["s3_models"][model];
+            }
+        }
+    
+        const results = {
+            "s3_models": this.models["s3_models"],
+            "ipfs_models": this.models["ipfs_models"],
+            "local_models": this.models["local_models"],
+            "https_models": this.models["https_models"]
+        };
+    
+        return results;
+    }
 
 
-async check_zombies(kwargs = {}) {
-    const ls_models = this.ls_models();
-    const local_files = fs.readdirSync(this.local_path, { withFileTypes: true });
-    const ls_local_files = [];
-    const collection_files = ["collection.json"];
-    const zombies = {};
-  
-    local_files.forEach(file => {
-      if (file.isFile()) {
-        let tmp_filename = path.join(this.local_path, file.name);
-        tmp_filename = tmp_filename.split(path.sep).slice(3).join(path.sep);
-        const split_tmp_filename = tmp_filename.split(path.sep);
-        if (split_tmp_filename.length > 1 && !tmp_filename.includes("ipfs") && !tmp_filename.includes("cloudkit")) {
-          ls_local_files.push(tmp_filename);
+    async check_history_models(kwargs = {}) {
+        const ls_models = this.ls_models();
+        const current_timestamp = Date.now() / 1000;
+        const history_json_path = path.join(this.ipfsPath, "history.json");
+    
+        if (Object.keys(this.history_models).length === 0) {
+            if (fs.existsSync(history_json_path)) {
+                try {
+                    this.history_models = JSON.parse(fs.readFileSync(history_json_path, 'utf8'));
+                } catch (e) {
+                    fs.writeFileSync(history_json_path, JSON.stringify({}));
+                }
+            }
         }
-      }
-    });
-  
-    for (const model in this.collection) {
-      if (model !== "cache") {
-        const this_model = this.collection[model];
-        const this_folder_name = this_model["id"];
-        const this_folder_data = this_model["folderData"];
-        this_folder_data.forEach(file => {
-          collection_files.push(this_folder_name + file);
+    
+        for (const model of ls_models) {
+            if (!this.history_models.hasOwnProperty(model)) {
+                this.history_models[model] = null;
+            }
+    
+            if (this.history_models[model] !== null) {
+                const this_model_timestamp = new Date(this.history[model]).getTime() / 1000;
+                if (current_timestamp - this_model_timestamp > 60) {
+                    this.history_models[model] = null;
+                }
+            }
+        }
+    
+        for (const model in this.history_models) {
+            if (!ls_models.includes(model)) {
+                delete this.history_models[model];
+            }
+        }
+    
+        const history_json_mtime = fs.existsSync(history_json_path) ? fs.statSync(history_json_path).mtime.getTime() / 1000 : null;
+        if (!history_json_mtime || current_timestamp - history_json_mtime > 60) {
+            fs.writeFileSync(history_json_path, JSON.stringify(this.history_models));
+        }
+    
+        return this.history_models;
+    }
+
+
+    async check_zombies(kwargs = {}) {
+        const ls_models = this.ls_models();
+        const local_files = fs.readdirSync(this.local_path, { withFileTypes: true });
+        const ls_local_files = [];
+        const collection_files = ["collection.json"];
+        const zombies = {};
+    
+        local_files.forEach(file => {
+            if (file.isFile()) {
+                let tmp_filename = path.join(this.local_path, file.name);
+                tmp_filename = tmp_filename.split(path.sep).slice(3).join(path.sep);
+                const split_tmp_filename = tmp_filename.split(path.sep);
+                if (split_tmp_filename.length > 1 && !tmp_filename.includes("ipfs") && !tmp_filename.includes("cloudkit")) {
+                    ls_local_files.push(tmp_filename);
+                }
+            }
         });
-      }
-    }
-  
-    const s3_files = await this.s3_kit.s3_ls_dir("", this.s3cfg["bucket"]);
-    const s3_file_names = s3_files.map(file => file["key"]);
-  
-    const ipfs_files = await this.ipfs_kit.ipfs_ls_path("/");
-    const ipfs_file_names = ipfs_files["ipfs_ls_path"].map(file => file["name"]);
-  
-    const collection_pins = this.collection_pins;
-  
-    const compare_s3_files = s3_file_names.filter(x => !collection_files.includes(x));
-    zombies["s3"] = compare_s3_files;
-    const compare_local_files = ls_local_files.filter(x => !collection_files.includes(x));
-    zombies["local"] = compare_local_files;
-    const compare_ipfs_files = ipfs_file_names.filter(x => !collection_files.includes(x));
-    zombies["ipfs_files"] = compare_ipfs_files;
-    const compare_ipfs_pins = collection_pins.filter(x => !this.ipfs_pinset.includes(x));
-    zombies["ipfs"] = compare_ipfs_pins;
-  
-    this.zombies = zombies;
-    return zombies;
-  }
-  rand_history(kwargs = {}) {
-    const history = this.history_models;
-    const two_weeks_ago = Date.now() / 1000 - 14 * 24 * 60 * 60;
-    const two_days_ago = Date.now() / 1000 - 2 * 24 * 60 * 60;
-    const now = Date.now() / 1000;
-  
-    for (const model in history) {
-      const random_float = Math.random();
-      const random_timestamp = ((now - two_weeks_ago) * random_float) + two_weeks_ago;
-      history[model] = random_timestamp;
-    }
-  
-    this.history_models = history;
-    return history;
-  }
-
-  check_expired(kwargs = {}) {
-    const ls_models = this.ls_models();
-    const current_timestamp = Date.now() / 1000;
-    const expired = {
-      "local" : [],
-      "s3" : [],
-      "ipfs": [],
-    };
-  
-    for (const model of ls_models) {
-      if ("local_models" in this.models && model in this.models["local_models"]) {
-        const this_model_timestamp = this.models["local_models"][model];
-        if (current_timestamp - this_model_timestamp > this.timing["local_time"] && current_timestamp - this.history_models[model] > this.timing["local_time"]) {
-          expired["local"].push(model);
+    
+        for (const model in this.collection) {
+            if (model !== "cache") {
+                const this_model = this.collection[model];
+                const this_folder_name = this_model["id"];
+                const this_folder_data = this_model["folderData"];
+                this_folder_data.forEach(file => {
+                    collection_files.push(this_folder_name + file);
+                });
+            }
         }
-      }
-      if ("s3Models" in this.models && model in this.models["s3Models"]) {
-        const this_model_timestamp = this.models["s3Models"][model];
-        if (current_timestamp - this_model_timestamp > this.timing["s3_time"] && current_timestamp - this.history_models[model] > this.timing["s3_time"]) {
-          expired["s3"].push(model);
+    
+        const s3_files = await this.s3_kit.s3_ls_dir("", this.s3cfg["bucket"]);
+        const s3_file_names = s3_files.map(file => file["key"]);
+        const ipfs_files = await this.ipfs_kit.ipfs_ls_path("/");
+        const ipfs_file_names = ipfs_files["ipfs_ls_path"].map(file => file["name"]);
+    
+        const collection_pins = this.collection_pins;
+    
+        const compare_s3_files = s3_file_names.filter(x => !collection_files.includes(x));
+        zombies["s3"] = compare_s3_files;
+        const compare_local_files = ls_local_files.filter(x => !collection_files.includes(x));
+        zombies["local"] = compare_local_files;
+        const compare_ipfs_files = ipfs_file_names.filter(x => !collection_files.includes(x));
+        zombies["ipfs_files"] = compare_ipfs_files;
+        const compare_ipfs_pins = collection_pins.filter(x => !this.ipfs_pinset.includes(x));
+        zombies["ipfs"] = compare_ipfs_pins;
+    
+        this.zombies = zombies;
+        return zombies;
+    }
+
+    async rand_history(kwargs = {}) {
+        const history = this.history_models;
+        const two_weeks_ago = Date.now() / 1000 - 14 * 24 * 60 * 60;
+        const two_days_ago = Date.now() / 1000 - 2 * 24 * 60 * 60;
+        const now = Date.now() / 1000;
+    
+        for (const model in history) {
+            const random_float = Math.random();
+            const random_timestamp = ((now - two_weeks_ago) * random_float) + two_weeks_ago;
+            history[model] = random_timestamp;
         }
-      }
-      if ("s3_models" in this.models && model in this.models["s3_models"]) {
-        const this_model_timestamp = this.models["s3_models"][model];
-        if (current_timestamp - this_model_timestamp > this.timing["s3_time"] && current_timestamp - this.history_models[model] > this.timing["s3_time"]) {
-          expired["s3"].push(model);
+    
+        this.history_models = history;
+        return history;
+    }
+
+    async check_expired(kwargs = {}) {
+        const ls_models = this.ls_models();
+        const current_timestamp = Date.now() / 1000;
+        const expired = {
+        "local" : [],
+        "s3" : [],
+        "ipfs": [],
+        };
+    
+        for (const model of ls_models) {
+            if ("local_models" in this.models && model in this.models["local_models"]) {
+                const this_model_timestamp = this.models["local_models"][model];
+                if (current_timestamp - this_model_timestamp > this.timing["local_time"] && current_timestamp - this.history_models[model] > this.timing["local_time"]) {
+                    expired["local"].push(model);
+                }
+            }
+            if ("s3Models" in this.models && model in this.models["s3Models"]) {
+                const this_model_timestamp = this.models["s3Models"][model];
+                if (current_timestamp - this_model_timestamp > this.timing["s3_time"] && current_timestamp - this.history_models[model] > this.timing["s3_time"]) {
+                    expired["s3"].push(model);
+                }
+            }
+            if ("s3_models" in this.models && model in this.models["s3_models"]) {
+                const this_model_timestamp = this.models["s3_models"][model];
+                if (current_timestamp - this_model_timestamp > this.timing["s3_time"] && current_timestamp - this.history_models[model] > this.timing["s3_time"]) {
+                    expired["s3"].push(model);
+                }
+            }
         }
-      }
+    
+        this.expired = expired;
+        return this.expired;
     }
-  
-    this.expired = expired;
-    return this.expired;
-  }
 
-  check_pinned_models(kwargs = {}) {
-    const ls_models = this.ls_models();
-  
-    while (Object.keys(this.pinned_models).length < 5) {
-      const random_number = Math.random();
-      const calculate = Math.round(random_number * ls_models.length);
-      if (calculate < ls_models.length) {
-        const chosen_model = ls_models[calculate];
-        this.pinned_models[chosen_model] = Date.now() / 1000;
-      }
-    }
-  
-    // remove later and get data from orchestrator
-    return this.pinned;
-  }
-
-  check_not_found(kwargs = {}) {
-    const ls_models = this.ls_models();
-    const not_found = {
-      "local" : [],
-      "s3" : [],
-    };
-  
-    for (const model in this.history_models) {
-      const current_time = Date.now() / 1000;
-      const time_delta = current_time - this.history_models[model];
-      if (time_delta < this.timing["local_time"]) {
-        if ("local_models" in this.models && !(model in this.models["local_models"])) {
-          not_found["local"].push(model);
+    async check_pinned_models(kwargs = {}) {
+        const ls_models = this.ls_models();
+        while (Object.keys(this.pinnedModels).length < 5) {
+            const random_number = Math.random();
+            const calculate = Math.round(random_number * ls_models.length);
+            if (calculate < ls_models.length) {
+                const chosen_model = ls_models[calculate];
+                this.pinnedModels[chosen_model] = Date.now() / 1000;
+            }
         }
-        if ("s3_models" in this.models && !(model in this.models["s3_models"])) {
-          not_found["s3"].push(model);
+        // remove later and get data from orchestrator
+        return this.pinned;
+    }
+
+    async check_not_found(kwargs = {}) {
+        const ls_models = this.ls_models();
+        const not_found = {
+            "local" : [],
+            "s3" : [],
+        };
+
+        for (const model in this.history_models) {
+            const current_time = Date.now() / 1000;
+            const time_delta = current_time - this.history_models[model];
+            if (time_delta < this.timing["local_time"]) {
+                if ("local_models" in this.models && !(model in this.models["local_models"])) {
+                    not_found["local"].push(model);
+                }
+                if ("s3_models" in this.models && !(model in this.models["s3_models"])) {
+                    not_found["s3"].push(model);
+                }
+            }
         }
-      }
-    }
   
-    for (const model in this.pinned_models) {
-      if ("local_models" in this.models && !(model in this.models["local_models"])) {
-        not_found["local"].push(model);
-      }
-      if ("s3_models" in this.models && !(model in this.models["s3_models"])) {
-        not_found["s3"].push(model);
-      }
-    }
+        for (const model in this.pinnedModels) {
+            if ("local_models" in this.models && !(model in this.models["local_models"])) {
+                not_found["local"].push(model);
+            }
+            if ("s3_models" in this.models && !(model in this.models["s3_models"])) {
+                not_found["s3"].push(model);
+            }
+        }
   
-    this.not_found = not_found;
-    return this.not_found;
-  }
+        this.not_found = not_found;
+        return this.not_found;
+    }
 
-  download_missing(kwargs = {}) {
-    const current_timestamp = Date.now() / 1000;
-    const not_found = this.check_not_found();
-    for (const model of not_found["local"]) {
-      if (model in this.pinned_models) {
-        this.download_model(model);
-        this.models["local_models"][model] = Date.now() / 1000;
-      } else if (this.history_models[model] > current_timestamp - this.timing["local_time"]) {
-        this.download_model(model);
-        this.models["local_models"][model] = Date.now() / 1000;
-      }
+    async download_missing(kwargs = {}) {
+        const current_timestamp = Date.now() / 1000;
+        const not_found = this.check_not_found();
+        for (const model of not_found["local"]) {
+            if (model in this.pinnedModels) {
+                this.download_model(model);
+                this.models["local_models"][model] = Date.now() / 1000;
+            } else if (this.history_models[model] > current_timestamp - this.timing["local_time"]) {
+                this.download_model(model);
+                this.models["local_models"][model] = Date.now() / 1000;
+            }
+        }
+        for (const model of not_found["s3"]) {
+            if (model in this.pinnedModels) {
+                this.s3_kit.s3_ul_dir(this.local_path + "/" + model, this.s3cfg["bucket"], this.models["s3_models"][model]["folderData"]);
+                this.models["s3_models"][model] = Date.now() / 1000;
+            } else if (this.history_models[model] > current_timestamp - this.timing["s3_time"]) {
+                this.s3_kit.s3_ul_dir(this.local_path + "/" + model, this.s3cfg["bucket"], this.models["s3_models"][model]["folderData"]);
+                this.models["s3_models"][model] = Date.now() / 1000;
+            }
+        }
+        return null;
     }
-    for (const model of not_found["s3"]) {
-      if (model in this.pinned_models) {
-        this.s3_kit.s3_ul_dir(this.local_path + "/" + model, this.s3cfg["bucket"], this.models["s3_models"][model]["folderData"]);
-        this.models["s3_models"][model] = Date.now() / 1000;
-      } else if (this.history_models[model] > current_timestamp - this.timing["s3_time"]) {
-        this.s3_kit.s3_ul_dir(this.local_path + "/" + model, this.s3cfg["bucket"], this.models["s3_models"][model]["folderData"]);
-        this.models["s3_models"][model] = Date.now() / 1000;
-      }
-    }
-    return null;
-  }
 
-  evict_expired_models(kwargs = {}) {
-    const current_timestamp = Date.now() / 1000;
-    const expired = this.expired;
-    for (const model of expired["local"]) {
-      this.evict_local(model);
-      delete this.models["local_models"][model];
+    async evict_expired_models(kwargs = {}) {
+        const current_timestamp = Date.now() / 1000;
+        const expired = this.expired;
+        for (const model of expired["local"]) {
+        this.evict_local(model);
+        delete this.models["local_models"][model];
+        }
+        for (const model of expired["s3"]) {
+        this.evict_s3(model);
+        delete this.models["s3_models"][model];
+        }
+        return null;
     }
-    for (const model of expired["s3"]) {
-      this.evict_s3(model);
-      delete this.models["s3_models"][model];
+    
+    async  evict_zombies(kwargs = {}) {
+        const zombies = this.zombies;
+        for (const file of zombies["local"]) {
+            fs.unlinkSync(path.join(this.local_path, file));
+        }
+        for (const file of zombies["s3"]) {
+            this.s3_kit.s3_rm_file(file, this.s3cfg["bucket"]);
+        }
+        return null;
     }
-    return null;
-  }
-  
-  evict_zombies(kwargs = {}) {
-    const zombies = this.zombies;
-    for (const file of zombies["local"]) {
-      fs.unlinkSync(path.join(this.local_path, file));
-    }
-    for (const file of zombies["s3"]) {
-      this.s3_kit.s3_rm_file(file, this.s3cfg["bucket"]);
-    }
-    return null;
-  }
 
-
-  test(kwargs = {}) {
-    this.load_collection_cache();
-    this.state();
-    // this.state({src: "s3"});
-    this.state({src: "local"});
-    // this.state({src: "ipfs"});
-    // this.state({src: "https"});
-    this.check_pinned_models();
-    this.check_history_models();
-    this.rand_history();
-    this.check_zombies();
-    this.check_expired();
-    this.check_not_found();
-    // this.download_model('gte-small');
-    // this.download_model('stablelm-zephyr-3b-GGUF-Q2_K');
-    this.download_missing();
-    this.evict_expired_models();
-    this.evict_zombies();
-    return this;
-  }
+    async test(kwargs = {}) {
+        await this.loadCollectionCache();
+        await this.state();
+        await this.state({src: "s3"});
+        await this.state({src: "local"});
+        await this.state({src: "ipfs"});
+        await this.state({src: "https"});
+        await this.check_pinned_models();
+        await this.check_history_models();
+        await this.rand_history();
+        await this.check_zombies();
+        await this.check_expired();
+        await this.check_not_found();
+        // this.download_model('gte-small');
+        // this.download_model('stablelm-zephyr-3b-GGUF-Q2_K');
+        await this.download_missing();
+        await this.evict_expired_models();
+        await this.evict_zombies();
+        return this;
+    }
 
 }

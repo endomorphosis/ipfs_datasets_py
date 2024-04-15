@@ -1,7 +1,7 @@
  
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
 
-class IpfsClusterService {
+export class IpfsClusterService {
     constructor(resources, meta = null) {
         this.role = "leecher";
         if (meta !== null) {
@@ -17,7 +17,7 @@ class IpfsClusterService {
         }
     }
 
-    test_ipfs_cluster_service() {
+    async test_ipfs_cluster_service() {
         let detect;
         try {
             detect = execSync('which ipfs-cluster-service').toString();
@@ -27,26 +27,27 @@ class IpfsClusterService {
         return detect.length > 0;
     }
 
-    ipfs_cluster_service_start() {
+    async ipfs_cluster_service_start() {
         const command = "systemctl start ipfs-cluster-service";
         const results = execSync(command).toString();
         return results;
     }
 
-    ipfs_cluster_service_stop() {
+    async ipfs_cluster_service_stop() {
         const command = "systemctl stop ipfs-cluster-service";
         const results = execSync(command).toString();
         return results;
     }
 
-    ipfs_cluster_service_status() {
+    async ipfs_cluster_service_status() {
         const command = "ipfs-cluster-service status";
         const results = execSync(command).toString();
         return results;
     }
 }
-if (require.main === module) {
+
+async function main(){
     const thisIpfsClusterService = new IpfsClusterService();
-    const results = thisIpfsClusterService.test_ipfs_cluster_service();
+    const results = await thisIpfsClusterService.test_ipfs_cluster_service();
     console.log(results);
 }

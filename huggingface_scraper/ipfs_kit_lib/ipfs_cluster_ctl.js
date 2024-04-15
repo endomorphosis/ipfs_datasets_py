@@ -1,4 +1,4 @@
-class IPFSClusterCtl {
+export class IPFSClusterCtl {
     constructor(resources, meta = null) {
         this.config = {};
         this.role = "leecher"; // Default role
@@ -239,8 +239,8 @@ class IPFSClusterCtl {
     }
 }
 
-if (require.main === module) {
-
+function main()
+{
     (async () => {
         const thisIpfsClusterCtl = new IPFSClusterCtl();
         const results = await thisIpfsClusterCtl.testIPFSClusterCtl();
