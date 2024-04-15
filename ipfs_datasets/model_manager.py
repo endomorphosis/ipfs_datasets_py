@@ -228,7 +228,8 @@ class model_manager:
             "local_collection": self.local_collection,
             "https_collection": self.https_collection
         }
-       
+    # TODO: This fails if aria2c is not installed but doesn't fail gracefully and in a way that diagnoses the problem to the user 
+    #       Either add a check for aria2c and report to user or add aria2c to the install that is ran before hand
     def download_https(self, https_src, model_path, **kwargs):
         suffix = "." + https_src.split("/")[-1].split(".")[-1]
         if (os.path.exists(model_path)):
@@ -455,6 +456,7 @@ class model_manager:
         }
 
         if all(value is None for value in model_data.values()):
+            # TODO: Should go over the file and fix all instances of model to dataset 
             raise Exception("Model not found")
         
         this_model = None
@@ -621,6 +623,7 @@ class model_manager:
             cache = kwargs["cache"]
         else:
             cache = {
+                # FIXME: Why is this local path set to /storage/cloudkit-models/collection.json?
                 "local": "/storage/cloudkit-models/collection.json",
                 "s3": "s3://cloudkit-beta/collection.json",
                 "ipfs": "QmXBUkLywjKGTWNDMgxknk6FJEYu9fZaEepv3djmnEqEqD",

@@ -833,6 +833,7 @@ class install_ipfs:
 	
 		return results7
 	
+	# FIXME: I really need to check the sudo rm -rf commands these should have error checking so they can't rm -rf /* or something when results is empty
 	def uninstall_ipfs(self):
 		try:
 			command = "ps -ef | grep ipfs | grep daemon | grep -v grep | awk '{print $2}' | xargs kill -9"
@@ -1085,9 +1086,9 @@ if __name__ == "__main__":
 		"ipfs_path":"/home/kensix/.cache/ipfs",
 	}
 	install = install_ipfs(None, meta=meta) 
-	# results = install.test_uninstall()
+	results = install.test_uninstall()
 	
-	results = install.install_config()
+	# results = install.install_config()
 
 	print(results)
 	pass

@@ -74,13 +74,13 @@ class AutoDownloadModel():
 		cid = None
 		if "dataset_name" in kwargs:
 			if "/" in kwargs["dataset_name"]:
-				model_name = kwargs["dataset_name"].split("/")[1]
+				dataset_name = kwargs["dataset_name"].split("/")[1]
 				pass
 			elif "https://" in kwargs["dataset_name"]:
-				model_name = kwargs["dataset_name"].split("/")[-1]
+				dataset_name = kwargs["dataset_name"].split("/")[-1]
 				pass
 			else:
-				model_name = kwargs["dataset_name"]
+				dataset_name = kwargs["dataset_name"]
 			pass
 		elif "cid" in kwargs:
 			cid = kwargs["cid"]
@@ -88,6 +88,7 @@ class AutoDownloadModel():
 			try:
 				results = self.model_manager.download_model(dataset_name, **kwargs)
 			except Exception as e:
+				# FIXME: --- REMOVE THIS NOTE: I left off here error was "Exception: Model not found" 
 				raise e
 			finally:
 				pass
