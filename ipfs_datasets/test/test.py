@@ -28,7 +28,6 @@ def ws_test():
 	data = load_dataset("cifar10")
 	db.orb_upload(data)
 
-
 	# Test loading a document dataset
 	# data = load_dataset("CohereForAI/aya_collection_language_split", "japanese")
 	# db.orb_upload(data, "id")

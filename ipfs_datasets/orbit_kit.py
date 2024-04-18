@@ -46,14 +46,20 @@ class orbit_kit:
 		try:
 			socket = await websockets.connect(self.uri)
 			
-			# TODO: Add schema extraction from the data set to check against on the server
-			# Check what the schema is of the dataset and compare it to the one on the server
+			print(data)
+
+			# TODO: Extract schema from the data set
+			# get dataset name 
+			# pass to the server to check if it exists
 
 			payload = {
 				"job": "check_dataset",
-				"dataset_name": data,
+				"dataset_name": "cifar10",
+				"schema": "schema",
 				"ipfs_address": cid
 			}
+
+			print(json.dumps(payload))
 
 			# TODO: Make sure the server handles these cases and returns the correct response
 			await socket.send(json.dumps(payload))
@@ -97,16 +103,16 @@ class orbit_kit:
 				raise ValueError("Dataset is invalid, Expected <class 'datasets.dataset_dict.DatasetDict'> but got: " + str(type(data)))
 
 			# Connect to the websocket server and check if the data set exists on orbit db if so check which is newer
-			# data_set_check = await self._check_existing_datasets(data=data)
-			# if data_set_check == True:
-			# 	return
+			data_set_check = await self._check_existing_datasets(data=data)
+			if data_set_check == True:
+				return
 
 			unique_columns = []
 			splits = data.keys()
 			batch_size = 100
 
 			# Open a websocket connection
-			# socket = await websockets.connect(self.uri)
+			socket = await websockets.connect(self.uri)
 
 			# FOR NON TIME SERIES DATA WITH A KEY
 			if key is not None and time_series is False:
@@ -152,7 +158,7 @@ class orbit_kit:
 										"data": docstore
 									}
 									pbar.update(1)
-									# await socket.send(json.dumps(payload))
+									await socket.send(json.dumps(payload))
 						
 						
 							# --- STORE DATA AS KEY/VALUE --- # ( multiple unique keys )
@@ -172,12 +178,12 @@ class orbit_kit:
 									}
 									
 									pbar.update(1)
-									# await socket.send(json.dumps(payload))
+									await socket.send(json.dumps(payload))
 								
 								pass
 
 
-			# FOR TIME SERIES DATA
+			# --- STORE DATA AS TIMESERIES --- # ( Event key )
 			elif time_series is True and key is not None:
 					for split in splits:
 						if not key in data[split].column_names:
@@ -228,11 +234,11 @@ class orbit_kit:
 									
 									pbar.update(1)
 									
-									# await socket.send(json.dumps(payload))
+									await socket.send(json.dumps(payload))
 	   					
 
 						
-			# FOR NON TIME SERIES DATA WITHOUT A KEY OR NON UNIQUE FIELD
+			# --- STORE DATA AS DOCUMENT --- # ( no unique key )
 			else:
 				# Stores the index as the key (keeping this out of the loop so i maintain a single incrementing key for all the data)
 				key_idx = 0
@@ -278,17 +284,22 @@ class orbit_kit:
 							# Needs a collection name to be grouped should get the dataset name
 							# Not sure how the indexed key/value data will look like so i added some key to insert but it might not be needed 
 							payload = {
-								"job": "upload_time_series",
+								"job": "upload_indexed_key_value",
 								"key": key_idx,
-								"value": {k: v for k, v in batch[row].items()} # Removes the key column from the value dictionary
+								"value": {} # Removes the key column from the value dictionary
 							}
-							# Increment the key index ( not using i because i want a single incrementing key 
-							# for all the data in the dataset regardless of the split or batch) 
+
+							# FIXME: I cant encode or serialize some datatypes so i need to find a way to handle that
+							#        This goes for all the other uploads too 
+							
+
+
+							# Increments a key for the entire set
 							key_idx += 1
 
 							pbar.update(1)
-							
-							# await socket.send(json.dumps(payload))
+
+							await socket.send(json.dumps(payload))
 	   
 		except Exception as e:
 			print(e)
@@ -298,7 +309,6 @@ class orbit_kit:
 	async def orb_download(self, cid):
 		data_set_check = await self._check_existing_datasets(cid=cid)
 
-		
 		if data_set_check == True:
 			# Run download code here
 			# socket = await websockets.connect(self.uri)
