@@ -1,4 +1,5 @@
 import { WebSocketServer } from 'ws';
+import fs from 'fs';
 
 export default async function main(){
 	const wss = new WebSocketServer({ port: 8888 });
@@ -9,6 +10,10 @@ export default async function main(){
 
 			if(parsed_message.job == 'check_dataset'){
 				check_dataset(ws, message);
+			}
+
+			if(parsed_message.job == 'schema_instruction'){
+				schema_setup(ws, message);
 			}
 
 			if(parsed_message.job == 'upload_document'){
@@ -45,32 +50,48 @@ async function check_dataset(ws, message){
 	ws.send("dataset_not_found")
 }
 
+
 async function upload_document(ws, message){
+	const parsedMessage = JSON.parse(message);
+	
 	console.log("uploading document");
-	console.log(JSON.parse(message));
-	ws.send('document_uploaded');
+	console.log(parsedMessage);
+	
+	fs.appendFileSync('database_test_file.json', JSON.stringify(parsedMessage, null, 2) + '\n');
+	
+	ws.send('OK');
 }
 
+
 async function upload_key_value(ws, message){
+	const parsedMessage = JSON.parse(message);
+	
 	console.log("uploading key value");
-	console.log(JSON.parse(message));
-	ws.send('key_value_uploaded');
+	console.log(parsedMessage);
+	
+	fs.appendFileSync('database_test_file.json', JSON.stringify(parsedMessage, null, 2) + '\n');
+	
+	ws.send('OK');
 }
+
 
 async function upload_time_series(ws, message){
 	console.log("uploading time series");
-	console.log(JSON.parse(message));
-	ws.send('time_series_uploaded');
+	const parsedMessage = JSON.parse(message);
+
+	fs.appendFileSync('database_test_file.json', JSON.stringify(parsedMessage, null, 2) + '\n');
+	
+	ws.send('OK');
 }
+
 
 async function upload_indexed(ws, message){
 	console.log("uploading indexed");
+	const parsedMessage = JSON.parse(message);
 
-	let parsed_message = JSON.parse(message);
-	console.log(parsed_message);
-
+	fs.appendFileSync('database_test_file.json', JSON.stringify(parsedMessage, null, 2) + '\n');
 	
-	ws.send('indexed_uploaded');
+	ws.send('OK');
 }
 
 main();
