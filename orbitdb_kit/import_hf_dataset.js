@@ -12,8 +12,8 @@ export default async function main(){
 				check_dataset(ws, message);
 			}
 
-			if(parsed_message.job == 'schema_instruction'){
-				schema_setup(ws, message);
+			if(parsed_message.job == 'download_dataset'){
+				download_dataset(ws, message);
 			}
 
 			if(parsed_message.job == 'upload_document'){
@@ -48,6 +48,13 @@ async function check_dataset(ws, message){
 		// return dataset_not_found
 		
 	ws.send("dataset_not_found")
+}
+
+
+async function download_dataset(ws, message){
+	console.log("downloading dataset");
+	// Download the dataset 
+	ws.send("dataset_downloaded")
 }
 
 

@@ -43,6 +43,15 @@ class orbit_kit:
 		"""
 
 
+	def orb_download(self, cid):
+		asyncio.run(self._orb_download(cid))
+		"""
+		This allows you to download a dataset from orbitdb. The data is stored as a hugging face dataset.
+		
+		:param cid: The content identifier of the dataset you want to download. This is the hash of the dataset stored on orbitdb.
+		"""
+
+
 	async def _orb_upload_async(self, data, dataset_name, key=None, time_series=False, **kwargs):
 		try:
 			if not isinstance(data, DatasetDict):
@@ -272,7 +281,7 @@ class orbit_kit:
 
 
 
-	async def orb_download(self, cid):
+	async def _orb_download(self, cid):
 		self.socket = await websockets.connect(self.uri)
 		data_set_check = await self._check_existing_datasets(cid=cid)
 
