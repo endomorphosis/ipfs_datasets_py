@@ -58,7 +58,7 @@ class ModelManager {
             this.localPath = "/root/";
             localPath = this.localPath;
         } else {
-            this.localPath = "/home/" + username;
+            this.localPath = path.join(os.homeDir(), username);
             localPath = this.localPath;
         }
         if (meta !== null && typeof meta === 'object') {
@@ -1741,3 +1741,53 @@ class ModelManager {
     }
 
 }
+
+const endpoint = "https://object.ord1.coreweave.com"
+const access_key = "CWVFBNRZEEDYTAUM"
+const secret_key = "cwoBNj1ILmRGxcm18EsWE5Qth4hVtmtNJPkLVW2AETU"
+const host_bucket = "%(bucket)s.object.ord1.coreweave.com"
+const bucket = "cloudkit-beta";
+const ipfs_src = "QmXBUkLywjKGTWNDMgxknk6FJEYu9fZaEepv3djmnEqEqD";
+const s3cfg = {
+    "endpoint": endpoint,
+    "accessKey": access_key,
+    "secretKey": secret_key,
+    "hostBucket": host_bucket,   
+    "bucket": bucket
+};
+const cluster_name = "cloudkit_storage";
+//let ipfs_path = "/storage/";
+const local_path = "/storage/cloudkit-models";
+//ipfs_path = "/storage/ipfs/";
+const ten_mins = 600;
+const ten_hours = 36000;
+const ten_days = 864000;
+const never =  100000000;
+const role = "worker";
+const cache = {
+    "local": "/storage/cloudkit-models/collection.json",
+    "s3": "s3://cloudkit-beta/collection.json",
+    "ipfs": ipfs_src,
+    "https": "https://huggingface.co/endomorphosis/cloudkit-collection/resolve/main/collection.json"
+};
+const timing = {
+    "local_time": ten_mins,
+    "s3_time": ten_hours,
+    "ipfsTime": ten_days,
+    "httpsTime": never,
+};
+const meta = {
+    "s3cfg": s3cfg,
+    "ipfs_src": ipfs_src,
+    "timing": timing,
+    "cache": cache,
+    "role": role,
+    "cluster_name": cluster_name,
+    //"ipfs_path": ipfs_path,
+    //"local_path": local_path,
+    //"ipfs_path": ipfs_path
+};
+
+const models_manager = new ModelManager(null, meta);
+const results = await models_manager.test();
+console.log(results);

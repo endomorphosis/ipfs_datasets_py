@@ -1,6 +1,6 @@
 {
   "cluster": {
-    "peername": "worker-1",
+    "peername": "master",
     "secret": "96d5952479d0a2f9fbf55076e5ee04802f15ae5452b5faafc98e2bd48cf564d3",
     "leave_on_shutdown": false,
     "listen_multiaddress": [

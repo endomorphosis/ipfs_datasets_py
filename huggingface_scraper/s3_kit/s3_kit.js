@@ -543,10 +543,18 @@ class S3Kit {
             upload_file = Buffer.from(upload_file);
             file_extension = pathModule.extname(path);
         }
-    
-        const { path: tempFilePath, cleanup } = await tmp.file({ postfix: file_extension });
-        fs.writeFileSync(tempFilePath, upload_file);
-        upload_file = fs.createReadStream(tempFilePath);
+        let thisTempFile = await new Promise((resolve, reject) => {
+            tmpFile.createTempFile({  postfix: file_extension, dir: '/tmp' }, (err, path, fd, cleanupCallback) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({ name: path, fd, removeCallback: cleanupCallback });
+                }
+            });
+            fs.writeFileSync(tmpFile.name, fileData);
+            
+          });
+
     
         const s3 = new AWS.S3(this.config_to_boto(s3_config));
         const params = {
@@ -787,6 +795,92 @@ class S3Kit {
         }
 
         this.config = results;
+        return results;
+    }
+
+    async test() {
+        const endpoint = "https://object.ord1.coreweave.com";
+        const access_key = "OVEXCZJJQPUGXZOV";
+        const secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10";
+        const host_bucket = "%(bucket)s.object.ord1.coreweave.com";
+        let bucket = "swissknife-models";
+        const dir = "bge-base-en-v1.5@hf";
+        let config = {
+            "accessKey": access_key,
+            "secretKey": secret_key,
+            "endpoint": endpoint,
+        };
+        config = this.config_to_boto(config);
+        this.session = this.get_session(config);
+        const s3 = new AWS.S3(config);
+        const params = {
+            Bucket: bucket,
+            Prefix: dir
+        };
+
+        const data = await s3.listObjectsV2(params).promise();
+        const directory = {};
+
+        for (const object of data.Contents) {
+            const metadata = {
+                "key": object.Key,
+                "last_modified": new Date(object.LastModified).getTime() / 1000,
+                "size": object.Size,
+                "e_tag": object.ETag,
+            };
+
+            directory[object.Key] = metadata;
+        }
+
+        return directory;
+    }
+
+    async test2() {
+        const endpoint = "https://object.ord1.coreweave.com";
+        const access_key = "OVEXCZJJQPUGXZOV";
+        const secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10";
+        const host_bucket = "%(bucket)s.object.ord1.coreweave.com";
+        let bucket = "cloudkit-beta";
+        const keys = [
+            'stablelm-zephyr-3b-GGUF-Q2_K@gguf/manifest.json',
+            'stablelm-zephyr-3b-GGUF-Q2_K-Q2_K@gguf/README.md',
+            'stablelm-zephyr-3b-GGUF-Q2_K-Q2_K@gguf/config.json',
+            'stablelm-zephyr-3b-GGUF-Q2_K-Q2_K@gguf/manifest.json',
+            'stablelm-zephyr-3b-GGUF-Q2_K-Q2_K@gguf/stablelm-zephyr-3b.Q2_K.gguf'
+        ];
+        let config = {
+            "accessKey": access_key,
+            "secretKey": secret_key,
+            "endpoint": endpoint,
+        };
+        config = this.config_to_boto(config);
+        this.session = this.get_session(config);
+
+        const results = [];
+        for (const key of keys) {
+            const result = await this.s3_ls_file(key, bucket, config);
+            results.push(result);
+        }
+
+        return results[0];
+    }
+
+    async test3() {
+        const endpoint = "https://object.ord1.coreweave.com";
+        const access_key = "OVEXCZJJQPUGXZOV";
+        const secret_key = "H1osbJRy3903PTMqyOAGD6MIohi4wLXGscnvMEduh10";
+        const host_bucket = "%(bucket)s.object.ord1.coreweave.com";
+        let bucket = "cloudkit-beta";
+        const key = 'Airoboros-c34B-3.1.2-GGUF-Q4_0-Q4_0@gguf/README.md';
+        let config = {
+            "accessKey": access_key,
+            "secretKey": secret_key,
+            "endpoint": endpoint,
+        };
+        config = this.config_to_boto(config);
+        this.session = this.get_session(config);
+        const results = await this.s3_ls_file(key, bucket, config);
+
         return results;
     }
 }

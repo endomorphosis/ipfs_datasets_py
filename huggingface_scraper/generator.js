@@ -10,7 +10,7 @@ import generate_hf_t5 from './modeldata/generate_hf_t5.json' assert { type: 'jso
 import generate_hf_diffusion from './modeldata/generate_diffusion.json' assert { type: 'json' };
 import generate_api from './modeldata/generate_api.json' assert { type: 'json' };
 import generate_knn from './modeldata/generate_knn.json' assert { type: 'json' };
-
+import generate_dataset from './modeldata/generate_dataset.json' assert { type: 'json' };
 import { setFlagsFromString } from 'v8';
 
 export function template_llama_cpp(local_model_path, collection_path){
@@ -231,6 +231,30 @@ export function template_api(local_model_path, collection_path){
     return results
 }
 
+
+export function template_dataset(local_model_path, collection_path){
+    let results = []
+    let generate
+    let models = Object.keys(generate_api)
+    let local = local_model_path
+    for (var model in models){
+        let this_model = models[model]
+        generate = {}
+        generate.modelName = this_model
+        generate.skill = "dataset"
+        generate.format = generate_template[this_model].format
+        generate.id = this_model 
+        generate.samples = generate_template[this_model].samples
+        generate.size = generate_template[this_model].size
+        generate.location = "huggingface"
+        generate.units = "MB"
+        generate.destPath = local + "/" + this_model 
+        results.push(generate)
+    }
+    return results
+}
+
+
 export class Generator{
     constructor(local_model_path, collection_path){
         this.llama_cpp = {}
@@ -243,6 +267,7 @@ export class Generator{
         this.hf_lm = {}
         this.hf_t5 = {}
         this.hf_diffusion = {}
+        this.dataset = {}
         this.local_model_path = local_model_path
         this.collection_path = collection_path
     }
@@ -258,6 +283,7 @@ export class Generator{
         this.hf_diffusion = template_hf_diffusion(this.local_model_path, this.collection_path)
         this.api = template_api(this.local_model_path, this.collection_path)
         this.knn = template_knn(this.local_model_path, this.collection_path)
+        this.dataset = template_dataset(this.local_model_path, this.collection_path)
         return this 
     }
 }

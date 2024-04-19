@@ -1,0 +1,12 @@
+[Unit]
+Description=IPFS Cluster Follow Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs-cluster-follow run
+Restart=on-failure
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

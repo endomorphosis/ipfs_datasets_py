@@ -14,7 +14,6 @@ export class ipfsClusterCtl {
         return this
     }
 
-
     check_collection(collection){
         let status = {}
         let collection_keys = Object.keys(collection)

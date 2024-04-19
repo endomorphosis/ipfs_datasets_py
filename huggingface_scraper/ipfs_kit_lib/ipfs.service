@@ -1,0 +1,11 @@
+Description=IPFS Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ipfs daemon --enable-gc --enable-pubsub-experiment \"
+Restart=on-failure
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
