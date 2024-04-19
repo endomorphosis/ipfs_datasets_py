@@ -5,7 +5,8 @@
   "main": "orbit.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"import_test": "node import_hf_dataset.js"
   },
   "keywords": [
     "AGW",

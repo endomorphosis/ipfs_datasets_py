@@ -24,19 +24,24 @@ def ws_test():
 	
 	db = orbit_kit()
 
-	# Test loading a key/value dataset
-	# data = load_dataset("cifar10")
-	
-	# Test loading a timeseries dataset
-	data = load_dataset("edarchimbaud/timeseries-1m-stocks")
+	# Test loading indexed key/value dataset
+	data = load_dataset("cifar10")
+	db.orb_upload(data, "cifar10")
+
 
 	# Test loading a document dataset
 	# data = load_dataset("CohereForAI/aya_collection_language_split", "japanese")
+	# db.orb_upload(data, "CohereForAI/aya_collection_language_split", key="id")
 
-	# print(data['train'][0])
 
-	# db.orb_upload(data, "id")
-	db.orb_upload(data, key='datetime', time_series=True)
+	#Test loading a key/value dataset
+	# Find multi-key unique dataset
+
+
+	# Test loading a timeseries dataset
+	# data = load_dataset("edarchimbaud/timeseries-1m-stocks")
+	# db.orb_upload(data, "edarchimbaud/timeseries-1m-stocks", key='datetime', time_series=True)
+
 
 	print("Done")
 
