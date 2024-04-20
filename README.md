@@ -93,9 +93,3 @@ import all models previously defined:
 ~~~shell
 node scraper.js hf 
 ~~~
-
-## TODO integrate orbitDB
-
-## TODO integrate ipfs_knn_kit
-
-## TODO integrate bacalhau dockerfile
