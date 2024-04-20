@@ -17,6 +17,22 @@ dataset = auto_download_dataset('squad')
 #    }
 #)
 
+# TODO
+# NOTE
+# example huggingface method do_this_thing()
+#datasets.do_this_thing()
+#auto_download_dataset.do_this_thing()
+#ipfs_datset.do_this_thing()
+
+# our methods
+#dataset.from_orbitdb()
+#auto_download_dataset.to_orbitdb()
+#ipfs_dataset.to_orbitdb()
+
+#dataset.from_orbitdb()
+#dataset.to_orbitdb()
+#ipfs_dataset.to_orbitdb()
+
 # Load a Faiss index
 knnindex = auto_download_faiss_index('squad')
 #knnindex = ipfs_load_faiss_index('ipfs_CID')
