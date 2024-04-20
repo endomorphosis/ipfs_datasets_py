@@ -39,6 +39,9 @@ class model_manager:
         self.this_model = None
         self.this_model_name = None
         self.s3cfg = None
+        #NOTE
+        #TODO
+        # make sure that meta is getting data from config.toml, and that if there is no config.toml that all values in config_template.toml are assigned at start.
         if meta is not None and type (meta) == dict:
             if "s3cfg" in meta:
                 self.s3cfg = meta["s3cfg"]
@@ -91,6 +94,9 @@ class model_manager:
         self.s3_kit = s3_kit(resources, meta = meta)
         self.ipfs_kit = ipfs_kit(resources, meta = meta)
         self.install_ipfs = install_ipfs(resources, meta = meta)
+        #NOTE
+        #TODO
+        #add self.install_orbitdb object to automatically pull and install orbitdb node server
         ipfs_path = self.ipfs_path
         if not os.path.exists(self.ipfs_path):
             os.makedirs(self.ipfs_path)
@@ -122,6 +128,9 @@ class model_manager:
             self.install_ipfs.config_ipfs_cluster_follow()
             pass               
         
+        #NOTE
+        #TODO
+        #ADD STOP AND START ORBITDB
         self.ipfs_kit.ipfs_kit_stop()
         self.ipfs_kit.ipfs_kit_start()
         execute_ready = False
