@@ -1,0 +1,86 @@
+[[PATHS]]
+local_path = "/storage/cloudkit-models"
+ipfs_path = "/storage/ipfs/"
+
+[[PATHS.COLLECTION]]
+"local" = "/storage/cloudkit-models/collection.json",
+"s3": "s3://cloudkit-beta/collection.json",
+"ipfs": "QmXBUkLywjKGTWNDMgxknk6FJEYu9fZaEepv3djmnEqEqD",
+"https": "https://huggingface.co/endomorphosis/cloudkit-collection/resolve/main/collection.json"
+"orbitdb: "/orbitdb/zdpuB31L6gJz49erikZSQT3A1erJbid8oUTBrjLtBwjjXe3R5"
+
+[[HF]]
+hf_account_name = "your_account_name"
+hf_user_key = "your_user_key"
+hf_org_key = "your_org_key"
+hf_org_name = "your_org_name"
+
+[[IPFS]]
+
+[[IPFS.BOOTSTRAP]]
+bootstrap = [
+"/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+"/ip4/104.131.131.82/udp/4001/quic-v1/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt"
+]
+
+[[IPFS.CLUSTER]]
+clusterName = "cloudkit_storage"
+clusterLocation = "/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+secret = ""
+
+[[IPFS.PEERSTORE]]
+peerlist = [
+"/ip4/10.11.0.1/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/10.120.0.2/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/10.46.0.5/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/127.0.0.1/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/172.17.0.1/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/10.11.0.1/tcp/9096/p2p/12D3KooWFHz8Ze2LyrkkL7q3AqMU6TASaYcW2nmzpYwQodsq2SCV",
+"/ip4/10.120.0.2/tcp/9096/p2p/12D3KooWFHz8Ze2LyrkkL7q3AqMU6TASaYcW2nmzpYwQodsq2SCV",
+"/ip4/10.46.0.5/tcp/9096/p2p/12D3KooWFHz8Ze2LyrkkL7q3AqMU6TASaYcW2nmzpYwQodsq2SCV",
+"/ip4/127.0.0.1/tcp/9096/p2p/12D3KooWFHz8Ze2LyrkkL7q3AqMU6TASaYcW2nmzpYwQodsq2SCV",
+"/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWFHz8Ze2LyrkkL7q3AqMU6TASaYcW2nmzpYwQodsq2SCV",
+"/ip4/172.17.0.1/tcp/9096/p2p/12D3KooWFHz8Ze2LyrkkL7q3AqMU6TASaYcW2nmzpYwQodsq2SCV",
+"/ip4/172.29.29.10/tcp/9096/p2p/12D3KooWNJN6azoq29bY4J3GjE8xQHdYZeQ72Ga6cXnnQ11Jx8fP",
+"/ip4/192.168.0.20/tcp/57468/p2p/12D3KooWNJN6azoq29bY4J3GjE8xQHdYZeQ72Ga6cXnnQ11Jx8fP",
+"/ip4/97.120.209.166/tcp/18100/p2p/12D3KooWJ6mj5yii47Hedtfajahmcq1jhU1CmycvKoKoRFWyY4Ea/p2p-circuit/p2p/12D3KooWNJN6azoq29bY4J3GjE8xQHdYZeQ72Ga6cXnnQ11Jx8fP",
+"/ip4/97.120.209.166/tcp/28143/p2p/12D3KooWECihD8h6TooNoqJAVFDsP5MgUiVcy7XYRRmkFM3yyYME/p2p-circuit/p2p/12D3KooWNJN6azoq29bY4J3GjE8xQHdYZeQ72Ga6cXnnQ11Jx8fP",
+"/ip4/97.120.209.166/tcp/38053/p2p/12D3KooWJ6mj5yii47Hedtfajahmcq1jhU1CmycvKoKoRFWyY4Ea/p2p-circuit/p2p/12D3KooWNJN6azoq29bY4J3GjE8xQHdYZeQ72Ga6cXnnQ11Jx8fP",
+"/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv/p2p-circuit/p2p/12D3KooWJ6mj5yii47Hedtfajahmcq1jhU1CmycvKoKoRFWyY4Ea",
+"/ip4/25.18.152.214/tcp/9096/p2p/12D3KooWECihD8h6TooNoqJAVFDsP5MgUiVcy7XYRRmkFM3yyYME/p2p-circuit/p2p/12D3KooWJ6mj5yii47Hedtfajahmcq1jhU1CmycvKoKoRFWyY4Ea",
+"/ip4/97.120.129.70/tcp/15289/p2p/12D3KooWECihD8h6TooNoqJAVFDsP5MgUiVcy7XYRRmkFM3yyYME/p2p-circuit/p2p/12D3KooWJ6mj5yii47Hedtfajahmcq1jhU1CmycvKoKoRFWyY4Ea",
+"/ip4/97.120.209.166/tcp/28143/p2p/12D3KooWECihD8h6TooNoqJAVFDsP5MgUiVcy7XYRRmkFM3yyYME/p2p-circuit/p2p/12D3KooWJ6mj5yii47Hedtfajahmcq1jhU1CmycvKoKoRFWyY4Ea",
+"/ip4/10.11.0.1/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+"/ip4/10.120.0.2/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+"/ip4/10.46.0.5/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+"/ip4/127.0.0.1/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+"/ip4/167.99.96.231/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+"/ip4/172.17.0.1/tcp/9096/p2p/12D3KooWKw9XCkdfnf8CkAseryCgS3VVoGQ6HUAkY91Qc6Fvn4yv",
+"/ip4/10.11.0.1/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu",
+"/ip4/10.120.0.2/tcp/9096/p2p/12D3KooWDYKMnVLKnP2SmM8umJEEKdhug93QYybmNUEiSe1Kwjmu"
+]
+
+[[ORBITDB]]
+ipAddress = "127.0.0.1"
+dbAddress = "/orbitdb/zdpuB31L6gJz49erikZSQT3A1erJbid8oUTBrjLtBwjjXe3R5"
+
+[[S3]]
+s3_bucket =""
+s3_secret_key = ""
+s3_access_key = ""
+s3_endpoint = ""
+s3_host_bucket = ""
+
+[[PINATA]]
+
+[[LIGHTHOUSE]]
+
+[[WEB3STORAGE]]
+
+[[FILEBASE]]
+
