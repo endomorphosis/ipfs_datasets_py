@@ -8,7 +8,7 @@ https://github.com/endomorphosis/ipfs_transformers/
 for transformers js client visit:                          
 https://github.com/endomorphosis/ipfs_transformers_js/
 
-for orbitdbkit nodejs library visit:
+for orbitdb_kit nodejs library visit:
 https://github.com/endomorphosis/orbitdb_kit/
 
 for Faiss KNN index python library visit:
