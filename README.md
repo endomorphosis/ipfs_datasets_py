@@ -1,14 +1,28 @@
-# Data Economy Hackathon
-IPFS Huggingface Bridge
+# Encode Club Scaling Web3 Hackathon Presents
 
-for huggingface transformers python library visit
-https://github.com/endomorphosis/ipfs_transformers
+IPFS Huggingface Bridge:
 
-for transformers.js visit:
-https://github.com/endomorphosis/ipfs_transformers_js
+for transformers python library visit:
+https://github.com/endomorphosis/ipfs_transformers/
 
-for orbitdbkit nodejs library visit
-https://github.com/endomorphosis/orbitdb-benchmark/
+for transformers js client visit:                          
+https://github.com/endomorphosis/ipfs_transformers_js/
+
+for orbitdbkit nodejs library visit:
+https://github.com/endomorphosis/orbitdb_kit/
+
+for Faiss KNN index python library visit:
+https://github.com/endomorphosis/ipfs_faiss/
+
+for python model manager library visit: 
+https://github.com/endomorphosis/ipfs_model_manager/
+
+for nodejs model manager library visit: 
+https://github.com/endomorphosis/ipfs_model_manager_js/
+
+for nodejs ipfs huggingface scraper with pinning services visit:
+https://github.com/endomorphosis/ipfs_huggingface_scraper/
+
 
 Author - Benjamin Barber
 QA - Kevin De Haan
