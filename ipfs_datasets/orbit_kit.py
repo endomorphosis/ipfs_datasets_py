@@ -112,21 +112,21 @@ class orbit_kit:
 
 					# --- STORE DATA AS DOCUMENT --- # ( single unique key )
 					if len(unique_columns) == 1:
+						docstore = {}
 						for row in range(batch.num_rows):
-							docstore = {
-								"dataset_name": dataset_name
-							}
 							# TODO: Add the python object removal code here ( Remove python objects from the data for document store)
 							for feature in batch.column_names:
 								docstore.update({feature: batch[feature][row]})
  
+							pbar.update(1)
+
 							payload = {
-								"job": "upload_document",
+								"job": "upload",
+								"database_type": "document",
 								"dataset_name": dataset_name,
 								"key": key,
-								"data": docstore
+								"value": docstore
 							}
-							pbar.update(1)
 
 							await self.socket.send(json.dumps(payload))
 							await self.socket.recv()
@@ -140,25 +140,23 @@ class orbit_kit:
 							# TODO: Write code to flatten the dictionary 
 							pass
 
-						for row in range(batch.num_rows):								
-							payload = {
-								"job": "upload_key_value",
-								"dataset_name": dataset_name,
-								"key": key,
-								"value": {},
-								"schema": schema
-							}
-							
+						payload = {
+							"job": "upload",
+							"database_type": "key_value",
+							"dataset_name": dataset_name,
+							"key": key,
+							"value": {},
+							"schema": schema
+						}
+
+						for row in range(batch.num_rows):
 							for k, v in batch[row].items():
-								if k != key:
 									payload["value"][k] = self._object_data_extract(v)
-								else:
-									payload["key"] = self._object_data_extract(v)
 
 							pbar.update(1)
 
-							await self.socket.send(json.dumps(payload))
-							await self.socket.recv()
+						await self.socket.send(json.dumps(payload))
+						await self.socket.recv()
 
 
 
@@ -174,7 +172,6 @@ class orbit_kit:
 		
 			# TODO: Clean this check for the timeseries types up
 			first_element = data[split][key][0]
-
 
 			if isinstance(first_element, str):
 				try:
@@ -208,25 +205,23 @@ class orbit_kit:
 				for i in range(num_batches):
 					batch = data[split].select(range(i * self.batch_size, (i + 1) * self.batch_size))
 
-					for row in range(batch.num_rows):								
-						payload = {
-							"job": "upload_time_series",
-							"dataset_name": dataset_name,
+					payload = {
+							"job": "upload",
+							"database_type": "event",
+							"dataset_name": dataset_name, # TODO: Data set names cant contain / so i need to resolve these 
 							"key": key,
 							"value": {},
 							"schema": schema
 						}
 
+					for row in range(batch.num_rows):						
 						for k, v in batch[row].items():
-							if k != key:
-								payload["value"][k] = self._object_data_extract(v)
-							else:
-								payload["key"] = self._object_data_extract(v)
-
+							payload["value"][k] = self._object_data_extract(v)
+							
 						pbar.update(1)
-						
-						await self.socket.send(json.dumps(payload))
-						await self.socket.recv()
+
+					await self.socket.send(json.dumps(payload))
+					await self.socket.recv()
 
 
 
@@ -259,53 +254,57 @@ class orbit_kit:
 			for i in range(num_batches):
 				batch = data[split].select(range(i * self.batch_size, (i + 1) * self.batch_size))
 
-				for row in range(batch.num_rows):
-					# TODO: Check if an inserted index is needed for indexed key/value data
-					payload = {
-						"job": "upload_indexed_key_value",
+				payload = {
+						"job": "upload",
+						"database_type": "indexed_key_value",
 						"dataset_name": dataset_name,
-						"key": key_idx,
+						# "key": "id", # Check how to handle this i'm thinking of passing the column name as index
 						"value": {},
 						"schema": schema
-					}
+				}
+
+				for row in range(batch.num_rows):
+					# TODO: Check if an inserted index is needed for indexed key/value data	
+					payload["value"][key_idx] = {}
 
 					for k, v in batch[row].items():
-						payload["value"][k] = self._object_data_extract(v)
+						payload["value"][key_idx][k] = self._object_data_extract(v)
 					
 					# Increments a key for the entire set
 					key_idx += 1
 					pbar.update(1)
 
-					await self.socket.send(json.dumps(payload))
-					await self.socket.recv()
+				await self.socket.send(json.dumps(payload))
+				await self.socket.recv()
 
 
 
 	async def _orb_download(self, cid):
 		self.socket = await websockets.connect(self.uri)
-		data_set_check = await self._check_existing_datasets(cid=cid)
+		# data_set_check = await self._check_existing_datasets(cid=cid)
+		
+		# For testing purposes
+		data_set_check = True
 
 		if data_set_check == True:
 			pass
 		else:
-			print("Data set not found on orbitdb")
+			print("Dataset not found on orbitdb")
 			return
 		
 		try:
 			socket = await websockets.connect(self.uri)
 			payload = {
-				"job": "download_dataset",
-				"ipfs_address": cid
+				"job": "download",
+				"ipfs_address": cid,
 			}
 
 			await socket.send(json.dumps(payload))
 
 			response = await socket.recv()
-			
-			# TODO: Implement a way to download the data set from orbitdb
-			#		and store in the fs as a hugging face dataset
-			print(response)
-		
+
+			print(response)			
+
 		except Exception as e:
 			print(e)
 
@@ -416,28 +415,31 @@ class orbit_kit:
 			with tqdm.tqdm(total=len(data[split].column_names)) as pbar:
 			
 				for feature in data[split].column_names:
-					data_type = type(data[split][feature][0])
+					data_type = data[split][feature][0]
 					
 					# TODO: Add all the SQL data types that i can encounter 
 					# SQL DATATYPES
 					# BLOB
 					# TEXT	
 
-					if data_type == str:
+					if isinstance(data_type, str):
 						schema['data_types'].update({feature: 'TEXT'})
 					
-					elif data_type == int:
+					elif isinstance(data_type, int):
 						schema['data_types'].update({feature: 'INT'})
 					
-					elif data_type == float:
+					elif isinstance(data_type, float):
 						schema['data_types'].update({feature: 'FLOAT'})
 
-					elif data_type == bool:
+					elif isinstance(data_type, bool):
 						schema['data_types'].update({feature: 'BOOLEAN'})
 
-					elif data_type == pandas.Timestamp:
+					elif isinstance(data_type, datetime.datetime) or isinstance(data_type, pandas.Timestamp):
 						# NEEDS ADDITIONAL CHECKING FOR TIMESTAMPS, DATES, TIME etc 
 						schema['data_types'].update({feature: 'DATETIME'})
+
+					elif isinstance(data_type, PIL.Image.Image):
+						schema['data_types'].update({feature: 'BLOB'})
 
 					# TODO: Add more data types here that fit the SQL scheme
 

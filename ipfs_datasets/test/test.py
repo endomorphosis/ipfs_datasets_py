@@ -31,7 +31,7 @@ def ws_test():
 
 	# Test loading a document dataset
 	# data = load_dataset("CohereForAI/aya_collection_language_split", "japanese")
-	# db.orb_upload(data, "CohereForAI/aya_collection_language_split", key="id")
+	# db.orb_upload(data, "CohereForAI-aya_collection_language_split", key="id")
 
 
 	#Test loading a key/value dataset
@@ -40,11 +40,22 @@ def ws_test():
 
 	# Test loading a timeseries dataset
 	# data = load_dataset("edarchimbaud/timeseries-1m-stocks")
-	# db.orb_upload(data, "edarchimbaud/timeseries-1m-stocks", key='datetime', time_series=True)
+	# db.orb_upload(data, "edarchimbaud-timeseries-1m-stocks", key='datetime', time_series=True)
+
+
+def download_test():
+	parent_dir = os.path.dirname(os.path.dirname(__file__))
+	sys.path.append(parent_dir)
+	from orbit_kit import orbit_kit
+
+
+	db = orbit_kit()
+	db.orb_download("cifar10")
 
 
 	print("Done")
 
 if __name__ == "__main__":
 	# test()
-	ws_test()
+	# ws_test()
+	download_test()
