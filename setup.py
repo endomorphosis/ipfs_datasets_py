@@ -4,9 +4,6 @@ setup(
 	version='0.0.1',
 	packages=[
 		'ipfs_datasets',
-		'ipfs_datasets.model_manager',
-        'ipfs_datasets.model_manager.ipfs_kit_lib',
-		'ipfs_datasets.model_manager.orbitdb_kit_lib',
 	],
 	install_requires=[
 		'datasets',
