@@ -89,7 +89,7 @@ class AutoDownloadModel():
 			try:
 				results = self.model_manager.download_model(dataset_name, **kwargs)
 			except Exception as e:
-				# FIXME: --- REMOVE THIS NOTE: I left off here error was "Exception: Model not found" 
+				print("Error: ", e)
 				raise e
 			finally:
 				pass
