@@ -7,20 +7,21 @@ from os.path import isfile, join
 from os import walk
 import toml
 
-class config():
+class config:
     def __init__(self, collection=None, meta=None):
         this_dir = os.path.dirname(os.path.realpath(__file__))
         if meta is not None:
             if "config" in meta:
                 self.toml_file = meta["config"]
-                self.baseConfig = self.requireConfig(self.toml_file)
+                # self.baseConfig = self.requireConfig(self.toml_file)
         else:
-            self.toml_file = "./config/config.toml"
+            self.toml_file = os.path.join(os.path.dirname(__file__),"config.toml")
+            # self.toml_file = "./config/config.toml"
             if os.path.exists(self.toml_file):
                 self.toml_file = os.path.realpath(self.toml_file)
             elif os.path.exists(os.path.join(this_dir, self.toml_file)):
                 self.toml_file = os.path.realpath(os.path.join(this_dir, self.toml_file))
-            self.baseConfig = self.requireConfig(self.toml_file)
+            # self.baseConfig = self.requireConfig(self.toml_file)
 
     def overrideToml(self, base, overrides):
         if not isinstance(overrides, dict):
@@ -47,20 +48,24 @@ class config():
     
     def findConfig(self):
         paths = [
-            './config.toml',
-            '../config.toml',
-            '../config/config.toml',
-            './config/config.toml'
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),'config.toml'),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'config.toml'),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'config/config.toml'),
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),'config/config.toml')
         ]
         foundPath = None
 
         for path in paths:
-            thisdir = path.dirname(os.path.realpath(__file__))
-            this_path = os.path.realpath(os.path.join(thisdir, path))
+            this_file = os.path.realpath(__file__)
+            this_dir = os.path.dirname(os.path.realpath(__file__))
+            this_path = os.path.realpath(os.path.join(this_dir, path))
             if os.path.exists(this_path):
                 foundPath = this_path
+            elif os.path.exists(path):
+                foundPath = path
         
         print("foundPath: ", foundPath)
+        # print(paths)
         return foundPath if foundPath != None else None
 
     def loadConfig(self, configPath, overrides = None):

@@ -1,4 +1,0 @@
-omegaconf 
-diffusers
-git+https://github.com/huggingface/transformers
-hfapi
