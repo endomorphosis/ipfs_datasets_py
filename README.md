@@ -1,34 +1,5 @@
 # IPFS Huggingface Datasets
 
-IPFS Huggingface Bridge:
-
-for transformers python library visit:
-https://github.com/endomorphosis/ipfs_transformers/
-
-for transformers js client visit:                          
-https://github.com/endomorphosis/ipfs_transformers_js/
-
-for orbitdb_kit nodejs library visit:
-https://github.com/endomorphosis/orbitdb_kit/
-
-for Faiss KNN index python library visit:
-https://github.com/endomorphosis/ipfs_faiss/
-
-for python model manager library visit: 
-https://github.com/endomorphosis/ipfs_model_manager/
-
-for nodejs model manager library visit: 
-https://github.com/endomorphosis/ipfs_model_manager_js/
-
-for nodejs ipfs huggingface scraper with pinning services visit:
-https://github.com/endomorphosis/ipfs_huggingface_scraper/
-
-
-Author - Benjamin Barber
-QA - Kevin De Haan
-
-# About
-
 This is a model manager and wrapper for huggingface, looks up a index of models from an collection of models, and will download a model from either https/s3/ipfs, depending on which source is the fastest.
 
 # How to use
@@ -70,26 +41,32 @@ dataset = load_dataset.from_auto_download(
 )
 ~~~
 
-# To scrape huggingface
+# IPFS Huggingface Bridge:
 
-with interactive prompt:
+for transformers python library visit:
+https://github.com/endomorphosis/ipfs_transformers/
 
-~~~shell
-node scraper.js [source] [model name]
-~~~
+for transformers js client visit:                          
+https://github.com/endomorphosis/ipfs_transformers_js/
 
-~~~shell
-node scraper.js 
-~~~
+for orbitdb_kit nodejs library visit:
+https://github.com/endomorphosis/orbitdb_kit/
 
-import a model already defined:
+for fireproof_kit nodejs library visit:
+https://github.com/endomorphosis/fireproof_kit
 
-~~~shell
-node scraper.js hf "datasetname" (as defined in your .json files)
-~~~
+for Faiss KNN index python library visit:
+https://github.com/endomorphosis/ipfs_faiss/
 
-import all models previously defined:
+for python model manager library visit: 
+https://github.com/endomorphosis/ipfs_model_manager/
 
-~~~shell
-node scraper.js hf 
-~~~
+for nodejs model manager library visit: 
+https://github.com/endomorphosis/ipfs_model_manager_js/
+
+for nodejs ipfs huggingface scraper with pinning services visit:
+https://github.com/endomorphosis/ipfs_huggingface_scraper/
+
+
+Author - Benjamin Barber
+QA - Kevin De Haan
