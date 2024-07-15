@@ -1,4 +1,4 @@
-# Encode Club Scaling Web3 Hackathon Presents
+# IPFS Huggingface Datasets
 
 IPFS Huggingface Bridge:
 
