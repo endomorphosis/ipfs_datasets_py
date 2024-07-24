@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="ipfs_datasets",
-	version='0.0.2',
+	version='0.0.3',
 	packages=[
 		'ipfs_datasets'
 	],
