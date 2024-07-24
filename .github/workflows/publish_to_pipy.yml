@@ -26,12 +26,12 @@ jobs:
   
   publish-to-pypi:
     name: Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    if: github.ref == 'refs/heads/main'  # only publish to PyPI on pushes to main branch
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/ipfs_transformers # Replace <package-name> with your PyPI project name
+      url: https://pypi.org/p/ipfs-datasets # Replace <package-name> with your PyPI project name
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
