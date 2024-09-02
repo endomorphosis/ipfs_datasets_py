@@ -5,7 +5,7 @@ parent_dir = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(parent_dir)
 
 from datasets import load_dataset
-from ipfs_datasets import load_dataset
+from ipfs_datasets_py import load_dataset
 
 # Test loading a dataset 
 dataset = load_dataset.from_auto_download("cifar10")
