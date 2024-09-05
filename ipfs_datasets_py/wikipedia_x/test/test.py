@@ -6,9 +6,9 @@ class test_ipfs_datasets_py:
         return None
 
     def load_dataset(self, dataset_name):
-        self.db[dataset_name] =  {}
-        self.db[dataset_name]  = datasets.load_dataset(dataset_name)
-        return self.db[dataset_name]
+        self.db[0] =  {}
+        self.db[0]  = datasets.load_dataset(dataset_name)
+        return self.db[0]
 
     def test(self, datasets):
         if type(datasets) is None:
