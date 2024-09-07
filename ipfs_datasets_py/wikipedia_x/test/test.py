@@ -24,7 +24,7 @@ class test_ipfs_datasets_py:
         return self.db
 
 if __name__ == "__main__":
-    load_these_datasets = ["laion/Wikipedia-X", "laion/Wikipedia-X-Full", "laion/Wikipedia-X-Concat", "laion/Wikipedia-X-M3"]
+    load_these_datasets = ["laion/Wikipedia-X", "laion/Wikipedia-X-Full", "laion/Wikipedia-X-Concat", "laion/Wikipedia-M3"]
     test_ipfs_datasets_py = test_ipfs_datasets_py()
     test_ipfs_datasets_py.test(load_these_datasets)
     print("test complete")
