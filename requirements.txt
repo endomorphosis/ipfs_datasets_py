@@ -1,0 +1,14 @@
+orbitdb_kit_py
+ipfs_kit_py
+ipfs_model_manager_py
+ipfs_faiss_py
+transformers
+numpy
+urllib3
+requests
+boto3
+ipfsspec
+duckdb
+datasets
+pyarrow
+fsspec

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="ipfs_datasets_py",
-	version='0.0.5',
+	version='0.0.9',
 	packages=[
 		'ipfs_datasets_py',
 	],
@@ -16,5 +16,9 @@ setup(
         'urllib3',
         'requests',
         'boto3',
+        'ipfsspec',
+        "duckdb",
+        "pyarrow",
+        "fsspec",
 	]
 )
