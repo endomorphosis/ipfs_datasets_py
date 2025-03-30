@@ -105,7 +105,7 @@ class ReasoningTrace:
             content=content,
             source=source,
             confidence=confidence,
-            metadata=metadata or {}
+            metadata=metadata if metadata is not None else {}
         )
         
         # If this is the first node and it's a query, set as root
@@ -990,14 +990,14 @@ class WikipediaKnowledgeGraphTracer:
         
         # Add initial nodes for document
         root_node_id = trace.add_node(
-            ReasoningNodeType.DOCUMENT,
-            f"Document: {document_title}",
+            node_type=ReasoningNodeType.DOCUMENT,
+            content=f"Document: {document_title}",
             metadata={"title": document_title}
         )
         
         text_node_id = trace.add_node(
-            ReasoningNodeType.EVIDENCE,
-            f"Text snippet: {text_snippet[:100]}...",
+            node_type=ReasoningNodeType.EVIDENCE,
+            content=f"Text snippet: {text_snippet[:100]}...",
             metadata={"full_text": text_snippet}
         )
         
@@ -1038,14 +1038,14 @@ class WikipediaKnowledgeGraphTracer:
         
         # Create entity node
         entity_node_id = trace.add_node(
-            ReasoningNodeType.ENTITY,
-            f"Entity: {entity_text} (Type: {entity_type})",
+            node_type=ReasoningNodeType.ENTITY,
+            content=f"Entity: {entity_text} (Type: {entity_type})",
             metadata={
                 "entity_text": entity_text,
                 "entity_type": entity_type,
                 "confidence": confidence,
                 "source_text": source_text,
-                **metadata or {}
+                **(metadata or {})
             }
         )
         
@@ -1090,13 +1090,13 @@ class WikipediaKnowledgeGraphTracer:
         
         # Create relationship node
         relationship_node_id = trace.add_node(
-            ReasoningNodeType.RELATIONSHIP,
-            f"Relationship: {relationship_type}",
+            node_type=ReasoningNodeType.RELATIONSHIP,
+            content=f"Relationship: {relationship_type}",
             metadata={
                 "relationship_type": relationship_type,
                 "confidence": confidence,
                 "source_text": source_text,
-                **metadata or {}
+                **(metadata or {})
             }
         )
         
@@ -1140,15 +1140,18 @@ class WikipediaKnowledgeGraphTracer:
         trace = self.traces[trace_id]
         
         # Create validation node
+        base_metadata = {
+            "wikidata_id": wikidata_id,
+            "validation_result": validation_result,
+            "confidence": confidence,
+        }
+        if metadata:
+            base_metadata.update(metadata)
+            
         validation_node_id = trace.add_node(
-            ReasoningNodeType.INFERENCE,
-            f"Wikidata validation: {'Successful' if validation_result else 'Failed'}",
-            metadata={
-                "wikidata_id": wikidata_id,
-                "validation_result": validation_result,
-                "confidence": confidence,
-                **metadata or {}
-            }
+            node_type=ReasoningNodeType.INFERENCE,
+            content=f"Wikidata validation: {'Successful' if validation_result else 'Failed'}",
+            metadata=base_metadata
         )
         
         # Link to entity
@@ -1197,14 +1200,14 @@ class WikipediaKnowledgeGraphTracer:
         
         # Create validation node
         validation_node_id = trace.add_node(
-            ReasoningNodeType.INFERENCE,
-            f"SPARQL validation: {'Successful' if validation_result else 'Failed'}",
+            node_type=ReasoningNodeType.INFERENCE,
+            content=f"SPARQL validation: {'Successful' if validation_result else 'Failed'}",
             metadata={
                 "sparql_query": sparql_query,
                 "validation_result": validation_result,
                 "confidence": confidence,
                 "result_count": result_count,
-                **metadata or {}
+                **(metadata or {})
             }
         )
         
@@ -1253,13 +1256,13 @@ class WikipediaKnowledgeGraphTracer:
         
         # Create decision node
         decision_node_id = trace.add_node(
-            ReasoningNodeType.CONCLUSION,
-            f"Integration decision: {decision}",
+            node_type=ReasoningNodeType.CONCLUSION,
+            content=f"Integration decision: {decision}",
             metadata={
                 "decision": decision,
                 "confidence": confidence,
                 "reasoning": reasoning,
-                **metadata or {}
+                **(metadata or {})
             }
         )
         
@@ -1326,7 +1329,7 @@ class WikipediaKnowledgeGraphTracer:
         ]
         
         # Add entity nodes
-        entity_nodes = [n for n in trace.nodes if n.node_type == ReasoningNodeType.ENTITY]
+        entity_nodes = [n for n in trace.nodes.values() if n.node_type == ReasoningNodeType.ENTITY]
         lines.append(f"Entities ({len(entity_nodes)}):")
         for node in entity_nodes:
             metadata = node.metadata or {}
@@ -1336,7 +1339,7 @@ class WikipediaKnowledgeGraphTracer:
                        f"(Type: {entity_type}, Confidence: {confidence:.2f})")
         
         # Add relationship nodes
-        relationship_nodes = [n for n in trace.nodes if n.node_type == ReasoningNodeType.RELATIONSHIP]
+        relationship_nodes = [n for n in trace.nodes.values() if n.node_type == ReasoningNodeType.RELATIONSHIP]
         lines.append(f"\nRelationships ({len(relationship_nodes)}):")
         for node in relationship_nodes:
             metadata = node.metadata or {}
@@ -1344,25 +1347,25 @@ class WikipediaKnowledgeGraphTracer:
             rel_type = metadata.get("relationship_type", "Unknown")
             
             # Find source and target entities
-            source_edges = [e for e in trace.edges if e.target_id == node.node_id and e.label == "source_entity"]
-            target_edges = [e for e in trace.edges if e.target_id == node.node_id and e.label == "target_entity"]
+            source_edges = [e for e in trace.edges if e.target_id == node.node_id and e.edge_type == "source_entity"]
+            target_edges = [e for e in trace.edges if e.target_id == node.node_id and e.edge_type == "target_entity"]
             
             source_entity = "Unknown"
             target_entity = "Unknown"
             
-            if source_edges and source_edges[0].source_id in trace.node_map:
-                source_node = trace.node_map[source_edges[0].source_id]
+            if source_edges and source_edges[0].source_id in trace.nodes:
+                source_node = trace.nodes[source_edges[0].source_id]
                 source_entity = source_node.metadata.get("entity_text", "Unknown") if source_node.metadata else "Unknown"
                 
-            if target_edges and target_edges[0].source_id in trace.node_map:
-                target_node = trace.node_map[target_edges[0].source_id]
+            if target_edges and target_edges[0].source_id in trace.nodes:
+                target_node = trace.nodes[target_edges[0].source_id]
                 target_entity = target_node.metadata.get("entity_text", "Unknown") if target_node.metadata else "Unknown"
             
             lines.append(f"  - {source_entity} --[{rel_type}]--> {target_entity} "
                        f"(Confidence: {confidence:.2f})")
         
         # Add validation results
-        validation_nodes = [n for n in trace.nodes if 
+        validation_nodes = [n for n in trace.nodes.values() if 
                           n.node_type == ReasoningNodeType.INFERENCE and 
                           (n.content.startswith("Wikidata validation") or 
                            n.content.startswith("SPARQL validation"))]
@@ -1464,11 +1467,11 @@ class WikipediaKnowledgeGraphTracer:
         for edge in trace.edges:
             source_id = edge.source_id
             target_id = edge.target_id
-            label = edge.label
+            label = edge.edge_type
             
             # Determine node types for source and target
-            source_node = trace.node_map.get(source_id)
-            target_node = trace.node_map.get(target_id)
+            source_node = trace.nodes.get(source_id)
+            target_node = trace.nodes.get(target_id)
             
             if not source_node or not target_node:
                 continue
