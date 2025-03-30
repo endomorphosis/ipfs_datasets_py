@@ -1,3 +1,4 @@
+## Core dependencies
 orbitdb_kit_py
 ipfs_kit_py
 ipfs_model_manager_py
@@ -12,3 +13,33 @@ duckdb
 datasets
 pyarrow
 fsspec
+
+## Phase 1 dependencies
+# IPFS integration
+ipfshttpclient>=0.8.0
+
+# IPLD components
+multiformats>=0.2.1
+
+# Optional but recommended IPLD implementations
+ipld-car>=0.1.0
+ipld-dag-pb>=0.1.0
+
+# Web Archive integration
+archivenow>=2023.5.7
+ipwb>=0.2021.12.16
+beautifulsoup4>=4.11.1
+warcio>=1.7.4
+
+# Data processing
+pyarrow>=10.0.0
+pandas>=1.5.0
+datasets>=2.10.0
+
+# P2P communication
+py-libp2p>=0.1.0  # Optional: for distributed dataset management
+
+# Testing
+pytest>=7.3.1
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0  # For testing async functions
