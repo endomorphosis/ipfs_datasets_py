@@ -725,6 +725,79 @@ The distributed dataset management features provide:
 
 See the `examples/distributed_dataset_example.py` file for comprehensive examples of these distributed capabilities.
 
+### Performance Optimized Streaming Data Loading
+
+The library includes high-performance streaming data loaders for efficient processing of large datasets:
+
+```python
+from ipfs_datasets_py.streaming_data_loader import (
+    load_parquet,
+    load_csv,
+    load_json,
+    load_huggingface,
+    create_memory_mapped_vectors,
+    load_memory_mapped_vectors
+)
+import numpy as np
+
+# Load a large Parquet file with streaming
+dataset = load_parquet(
+    parquet_path="large_dataset.parquet",
+    batch_size=10000,
+    prefetch_batches=2,
+    cache_enabled=True
+)
+
+# Process data in batches without loading the entire dataset into memory
+for batch in dataset.iter_batches():
+    # Process batch
+    print(f"Processing batch with {len(batch)} records")
+
+# Transform data on-the-fly
+transformed_dataset = dataset.map(lambda batch: process_batch(batch))
+
+# Memory-mapped access to large vector datasets
+vectors = load_memory_mapped_vectors(
+    file_path="embeddings.bin",
+    dimension=768,
+    mode='r'
+)
+
+# Efficient random access without loading entire dataset
+vector = vectors[1000]  # Get a specific vector
+batch = vectors[5000:5100]  # Get a batch of vectors
+
+# Create and populate memory-mapped vectors
+with create_memory_mapped_vectors(
+    file_path="new_embeddings.bin",
+    dimension=768,
+    mode='w+'
+) as mmap_vectors:
+    # Add vectors in batches
+    batch = np.random.rand(1000, 768).astype(np.float32)
+    mmap_vectors.append(batch)
+```
+
+The streaming data loading capabilities provide:
+
+#### Core Features
+- **Memory-Efficient Streaming**: Process datasets larger than available RAM
+- **Support for Multiple Formats**: Parquet, CSV, JSON, and HuggingFace datasets
+- **Memory-Mapped Vector Access**: Efficient random access to large vector datasets
+- **Batch Processing**: Process data in manageable chunks
+- **Prefetching**: Load next batch while processing current batch
+- **Caching**: Avoid redundant reads with intelligent caching
+
+#### Performance Features
+- **Performance Monitoring**: Detailed statistics on throughput and processing time
+- **Transformation Pipeline**: Apply transformations while streaming
+- **Filtering Capabilities**: Filter data without loading the entire dataset
+- **Custom Batch Processing**: Define custom functions to process batches
+- **Parallel Processing Support**: Designed to work with parallel processing libraries
+- **Minimal Memory Footprint**: Optimized for working with very large datasets
+
+See the `examples/streaming_data_example.py` file for comprehensive examples of these streaming capabilities.
+
 # IPFS Huggingface Bridge:
 
 for transformers python library visit:
