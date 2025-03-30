@@ -407,14 +407,21 @@ The IPLD-based GraphRAG system combines vector similarity search with knowledge 
    - Properties stored as node attributes
    - Graph schema defined via IPLD schemas
 
-3. **Hybrid Search Process**:
+3. **Knowledge Graph Extraction from Text**:
+   - Extract structured knowledge graphs from raw text using LLM-based extraction
+   - Apply "extraction temperature" parameter to control level of detail extracted
+   - Use "structure temperature" to tune the structural complexity of the extracted graph
+   - Balance between comprehensive extraction and manageable graph complexity
+   - Support for testing with mock graphs while ensuring adaptability to real extraction
+
+4. **Hybrid Search Process**:
    - Convert query to embedding vector
    - Find similar vectors via ANN search
    - Expand results through graph relationships
    - Apply path-based relevance scoring
    - Rank by combined vector similarity and graph relevance
 
-4. **IPLD Schema for Vectors**:
+5. **IPLD Schema for Vectors**:
 ```json
 {
   "type": "struct",
@@ -436,7 +443,7 @@ The IPLD-based GraphRAG system combines vector similarity search with knowledge 
 }
 ```
 
-5. **IPLD Schema for Knowledge Graph Nodes**:
+6. **IPLD Schema for Knowledge Graph Nodes**:
 ```json
 {
   "type": "struct",
@@ -815,19 +822,30 @@ The following diagram illustrates how all components interact in the complete sy
    - Implement collaborative dataset building with P2P synchronization
    - Create federated search across distributed dataset fragments
    - Build resilient operations with node failures
+     - Automatic retry with exponential backoff
+     - Circuit breaker pattern for preventing cascading failures
+     - Health checking and performance monitoring
+     - Node selection based on reliability metrics
+     - Resumable operations via checkpointing
+     - Fault-tolerant operations with graceful degradation
 
 3. **GraphRAG Implementation**
    - Integrate knowledge graph and vector search for hybrid queries
    - Implement context-aware ranking algorithms
    - Create entity-centric query expansion
    - Develop graph-based relevance scoring
+   - LLM reasoning tracer for explainability and transparency
+     - Tracking of reasoning steps during query processing
+     - Visualization of reasoning graphs
+     - Natural language explanation generation
+     - Audit capabilities for reasoning processes
 
 ### Phase 5: Production Readiness (Months 12-15)
 1. **Monitoring and Management**
-   - Implement comprehensive logging
-   - Create performance metrics collection
-   - Build administration dashboards
-   - Develop operational tooling
+   - ✅ Implement comprehensive logging
+   - ✅ Create performance metrics collection
+   - ✅ Build administration dashboards
+   - ✅ Develop operational tooling
 
 2. **Security & Governance**
    - Implement encryption for sensitive data
@@ -840,6 +858,100 @@ The following diagram illustrates how all components interact in the complete sy
    - Create examples and tutorials
    - Build containerized deployment options
    - Prepare release packaging and distribution
+
+### Current Development Status and Next Steps
+
+#### Completed Components
+1. **Knowledge Graph Extraction with Temperature Parameters**
+   - Implemented in `knowledge_graph_extraction.py`
+   - Extraction temperature controls level of detail (0.0-1.0)
+   - Structure temperature controls structural complexity (0.0-1.0)
+   - Comprehensive entity and relationship extraction
+
+2. **Wikipedia Integration and SPARQL Validation**
+   - Extract knowledge graphs from Wikipedia pages via MediaWiki API
+   - Validate extracted knowledge graphs against Wikidata via SPARQL
+   - Measure coverage of structured knowledge from Wikidata
+   - Entity mapping between extracted entities and Wikidata entities
+   - Test suite for validation against different Wikipedia pages
+   
+3. **Federated Search for Distributed Datasets**
+   - Implemented in `federated_search.py`
+   - Multiple search types (vector, keyword, hybrid, filter)
+   - Search result aggregation with various ranking strategies
+   - Distributed index management
+   - Result caching and optimization
+   - Fault-tolerant search across nodes
+
+4. **Resilient Operations for Distributed Systems**
+   - Implemented in `resilient_operations.py`
+   - Automatic retry mechanism with exponential backoff
+   - Circuit breaker pattern for preventing cascading failures
+   - Node health monitoring and tracking
+   - Health-aware node selection for improved reliability
+   - Checkpointing for long-running operations
+   - Comprehensive test suite in `test_resilient_operations.py`
+
+#### Completed Components (continued)
+5. **LLM Reasoning Tracer for GraphRAG (Mock Implementation)**
+   - Implemented as a mock in `llm_reasoning_tracer.py`
+   - Provides detailed tracing of reasoning steps in GraphRAG queries
+   - Visualization and auditing of knowledge graph traversal
+   - Explanation generation for cross-document reasoning
+   - Mock implementation that defines interfaces but leaves actual LLM integration for future work with ipfs_accelerate_py
+   - Complete example in `llm_reasoning_example.py`
+   - Comprehensive test suite in `test_llm_reasoning_tracer.py`
+
+6. **Comprehensive Monitoring and Metrics Collection System**
+   - Implemented in `monitoring.py`
+   - Configurable structured logging with context
+   - Performance metrics collection with multiple metric types (counters, gauges, histograms, timers, events)
+   - Operation tracking for distributed transactions
+   - System resource monitoring (CPU, memory, disk, network)
+   - Prometheus integration for metrics export
+   - Context managers and decorators for easy integration
+   - Pluggable outputs (file, console, Prometheus)
+   - Complete example in `monitoring_example.py`
+   - Comprehensive test suite in `test_monitoring.py`
+
+#### Completed Components (continued)
+
+7. **Administration Dashboard and Operational Tooling**
+   - Implemented in `admin_dashboard.py`
+   - Web-based dashboard for real-time system monitoring
+   - Built with Flask and Chart.js for visualization
+   - Comprehensive metrics display with historical data
+   - Log browsing and filtering capabilities
+   - Operation tracking and visualization
+   - Node management interface
+   - Configuration management and display
+   - Complete example in `admin_dashboard_example.py`
+   - Comprehensive test suite in `test_admin_dashboard.py`
+
+#### Current Priority Focus Areas
+
+1. **Security & Governance**
+   - ✅ Implementing encryption for sensitive data (Completed)
+   - ✅ Creating access control mechanisms (Completed)
+   - Building enhanced data provenance tracking with detailed lineage
+   - Developing comprehensive audit logging capabilities
+
+2. **RAG Query Optimizer for Knowledge Graphs**
+   - Implementation in `rag_query_optimizer.py`
+   - Optimizing GraphRAG queries over Wikipedia-derived knowledge graphs
+   - Query planning, statistics collection, and caching
+   - Performance improvements for complex graph traversals
+
+#### Scope Notes
+- **LLM-based functionality** including cross-document reasoning will be handled by the separate `ipfs_accelerate_py` package, not in this repository
+- The `llm_reasoning_tracer.py` module will remain as a mock implementation with interfaces for integration with `ipfs_accelerate_py`
+- This repository focuses on the core data management, storage, and retrieval capabilities, not LLM-specific processing
+
+#### Implementation Notes
+- Multi-model embedding generation is handled by the existing `ipfs_embeddings_py` package
+- Knowledge graph extraction functionality is complete and tested
+- Current focus is on data provenance tracking and RAG query optimization
+- All implementation follows the modular design principles of the project
 
 ### Integration Architecture
 

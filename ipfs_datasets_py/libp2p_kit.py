@@ -538,8 +538,105 @@ class DatasetShardManager:
         Args:
             stream: The network stream
         """
-        # To be implemented: receive and store a shard from another node
-        pass
+        try:
+            # Read request
+            data = await stream.read()
+            request = json.loads(data.decode())
+            response = {"status": "error", "message": "Invalid request"}
+            
+            if request.get("action") == "accept_shard":
+                shard_id = request.get("shard_id")
+                dataset_id = request.get("dataset_id")
+                cid = request.get("cid")
+                
+                if not all([shard_id, dataset_id, cid]):
+                    response = {"status": "error", "message": "Missing required parameters"}
+                else:
+                    # Check if we already have this shard
+                    if shard_id in self.shards:
+                        response = {"status": "accepted", "message": "Shard already exists"}
+                    else:
+                        # Accept the shard transfer request
+                        response = {"status": "accepted", "message": "Ready to receive shard"}
+                        await stream.write(json.dumps(response).encode())
+                        
+                        # Receive shard metadata
+                        metadata_data = await stream.read()
+                        shard_metadata = json.loads(metadata_data.decode())
+                        
+                        # Create the shard locally
+                        shard = ShardMetadata(**shard_metadata)
+                        
+                        # Verify that the dataset exists
+                        if dataset_id not in self.datasets:
+                            # If dataset doesn't exist locally, request its metadata
+                            await stream.write(json.dumps({"status": "need_dataset"}).encode())
+                            dataset_data = await stream.read()
+                            dataset_metadata = json.loads(dataset_data.decode())
+                            self.datasets[dataset_id] = DatasetMetadata(**dataset_metadata)
+                            self._save_metadata(self.datasets[dataset_id])
+                        else:
+                            await stream.write(json.dumps({"status": "have_dataset"}).encode())
+                        
+                        # Add ourselves to the node list
+                        if self.node.node_id not in shard.node_ids:
+                            shard.node_ids.append(self.node.node_id)
+                        
+                        # Store the shard metadata
+                        self.shards[shard_id] = shard
+                        self._save_metadata(shard)
+                        
+                        # Update dataset to include this shard if it's not already there
+                        dataset = self.datasets[dataset_id]
+                        if shard_id not in dataset.shard_ids:
+                            dataset.shard_ids.append(shard_id)
+                            dataset.shard_count = len(dataset.shard_ids)
+                            dataset.total_records += shard.record_count
+                            dataset.modified_time = time.time()
+                            self._save_metadata(dataset)
+                        
+                        # Notify of successful transfer
+                        return await stream.write(json.dumps({"status": "success", "message": "Shard transferred"}).encode())
+            
+            elif request.get("action") == "transfer_shard":
+                # Handle the case where we're sending a shard to another node
+                shard_id = request.get("shard_id")
+                if shard_id not in self.shards:
+                    response = {"status": "error", "message": f"Shard {shard_id} not found"}
+                else:
+                    shard = self.shards[shard_id]
+                    dataset_id = shard.dataset_id
+                    
+                    # Send the shard metadata
+                    response = {"status": "sending", "shard_id": shard_id}
+                    await stream.write(json.dumps(response).encode())
+                    
+                    # Send shard metadata
+                    await stream.write(json.dumps(shard.__dict__).encode())
+                    
+                    # Check if the recipient needs the dataset metadata
+                    dataset_response = await stream.read()
+                    dataset_status = json.loads(dataset_response.decode()).get("status")
+                    
+                    if dataset_status == "need_dataset":
+                        # Send dataset metadata
+                        await stream.write(json.dumps(self.datasets[dataset_id].__dict__).encode())
+                    
+                    # Wait for confirmation of successful transfer
+                    transfer_response = await stream.read()
+                    response = json.loads(transfer_response.decode())
+                    return
+            
+            # Send response
+            await stream.write(json.dumps(response).encode())
+        except Exception as e:
+            logging.error(f"Error handling shard transfer: {str(e)}")
+            try:
+                await stream.write(json.dumps({"status": "error", "message": str(e)}).encode())
+            except:
+                pass
+        finally:
+            await stream.close()
     
     async def _handle_shard_sync(self, stream: INetStream):
         """
@@ -548,8 +645,97 @@ class DatasetShardManager:
         Args:
             stream: The network stream
         """
-        # To be implemented: synchronize shard changes
-        pass
+        try:
+            # Read request
+            data = await stream.read()
+            request = json.loads(data.decode())
+            response = {"status": "error", "message": "Invalid request"}
+            
+            if request.get("action") == "sync_shard":
+                shard_id = request.get("shard_id")
+                updated_metadata = request.get("metadata")
+                
+                if not shard_id or not updated_metadata:
+                    response = {"status": "error", "message": "Missing required parameters"}
+                else:
+                    # Check if we have this shard
+                    if shard_id not in self.shards:
+                        response = {"status": "error", "message": f"Shard {shard_id} not found locally"}
+                    else:
+                        # Get the local shard
+                        local_shard = self.shards[shard_id]
+                        updated_shard = ShardMetadata(**updated_metadata)
+                        
+                        # Only update if the remote shard is newer
+                        if updated_shard.modified_time > local_shard.modified_time:
+                            # Merge node IDs to ensure we maintain all locations
+                            for node_id in local_shard.node_ids:
+                                if node_id not in updated_shard.node_ids:
+                                    updated_shard.node_ids.append(node_id)
+                            
+                            # Update the local shard
+                            self.shards[shard_id] = updated_shard
+                            self._save_metadata(updated_shard)
+                            
+                            # Update the dataset if record count changed
+                            if updated_shard.record_count != local_shard.record_count:
+                                dataset_id = updated_shard.dataset_id
+                                if dataset_id in self.datasets:
+                                    dataset = self.datasets[dataset_id]
+                                    record_diff = updated_shard.record_count - local_shard.record_count
+                                    dataset.total_records += record_diff
+                                    dataset.modified_time = time.time()
+                                    self._save_metadata(dataset)
+                            
+                            response = {"status": "success", "message": "Shard metadata synchronized"}
+                        else:
+                            response = {"status": "unchanged", "message": "Local shard is newer or identical"}
+            
+            elif request.get("action") == "get_shard_timestamp":
+                shard_id = request.get("shard_id")
+                if not shard_id:
+                    response = {"status": "error", "message": "Missing shard ID"}
+                else:
+                    if shard_id in self.shards:
+                        response = {
+                            "status": "success",
+                            "shard_id": shard_id,
+                            "modified_time": self.shards[shard_id].modified_time
+                        }
+                    else:
+                        response = {"status": "not_found", "message": f"Shard {shard_id} not found"}
+            
+            elif request.get("action") == "list_shards_with_timestamps":
+                dataset_id = request.get("dataset_id")
+                if dataset_id:
+                    # List shards for a specific dataset
+                    shards = {
+                        shard_id: shard.modified_time
+                        for shard_id, shard in self.shards.items()
+                        if shard.dataset_id == dataset_id
+                    }
+                else:
+                    # List all shards
+                    shards = {
+                        shard_id: shard.modified_time
+                        for shard_id, shard in self.shards.items()
+                    }
+                
+                response = {
+                    "status": "success",
+                    "shards": shards
+                }
+            
+            # Send response
+            await stream.write(json.dumps(response).encode())
+        except Exception as e:
+            logging.error(f"Error handling shard sync: {str(e)}")
+            try:
+                await stream.write(json.dumps({"status": "error", "message": str(e)}).encode())
+            except:
+                pass
+        finally:
+            await stream.close()
     
     async def _handle_metadata_sync(self, stream: INetStream):
         """
@@ -558,8 +744,98 @@ class DatasetShardManager:
         Args:
             stream: The network stream
         """
-        # To be implemented: synchronize metadata changes
-        pass
+        try:
+            # Read request
+            data = await stream.read()
+            request = json.loads(data.decode())
+            response = {"status": "error", "message": "Invalid request"}
+            
+            if request.get("action") == "sync_dataset":
+                dataset_id = request.get("dataset_id")
+                dataset_metadata = request.get("metadata")
+                
+                if not dataset_id or not dataset_metadata:
+                    response = {"status": "error", "message": "Missing required parameters"}
+                else:
+                    # Create dataset object from metadata
+                    updated_dataset = DatasetMetadata(**dataset_metadata)
+                    
+                    # Check if we already have this dataset
+                    if dataset_id in self.datasets:
+                        local_dataset = self.datasets[dataset_id]
+                        
+                        # Only update if the remote dataset is newer
+                        if updated_dataset.modified_time > local_dataset.modified_time:
+                            # Keep track of previously unknown shards
+                            new_shard_ids = [
+                                shard_id for shard_id in updated_dataset.shard_ids
+                                if shard_id not in local_dataset.shard_ids
+                            ]
+                            
+                            # Update dataset
+                            self.datasets[dataset_id] = updated_dataset
+                            self._save_metadata(updated_dataset)
+                            
+                            # Return information about missing shards
+                            response = {
+                                "status": "success", 
+                                "message": "Dataset metadata synchronized",
+                                "new_shard_ids": new_shard_ids
+                            }
+                        else:
+                            # Our version is newer or identical
+                            response = {"status": "unchanged", "message": "Local dataset is newer or identical"}
+                    else:
+                        # This is a new dataset for us
+                        self.datasets[dataset_id] = updated_dataset
+                        self._save_metadata(updated_dataset)
+                        response = {
+                            "status": "success", 
+                            "message": "New dataset added",
+                            "new_shard_ids": updated_dataset.shard_ids
+                        }
+            
+            elif request.get("action") == "get_dataset_timestamp":
+                dataset_id = request.get("dataset_id")
+                if not dataset_id:
+                    response = {"status": "error", "message": "Missing dataset ID"}
+                else:
+                    if dataset_id in self.datasets:
+                        response = {
+                            "status": "success",
+                            "dataset_id": dataset_id,
+                            "modified_time": self.datasets[dataset_id].modified_time,
+                            "shard_count": self.datasets[dataset_id].shard_count
+                        }
+                    else:
+                        response = {"status": "not_found", "message": f"Dataset {dataset_id} not found"}
+            
+            elif request.get("action") == "list_datasets_with_timestamps":
+                # List all datasets with timestamps
+                datasets = {
+                    dataset_id: {
+                        "modified_time": dataset.modified_time,
+                        "shard_count": dataset.shard_count,
+                        "name": dataset.name
+                    }
+                    for dataset_id, dataset in self.datasets.items()
+                }
+                
+                response = {
+                    "status": "success",
+                    "datasets": datasets
+                }
+            
+            # Send response
+            await stream.write(json.dumps(response).encode())
+        except Exception as e:
+            logging.error(f"Error handling metadata sync: {str(e)}")
+            try:
+                await stream.write(json.dumps({"status": "error", "message": str(e)}).encode())
+            except:
+                pass
+        finally:
+            await stream.close()
     
     def create_dataset(
         self,
@@ -1145,23 +1421,150 @@ class DistributedDatasetManager:
         dataset_id: str,
         data: Any,
         format: str = "parquet",
-        replication_factor: int = 3
+        shard_size: int = 10000,
+        replication_factor: int = 3,
+        use_consistent_hashing: bool = True
     ) -> List[ShardMetadata]:
         """
         Shard a dataset and distribute it across the network.
         
         Args:
             dataset_id: Dataset ID
-            data: Dataset data
-            format: Dataset format
+            data: Dataset data (pandas DataFrame, Arrow table, list, etc.)
+            format: Dataset format ("parquet", "arrow", etc.)
+            shard_size: Number of records per shard
             replication_factor: Number of nodes to replicate each shard to
+            use_consistent_hashing: Whether to use consistent hashing for distribution
             
         Returns:
             List[ShardMetadata]: Metadata for the created shards
+            
+        Raises:
+            ValueError: If the dataset doesn't exist or the data is invalid
         """
-        # To be implemented: Split data into shards, create CIDs, and distribute
-        # For now, this is a placeholder implementation
-        return []
+        import pandas as pd
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        import tempfile
+        import os
+        import hashlib
+        from tqdm import tqdm
+        
+        # Verify dataset exists
+        if dataset_id not in self.shard_manager.datasets:
+            raise ValueError(f"Dataset {dataset_id} not found")
+        
+        dataset = self.shard_manager.datasets[dataset_id]
+        created_shards = []
+        
+        # Step 1: Convert data to a common format (pandas DataFrame)
+        df = None
+        if isinstance(data, pd.DataFrame):
+            df = data
+        elif isinstance(data, pa.Table):
+            df = data.to_pandas()
+        elif isinstance(data, list) and all(isinstance(item, dict) for item in data):
+            df = pd.DataFrame(data)
+        elif hasattr(data, "to_pandas"):  # Handle HuggingFace datasets
+            df = data.to_pandas()
+        else:
+            raise ValueError("Unsupported data format. Provide DataFrame, Arrow Table, or list of dicts")
+        
+        total_records = len(df)
+        logging.info(f"Sharding dataset with {total_records} records, shard size {shard_size}")
+        
+        # Update dataset metadata
+        dataset.total_records = total_records
+        dataset.modified_time = time.time()
+        self.shard_manager._save_metadata(dataset)
+        
+        # Step 2: Split data into shards
+        num_shards = (total_records + shard_size - 1) // shard_size  # Ceiling division
+        
+        # Create temporary directory for shard files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            shard_metadata_list = []
+            
+            # Discover nodes for distribution
+            all_peers = await self.node.discover_peers()
+            available_nodes = list(all_peers)
+            
+            if not available_nodes and replication_factor > 1:
+                logging.warning("No peer nodes found. Shards will only be stored locally.")
+            
+            # Process each shard
+            for shard_index in tqdm(range(num_shards), desc="Creating shards"):
+                # Extract shard data
+                start_idx = shard_index * shard_size
+                end_idx = min(start_idx + shard_size, total_records)
+                shard_df = df.iloc[start_idx:end_idx]
+                shard_record_count = len(shard_df)
+                
+                # Create a unique shard ID
+                shard_id = f"shard-{dataset_id}-{shard_index}"
+                
+                # Convert to appropriate format and calculate CID
+                shard_file_path = os.path.join(temp_dir, f"{shard_id}.{format}")
+                
+                if format == "parquet":
+                    # Convert to Arrow table and write Parquet
+                    table = pa.Table.from_pandas(shard_df)
+                    pq.write_table(table, shard_file_path)
+                elif format == "arrow":
+                    # Write Arrow IPC file
+                    table = pa.Table.from_pandas(shard_df)
+                    with pa.OSFile(shard_file_path, "wb") as sink:
+                        writer = pa.RecordBatchFileWriter(sink, table.schema)
+                        writer.write_table(table)
+                        writer.close()
+                else:
+                    raise ValueError(f"Unsupported format: {format}")
+                
+                # Here we would normally add the file to IPFS, but for this example,
+                # we'll just calculate a hash to simulate a CID
+                with open(shard_file_path, "rb") as f:
+                    file_data = f.read()
+                    fake_cid = "Qm" + hashlib.sha256(file_data).hexdigest()[:44]
+                
+                # Create shard metadata
+                shard = self.shard_manager.create_shard(
+                    dataset_id=dataset_id,
+                    data=None,  # We're not storing the actual data here
+                    cid=fake_cid,
+                    record_count=shard_record_count,
+                    format=format
+                )
+                
+                shard_metadata_list.append(shard)
+                
+                # Step 3: Distribute shards to other nodes
+                if replication_factor > 1 and available_nodes:
+                    # Use consistent hashing to determine which nodes should store this shard
+                    if use_consistent_hashing:
+                        target_nodes = []
+                        # Simple hash-based node selection (a basic form of consistent hashing)
+                        shard_hash = int(hashlib.md5(shard_id.encode()).hexdigest(), 16)
+                        for _ in range(min(replication_factor, len(available_nodes))):
+                            node_idx = shard_hash % len(available_nodes)
+                            target_nodes.append(available_nodes[node_idx])
+                            # Adjust hash for next selection to avoid choosing the same node
+                            shard_hash = (shard_hash * 31) % (2**32)
+                    else:
+                        # Random selection
+                        target_count = min(replication_factor - 1, len(available_nodes))
+                        target_nodes = random.sample(available_nodes, target_count)
+                    
+                    # Distribute the shard
+                    successful_transfers = await self.shard_manager.distribute_shard(
+                        shard_id=shard.shard_id,
+                        target_nodes=target_nodes
+                    )
+                    
+                    logging.info(f"Distributed shard {shard.shard_id} to {len(successful_transfers)} nodes")
+                    created_shards.append(shard)
+        
+        logging.info(f"Created and distributed {len(created_shards)} shards")
+        return created_shards
     
     async def vector_search(
         self,
@@ -1243,4 +1646,231 @@ class DistributedDatasetManager:
                 dataset_id: [s.__dict__ for s in shards]
                 for dataset_id, shards in shards_by_dataset.items()
             }
+        }
+    
+    async def sync_with_network(self) -> Dict[str, Any]:
+        """
+        Synchronize dataset and shard metadata with the network.
+        
+        This method discovers peers in the network and synchronizes dataset
+        and shard metadata to ensure all nodes have a consistent view of 
+        the distributed datasets.
+        
+        Returns:
+            Dict: Synchronization results
+        """
+        # Discover peers
+        peers = await self.node.discover_peers()
+        if not peers:
+            return {"status": "no_peers", "message": "No peers found to synchronize with"}
+        
+        # Get local datasets and their timestamps
+        local_datasets = {
+            dataset_id: dataset.modified_time
+            for dataset_id, dataset in self.shard_manager.datasets.items()
+        }
+        
+        # Track sync stats
+        results = {
+            "peers_synced": 0,
+            "datasets_updated": 0,
+            "datasets_added": 0,
+            "shards_updated": 0,
+            "shards_added": 0
+        }
+        
+        # Sync with each peer
+        for peer_id in peers:
+            try:
+                # Get remote datasets
+                remote_datasets_response = await self.node.send_message(
+                    peer_id,
+                    NetworkProtocol.METADATA_SYNC,
+                    {"action": "list_datasets_with_timestamps"}
+                )
+                
+                if remote_datasets_response.get("status") != "success":
+                    continue
+                
+                remote_datasets = remote_datasets_response.get("datasets", {})
+                
+                # Check each remote dataset
+                for dataset_id, dataset_info in remote_datasets.items():
+                    remote_timestamp = dataset_info.get("modified_time", 0)
+                    
+                    # If we don't have this dataset or our version is older
+                    if dataset_id not in local_datasets or remote_timestamp > local_datasets[dataset_id]:
+                        # Request full dataset metadata
+                        dataset_response = await self.node.send_message(
+                            peer_id,
+                            NetworkProtocol.METADATA_SYNC,
+                            {
+                                "action": "sync_dataset",
+                                "dataset_id": dataset_id,
+                                "metadata": self.shard_manager.datasets[dataset_id].__dict__ if dataset_id in self.shard_manager.datasets else None
+                            }
+                        )
+                        
+                        if dataset_response.get("status") == "success":
+                            if dataset_id in local_datasets:
+                                results["datasets_updated"] += 1
+                            else:
+                                results["datasets_added"] += 1
+                            
+                            # Check for new shards we need to fetch
+                            new_shard_ids = dataset_response.get("new_shard_ids", [])
+                            for shard_id in new_shard_ids:
+                                if shard_id not in self.shard_manager.shards:
+                                    # Request shard transfer
+                                    try:
+                                        shard_response = await self.node.send_message(
+                                            peer_id,
+                                            NetworkProtocol.SHARD_TRANSFER,
+                                            {
+                                                "action": "transfer_shard",
+                                                "shard_id": shard_id
+                                            }
+                                        )
+                                        
+                                        if shard_response.get("status") == "success":
+                                            results["shards_added"] += 1
+                                    except Exception as e:
+                                        logging.error(f"Error transferring shard {shard_id}: {str(e)}")
+                
+                # Sync our local shards with remote peer
+                for dataset_id, dataset in self.shard_manager.datasets.items():
+                    local_shards = [s for s in self.shard_manager.shards.values() if s.dataset_id == dataset_id]
+                    
+                    for shard in local_shards:
+                        # Get remote shard timestamp
+                        try:
+                            shard_timestamp_response = await self.node.send_message(
+                                peer_id,
+                                NetworkProtocol.SHARD_SYNC,
+                                {
+                                    "action": "get_shard_timestamp",
+                                    "shard_id": shard.shard_id
+                                }
+                            )
+                            
+                            remote_timestamp = 0
+                            if shard_timestamp_response.get("status") == "success":
+                                remote_timestamp = shard_timestamp_response.get("modified_time", 0)
+                            
+                            # If remote version is older or not found, sync our version
+                            if shard_timestamp_response.get("status") == "not_found" or shard.modified_time > remote_timestamp:
+                                sync_response = await self.node.send_message(
+                                    peer_id,
+                                    NetworkProtocol.SHARD_SYNC,
+                                    {
+                                        "action": "sync_shard",
+                                        "shard_id": shard.shard_id,
+                                        "metadata": shard.__dict__
+                                    }
+                                )
+                                
+                                if sync_response.get("status") == "success":
+                                    results["shards_updated"] += 1
+                        except Exception as e:
+                            logging.error(f"Error syncing shard {shard.shard_id} with peer {peer_id}: {str(e)}")
+                
+                results["peers_synced"] += 1
+                
+            except Exception as e:
+                logging.error(f"Error syncing with peer {peer_id}: {str(e)}")
+        
+        return results
+    
+    async def rebalance_shards(self, dataset_id: Optional[str] = None, target_replication: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Rebalance shards across nodes to ensure proper distribution and replication.
+        
+        Args:
+            dataset_id: Optional dataset ID to rebalance (all datasets if None)
+            target_replication: Target replication factor (use dataset default if None)
+            
+        Returns:
+            Dict: Rebalancing results
+        """
+        # Discover available nodes
+        peers = await self.node.discover_peers()
+        available_nodes = list(peers) + [self.node.node_id]
+        
+        if len(available_nodes) < 2:
+            return {
+                "status": "insufficient_nodes",
+                "message": "At least 2 nodes are required for rebalancing",
+                "shards_rebalanced": 0
+            }
+        
+        # Determine datasets to rebalance
+        datasets_to_rebalance = []
+        if dataset_id:
+            if dataset_id in self.shard_manager.datasets:
+                datasets_to_rebalance.append(self.shard_manager.datasets[dataset_id])
+            else:
+                return {
+                    "status": "dataset_not_found",
+                    "message": f"Dataset {dataset_id} not found",
+                    "shards_rebalanced": 0
+                }
+        else:
+            datasets_to_rebalance = list(self.shard_manager.datasets.values())
+        
+        # Track rebalancing stats
+        total_shards_rebalanced = 0
+        rebalance_results = {}
+        
+        # Process each dataset
+        for dataset in datasets_to_rebalance:
+            current_dataset_id = dataset.dataset_id
+            dataset_replication = target_replication or 3  # Default replication factor
+            
+            # Get all shards for this dataset
+            dataset_shards = [
+                shard for shard in self.shard_manager.shards.values()
+                if shard.dataset_id == current_dataset_id
+            ]
+            
+            dataset_results = {
+                "total_shards": len(dataset_shards),
+                "rebalanced_shards": 0,
+                "failed_shards": 0
+            }
+            
+            # Analyze shard distribution
+            for shard in dataset_shards:
+                current_nodes = set(shard.node_ids)
+                current_replication = len(current_nodes)
+                
+                # If under-replicated, add more replicas
+                if current_replication < dataset_replication:
+                    # Find nodes that don't have this shard
+                    candidate_nodes = [node for node in available_nodes if node not in current_nodes]
+                    
+                    if candidate_nodes:
+                        # Calculate how many more replicas we need
+                        additional_replicas = min(dataset_replication - current_replication, len(candidate_nodes))
+                        target_nodes = random.sample(candidate_nodes, additional_replicas)
+                        
+                        try:
+                            # Distribute the shard to new nodes
+                            successful_transfers = await self.shard_manager.distribute_shard(
+                                shard_id=shard.shard_id,
+                                target_nodes=target_nodes
+                            )
+                            
+                            if successful_transfers:
+                                total_shards_rebalanced += 1
+                                dataset_results["rebalanced_shards"] += 1
+                        except Exception as e:
+                            logging.error(f"Error rebalancing shard {shard.shard_id}: {str(e)}")
+                            dataset_results["failed_shards"] += 1
+            
+            rebalance_results[current_dataset_id] = dataset_results
+        
+        return {
+            "status": "success",
+            "total_shards_rebalanced": total_shards_rebalanced,
+            "datasets": rebalance_results
         }

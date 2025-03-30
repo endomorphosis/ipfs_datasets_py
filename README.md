@@ -1,829 +1,428 @@
-# IPFS Huggingface Datasets
+# IPFS Datasets Python
 
-This is a model manager and wrapper for huggingface, looks up a index of models from an collection of models, and will download a model from either https/s3/ipfs, depending on which source is the fastest.
+A unified interface for data processing and distribution across decentralized networks, with seamless conversion between formats and storage systems.
 
-## How to use
-~~~shell
-pip install .
-~~~
+## Overview
 
-look run ``python3 example.py`` for examples of usage.
+IPFS Datasets Python serves as a facade to multiple data processing and storage libraries:
+- DuckDB, Arrow, and HuggingFace Datasets for data manipulation
+- IPLD for data structuring
+- IPFS (via ipfs_datasets_py.ipfs_kit) for decentralized storage
+- libp2p (via ipfs_datasets_py.libp2p_kit) for peer-to-peer data transfer
+- InterPlanetary Wayback (IPWB) for web archive integration
+- GraphRAG for knowledge graph-enhanced retrieval and reasoning
+- Security and governance features for sensitive data
+- Comprehensive audit logging for security, compliance, and operations
 
-this is designed to be a drop in replacement, which requires only 2 lines to be changed
+## Installation
 
-In your python script
-~~~shell
-from datasets import load_dataset
-from ipfs_datasets import load_dataset
-dataset = load_dataset.from_auto_download("bge-small-en-v1.5")  
-~~~
-
-or 
-
-~~~shell
-from datasets import load_dataset
-from ipfs_datasets import load_dataset
-dataset = load_dataset.from_ipfs("QmccfbkWLYs9K3yucc6b3eSt8s8fKcyRRt24e3CDaeRhM1")
-~~~
-
-or to use with with s3 caching 
-~~~shell
-from datasets import load_dataset
-from ipfs_datasets import load_dataset
-dataset = load_dataset.from_auto_download(
-    dataset_name="common-crawl",
-    s3cfg={
-        "bucket": "cloud",
-        "endpoint": "https://storage.googleapis.com",
-        "secret_key": "",
-        "access_key": ""
-    }
-)
-~~~
-
-## Advanced GraphRAG Capabilities
-
-This library includes advanced Graph Retrieval-Augmented Generation (GraphRAG) capabilities that combine vector embeddings with graph structures for enhanced information retrieval.
-
-```python
-from ipfs_datasets_py.dataset_serialization import VectorAugmentedGraphDataset
-import numpy as np
-
-# Create a GraphRAG dataset
-dataset = VectorAugmentedGraphDataset(vector_dimension=768)
-
-# Add nodes with vector embeddings
-paper1 = dataset.add_node("paper", {"title": "Neural Networks"}, vector=vector1)
-paper2 = dataset.add_node("paper", {"title": "Graph Neural Networks"}, vector=vector2)
-
-# Add edges with properties
-dataset.add_edge(paper1, "cites", paper2, {"importance": "high"})
-
-# Perform basic GraphRAG searches
-
-# 1. Find semantically similar nodes connected by specific relationships
-results = dataset.find_similar_connected_nodes(
-    query_vector=query_vector,
-    max_hops=2,
-    edge_filters=[("importance", "=", "high")]
-)
-
-# 2. Extract a subgraph of semantically similar nodes
-subgraph = dataset.semantic_subgraph(
-    query_vector=query_vector,
-    similarity_threshold=0.7
-)
-
-# 3. Perform logical operations on multiple query vectors
-results = dataset.logical_query(
-    query_vectors=[vector1, vector2],
-    operators=["AND"],
-    similarity_threshold=0.7
-)
-
-# 4. Hybrid search combining semantic similarity with structured filters
-results = dataset.hybrid_structured_semantic_search(
-    query_vector=query_vector,
-    node_filters=[("citation_count", ">=", 50)],
-    relationship_patterns=[{
-        "direction": "outgoing",
-        "edge_type": "cites",
-        "edge_filters": [("importance", "=", "high")]
-    }]
-)
-
-# 5. Generate explanations for paths between nodes
-explanations = dataset.explain_path(
-    start_node_id=paper1,
-    end_node_id=paper2
-)
-
-# 6. Incrementally update the graph
-dataset.incremental_graph_update(
-    nodes_to_add=[new_node],
-    edges_to_add=[(paper1, "references", "new_node", {"count": 3})],
-    maintain_index=True
-)
-
-# Advanced knowledge graph features
-
-# 7. Rank nodes by centrality with PageRank algorithm
-central_nodes = dataset.rank_nodes_by_centrality(
-    query_vector=query_vector,  # Optional semantic influence
-    damping_by_similarity=True,
-    weight_by_edge_properties={"cites": "importance"}
-)
-
-# 8. Infer indirect relationships through multi-hop patterns
-collaborators = dataset.multi_hop_inference(
-    start_node_id="author1",
-    relationship_pattern=["authored", "cites", "authored_by"],
-    confidence_threshold=0.5
-)
-
-# 9. Discover entity clusters and thematic communities
-clusters = dataset.find_entity_clusters(
-    similarity_threshold=0.6,
-    min_community_size=3,
-    relationship_weight=0.4
-)
-
-# Advanced retrieval enhancement
-
-# 10. Expand queries with knowledge graph context
-expanded_query = dataset.expand_query(
-    query_vector=query_vector,
-    expansion_strategy="concept_enrichment",
-    expansion_factor=0.3,
-    max_terms=3
-)
-
-# 11. Identify and group duplicate entities
-entity_groups = dataset.resolve_entities(
-    candidate_nodes=papers,
-    resolution_strategy="hybrid",
-    similarity_threshold=0.8
-)
-
-# 12. Generate context-aware embeddings
-contextual_embedding = dataset.generate_contextual_embeddings(
-    node_id=paper1,
-    context_strategy="type_specific",
-    context_depth=1
-)
+### Basic Installation
+```bash
+pip install ipfs-datasets-py
 ```
 
-These GraphRAG capabilities allow for enhanced knowledge retrieval that combines the benefits of semantic similarity search with graph-based relationships. The library supports:
-
-### Basic Features
-- **Semantic Search**: Find entities based on vector similarity
-- **Structured Queries**: Filter entities by metadata and relationship patterns
-- **Hybrid Retrieval**: Combine semantic and structured search criteria
-- **Graph Analysis**: Rank entities by centrality and discover clusters
-- **Relationship Inference**: Discover implicit connections through patterns
-- **Path Explanation**: Generate natural language explanations of entity connections
-- **Incremental Updates**: Efficiently maintain and update knowledge graphs
-- **Community Detection**: Identify thematic clusters in the knowledge graph
-
-### Advanced Features
-- **Query Expansion**: Enhance queries with related concepts from the knowledge graph
-- **Entity Resolution**: Identify and link duplicate or equivalent entities
-- **Contextual Embeddings**: Generate vectors that incorporate graph structure
-- **Semantic Ranking**: PageRank variant with semantic similarity influence
-- **Multi-hop Inference**: Discover indirect relationships through pattern matching
-- **Relationship Weighting**: Weight edges by semantic and structural properties
-- **Thematic Clustering**: Identify communities with common themes
-- **Semantic Deduplication**: Merge equivalent entities based on properties and vectors
-- **Subgraph Comparison**: Measure similarity between different subgraphs
-- **Temporal Analysis**: Track graph evolution over time periods
-- **Knowledge Graph Completion**: Predict missing relationships
-- **Cross-Document Reasoning**: Reason across multiple documents using entity connections
-- **LLM-Enhanced GraphRAG**: Integrate LLMs for improved reasoning capabilities
-
-```python
-# Comparing subgraphs
-comparison = dataset.compare_subgraphs(
-    subgraph1=ml_subgraph, 
-    subgraph2=cv_subgraph,
-    comparison_method="hybrid",
-    semantic_weight=0.6,
-    structural_weight=0.4
-)
-
-# Analyzing temporal evolution of the graph
-results = dataset.temporal_graph_analysis(
-    time_property="year",
-    time_intervals=[(2018, 2019), (2020, 2021)],
-    metrics=["node_count", "edge_count", "density"],
-    reference_node_id="paper1"  # Track a specific entity
-)
-
-# Predicting missing relationships in the graph
-predicted_edges = dataset.knowledge_graph_completion(
-    completion_method="combined",  # semantic, structural, or combined
-    target_relation_types=["cites"],
-    min_confidence=0.7,
-    use_existing_edges_as_training=True
-)
-
-# Performing cross-document reasoning
-reasoning_result = dataset.cross_document_reasoning(
-    query="How has deep learning influenced computer vision?",
-    document_node_types=["document", "paper"],
-    max_hops=2,
-    reasoning_depth="moderate"  # basic, moderate, or deep
-)
+### Development Installation
+```bash
+git clone https://github.com/your-organization/ipfs_datasets_py.git
+cd ipfs_datasets_py
+pip install -e .
 ```
 
-### Cross-Document Reasoning
+### Optional Dependencies
+```bash
+# For vector search capabilities
+pip install ipfs-datasets-py[vector]
 
-The library provides advanced cross-document reasoning capabilities that go beyond simple document retrieval. This feature enables answering complex queries by connecting information across multiple documents using their semantic relationships and shared entities.
+# For knowledge graph and RAG capabilities
+pip install ipfs-datasets-py[graphrag]
 
-```python
-# Sample cross-document reasoning for a complex query
-result = dataset.cross_document_reasoning(
-    query="What is the relationship between neural networks and reinforcement learning?",
-    document_node_types=["document", "paper"],
-    max_hops=2,
-    min_relevance=0.6,
-    max_documents=5,
-    reasoning_depth="deep"  # basic, moderate, or deep
-)
+# For web archive integration
+pip install ipfs-datasets-py[web_archive]
 
-# Access the synthesized answer
-print(result["answer"])
+# For security features
+pip install ipfs-datasets-py[security]
 
-# Access the evidence paths
-for path in result["evidence_paths"]:
-    print(f"Connection: {path['potential_inference']}")
+# For audit logging capabilities
+pip install ipfs-datasets-py[audit]
 
-# Get explanation of the reasoning process
-for step in result["reasoning_trace"]:
-    print(step)
-
-# Get confidence score
-print(f"Answer confidence: {result['confidence']}")
+# For all features
+pip install ipfs-datasets-py[all]
 ```
 
-#### Reasoning Depths:
-- **Basic**: Simple connections between documents through shared entities
-- **Moderate**: Entity-mediated relationships with information relation analysis (complementary/contradictory)
-- **Deep**: Complex multi-hop reasoning with knowledge gaps, transitive relationships, and detailed inferences
-
-The cross-document reasoning feature enables:
-- Identifying connections between documents through shared entities
-- Detecting complementary or contradictory information
-- Analyzing knowledge gaps between documents
-- Discovering transitive relationships through multi-hop paths
-- Generating comprehensive answers with confidence scores
-- Producing detailed reasoning traces that explain the answer derivation
-
-### Knowledge Graph Extraction with Temperature Control
-
-The library provides advanced knowledge graph extraction capabilities with tunable parameters to control the level of detail and structural complexity:
+## Basic Usage
 
 ```python
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
+from ipfs_datasets_py import ipfs_datasets
 
-# Initialize the extractor
-extractor = KnowledgeGraphExtractor()
+# Load a dataset (supports local and remote datasets)
+dataset = ipfs_datasets.load_dataset("wikipedia", subset="20220301.en")
+print(f"Loaded dataset with {len(dataset)} records")
 
-# Extract knowledge graph with temperature parameters
-text = "IPFS (InterPlanetary File System) is a protocol and peer-to-peer network for storing and sharing data in a distributed file system. IPFS was created by Juan Benet and is maintained by Protocol Labs."
-
-kg = extractor.extract_knowledge_graph(
-    text=text,
-    extraction_temperature=0.7,  # Controls level of detail extracted
-    structure_temperature=0.5    # Controls structural complexity of the graph
-)
-
-# View extracted entities
-for entity in kg.entities.values():
-    print(f"Entity: {entity.name}, Type: {entity.entity_type}, Confidence: {entity.confidence}")
-
-# View extracted relationships
-for rel in kg.relationships.values():
-    print(f"Relationship: {rel.source_entity.name} --[{rel.relationship_type}]--> {rel.target_entity.name}")
-```
-
-#### Temperature Parameters:
-- **Extraction Temperature (0.0-1.0)**:
-  - Lower values (0.1-0.3): Extract only major concepts and strongest relationships
-  - Medium values (0.4-0.7): Extract balanced set of entities and relationships
-  - Higher values (0.8-1.0): Extract detailed concepts, properties, and nuanced relationships
-
-- **Structure Temperature (0.0-1.0)**:
-  - Lower values (0.1-0.3): Flatter structure with fewer relationship types
-  - Medium values (0.4-0.7): Balanced hierarchical structure
-  - Higher values (0.8-1.0): Rich, multi-level concept hierarchies with diverse relationship types
-
-### Knowledge Graph Extraction with Integrated SPARQL Validation
-
-The library includes comprehensive capabilities for extracting knowledge graphs from text, Wikipedia pages, and multiple documents, with integrated validation against Wikidata using SPARQL queries:
-
-```python
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractorWithValidation
-
-# Initialize the extractor with integrated validation
-extractor = KnowledgeGraphExtractorWithValidation(
-    validate_during_extraction=True,
-    auto_correct_suggestions=True,
-    cache_validation_results=True
-)
-
-# Extract knowledge graph from a Wikipedia page with validation
-result = extractor.extract_from_wikipedia(
-    page_title="IPFS",
-    extraction_temperature=0.7,
-    structure_temperature=0.5,
-    validation_depth=2  # Include relationship validation
-)
-
-# Access the extracted knowledge graph
-kg = result["knowledge_graph"]
-print(f"Extracted {len(kg.entities)} entities and {len(kg.relationships)} relationships")
-
-# Check validation metrics
-metrics = result["validation_metrics"]
-print(f"Property coverage: {metrics['property_coverage']:.2f}")
-print(f"Relationship coverage: {metrics['relationship_coverage']:.2f}")
-print(f"Overall coverage: {metrics['overall_coverage']:.2f}")
-
-# Get correction suggestions
-if "corrections" in result:
-    print("Correction suggestions available")
-    
-    # Apply the suggested corrections
-    corrected_kg = extractor.apply_validation_corrections(
-        kg=kg,
-        corrections=result["corrections"]
-    )
-    print(f"Corrected knowledge graph created")
-
-# Extract from custom text
-text_result = extractor.extract_knowledge_graph(
-    text="IPFS is a peer-to-peer hypermedia protocol designed to make the web faster, safer, and more open.",
-    validation_depth=1  # Validate only entities
-)
-
-# Extract from multiple documents
-documents = [
-    {"title": "Doc 1", "text": "IPFS was created by Juan Benet in 2014."},
-    {"title": "Doc 2", "text": "Protocol Labs develops IPFS and Filecoin."}
-]
-multi_doc_result = extractor.extract_from_documents(
-    documents=documents,
-    text_key="text",
-    validation_depth=2
-)
-```
-
-This enhanced functionality provides:
-- **Integrated extraction and validation**: Seamlessly extract and validate knowledge graphs in one step
-- **Validation against Wikidata**: Verify entity properties and relationships using SPARQL queries
-- **Automatic correction suggestions**: Receive suggestions for fixing inaccurate or incomplete information
-- **Path finding between entities**: Discover how entities are connected in Wikidata
-- **Validation metrics**: Measure coverage of properties and relationships compared to Wikidata
-- **Caching of validation results**: Improve performance with cached validation results
-- **Multiple sources**: Extract from text, Wikipedia articles, or multiple documents
-- **Flexible validation depth**: Control whether to validate only entities or both entities and relationships
-
-### Comprehensive RAG Query Optimization Framework
-
-The library includes a comprehensive query optimization framework for GraphRAG operations, supporting both Wikipedia-derived knowledge graphs and IPLD-based knowledge graphs. The framework consists of specialized optimizers that can be used independently or through a unified interface that handles mixed environments.
-
-```python
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.rag_query_optimizer import (
-    WikipediaKnowledgeGraphOptimizer,  # For Wikipedia-derived knowledge graphs
-    IPLDGraphRAGQueryOptimizer,        # For IPLD-based knowledge graphs
-    UnifiedGraphRAGQueryOptimizer      # For mixed environments
-)
-import numpy as np
-
-# Create a query vector (using an embedding model in real applications)
-query = "How does content addressing work in distributed systems?"
-query_vector = np.random.rand(768)  # Placeholder for a real embedding
-
-# Option 1: Wikipedia-specific optimization
-tracer = WikipediaKnowledgeGraphTracer()
-wiki_optimizer = WikipediaKnowledgeGraphOptimizer(tracer=tracer)
-
-# Optimize the query for a Wikipedia-derived knowledge graph
-wiki_plan = wiki_optimizer.optimize_query(
-    query_text=query,
-    query_vector=query_vector,
-    trace_id="wikipedia-trace-123"  # Trace ID from extraction
-)
-
-# Option 2: IPLD-specific optimization
-ipld_optimizer = IPLDGraphRAGQueryOptimizer()
-
-# Optimize the query for an IPLD-based knowledge graph
-ipld_plan = ipld_optimizer.optimize_query(
-    query_vector=query_vector,
-    query_text=query,
-    root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"],  # Root CID
-    content_types=["application/json"]  # Content types to optimize for
-)
-
-# Option 3: Unified optimizer for mixed environments
-unified_optimizer = UnifiedGraphRAGQueryOptimizer(
-    wikipedia_optimizer=wiki_optimizer,
-    ipld_optimizer=ipld_optimizer,
-    auto_detect_graph_type=True
-)
-
-# Automatically detect graph type based on parameters
-auto_plan = unified_optimizer.optimize_query(
-    query_vector=query_vector,
-    query_text=query,
-    trace_id="wikipedia-trace-123"  # Will use Wikipedia optimizer
-)
-
-# Multi-graph query that spans different graph types
-multi_graph_plan = unified_optimizer.optimize_multi_graph_query(
-    query_vector=query_vector,
-    query_text="Compare content addressing in IPFS and BitTorrent",
-    graph_specs=[
-        {"graph_type": "wikipedia", "trace_id": "wiki-ipfs", "weight": 0.4},
-        {"graph_type": "wikipedia", "trace_id": "wiki-bittorrent", "weight": 0.3},
-        {"graph_type": "ipld", "root_cid": "QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx", "weight": 0.3}
+# Process the dataset
+processed_dataset = ipfs_datasets.process_dataset(
+    dataset,
+    operations=[
+        {"type": "filter", "column": "length", "condition": ">", "value": 1000},
+        {"type": "select", "columns": ["id", "title", "text"]}
     ]
 )
 
-# Get optimization statistics and performance analysis
-stats = unified_optimizer.get_optimization_stats()
-analysis = unified_optimizer.analyze_query_performance()
+# Save to different formats
+ipfs_datasets.save_dataset(dataset, "output/dataset.parquet", format="parquet")
+cid = ipfs_datasets.save_dataset(dataset, "output/dataset.car", format="car")
 ```
 
-The query optimization framework provides:
-
-#### Wikipedia Knowledge Graph Optimization
-- **Type-Specific Optimization**: Adapts query parameters based on entity types in the query
-- **Edge Type Detection**: Identifies important relationship types for the query
-- **Temperature-Aware Planning**: Uses extraction and validation information to adjust parameters
-- **Category Expansion**: Automatically expands queries with category-related terms
-- **Entity-Mediated Traversal**: Plans efficient paths through connecting entities
-- **Cross-Document Reasoning**: Optimizes queries that require information from multiple documents
-
-#### IPLD Knowledge Graph Optimization
-- **CID-Aware Caching**: Optimizes query execution with CID-level caching
-- **Content-Addressed Path Planning**: Efficient traversal planning for IPLD DAGs
-- **Content Type-Specific Tuning**: Adjusts vector/graph weights based on content types
-- **Block Prefetching**: Intelligent prefetching of relevant IPLD blocks
-- **DAG Traversal Strategies**: Breadth-first or depth-first strategies based on query patterns
-- **Multi-CID Query Planning**: Optimized planning for queries spanning multiple CIDs
-
-#### Unified Optimization for Mixed Environments
-- **Graph Type Auto-Detection**: Automatically determines the appropriate optimizer
-- **Multi-Graph Support**: Handles queries spanning different graph types
-- **Weighted Result Combination**: Adjustable weights for different knowledge sources
-- **Performance Analysis**: Comprehensive statistics and optimization recommendations
-- **Cache Management**: Intelligent caching across different graph types
-- **Centralized Statistics**: Unified view of query patterns and performance
-
-See the `examples/rag_query_optimizer_example.py` file for comprehensive usage examples.
-
-### LLM-Enhanced GraphRAG with Query Optimization
-
-The library integrates the RAG Query Optimizer with the GraphRAG LLM processor for enhanced cross-document reasoning. This integration enables optimized knowledge graph traversal, content-aware query planning, and improved performance.
+## Vector Search
 
 ```python
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+import numpy as np
+from typing import List
+from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+
+# Create sample vectors
+vectors: List[np.ndarray] = [np.random.rand(768) for _ in range(100)]
+metadata = [{"id": i, "source": "wikipedia", "title": f"Article {i}"} for i in range(100)]
+
+# Create vector index
+index = IPFSKnnIndex(dimension=768, metric="cosine")
+vector_ids = index.add_vectors(vectors, metadata=metadata)
+
+# Search for similar vectors
+query_vector = np.random.rand(768)
+results = index.search(query_vector, top_k=5)
+for i, result in enumerate(results):
+    print(f"Result {i+1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}")
+```
+
+## GraphRAG Integration
+
+The GraphRAG system combines vector similarity search with knowledge graph traversal for enhanced retrieval and reasoning capabilities. It includes advanced query optimization for efficient cross-document reasoning.
+
+```python
+from ipfs_datasets_py.ipld import IPLDStorage, IPLDVectorStore, IPLDKnowledgeGraph
+from ipfs_datasets_py.graphrag_integration import GraphRAGQueryEngine
+from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
-from ipfs_datasets_py.llm_interface import LLMInterfaceFactory
+from ipfs_datasets_py.cross_document_reasoning import CrossDocumentReasoner
 import numpy as np
 
-# Create the query optimizer
-tracer = WikipediaKnowledgeGraphTracer()
-unified_optimizer = UnifiedGraphRAGQueryOptimizer(
-    wikipedia_optimizer=WikipediaKnowledgeGraphOptimizer(tracer=tracer),
-    ipld_optimizer=IPLDGraphRAGQueryOptimizer(),
+# Initialize IPLD storage components
+storage = IPLDStorage()
+vector_store = IPLDVectorStore(dimension=768, metric="cosine", storage=storage)
+knowledge_graph = IPLDKnowledgeGraph(name="my_graph", storage=storage, vector_store=vector_store)
+
+# Extract knowledge graph from text
+extractor = KnowledgeGraphExtractor()
+text = "IPFS is a peer-to-peer hypermedia protocol designed to make the web faster, safer, and more open."
+entities, relationships = extractor.extract_graph(text)
+
+# Add entities and relationships to the knowledge graph
+for entity in entities:
+    knowledge_graph.add_entity(
+        entity_type=entity.type,
+        name=entity.name,
+        properties=entity.properties,
+        vector=np.random.rand(768)  # In practice, use actual embeddings
+    )
+
+for relationship in relationships:
+    knowledge_graph.add_relationship(
+        relationship_type=relationship.type,
+        source=relationship.source_id,
+        target=relationship.target_id,
+        properties=relationship.properties
+    )
+
+# Initialize query optimizer
+query_optimizer = UnifiedGraphRAGQueryOptimizer(
+    enable_query_rewriting=True,
+    enable_budget_management=True,
     auto_detect_graph_type=True
 )
 
-# Initialize LLM processor with the optimizer
-llm = LLMInterfaceFactory.create()
-processor = GraphRAGLLMProcessor(
-    llm_interface=llm,
-    query_optimizer=unified_optimizer
+# Initialize GraphRAG query engine with optimizer
+query_engine = GraphRAGQueryEngine(
+    vector_stores={"default": vector_store},
+    knowledge_graph=knowledge_graph,
+    query_optimizer=query_optimizer
 )
 
-# Create reasoning enhancer
-enhancer = ReasoningEnhancer(
-    llm_processor=processor,
-    query_optimizer=unified_optimizer
+# Perform a query
+results = query_engine.query(
+    query_text="How does IPFS work?",
+    top_k=5,
+    max_graph_hops=2
 )
 
-# Perform optimized cross-document reasoning
-documents = [...]  # Your document list
-connections = [...]  # Document connections
-query = "How do neural networks relate to transformers?"
-query_vector = np.array([...])  # Your query embedding
-
-# The optimize_and_reason method automatically applies the appropriate optimizations
-result = enhancer.optimize_and_reason(
-    query=query,
-    query_vector=query_vector,
-    documents=documents,
-    connections=connections,
-    reasoning_depth="moderate",
-    doc_trace_ids=["trace1", "trace2"],  # For Wikipedia graphs
-    root_cids=["bafy123", "bafy456"]     # For IPLD graphs
+# Initialize cross-document reasoner
+cross_doc_reasoner = CrossDocumentReasoner(
+    query_optimizer=query_optimizer,
+    reasoning_tracer=None,  # Optional LLMReasoningTracer can be provided
+    min_connection_strength=0.6,
+    max_reasoning_depth=3
 )
 
-# Access the optimized results
-answer = result["answer"]
-confidence = result["confidence"]
-optimizer_info = result.get("optimizer_info", {})
+# Advanced cross-document reasoning
+reasoning_results = cross_doc_reasoner.reason_across_documents(
+    query="What are the security benefits of content addressing in IPFS?",
+    query_embedding=None,  # Will be computed if not provided
+    vector_store=vector_store,
+    knowledge_graph=knowledge_graph,
+    reasoning_depth="deep",  # "basic", "moderate", or "deep"
+    max_documents=10,
+    min_relevance=0.6,
+    max_hops=2,
+    return_trace=True  # Include detailed reasoning trace
+)
+
+print(f"Answer: {reasoning_results['answer']}")
+print(f"Confidence: {reasoning_results['confidence']}")
+
+# View entity-mediated connections
+for connection in reasoning_results["entity_connections"]:
+    print(f"Connection through {connection['entity']} ({connection['type']}): {connection['relation']} relationship")
+
+# Analyze reasoning trace
+if "reasoning_trace" in reasoning_results:
+    for step in reasoning_results["reasoning_trace"]["steps"]:
+        print(f"Reasoning step: {step['content']}")
 ```
 
-Key features of the integrated system:
-
-- **Optimizer-Enhanced LLM Processing**: Combines the power of query optimization with LLM capabilities
-- **Knowledge Graph-Aware Reasoning**: Uses graph structure to improve reasoning quality
-- **Multi-Graph Support**: Handles reasoning across Wikipedia and IPLD-based knowledge graphs
-- **Domain-Specific Processing**: Tailors reasoning for different knowledge domains (academic, medical, etc.)
-- **Performance Monitoring**: Tracks and analyzes LLM interactions for optimization
-- **Cross-Document Analysis**: Identifies connections and performs reasoning across multiple documents
-
-The system provides a seamless way to enhance the quality of answers by optimizing how the knowledge graph is traversed and which parts are prioritized based on the query.
-
-# Example of direct processor usage
-result = processor.analyze_evidence_chain(
-    doc1={"id": "doc1", "title": "Document 1"},
-    doc2={"id": "doc2", "title": "Document 2"},
-    entity={"id": "entity1", "name": "Entity", "type": "concept"},
-    doc1_context="Context from document 1",
-    doc2_context="Context from document 2"
-)
-
-print(f"Relationship type: {result['relationship_type']}")
-print(f"Inference: {result['inference']}")
-print(f"Confidence: {result['confidence']}")
-```
-
-The GraphRAG LLM integration with Query Optimization provides:
-- **Enhanced Cross-Document Reasoning**: More sophisticated analysis of document connections
-- **Evidence Chain Analysis**: LLM-powered analysis of document relationships
-- **Query-Optimized Knowledge Graph Traversal**: Efficient exploration of graph structures
-- **Content-Type Aware Processing**: Tailored processing for different content types
-- **Domain-Specific Analysis**: Specialized analysis for different knowledge domains
-- **Performance Monitoring and Optimization**: Continuous improvement of reasoning quality
-- **Knowledge Gap Identification**: Detection of missing information between documents
-- **Deep Inference Generation**: Generation of insights based on document connections
-- **Transitive Relationship Analysis**: Analysis of multi-hop paths between entities
-- **LLM-Powered Synthesis**: Generation of comprehensive answers to complex queries
-- **Mock LLM Interface**: Development-ready interfaces that will eventually connect to real models
-
-### Tracing and Explanation for GraphRAG
-
-The library includes comprehensive tracing and explanation capabilities for GraphRAG operations, particularly for Wikipedia knowledge graph extraction and cross-document analysis:
+## Web Archive Integration
 
 ```python
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.web_archive_utils import archive_website, index_warc, extract_dataset_from_cdxj
 
-# Initialize components
-tracer = WikipediaKnowledgeGraphTracer()
-extractor = KnowledgeGraphExtractorWithValidation(use_tracer=True)
+# Archive a website
+warc_file = archive_website("https://example.com/", output_dir="archives")
 
-# Extract knowledge graph with tracing
-result = extractor.extract_from_wikipedia(
-    page_title="IPFS",
-    extraction_temperature=0.7,
-    structure_temperature=0.5,
-    validation_depth=2
-)
-kg = result["knowledge_graph"]
-trace_id = result.get("trace_id")
+# Index WARC file to IPFS
+cdxj_path = index_warc(warc_file, output_path="indexes/example.cdxj")
 
-# Get detailed explanation of the extraction process
-explanation = tracer.explain_extraction_trace(trace_id)
-print(explanation)
-
-# Generate visualization of the knowledge graph
-visualization = tracer._generate_detailed_mermaid_graph({"entities": kg.entities, "relationships": kg.relationships})
-print(visualization)
-
-# Extract knowledge graphs from multiple related pages
-ai_result = extractor.extract_from_wikipedia("Artificial Intelligence", validation_depth=2)
-ml_result = extractor.extract_from_wikipedia("Machine Learning", validation_depth=2)
-dl_result = extractor.extract_from_wikipedia("Deep Learning", validation_depth=2)
-
-# Perform cross-document analysis
-analysis = tracer.cross_document_analysis(
-    trace_ids=[ai_result.get("trace_id"), ml_result.get("trace_id"), dl_result.get("trace_id")],
-    entity_threshold=0.7,
-    relationship_threshold=0.6
-)
-
-# Print cross-document insights
-print(f"Found {len(analysis['connecting_entities'])} connecting entities across documents")
-print(f"Found {len(analysis['shared_relationships'])} shared relationships")
-print(f"Identified {len(analysis['knowledge_gaps']['property_gaps'])} knowledge gaps")
-print(f"Generated {len(analysis['potential_inferences'])} potential inferences")
-
-# Visualize cross-document connections
-print(analysis["visualization"])
-
-# Compare different temperature settings
-comparison = tracer.compare_temperature_settings(
-    trace_ids=["low_temp_extraction", "medium_temp_extraction", "high_temp_extraction"],
-    comparison_aspects=["entity_count", "relationship_count", "structure_complexity"]
-)
-
-# Get temperature recommendations
-recommendation = tracer.generate_temperature_recommendation(
-    trace_id=trace_id,
-    target="balanced"  # Can be "detailed", "balanced", or "concise"
-)
-print(f"Recommended settings: extraction={recommendation['recommended_settings']['extraction_temperature']}, structure={recommendation['recommended_settings']['structure_temperature']}")
+# Extract dataset from CDXJ index
+dataset = extract_dataset_from_cdxj(cdxj_path)
 ```
 
-The enhanced tracing and explanation capabilities now provide:
-
-#### Basic Features
-- **Detailed Process Tracing**: Capture every step of the knowledge graph extraction and validation
-- **Temperature Impact Analysis**: Compare the effects of different temperature settings with detailed metrics
-- **Wikidata Coverage Gap Analysis**: Identify what knowledge is missing compared to Wikidata
-- **Enhanced Visualizations**: Generate detailed graph visualizations, timelines, and cross-document connections
-- **Confidence Explanation**: Explain how confidence scores were determined
-- **Human-Readable Summaries**: Generate concise explanations of complex processes
-- **Knowledge Graph Statistics**: Provide detailed metrics about extracted knowledge graphs
-
-#### New Cross-Document Analysis Features
-- **Entity Connections**: Discover entities that appear across multiple Wikipedia pages
-- **Shared Relationship Detection**: Identify similar relationships across documents
-- **Knowledge Gap Analysis**: Find missing properties and relationships in documents
-- **Cross-Document Inferences**: Generate potential inferences by combining information across documents
-- **Cross-Document Visualization**: Visualize the connections between documents through shared entities
-
-#### Advanced Temperature Control
-- **Temperature Recommendation System**: Get recommendations for temperature settings based on desired output profiles
-- **Profile-Based Extraction**: Choose from "detailed", "balanced", or "concise" extraction profiles
-- **Temperature Impact Tracking**: Analyze how temperature changes affect entity counts, relationship diversity, and complexity
-- **Entity Type and Relationship Diversity Analysis**: Measure how temperature affects knowledge graph diversity
-
-See the `examples/graph_reasoning_tracer_example.py` file for comprehensive examples of these new capabilities.
-
-### Distributed Dataset Management with LibP2P
-
-The library includes distributed dataset management capabilities using LibP2P, enabling peer-to-peer sharing and collaborative dataset building:
+## Security and Governance
 
 ```python
-from ipfs_datasets_py.libp2p_kit import DistributedDatasetManager, NodeRole
-import numpy as np
+from ipfs_datasets_py.security import SecurityManager, require_authentication, require_access
 
-# Initialize a distributed dataset manager
-manager = DistributedDatasetManager(
-    storage_dir="./data",
-    listen_addresses=["/ip4/0.0.0.0/tcp/0"],
-    bootstrap_peers=["/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"],
-    role=NodeRole.HYBRID
-)
+# Initialize security manager
+security = SecurityManager()
 
-# Create a new dataset
-dataset = manager.create_dataset(
-    name="Vector Dataset",
-    description="A distributed vector dataset",
-    schema={"id": "string", "text": "string", "vector": "float32[]"},
-    vector_dimensions=128,
-    tags=["example", "vectors"]
-)
+# Create users with different roles
+admin_id = security.create_user("admin", "admin_password", role="admin")
+user_id = security.create_user("standard_user", "user_password", role="user")
 
-# Shard the dataset and distribute it across the network
-await manager.shard_dataset(
-    dataset_id=dataset.dataset_id,
-    data=dataset_data,
-    format="parquet",
-    replication_factor=3
-)
+# Encrypt sensitive data
+key_id = security.create_encryption_key("my-secret-key")
+encrypted_data = security.encrypt_data("This is confidential".encode(), key_id)
 
-# Perform a federated vector search across the network
-query_vector = np.random.rand(128)
-results = await manager.vector_search(
-    dataset_id=dataset.dataset_id,
-    query_vector=query_vector,
-    top_k=10
-)
-
-# Perform a federated keyword search
-keyword_results = await manager.keyword_search(
-    dataset_id=dataset.dataset_id,
-    query="machine learning",
-    top_k=10
-)
-
-# Get network status information
-status = await manager.get_network_status()
-print(f"Connected to {status['peer_count']} peers")
-print(f"Managing {status['dataset_count']} datasets with {status['shard_count']} shards")
+# Use authentication and access control
+@require_authentication
+@require_access("dataset_id", "write")
+def update_dataset(user_token, dataset_id, new_data):
+    # Update logic here
+    return True
 ```
 
-The distributed dataset management features provide:
-
-#### Core Features
-- **Peer-to-Peer Communication**: Direct communication between dataset nodes using LibP2P
-- **Dataset Sharding**: Division of large datasets into manageable shards for distribution
-- **Distributed Storage**: Storage of shards across multiple nodes in the network
-- **Federated Search**: Search capabilities that span all nodes storing relevant data
-- **Metadata Synchronization**: Automatic synchronization of dataset metadata across nodes
-- **Node Discovery**: Automatic discovery of peers in the network
-- **Resilient Operations**: Handling of node failures and network partitions
-
-#### Advanced Features
-- **Dataset Replication**: Configurable replication of shards for redundancy and availability
-- **Collaborative Dataset Building**: Ability for multiple nodes to contribute to the same dataset
-- **Shard Transfer Protocol**: Efficient protocol for transferring shards between nodes
-- **Node Roles**: Different node types (coordinator, worker, hybrid, client) for specialized tasks
-- **Protocol Handlers**: Extensible protocol handlers for custom dataset operations
-- **Federated Vector Search**: Distributed similarity search across vector embeddings
-- **Federated Keyword Search**: Distributed text search capabilities
-
-See the `examples/distributed_dataset_example.py` file for comprehensive examples of these distributed capabilities.
-
-### Performance Optimized Streaming Data Loading
-
-The library includes high-performance streaming data loaders for efficient processing of large datasets:
+## Audit Logging
 
 ```python
-from ipfs_datasets_py.streaming_data_loader import (
-    load_parquet,
-    load_csv,
-    load_json,
-    load_huggingface,
-    create_memory_mapped_vectors,
-    load_memory_mapped_vectors
-)
-import numpy as np
+from ipfs_datasets_py.audit import AuditLogger, AuditCategory, AuditLevel
+from ipfs_datasets_py.audit import FileAuditHandler, JSONAuditHandler
 
-# Load a large Parquet file with streaming
-dataset = load_parquet(
-    parquet_path="large_dataset.parquet",
-    batch_size=10000,
-    prefetch_batches=2,
-    cache_enabled=True
-)
+# Get the global audit logger
+audit_logger = AuditLogger.get_instance()
 
-# Process data in batches without loading the entire dataset into memory
-for batch in dataset.iter_batches():
-    # Process batch
-    print(f"Processing batch with {len(batch)} records")
+# Configure handlers
+audit_logger.add_handler(FileAuditHandler("file", "logs/audit.log"))
+audit_logger.add_handler(JSONAuditHandler("json", "logs/audit.json"))
 
-# Transform data on-the-fly
-transformed_dataset = dataset.map(lambda batch: process_batch(batch))
+# Set thread-local context
+audit_logger.set_context(user="current_user", session_id="session123")
 
-# Memory-mapped access to large vector datasets
-vectors = load_memory_mapped_vectors(
-    file_path="embeddings.bin",
-    dimension=768,
-    mode='r'
-)
+# Log various types of events
+audit_logger.auth("login", status="success", details={"ip": "192.168.1.100"})
+audit_logger.data_access("read", resource_id="dataset123", resource_type="dataset")
+audit_logger.security("permission_change", level=AuditLevel.WARNING,
+                   details={"target_role": "admin", "changes": ["added_user"]})
 
-# Efficient random access without loading entire dataset
-vector = vectors[1000]  # Get a specific vector
-batch = vectors[5000:5100]  # Get a batch of vectors
-
-# Create and populate memory-mapped vectors
-with create_memory_mapped_vectors(
-    file_path="new_embeddings.bin",
-    dimension=768,
-    mode='w+'
-) as mmap_vectors:
-    # Add vectors in batches
-    batch = np.random.rand(1000, 768).astype(np.float32)
-    mmap_vectors.append(batch)
+# Generate compliance report
+from ipfs_datasets_py.audit import GDPRComplianceReporter
+reporter = GDPRComplianceReporter()
+report = reporter.generate_report(events)
+report.save_html("reports/gdpr_compliance.html")
 ```
 
-The streaming data loading capabilities provide:
+## Data Provenance and Lineage
 
-#### Core Features
-- **Memory-Efficient Streaming**: Process datasets larger than available RAM
-- **Support for Multiple Formats**: Parquet, CSV, JSON, and HuggingFace datasets
-- **Memory-Mapped Vector Access**: Efficient random access to large vector datasets
-- **Batch Processing**: Process data in manageable chunks
-- **Prefetching**: Load next batch while processing current batch
-- **Caching**: Avoid redundant reads with intelligent caching
+```python
+from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
 
-#### Performance Features
-- **Performance Monitoring**: Detailed statistics on throughput and processing time
-- **Transformation Pipeline**: Apply transformations while streaming
-- **Filtering Capabilities**: Filter data without loading the entire dataset
-- **Custom Batch Processing**: Define custom functions to process batches
-- **Parallel Processing Support**: Designed to work with parallel processing libraries
-- **Minimal Memory Footprint**: Optimized for working with very large datasets
+# Initialize provenance manager
+provenance = EnhancedProvenanceManager(
+    storage_path="provenance_data",
+    enable_ipld_storage=True,
+    default_agent_id="data_scientist",
+    tracking_level="detailed",
+    visualization_engine="matplotlib"
+)
 
-See the `examples/streaming_data_example.py` file for comprehensive examples of these streaming capabilities.
+# Record a data source
+source_id = provenance.record_source(
+    data_id="customer_data",
+    source_type="csv", 
+    location="/data/customers.csv",
+    format="csv",
+    description="Raw customer data",
+    size=1024 * 1024 * 5,  # 5MB
+    hash="sha256:abc123def456..."
+)
 
-# IPFS Huggingface Bridge:
+# Record data cleaning with context manager
+with provenance.begin_transformation(
+    description="Clean customer data",
+    transformation_type="data_cleaning",
+    tool="pandas",
+    version="1.5.3",
+    input_ids=["customer_data"],
+    parameters={"dropna": True, "normalize": True}
+) as context:
+    # Actual data cleaning code would go here
+    # ...
+    
+    # Set output ID
+    context.set_output_ids(["cleaned_data"])
 
-for transformers python library visit:
-https://github.com/endomorphosis/ipfs_transformers/
+# Record data validation
+verification_id = provenance.record_verification(
+    data_id="cleaned_data",
+    verification_type="schema",
+    schema={"required": ["customer_id", "name", "email"]},
+    validation_rules=[{"field": "email", "rule": "email_format"}],
+    pass_count=950,
+    fail_count=50,
+    description="Customer data validation"
+)
 
-for transformers js client visit:                          
-https://github.com/endomorphosis/ipfs_transformers_js/
+# Generate enhanced visualization
+provenance.visualize_provenance_enhanced(
+    data_ids=["cleaned_data"],
+    max_depth=5,
+    include_parameters=True,
+    show_timestamps=True,
+    layout="hierarchical",
+    highlight_critical_path=True,
+    include_metrics=True,
+    file_path="visualizations/data_lineage.png",
+    format="png",
+    width=1200,
+    height=800
+)
 
-for orbitdb_kit nodejs library visit:
-https://github.com/endomorphosis/orbitdb_kit/
+# Search provenance records semantically
+results = provenance.semantic_search("customer validation schema", limit=5)
 
-for fireproof_kit nodejs library visit:
-https://github.com/endomorphosis/fireproof_kit
+# Calculate data metrics
+metrics = provenance.calculate_data_metrics("cleaned_data")
+impact_score = metrics["impact"]
+complexity = metrics["complexity"]
+print(f"Data impact score: {impact_score:.2f}")
+print(f"Processing depth: {complexity['max_depth']}")
 
-for Faiss KNN index python library visit:
-https://github.com/endomorphosis/ipfs_faiss/
+# Export provenance to CAR file for distributed verification
+provenance.export_to_car("provenance.car")
+```
 
-for python model manager library visit: 
-https://github.com/endomorphosis/ipfs_model_manager/
+## Resilient Distributed Operations
 
-for nodejs model manager library visit: 
-https://github.com/endomorphosis/ipfs_model_manager_js/
+```python
+from ipfs_datasets_py.resilient_operations import ResilienceManager, resilient
 
-for nodejs ipfs huggingface scraper with pinning services visit:
-https://github.com/endomorphosis/ipfs_huggingface_scraper/
+# Create resilience manager
+resilience_manager = ResilienceManager()
 
+# Use resilient operations
+result = await resilience_manager.resilient_operation(
+    operation_func=complex_operation,
+    max_retries=3,
+    fallback_func=fallback_operation
+)
 
-Author - Benjamin Barber
-QA - Kevin De Haan
+# Use decorator for resilient functions
+@resilient(max_retries=3)
+def critical_operation():
+    # Operation that might fail
+    pass
+```
+
+## Docker Deployment
+
+```bash
+# Build Docker image
+docker build -t ipfs-datasets-app .
+
+# Run container
+docker run -p 8000:8000 -v /path/to/data:/app/data ipfs-datasets-app
+
+# Run with Docker Compose for multi-service deployment
+docker-compose up -d
+```
+
+## Documentation
+
+- [Getting Started](docs/getting_started.md): Basic concepts and quick start guide
+- [User Guide](docs/user_guide.md): Comprehensive guide for using the library
+- [Installation Guide](docs/installation.md): Detailed installation instructions
+- [API Reference](docs/api_reference.md): Complete API documentation
+- [Advanced Examples](docs/advanced_examples.md): Complex usage patterns
+- [Docker Deployment](docs/docker_deployment.md): Containerization guide
+- [Tutorials](docs/tutorials/): Step-by-step guides for specific features
+- [Security & Governance](docs/security_governance.md): Security features guide
+- [Audit Logging](docs/audit_logging.md): Comprehensive audit logging 
+- [Data Provenance](docs/data_provenance.md): Enhanced data provenance tracking
+- [Performance Optimization](docs/performance_optimization.md): Optimizing for large datasets
+- [Distributed Features](docs/distributed_features.md): Multi-node capabilities
+- [IPLD Optimization](docs/ipld_optimization.md): IPLD encoding/decoding optimizations
+- [Query Optimization](docs/query_optimization.md): Optimizing graph and vector queries
+
+## Testing
+
+```bash
+python3 test/test.py                                        # Run all tests
+python3 -c "from test.test import test; test()"             # Run single test function
+python3 -c "from test.test import download_test; download_test()"  # Test downloads
+python3 -c "from test.phase1.run_llm_tests import run_all"  # Run LLM integration tests
+```
+
+## Project Status
+
+This project has completed all planned implementation phases:
+- ✅ Phase 0: Foundation
+- ✅ Phase 1: Core Infrastructure Integration
+- ✅ Phase 2: Processing & Analysis
+- ✅ Phase 3: Advanced Features
+- ✅ Phase 4: Optimization and Scaling
+- ✅ Phase 5: Production Readiness
+
+## Related Projects
+
+- [IPFS Transformers](https://github.com/endomorphosis/ipfs_transformers/): Transformers library with IPFS support
+- [IPFS Transformers JS](https://github.com/endomorphosis/ipfs_transformers_js/): JavaScript client for IPFS Transformers
+- [OrbitDB Kit](https://github.com/endomorphosis/orbitdb_kit/): NodeJS library for OrbitDB
+- [Fireproof Kit](https://github.com/endomorphosis/fireproof_kit): NodeJS library for Fireproof
+- [IPFS FAISS](https://github.com/endomorphosis/ipfs_faiss/): FAISS vector search with IPFS support
+- [IPFS Model Manager](https://github.com/endomorphosis/ipfs_model_manager/): Python model manager for IPFS
+- [IPFS Model Manager JS](https://github.com/endomorphosis/ipfs_model_manager_js/): JavaScript model manager for IPFS
+- [IPFS Huggingface Scraper](https://github.com/endomorphosis/ipfs_huggingface_scraper/): NodeJS scraper with pinning services
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Authors
+
+- Benjamin Barber - Creator
+- Kevin De Haan - QA

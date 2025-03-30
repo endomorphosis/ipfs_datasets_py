@@ -1,259 +1,248 @@
 #!/usr/bin/env python3
 """
-Example of using the libp2p_kit module for distributed dataset management.
+Example demonstrating support for sharded datasets across multiple IPFS nodes.
 
 This example demonstrates:
-1. Setting up a distributed dataset environment
-2. Creating and sharding a dataset
-3. Distributing shards across nodes
-4. Performing federated search
-
-Requirements:
-- py-libp2p (install with: pip install py-libp2p)
-- numpy
+1. Creating a distributed dataset
+2. Sharding and distributing the dataset across nodes
+3. Querying the dataset from different nodes
+4. Synchronizing dataset metadata between nodes
+5. Rebalancing shards to ensure proper distribution
 """
 
 import os
-import sys
 import time
 import asyncio
 import argparse
 import numpy as np
+import pandas as pd
 from typing import Dict, List, Any, Optional
-
-# Add the parent directory to the path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ipfs_datasets_py.libp2p_kit import (
     DistributedDatasetManager,
     NodeRole,
-    LibP2PNotAvailableError
+    LIBP2P_AVAILABLE
 )
 
 
-def setup_argparse():
-    """Set up command-line arguments."""
-    parser = argparse.ArgumentParser(description='Distributed Dataset Example')
-    parser.add_argument(
-        '--role',
-        choices=['coordinator', 'worker', 'hybrid', 'client'],
-        default='hybrid',
-        help='Role of this node (default: hybrid)'
-    )
-    parser.add_argument(
-        '--storage',
-        default='./data',
-        help='Storage directory (default: ./data)'
-    )
-    parser.add_argument(
-        '--listen',
-        default='/ip4/0.0.0.0/tcp/0',
-        help='Listen address (default: /ip4/0.0.0.0/tcp/0)'
-    )
-    parser.add_argument(
-        '--bootstrap',
-        action='append',
-        help='Bootstrap peer address(es)'
-    )
-    parser.add_argument(
-        '--create-dataset',
-        action='store_true',
-        help='Create a new dataset'
-    )
-    parser.add_argument(
-        '--search',
-        action='store_true',
-        help='Perform a search'
-    )
-    return parser
+def create_sample_dataset(size=1000):
+    """Create a sample dataset for testing."""
+    return pd.DataFrame({
+        "id": list(range(size)),
+        "text": [f"Sample text {i}" for i in range(size)],
+        "vector": [np.random.rand(128).tolist() for _ in range(size)]
+    })
 
 
-async def create_dataset_example(manager):
-    """Create and distribute a dataset."""
-    print("Creating a new distributed dataset...")
+async def run_coordinator(args):
+    """Run a coordinator node that creates and distributes the dataset."""
+    print(f"Starting coordinator node with ID {args.node_id}...")
     
-    # Create the dataset
+    # Create the distributed dataset manager
+    manager = DistributedDatasetManager(
+        storage_dir=args.storage_dir,
+        node_id=args.node_id,
+        listen_addresses=["/ip4/0.0.0.0/tcp/0"],
+        bootstrap_peers=args.bootstrap_peers,
+        role=NodeRole.COORDINATOR
+    )
+    
+    # Wait for node to start
+    time.sleep(2)
+    
+    print("Creating dataset...")
     dataset = manager.create_dataset(
-        name="Example Vector Dataset",
-        description="An example vector dataset created with libp2p_kit",
-        schema={
-            "id": "string",
-            "text": "string",
-            "vector": "float32[]"
-        },
+        name="Distributed Test Dataset",
+        description="Example dataset distributed across multiple nodes",
+        schema={"id": "integer", "text": "string", "vector": "float[]"},
         vector_dimensions=128,
-        tags=["example", "vector", "distributed"]
+        tags=["example", "test"]
     )
     
-    print(f"Created dataset: {dataset.name}")
-    print(f"Dataset ID: {dataset.dataset_id}")
+    print(f"Created dataset with ID: {dataset.dataset_id}")
     
-    # Create sample data (in a real scenario, this would be loaded from a file)
-    print("Creating sample data...")
-    sample_size = 100
-    sample_data = []
+    # Create sample data
+    data = create_sample_dataset(size=args.dataset_size)
+    print(f"Created sample dataset with {len(data)} records")
     
-    for i in range(sample_size):
-        sample_data.append({
-            "id": f"sample-{i}",
-            "text": f"This is sample document {i}",
-            "vector": np.random.rand(128).tolist()  # Random vector
-        })
-    
-    # In a real implementation, we would store this data in a Parquet file
-    # and then shard it across the network
-    print("Sharding dataset (mock implementation)...")
-    
-    # Mock implementation of sharding
-    shard_size = 20
-    num_shards = (sample_size + shard_size - 1) // shard_size
-    
-    for i in range(num_shards):
-        start_idx = i * shard_size
-        end_idx = min(start_idx + shard_size, sample_size)
-        shard_data = sample_data[start_idx:end_idx]
-        
-        # In a real implementation, we would store this shard in IPFS
-        # and get a CID for it. For this example, we'll use a mock CID.
-        mock_cid = f"QmExampleCID{i}"
-        
-        # Create the shard in the dataset
-        shard = manager.shard_manager.create_shard(
-            dataset_id=dataset.dataset_id,
-            data=None,  # In a real implementation, this would be the actual data
-            cid=mock_cid,
-            record_count=len(shard_data),
-            format="parquet"
-        )
-        
-        print(f"Created shard {i+1}/{num_shards}: {shard.shard_id}")
-    
-    # Print dataset information
-    print("\nDataset Information:")
-    print(f"Total records: {dataset.total_records}")
-    print(f"Total shards: {dataset.shard_count}")
-    
-    return dataset
-
-
-async def search_example(manager, dataset_id=None):
-    """Perform a federated search."""
-    # Get available datasets
-    status = await manager.get_network_status()
-    
-    if not dataset_id:
-        if not status["datasets"]:
-            print("No datasets available. Create a dataset first.")
-            return
-        
-        print("\nAvailable Datasets:")
-        for i, dataset in enumerate(status["datasets"]):
-            print(f"{i+1}. {dataset['name']} (ID: {dataset['dataset_id']})")
-        
-        dataset_id = status["datasets"][0]["dataset_id"]
-        print(f"\nUsing dataset: {dataset_id}")
-    
-    # Create a random query vector
-    vector_dimensions = 128  # This should match the dataset dimensions
-    query_vector = np.random.rand(vector_dimensions)
-    
-    print(f"\nPerforming vector search on dataset {dataset_id}...")
-    print(f"Query vector dimensions: {vector_dimensions}")
-    
-    # In a real implementation, this would perform a federated search
-    # across all nodes hosting shards of this dataset
-    results = await manager.vector_search(
-        dataset_id=dataset_id,
-        query_vector=query_vector,
-        top_k=5
+    # Shard and distribute the dataset
+    print(f"Sharding dataset with shard size {args.shard_size}...")
+    shards = await manager.shard_dataset(
+        dataset_id=dataset.dataset_id,
+        data=data,
+        format="parquet",
+        shard_size=args.shard_size,
+        replication_factor=args.replication
     )
     
-    print("\nSearch Results:")
-    if "results" in results and results["results"]:
-        for i, result in enumerate(results["results"]):
-            print(f"{i+1}. ID: {result.get('id', 'unknown')}")
-            print(f"   Distance: {result.get('distance', 'unknown')}")
-            
-            # Print metadata if available
-            if "metadata" in result:
-                text = result["metadata"].get("text", "No text available")
-                print(f"   Text: {text[:50]}..." if len(text) > 50 else f"   Text: {text}")
-            
-            print()
-    else:
-        print("No results found or mock implementation returned empty results.")
+    print(f"Created {len(shards)} shards")
     
-    print(f"Query executed against {len(results.get('nodes_queried', []))} nodes")
+    # Get network status
+    network_status = await manager.get_network_status()
+    print("\nNetwork Status:")
+    print(f"- Node ID: {network_status['node_id']}")
+    print(f"- Role: {network_status['role']}")
+    print(f"- Peer Count: {network_status['peer_count']}")
+    print(f"- Dataset Count: {network_status['dataset_count']}")
+    print(f"- Shard Count: {network_status['shard_count']}")
+    
+    # Keep the node running
+    print("\nCoordinator node is running. Press Ctrl+C to exit.")
+    while True:
+        await asyncio.sleep(10)
+        
+        # Rebalance shards every 10 seconds
+        if args.rebalance:
+            print("Rebalancing shards...")
+            rebalance_results = await manager.rebalance_shards(
+                dataset_id=dataset.dataset_id,
+                target_replication=args.replication
+            )
+            print(f"Rebalanced {rebalance_results['total_shards_rebalanced']} shards")
 
 
-async def main():
-    """Main function."""
-    parser = setup_argparse()
+async def run_worker(args):
+    """Run a worker node that participates in the distributed dataset."""
+    print(f"Starting worker node with ID {args.node_id}...")
+    
+    # Create the distributed dataset manager
+    manager = DistributedDatasetManager(
+        storage_dir=args.storage_dir,
+        node_id=args.node_id,
+        listen_addresses=["/ip4/0.0.0.0/tcp/0"],
+        bootstrap_peers=args.bootstrap_peers,
+        role=NodeRole.WORKER
+    )
+    
+    # Wait for node to start
+    time.sleep(2)
+    
+    # Sync with the network
+    print("Synchronizing with network...")
+    sync_results = await manager.sync_with_network()
+    print(f"Sync results: {sync_results}")
+    
+    # Get network status
+    network_status = await manager.get_network_status()
+    print("\nNetwork Status:")
+    print(f"- Node ID: {network_status['node_id']}")
+    print(f"- Role: {network_status['role']}")
+    print(f"- Peer Count: {network_status['peer_count']}")
+    print(f"- Dataset Count: {network_status['dataset_count']}")
+    print(f"- Shard Count: {network_status['shard_count']}")
+    
+    # Keep the node running
+    print("\nWorker node is running. Press Ctrl+C to exit.")
+    while True:
+        await asyncio.sleep(30)
+        
+        # Sync with the network periodically
+        print("Synchronizing with network...")
+        sync_results = await manager.sync_with_network()
+        print(f"Sync results: {sync_results}")
+
+
+async def run_client(args):
+    """Run a client node that queries the distributed dataset."""
+    print(f"Starting client node with ID {args.node_id}...")
+    
+    # Create the distributed dataset manager
+    manager = DistributedDatasetManager(
+        storage_dir=args.storage_dir,
+        node_id=args.node_id,
+        listen_addresses=["/ip4/0.0.0.0/tcp/0"],
+        bootstrap_peers=args.bootstrap_peers,
+        role=NodeRole.CLIENT
+    )
+    
+    # Wait for node to start
+    time.sleep(2)
+    
+    # Sync with the network
+    print("Synchronizing with network...")
+    sync_results = await manager.sync_with_network()
+    print(f"Sync results: {sync_results}")
+    
+    # Get network status
+    network_status = await manager.get_network_status()
+    print("\nNetwork Status:")
+    print(f"- Node ID: {network_status['node_id']}")
+    print(f"- Role: {network_status['role']}")
+    print(f"- Peer Count: {network_status['peer_count']}")
+    print(f"- Dataset Count: {network_status['dataset_count']}")
+    
+    if network_status['dataset_count'] == 0:
+        print("No datasets found. Waiting for datasets to be available...")
+        while network_status['dataset_count'] == 0:
+            await asyncio.sleep(5)
+            await manager.sync_with_network()
+            network_status = await manager.get_network_status()
+    
+    # Get the first dataset for querying
+    dataset_id = list(manager.shard_manager.datasets.keys())[0]
+    dataset = manager.shard_manager.datasets[dataset_id]
+    print(f"\nFound dataset: {dataset.name} ({dataset_id})")
+    
+    # Perform a query every 10 seconds
+    while True:
+        # Create a random query vector
+        query_vector = np.random.rand(dataset.vector_dimensions)
+        
+        print(f"\nPerforming vector search on dataset {dataset.name}...")
+        try:
+            results = await manager.vector_search(
+                dataset_id=dataset_id,
+                query_vector=query_vector,
+                top_k=5
+            )
+            
+            print(f"Search results: Found {results['total_results']} matches")
+            for i, result in enumerate(results['results'][:3]):
+                print(f"Result {i+1}: {result}")
+            
+            print(f"Query executed across {len(results.get('nodes_queried', []))} nodes")
+        except Exception as e:
+            print(f"Error performing search: {str(e)}")
+        
+        await asyncio.sleep(10)
+
+
+def main():
+    """Main entry point."""
+    if not LIBP2P_AVAILABLE:
+        print("Error: libp2p is not installed. Install it with: pip install py-libp2p")
+        return
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Distributed Dataset Example")
+    parser.add_argument("--role", choices=["coordinator", "worker", "client"], 
+                        required=True, help="Node role")
+    parser.add_argument("--node-id", default=None, help="Node ID (generated if not provided)")
+    parser.add_argument("--storage-dir", default="./data", help="Storage directory")
+    parser.add_argument("--bootstrap-peers", nargs="+", default=[], 
+                        help="Bootstrap peer multiaddresses")
+    parser.add_argument("--dataset-size", type=int, default=1000, 
+                        help="Size of the sample dataset (coordinator only)")
+    parser.add_argument("--shard-size", type=int, default=100, 
+                        help="Records per shard (coordinator only)")
+    parser.add_argument("--replication", type=int, default=3, 
+                        help="Replication factor (coordinator only)")
+    parser.add_argument("--rebalance", action="store_true", 
+                        help="Enable periodic shard rebalancing (coordinator only)")
+    
     args = parser.parse_args()
     
-    try:
-        print("Initializing distributed dataset manager...")
-        
-        role_map = {
-            "coordinator": NodeRole.COORDINATOR,
-            "worker": NodeRole.WORKER,
-            "hybrid": NodeRole.HYBRID,
-            "client": NodeRole.CLIENT
-        }
-        
-        manager = DistributedDatasetManager(
-            storage_dir=args.storage,
-            listen_addresses=[args.listen],
-            bootstrap_peers=args.bootstrap,
-            role=role_map[args.role],
-            auto_start=True
-        )
-        
-        print(f"Node initialized with ID: {manager.node.node_id}")
-        print(f"Role: {manager.node.role.value}")
-        
-        # Get initial network status
-        status = await manager.get_network_status()
-        print(f"Connected to {status['peer_count']} peers")
-        print(f"Managing {status['dataset_count']} datasets with {status['shard_count']} shards")
-        
-        # Create dataset if requested
-        dataset_id = None
-        if args.create_dataset:
-            dataset = await create_dataset_example(manager)
-            dataset_id = dataset.dataset_id
-        
-        # Perform search if requested
-        if args.search:
-            await search_example(manager, dataset_id)
-        
-        # If neither operation was requested, show help
-        if not (args.create_dataset or args.search):
-            print("\nNo operation specified. Use --create-dataset or --search.")
-            parser.print_help()
-        
-        # Keep the node running for a bit to allow for network operations
-        print("\nNode is running. Press Ctrl+C to exit...")
-        while True:
-            await asyncio.sleep(1)
+    # Create storage directory if it doesn't exist
+    os.makedirs(args.storage_dir, exist_ok=True)
     
-    except LibP2PNotAvailableError:
-        print("Error: py-libp2p is not installed.")
-        print("Install it with: pip install py-libp2p")
-        return 1
-    
-    except KeyboardInterrupt:
-        print("\nShutting down...")
-    
-    finally:
-        if 'manager' in locals():
-            manager.stop()
-    
-    return 0
+    # Run the appropriate node type
+    if args.role == "coordinator":
+        asyncio.run(run_coordinator(args))
+    elif args.role == "worker":
+        asyncio.run(run_worker(args))
+    elif args.role == "client":
+        asyncio.run(run_client(args))
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nExiting...")
+    main()

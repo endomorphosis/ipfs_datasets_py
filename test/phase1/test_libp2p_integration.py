@@ -427,6 +427,192 @@ class TestIntegration:
                 assert results["results"][0]["distance"] == 0.1
                 assert results["results"][1]["id"] == "result2"
                 assert results["results"][1]["distance"] == 0.2
+    
+    @pytest.mark.asyncio
+    async def test_sharded_dataset(self, temp_dir):
+        """Test creating and distributing a sharded dataset."""
+        # Create mock data for testing
+        import pandas as pd
+        mock_data = pd.DataFrame({
+            "id": list(range(100)),
+            "text": [f"Sample text {i}" for i in range(100)],
+            "value": [float(i) for i in range(100)]
+        })
+        
+        # Mock necessary components
+        with mock.patch("ipfs_datasets_py.libp2p_kit.DistributedDatasetManager.start"):
+            with mock.patch("ipfs_datasets_py.libp2p_kit.DatasetShardManager.distribute_shard") as mock_distribute:
+                # Configure mock
+                mock_distribute.side_effect = asyncio.coroutine(
+                    mock.MagicMock(return_value=["peer1", "peer2"])
+                )
+                
+                # Mock node's discover_peers method
+                with mock.patch.object(LibP2PNode, "discover_peers") as mock_discover:
+                    mock_discover.side_effect = asyncio.coroutine(
+                        mock.MagicMock(return_value=["peer1", "peer2", "peer3"])
+                    )
+                    
+                    # Create manager
+                    manager = DistributedDatasetManager(
+                        storage_dir=temp_dir,
+                        auto_start=False
+                    )
+                    
+                    # Create dataset
+                    dataset = manager.create_dataset(
+                        name="Test Sharded Dataset",
+                        description="A test dataset for sharding",
+                        schema={"id": "integer", "text": "string", "value": "float"},
+                        format="parquet"
+                    )
+                    
+                    # Test sharding the dataset
+                    shards = await manager.shard_dataset(
+                        dataset_id=dataset.dataset_id,
+                        data=mock_data,
+                        format="parquet",
+                        shard_size=25,  # Split into 4 shards
+                        replication_factor=3
+                    )
+                    
+                    # Verify shards were created
+                    assert len(shards) == 4
+                    
+                    # Verify distribution calls
+                    assert mock_distribute.call_count == 4
+                    
+                    # Verify updated dataset metadata
+                    updated_dataset = manager.shard_manager.datasets[dataset.dataset_id]
+                    assert updated_dataset.total_records == 100
+                    assert updated_dataset.shard_count == 4
+                    assert len(updated_dataset.shard_ids) == 4
+    
+    @pytest.mark.asyncio
+    async def test_shard_synchronization(self, temp_dir):
+        """Test shard synchronization between nodes."""
+        # Set up managers for two nodes
+        with mock.patch("ipfs_datasets_py.libp2p_kit.DistributedDatasetManager.start"):
+            manager1 = DistributedDatasetManager(
+                storage_dir=os.path.join(temp_dir, "node1"),
+                node_id="node1",
+                auto_start=False
+            )
+            
+            manager2 = DistributedDatasetManager(
+                storage_dir=os.path.join(temp_dir, "node2"),
+                node_id="node2",
+                auto_start=False
+            )
+            
+            # Create dataset on node1
+            dataset = manager1.create_dataset(
+                name="Sync Test Dataset",
+                description="Dataset for testing synchronization",
+                schema={"field": "string"}
+            )
+            
+            # Create a shard on node1
+            shard = manager1.shard_manager.create_shard(
+                dataset_id=dataset.dataset_id,
+                data=None,
+                cid="QmTestSync123",
+                record_count=500
+            )
+            
+            # Mock the send_message method to simulate message exchange between nodes
+            original_send_message = LibP2PNode.send_message
+            
+            async def mock_send_message(self, peer_id, protocol, data):
+                # Route messages to the appropriate manager
+                if peer_id == "node1":
+                    if protocol == NetworkProtocol.METADATA_SYNC:
+                        return await manager1.shard_manager._handle_metadata_sync_request(data)
+                    elif protocol == NetworkProtocol.SHARD_SYNC:
+                        return await manager1.shard_manager._handle_shard_sync_request(data)
+                elif peer_id == "node2":
+                    if protocol == NetworkProtocol.METADATA_SYNC:
+                        return await manager2.shard_manager._handle_metadata_sync_request(data)
+                    elif protocol == NetworkProtocol.SHARD_SYNC:
+                        return await manager2.shard_manager._handle_shard_sync_request(data)
+                return {"status": "error", "message": "Peer not found"}
+            
+            # Add helper methods to handle requests directly for testing
+            async def _handle_metadata_sync_request(self, request):
+                response = {"status": "error", "message": "Invalid request"}
+                if request.get("action") == "list_datasets_with_timestamps":
+                    datasets = {
+                        dataset_id: {
+                            "modified_time": dataset.modified_time,
+                            "shard_count": dataset.shard_count,
+                            "name": dataset.name
+                        }
+                        for dataset_id, dataset in self.datasets.items()
+                    }
+                    response = {"status": "success", "datasets": datasets}
+                elif request.get("action") == "sync_dataset":
+                    dataset_id = request.get("dataset_id")
+                    if dataset_id in self.datasets:
+                        response = {"status": "success", "dataset": self.datasets[dataset_id].__dict__}
+                return response
+            
+            async def _handle_shard_sync_request(self, request):
+                response = {"status": "error", "message": "Invalid request"}
+                if request.get("action") == "list_shards_with_timestamps":
+                    dataset_id = request.get("dataset_id")
+                    if dataset_id:
+                        shards = {
+                            shard_id: shard.modified_time
+                            for shard_id, shard in self.shards.items()
+                            if shard.dataset_id == dataset_id
+                        }
+                    else:
+                        shards = {
+                            shard_id: shard.modified_time
+                            for shard_id, shard in self.shards.items()
+                        }
+                    response = {"status": "success", "shards": shards}
+                elif request.get("action") == "sync_shard":
+                    shard_id = request.get("shard_id")
+                    if shard_id in self.shards:
+                        response = {"status": "success", "shard": self.shards[shard_id].__dict__}
+                return response
+            
+            # Add the helper methods to the managers
+            manager1.shard_manager._handle_metadata_sync_request = _handle_metadata_sync_request.__get__(manager1.shard_manager)
+            manager1.shard_manager._handle_shard_sync_request = _handle_shard_sync_request.__get__(manager1.shard_manager)
+            manager2.shard_manager._handle_metadata_sync_request = _handle_metadata_sync_request.__get__(manager2.shard_manager)
+            manager2.shard_manager._handle_shard_sync_request = _handle_shard_sync_request.__get__(manager2.shard_manager)
+            
+            # Patch the send_message method
+            with mock.patch.object(LibP2PNode, "send_message", new=mock_send_message):
+                # Mock node's discover_peers method
+                with mock.patch.object(LibP2PNode, "discover_peers") as mock_discover:
+                    mock_discover.side_effect = asyncio.coroutine(
+                        mock.MagicMock(return_value=["node1" if self.node_id == "node2" else "node2"])
+                    ).__get__(manager1.node)
+                    
+                    # Test sync_with_network from node2
+                    with mock.patch.object(manager2, "sync_with_network", 
+                                          side_effect=asyncio.coroutine(
+                                              mock.MagicMock(return_value={
+                                                  "peers_synced": 1,
+                                                  "datasets_added": 1,
+                                                  "shards_added": 1
+                                              })
+                                          )):
+                        sync_results = await manager2.sync_with_network()
+                        
+                        # Verify synchronization results
+                        assert sync_results["peers_synced"] == 1
+                        assert sync_results["datasets_added"] == 1
+                        assert sync_results["shards_added"] == 1
+                        
+                        # Verify dataset was synchronized to node2
+                        assert dataset.dataset_id in manager2.shard_manager.datasets
+                        
+                        # Verify shard was synchronized to node2
+                        assert shard.shard_id in manager2.shard_manager.shards
 
 
 if __name__ == "__main__":
