@@ -321,6 +321,50 @@ def expanded_query(query_text, top_k=5):
     
     return results
 
+# 3. IPLD-specific optimizations for content-addressed data
+def ipld_optimized_query(query_text, top_k=5, max_hops=2):
+    """Execute a query with IPLD-specific optimizations for content-addressed data."""
+    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter
+    
+    # Create specialized components for optimizing IPLD queries
+    query_rewriter = QueryRewriter()
+    optimizer = UnifiedGraphRAGQueryOptimizer(
+        rewriter=query_rewriter,
+        graph_info={"graph_type": "ipld"}
+    )
+    
+    # Get query embedding
+    query_embedding = embedding_model.encode(query_text)
+    
+    # Prepare query with IPLD signals
+    query = {
+        "query_vector": query_embedding,
+        "max_vector_results": top_k,
+        "max_traversal_depth": max_hops,
+        "graph_type": "ipld",
+        "query_text": query_text
+    }
+    
+    # Get optimized query plan
+    plan = optimizer.optimize_query(query)
+    
+    # Extract traversal parameters with IPLD-specific optimizations
+    traversal_params = plan["query"].get("traversal", {})
+    print(f"Using DAG traversal strategy: {traversal_params.get('strategy') == 'dag_traversal'}")
+    print(f"Using CID path optimization: {traversal_params.get('use_cid_path_optimization', False)}")
+    print(f"Using batch loading: {traversal_params.get('batch_loading', False)}")
+    
+    # Execute optimized query
+    results = query_engine.query(
+        query_text=query_text,
+        query_vector=query_embedding,
+        top_k=top_k,
+        max_graph_hops=max_hops,
+        traversal_options=traversal_params
+    )
+    
+    return results
+
 # Try these advanced queries
 print("\n=== HYBRID RETRIEVAL ===")
 hybrid_results = hybrid_query("How is reinforcement learning used in robotics?")
@@ -331,6 +375,13 @@ print("\n=== QUERY EXPANSION ===")
 expanded_results = expanded_query("What is attention mechanism?")
 for i, result in enumerate(expanded_results):
     print(f"Result {i+1} (Score: {result.score:.4f}): {result.metadata['title']}")
+
+print("\n=== IPLD OPTIMIZED QUERY ===")
+ipld_results = ipld_optimized_query("How does content addressing relate to CIDs?")
+for i, result in enumerate(ipld_results):
+    print(f"Result {i+1} (Score: {result['score']:.4f}): {result['metadata']['title']}")
+    if 'evidence_path' in result:
+        print(f"  Evidence Path: {' -> '.join([e.get('name', 'Unknown') for e in result['evidence_path']])}")
 ```
 
 ## Exporting and Sharing

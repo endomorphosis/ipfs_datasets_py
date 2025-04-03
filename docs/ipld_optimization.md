@@ -306,6 +306,72 @@ builder.finalize([root_cid])
 builder.close()
 ```
 
+### Provenance Data CAR Export/Import
+
+The enhanced data provenance system supports optimized CAR file operations for storing and sharing provenance information:
+
+```python
+from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager, IPLDProvenanceStorage
+
+# Initialize provenance manager with IPLD storage
+manager = EnhancedProvenanceManager(enable_ipld_storage=True)
+
+# Record some provenance information
+source_id = manager.record_source(
+    output_id="dataset_1", 
+    source_type="file",
+    description="Original dataset"
+)
+transform_id = manager.record_transformation(
+    input_ids=[source_id],
+    output_id="processed_dataset",
+    transformation_type="normalize",
+    description="Normalize dataset values"
+)
+
+# Export provenance data with selective options
+export_stats = manager.export_to_car(
+    output_path="provenance.car",
+    include_records=True,       # Include record data
+    include_graph=True,         # Include graph structure
+    selective_record_ids=[      # Optionally specify which records to include
+        source_id,
+        transform_id
+    ]
+)
+
+print(f"Exported {export_stats['record_count']} records to CAR file")
+print(f"Root CID: {export_stats['root_cid']}")
+
+# Import provenance data from CAR file
+new_manager = EnhancedProvenanceManager(enable_ipld_storage=True)
+import_stats = new_manager.import_from_car(
+    car_path="provenance.car",
+    verify_integrity=True,      # Verify cryptographic integrity
+    skip_existing=True          # Skip records that already exist
+)
+
+print(f"Imported {import_stats['record_count']} records and {import_stats['edge_count']} edges")
+
+# Access the imported provenance storage directly
+storage = new_manager.storage
+
+# Programmatically access specific record types from the imported data
+source_records = storage.get_records_by_type("source")
+transformation_records = storage.get_records_by_type("transformation")
+
+print(f"Imported {len(source_records)} source records")
+print(f"Imported {len(transformation_records)} transformation records")
+```
+
+The optimized provenance CAR export/import offers several advantages:
+
+1. **Selective Export**: Export only specific records based on IDs, types, or time range
+2. **Integrity Verification**: Cryptographic verification of record integrity during import
+3. **Efficient Graph Storage**: Efficiently stores both records and their relationships
+4. **Metadata Preservation**: Maintains all metadata including timestamps and signatures
+5. **Incremental Updates**: Support for merging new data with existing provenance graphs
+
 ## Content Addressing Strategies
 
 Optimize content addressing for your specific use case.

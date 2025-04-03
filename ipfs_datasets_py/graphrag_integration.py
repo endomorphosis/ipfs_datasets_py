@@ -27,39 +27,37 @@ Main Components:
 - GraphRAGFactory: Factory for creating and composing GraphRAG components
 
 Usage Example:
-```python
-# Create a complete GraphRAG system
-graphrag = GraphRAGFactory.create_graphrag_system(
-    dataset,
-    config={
-        "vector_weight": 0.6,
-        "graph_weight": 0.4,
-        "max_graph_hops": 2,
-        "enable_cross_document_reasoning": True,
-        "vector_stores": vector_stores,
-        "graph_store": graph_store
-    }
-)
+ 
+    # Create a complete GraphRAG system
+    graphrag = GraphRAGFactory.create_graphrag_system(
+        dataset,
+        config={
+            "vector_weight": 0.6,
+            "graph_weight": 0.4,
+            "max_graph_hops": 2,
+            "enable_cross_document_reasoning": True,
+            "vector_stores": vector_stores,
+            "graph_store": graph_store
+        }
+    )
 
-# Use the query engine for advanced queries
-result = graphrag["query_engine"].query(
-    query_text="How does IPFS handle content addressing?",
-    top_k=5,
-    include_cross_document_reasoning=True,
-    reasoning_depth="moderate"
-)
+    # Use the query engine for advanced queries
+    result = graphrag["query_engine"].query(
+        query_text="How does IPFS handle content addressing?",
+        top_k=5,
+        include_cross_document_reasoning=True,
+        reasoning_depth="moderate"
+    )
 
-# Access the reasoning result
-answer = result["reasoning_result"]["answer"]
-evidence = result["evidence_chains"]
+    # Access the reasoning result
+    answer = result["reasoning_result"]["answer"]
+    evidence = result["evidence_chains"]
 
-# Visualize the reasoning process
-visualization = graphrag["query_engine"].visualize_query_result(
-    result, format="mermaid"
-)
-```
+    # Visualize the reasoning process
+    visualization = graphrag["query_engine"].visualize_query_result(
+        result, format="mermaid"
+    )
 """
-
 import time
 import logging
 from typing import Dict, List, Any, Optional, Union, Tuple, Callable, Set
@@ -72,11 +70,15 @@ from ipfs_datasets_py.llm_semantic_validation import (
     SchemaValidator, SemanticAugmenter, SemanticValidator
 )
 from ipfs_datasets_py.llm_reasoning_tracer import (
-    ReasoningTrace, ReasoningStep, TracingManager, StepType, ConfidenceLevel
+    ReasoningTrace, ReasoningNodeType # Removed ReasoningStep, TracingManager, StepType, ConfidenceLevel
 )
 from ipfs_datasets_py.knowledge_graph_extraction import (
     Entity, Relationship, KnowledgeGraph
 )
+
+# Forward references for type hints
+class GraphRAGQueryEngine: pass
+class HybridVectorGraphSearch: pass
 
 
 class GraphRAGIntegration:
@@ -112,9 +114,9 @@ class GraphRAGIntegration:
         llm_processor: Optional[GraphRAGLLMProcessor] = None,
         performance_monitor: Optional[GraphRAGPerformanceMonitor] = None,
         validator: Optional[SemanticValidator] = None,
-        tracing_manager: Optional[TracingManager] = None,
+        # tracing_manager: Optional[TracingManager] = None, # Removed TracingManager
         validate_outputs: bool = True,
-        enable_tracing: bool = True
+        enable_tracing: bool = True # Keep flag, but functionality will be limited
     ):
         """
         Initialize GraphRAG integration.
@@ -137,11 +139,10 @@ class GraphRAGIntegration:
         # Create semantic validator
         self.validator = validator or SemanticValidator()
         self.validate_outputs = validate_outputs
-        
-        # Initialize tracing
+        # Initialize tracing (functionality limited without TracingManager)
         self.enable_tracing = enable_tracing
-        self.tracing_manager = tracing_manager or TracingManager()
-        
+        # self.tracing_manager = tracing_manager or TracingManager() # Removed TracingManager
+
         # Create reasoning enhancer with performance monitoring
         self.enhancer = ReasoningEnhancer(
             llm_processor=self.llm_processor,
@@ -207,18 +208,21 @@ class GraphRAGIntegration:
         relationship_types = set()
         
         # Look at node types
-        for node in self.dataset.nodes.values():
-            entity_types.add(node.type)
+        if hasattr(self.dataset, 'nodes') and isinstance(self.dataset.nodes, dict):
+             for node in self.dataset.nodes.values():
+                 if hasattr(node, 'type'):
+                     entity_types.add(node.type)
         
         # Look at edge types
-        for edge_type in self.dataset._edges_by_type:
-            relationship_types.add(edge_type)
+        if hasattr(self.dataset, '_edges_by_type') and isinstance(self.dataset._edges_by_type, dict):
+             for edge_type in self.dataset._edges_by_type:
+                 relationship_types.add(edge_type)
         
         return {
             "entity_types": list(entity_types),
             "relationship_types": list(relationship_types),
-            "node_count": len(self.dataset.nodes),
-            "graph_name": self.dataset.name
+            "node_count": len(self.dataset.nodes) if hasattr(self.dataset, 'nodes') else 0,
+            "graph_name": getattr(self.dataset, 'name', 'unknown')
         }
     
     def _enhanced_synthesize_cross_document_information(
@@ -243,33 +247,34 @@ class GraphRAGIntegration:
         start_time = time.time()
         self.metrics["queries_processed"] += 1
         
-        # Initialize reasoning trace if tracing is enabled
+        # Initialize reasoning trace if tracing is enabled (limited functionality)
         trace = None
+        trace_id = None # Initialize trace_id
         if self.enable_tracing:
+            # Cannot use TracingManager, create a basic trace object directly for structure
+            # Note: This trace won't be managed or saved by a manager
             graph_info = self._get_graph_info()
-            trace = self.tracing_manager.start_trace(
+            trace = ReasoningTrace(
                 query=query,
-                context={
+                metadata={
+                    "dataset_name": getattr(self.dataset, "name", "unknown"),
+                    "start_time": time.time(),
                     "reasoning_depth": reasoning_depth,
                     "graph_info": graph_info,
                     "num_documents": len(documents),
                     "num_connections": len(evidence_chains)
-                },
-                metadata={
-                    "dataset_name": getattr(self.dataset, "name", "unknown"),
-                    "start_time": time.time()
                 }
             )
+            trace_id = trace.trace_id # Store the ID
             self.metrics["traces_created"] += 1
         
         try:
-            # Create initial query step in trace
-            query_step_id = None
+            # Create initial query node in trace
+            query_node_id = None
             if trace:
-                query_step_id = trace.create_step(
-                    step_type=StepType.METADATA,
-                    description=f"User query: {query}",
-                    outputs={"query": query}
+                query_node_id = trace.add_node(
+                    node_type=ReasoningNodeType.QUERY,
+                    content=query
                 )
             
             # Format documents for LLM
@@ -285,22 +290,25 @@ class GraphRAGIntegration:
                 }
                 
                 # Add any additional metadata that might be useful for domain detection
-                for key, value in getattr(doc, "data", {}).items():
-                    if key not in ["title", "content"] and value and not isinstance(value, (dict, list)):
-                        doc_data[key] = value
+                if hasattr(doc, "data") and isinstance(doc.data, dict):
+                    for key, value in doc.data.items():
+                        if key not in ["title", "content"] and value and not isinstance(value, (dict, list)):
+                            doc_data[key] = value
                 
                 formatted_docs.append(doc_data)
-            
-            # Create document retrieval step in trace
-            retrieval_step_id = None
-            if trace:
-                retrieval_step_id = trace.create_step(
-                    step_type=StepType.RETRIEVAL,
-                    description=f"Retrieved {len(documents)} relevant documents",
-                    outputs={"documents": formatted_docs},
-                    dependencies=[query_step_id] if query_step_id else [],
-                    confidence=ConfidenceLevel.HIGH if documents else ConfidenceLevel.LOW
-                )
+            # Create document retrieval nodes in trace
+            doc_node_ids = {}
+            if trace and query_node_id:
+                for doc_data in formatted_docs:
+                    doc_node_id = trace.add_node(
+                        node_type=ReasoningNodeType.DOCUMENT,
+                        content=f"Doc: {doc_data['title']}",
+                        source=doc_data['id'],
+                        confidence=doc_data['score'], # Use float score
+                        metadata=doc_data
+                    )
+                    trace.add_edge(query_node_id, doc_node_id, "retrieved", weight=doc_data['score'])
+                    doc_node_ids[doc_data['id']] = doc_node_id
             
             # Format evidence chains for LLM
             formatted_chains = []
@@ -308,25 +316,25 @@ class GraphRAGIntegration:
                 # Get document 1 data
                 doc1 = chain.get("doc1", {})
                 doc1_data = {
-                    "id": getattr(doc1, "id", "unknown"),
-                    "title": getattr(doc1, "data", {}).get("title", "Untitled"),
-                    "type": getattr(doc1, "type", "document")
+                    "id": getattr(doc1, "id", chain.get("doc1", {}).get("id", "unknown")), # Handle direct dict or object
+                    "title": getattr(doc1, "data", {}).get("title", chain.get("doc1", {}).get("title", "Untitled")),
+                    "type": getattr(doc1, "type", chain.get("doc1", {}).get("type", "document"))
                 }
                 
                 # Get document 2 data
                 doc2 = chain.get("doc2", {})
                 doc2_data = {
-                    "id": getattr(doc2, "id", "unknown"),
-                    "title": getattr(doc2, "data", {}).get("title", "Untitled"),
-                    "type": getattr(doc2, "type", "document")
+                    "id": getattr(doc2, "id", chain.get("doc2", {}).get("id", "unknown")),
+                    "title": getattr(doc2, "data", {}).get("title", chain.get("doc2", {}).get("title", "Untitled")),
+                    "type": getattr(doc2, "type", chain.get("doc2", {}).get("type", "document"))
                 }
                 
                 # Get entity data
                 entity = chain.get("entity", {})
                 entity_data = {
-                    "id": getattr(entity, "id", "unknown"),
-                    "name": getattr(entity, "data", {}).get("name", "Unnamed Entity"),
-                    "type": getattr(entity, "type", "Entity")
+                    "id": getattr(entity, "id", chain.get("entity", {}).get("id", "unknown")),
+                    "name": getattr(entity, "data", {}).get("name", chain.get("entity", {}).get("name", "Unnamed Entity")),
+                    "type": getattr(entity, "type", chain.get("entity", {}).get("type", "Entity"))
                 }
                 
                 # Create formatted chain
@@ -342,35 +350,31 @@ class GraphRAGIntegration:
                         formatted_chain[key] = value
                 
                 formatted_chains.append(formatted_chain)
-            
-            # Create evidence extraction step in trace
-            evidence_step_id = None
-            if trace:
-                evidence_step_id = trace.create_step(
-                    step_type=StepType.EVIDENCE,
-                    description="Extracted evidence chains between documents",
-                    outputs={"evidence_chains": formatted_chains},
-                    dependencies=[retrieval_step_id] if retrieval_step_id else [],
-                    confidence=ConfidenceLevel.MEDIUM if formatted_chains else ConfidenceLevel.LOW
-                )
-            
-            # Create connection finding step in trace
-            connection_step_id = None
-            if trace:
-                connection_step_id = trace.create_step(
-                    step_type=StepType.INFERENCE,
-                    description=f"Found {len(evidence_chains)} connections between documents",
-                    outputs={"connection_count": len(evidence_chains)},
-                    dependencies=[evidence_step_id] if evidence_step_id else [],
-                    confidence=ConfidenceLevel.MEDIUM if evidence_chains else ConfidenceLevel.LOW
-                )
+            # Create evidence chain nodes in trace
+            chain_node_ids = []
+            if trace and query_node_id: # Link chains conceptually to query for now
+                 for i, chain_data in enumerate(formatted_chains):
+                     entity_node_id = trace.add_node(
+                         node_type=ReasoningNodeType.ENTITY,
+                         content=f"Entity: {chain_data['entity']['name']}",
+                         source=chain_data['entity']['id'],
+                         metadata=chain_data['entity']
+                     )
+                     # Link entity to documents if nodes exist
+                     doc1_node_id = doc_node_ids.get(chain_data['doc1']['id'])
+                     doc2_node_id = doc_node_ids.get(chain_data['doc2']['id'])
+                     if doc1_node_id:
+                         trace.add_edge(entity_node_id, doc1_node_id, "mentioned_in")
+                     if doc2_node_id:
+                         trace.add_edge(entity_node_id, doc2_node_id, "mentioned_in")
+                     chain_node_ids.append(entity_node_id) # Use entity node to represent chain link
+            # Connection finding step is implicitly represented by entity links above
             
             # Get graph info for domain detection
             graph_info = self._get_graph_info()
-            
-            # Create domain identification step in trace
-            domain_step_id = None
-            # Detect domain from context
+            # Domain identification step
+            domain_node_id = None
+            # Detect domain from context (simplified logic from original)
             domain = graph_info.get("domain", "general")
             if "entity_types" in graph_info:
                 entity_types = set(graph_info["entity_types"])
@@ -384,86 +388,49 @@ class GraphRAGIntegration:
                     domain = "financial"
                 elif entity_types & {"technology", "device", "software", "system"}:
                     domain = "technical"
-            
-            if trace:
-                domain_step_id = trace.create_step(
-                    step_type=StepType.METADATA,
-                    description=f"Identified domain: {domain}",
-                    outputs={"domain": domain},
-                    dependencies=[connection_step_id] if connection_step_id else []
+
+            if trace and query_node_id: # Link domain to query
+                domain_node_id = trace.add_node(
+                    node_type=ReasoningNodeType.METADATA, # Using METADATA type
+                    content=f"Domain: {domain}"
                 )
+                trace.add_edge(query_node_id, domain_node_id, "has_domain")
             
             # Use LLM enhancer for synthesis
             # Track the start time for synthesis
             synthesis_start_time = time.time()
-            
-            # Create synthesis start step in trace
-            synthesis_start_id = None
-            if trace:
-                synthesis_start_id = trace.create_step(
-                    step_type=StepType.METADATA,
-                    description="Started information synthesis process",
-                    dependencies=[
-                        retrieval_step_id, 
-                        evidence_step_id, 
-                        connection_step_id,
-                        domain_step_id
-                    ] if all([retrieval_step_id, evidence_step_id, connection_step_id, domain_step_id]) else []
-                )
+            # Synthesis start step (implicit)
             
             # Call the enhancer
             enhanced_result = self.enhancer.enhance_cross_document_reasoning(
                 query, formatted_docs, formatted_chains, reasoning_depth, graph_info
             )
-            
-            # Create synthesis result step in trace
-            synthesis_step_id = None
+            # Synthesis result step
+            synthesis_node_id = None
             if trace:
-                synthesis_confidence = ConfidenceLevel.MEDIUM
-                if "confidence" in enhanced_result:
-                    conf_value = enhanced_result["confidence"]
-                    if isinstance(conf_value, (int, float)):
-                        if conf_value >= 0.8:
-                            synthesis_confidence = ConfidenceLevel.HIGH
-                        elif conf_value >= 0.5:
-                            synthesis_confidence = ConfidenceLevel.MEDIUM
-                        else:
-                            synthesis_confidence = ConfidenceLevel.LOW
-                    elif isinstance(conf_value, str):
-                        if conf_value.lower() in ["high", "strong"]:
-                            synthesis_confidence = ConfidenceLevel.HIGH
-                        elif conf_value.lower() in ["low", "weak"]:
-                            synthesis_confidence = ConfidenceLevel.LOW
-                
-                synthesis_step_id = trace.create_step(
-                    step_type=StepType.SYNTHESIS,
-                    description="Synthesized information across documents",
-                    inputs={
-                        "query": query,
-                        "documents": formatted_docs,
-                        "evidence_chains": formatted_chains,
-                        "reasoning_depth": reasoning_depth
-                    },
-                    outputs=enhanced_result,
-                    dependencies=[synthesis_start_id] if synthesis_start_id else [],
-                    confidence=synthesis_confidence,
+                synthesis_confidence_val = 0.5 # Default medium
+                if "confidence" in enhanced_result and isinstance(enhanced_result["confidence"], (int, float)):
+                    synthesis_confidence_val = enhanced_result["confidence"]
+
+                synthesis_node_id = trace.add_node(
+                    node_type=ReasoningNodeType.INFERENCE, # Represent synthesis as inference
+                    content=f"Synthesis: {enhanced_result.get('answer', '')[:50]}...",
+                    confidence=synthesis_confidence_val, # Use float
                     metadata={
-                        "execution_time": time.time() - synthesis_start_time
+                        "full_answer": enhanced_result.get('answer'),
+                        "reasoning": enhanced_result.get('reasoning')
                     }
                 )
-            
-            # Apply semantic validation if enabled
-            validation_step_id = None
+                # Link synthesis node to evidence/chain nodes
+                for chain_node_id in chain_node_ids:
+                    trace.add_edge(synthesis_node_id, chain_node_id, "based_on")
+                for doc_node_id in doc_node_ids.values():
+                     trace.add_edge(synthesis_node_id, doc_node_id, "based_on") # Link to docs too
+            # Semantic validation step
+            validation_node_id = None
             if self.validate_outputs:
                 # Track start time for validation
                 validation_start_time = time.time()
-                
-                if trace:
-                    validation_start_id = trace.create_step(
-                        step_type=StepType.METADATA,
-                        description="Started semantic validation",
-                        dependencies=[synthesis_step_id] if synthesis_step_id else []
-                    )
                 
                 # Validate and augment
                 success, validated_result, errors = self.validator.process(
@@ -473,84 +440,52 @@ class GraphRAGIntegration:
                     context={"query": query, "graph_info": graph_info},
                     auto_repair=True
                 )
-                
                 if success:
                     enhanced_result = validated_result
-                    
-                    if trace:
-                        validation_step_id = trace.create_step(
-                            step_type=StepType.VALIDATION,
-                            description="Validated and augmented synthesis results",
-                            inputs={"original_result": enhanced_result},
-                            outputs={"validated_result": validated_result},
-                            dependencies=[validation_start_id] if 'validation_start_id' in locals() else [],
-                            confidence=ConfidenceLevel.HIGH,
-                            metadata={
-                                "execution_time": time.time() - validation_start_time
-                            }
+                    if trace and synthesis_node_id:
+                        validation_node_id = trace.add_node(
+                            node_type=ReasoningNodeType.METADATA, # Use METADATA for validation status
+                            content="Validation: Success",
+                            confidence=1.0, # Use float
+                            metadata={"validated_result": validated_result}
                         )
+                        trace.add_edge(validation_node_id, synthesis_node_id, "validates")
                 else:
                     # Record validation failure but continue with original result
                     logging.warning(f"Semantic validation failed: {errors}")
                     self.metrics["validation_failures"] += 1
-                    
-                    if trace:
-                        validation_step_id = trace.create_step(
-                            step_type=StepType.VALIDATION,
-                            description="Validation failed but continuing with original result",
-                            inputs={"original_result": enhanced_result},
-                            outputs={"errors": errors},
-                            dependencies=[validation_start_id] if 'validation_start_id' in locals() else [],
-                            confidence=ConfidenceLevel.LOW,
-                            metadata={
-                                "execution_time": time.time() - validation_start_time,
-                                "validation_success": False
-                            }
-                        )
-            
-            # Create conclusion step in trace
-            conclusion_step_id = None
+                    if trace and synthesis_node_id:
+                         validation_node_id = trace.add_node(
+                            node_type=ReasoningNodeType.METADATA,
+                            content="Validation: Failed",
+                            confidence=0.1, # Use float
+                            metadata={"errors": errors}
+                         )
+                         trace.add_edge(validation_node_id, synthesis_node_id, "validates")
+            # Conclusion step
+            conclusion_node_id = None
             if trace:
                 answer = enhanced_result.get("answer", "No answer available")
-                conclusion_confidence = ConfidenceLevel.MEDIUM
-                
-                if "confidence" in enhanced_result:
-                    conf_value = enhanced_result["confidence"]
-                    if isinstance(conf_value, (int, float)):
-                        if conf_value >= 0.8:
-                            conclusion_confidence = ConfidenceLevel.HIGH
-                        elif conf_value >= 0.5:
-                            conclusion_confidence = ConfidenceLevel.MEDIUM
-                        else:
-                            conclusion_confidence = ConfidenceLevel.LOW
-                    elif isinstance(conf_value, str):
-                        if conf_value.lower() in ["high", "strong"]:
-                            conclusion_confidence = ConfidenceLevel.HIGH
-                        elif conf_value.lower() in ["low", "weak"]:
-                            conclusion_confidence = ConfidenceLevel.LOW
-                
-                # Adjust confidence based on reasoning depth
+                conclusion_confidence_val = 0.5 # Default medium
+                if "confidence" in enhanced_result and isinstance(enhanced_result["confidence"], (int, float)):
+                     conclusion_confidence_val = enhanced_result["confidence"]
+
+                # Adjust confidence based on reasoning depth (example logic)
                 if reasoning_depth == "deep":
-                    # Deep reasoning generally has higher confidence
-                    if conclusion_confidence == ConfidenceLevel.MEDIUM:
-                        conclusion_confidence = ConfidenceLevel.HIGH
-                
-                conclusion_dependencies = []
-                if validation_step_id:
-                    conclusion_dependencies.append(validation_step_id)
-                elif synthesis_step_id:
-                    conclusion_dependencies.append(synthesis_step_id)
-                
-                conclusion_step_id = trace.create_step(
-                    step_type=StepType.FINAL,
-                    description=f"Final answer: {answer}",
-                    outputs={
-                        "answer": answer,
-                        "confidence": conclusion_confidence.value,
-                    },
-                    dependencies=conclusion_dependencies,
-                    confidence=conclusion_confidence
+                    conclusion_confidence_val = min(1.0, conclusion_confidence_val + 0.1)
+                elif reasoning_depth == "basic":
+                     conclusion_confidence_val = max(0.0, conclusion_confidence_val - 0.1)
+
+                conclusion_node_id = trace.add_node(
+                    node_type=ReasoningNodeType.CONCLUSION,
+                    content=f"Final Answer: {answer[:50]}...",
+                    confidence=conclusion_confidence_val, # Use float
+                    metadata={"full_answer": answer}
                 )
+                # Link conclusion to synthesis/validation node
+                link_from_node = validation_node_id if validation_node_id else synthesis_node_id
+                if link_from_node:
+                    trace.add_edge(conclusion_node_id, link_from_node, "concludes")
             
             # Ensure the result has the expected fields
             result = {
@@ -641,37 +576,11 @@ class GraphRAGIntegration:
                         "step": "Technical implications", 
                         "description": enhanced_result["technical_implications"]
                     })
-            
-            # Complete the reasoning trace if enabled
+            # Complete the reasoning trace (no manager to call complete_trace)
             if trace:
-                # Add any missing connections between steps
-                if retrieval_step_id and query_step_id:
-                    trace.add_dependency(retrieval_step_id, query_step_id)
-                
-                if evidence_step_id and retrieval_step_id:
-                    trace.add_dependency(evidence_step_id, retrieval_step_id)
-                
-                if connection_step_id and evidence_step_id:
-                    trace.add_dependency(connection_step_id, evidence_step_id)
-                
-                if synthesis_step_id and connection_step_id:
-                    trace.add_dependency(synthesis_step_id, connection_step_id)
-                
-                if validation_step_id and synthesis_step_id:
-                    trace.add_dependency(validation_step_id, synthesis_step_id)
-                
-                if conclusion_step_id:
-                    if validation_step_id:
-                        trace.add_dependency(conclusion_step_id, validation_step_id)
-                    elif synthesis_step_id:
-                        trace.add_dependency(conclusion_step_id, synthesis_step_id)
-                
-                # Complete the trace and get the trace ID
-                trace_id = self.tracing_manager.complete_trace(trace)
-                
-                # Add trace ID to result
-                if trace_id:
-                    result["trace_id"] = trace_id
+                # Add trace object directly to result if needed (not just ID)
+                # result["trace_object"] = trace.to_dict() # Optional: include full trace
+                result["trace_id"] = trace_id # Use the stored trace_id
             
             # Track successful processing
             processing_time = time.time() - start_time
@@ -689,18 +598,17 @@ class GraphRAGIntegration:
         except Exception as e:
             # Log error
             logging.error(f"Error in synthesize_cross_document_information: {str(e)}")
-            
-            # Create error step in trace if enabled
+            # Create error node in trace if enabled
             if trace:
-                error_step_id = trace.create_step(
-                    step_type=StepType.METADATA,
-                    description=f"Error: {str(e)}",
-                    outputs={"error": str(e)},
-                    confidence=ConfidenceLevel.LOW
-                )
-                
-                # Complete the trace and get the trace ID
-                self.tracing_manager.complete_trace(trace)
+                 error_node_id = trace.add_node(
+                     node_type=ReasoningNodeType.METADATA,
+                     content=f"Error: {str(e)}",
+                     confidence=0.0 # Use float
+                 )
+                 # Link error to query node if possible
+                 if query_node_id:
+                     trace.add_edge(error_node_id, query_node_id, "occurred_during")
+                 # result["trace_id"] = trace_id # Include trace ID even on error # result not defined here
             
             # Track failed processing
             processing_time = time.time() - start_time
@@ -773,10 +681,11 @@ class GraphRAGIntegration:
         
         # Add tracing metrics
         if self.enable_tracing:
+            # Cannot use TracingManager
             metrics["tracing"] = {
                 "enabled": True,
                 "traces_created": metrics.get("traces_created", 0),
-                "stored_traces": len(self.tracing_manager.traces)
+                "stored_traces": "N/A (TracingManager not available)"
             }
         else:
             metrics["tracing"] = {
@@ -788,37 +697,35 @@ class GraphRAGIntegration:
     def get_reasoning_trace(self, trace_id: str) -> Optional[Dict[str, Any]]:
         """
         Get a reasoning trace by ID.
-        
         Args:
             trace_id: ID of the trace to get
-            
+
         Returns:
             Trace data or None if not found
         """
         if not self.enable_tracing:
+            logging.warning("Tracing is disabled, cannot get trace.")
             return None
-            
-        trace = self.tracing_manager.get_trace(trace_id)
-        if not trace:
-            return None
-            
-        return trace.to_dict()
+        # Cannot use TracingManager, return None or handle differently
+        logging.warning("TracingManager not available in this context.")
+        return None
         
     def get_recent_traces(self, limit: int = 10, query_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get a list of recent reasoning traces.
-        
         Args:
             limit: Maximum number of traces to return
             query_filter: Optional filter by query text
-            
+
         Returns:
             List of trace summaries
         """
         if not self.enable_tracing:
+            logging.warning("Tracing is disabled, cannot get recent traces.")
             return []
-            
-        return self.tracing_manager.get_traces(limit=limit, query_filter=query_filter)
+        # Cannot use TracingManager, return empty list
+        logging.warning("TracingManager not available in this context.")
+        return []
         
     def explain_trace(
         self,
@@ -838,13 +745,10 @@ class GraphRAGIntegration:
             Explanation data
         """
         if not self.enable_tracing:
-            return {"error": "Tracing is not enabled"}
-            
-        return self.tracing_manager.explain_trace(
-            trace_id=trace_id,
-            explanation_type=explanation_type,
-            target_audience=target_audience
-        )
+            return {"error": "Tracing is disabled"}
+        # Cannot use TracingManager, return error
+        logging.warning("TracingManager not available in this context.")
+        return {"error": "TracingManager not available"}
         
     def visualize_trace(self, trace_id: str, format: str = "text") -> Dict[str, Any]:
         """
@@ -858,12 +762,10 @@ class GraphRAGIntegration:
             Visualization data
         """
         if not self.enable_tracing:
-            return {"error": "Tracing is not enabled"}
-            
-        return self.tracing_manager.generate_trace_visualization(
-            trace_id=trace_id,
-            format=format
-        )
+            return {"error": "Tracing is disabled"}
+        # Cannot use TracingManager, return error
+        logging.warning("TracingManager not available in this context.")
+        return {"error": "TracingManager not available"}
 
 
 class HybridVectorGraphSearch:
@@ -1330,7 +1232,7 @@ class HybridVectorGraphSearch:
         # First, find the most relevant documents using vector search
         seed_documents = self._perform_vector_search(
             query_embedding,
-            top_k=top_k * 2,  # Get more to ensure we find connections
+            top_k=top_k * 2,  # Get more results for expansion
             entity_types=["document"]  # Only consider document nodes
         )
         
@@ -1554,9 +1456,9 @@ def enhance_dataset_with_llm(
     llm_processor: Optional[GraphRAGLLMProcessor] = None,
     performance_monitor: Optional[GraphRAGPerformanceMonitor] = None,
     validator: Optional[SemanticValidator] = None,
-    tracing_manager: Optional[TracingManager] = None,
+    # tracing_manager: Optional[TracingManager] = None, # Removed TracingManager type hint
     enable_tracing: bool = True
-):
+) -> GraphRAGIntegration:
     """
     Enhance a VectorAugmentedGraphDataset with LLM capabilities.
     
@@ -1577,7 +1479,7 @@ def enhance_dataset_with_llm(
         llm_processor=llm_processor,
         performance_monitor=performance_monitor,
         validator=validator,
-        tracing_manager=tracing_manager,
+        # tracing_manager=tracing_manager, # Removed TracingManager usage
         validate_outputs=validate_outputs,
         enable_tracing=enable_tracing
     )
@@ -2049,7 +1951,7 @@ class GraphRAGFactory:
         llm_processor: Optional[GraphRAGLLMProcessor] = None,
         performance_monitor: Optional[GraphRAGPerformanceMonitor] = None,
         validator: Optional[SemanticValidator] = None,
-        tracing_manager: Optional[TracingManager] = None,
+        # tracing_manager: Optional[TracingManager] = None, # Removed TracingManager type hint
         enable_tracing: bool = True
     ) -> GraphRAGIntegration:
         """
@@ -2072,7 +1974,7 @@ class GraphRAGFactory:
             llm_processor=llm_processor,
             performance_monitor=performance_monitor,
             validator=validator,
-            tracing_manager=tracing_manager,
+            # tracing_manager=tracing_manager, # Removed TracingManager usage
             validate_outputs=validate_outputs,
             enable_tracing=enable_tracing
         )
@@ -2195,8 +2097,6 @@ class GraphRAGFactory:
         # Create LLM processor with shared performance monitor
         llm_processor = GraphRAGLLMProcessor(performance_monitor=performance_monitor)
         
-        # Create tracing manager
-        tracing_manager = TracingManager()
         
         # Create semantic validator
         validator = SemanticValidator()
@@ -2216,7 +2116,6 @@ class GraphRAGFactory:
             llm_processor=llm_processor,
             performance_monitor=performance_monitor,
             validator=validator,
-            tracing_manager=tracing_manager,
             enable_tracing=enable_tracing
         )
         

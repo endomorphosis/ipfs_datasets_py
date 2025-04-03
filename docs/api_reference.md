@@ -30,6 +30,8 @@ This documentation provides detailed information about the modules, classes, and
    - [web_archive_utils](#web_archive_utils)
 
 6. [Operations and Management](#operations-and-management)
+   - [data_provenance](#data_provenance)
+   - [cross_document_lineage](#cross_document_lineage)
    - [monitoring](#monitoring)
    - [security](#security)
    - [resilient_operations](#resilient_operations)
@@ -475,6 +477,199 @@ Query Internet Archive Wayback Machine.
 ---
 
 ## Operations and Management
+
+### data_provenance
+
+Module for tracking data provenance and lineage.
+
+#### Classes
+
+##### `ProvenanceManager`
+
+Base class for tracking data provenance.
+
+**Methods:**
+
+- `record_source(output_id, source_type, **kwargs)`: Record a data source
+- `record_transformation(input_ids, output_id, transformation_type, **kwargs)`: Record a transformation
+- `record_merge(input_ids, output_id, merge_type, **kwargs)`: Record a merge operation
+- `record_query(input_ids, query_text, **kwargs)`: Record a query operation
+- `get_lineage(data_id)`: Get the lineage for a data entity
+- `visualize(data_ids, file_path=None)`: Visualize the provenance graph
+
+##### `EnhancedProvenanceManager`
+
+Enhanced version of the provenance manager with advanced features.
+
+**Methods:**
+
+- All methods from `ProvenanceManager`
+- `record_verification(data_id, verification_type, **kwargs)`: Record a verification operation
+- `record_annotation(data_id, annotation_type, content, **kwargs)`: Record an annotation
+- `semantic_search(query, limit=10)`: Search records by semantic similarity
+- `temporal_query(start_time, end_time=None, **kwargs)`: Query records by time
+
+### cross_document_lineage
+
+Module for tracking detailed data lineage across document and domain boundaries, with enhanced capabilities for domain-based organization, detailed transformation tracking, version awareness, temporal consistency checks, and IPLD integration.
+
+#### Overview
+
+The cross_document_lineage module provides a comprehensive framework for tracking data as it flows across document boundaries and multiple domains. It enables enhanced visibility into data transformations, with support for detailed lineage tracking at multiple levels of granularity, from field-level impacts to complete document lineage. The module integrates with both audit logging and IPLD storage to provide a complete provenance tracking solution.
+
+Key features:
+- Domain-based organization with hierarchical structure
+- Detailed transformation decomposition and tracking
+- Version-aware lineage with temporal consistency checks
+- Semantic relationship detection and confidence scoring
+- Bidirectional audit trail integration
+- IPLD-based content-addressable storage
+- Flexible query capabilities with path and subgraph extraction
+- Visualization tools for complex lineage graphs
+- Impact and dependency analysis
+
+#### Classes
+
+##### `LineageDomain`
+
+Represents a logical domain in the data lineage graph for organizing lineage data in a structured, hierarchical manner.
+
+**Attributes:**
+
+- `domain_id`: Unique identifier for the domain
+- `name`: Name of the domain
+- `description`: Optional description
+- `domain_type`: Type of domain (generic, application, dataset, workflow, etc.)
+- `attributes`: Additional domain attributes for domain-specific metadata
+- `metadata_schema`: Optional validation schema for metadata to enforce consistency
+- `parent_domain_id`: Optional parent domain ID for hierarchical domains
+- `timestamp`: Creation timestamp for temporal analysis
+
+##### `LineageBoundary`
+
+Represents a boundary between domains in the lineage graph, defining how data flows across domain boundaries with appropriate constraints and security properties.
+
+**Attributes:**
+
+- `boundary_id`: Unique identifier for the boundary
+- `source_domain_id`: Source domain ID for the data flow origin
+- `target_domain_id`: Target domain ID for the data flow destination
+- `boundary_type`: Type of boundary (data_transfer, api_call, etl_process, etc.)
+- `attributes`: Additional boundary attributes such as security properties, permissions, etc.
+- `constraints`: Boundary constraints defining rules for cross-domain data flow
+- `timestamp`: Creation timestamp for temporal analysis
+
+##### `LineageNode`
+
+Represents a node in the data lineage graph, representing datasets, transformations, or other data artifacts.
+
+**Attributes:**
+
+- `node_id`: Unique identifier for the node
+- `node_type`: Type of node (dataset, transformation, query, result, etc.)
+- `entity_id`: Optional entity ID for linking to external systems or specific data entities
+- `record_type`: Optional record type for compatibility with provenance records
+- `metadata`: Node metadata containing detailed information about the artifact
+- `timestamp`: Creation timestamp for temporal consistency checking
+
+##### `LineageLink`
+
+Represents a link in the data lineage graph, connecting nodes with typed relationships and confidence scoring.
+
+**Attributes:**
+
+- `source_id`: Source node ID representing the origin of the relationship
+- `target_id`: Target node ID representing the destination of the relationship
+- `relationship_type`: Type of relationship (input_to, output_from, derived_from, etc.)
+- `confidence`: Confidence score (0.0-1.0) indicating certainty of the relationship
+- `metadata`: Link metadata containing additional information about the relationship
+- `timestamp`: Creation timestamp for temporal ordering
+- `direction`: Link direction (forward, backward, bidirectional) for flexible traversal
+
+##### `LineageTransformationDetail`
+
+Detailed representation of a transformation operation in lineage tracking, providing fine-grained information about data transformations at field, record, or dataset level.
+
+**Attributes:**
+
+- `detail_id`: Unique identifier for the detail
+- `transformation_id`: ID of the parent transformation node
+- `operation_type`: Type of operation (filter, join, aggregate, map, etc.)
+- `inputs`: Input field mappings with data types and specifications
+- `outputs`: Output field mappings with transformed data types and specifications
+- `parameters`: Operation parameters describing the transformation configuration
+- `impact_level`: Level of impact (field, record, dataset, etc.) for granular tracking
+- `confidence`: Confidence score for this transformation detail
+- `timestamp`: Creation timestamp for temporal ordering
+
+##### `LineageVersion`
+
+Represents a version of a node in the lineage graph, enabling version-aware lineage tracking with complete history and change tracking.
+
+**Attributes:**
+
+- `version_id`: Unique identifier for the version
+- `node_id`: ID of the versioned node
+- `version_number`: Version identifier (semantic versioning recommended)
+- `parent_version_id`: Optional previous version ID for establishing version history
+- `change_description`: Optional description of changes made in this version
+- `creator_id`: Optional ID of the version creator for attribution
+- `attributes`: Additional version attributes for custom version metadata
+- `timestamp`: Creation timestamp for temporal ordering and analysis
+
+##### `LineageSubgraph`
+
+Represents a subgraph in the data lineage graph, used for query results, visualization, and analysis of specific lineage paths or portions.
+
+**Attributes:**
+
+- `nodes`: Dictionary of nodes in the subgraph mapping node IDs to LineageNode objects
+- `links`: List of links in the subgraph as LineageLink objects
+- `root_id`: Root node ID that serves as the entry point for traversal
+- `domains`: Optional dictionary of domains included in this subgraph for domain-aware analysis
+- `boundaries`: Optional list of boundaries between domains to track cross-domain flows
+- `transformation_details`: Optional dictionary of transformation details for detailed operation tracking
+- `versions`: Optional dictionary of versions for version-aware analysis
+- `metadata`: Subgraph metadata containing summary information and statistics
+- `extraction_criteria`: Criteria used to extract this subgraph for reproducing the query
+
+##### `EnhancedLineageTracker`
+
+Enhanced lineage tracking for comprehensive data provenance.
+
+**Methods:**
+
+- `create_domain(name, description=None, domain_type="generic", attributes=None, metadata_schema=None, parent_domain_id=None)`: Create a new domain
+- `create_domain_boundary(source_domain_id, target_domain_id, boundary_type, attributes=None, constraints=None)`: Create a boundary between domains
+- `create_node(node_type, metadata=None, domain_id=None, entity_id=None)`: Create a new node
+- `create_link(source_id, target_id, relationship_type, metadata=None, confidence=1.0, direction="forward", cross_domain=False)`: Create a link between nodes
+- `record_transformation_details(transformation_id, operation_type, inputs, outputs, parameters=None, impact_level="field", confidence=1.0)`: Record detailed transformation information
+- `create_version(node_id, version_number, change_description=None, parent_version_id=None, creator_id=None, attributes=None)`: Create a new version of a node
+- `extract_subgraph(root_id, max_depth=3, direction="both", include_domains=True, include_versions=False, include_transformation_details=False, relationship_types=None, domain_filter=None)`: Extract a subgraph
+- `query_lineage(query)`: Execute a query against the lineage graph
+- `find_paths(start_node_id, end_node_id, max_depth=10, relationship_filter=None)`: Find all paths between two nodes
+- `detect_semantic_relationships(confidence_threshold=0.7, max_candidates=100)`: Detect semantic relationships between nodes
+- `export_to_ipld(include_domains=True, include_versions=False, include_transformation_details=False)`: Export the lineage graph to IPLD
+- `from_ipld(root_cid, ipld_storage=None, config=None)`: Create an instance from an IPLD-stored lineage graph
+- `visualize_lineage(subgraph=None, output_path=None, visualization_type="interactive", include_domains=True)`: Visualize the lineage graph
+- `merge_lineage(other_tracker, conflict_resolution="newer", allow_domain_merging=True)`: Merge another lineage tracker into this one
+- `validate_temporal_consistency()`: Validate temporal consistency across the graph
+- `apply_metadata_inheritance()`: Apply metadata inheritance rules
+- `add_metadata_inheritance_rule(source_type, target_type, properties, condition=None, override=False)`: Add a rule for metadata inheritance
+- `get_entity_lineage(entity_id, include_semantic=True)`: Get complete lineage for a specific entity
+- `generate_provenance_report(entity_id=None, node_id=None, include_visualization=True, format="json")`: Generate a comprehensive provenance report
+
+##### `LineageMetrics`
+
+Calculate metrics for data lineage analysis.
+
+**Methods:**
+
+- `calculate_impact_score(graph, node_id)`: Calculate the impact score of a node
+- `calculate_dependency_score(graph, node_id)`: Calculate the dependency score of a node
+- `calculate_centrality(graph, node_type=None)`: Calculate centrality metrics for nodes
+- `identify_critical_paths(graph)`: Identify critical paths in the lineage graph
+- `calculate_complexity(graph, node_id)`: Calculate complexity metrics for a node's lineage
 
 ### monitoring
 

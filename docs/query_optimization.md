@@ -13,7 +13,8 @@ This guide covers techniques for optimizing queries in IPFS Datasets Python, inc
 7. [Result Caching](#result-caching)
 8. [Performance Monitoring](#performance-monitoring)
 9. [Tuning Parameters](#tuning-parameters)
-10. [Best Practices](#best-practices)
+10. [Metrics and Visualization](#metrics-and-visualization)
+11. [Best Practices](#best-practices)
 
 ## Introduction
 
@@ -229,11 +230,55 @@ query = {
     "query_text": "What is the relationship between quantum mechanics and general relativity?"
 }
 
-# Get a detailed execution plan
-plan = optimizer.get_execution_plan(query, priority="high")
+# Get optimized query plan
+plan = optimizer.optimize_query(query, priority="high")
 
 # Execute the query with a GraphRAG processor
 results, execution_info = optimizer.execute_query(processor, query, priority="high")
+```
+
+### IPLD-Specific GraphRAG Optimization
+
+For content-addressed graphs using IPLD (InterPlanetary Linked Data), specialized optimizations are applied:
+
+```python
+from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+
+# Create optimizer with IPLD-specific graph info
+ipld_optimizer = UnifiedGraphRAGQueryOptimizer(
+    graph_info={
+        "graph_type": "ipld",
+        "edge_selectivity": {
+            "links_to": 0.3,
+            "links_from": 0.4,
+            "contains": 0.2,
+            "references": 0.5
+        },
+        "graph_density": 0.4
+    }
+)
+
+# Create a query for content-addressed data
+ipld_query = {
+    "query_vector": query_vector,
+    "max_vector_results": 5,
+    "max_traversal_depth": 3,
+    "graph_type": "ipld",  # Explicitly specify IPLD graph type
+    "query_text": "How does IPFS implement CID-based content addressing?"
+}
+
+# Get optimized plan with IPLD-specific optimizations
+plan = ipld_optimizer.optimize_query(ipld_query)
+
+# Execute with a processor that supports IPLD DAG traversal
+results, info = ipld_optimizer.execute_query(ipld_processor, ipld_query)
+
+# The IPLD-specific optimizations include:
+# - DAG traversal strategy optimized for content-addressed data
+# - CID path optimization for efficient traversal
+# - Block batch loading for improved performance
+# - Path caching for repeated traversals
+# - Vector dimensionality reduction for faster similarity search
 ```
 
 ### Performance Analysis and Recommendations
@@ -355,7 +400,8 @@ wiki_query = {
 ipld_query = {
     "query_vector": query_vector,
     "query_text": "How does IPFS use content-addressed data with CIDs?",
-    "max_traversal_depth": 2
+    "max_traversal_depth": 2,
+    "graph_type": "ipld"  # Explicitly specify graph type (optional)
 }
 
 # Get optimized query plans with graph-type-specific optimizations
@@ -368,6 +414,12 @@ print(f"Detected graph type for ipld query: {ipld_plan['graph_type']}")
 # Different weights for different graph types
 print(f"Vector weight for wiki query: {wiki_plan['weights'].get('vector', 0.7)}")
 print(f"Vector weight for ipld query: {ipld_plan['weights'].get('vector', 0.7)}")
+
+# Examine IPLD-specific optimizations in the plan
+ipld_traversal = ipld_plan["query"].get("traversal", {})
+print(f"IPLD using DAG traversal: {ipld_traversal.get('strategy') == 'dag_traversal'}")
+print(f"IPLD using CID path optimization: {ipld_traversal.get('use_cid_path_optimization', False)}")
+print(f"IPLD using batch loading: {ipld_traversal.get('batch_loading', False)}")
 ```
 
 ### Query Type Detection
@@ -882,7 +934,317 @@ config = templates.get_template(
 results = execute_query_with_config(query, config)
 ```
 
-## Best Practices
+## Metrics and Visualization
+
+IPFS Datasets Python provides comprehensive metrics collection and visualization capabilities for query optimization, allowing you to analyze query performance in detail and identify optimization opportunities.
+
+## Query Metrics Collection
+
+The `QueryMetricsCollector` class provides detailed metrics collection for GraphRAG queries:
+
+```python
+from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+
+# Initialize metrics collector
+metrics_collector = QueryMetricsCollector(
+    metrics_dir="query_metrics",  # Directory to store metrics files
+    track_resources=True,  # Track memory and CPU usage
+    max_history_size=1000  # Maximum number of query metrics to retain
+)
+
+# Start tracking a query
+query_id = metrics_collector.start_query_tracking(
+    query_params={
+        "max_vector_results": 5,
+        "max_traversal_depth": 2,
+        "edge_types": ["knows", "works_for"]
+    }
+)
+
+# Time specific phases of query execution
+with metrics_collector.time_phase("vector_search", {"type": "search"}):
+    # Vector search code here
+    time.sleep(0.2)  # Simulating work
+    
+# Time nested phases for detailed analysis
+with metrics_collector.time_phase("graph_traversal"):
+    # Graph traversal setup
+    time.sleep(0.1)
+    
+    # Track nested operations with proper hierarchical timing
+    with metrics_collector.time_phase("node_expansion"):
+        # Node expansion code
+        time.sleep(0.2)
+        
+    with metrics_collector.time_phase("path_filtering"):
+        # Path filtering code
+        time.sleep(0.1)
+
+# Record custom metrics
+metrics_collector.record_additional_metric(
+    name="cache_hit_rate", 
+    value=0.75, 
+    category="cache"
+)
+
+# End tracking and get metrics
+metrics = metrics_collector.end_query_tracking(
+    results_count=10,
+    quality_score=0.85  # Score indicating quality of results (0.0-1.0)
+)
+
+# Generate performance report
+report = metrics_collector.generate_performance_report(query_id)
+print(f"Total duration: {report['timing_summary']['avg_duration']:.3f}s")
+print(f"Peak memory: {report['resource_usage']['max_peak_memory'] / (1024*1024):.2f} MB")
+
+# Export metrics to CSV for external analysis
+csv_data = metrics_collector.export_metrics_csv("query_metrics.csv")
+```
+
+## Query Visualization
+
+The `QueryVisualizer` class provides various visualization capabilities for analyzing query performance:
+
+```python
+from ipfs_datasets_py.rag_query_optimizer import QueryVisualizer
+
+# Create visualizer with metrics collector
+visualizer = QueryVisualizer(metrics_collector)
+
+# Visualize phase timing breakdown
+visualizer.visualize_phase_timing(
+    query_id=query_id,
+    title="Query Phase Timing",
+    output_file="visualizations/phase_timing.png"
+)
+
+# Visualize query execution plan as a directed graph
+visualizer.visualize_query_plan(
+    query_plan={
+        "phases": {
+            "vector_search": {
+                "name": "Vector Search",
+                "type": "vector_search",
+                "duration": 0.2,
+                "dependencies": []
+            },
+            "graph_traversal": {
+                "name": "Graph Traversal",
+                "type": "graph_traversal",
+                "duration": 0.4,
+                "dependencies": ["vector_search"]
+            },
+            "node_expansion": {
+                "name": "Node Expansion",
+                "type": "processing",
+                "duration": 0.2,
+                "dependencies": ["graph_traversal"]
+            },
+            "path_filtering": {
+                "name": "Path Filtering",
+                "type": "processing",
+                "duration": 0.1,
+                "dependencies": ["node_expansion"]
+            },
+            "ranking": {
+                "name": "Result Ranking",
+                "type": "ranking",
+                "duration": 0.1,
+                "dependencies": ["path_filtering"]
+            }
+        }
+    },
+    title="Query Execution Plan",
+    output_file="visualizations/query_plan.png"
+)
+
+# Visualize resource usage (memory and CPU) during query execution
+visualizer.visualize_resource_usage(
+    query_id=query_id,
+    title="Query Resource Usage",
+    output_file="visualizations/resource_usage.png"
+)
+
+# Compare performance across multiple queries
+visualizer.visualize_performance_comparison(
+    query_ids=["query_id1", "query_id2", "query_id3"],
+    labels=["Original", "Optimized", "Fine-tuned"],
+    output_file="visualizations/performance_comparison.png"
+)
+
+# Visualize common query patterns
+visualizer.visualize_query_patterns(
+    limit=5,
+    output_file="visualizations/query_patterns.png"
+)
+
+# Generate comprehensive HTML dashboard
+visualizer.export_dashboard_html(
+    output_file="visualizations/query_dashboard.html",
+    query_id=query_id,
+    include_all_metrics=True
+)
+```
+
+## Integration with Query Optimizer
+
+The metrics collection and visualization capabilities can be integrated directly with the `UnifiedGraphRAGQueryOptimizer`:
+
+```python
+from ipfs_datasets_py.rag_query_optimizer import (
+    UnifiedGraphRAGQueryOptimizer,
+    QueryMetricsCollector,
+    QueryVisualizer
+)
+
+# Create metrics collector and visualizer
+metrics_collector = QueryMetricsCollector(metrics_dir="metrics")
+visualizer = QueryVisualizer(metrics_collector)
+
+# Initialize query optimizer with metrics and visualization
+optimizer = UnifiedGraphRAGQueryOptimizer(
+    rewriter=query_rewriter,
+    budget_manager=budget_manager,
+    metrics_collector=metrics_collector,
+    visualizer=visualizer
+)
+
+# Execute queries - metrics will be collected automatically
+results, execution_info = optimizer.execute_query(
+    processor=graph_processor,
+    query={
+        "query_vector": query_vector,
+        "max_vector_results": 5,
+        "max_traversal_depth": 2
+    }
+)
+
+# The query ID is stored for convenience
+query_id = optimizer.last_query_id
+
+# Visualize query plan
+optimizer.visualize_query_plan(
+    query_id=query_id,
+    output_file="visualizations/latest_query_plan.png"
+)
+
+# Visualize resource usage
+optimizer.visualize_resource_usage(
+    query_id=query_id,
+    output_file="visualizations/latest_resource_usage.png"
+)
+
+# Generate dashboard with comprehensive metrics
+optimizer.visualize_metrics_dashboard(
+    query_id=query_id,
+    output_file="visualizations/latest_dashboard.html"
+)
+
+# Compare multiple queries
+optimizer.visualize_performance_comparison(
+    query_ids=[query_id1, query_id2],
+    labels=["Original", "Optimized"],
+    output_file="visualizations/optimization_comparison.png"
+)
+
+# Export metrics to CSV
+optimizer.export_metrics_to_csv("all_query_metrics.csv")
+
+# Get detailed performance analysis with metrics
+performance_analysis = optimizer.analyze_performance()
+
+# View bottlenecks
+if "detailed_metrics" in performance_analysis:
+    phases = performance_analysis["detailed_metrics"]["phase_breakdown"]
+    sorted_phases = sorted(
+        [(phase, stats["avg_duration"]) for phase, stats in phases.items()],
+        key=lambda x: x[1],
+        reverse=True
+    )
+    
+    print("Top bottlenecks:")
+    for phase, duration in sorted_phases[:3]:
+        print(f"- {phase}: {duration:.3f}s")
+```
+
+## Visualization Types
+
+### Phase Timing Visualization
+
+Shows the time spent in each phase of query execution:
+
+- Horizontal bar chart showing duration of each phase
+- Phases sorted by duration (longest first)
+- Includes timing for nested operations with proper hierarchy
+- Color-coded by operation type (vector search, graph traversal, processing, etc.)
+- Includes labels with exact duration values
+
+### Query Plan Visualization
+
+Displays the query execution plan as a directed graph:
+
+- Nodes represent query operations
+- Edges represent dependencies between operations
+- Node size indicates cost or duration
+- Node color indicates operation type
+- Includes timing information for each node
+- Shows the flow of execution from start to finish
+
+### Resource Usage Visualization
+
+Shows resource utilization during query execution:
+
+- Time-series plot of memory usage (MB)
+- Time-series plot of CPU usage (%)
+- Vertical markers indicating phase boundaries
+- Peak memory usage highlighted
+- Average CPU utilization displayed
+
+### Performance Comparison Visualization
+
+Compares performance metrics across multiple queries:
+
+- Multiple metrics shown across different queries
+- Duration comparison with bar charts
+- Memory usage comparison
+- Phase-by-phase timing comparison
+- Result quality and count comparison
+- Summary statistics for easy comparison
+
+### Query Patterns Visualization
+
+Visualizes common query patterns from collected metrics:
+
+- Pattern frequency chart
+- Average duration by pattern
+- Memory usage by pattern
+- Identifies most expensive patterns
+- Suggests optimization opportunities
+
+### Interactive Dashboard
+
+Generates a comprehensive HTML dashboard with all visualizations:
+
+- Summary of query performance
+- Phase timing breakdown
+- Resource usage charts
+- Optimization recommendations
+- Detailed metrics tables
+- Historical performance trends
+
+## Best Practices for Query Performance Analysis
+
+1. **Collect metrics consistently**: Enable metrics collection for all production queries to build a comprehensive performance profile
+2. **Use hierarchical timing**: Structure your phase timing to capture nested operations for detailed analysis
+3. **Track resource usage**: Enable resource tracking to identify memory-intensive operations
+4. **Compare optimization strategies**: Use performance comparison to evaluate different optimization approaches
+5. **Export metrics regularly**: Export metrics to CSV for long-term trend analysis
+6. **Generate dashboards for complex issues**: Create comprehensive dashboards when investigating performance problems
+7. **Focus on bottlenecks**: Prioritize optimization of the most time-consuming phases
+8. **Monitor cache effectiveness**: Track cache hit rates and savings through performance metrics
+9. **Correlate query features and performance**: Analyze how query parameters affect performance metrics
+10. **Implement recommendations**: Apply the optimization recommendations generated from the performance analysis
 
 ### Vector Query Optimization
 
@@ -907,6 +1269,14 @@ results = execute_query_with_config(query, config)
 3. **Entity-Centric Traversal**: Focus traversal on entities relevant to the query
 4. **Progressive Retrieval**: Retrieve and process in stages for efficiency
 5. **Path Pruning**: Prune traversal paths that are unlikely to be relevant
+
+### IPLD-Specific Optimizations
+
+1. **DAG Traversal Strategy**: Use specialized traversal algorithms for IPLD DAGs
+2. **CID Path Optimization**: Optimize traversal using CID path patterns
+3. **Block Batch Loading**: Load multiple blocks in batches by prefix
+4. **Path Caching**: Cache traversal paths for improved performance
+5. **Vector Dimensionality Reduction**: Optimize vector storage and comparison for IPLD
 
 ### Distributed Query Optimization
 

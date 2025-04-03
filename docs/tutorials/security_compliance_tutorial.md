@@ -205,52 +205,317 @@ else:
     )
 ```
 
-## 5. Data Provenance Tracking
+## 5. Enhanced Data Provenance and Lineage for Compliance
 
-Track data transformations:
+Track comprehensive data provenance and lineage for regulatory compliance with detailed tracking across domains:
 
 ```python
-# Record origin of a dataset
-provenance = security.record_provenance(
-    data_id="patient_dataset",
-    source="hospital_system",
-    process_steps=[],
-    parent_ids=[],
-    checksum="sha256:a1b2c3...",
-    data_type="dataset",
-    content_type="parquet"
+from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
+from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+from ipfs_datasets_py.security import SecurityManager
+import datetime
+
+# Initialize components
+security_manager = SecurityManager.get_instance()
+provenance_manager = EnhancedProvenanceManager(
+    storage_path="provenance_data",
+    enable_ipld_storage=True,
+    enable_crypto_verification=True,
+    default_agent_id="compliance_officer"
 )
 
-# Record a transformation
-filtered_provenance = security.record_provenance(
-    data_id="filtered_patient_dataset",
-    source="derived",
-    process_steps=[{
-        "operation": "filter",
-        "description": "Filter patients with hypertension",
-        "tool": "duckdb",
-        "parameters": {"condition": "diagnosis = 'Hypertension'"}
-    }],
-    parent_ids=["patient_dataset"],
-    checksum="sha256:d4e5f6...",
-    data_type="dataset",
-    content_type="parquet"
-)
-
-# Log transformation in audit log
-audit_logger.data_modify(
-    "transform",
-    resource_id="patient_dataset",
-    resource_type="dataset",
-    details={
-        "output_id": "filtered_patient_dataset",
-        "operation": "filter",
-        "condition": "diagnosis = 'Hypertension'"
+# Initialize the enhanced lineage tracker with security integration
+lineage_tracker = EnhancedLineageTracker(
+    config={
+        "enable_audit_integration": True,
+        "enable_temporal_consistency": True,
+        "enable_ipld_storage": True,
+        "security_manager": security_manager,
+        "domain_validation_level": "strict"
     }
 )
 
-# Get provenance information
-provenance_info = security.get_provenance("filtered_patient_dataset")
+# Create domains for organizing lineage data
+healthcare_domain = lineage_tracker.create_domain(
+    name="HealthcareSystem",
+    description="Protected healthcare data system",
+    domain_type="business",
+    attributes={
+        "organization": "Hospital System",
+        "compliance_frameworks": ["HIPAA", "GDPR"],
+        "data_owner": "medical_records_department",
+        "classification": "restricted"
+    },
+    metadata_schema={
+        "required": ["retention_period", "classification", "consent_level"],
+        "properties": {
+            "retention_period": {"type": "string"},
+            "classification": {"enum": ["public", "internal", "confidential", "restricted"]},
+            "consent_level": {"enum": ["none", "basic", "research", "full"]}
+        }
+    }
+)
+
+analytics_domain = lineage_tracker.create_domain(
+    name="AnalyticsSystem",
+    description="Healthcare analytics platform",
+    domain_type="business",
+    attributes={
+        "organization": "Research Department",
+        "compliance_frameworks": ["HIPAA", "GDPR"],
+        "data_owner": "data_science_team",
+        "classification": "confidential"
+    }
+)
+
+# Create boundary with HIPAA compliance constraints
+healthcare_to_analytics = lineage_tracker.create_domain_boundary(
+    source_domain_id=healthcare_domain,
+    target_domain_id=analytics_domain,
+    boundary_type="data_transfer",
+    attributes={
+        "encryption": "AES-256",
+        "access_control": "role_based",
+        "data_masking": "enabled",
+        "deidentification": "required",
+        "requires_approval": True,
+        "compliance_verified": True
+    },
+    constraints=[
+        {"type": "field_level", "fields": ["patient_name", "ssn", "mrn"], "action": "mask"},
+        {"type": "field_level", "fields": ["date_of_birth"], "action": "generalize"},
+        {"type": "approval", "approvers": ["compliance_officer", "privacy_officer"]}
+    ]
+)
+
+# Record initial data source in provenance system
+with audit_logger.audit_context(
+    category=AuditCategory.DATA_ACCESS,
+    operation="import",
+    subject="patient_records",
+    status="success",
+    details={"source": "hospital_system", "record_count": 5000}
+):
+    source_id = provenance_manager.record_source(
+        data_id="patient_dataset",
+        source_type="database",
+        source_uri="hospital://records/patient_data",
+        description="Protected patient health records",
+        format="parquet",
+        size=1024 * 1024 * 50,  # 50MB
+        hash="sha256:a1b2c3...",
+        metadata={
+            "hipaa_compliant": True,
+            "contains_phi": True,
+            "consent_obtained": True,
+            "document_id": "patient_records_2023"
+        }
+    )
+
+    # Create corresponding node in lineage tracker
+    patient_data_node = lineage_tracker.create_node(
+        node_type="dataset",
+        metadata={
+            "name": "Patient Health Records",
+            "format": "parquet",
+            "record_count": 5000,
+            "retention_period": "7 years",
+            "classification": "restricted",
+            "consent_level": "research",
+            "contains_phi": True,
+            "security_controls": {
+                "encryption": "field-level",
+                "access_restriction": "need-to-know",
+                "masking_rules": ["patient_name", "ssn", "mrn"]
+            },
+            "provenance_record_id": source_id  # Link to provenance record
+        },
+        domain_id=healthcare_domain,
+        entity_id="patient_dataset_2023"
+    )
+
+# Record deidentification transformation
+with audit_logger.audit_context(
+    category=AuditCategory.DATA_TRANSFORMATION,
+    operation="deidentify",
+    subject="patient_dataset",
+    object="deidentified_dataset",
+    status="success",
+    details={
+        "method": "HIPAA Safe Harbor",
+        "fields_affected": ["patient_name", "mrn", "ssn", "date_of_birth", "zip"]
+    }
+):
+    # Record in provenance system
+    transform_id = provenance_manager.record_transformation(
+        input_ids=["patient_dataset"],
+        output_id="deidentified_dataset",
+        transformation_type="deidentification",
+        tool="privacy_toolkit",
+        parameters={
+            "method": "HIPAA Safe Harbor",
+            "k_anonymity": 5,
+            "fields_to_mask": ["patient_name", "mrn", "ssn"],
+            "fields_to_generalize": ["date_of_birth", "zip"]
+        },
+        description="Deidentify patient data using HIPAA Safe Harbor method",
+        metadata={
+            "hipaa_compliant": True,
+            "verification_status": "verified",
+            "verifier": "privacy_officer",
+            "document_id": "patient_deidentification_2023"
+        }
+    )
+    
+    # Create transformation node in lineage tracker
+    deidentify_node = lineage_tracker.create_node(
+        node_type="transformation",
+        metadata={
+            "name": "Patient Data Deidentification",
+            "tool": "privacy_toolkit",
+            "version": "2.3.1",
+            "method": "HIPAA Safe Harbor",
+            "execution_time": "32m",
+            "executor": "privacy_officer",
+            "execution_id": "job-45678",
+            "execution_date": datetime.datetime.now().isoformat(),
+            "security_context": {
+                "authentication": "mfa",
+                "authorization": "role_based",
+                "security_clearance": "confidential",
+                "compliance_verified": True,
+                "verification_date": datetime.datetime.now().isoformat(),
+                "verifier": "compliance_officer"
+            },
+            "provenance_record_id": transform_id  # Link to provenance record
+        },
+        domain_id=healthcare_domain,
+        entity_id="deidentify_transform_2023"
+    )
+    
+    # Record detailed transformation information
+    lineage_tracker.record_transformation_details(
+        transformation_id=deidentify_node,
+        operation_type="deidentification",
+        inputs=[
+            {"field": "patient_name", "type": "string", "sensitivity": "high", "phi": True},
+            {"field": "mrn", "type": "string", "sensitivity": "high", "phi": True},
+            {"field": "ssn", "type": "string", "sensitivity": "high", "phi": True},
+            {"field": "date_of_birth", "type": "date", "sensitivity": "high", "phi": True},
+            {"field": "zip", "type": "string", "sensitivity": "medium", "phi": True},
+            {"field": "diagnosis", "type": "string", "sensitivity": "high", "phi": True},
+            {"field": "medications", "type": "array", "sensitivity": "high", "phi": True}
+        ],
+        outputs=[
+            {"field": "id", "type": "string", "sensitivity": "low", "phi": False, "anonymized": True},
+            {"field": "birth_year", "type": "integer", "sensitivity": "low", "phi": False, "generalized": True},
+            {"field": "zip3", "type": "string", "sensitivity": "low", "phi": False, "generalized": True},
+            {"field": "diagnosis", "type": "string", "sensitivity": "high", "phi": True},
+            {"field": "medications", "type": "array", "sensitivity": "high", "phi": True}
+        ],
+        parameters={
+            "deidentification_method": "HIPAA Safe Harbor",
+            "k_anonymity": 5,
+            "suppression_threshold": 0.05,
+            "generalization_hierarchy": {
+                "date_of_birth": "date→month/year→year",
+                "zip": "5-digit→3-digit→state"
+            }
+        },
+        impact_level="field"
+    )
+    
+    # Create link between nodes
+    lineage_tracker.create_link(
+        source_id=patient_data_node,
+        target_id=deidentify_node,
+        relationship_type="input_to",
+        metadata={
+            "timestamp": datetime.datetime.now().isoformat(),
+            "compliance_context": {
+                "hipaa_compliant": True,
+                "gdpr_compliant": True,
+                "verified_by": "compliance_officer"
+            }
+        },
+        confidence=1.0
+    )
+    
+    # Create deidentified data node
+    deidentified_data_node = lineage_tracker.create_node(
+        node_type="dataset",
+        metadata={
+            "name": "Deidentified Patient Data",
+            "format": "parquet",
+            "record_count": 5000,
+            "retention_period": "5 years",
+            "classification": "confidential",
+            "consent_level": "research",
+            "contains_phi": False,
+            "deidentification_method": "HIPAA Safe Harbor",
+            "security_controls": {
+                "encryption": "transport-only",
+                "access_restriction": "department-level"
+            }
+        },
+        domain_id=analytics_domain,
+        entity_id="deidentified_dataset_2023"
+    )
+    
+    # Create link to deidentified data
+    lineage_tracker.create_link(
+        source_id=deidentify_node,
+        target_id=deidentified_data_node,
+        relationship_type="output_from",
+        metadata={
+            "timestamp": datetime.datetime.now().isoformat(),
+            "quality_score": 1.0,
+            "compliance_verified": True
+        },
+        confidence=1.0,
+        cross_domain=True  # This crosses domain boundaries
+    )
+
+# Generate comprehensive compliance report with detailed lineage
+compliance_report = lineage_tracker.generate_provenance_report(
+    entity_id="deidentified_dataset_2023",
+    include_visualization=True,
+    include_transformation_details=True,
+    include_security_context=True,
+    include_audit_trail=True,
+    format="html"
+)
+
+# Export lineage to IPLD for secure, tamper-proof storage
+root_cid = lineage_tracker.export_to_ipld(
+    include_domains=True,
+    include_boundaries=True,
+    include_versions=True,
+    include_transformation_details=True,
+    encrypt_sensitive_data=True
+)
+print(f"Exported compliant data lineage to IPLD with root CID: {root_cid}")
+
+# Get full provenance and lineage information for audit
+provenance_info = provenance_manager.get_record("deidentified_dataset")
+lineage_info = lineage_tracker.get_entity_lineage("deidentified_dataset_2023")
+
+# Verify temporal consistency of data flows
+inconsistencies = lineage_tracker.validate_temporal_consistency()
+if inconsistencies:
+    print(f"COMPLIANCE ISSUE: Found {len(inconsistencies)} temporal inconsistencies")
+    for issue in inconsistencies:
+        audit_logger.log_event(
+            level=AuditLevel.WARNING,
+            category=AuditCategory.COMPLIANCE,
+            operation="validate",
+            subject=issue["source_id"],
+            object=issue["target_id"],
+            status="failed",
+            details={"issue": "temporal_inconsistency", "description": issue["description"]}
+        )
+else:
+    print("COMPLIANCE: All data flows have proper temporal consistency")
 ```
 
 ## 6. Generating Compliance Reports
@@ -390,11 +655,16 @@ In this tutorial, we've learned how to:
 2. Configure comprehensive audit logging for security events
 3. Work with encrypted data and manage encryption keys
 4. Implement resource access control policies
-5. Track data transformations with provenance
-6. Generate compliance reports for GDPR and HIPAA
-7. Set up automated intrusion detection and alerting
+5. Track cross-document data lineage with domain-based organization
+6. Implement field-level transformation tracking for compliance
+7. Create secure domain boundaries with constraints
+8. Validate temporal consistency of data flows
+9. Link provenance and lineage with security context
+10. Generate comprehensive compliance reports with visualizations
+11. Export tamper-proof lineage to IPLD storage
+12. Set up automated intrusion detection and alerting
 
-These features provide the foundation for secure, compliant handling of sensitive data in IPFS Datasets applications.
+These features provide the foundation for secure, compliant handling of sensitive data in IPFS Datasets applications with complete data governance capabilities and detailed cross-domain lineage tracking.
 
 ## Next Steps
 

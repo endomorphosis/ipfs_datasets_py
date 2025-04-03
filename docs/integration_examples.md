@@ -2,6 +2,199 @@
 
 This document provides examples of integrating various components of the IPFS Datasets library.
 
+## Enhanced Cross-Document Lineage Integration
+
+The enhanced lineage tracking system provides comprehensive capabilities for tracking data provenance across document boundaries and multiple domains:
+
+```python
+from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
+from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
+
+# Create an enhanced lineage tracker with audit integration
+lineage_tracker = EnhancedLineageTracker(
+    config={
+        "enable_audit_integration": True,
+        "enable_semantic_detection": True,
+        "enable_temporal_consistency": True,
+        "enable_ipld_storage": True
+    }
+)
+
+# Create domains for organizing lineage data
+data_processing_domain = lineage_tracker.create_domain(
+    name="DataProcessing",
+    description="Domain for data transformation operations",
+    domain_type="processing"
+)
+
+storage_domain = lineage_tracker.create_domain(
+    name="Storage",
+    description="Domain for data storage systems",
+    domain_type="storage"
+)
+
+analytics_domain = lineage_tracker.create_domain(
+    name="Analytics",
+    description="Domain for analytics and reporting",
+    domain_type="analytics",
+    attributes={"compliance_level": "high"}
+)
+
+# Create domain boundaries to manage cross-domain data flow
+lineage_tracker.create_domain_boundary(
+    source_domain_id=data_processing_domain,
+    target_domain_id=storage_domain,
+    boundary_type="data_export",
+    attributes={"encryption": "AES-256"}
+)
+
+lineage_tracker.create_domain_boundary(
+    source_domain_id=storage_domain,
+    target_domain_id=analytics_domain,
+    boundary_type="data_import",
+    attributes={"access_control": "role_based"}
+)
+
+# Create nodes representing data artifacts in different domains
+raw_data_node = lineage_tracker.create_node(
+    node_type="dataset",
+    metadata={"format": "csv", "size": "2.3GB", "record_count": 1000000},
+    domain_id=data_processing_domain,
+    entity_id="raw_sales_data"
+)
+
+cleaned_data_node = lineage_tracker.create_node(
+    node_type="dataset",
+    metadata={"format": "parquet", "size": "1.8GB", "record_count": 950000},
+    domain_id=data_processing_domain,
+    entity_id="cleaned_sales_data"
+)
+
+transform_node = lineage_tracker.create_node(
+    node_type="transformation",
+    metadata={"tool": "pandas", "execution_time": "45min"},
+    domain_id=data_processing_domain,
+    entity_id="clean_transform_01"
+)
+
+# Record detailed transformation information
+lineage_tracker.record_transformation_details(
+    transformation_id=transform_node,
+    operation_type="data_cleaning",
+    inputs=[
+        {"field": "sales_amount", "type": "float"},
+        {"field": "transaction_date", "type": "date"}
+    ],
+    outputs=[
+        {"field": "sales_amount", "type": "float", "null_count": 0},
+        {"field": "transaction_date", "type": "date", "format": "yyyy-mm-dd"}
+    ],
+    parameters={"drop_na": True, "convert_dates": True},
+    impact_level="field"
+)
+
+# Create relationships between nodes
+lineage_tracker.create_link(
+    source_id=raw_data_node,
+    target_id=transform_node,
+    relationship_type="input_to",
+    metadata={"timestamp": "2023-04-01T08:15:00"}
+)
+
+lineage_tracker.create_link(
+    source_id=transform_node,
+    target_id=cleaned_data_node,
+    relationship_type="output_from",
+    metadata={"timestamp": "2023-04-01T09:00:00"}
+)
+
+# Create cross-domain relationships
+storage_node = lineage_tracker.create_node(
+    node_type="storage_system",
+    metadata={"type": "object_store", "provider": "internal"},
+    domain_id=storage_domain,
+    entity_id="data_lake_01"
+)
+
+lineage_tracker.create_link(
+    source_id=cleaned_data_node,
+    target_id=storage_node,
+    relationship_type="stored_in",
+    metadata={"timestamp": "2023-04-01T09:30:00"},
+    cross_domain=True
+)
+
+# Create version information
+lineage_tracker.create_version(
+    node_id=cleaned_data_node,
+    version_number="1.0.2",
+    change_description="Fixed date format inconsistencies",
+    creator_id="data_engineer_1"
+)
+
+# Query the lineage graph for analytics domain dependencies
+analytics_dependencies = lineage_tracker.query_lineage({
+    "domain_id": analytics_domain,
+    "node_type": ["dataset", "report"],
+    "relationship_type": ["derived_from", "based_on"]
+})
+
+# Find all paths between raw data and analytics results
+paths = lineage_tracker.find_paths(
+    start_node_id=raw_data_node,
+    end_node_id=analytics_node,
+    max_depth=5
+)
+
+# Detect potential semantic relationships
+semantic_relationships = lineage_tracker.detect_semantic_relationships()
+
+# Generate a visualization of the lineage graph
+lineage_tracker.visualize_lineage(
+    output_path="cross_domain_lineage.html",
+    visualization_type="interactive",
+    include_domains=True
+)
+
+# Export lineage data to IPLD for decentralized storage
+root_cid = lineage_tracker.export_to_ipld(
+    include_domains=True,
+    include_versions=True,
+    include_transformation_details=True
+)
+print(f"Lineage graph stored on IPLD with root CID: {root_cid}")
+
+# Generate comprehensive provenance report
+report = lineage_tracker.generate_provenance_report(
+    entity_id="cleaned_sales_data",
+    include_visualization=True,
+    format="html"
+)
+```
+
+### Benefits of Enhanced Lineage Tracking
+
+1. **Cross-Domain Visibility**: Track data as it moves across logical domains and system boundaries.
+
+2. **Hierarchical Organization**: Organize lineage data into domains and subdomains for better management.
+
+3. **Detailed Transformation Tracking**: Record granular details about transformation operations.
+
+4. **Temporal Consistency Checking**: Ensure data flows make logical sense in time.
+
+5. **Version Tracking**: Track versions of data artifacts with full history.
+
+6. **Semantic Relationship Detection**: Discover potential relationships beyond explicit links.
+
+7. **Interactive Visualization**: Visualize complex data flows with domain highlighting.
+
+8. **IPLD Integration**: Store lineage data in content-addressable format for decentralized access.
+
+9. **Audit Trail Integration**: Link lineage information with audit events for compliance.
+
+10. **Comprehensive Querying**: Find paths, subgraphs, and relationships with flexible criteria.
+
 ## IPLD Storage Integration with Data Provenance
 
 The IPLD storage system can be integrated with the enhanced data provenance system to enable content-addressed storage and portability of provenance records:
@@ -258,6 +451,211 @@ operations = [
 # Process the dataset with audit logging
 result = process_dataset(df, operations, "test_dataset")
 print(result)
+```
+
+## Integration with Security and Governance
+
+The enhanced lineage tracking system can be integrated with security and governance components for comprehensive data governance:
+
+```python
+from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditCategory, AuditLevel
+from ipfs_datasets_py.security import SecurityManager
+
+# Initialize security manager
+security_manager = SecurityManager(
+    config={
+        "enable_encryption": True,
+        "enable_access_control": True,
+        "key_storage": "secure_storage"
+    }
+)
+
+# Create encryption keys for sensitive data
+encryption_key_id = security_manager.create_encryption_key(
+    key_name="lineage-sensitive-data",
+    key_description="Key for encrypting sensitive lineage metadata"
+)
+
+# Set up access policies for lineage data
+security_manager.create_resource_policy(
+    resource_id="lineage-graph",
+    policy={
+        "admin": ["read", "write", "delete", "grant"],
+        "data_steward": ["read", "write"],
+        "analyst": ["read"],
+        "auditor": ["read"]
+    }
+)
+
+# Initialize audit logger with security integration
+audit_logger = AuditLogger(
+    log_file="lineage_audit.log",
+    console_level=AuditLevel.WARNING,
+    security_manager=security_manager
+)
+
+# Create enhanced lineage tracker with security and audit integration
+lineage_tracker = EnhancedLineageTracker(
+    config={
+        "enable_audit_integration": True,
+        "enable_ipld_storage": True,
+        "security_manager": security_manager,
+        "audit_logger": audit_logger,
+        "encryption_key_id": encryption_key_id
+    }
+)
+
+# Create domains with appropriate security controls
+finance_domain = lineage_tracker.create_domain(
+    name="Finance",
+    domain_type="business",
+    attributes={
+        "sensitivity": "high",
+        "compliance_frameworks": ["SOX", "GDPR"],
+        "data_owners": ["finance_team"],
+        "security_classification": "restricted"
+    }
+)
+
+analytics_domain = lineage_tracker.create_domain(
+    name="Analytics",
+    domain_type="business",
+    attributes={
+        "sensitivity": "medium",
+        "data_owners": ["analytics_team"],
+        "security_classification": "internal"
+    }
+)
+
+# Set up secure boundary between domains
+lineage_tracker.create_domain_boundary(
+    source_domain_id=finance_domain,
+    target_domain_id=analytics_domain,
+    boundary_type="data_transfer",
+    attributes={
+        "encryption": "AES-256",
+        "access_control": "role_based",
+        "data_masking": "enabled",
+        "approval_required": True
+    },
+    constraints=[
+        {"type": "field_level", "fields": ["ssn", "account_number"], "action": "mask"},
+        {"type": "time_constraint", "hours": "8-17", "days": "mon-fri"},
+        {"type": "approval", "approvers": ["data_governance_team"]}
+    ]
+)
+
+# Create sensitive data node with security controls
+sensitive_data = lineage_tracker.create_node(
+    node_type="dataset",
+    metadata={
+        "format": "parquet",
+        "record_count": 50000,
+        "contains_pii": True,
+        "security_controls": {
+            "encryption": "column-level",
+            "access_restriction": "need-to-know",
+            "retention_policy": "3 years"
+        }
+    },
+    domain_id=finance_domain,
+    entity_id="financial_transactions"
+)
+
+# Record access to sensitive data with audit trail
+with audit_logger.audit_context(
+    category=AuditCategory.DATA_ACCESS,
+    operation="read",
+    subject="financial_transactions",
+    status="success"
+):
+    # Create a transformation with security context
+    transform_node = lineage_tracker.create_node(
+        node_type="transformation",
+        metadata={
+            "tool": "secure_etl",
+            "user_id": "data_engineer_1",
+            "security_context": {
+                "authentication": "mfa",
+                "authorization": "role_based",
+                "security_clearance": "confidential"
+            }
+        },
+        domain_id=finance_domain,
+        entity_id="anonymize_transform"
+    )
+    
+    # Record detailed transformation with security controls
+    lineage_tracker.record_transformation_details(
+        transformation_id=transform_node,
+        operation_type="anonymization",
+        inputs=[
+            {"field": "customer_id", "type": "string", "sensitivity": "high"},
+            {"field": "transaction_amount", "type": "decimal", "sensitivity": "medium"}
+        ],
+        outputs=[
+            {"field": "customer_hash", "type": "string", "sensitivity": "low"},
+            {"field": "transaction_amount", "type": "decimal", "sensitivity": "medium"}
+        ],
+        parameters={
+            "anonymization_method": "sha256",
+            "salt": "secure-random-salt",
+            "k_anonymity": 5
+        },
+        impact_level="field"
+    )
+
+# Create cross-domain link with security controls for data crossing boundary
+anonymized_data = lineage_tracker.create_node(
+    node_type="dataset",
+    metadata={
+        "format": "parquet",
+        "record_count": 50000,
+        "contains_pii": False,
+        "security_controls": {
+            "encryption": "transport-only",
+            "access_restriction": "department-level",
+            "retention_policy": "1 year"
+        }
+    },
+    domain_id=analytics_domain,
+    entity_id="anonymized_transactions"
+)
+
+# Create link that crosses domain boundary with security context
+lineage_tracker.create_link(
+    source_id=transform_node,
+    target_id=anonymized_data,
+    relationship_type="output_from",
+    metadata={
+        "timestamp": datetime.datetime.now().isoformat(),
+        "security_context": {
+            "boundary_crossing_approved_by": "data_governance_team",
+            "security_validation": "passed",
+            "compliance_check": "passed"
+        }
+    },
+    cross_domain=True
+)
+
+# Generate comprehensive security-enhanced provenance report
+report = lineage_tracker.generate_provenance_report(
+    entity_id="anonymized_transactions",
+    include_visualization=True,
+    format="html",
+    include_security_context=True,
+    include_audit_trail=True
+)
+
+# Export secured lineage data to IPLD with encrypted sensitive information
+root_cid = lineage_tracker.export_to_ipld(
+    include_domains=True,
+    include_versions=True,
+    include_transformation_details=True,
+    encrypt_sensitive_data=True
+)
+print(f"Secure lineage graph stored on IPLD with root CID: {root_cid}")
 ```
 
 ## Complete Integration: IPLD Storage + Provenance + Audit Logging

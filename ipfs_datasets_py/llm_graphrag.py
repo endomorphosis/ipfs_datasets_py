@@ -29,6 +29,8 @@ from ipfs_datasets_py.llm_interface import (
     LLMInterface, LLMInterfaceFactory, GraphRAGPromptTemplates,
     PromptLibrary, AdaptivePrompting, PromptTemplate
 )
+from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex # Added import
+from ipfs_datasets_py.ipld.knowledge_graph import IPLDKnowledgeGraph # Added import
 
 # Import UnifiedGraphRAGQueryOptimizer conditionally to avoid circular imports
 if TYPE_CHECKING:
@@ -628,6 +630,161 @@ class GraphRAGLLMProcessor:
         
         # Cache for LLM responses to reduce redundant calls
         self._response_cache = {}
+
+        # Initialize vector and graph stores
+        # TODO: Allow passing configured stores or config details
+        try:
+            # Use default dimension of 768 for embedding vectors
+            self.vector_store = IPFSKnnIndex(dimension=768) 
+            logging.info("Initialized default IPFSKnnIndex as vector_store.")
+        except Exception as e:
+            logging.error(f"Failed to initialize IPFSKnnIndex: {e}")
+            self.vector_store = None
+
+        try:
+            self.graph_store = IPLDKnowledgeGraph()
+            logging.info("Initialized default IPLDKnowledgeGraph as graph_store.")
+        except Exception as e:
+            logging.error(f"Failed to initialize IPLDKnowledgeGraph: {e}")
+            self.graph_store = None
+
+    # --- Retrieval Methods (Implementations based on Optimizer requirements) ---
+
+    def search_by_vector(self, vector: np.ndarray, top_k: int = 5, min_score: float = 0.5, **kwargs) -> List[Dict[str, Any]]:
+        """Perform vector search using the initialized vector store."""
+        if not self.vector_store:
+            logging.error("Vector store not initialized in GraphRAGLLMProcessor.")
+            return []
+        try:
+            # Assuming vector_store has a search method similar to IPFSKnnIndex
+            # The actual result format might need adjustment based on the store's implementation
+            search_results = self.vector_store.search(vector, top_k=top_k)
+            
+            # Filter by min_score and format
+            formatted_results = []
+            for result in search_results:
+                 if result.score >= min_score:
+                     formatted_results.append({
+                         "id": result.id, # Assuming result has 'id'
+                         "score": result.score, # Assuming result has 'score'
+                         "metadata": result.metadata, # Assuming result has 'metadata'
+                         "source": "vector" # Mark source for ranking
+                     })
+            return formatted_results
+        except AttributeError:
+             logging.error(f"Vector store ({type(self.vector_store)}) does not have a 'search' method.")
+             return []
+        except Exception as e:
+            logging.error(f"Error during vector search: {e}")
+            return []
+
+    def expand_by_graph(self, entities: List[Dict[str, Any]], max_depth: int = 2, edge_types: Optional[List[str]] = None, **kwargs) -> List[Dict[str, Any]]:
+        """Perform graph expansion using the initialized graph store."""
+        if not self.graph_store:
+            logging.error("Graph store not initialized in GraphRAGLLMProcessor.")
+            return entities # Return original entities if no graph store
+        
+        if not entities:
+            return []
+
+        try:
+            # Assuming graph_store has a method like traverse_from_entities
+            # Need to adapt input/output based on actual graph store implementation
+            seed_entities_info = [{"id": e["id"], "metadata": e.get("metadata", {})} for e in entities if "id" in e]
+
+            # Call graph traversal (adjust parameters as needed for the actual method)
+            traversed_entities = self.graph_store.traverse_from_entities(
+                entities=seed_entities_info, # Pass necessary info
+                relationship_types=edge_types,
+                max_depth=max_depth
+            )
+
+            # Combine original entities with traversed ones, marking source
+            # Need a strategy to handle duplicates and combine info/scores
+            combined_results = entities[:] # Start with original vector results
+            existing_ids = {e["id"] for e in entities}
+
+            for trav_entity in traversed_entities:
+                 # Assuming traversed_entity is a dict with 'id', 'properties', etc.
+                 entity_id = trav_entity.get("id")
+                 if entity_id and entity_id not in existing_ids:
+                     combined_results.append({
+                         "id": entity_id,
+                         "score": 0.5, # Assign a default graph score or derive one
+                         "metadata": trav_entity.get("properties", {}),
+                         "source": "graph" # Mark source
+                     })
+                     existing_ids.add(entity_id)
+                 # TODO: Add logic to potentially update existing entities if found via graph
+
+            return combined_results
+        except AttributeError:
+             logging.error(f"Graph store ({type(self.graph_store)}) does not have a 'traverse_from_entities' method.")
+             return entities # Return original entities
+        except Exception as e:
+            logging.error(f"Error during graph expansion: {e}")
+            return entities # Return original entities on error
+
+    def rank_results(self, results: List[Dict[str, Any]], vector_weight: float = 0.7, graph_weight: float = 0.3, **kwargs) -> List[Dict[str, Any]]:
+        """Rank combined results from vector search and graph expansion."""
+        """Rank combined results from vector search and graph expansion."""
+        
+        if not results:
+            return []
+
+        # Separate results by source
+        vector_results = [r for r in results if r.get("source") == "vector"]
+        graph_results = [r for r in results if r.get("source") == "graph"]
+        other_results = [r for r in results if r.get("source") not in ["vector", "graph"]]
+
+        # --- Score Normalization (Min-Max Scaling) ---
+        # Normalize vector scores (assuming higher is better, scale 0-1)
+        vector_scores = [r.get("score", 0.0) for r in vector_results]
+        min_vec_score = min(vector_scores) if vector_scores else 0.0
+        max_vec_score = max(vector_scores) if vector_scores else 1.0
+        range_vec = max_vec_score - min_vec_score
+        if range_vec == 0: range_vec = 1.0 # Avoid division by zero
+
+        for r in vector_results:
+            r["normalized_score"] = (r.get("score", 0.0) - min_vec_score) / range_vec
+
+        # Normalize graph scores (assuming higher is better, scale 0-1)
+        # Graph scores might represent distance or relevance, adjust logic as needed
+        graph_scores = [r.get("score", 0.0) for r in graph_results]
+        min_graph_score = min(graph_scores) if graph_scores else 0.0
+        max_graph_score = max(graph_scores) if graph_scores else 1.0
+        range_graph = max_graph_score - min_graph_score
+        if range_graph == 0: range_graph = 1.0 # Avoid division by zero
+
+        for r in graph_results:
+             # Assuming higher score is better for graph results too
+            r["normalized_score"] = (r.get("score", 0.0) - min_graph_score) / range_graph
+
+        # Assign default normalized score for others
+        for r in other_results:
+            r["normalized_score"] = r.get("score", 0.0) # Or assign a fixed low score like 0.1
+
+        # --- Weighted Combination ---
+        combined_results = vector_results + graph_results + other_results
+        final_ranked_results = []
+        for result in combined_results:
+            norm_score = result.get("normalized_score", 0.0)
+            source = result.get("source", "unknown")
+
+            if source == "vector":
+                final_score = norm_score * vector_weight
+            elif source == "graph":
+                final_score = norm_score * graph_weight
+            else:
+                final_score = norm_score * 0.1 # Lower weight for unknown sources
+
+            result["final_score"] = final_score
+            final_ranked_results.append(result)
+
+        # Sort by the final combined score
+        return sorted(final_ranked_results, key=lambda x: x.get("final_score", 0.0), reverse=True)
+
+    # --- Core LLM Processing Methods ---
         
     def analyze_evidence_chain(
         self,
@@ -989,10 +1146,11 @@ class GraphRAGLLMProcessor:
         graph_info: Optional[Dict[str, Any]] = None,
         query_vector: Optional[np.ndarray] = None,
         doc_trace_ids: Optional[List[str]] = None,
-        root_cids: Optional[List[str]] = None
+            root_cids: Optional[List[str]] = None,
+            skip_cache: bool = False # Added skip_cache parameter
     ) -> Dict[str, Any]:
         """
-        Synthesize information across documents to answer a query.
+        Synthesize information across documents to answer a query, potentially using query optimization.
         
         Args:
             query: User query
@@ -1039,71 +1197,57 @@ class GraphRAGLLMProcessor:
                 "document_metadata": document_metadata
             }
         }
-        
-        # Apply query optimization if available
-        optimized_plan = None
+
+        # Start timing for statistics recording (if optimizer exists)
+        query_start_time = time.time()
+        retrieved_context = []
+        execution_info = {}
+        optimizer_used = False
+
+        # --- Retrieval Step ---
         if self.query_optimizer and query_vector is not None:
+            optimizer_used = True
             try:
-                if doc_trace_ids and len(doc_trace_ids) > 0:
-                    # Optimize for Wikipedia knowledge graphs
-                    optimized_plan = self.query_optimizer.optimize_cross_document_query(
-                        query_text=query,
-                        query_vector=query_vector,
-                        doc_trace_ids=doc_trace_ids,
-                        max_docs=len(documents)
-                    )
-                    # Add optimizer type to context for potential template selection
-                    context["optimizer_type"] = "wikipedia"
-                elif root_cids and len(root_cids) > 0:
-                    # Optimize for IPLD-based knowledge graphs
-                    content_types = []
-                    for doc in documents:
-                        if "content_type" in doc:
-                            content_types.append(doc["content_type"])
-                    
-                    optimized_plan = self.query_optimizer.optimize_query(
-                        query_vector=query_vector,
-                        query_text=query,
-                        root_cids=root_cids,
-                        content_types=content_types if content_types else None
-                    )
-                    # Add optimizer type to context for potential template selection
-                    context["optimizer_type"] = "ipld"
-                else:
-                    # No specific graph information, use general optimization
-                    graph_specs = []
-                    for i, doc in enumerate(documents):
-                        if "trace_id" in doc:
-                            graph_specs.append({
-                                "graph_type": "wikipedia",
-                                "trace_id": doc["trace_id"],
-                                "weight": 1.0 / len(documents)
-                            })
-                        elif "root_cid" in doc:
-                            graph_specs.append({
-                                "graph_type": "ipld",
-                                "root_cid": doc["root_cid"],
-                                "weight": 1.0 / len(documents)
-                            })
-                    
-                    if graph_specs:
-                        optimized_plan = self.query_optimizer.optimize_multi_graph_query(
-                            query_vector=query_vector,
-                            query_text=query,
-                            graph_specs=graph_specs
-                        )
-                        # Add optimizer type to context for potential template selection
-                        context["optimizer_type"] = "unified_multi_graph"
-                
-                # Add optimization plan to context
-                if optimized_plan:
-                    context["optimized_plan"] = optimized_plan
+                # Prepare query for optimizer
+                optimizer_query = {
+                    "query_vector": query_vector,
+                    "query_text": query,
+                    # Pass relevant info if available
+                    "doc_trace_ids": doc_trace_ids,
+                    "root_cids": root_cids,
+                    # Add other potential parameters the optimizer might use
+                    "max_vector_results": 10, # Example default
+                    "max_traversal_depth": 2, # Example default
+                }
+
+                # Use the optimizer's execute_query method for retrieval & budget tracking
+                # Pass 'self' as the processor implementing search/expand/rank methods
+                retrieved_context, execution_info = self.query_optimizer.execute_query(
+                    processor=self,
+                    query=optimizer_query,
+                    priority="normal", # Or determine priority based on context
+                    skip_cache=skip_cache
+                )
+                # Add optimizer plan to context for adaptive prompting
+                if "plan" in execution_info:
+                     context["optimized_plan"] = execution_info["plan"]
+
             except Exception as e:
-                # Log optimization error but continue without it
-                logging.warning(f"Error in query optimization: {str(e)}")
+                logging.error(f"Error during optimized query execution: {str(e)}")
                 logging.debug(traceback.format_exc())
-        
-        # Detect domain and enhance context
+                # Fallback or handle error - for now, proceed without retrieved context
+                retrieved_context = []
+                execution_info = {"error": str(e)}
+        else:
+            # Fallback: Simple retrieval if no optimizer or vector
+            # For now, just use the initially provided documents as context
+            # TODO: Implement a basic retrieval fallback if needed
+            logging.warning("Query optimizer not used. Using provided documents as context.")
+            retrieved_context = documents # Use input documents directly
+
+        # --- LLM Synthesis Step ---
+        # Detect domain and enhance context (using potentially optimized context)
+        context["retrieved_context"] = retrieved_context # Add retrieved context for domain detection
         enhanced_context = self.domain_processor.enhance_context_with_domain(context)
         domain = enhanced_context.get("domain", "academic")
         
@@ -1115,26 +1259,15 @@ class GraphRAGLLMProcessor:
             task="cross_document_reasoning",
             default_template="cross_document_reasoning"
         )
-        
-        # Format documents for prompt
-        doc_text = self._format_documents_for_domain(documents, domain)
-        
-        # Enhance connections description with optimizer insights if available
+        # Format retrieved context for prompt
+        # Use retrieved_context instead of the original documents list
+        doc_text = self._format_documents_for_domain(retrieved_context, domain)
+
+        # Enhance connections description (remains the same, based on original input)
         enhanced_connections = connections
-        if optimized_plan and isinstance(connections, str):
-            # Add optimizer insights to connections
-            if "connecting_entities" in optimized_plan:
-                enhanced_connections += "\n\nOPTIMIZER INSIGHTS:\n"
-                enhanced_connections += f"Found {len(optimized_plan['connecting_entities'])} connecting entities between documents.\n"
-            
-            if "traversal_paths" in optimized_plan and len(optimized_plan["traversal_paths"]) > 0:
-                enhanced_connections += "Optimal traversal paths identified between documents.\n"
-            
-            if "weights" in optimized_plan:
-                enhanced_connections += f"Optimal search weights - Vector: {optimized_plan['weights'].get('vector', 0.5):.2f}, Graph: {optimized_plan['weights'].get('graph', 0.5):.2f}\n"
-        
-        # Log parameters for performance monitoring
-        start_time = time.time()
+
+        # Log parameters for performance monitoring (using LLM start time)
+        llm_start_time = time.time()
         
         try:
             # Format prompt
@@ -1152,7 +1285,7 @@ class GraphRAGLLMProcessor:
             result = self.llm.generate_with_structured_output(prompt, schema)
             
             # Record successful interaction
-            latency = time.time() - start_time
+            latency = time.time() - llm_start_time
             self.performance_monitor.record_interaction(
                 task="cross_document_reasoning",
                 model=self.llm.config.model_name,
@@ -1163,31 +1296,26 @@ class GraphRAGLLMProcessor:
                 metadata={
                     "domain": domain,
                     "reasoning_depth": reasoning_depth,
-                    "num_documents": len(documents),
-                    "optimizer_used": optimized_plan is not None
+                    "num_documents": len(retrieved_context), # Use count of retrieved docs
+                    "optimizer_used": optimizer_used,
+                    "execution_info": execution_info # Include optimizer execution info
                 }
             )
-            
+
             # Enhance result with domain-specific post-processing
             enhanced_result = self._enhance_result_for_domain(result, domain, reasoning_depth)
-            
-            # Add optimizer information to the result if available
-            if optimized_plan:
-                optimizer_type = context.get("optimizer_type", "unknown")
-                enhanced_result["optimizer_info"] = {
-                    "optimizer_type": optimizer_type,
-                    "vector_weight": optimized_plan.get("weights", {}).get("vector", 0.5),
-                    "graph_weight": optimized_plan.get("weights", {}).get("graph", 0.5)
-                }
-            
-            # Cache result
+
+            # Add optimizer execution info to the final result
+            enhanced_result["execution_info"] = execution_info
+
+            # Cache result (using original cache key)
             self._response_cache[cache_key] = enhanced_result
             
             return enhanced_result
             
         except Exception as e:
             # Record failed interaction
-            latency = time.time() - start_time
+            latency = time.time() - llm_start_time
             error_msg = str(e)
             self.performance_monitor.record_interaction(
                 task="cross_document_reasoning",
@@ -1200,11 +1328,12 @@ class GraphRAGLLMProcessor:
                 metadata={
                     "domain": domain,
                     "reasoning_depth": reasoning_depth,
-                    "num_documents": len(documents),
-                    "optimizer_used": optimized_plan is not None
+                    "num_documents": len(retrieved_context), # Use count of retrieved docs
+                    "optimizer_used": optimizer_used,
+                    "execution_info": execution_info # Include optimizer execution info
                 }
             )
-            
+
             # Log error
             logging.error(f"Error in synthesize_cross_document_reasoning: {error_msg}")
             logging.debug(traceback.format_exc())
@@ -1213,9 +1342,11 @@ class GraphRAGLLMProcessor:
             return {
                 "answer": f"Error synthesizing information: {error_msg}",
                 "reasoning": "Unable to synthesize information due to error",
-                "confidence": 0.0
+                "confidence": 0.0,
+                "execution_info": execution_info # Include execution info even on error
             }
-    
+        # Note: The overall query time recording was moved to the optimizer's execute_query method
+
     def _format_documents_for_domain(
         self,
         documents: List[Dict[str, Any]],

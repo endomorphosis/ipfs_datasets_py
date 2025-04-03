@@ -7,3 +7,13 @@ package-lock.json
 build/
 dist/
 *.egg-info/
+*.venv/*
+*.venv/
+*.egg
+*.whl
+.venv
+.venv/*
+*venv*
+*.env
+*.env.*
+*.DS_Store

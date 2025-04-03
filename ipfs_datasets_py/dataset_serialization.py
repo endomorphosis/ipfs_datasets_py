@@ -11,7 +11,190 @@ Features:
 - Content-based deduplication
 - Support for graph datasets
 - Vector embedding storage and retrieval
+- JSONL import, export, and conversion capabilities
 """
+
+# Version 1.0.1 - Added JSONL serialization support
+
+import json
+import os
+import tempfile
+from typing import List, Dict, Any, Optional, Union, Tuple, Iterator
+
+class DatasetSerializer:
+    """
+    Class for serializing and deserializing datasets between various formats.
+    
+    Features:
+    - Convert between different dataset formats (Arrow, Parquet, HuggingFace, JSONL)
+    - Serialization to IPLD for storage on IPFS
+    - Content-based deduplication
+    - Support for large datasets through streaming
+    - Preservation of schema and metadata
+    """
+    
+    def __init__(self, storage=None):
+        """
+        Initialize the dataset serializer.
+        
+        Args:
+            storage (IPLDStorage, optional): IPLD storage backend
+        """
+        # Use the provided storage or create a new one
+        if storage is None:
+            from ipfs_datasets_py.ipld.storage import IPLDStorage
+            self.storage = IPLDStorage()
+        else:
+            self.storage = storage
+            
+    def export_to_jsonl(self, data: List[Dict[str, Any]], output_path: str) -> str:
+        """
+        Export data to a JSONL (JSON Lines) file.
+        
+        Args:
+            data (List[Dict]): List of JSON-serializable records
+            output_path (str): Path to the output JSONL file
+            
+        Returns:
+            str: Path to the created JSONL file
+        """
+        with open(output_path, 'w') as f:
+            for record in data:
+                json_str = json.dumps(record)
+                f.write(json_str + '\n')
+        return output_path
+    
+    def import_from_jsonl(self, jsonl_path: str) -> Optional['pa.Table']:
+        """
+        Import data from a JSONL file to an Arrow table.
+        
+        Args:
+            jsonl_path (str): Path to the JSONL file
+            
+        Returns:
+            pa.Table: Arrow table containing the data
+            
+        Raises:
+            ImportError: If PyArrow is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for JSONL import")
+        
+        # Read the JSONL file
+        records = []
+        with open(jsonl_path, 'r') as f:
+            for line in f:
+                if line.strip():  # Skip empty lines
+                    records.append(json.loads(line))
+        
+        # Convert to Arrow table
+        return pa.Table.from_pylist(records)
+    
+    def convert_jsonl_to_huggingface(self, jsonl_path: str) -> Optional['Dataset']:
+        """
+        Convert a JSONL file to a HuggingFace dataset.
+        
+        Args:
+            jsonl_path (str): Path to the JSONL file
+            
+        Returns:
+            Dataset: HuggingFace dataset containing the data
+            
+        Raises:
+            ImportError: If HuggingFace datasets library is not available
+        """
+        if not HAVE_HUGGINGFACE:
+            raise ImportError("HuggingFace datasets library is required for JSONL to HuggingFace conversion")
+        
+        # Import the dataset from JSONL
+        from datasets import Dataset
+        return Dataset.from_json(jsonl_path)
+    
+    def convert_arrow_to_jsonl(self, table: 'pa.Table', output_path: str) -> str:
+        """
+        Convert an Arrow table to a JSONL file.
+        
+        Args:
+            table (pa.Table): Arrow table to convert
+            output_path (str): Path to the output JSONL file
+            
+        Returns:
+            str: Path to the created JSONL file
+            
+        Raises:
+            ImportError: If PyArrow is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Arrow to JSONL conversion")
+        
+        # Convert table to Python records
+        records = table.to_pylist()
+        
+        # Write to JSONL
+        return self.export_to_jsonl(records, output_path)
+    
+    def serialize_jsonl(self, jsonl_path: str) -> str:
+        """
+        Serialize a JSONL file to IPLD for storage on IPFS.
+        
+        Args:
+            jsonl_path (str): Path to the JSONL file
+            
+        Returns:
+            str: CID of the serialized data
+        """
+        # Read the JSONL file
+        records = []
+        with open(jsonl_path, 'r') as f:
+            for line in f:
+                if line.strip():  # Skip empty lines
+                    records.append(json.loads(line))
+        
+        # Structure for storage
+        dataset = {
+            "type": "jsonl_dataset",
+            "record_count": len(records),
+            "records": records,
+            "metadata": {
+                "created_at": datetime.datetime.now().isoformat(),
+                "source_file": os.path.basename(jsonl_path)
+            }
+        }
+        
+        # Store in IPLD
+        return self.storage.store_json(dataset)
+    
+    def deserialize_jsonl(self, cid: str, output_path: Optional[str] = None) -> Union[List[Dict[str, Any]], str]:
+        """
+        Deserialize JSONL data from IPLD/IPFS.
+        
+        Args:
+            cid (str): CID of the serialized JSONL data
+            output_path (str, optional): If provided, write the deserialized data to this path
+            
+        Returns:
+            Union[List[Dict], str]: List of records, or path to the output file if output_path is provided
+        """
+        # Get the data from IPFS
+        dataset = self.storage.get_json(cid)
+        
+        # Verify it's a JSONL dataset
+        if dataset.get("type") != "jsonl_dataset":
+            raise ValueError(f"CID {cid} does not contain a JSONL dataset")
+        
+        # Extract records
+        records = dataset.get("records", [])
+        
+        # If output path provided, write to file
+        if output_path:
+            with open(output_path, 'w') as f:
+                for record in records:
+                    json_str = json.dumps(record)
+                    f.write(json_str + '\n')
+            return output_path
+        
+        # Otherwise return records
+        return records
 
 import os
 import json
@@ -5877,6 +6060,468 @@ class DatasetSerializer:
         # Create the table
         table = pa.Table.from_arrays(columns, schema=schema)
         return table
+        
+    def export_to_jsonl(self, data, output_path, orient="records", lines=True, compression=None):
+        """
+        Export data to a JSONL file.
+        
+        Args:
+            data: Data to export (Arrow Table, HuggingFace Dataset, Pandas DataFrame, or dict)
+            output_path (str): Path to output JSONL file
+            orient (str): JSON orientation format (for pandas conversion)
+            lines (bool): Whether to write JSON Lines format (one object per line)
+            compression (str, optional): Compression format ("gzip", "bz2", "xz")
+            
+        Returns:
+            str: Path to the exported file
+            
+        Raises:
+            ValueError: If data type is not supported
+        """
+        # Convert data to appropriate format if needed
+        arrow_table = None
+        
+        if HAVE_ARROW and isinstance(data, pa.Table):
+            arrow_table = data
+        elif HAVE_HUGGINGFACE and (
+            isinstance(data, Dataset) or 
+            (isinstance(data, DatasetDict) and len(data) > 0)
+        ):
+            if isinstance(data, DatasetDict):
+                # Take the first split by default
+                split = next(iter(data))
+                data = data[split]
+            arrow_table = data.data.table
+        else:
+            try:
+                import pandas as pd
+                if isinstance(data, pd.DataFrame):
+                    # Use pandas to_json with lines=True for JSONL format
+                    if compression:
+                        data.to_json(output_path, orient=orient, lines=lines, compression=compression)
+                    else:
+                        data.to_json(output_path, orient=orient, lines=lines)
+                    return output_path
+            except ImportError:
+                pass
+                
+            # If we're here, we need to handle dict/list data
+            if isinstance(data, (dict, list)):
+                # Open file with appropriate compression
+                if compression == "gzip":
+                    import gzip
+                    f = gzip.open(output_path, "wt")
+                elif compression == "bz2":
+                    import bz2
+                    f = bz2.open(output_path, "wt")
+                elif compression == "xz":
+                    import lzma
+                    f = lzma.open(output_path, "wt")
+                else:
+                    f = open(output_path, "w")
+                    
+                try:
+                    if isinstance(data, list):
+                        # Write each record as a separate JSON line
+                        for record in data:
+                            f.write(json.dumps(record) + "\n")
+                    elif isinstance(data, dict):
+                        if orient == "records" and "records" in data:
+                            # Handle {"records": [...]} format
+                            for record in data["records"]:
+                                f.write(json.dumps(record) + "\n")
+                        else:
+                            # Write as a single JSON object
+                            f.write(json.dumps(data))
+                finally:
+                    f.close()
+                    
+                return output_path
+            else:
+                raise ValueError(f"Unsupported data type for JSONL export: {type(data)}")
+        
+        # If we have an Arrow table, convert to JSONL
+        if arrow_table is not None:
+            if HAVE_ARROW:
+                # Use pyarrow.json for efficient conversion
+                from pyarrow import json as pa_json
+                
+                # Convert Arrow table to pandas first for more control over JSON format
+                try:
+                    import pandas as pd
+                    df = arrow_table.to_pandas()
+                    
+                    # Use pandas to_json with lines=True for JSONL format
+                    if compression:
+                        df.to_json(output_path, orient=orient, lines=lines, compression=compression)
+                    else:
+                        df.to_json(output_path, orient=orient, lines=lines)
+                        
+                except ImportError:
+                    # Fallback to manual JSON serialization if pandas not available
+                    if compression:
+                        # Import appropriate compression module
+                        if compression == "gzip":
+                            import gzip as compression_module
+                        elif compression == "bz2":
+                            import bz2 as compression_module
+                        else:
+                            import lzma as compression_module
+                            
+                        with compression_module.open(output_path, "wt") as f:
+                            self._write_arrow_to_jsonl(arrow_table, f)
+                    else:
+                        with open(output_path, "w") as f:
+                            self._write_arrow_to_jsonl(arrow_table, f)
+            else:
+                raise ImportError("PyArrow is required for exporting Arrow tables to JSONL")
+                
+        return output_path
+        
+    def _write_arrow_to_jsonl(self, table, file_obj):
+        """
+        Write an Arrow table to a JSONL file.
+        
+        Args:
+            table (pyarrow.Table): Table to write
+            file_obj: File object to write to
+        """
+        # Convert to Python objects row by row
+        for i in range(table.num_rows):
+            row = {col: table.column(col)[i].as_py() for col in table.column_names}
+            file_obj.write(json.dumps(row) + "\n")
+    
+    def import_from_jsonl(self, input_path, schema=None, compression=None, infer_schema=True, max_rows_for_inference=1000):
+        """
+        Import data from a JSONL file.
+        
+        Args:
+            input_path (str): Path to input JSONL file
+            schema (pyarrow.Schema, optional): Schema for the data
+            compression (str, optional): Compression format ("gzip", "bz2", "xz")
+            infer_schema (bool): Whether to infer schema from the data
+            max_rows_for_inference (int): Maximum number of rows to read for schema inference
+            
+        Returns:
+            pyarrow.Table: Imported data as an Arrow table
+            
+        Raises:
+            ImportError: If PyArrow is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for importing JSONL files")
+            
+        try:
+            # Use pyarrow.json for efficient parsing
+            read_options = pa.json.ReadOptions(use_threads=True)
+            parse_options = pa.json.ParseOptions(explicit_schema=schema)
+            
+            if compression == "gzip":
+                # For compressed files, we need to decompress first
+                import gzip
+                with gzip.open(input_path, "rt") as f:
+                    # Read the decompressed data to temporary file
+                    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_f:
+                        temp_path = temp_f.name
+                        for line in f:
+                            temp_f.write(line)
+                            
+                # Read from temporary file
+                table = pa.json.read_json(temp_path, read_options=read_options, parse_options=parse_options)
+                # Clean up
+                os.unlink(temp_path)
+            elif compression == "bz2":
+                import bz2
+                with bz2.open(input_path, "rt") as f:
+                    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_f:
+                        temp_path = temp_f.name
+                        for line in f:
+                            temp_f.write(line)
+                table = pa.json.read_json(temp_path, read_options=read_options, parse_options=parse_options)
+                os.unlink(temp_path)
+            elif compression == "xz":
+                import lzma
+                with lzma.open(input_path, "rt") as f:
+                    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_f:
+                        temp_path = temp_f.name
+                        for line in f:
+                            temp_f.write(line)
+                table = pa.json.read_json(temp_path, read_options=read_options, parse_options=parse_options)
+                os.unlink(temp_path)
+            else:
+                # For uncompressed files, read directly
+                table = pa.json.read_json(input_path, read_options=read_options, parse_options=parse_options)
+                
+            return table
+        except Exception as e:
+            # Fallback to manual JSON parsing if PyArrow's json reader fails
+            print(f"Warning: PyArrow JSON reader failed ({e}), falling back to manual parsing")
+            
+            # Open file with appropriate compression
+            if compression == "gzip":
+                import gzip
+                f = gzip.open(input_path, "rt")
+            elif compression == "bz2":
+                import bz2
+                f = bz2.open(input_path, "rt")
+            elif compression == "xz":
+                import lzma
+                f = lzma.open(input_path, "rt")
+            else:
+                f = open(input_path, "r")
+                
+            try:
+                # Read records
+                records = []
+                for line in f:
+                    line = line.strip()
+                    if line:  # Skip empty lines
+                        try:
+                            record = json.loads(line)
+                            records.append(record)
+                        except json.JSONDecodeError:
+                            print(f"Warning: Skipping invalid JSON line: {line[:100]}...")
+            finally:
+                f.close()
+                
+            # Convert to Arrow table
+            if records:
+                import pyarrow as pa
+                try:
+                    # Try to convert list of dicts to Arrow table
+                    table = pa.Table.from_pylist(records)
+                    return table
+                except Exception as e:
+                    print(f"Error converting JSON records to Arrow table: {e}")
+                    raise
+            else:
+                return pa.Table.from_pylist([])
+                
+    def convert_jsonl_to_huggingface(self, input_path, compression=None):
+        """
+        Convert a JSONL file to a HuggingFace dataset.
+        
+        Args:
+            input_path (str): Path to input JSONL file
+            compression (str, optional): Compression format ("gzip", "bz2", "xz")
+            
+        Returns:
+            datasets.Dataset: HuggingFace dataset
+            
+        Raises:
+            ImportError: If HuggingFace datasets is not available
+        """
+        if not HAVE_HUGGINGFACE:
+            raise ImportError("HuggingFace datasets is required for JSONL to Dataset conversion")
+            
+        # Import as Arrow table first
+        table = self.import_from_jsonl(input_path, compression=compression)
+        
+        # Convert to HuggingFace dataset
+        return Dataset(arrow_table=table)
+        
+    def convert_arrow_to_jsonl(self, table, output_path, compression=None):
+        """
+        Convert an Arrow table to a JSONL file.
+        
+        Args:
+            table (pyarrow.Table): Arrow table to convert
+            output_path (str): Path to output JSONL file
+            compression (str, optional): Compression format ("gzip", "bz2", "xz")
+            
+        Returns:
+            str: Path to the exported file
+        """
+        return self.export_to_jsonl(table, output_path, compression=compression)
+        
+    def serialize_jsonl(self, input_path, hash_records=True, compression=None, batch_size=1000):
+        """
+        Serialize a JSONL file to IPLD with efficient streaming.
+        
+        Args:
+            input_path (str): Path to input JSONL file
+            hash_records (bool): Whether to hash individual records for content addressing
+            compression (str, optional): Compression format of the input file ("gzip", "bz2", "xz")
+            batch_size (int): Number of records per batch for streaming processing
+            
+        Returns:
+            str: CID of the root IPLD block
+            
+        Raises:
+            ImportError: If PyArrow is not available for optimized processing
+        """
+        # Create a reader for the JSONL file
+        if compression == "gzip":
+            import gzip
+            file_obj = gzip.open(input_path, "rt")
+        elif compression == "bz2":
+            import bz2
+            file_obj = bz2.open(input_path, "rt")
+        elif compression == "xz":
+            import lzma
+            file_obj = lzma.open(input_path, "rt")
+        else:
+            file_obj = open(input_path, "r")
+            
+        try:
+            # Process records in batches for memory efficiency
+            record_cids = []
+            batch = []
+            batch_count = 0
+            total_records = 0
+            
+            # Read and process records
+            for line in file_obj:
+                line = line.strip()
+                if not line:  # Skip empty lines
+                    continue
+                    
+                try:
+                    record = json.loads(line)
+                    batch.append(record)
+                    
+                    if len(batch) >= batch_size:
+                        # Process and store batch
+                        batch_cids = self._store_jsonl_batch(batch, hash_records)
+                        record_cids.extend(batch_cids)
+                        batch = []
+                        batch_count += 1
+                        total_records += len(batch_cids)
+                except json.JSONDecodeError:
+                    print(f"Warning: Skipping invalid JSON line: {line[:100]}...")
+                    
+            # Process any remaining records
+            if batch:
+                batch_cids = self._store_jsonl_batch(batch, hash_records)
+                record_cids.extend(batch_cids)
+                total_records += len(batch_cids)
+                
+            # Create index of all records
+            index_cid = self.storage.store_json({
+                "total_records": total_records,
+                "record_cids": record_cids
+            })
+            
+            # Create metadata for the dataset
+            metadata = {
+                "type": "jsonl",
+                "source": os.path.basename(input_path),
+                "record_count": total_records,
+                "created_at": datetime.datetime.now().isoformat(),
+                "compression": compression
+            }
+            
+            # Create root object
+            root_obj = {
+                "type": "jsonl_dataset",
+                "metadata": metadata,
+                "index": index_cid
+            }
+            
+            # Store and return root CID
+            root_cid = self.storage.store_json(root_obj)
+            return root_cid
+        finally:
+            file_obj.close()
+            
+    def _store_jsonl_batch(self, records, hash_records=True):
+        """
+        Store a batch of JSON records in IPLD.
+        
+        Args:
+            records (list): List of JSON records to store
+            hash_records (bool): Whether to hash individual records for content addressing
+            
+        Returns:
+            list: List of CIDs for the stored records
+        """
+        record_cids = []
+        
+        for record in records:
+            # Serialize record to JSON string
+            record_json = json.dumps(record)
+            
+            # Compute deterministic CID based on content if requested
+            if hash_records:
+                # Compute SHA-256 hash of the record content
+                record_hash = hashlib.sha256(record_json.encode('utf-8')).hexdigest()
+                
+                # Use hash as CID key for deterministic storing
+                record_cid = self.storage.store_json(record, key=record_hash)
+            else:
+                # Store with random CID
+                record_cid = self.storage.store_json(record)
+                
+            record_cids.append(record_cid)
+            
+        return record_cids
+        
+    def deserialize_jsonl(self, cid, output_path=None, compression=None, max_records=None):
+        """
+        Deserialize a JSONL dataset from IPLD.
+        
+        Args:
+            cid (str): CID of the root IPLD block
+            output_path (str, optional): Path to output JSONL file. If None, records are returned as a list.
+            compression (str, optional): Compression format for output file ("gzip", "bz2", "xz")
+            max_records (int, optional): Maximum number of records to retrieve
+            
+        Returns:
+            Union[str, List[Dict]]: Path to output file if output_path is specified, otherwise list of records
+            
+        Raises:
+            ValueError: If the IPLD block is not a valid JSONL dataset
+        """
+        # Get the root object
+        root_obj = self.storage.get_json(cid)
+        
+        # Verify it's a JSONL dataset
+        if root_obj.get("type") != "jsonl_dataset":
+            raise ValueError(f"IPLD block {cid} is not a JSONL dataset")
+            
+        # Get the index
+        index_cid = root_obj["index"]
+        index = self.storage.get_json(index_cid)
+        
+        total_records = index["total_records"]
+        record_cids = index["record_cids"]
+        
+        # Limit number of records if requested
+        if max_records is not None:
+            record_cids = record_cids[:max_records]
+            
+        # If output file specified, write records to file
+        if output_path:
+            # Open file with appropriate compression
+            if compression == "gzip":
+                import gzip
+                file_obj = gzip.open(output_path, "wt")
+            elif compression == "bz2":
+                import bz2
+                file_obj = bz2.open(output_path, "wt")
+            elif compression == "xz":
+                import lzma
+                file_obj = lzma.open(output_path, "wt")
+            else:
+                file_obj = open(output_path, "w")
+                
+            try:
+                # Write records to file
+                for record_cid in record_cids:
+                    record = self.storage.get_json(record_cid)
+                    file_obj.write(json.dumps(record) + "\n")
+            finally:
+                file_obj.close()
+                
+            return output_path
+        else:
+            # Return records as a list
+            records = []
+            for record_cid in record_cids:
+                record = self.storage.get_json(record_cid)
+                records.append(record)
+                
+            return records
         
     def serialize_huggingface_dataset(self, dataset, split="train", hash_columns=None):
         """

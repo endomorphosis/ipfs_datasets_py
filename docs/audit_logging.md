@@ -117,6 +117,8 @@ The audit logging system integrates tightly with the data provenance tracking sy
 
 ### AuditProvenanceIntegrator
 
+The AuditProvenanceIntegrator provides bidirectional integration between audit logging and data provenance systems:
+
 ```python
 from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
 from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
@@ -152,6 +154,257 @@ integrator.link_audit_to_provenance(audit_event_id, record_id)
 car_path = "/path/to/provenance.car"
 root_cid = provenance_manager.export_to_car(car_path)
 print(f"Exported provenance to {car_path} with root CID: {root_cid}")
+```
+
+### Integrated Compliance Reporting with Cross-Document Lineage
+
+The enhanced IntegratedComplianceReporter generates comprehensive compliance reports that leverage our improved cross-document lineage capabilities to provide detailed insights into data flows across document boundaries:
+
+```python
+from ipfs_datasets_py.audit.integration import IntegratedComplianceReporter
+from ipfs_datasets_py.audit.compliance import ComplianceStandard, ComplianceRequirement
+
+# Create reporter with bidirectional integration
+reporter = IntegratedComplianceReporter(
+    standard=ComplianceStandard.GDPR,
+    audit_logger=audit_logger,
+    provenance_manager=provenance_manager
+)
+
+# Add compliance requirements
+reporter.add_requirement(ComplianceRequirement(
+    id="GDPR-Art30",
+    standard=ComplianceStandard.GDPR,
+    description="Records of processing activities",
+    audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
+    actions=["read", "write", "update", "delete"]
+))
+
+# Generate report with enhanced cross-document lineage analysis
+report = reporter.generate_report(
+    start_time="2023-01-01T00:00:00Z",
+    end_time="2023-12-31T23:59:59Z",
+    include_cross_document_analysis=True,  # Enable cross-document analysis
+    include_lineage_metrics=True           # Include metrics about lineage graph
+)
+
+# The enhanced report now includes:
+# - Document boundary detection and analysis
+# - Relationship analysis across document boundaries
+# - Compliance-specific insights based on cross-document flows
+# - Visualization data for interactive representations
+
+# Example of accessing enhanced cross-document lineage information
+cross_doc_info = report.details.get("cross_document_lineage", {})
+print(f"Document count: {cross_doc_info.get('document_count', 0)}")
+
+# Document boundaries information
+if "document_boundaries" in cross_doc_info:
+    boundaries = cross_doc_info["document_boundaries"]
+    print(f"Boundary count: {boundaries.get('count', 0)}")
+    print(f"Cross-boundary flows: {boundaries.get('cross_boundary_flow_count', 0)}")
+    
+# Document relationships information
+if "document_relationships" in cross_doc_info:
+    relationships = cross_doc_info["document_relationships"]
+    print(f"Relationship count: {relationships.get('relationship_count', 0)}")
+    print(f"High-risk relationships: {relationships.get('high_risk_relationships', 0)}")
+
+# Compliance-specific insights from cross-document analysis
+if "provenance_insights" in report.details:
+    print("Compliance insights from cross-document analysis:")
+    for insight in report.details["provenance_insights"]:
+        print(f"- {insight}")
+
+# Save report in various formats
+report.save_json("gdpr_compliance.json")
+report.save_html("gdpr_compliance.html")
+report.save_csv("gdpr_compliance.csv")
+
+# Helper function for easy report generation
+from ipfs_datasets_py.audit.integration import generate_integrated_compliance_report
+
+gdpr_report = generate_integrated_compliance_report(
+    standard_name="GDPR",
+    start_time="2023-01-01T00:00:00Z",
+    end_time="2023-12-31T23:59:59Z",
+    output_format="json",
+    output_path="gdpr_report.json"
+)
+```
+
+The enhanced compliance reports provide standard-specific insights based on cross-document lineage analysis:
+
+#### GDPR-Specific Insights
+- Identification of cross-document data flows requiring data sharing agreements (Article 26/28)
+- Detection of international transfers requiring appropriate safeguards (Articles 44-50)
+- Analysis of data sharing relationships across document boundaries
+- Identification of high-risk data processing requiring DPIA (Article 35)
+
+#### HIPAA-Specific Insights
+- Identification of PHI data flows crossing document boundaries
+- Analysis of technical safeguards for PHI boundaries
+- Detection of PHI sharing relationships requiring Business Associate Agreements
+- Monitoring of de-identification processes across document boundaries
+
+#### SOC2-Specific Insights
+- Identification of critical data transit points requiring enhanced monitoring
+- Analysis of data transformation processes for processing integrity
+- Detection of boundary controls required for logical access security
+- Monitoring of data processing relationships for input validation
+
+### Enhanced Cross-Document Search Capabilities
+
+The enhanced ProvenanceAuditSearchIntegrator provides unified search across audit logs and provenance records, with advanced support for cross-document lineage-aware searching:
+
+```python
+from ipfs_datasets_py.audit.integration import ProvenanceAuditSearchIntegrator
+
+# Create search integrator
+search = ProvenanceAuditSearchIntegrator(
+    audit_logger=audit_logger,
+    provenance_manager=provenance_manager
+)
+
+# Basic search by time range and resource type
+results = search.search(
+    query={
+        "timerange": {
+            "start": "2023-01-01T00:00:00Z",
+            "end": "2023-12-31T23:59:59Z"
+        },
+        "resource_type": "dataset",
+        "resource_id": "example_dataset",
+        "action": "transform"
+    },
+    include_audit=True,
+    include_provenance=True,
+    correlation_mode="auto"  # Automatically detect correlations
+)
+
+# Enhanced cross-document lineage-aware search
+cross_doc_results = search.search(
+    query={
+        "document_id": "source_document",  # Start search from this document
+        "max_depth": 3,                   # Search up to 3 hops across documents
+        "link_types": ["derived_from", "exported_from", "processes"],  # Filter by link types
+        "timerange": {
+            "start": "2023-01-01T00:00:00Z",
+            "end": "2023-12-31T23:59:59Z"
+        },
+        "keywords": ["sensitive", "pii", "personal"]  # Optional keyword filters
+    },
+    include_audit=True,
+    include_provenance=True,
+    include_cross_document=True,  # Enable cross-document search
+    correlation_mode="auto"
+)
+
+# Compliance-focused cross-document search
+compliance_results = search.search(
+    query={
+        "document_id": "sensitive_data_document",
+        "max_depth": 2,
+        "link_types": ["contains_pii", "processes_pii", "anonymizes"],  # Focus on PII-related links
+        "timerange": {
+            "start": "2023-01-01T00:00:00Z",
+            "end": "2023-12-31T23:59:59Z"
+        }
+    },
+    include_audit=True,
+    include_provenance=True,
+    include_cross_document=True
+)
+
+# Access standard search results
+print(f"Found {results.get('audit_count', 0)} audit events")
+print(f"Found {results.get('provenance_count', 0)} provenance records")
+print(f"Established {results.get('correlation_count', 0)} correlations")
+
+# Access enhanced cross-document search results
+print(f"Found {cross_doc_results.get('provenance_count', 0)} provenance records across document boundaries")
+print(f"Documents involved: {cross_doc_results.get('cross_document_analysis', {}).get('document_count', 0)}")
+
+# Analyze cross-document search results
+if "cross_document_analysis" in cross_doc_results:
+    analysis = cross_doc_results["cross_document_analysis"]
+    print(f"Document boundaries crossed: {len(analysis.get('documents', []))}")
+    
+    # Relationship types found in the search
+    if "relationship_types" in analysis:
+        print("Relationship types across documents:")
+        for rel_type, count in analysis.get("relationship_types", {}).items():
+            print(f"- {rel_type}: {count}")
+    
+    # Distribution of records across documents
+    if "records_by_document" in analysis:
+        print("Records by document:")
+        for doc_id, count in analysis.get("records_by_document", {}).items():
+            print(f"- {doc_id}: {count}")
+
+# Examine records with cross-document metadata
+for record in cross_doc_results.get("provenance_records", []):
+    if "cross_document_info" in record:
+        doc_info = record["cross_document_info"]
+        print(f"Record {record['record_id']} in document {doc_info.get('document_id')}")
+        print(f"  Distance from source: {doc_info.get('distance_from_source')}")
+        
+        # Show relationship path from source record/document
+        if "relationship_path" in doc_info:
+            path = doc_info["relationship_path"]
+            print("  Relationship path:")
+            for step in path:
+                print(f"    {step['from']} --({step['type']})--> {step['to']}")
+```
+
+The enhanced cross-document search capabilities enable comprehensive tracking of data flows across document boundaries with features specifically designed for compliance and security use cases:
+
+1. **Document boundary traversal**: Discover how data flows across document boundaries, enabling complete lineage understanding regardless of document structure
+2. **Relationship type filtering**: Focus searches on specific types of relationships (e.g., PII processing, data transformations)
+3. **Path analysis**: See the exact path from source to target records across document boundaries
+4. **Document relationship metrics**: Get statistical information about cross-document relationships
+5. **Compliance-focused filtering**: Use specialized link types for compliance-focused searches (e.g., GDPR, HIPAA, SOC2)
+
+### Dataset Operation Integration
+
+The AuditDatasetIntegrator simplifies audit logging for dataset operations:
+
+```python
+from ipfs_datasets_py.audit.integration import AuditDatasetIntegrator
+
+# Create dataset integrator
+dataset_integrator = AuditDatasetIntegrator(audit_logger=audit_logger)
+
+# Record dataset operations
+load_event_id = dataset_integrator.record_dataset_load(
+    dataset_name="example_dataset",
+    dataset_id="ds123",
+    source="huggingface",
+    user="user123"
+)
+
+transform_event_id = dataset_integrator.record_dataset_transform(
+    input_dataset="ds123",
+    output_dataset="ds123_transformed",
+    transformation_type="normalize",
+    parameters={"columns": ["col1", "col2"], "method": "z-score"},
+    user="user123"
+)
+
+save_event_id = dataset_integrator.record_dataset_save(
+    dataset_name="example_dataset_transformed",
+    dataset_id="ds123_transformed",
+    destination="ipfs",
+    format="car",
+    user="user123"
+)
+
+query_event_id = dataset_integrator.record_dataset_query(
+    dataset_name="ds123_transformed",
+    query="SELECT * FROM dataset WHERE value > 0.5",
+    query_type="sql",
+    user="user123"
+)
 ```
 
 ### Event Listeners
