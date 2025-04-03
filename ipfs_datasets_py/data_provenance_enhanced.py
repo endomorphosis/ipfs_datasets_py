@@ -4145,6 +4145,168 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
             self.logger.error(f"Error updating IPLD graph: {str(e)}")
             return None
     
+    def create_cross_document_lineage(self, output_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Creates detailed lineage tracking with cross-document relationships.
+        
+        This method integrates the current provenance graph with cross-document
+        lineage tracking, enabling more detailed analysis of data flows between
+        different documents and systems.
+        
+        Args:
+            output_path: Optional path to export the lineage graph visualization
+            
+        Returns:
+            Optional[Dict[str, Any]]: Detailed lineage data or None if generation failed
+        """
+        if not self.ipld_provenance_storage:
+            self.logger.warning("IPLD provenance storage not enabled, cannot create cross-document lineage")
+            return None
+            
+        try:
+            # Check if cross-document lineage module is available
+            try:
+                from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+                lineage_available = True
+            except ImportError:
+                self.logger.warning("cross_document_lineage module not available")
+                lineage_available = False
+                return None
+                
+            # Build NetworkX graph from our records
+            graph = nx.DiGraph()
+            
+            # Add nodes (records)
+            for record_id, record in self.records.items():
+                # Extract record attributes
+                attrs = {
+                    "record_type": record.record_type,
+                    "timestamp": record.timestamp,
+                    "agent_id": record.agent_id,
+                    "description": record.description if hasattr(record, "description") else ""
+                }
+                
+                # Add record-type specific attributes
+                if hasattr(record, "source_type"):
+                    attrs["source_type"] = record.source_type
+                if hasattr(record, "transformation_type"):
+                    attrs["transformation_type"] = record.transformation_type
+                
+                graph.add_node(record_id, **attrs)
+            
+            # Add edges based on relationships
+            for record_id, record in self.records.items():
+                if hasattr(record, 'input_ids') and record.input_ids:
+                    for input_id in record.input_ids:
+                        if input_id in self.records:
+                            graph.add_edge(input_id, record_id, relation="input_to")
+                
+                if hasattr(record, 'output_ids') and record.output_ids:
+                    for output_id in record.output_ids:
+                        if output_id in self.records:
+                            graph.add_edge(record_id, output_id, relation="output_to")
+            
+            # Create an Enhanced Lineage Tracker instance with this provenance manager
+            lineage_tracker = EnhancedLineageTracker(
+                provenance_manager=self,
+                storage=self.ipld_storage if hasattr(self, "ipld_storage") else None,
+                config={
+                    "enable_audit_integration": True,
+                    "enable_semantic_detection": True,
+                    "enable_temporal_consistency": True,
+                    "enable_ipld_storage": self.enable_ipld_storage
+                }
+            )
+            
+            # Import the provenance graph into the lineage tracker
+            lineage_nodes = {}
+            for record_id, record in self.records.items():
+                record_type = record.record_type
+                node_type = "source" if record_type == "source" else \
+                           "transformation" if record_type == "transformation" else \
+                           "merge" if record_type == "merge" else \
+                           "result" if record_type == "result" else "generic"
+                
+                # Create metadata from record attributes
+                metadata = {
+                    "agent_id": record.agent_id,
+                    "timestamp": record.timestamp,
+                    "description": record.description if hasattr(record, "description") else "",
+                    "cid": self.record_cids.get(record_id)
+                }
+                
+                if hasattr(record, "source_type"):
+                    metadata["source_type"] = record.source_type
+                    metadata["format"] = record.format if hasattr(record, "format") else ""
+                    metadata["location"] = record.location if hasattr(record, "location") else ""
+                
+                if hasattr(record, "transformation_type"):
+                    metadata["transformation_type"] = record.transformation_type
+                    metadata["tool"] = record.tool if hasattr(record, "tool") else ""
+                    metadata["parameters"] = record.parameters if hasattr(record, "parameters") else {}
+                
+                # Add node to lineage tracker
+                lineage_tracker.add_node(
+                    node_id=record_id,
+                    node_type=node_type,
+                    entity_id=record_id,
+                    record_type=record_type,
+                    metadata=metadata
+                )
+                
+            # Add links to lineage tracker
+            for source, target, attrs in graph.edges(data=True):
+                lineage_tracker.add_link(
+                    source_id=source,
+                    target_id=target,
+                    relationship_type=attrs.get("relation", "default"),
+                    confidence=1.0,
+                    metadata={"provenance": True}
+                )
+            
+            # Process cross-document links if available
+            cross_doc_links = self.ipld_provenance_storage.get_all_cross_document_links()
+            for link in cross_doc_links:
+                if "source_record_id" in link and "target_record_id" in link:
+                    lineage_tracker.add_link(
+                        source_id=link["source_record_id"],
+                        target_id=link["target_record_id"],
+                        relationship_type=link.get("link_type", "cross_document"),
+                        confidence=link.get("properties", {}).get("confidence", 0.9),
+                        metadata={
+                            "cross_document": True,
+                            "link_id": link.get("id", ""),
+                            "properties": link.get("properties", {})
+                        }
+                    )
+            
+            # Generate detailed lineage analysis
+            lineage_analysis = lineage_tracker.analyze_lineage()
+            
+            # Generate visualization if output_path provided
+            if output_path:
+                visualization_data = lineage_tracker.visualize_lineage(
+                    file_path=output_path,
+                    show_domains=True,
+                    show_transformations=True,
+                    highlight_cross_document=True
+                )
+            
+            # Return the detailed lineage information
+            return {
+                "lineage_analysis": lineage_analysis,
+                "nodes": len(lineage_tracker.get_nodes()),
+                "links": len(lineage_tracker.get_links()),
+                "cross_document_links": len(cross_doc_links),
+                "domains": lineage_tracker.get_domains(),
+                "transformation_details": lineage_tracker.get_transformation_details(),
+                "visualization_path": output_path if output_path else None
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error creating cross-document lineage: {str(e)}")
+            return None
+    
     def export_to_car(self, output_path: str) -> Optional[str]:
         """
         Export the entire provenance graph to a CAR file.
@@ -4176,9 +4338,10 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                             if input_id in self.records:
                                 graph.add_edge(input_id, record_id, relation="input_to")
                     
-                    if hasattr(record, 'output_id') and record.output_id:
-                        if record.output_id in self.records:
-                            graph.add_edge(record_id, record.output_id, relation="output_to")
+                    if hasattr(record, 'output_ids') and record.output_ids:
+                        for output_id in record.output_ids:
+                            if output_id in self.records:
+                                graph.add_edge(record_id, output_id, relation="output_to")
                 
                 # Use enhanced storage to export the graph
                 result_cid = self.ipld_provenance_storage.export_to_car(

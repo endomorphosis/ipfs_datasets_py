@@ -3884,7 +3884,52 @@ class UnifiedGraphRAGQueryOptimizer:
         with self.metrics_collector.time_phase("graph_type_detection", {"type": "preprocessing"}):
             graph_type = self.detect_graph_type(query)
         
-        # Get the appropriate optimizer
+        # Use specialized Wikipedia optimizer if available
+        if WIKIPEDIA_OPTIMIZER_AVAILABLE and graph_type == "wikipedia" and graph_processor:
+            try:
+                with self.metrics_collector.time_phase("wikipedia_optimization", {"type": "optimization"}):
+                    # Use specialized Wikipedia optimization
+                    wiki_optimized_plan = optimize_wikipedia_query(
+                        query=query,
+                        graph_processor=graph_processor,
+                        vector_store=None,  # We don't have vector_store here
+                        trace_id=query_id
+                    )
+                    
+                    # Add budget allocation
+                    if "budget" not in wiki_optimized_plan:
+                        wiki_optimized_plan["budget"] = self.budget_manager.allocate_budget(wiki_optimized_plan["query"], priority)
+                    
+                    # Add statistics
+                    wiki_optimized_plan["statistics"] = {
+                        "avg_query_time": self.query_stats.avg_query_time,
+                        "cache_hit_rate": self.query_stats.cache_hit_rate
+                    }
+                    
+                    # Record metrics
+                    self.metrics_collector.record_additional_metric(
+                        name="optimizer_used", 
+                        value="wikipedia_specialized",
+                        category="optimization"
+                    )
+                    
+                    # End tracking with a quality score of 1.0
+                    self.metrics_collector.end_query_tracking(
+                        results_count=1,  # One optimized plan
+                        quality_score=1.0
+                    )
+                    
+                    return wiki_optimized_plan
+            except Exception as e:
+                # Log the error but continue with standard optimization
+                print(f"Error using Wikipedia optimizer: {str(e)}")
+                self.metrics_collector.record_additional_metric(
+                    name="wikipedia_optimizer_error", 
+                    value=str(e),
+                    category="error"
+                )
+        
+        # Get the appropriate optimizer (standard path)
         optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
         
         # Calculate entity scores if graph processor is available
@@ -4108,8 +4153,48 @@ class UnifiedGraphRAGQueryOptimizer:
             plan = self.optimize_query(query, priority, processor)
             graph_type = plan["graph_type"]
         
-        # Get specialized optimizer
-        optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
+        # Get specialized optimizer - check for specialized Wikipedia optimizer
+        if WIKIPEDIA_OPTIMIZER_AVAILABLE and graph_type == "wikipedia":
+            # Create an instance of the Wikipedia-specific optimizer if needed
+            wiki_optimizer = None
+            try:
+                # Check if we already have a Wikipedia optimizer in our specific optimizers
+                if "wikipedia" in self._specific_optimizers and isinstance(self._specific_optimizers["wikipedia"], UnifiedWikipediaGraphRAGQueryOptimizer):
+                    wiki_optimizer = self._specific_optimizers["wikipedia"]
+                else:
+                    # Create a new specialized optimizer
+                    wiki_optimizer = create_appropriate_optimizer(
+                        graph_processor=processor,
+                        graph_type="wikipedia",
+                        metrics_collector=self.metrics_collector
+                    )
+                    # Cache it for future use
+                    self._specific_optimizers["wikipedia"] = wiki_optimizer
+                
+                # Add Wikipedia-specific traversal strategies to performance tracking if needed
+                if hasattr(self, "_strategy_performance"):
+                    # Add Wikipedia-specific strategies if they don't exist
+                    wikipedia_strategies = ["wikipedia_hierarchical", "wikipedia_topic_focused", "wikipedia_comparison"]
+                    for strategy in wikipedia_strategies:
+                        if strategy not in self._strategy_performance:
+                            self._strategy_performance[strategy] = {"avg_time": 0.0, "relevance_score": 0.0, "count": 0}
+                
+                # Record the use of specialized optimizer
+                self.metrics_collector.record_additional_metric(
+                    name="optimizer_type", 
+                    value="specialized_wikipedia",
+                    category="optimization"
+                )
+                
+                # Use the Wikipedia-specific optimizer
+                optimizer = wiki_optimizer
+            except Exception as e:
+                # Log error and fall back to standard optimizer
+                print(f"Error creating Wikipedia optimizer: {str(e)}")
+                optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
+        else:
+            # Use standard optimizer
+            optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
         
         # Check cache if enabled and not skipped
         cache_hit = False
@@ -4286,6 +4371,51 @@ class UnifiedGraphRAGQueryOptimizer:
                             batch_size=traversal_params.get("batch_size", 100),
                             **{k: v for k, v in additional_traversal_params.items() 
                               if k not in ["visit_nodes_once", "batch_loading", "batch_size"]}
+                        )
+                # Add support for Wikipedia-specific traversal strategies
+                elif WIKIPEDIA_OPTIMIZER_AVAILABLE and traversal_strategy == "wikipedia_hierarchical" and hasattr(processor, "expand_by_graph"):
+                    # Use Wikipedia-specific hierarchical traversal
+                    with self.metrics_collector.time_phase("wikipedia_hierarchical_traversal", {"type": "graph_traversal"}):
+                        # Add Wikipedia-specific parameters
+                        wiki_params = {
+                            "relationship_depths": traversal_params.get("relationship_depths", {}),
+                            "hierarchical_weight": traversal_params.get("hierarchical_weight", 1.5),
+                            "entity_importance_strategy": traversal_params.get("entity_importance_strategy", "hierarchical_and_reference_based")
+                        }
+                        
+                        # Combine with other parameters
+                        combined_params = {**additional_traversal_params, **wiki_params}
+                        
+                        # Use standard expand_by_graph with Wikipedia-specific parameters
+                        graph_results = processor.expand_by_graph(
+                            vector_results,
+                            max_depth=max_depth,
+                            edge_types=edge_types,
+                            **combined_params
+                        )
+                        
+                        # Record Wikipedia-specific metrics
+                        self.metrics_collector.record_additional_metric(
+                            name="wikipedia_traversal_used", 
+                            value=True,
+                            category="execution"
+                        )
+                elif WIKIPEDIA_OPTIMIZER_AVAILABLE and "wikipedia" in traversal_strategy.lower() and hasattr(processor, "expand_by_graph"):
+                    # Handle other Wikipedia-specific strategies
+                    with self.metrics_collector.time_phase("wikipedia_traversal", {"type": "graph_traversal"}):
+                        # Use standard expand_by_graph with Wikipedia-specific parameters
+                        graph_results = processor.expand_by_graph(
+                            vector_results,
+                            max_depth=max_depth,
+                            edge_types=edge_types,
+                            **additional_traversal_params
+                        )
+                        
+                        # Record Wikipedia-specific metrics
+                        self.metrics_collector.record_additional_metric(
+                            name="wikipedia_traversal_used", 
+                            value=True,
+                            category="execution"
                         )
                 else:
                     # Use standard graph expansion as fallback
@@ -5648,23 +5778,6 @@ class UnifiedGraphRAGQueryOptimizer:
             self._traversal_stats["optimization_rules"] = self._traversal_stats["optimization_rules"][-20:]
         
         return learning_results
-            query_success_rate = self.query_stats.query_count / max(1, wikipedia_optimizations)
-            if query_success_rate < 0.7:
-                recommendations.append({
-                    "type": "optimization_effectiveness",
-                    "description": "Low success rate for Wikipedia-optimized queries. Consider tuning the optimization parameters."
-                })
-                
-        return {
-            "avg_entity_score": sum(entity_scores) / len(entity_scores) if entity_scores else 0,
-            "entity_count": len(self._entity_importance_cache),
-            "score_variance": score_variance if entity_scores else 0,
-            "relation_success": relation_success[:3] if self._traversal_stats.get("path_scores") else [],
-            "wikidata_validation_rate": wikidata_validation_rate,
-            "cross_document_connectivity": avg_connections if cross_doc_connections else 0,
-            "optimization_count": wikipedia_optimizations,
-            "recommendations": recommendations
-        }
         
     def _analyze_ipld_performance(self) -> Dict[str, Any]:
         """
@@ -5701,6 +5814,8 @@ class UnifiedGraphRAGQueryOptimizer:
             "recommendations": recommendations
         }
         
+    def _cluster_queries_by_performance(self, query_metrics: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+        """
         Clusters queries into performance categories based on their execution characteristics.
         
         Args:

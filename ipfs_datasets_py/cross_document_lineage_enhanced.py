@@ -4,6 +4,10 @@ Enhanced Cross-Document Lineage Tracking
 This module extends the cross-document lineage tracking capabilities
 in the data provenance system with more detailed semantic relationship detection,
 advanced document boundary analysis, and improved visualization.
+
+It also provides integration with the IPLDProvenanceStorage class to support
+detailed lineage tracking across documents and systems with comprehensive
+analysis capabilities.
 """
 
 import os
@@ -1461,6 +1465,651 @@ class CrossDocumentLineageEnhancer:
             buffer = io.StringIO()
             nx.write_gexf(graph, buffer)
             return buffer.getvalue()
+
+
+# Integrator class for connecting data provenance with cross-document lineage
+class DetailedLineageIntegrator:
+    """
+    Integrates data provenance with cross-document lineage tracking.
+    
+    This class provides comprehensive integration between the EnhancedProvenanceManager
+    and cross-document lineage tracking capabilities, enabling:
+    - Detailed lineage analysis across document boundaries
+    - Comprehensive data flow visualization
+    - Semantic relationship enrichment
+    - Integrated impact analysis
+    - Enhanced reporting and visualization
+    """
+    
+    def __init__(self, provenance_manager, lineage_enhancer):
+        """
+        Initialize the integrator.
+        
+        Args:
+            provenance_manager: EnhancedProvenanceManager instance
+            lineage_enhancer: CrossDocumentLineageEnhancer instance
+        """
+        self.provenance_manager = provenance_manager
+        self.lineage_enhancer = lineage_enhancer
+        self.storage = lineage_enhancer.storage if lineage_enhancer else None
+        
+    def integrate_provenance_with_lineage(self, provenance_graph, lineage_graph=None):
+        """
+        Integrate provenance graph with cross-document lineage.
+        
+        This method combines the detailed provenance tracking with cross-document
+        lineage information, creating a comprehensive unified lineage graph.
+        
+        Args:
+            provenance_graph: Provenance graph from EnhancedProvenanceManager
+            lineage_graph: Optional cross-document lineage graph
+            
+        Returns:
+            nx.DiGraph: Integrated lineage graph
+        """
+        # If lineage graph not provided, try to build it
+        if lineage_graph is None and self.lineage_enhancer:
+            # Get all record IDs from provenance graph
+            record_ids = list(provenance_graph.nodes())
+            if record_ids:
+                try:
+                    lineage_graph = self.lineage_enhancer.build_enhanced_cross_document_lineage_graph(
+                        record_ids=record_ids,
+                        max_depth=3  # Default depth
+                    )
+                except Exception as e:
+                    logger.warning(f"Error building lineage graph: {str(e)}")
+                    lineage_graph = nx.DiGraph()
+        
+        # If still no lineage graph, create an empty one
+        if lineage_graph is None:
+            lineage_graph = nx.DiGraph()
+            
+        # Create a new graph for integration
+        integrated_graph = nx.DiGraph()
+        
+        # Add nodes and attributes from both graphs
+        for graph, source_name in [(provenance_graph, "provenance"), (lineage_graph, "lineage")]:
+            for node, attrs in graph.nodes(data=True):
+                # Add node if not already present
+                if not integrated_graph.has_node(node):
+                    integrated_graph.add_node(node, **attrs, source=source_name)
+                else:
+                    # Merge attributes if node already exists
+                    for key, value in attrs.items():
+                        if key not in integrated_graph.nodes[node]:
+                            integrated_graph.nodes[node][key] = value
+                            
+                    # Update source information
+                    if integrated_graph.nodes[node].get('source') != source_name:
+                        integrated_graph.nodes[node]['source'] = "both"
+        
+        # Add edges and attributes from both graphs
+        for graph, source_name in [(provenance_graph, "provenance"), (lineage_graph, "lineage")]:
+            for u, v, attrs in graph.edges(data=True):
+                # Skip if nodes don't exist in integrated graph (shouldn't happen)
+                if not (integrated_graph.has_node(u) and integrated_graph.has_node(v)):
+                    continue
+                    
+                # Add edge if not already present
+                if not integrated_graph.has_edge(u, v):
+                    integrated_graph.add_edge(u, v, **attrs, source=source_name)
+                else:
+                    # Merge attributes if edge already exists
+                    for key, value in attrs.items():
+                        if key not in integrated_graph.edges[u, v]:
+                            integrated_graph.edges[u, v][key] = value
+                            
+                    # Update source information
+                    if integrated_graph.edges[u, v].get('source') != source_name:
+                        integrated_graph.edges[u, v]['source'] = "both"
+        
+        # Add graph-level attributes
+        integrated_graph.graph.update(provenance_graph.graph)
+        
+        # Add lineage graph attributes with prefix to avoid collisions
+        for key, value in lineage_graph.graph.items():
+            if key not in integrated_graph.graph:
+                integrated_graph.graph[key] = value
+            else:
+                integrated_graph.graph[f"lineage_{key}"] = value
+                
+        # Add integration metadata
+        integrated_graph.graph['integration'] = {
+            'timestamp': time.time(),
+            'provenance_nodes': provenance_graph.number_of_nodes(),
+            'provenance_edges': provenance_graph.number_of_edges(),
+            'lineage_nodes': lineage_graph.number_of_nodes(),
+            'lineage_edges': lineage_graph.number_of_edges(),
+            'integrated_nodes': integrated_graph.number_of_nodes(),
+            'integrated_edges': integrated_graph.number_of_edges()
+        }
+        
+        return integrated_graph
+    
+    def enrich_lineage_semantics(self, integrated_graph):
+        """
+        Enrich the integrated lineage graph with additional semantic information.
+        
+        This method enhances the integrated graph with:
+        - Improved relationship descriptions
+        - Data transformation context
+        - Process step categorization
+        - Confidence scoring for relationships
+        
+        Args:
+            integrated_graph: nx.DiGraph - Integrated lineage graph
+            
+        Returns:
+            nx.DiGraph: Semantically enriched lineage graph
+        """
+        # Clone the graph to avoid modifying the original
+        enriched_graph = integrated_graph.copy()
+        
+        # Track relationships to enrich
+        enriched_relationships = []
+        
+        # Identify different types of relationships
+        for u, v, attrs in enriched_graph.edges(data=True):
+            # Base relationship type
+            rel_type = attrs.get('relation', 'unknown')
+            if 'relation' not in attrs and 'type' in attrs:
+                rel_type = attrs['type']
+                
+            # Source and target record types
+            source_type = enriched_graph.nodes[u].get('record_type', 'unknown')
+            target_type = enriched_graph.nodes[v].get('record_type', 'unknown')
+            
+            # Default semantic context
+            semantic_context = {}
+            
+            # Determine semantic relationship category based on record types and relationship
+            if source_type == 'source' and target_type == 'transformation':
+                semantic_category = "input"
+                semantic_context['description'] = f"Data from {u} used as input for transformation {v}"
+            elif source_type == 'transformation' and target_type in ['transformation', 'result']:
+                semantic_category = "output"
+                semantic_context['description'] = f"Transformation {u} produced result {v}"
+            elif source_type == 'source' and target_type == 'source':
+                semantic_category = "derivation"
+                semantic_context['description'] = f"Source {v} derived from source {u}"
+            elif source_type == 'verification' and target_type in ['source', 'transformation', 'result']:
+                semantic_category = "verification"
+                semantic_context['description'] = f"Verification {u} validated {v}"
+            elif rel_type in ["derived_from", "transforms", "generates"]:
+                semantic_category = "causal"
+                semantic_context['description'] = f"{u} causally influences {v}"
+            elif rel_type in ["contains", "part_of", "references"]:
+                semantic_category = "structural"
+                semantic_context['description'] = f"{u} structurally related to {v}"
+            elif rel_type in ["precedes", "follows", "concurrent_with"]:
+                semantic_category = "temporal"
+                semantic_context['description'] = f"{u} temporally related to {v}"
+            elif rel_type in ["similar_to", "semantically_related", "contradicts"]:
+                semantic_category = "semantic"
+                semantic_context['description'] = f"{u} semantically related to {v}"
+            else:
+                semantic_category = "unknown"
+                semantic_context['description'] = f"{u} related to {v}"
+                
+            # Add semantic category to edge
+            enriched_graph.edges[u, v]['semantic_category'] = semantic_category
+            
+            # Add confidence score if not already present
+            if 'confidence' not in attrs:
+                # Default high confidence for direct relationships
+                confidence = 0.9
+                # Lower confidence for inferred relationships
+                if attrs.get('source') == 'lineage':
+                    confidence = 0.7
+                enriched_graph.edges[u, v]['confidence'] = confidence
+                
+            # Add semantic context if not already present
+            if 'semantic_context' not in attrs:
+                enriched_graph.edges[u, v]['semantic_context'] = semantic_context
+            
+            # Add to enriched relationships
+            enriched_relationships.append({
+                'source': u,
+                'target': v,
+                'type': rel_type,
+                'semantic_category': semantic_category,
+                'confidence': enriched_graph.edges[u, v].get('confidence', 0.5),
+                'context': semantic_context
+            })
+        
+        # Add enriched relationship information to graph attributes
+        enriched_graph.graph['semantic_relationships'] = enriched_relationships
+        enriched_graph.graph['semantic_categories'] = {
+            cat: len([r for r in enriched_relationships if r['semantic_category'] == cat])
+            for cat in set(r['semantic_category'] for r in enriched_relationships)
+        }
+        
+        return enriched_graph
+    
+    def create_unified_lineage_report(self, integrated_graph=None, record_ids=None, 
+                                     include_visualization=True, output_path=None):
+        """
+        Create a comprehensive unified lineage report.
+        
+        This method generates a detailed report that combines data provenance
+        and cross-document lineage information into a unified view.
+        
+        Args:
+            integrated_graph: nx.DiGraph - Integrated lineage graph (created if None)
+            record_ids: IDs to start from if integrated_graph is None
+            include_visualization: Whether to include visualization in the report
+            output_path: Optional path to save the report
+            
+        Returns:
+            dict: Comprehensive lineage report
+        """
+        # If no integrated graph provided, create one
+        if integrated_graph is None:
+            if record_ids is None:
+                raise ValueError("Either integrated_graph or record_ids must be provided")
+                
+            # Get provenance graph
+            provenance_graph = self.provenance_manager.get_provenance_graph(record_ids)
+            
+            # Integrate with lineage
+            integrated_graph = self.integrate_provenance_with_lineage(provenance_graph)
+            
+            # Enrich with semantics
+            integrated_graph = self.enrich_lineage_semantics(integrated_graph)
+            
+        # Initialize report
+        report = {
+            'generated_at': datetime.datetime.now().isoformat(),
+            'record_count': integrated_graph.number_of_nodes(),
+            'relationship_count': integrated_graph.number_of_edges(),
+            'metadata': dict(integrated_graph.graph)
+        }
+        
+        # Analyze graph structure
+        report['structure'] = {
+            'node_count': integrated_graph.number_of_nodes(),
+            'edge_count': integrated_graph.number_of_edges(),
+            'connected_components': nx.number_weakly_connected_components(integrated_graph),
+            'diameter': self._safe_diameter(integrated_graph),
+            'average_path_length': self._safe_avg_path_length(integrated_graph)
+        }
+        
+        # Document analysis
+        if 'documents' in integrated_graph.graph:
+            report['documents'] = {
+                'count': len(integrated_graph.graph['documents']),
+                'details': integrated_graph.graph['documents']
+            }
+            
+        # Cross-document analysis
+        if 'document_boundaries' in integrated_graph.graph:
+            report['cross_document'] = {
+                'boundary_count': len(integrated_graph.graph['document_boundaries']),
+                'boundary_types': integrated_graph.graph.get('boundary_types', {}),
+                'flow_count': integrated_graph.graph.get('cross_boundary_flow_count', 0)
+            }
+            
+        # Semantic analysis
+        if 'semantic_categories' in integrated_graph.graph:
+            report['semantics'] = {
+                'categories': integrated_graph.graph['semantic_categories'],
+                'relationship_types': integrated_graph.graph.get('relationship_types', {})
+            }
+            
+        # Critical nodes analysis
+        try:
+            # Calculate node centrality
+            betweenness = nx.betweenness_centrality(integrated_graph)
+            degree = nx.degree_centrality(integrated_graph)
+            
+            # Find top 5 critical nodes
+            critical_nodes = sorted([(node, score) for node, score in betweenness.items()], 
+                                  key=lambda x: x[1], reverse=True)[:5]
+            
+            report['critical_nodes'] = [{
+                'id': node,
+                'betweenness': score,
+                'degree': degree.get(node, 0),
+                'record_type': integrated_graph.nodes[node].get('record_type', 'unknown'),
+                'document_id': integrated_graph.nodes[node].get('document_id', 'unknown')
+            } for node, score in critical_nodes]
+        except Exception as e:
+            logger.warning(f"Error calculating critical nodes: {str(e)}")
+            
+        # Data flow analysis
+        if 'data_flow_metrics' in integrated_graph.graph:
+            report['data_flow'] = integrated_graph.graph['data_flow_metrics']
+            
+        # Create visualization if requested
+        if include_visualization and self.lineage_enhancer:
+            try:
+                # Generate visualization
+                viz_result = self.lineage_enhancer.visualize_enhanced_cross_document_lineage(
+                    lineage_graph=integrated_graph,
+                    highlight_cross_document=True,
+                    highlight_boundaries=True,
+                    show_clusters=True,
+                    show_metrics=True,
+                    file_path=output_path + "_viz.png" if output_path else None,
+                    format="png",
+                    width=1200,
+                    height=800
+                )
+                
+                # Add visualization reference to report
+                if output_path:
+                    report['visualization_path'] = output_path + "_viz.png"
+                else:
+                    report['visualization_data'] = viz_result
+            except Exception as e:
+                logger.warning(f"Error creating visualization: {str(e)}")
+                
+        # Save report if output path provided
+        if output_path:
+            try:
+                with open(output_path, 'w') as f:
+                    json.dump(report, f, indent=2)
+            except Exception as e:
+                logger.error(f"Error saving report: {str(e)}")
+                
+        return report
+    
+    def analyze_data_flow_patterns(self, integrated_graph):
+        """
+        Analyze data flow patterns in the integrated lineage graph.
+        
+        This method identifies common data flow patterns, bottlenecks,
+        and critical paths in the data lineage.
+        
+        Args:
+            integrated_graph: nx.DiGraph - Integrated lineage graph
+            
+        Returns:
+            dict: Data flow pattern analysis
+        """
+        # Initialize analysis results
+        analysis = {
+            'flow_patterns': {},
+            'bottlenecks': [],
+            'critical_paths': [],
+            'parallel_flows': [],
+            'cycles': []
+        }
+        
+        # Identify common flow patterns
+        pattern_counts = defaultdict(int)
+        
+        # Analyze all paths of length 3 (source -> process -> target)
+        for source in integrated_graph.nodes():
+            if integrated_graph.out_degree(source) > 0:
+                for mid in integrated_graph.successors(source):
+                    if integrated_graph.out_degree(mid) > 0:
+                        for target in integrated_graph.successors(mid):
+                            # Get node types
+                            source_type = integrated_graph.nodes[source].get('record_type', 'unknown')
+                            mid_type = integrated_graph.nodes[mid].get('record_type', 'unknown')
+                            target_type = integrated_graph.nodes[target].get('record_type', 'unknown')
+                            
+                            # Create pattern key
+                            pattern = f"{source_type}->{mid_type}->{target_type}"
+                            pattern_counts[pattern] += 1
+        
+        # Keep top 5 patterns
+        top_patterns = sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        analysis['flow_patterns'] = {pattern: count for pattern, count in top_patterns}
+        
+        # Identify bottlenecks (nodes with high in-degree and out-degree)
+        bottlenecks = []
+        for node in integrated_graph.nodes():
+            in_deg = integrated_graph.in_degree(node)
+            out_deg = integrated_graph.out_degree(node)
+            
+            if in_deg > 1 and out_deg > 1:
+                bottleneck_score = in_deg * out_deg
+                bottlenecks.append((node, in_deg, out_deg, bottleneck_score))
+                
+        # Sort by bottleneck score and keep top 5
+        bottlenecks.sort(key=lambda x: x[3], reverse=True)
+        analysis['bottlenecks'] = [{
+            'id': node,
+            'in_degree': in_deg,
+            'out_degree': out_deg,
+            'bottleneck_score': score,
+            'record_type': integrated_graph.nodes[node].get('record_type', 'unknown'),
+            'document_id': integrated_graph.nodes[node].get('document_id', 'unknown')
+        } for node, in_deg, out_deg, score in bottlenecks[:5]]
+        
+        # Identify critical paths (longest paths in the graph)
+        critical_paths = []
+        
+        # Find source and sink nodes
+        sources = [n for n in integrated_graph.nodes() if integrated_graph.in_degree(n) == 0]
+        sinks = [n for n in integrated_graph.nodes() if integrated_graph.out_degree(n) == 0]
+        
+        # Find all paths between sources and sinks
+        for source in sources:
+            for sink in sinks:
+                try:
+                    # Find all simple paths (limited to prevent exponential explosion)
+                    for path in nx.all_simple_paths(integrated_graph, source, sink, cutoff=10):
+                        if len(path) > 2:  # Only consider non-trivial paths
+                            critical_paths.append((path, len(path)))
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    continue
+                    
+        # Sort by path length and keep top 5
+        critical_paths.sort(key=lambda x: x[1], reverse=True)
+        analysis['critical_paths'] = [{
+            'path': path,
+            'length': length,
+            'path_types': [integrated_graph.nodes[n].get('record_type', 'unknown') for n in path]
+        } for path, length in critical_paths[:5]]
+        
+        # Identify parallel flows (similar paths between same endpoints)
+        parallel_groups = defaultdict(list)
+        
+        for path, _ in critical_paths:
+            if len(path) < 2:
+                continue
+                
+            # Group by source and target
+            key = (path[0], path[-1])
+            parallel_groups[key].append(path)
+            
+        # Keep groups with multiple paths
+        for (source, target), paths in parallel_groups.items():
+            if len(paths) > 1:
+                analysis['parallel_flows'].append({
+                    'source': source,
+                    'target': target,
+                    'path_count': len(paths),
+                    'paths': paths
+                })
+                
+        # Identify cycles (potential feedback loops)
+        try:
+            cycles = list(nx.simple_cycles(integrated_graph))
+            # Keep cycles of reasonable size
+            cycles = [c for c in cycles if 2 <= len(c) <= 10]
+            
+            analysis['cycles'] = [{
+                'cycle': cycle,
+                'length': len(cycle),
+                'cycle_types': [integrated_graph.nodes[n].get('record_type', 'unknown') for n in cycle]
+            } for cycle in cycles[:5]]  # Limit to top 5
+        except:
+            # Simple cycles only works in directed graphs
+            pass
+            
+        return analysis
+    
+    def track_document_lineage_evolution(self, document_id, time_range=None):
+        """
+        Track the evolution of document lineage over time.
+        
+        This method analyzes how the lineage of a document has evolved
+        over time, identifying key changes and patterns.
+        
+        Args:
+            document_id: ID of the document to analyze
+            time_range: Optional tuple of (start_time, end_time) as timestamps
+            
+        Returns:
+            dict: Document lineage evolution analysis
+        """
+        # Initialize evolution tracking
+        evolution = {
+            'document_id': document_id,
+            'time_range': time_range,
+            'timeline': [],
+            'growth_metrics': {},
+            'relationship_evolution': {},
+            'key_events': []
+        }
+        
+        # Get all records associated with the document
+        document_records = []
+        if self.storage:
+            for record_id, cid in self.storage.record_cids.items():
+                try:
+                    record = self.storage.load_record(cid)
+                    if hasattr(record, 'metadata') and isinstance(record.metadata, dict):
+                        if record.metadata.get('document_id') == document_id:
+                            # Get record timestamp
+                            timestamp = record.metadata.get('timestamp', 0)
+                            if hasattr(record, 'timestamp'):
+                                timestamp = record.timestamp
+                                
+                            # Apply time range filter if provided
+                            if time_range:
+                                start_time, end_time = time_range
+                                if timestamp < start_time or timestamp > end_time:
+                                    continue
+                                    
+                            document_records.append((record_id, timestamp, record))
+                except Exception as e:
+                    logger.warning(f"Error loading record {record_id}: {str(e)}")
+        
+        # Sort records by timestamp
+        document_records.sort(key=lambda x: x[1])
+        
+        # Create timeline of document evolution
+        current_records = set()
+        current_relationships = defaultdict(int)
+        
+        for i, (record_id, timestamp, record) in enumerate(document_records):
+            current_records.add(record_id)
+            
+            # Build lineage graph at this point in time
+            if self.lineage_enhancer:
+                try:
+                    lineage_graph = self.lineage_enhancer.build_enhanced_cross_document_lineage_graph(
+                        record_ids=list(current_records),
+                        max_depth=2
+                    )
+                    
+                    # Count relationship types
+                    for _, _, attrs in lineage_graph.edges(data=True):
+                        rel_type = attrs.get('relation', 'unknown')
+                        current_relationships[rel_type] += 1
+                        
+                    # Create timeline entry
+                    timeline_entry = {
+                        'timestamp': timestamp,
+                        'formatted_time': datetime.datetime.fromtimestamp(timestamp).isoformat(),
+                        'record_count': len(current_records),
+                        'relationship_count': lineage_graph.number_of_edges(),
+                        'cross_document_edges': sum(1 for _, _, attrs in lineage_graph.edges(data=True) 
+                                                  if attrs.get('cross_document', False)),
+                        'relationship_types': dict(current_relationships)
+                    }
+                    
+                    # Identify key events (significant changes)
+                    is_key_event = False
+                    reason = None
+                    
+                    if i == 0:
+                        is_key_event = True
+                        reason = "First record in document"
+                    elif i == len(document_records) - 1:
+                        is_key_event = True
+                        reason = "Latest record in document"
+                    elif timeline_entry.get('cross_document_edges', 0) > 0 and i > 0 and evolution['timeline'][i-1].get('cross_document_edges', 0) == 0:
+                        is_key_event = True
+                        reason = "First cross-document link established"
+                        
+                    timeline_entry['is_key_event'] = is_key_event
+                    if reason:
+                        timeline_entry['key_event_reason'] = reason
+                        
+                    evolution['timeline'].append(timeline_entry)
+                    
+                    # Track key events separately
+                    if is_key_event:
+                        key_event = dict(timeline_entry)
+                        key_event['record_id'] = record_id
+                        evolution['key_events'].append(key_event)
+                except Exception as e:
+                    logger.warning(f"Error building lineage graph at timestamp {timestamp}: {str(e)}")
+        
+        # Calculate growth metrics
+        if evolution['timeline']:
+            first = evolution['timeline'][0]
+            last = evolution['timeline'][-1]
+            
+            evolution['growth_metrics'] = {
+                'duration_seconds': last['timestamp'] - first['timestamp'],
+                'record_growth': last['record_count'] - first['record_count'],
+                'relationship_growth': last['relationship_count'] - first['relationship_count'],
+                'records_per_day': (last['record_count'] - first['record_count']) / 
+                                  max(1, (last['timestamp'] - first['timestamp']) / (24 * 3600))
+            }
+            
+            # Track relationship type evolution
+            all_rel_types = set()
+            for entry in evolution['timeline']:
+                all_rel_types.update(entry.get('relationship_types', {}).keys())
+                
+            for rel_type in all_rel_types:
+                evolution['relationship_evolution'][rel_type] = [
+                    entry.get('relationship_types', {}).get(rel_type, 0)
+                    for entry in evolution['timeline']
+                ]
+                
+        return evolution
+        
+    def _safe_diameter(self, graph):
+        """Calculate graph diameter safely."""
+        try:
+            # Convert to undirected for diameter calculation
+            undirected = graph.to_undirected()
+            if nx.is_connected(undirected):
+                return nx.diameter(undirected)
+            else:
+                # Get diameter of largest component
+                largest_cc = max(nx.connected_components(undirected), key=len)
+                subgraph = undirected.subgraph(largest_cc)
+                return nx.diameter(subgraph)
+        except Exception as e:
+            logger.debug(f"Error calculating diameter: {str(e)}")
+            return -1  # Indicate calculation failure
+            
+    def _safe_avg_path_length(self, graph):
+        """Calculate average path length safely."""
+        try:
+            # Convert to undirected for path length calculation
+            undirected = graph.to_undirected()
+            if nx.is_connected(undirected):
+                return nx.average_shortest_path_length(undirected)
+            else:
+                # Calculate for largest component
+                largest_cc = max(nx.connected_components(undirected), key=len)
+                subgraph = undirected.subgraph(largest_cc)
+                return nx.average_shortest_path_length(subgraph)
+        except Exception as e:
+            logger.debug(f"Error calculating average path length: {str(e)}")
+            return -1  # Indicate calculation failure
 
 
 # Helper class for analyzing data transformation impact across document boundaries
