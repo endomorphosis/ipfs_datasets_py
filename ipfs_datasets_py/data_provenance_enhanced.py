@@ -5962,6 +5962,136 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         traverse_links(start_record_id)
         
         return lineage_graph
+        
+    def create_cross_document_lineage(self, output_path: Optional[str] = None, 
+                                     include_visualization: bool = True) -> Optional[Dict[str, Any]]:
+        """
+        Creates detailed lineage tracking with cross-document relationships.
+        
+        This method integrates the current provenance graph with cross-document
+        lineage tracking, enabling more detailed analysis of data flows between
+        different documents and systems.
+        
+        Args:
+            output_path: Optional path to export the lineage graph visualization and report
+            include_visualization: Whether to include visualization in the output
+            
+        Returns:
+            Optional[Dict[str, Any]]: Detailed lineage data or None if generation failed
+        """
+        # Check IPLD storage requirements
+        if not IPLD_AVAILABLE or not self.ipld_storage:
+            self.logger.warning("IPLD storage not enabled, cannot create cross-document lineage")
+            return None
+            
+        try:
+            # Check if cross-document lineage enhanced module is available
+            try:
+                from ipfs_datasets_py.cross_document_lineage_enhanced import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+                enhanced_lineage_available = True
+            except ImportError:
+                self.logger.warning("Enhanced cross-document lineage module not available, using basic functionality")
+                enhanced_lineage_available = False
+                
+            # Get all records to include in lineage
+            record_ids = list(self.records.keys())
+            if not record_ids:
+                self.logger.warning("No records found to build cross-document lineage")
+                return None
+                
+            # Build provenance graph from our records
+            provenance_graph = self.get_provenance_graph()
+            
+            # Use the enhanced integration if available
+            if enhanced_lineage_available:
+                # Create an enhanced lineage enhancer
+                lineage_enhancer = CrossDocumentLineageEnhancer(self.ipld_storage)
+                
+                # Create a detailed lineage integrator
+                lineage_integrator = DetailedLineageIntegrator(
+                    provenance_manager=self,
+                    lineage_enhancer=lineage_enhancer
+                )
+                
+                # Generate the integrated lineage
+                integrated_graph = lineage_integrator.integrate_provenance_with_lineage(provenance_graph)
+                
+                # Add semantic enrichment
+                enriched_graph = lineage_integrator.enrich_lineage_semantics(integrated_graph)
+                
+                # Generate the unified lineage report
+                lineage_report = lineage_integrator.create_unified_lineage_report(
+                    integrated_graph=enriched_graph,
+                    include_visualization=include_visualization,
+                    output_path=output_path
+                )
+                
+                # Perform flow pattern analysis for more insights
+                flow_patterns = lineage_integrator.analyze_data_flow_patterns(enriched_graph)
+                
+                # Include flow patterns in the report
+                if lineage_report:
+                    lineage_report["flow_patterns"] = flow_patterns
+                
+                # Return the enhanced report
+                return lineage_report
+                
+            else:
+                # Use basic functionality
+                # For each record, build its lineage graph
+                combined_graph = nx.DiGraph()
+                
+                for start_id in record_ids[:10]:  # Limit to first 10 records to avoid performance issues
+                    try:
+                        # Build lineage graph for this record
+                        record_graph = self.build_cross_document_lineage_graph(
+                            start_record_id=start_id,
+                            max_depth=3  # Reasonable depth
+                        )
+                        
+                        # Merge into combined graph
+                        combined_graph = nx.compose(combined_graph, record_graph)
+                    except Exception as e:
+                        self.logger.warning(f"Error building lineage for record {start_id}: {str(e)}")
+                
+                # Basic analysis
+                analysis = {
+                    "record_count": len(record_ids),
+                    "included_records": min(10, len(record_ids)),
+                    "node_count": combined_graph.number_of_nodes(),
+                    "edge_count": combined_graph.number_of_edges(),
+                    "cross_document_edges": sum(1 for _, _, attrs in combined_graph.edges(data=True)
+                                             if attrs.get("cross_document", False)),
+                }
+                
+                # Generate visualization if requested
+                if include_visualization and output_path:
+                    try:
+                        # Visualize the combined graph
+                        self.visualize_cross_document_lineage(
+                            start_record_id=record_ids[0],  # Use first record as focal point
+                            max_depth=3,
+                            output_file=output_path,
+                            show_interactive=False,
+                            layout='dot',
+                            highlight_path=True
+                        )
+                        analysis["visualization_path"] = output_path
+                    except Exception as e:
+                        self.logger.warning(f"Error creating visualization: {str(e)}")
+                
+                return {
+                    "analysis": analysis,
+                    "lineage_graph": {
+                        "nodes": list(combined_graph.nodes()),
+                        "edges": [{"source": u, "target": v, **attrs} 
+                                for u, v, attrs in combined_graph.edges(data=True)]
+                    }
+                }
+                
+        except Exception as e:
+            self.logger.error(f"Error creating cross-document lineage: {str(e)}")
+            return None
     
     def visualize_cross_document_lineage(self, 
                                         start_record_id: str, 

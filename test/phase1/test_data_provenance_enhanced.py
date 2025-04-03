@@ -589,6 +589,92 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
+                
+    @patch('ipfs_datasets_py.data_provenance_enhanced.IPLDStorage')
+    @patch('ipfs_datasets_py.cross_document_lineage_enhanced.CrossDocumentLineageEnhancer')
+    @patch('ipfs_datasets_py.cross_document_lineage_enhanced.DetailedLineageIntegrator')
+    def test_create_cross_document_lineage(self, mock_integrator_class, mock_enhancer_class, mock_ipld_storage_class):
+        """Test creating enhanced cross-document lineage."""
+        # Configure the mocks
+        mock_ipld_storage = MagicMock()
+        mock_ipld_storage_class.return_value = mock_ipld_storage
+        
+        mock_enhancer = MagicMock()
+        mock_enhancer_class.return_value = mock_enhancer
+        
+        mock_integrator = MagicMock()
+        mock_integrator_class.return_value = mock_integrator
+        
+        # Set up a provenance manager with IPLD storage enabled
+        enhanced_manager = EnhancedProvenanceManager(
+            storage_path=None,
+            enable_ipld_storage=True,
+            default_agent_id="test_agent",
+            tracking_level="detailed"
+        )
+        
+        # Create some test data
+        source_id = enhanced_manager.record_source(
+            data_id="doc1_data",
+            source_type="file",
+            location="/path/to/doc1.csv",
+            description="Document 1 data"
+        )
+        
+        transform_id = enhanced_manager.begin_transformation(
+            input_ids=["doc1_data"],
+            transformation_type="preprocessing",
+            description="Document 1 transformation"
+        )
+        enhanced_manager.end_transformation(
+            transformation_id=transform_id,
+            output_ids=["doc1_transformed"],
+            success=True
+        )
+        
+        # Mock the methods called by create_cross_document_lineage
+        integrated_graph = nx.DiGraph()
+        integrated_graph.add_node("record1", record_type="source")
+        
+        enriched_graph = nx.DiGraph()
+        enriched_graph.add_node("record1", record_type="source")
+        enriched_graph.add_node("record2", record_type="transformation")
+        enriched_graph.add_edge("record1", "record2", relation="input_to")
+        
+        expected_report = {
+            "record_count": 2,
+            "relationship_count": 1,
+            "documents": {"doc1": {}, "doc2": {}},
+            "visualization_path": None
+        }
+        
+        flow_patterns = {
+            "flow_patterns": {"source->transformation->result": 1},
+            "bottlenecks": [{"id": "record2", "bottleneck_score": 2}]
+        }
+        
+        mock_integrator.integrate_provenance_with_lineage.return_value = integrated_graph
+        mock_integrator.enrich_lineage_semantics.return_value = enriched_graph
+        mock_integrator.create_unified_lineage_report.return_value = expected_report
+        mock_integrator.analyze_data_flow_patterns.return_value = flow_patterns
+        
+        # Call the method under test
+        with tempfile.NamedTemporaryFile(suffix=".json") as temp_file:
+            report = enhanced_manager.create_cross_document_lineage(
+                output_path=temp_file.name,
+                include_visualization=True
+            )
+            
+            # Verify the result
+            self.assertEqual(report, expected_report)
+            
+            # Verify that the necessary methods were called
+            mock_enhancer_class.assert_called_once()
+            mock_integrator_class.assert_called_once()
+            mock_integrator.integrate_provenance_with_lineage.assert_called_once()
+            mock_integrator.enrich_lineage_semantics.assert_called_once_with(integrated_graph)
+            mock_integrator.create_unified_lineage_report.assert_called_once()
+            mock_integrator.analyze_data_flow_patterns.assert_called_once_with(enriched_graph)
 
 
 if __name__ == '__main__':

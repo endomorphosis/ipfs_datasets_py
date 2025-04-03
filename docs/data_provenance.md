@@ -808,7 +808,35 @@ manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 
 # ... record various provenance events ...
 
-# Build comprehensive cross-document lineage graph
+# Method 1: Using the DetailedLineageIntegrator for comprehensive analysis
+lineage_report = manager.create_cross_document_lineage(
+    output_path="cross_document_report.html",
+    include_visualization=True
+)
+
+# Access the report with detailed cross-document insights
+print(f"Report contains {lineage_report['record_count']} records")
+print(f"Cross-document boundaries: {lineage_report.get('cross_document', {}).get('boundary_count', 0)}")
+
+# Analyze the flow patterns
+if 'flow_patterns' in lineage_report:
+    patterns = lineage_report['flow_patterns']
+    print("\nCommon data flow patterns:")
+    for pattern, count in patterns.get('flow_patterns', {}).items():
+        print(f"- {pattern}: {count} occurrences")
+    
+    # Identify data flow bottlenecks
+    print("\nData flow bottlenecks:")
+    for bottleneck in patterns.get('bottlenecks', []):
+        print(f"- {bottleneck['id']} (score: {bottleneck['bottleneck_score']})")
+    
+    # Check for circular dependencies
+    if 'cycles' in patterns and patterns['cycles']:
+        print("\nCircular dependencies detected:")
+        for cycle in patterns['cycles']:
+            print(f"- Cycle: {' -> '.join(cycle['cycle'])}")
+
+# Method 2: Using storage directly for more control
 lineage_graph = manager.storage.build_cross_document_lineage_graph(
     record_ids=["dataset1", "dataset2"],
     max_depth=3,
@@ -840,6 +868,60 @@ lineage_data = manager.storage.export_cross_document_lineage(
     format="json",
     include_records=True
 )
+```
+
+### Semantic Enhancement with DetailedLineageIntegrator
+
+The new `DetailedLineageIntegrator` provides advanced capabilities for enriching cross-document lineage with semantic context:
+
+```python
+from ipfs_datasets_py.cross_document_lineage_enhanced import DetailedLineageIntegrator, CrossDocumentLineageEnhancer
+
+# Initialize components
+manager = EnhancedProvenanceManager(enable_ipld_storage=True)
+lineage_enhancer = CrossDocumentLineageEnhancer(manager.ipld_storage)
+integrator = DetailedLineageIntegrator(
+    provenance_manager=manager,
+    lineage_enhancer=lineage_enhancer
+)
+
+# Get the provenance graph
+provenance_graph = manager.get_provenance_graph()
+
+# Integrate provenance with lineage
+integrated_graph = integrator.integrate_provenance_with_lineage(provenance_graph)
+
+# Enrich with semantic information
+enriched_graph = integrator.enrich_lineage_semantics(integrated_graph)
+
+# Create a comprehensive unified report
+lineage_report = integrator.create_unified_lineage_report(
+    integrated_graph=enriched_graph,
+    include_visualization=True,
+    output_path="enhanced_lineage_report.json"
+)
+
+# Analyze data flow patterns
+flow_patterns = integrator.analyze_data_flow_patterns(enriched_graph)
+
+# Track document lineage evolution over time
+evolution = integrator.track_document_lineage_evolution(
+    document_id="document_1",
+    time_range=(time.time() - 30*86400, time.time())  # Last 30 days
+)
+
+# Get growth metrics
+growth = evolution['growth_metrics']
+print(f"Document growth over 30 days:")
+print(f"- Records added: {growth['record_growth']}")
+print(f"- Relationships added: {growth['relationship_growth']}")
+print(f"- Growth rate: {growth['records_per_day']} records/day")
+
+# Check key events in evolution
+print("\nKey events in document evolution:")
+for event in evolution['key_events']:
+    print(f"- {event['formatted_time']}: {event.get('key_event_reason', 'Unknown event')}")
+```
 ```
 
 ## Cryptographic Verification
