@@ -872,7 +872,7 @@ lineage_data = manager.storage.export_cross_document_lineage(
 
 ### Semantic Enhancement with DetailedLineageIntegrator
 
-The new `DetailedLineageIntegrator` provides advanced capabilities for enriching cross-document lineage with semantic context:
+The new `DetailedLineageIntegrator` class provides advanced capabilities for enriching cross-document lineage with semantic context and comprehensive relationship analysis:
 
 ```python
 from ipfs_datasets_py.cross_document_lineage_enhanced import DetailedLineageIntegrator, CrossDocumentLineageEnhancer
@@ -882,7 +882,10 @@ manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 lineage_enhancer = CrossDocumentLineageEnhancer(manager.ipld_storage)
 integrator = DetailedLineageIntegrator(
     provenance_manager=manager,
-    lineage_enhancer=lineage_enhancer
+    lineage_enhancer=lineage_enhancer,
+    semantic_detection_level="high",  # Enable high-level semantic detection
+    flow_pattern_analysis=True,       # Enable flow pattern analysis
+    detect_document_boundaries=True   # Enable automatic document boundary detection
 )
 
 # Get the provenance graph
@@ -901,8 +904,69 @@ lineage_report = integrator.create_unified_lineage_report(
     output_path="enhanced_lineage_report.json"
 )
 
+# Direct access through the EnhancedProvenanceManager
+cross_doc_lineage = manager.create_cross_document_lineage(
+    output_path="cross_document_lineage_report.html",
+    include_visualization=True
+)
+
+# Advanced semantic analysis of document relationships
+semantic_relationships = integrator.extract_semantic_relationships(
+    integrated_graph,
+    min_confidence=0.75,
+    relationship_types=["transfers", "transforms", "augments", "derives"]
+)
+
+print(f"Discovered {len(semantic_relationships)} semantic relationships between documents")
+for rel in semantic_relationships:
+    print(f"Relationship: {rel['source']} -> {rel['target']}")
+    print(f"  Type: {rel['relationship_type']}")
+    print(f"  Confidence: {rel['confidence']}")
+    print(f"  Semantic context: {rel['semantic_context']}")
+
 # Analyze data flow patterns
 flow_patterns = integrator.analyze_data_flow_patterns(enriched_graph)
+
+# Check detected flow patterns
+for pattern in flow_patterns['flow_patterns']:
+    print(f"Flow pattern: {pattern['name']}")
+    print(f"  Frequency: {pattern['frequency']}")
+    print(f"  Confidence: {pattern['confidence']}")
+    print(f"  Nodes involved: {pattern['node_count']}")
+    
+    # Check if this is a critical pattern
+    if pattern['is_critical']:
+        print(f"  ⚠️ CRITICAL PATTERN: This pattern affects {pattern['impact_score']} downstream nodes")
+
+# Identify potential data flow bottlenecks
+bottlenecks = integrator.identify_bottlenecks(enriched_graph)
+print(f"\nIdentified {len(bottlenecks)} potential bottlenecks in data flow:")
+for bottleneck in bottlenecks:
+    print(f"Bottleneck: {bottleneck['node_id']}")
+    print(f"  Impact score: {bottleneck['impact_score']}")
+    print(f"  Centrality: {bottleneck['centrality']}")
+    print(f"  Remediation suggestion: {bottleneck['remediation']}")
+
+# Perform document boundary analysis
+boundaries = integrator.analyze_document_boundaries(enriched_graph)
+print(f"\nDocument boundary analysis:")
+print(f"  Total boundaries: {boundaries['total_boundaries']}")
+print(f"  Cross-domain boundaries: {boundaries['cross_domain_boundaries']}")
+print(f"  Security-sensitive boundaries: {boundaries['security_sensitive_boundaries']}")
+
+# Analyze specific boundary
+for boundary_id, boundary in boundaries['boundary_details'].items():
+    print(f"Boundary {boundary_id}: {boundary['source']} -> {boundary['target']}")
+    print(f"  Type: {boundary['type']}")
+    print(f"  Security classification: {boundary['security_classification']}")
+    print(f"  Control strength: {boundary['control_strength']}")
+    
+    # Check for potential issues
+    if boundary['potential_issues']:
+        for issue in boundary['potential_issues']:
+            print(f"  ⚠️ Issue: {issue['description']}")
+            print(f"    Severity: {issue['severity']}")
+            print(f"    Recommendation: {issue['recommendation']}")
 
 # Track document lineage evolution over time
 evolution = integrator.track_document_lineage_evolution(
@@ -912,7 +976,7 @@ evolution = integrator.track_document_lineage_evolution(
 
 # Get growth metrics
 growth = evolution['growth_metrics']
-print(f"Document growth over 30 days:")
+print(f"\nDocument growth over 30 days:")
 print(f"- Records added: {growth['record_growth']}")
 print(f"- Relationships added: {growth['relationship_growth']}")
 print(f"- Growth rate: {growth['records_per_day']} records/day")
@@ -921,6 +985,22 @@ print(f"- Growth rate: {growth['records_per_day']} records/day")
 print("\nKey events in document evolution:")
 for event in evolution['key_events']:
     print(f"- {event['formatted_time']}: {event.get('key_event_reason', 'Unknown event')}")
+    
+# Generate a comprehensive impact analysis report
+impact_report = integrator.analyze_flow_impact(
+    source_id="critical_document",
+    include_indirect_impacts=True,
+    impact_depth=3
+)
+
+print(f"\nImpact analysis from 'critical_document':")
+print(f"Direct impacts: {impact_report['direct_impact_count']}")
+print(f"Indirect impacts: {impact_report['indirect_impact_count']}")
+print(f"Total impact score: {impact_report['total_impact_score']}")
+
+print("Top impacted documents:")
+for doc in impact_report['most_impacted_documents'][:3]:
+    print(f"- {doc['id']} (Impact score: {doc['impact_score']})")
 ```
 ```
 

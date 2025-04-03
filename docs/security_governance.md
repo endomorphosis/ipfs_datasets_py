@@ -915,18 +915,59 @@ The enhanced intrusion detection system can detect:
 
 ### Cross-Document Lineage for Security and Compliance
 
-The enhanced cross-document lineage tracking enables powerful security and compliance capabilities:
+The enhanced cross-document lineage tracking enables powerful security and compliance capabilities through the integration of detailed lineage tracking:
 
 ```python
 from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
 from ipfs_datasets_py.audit.integration import ProvenanceAuditSearchIntegrator
 from ipfs_datasets_py.audit.compliance import ComplianceStandard
+from ipfs_datasets_py.cross_document_lineage import CrossDocumentLineageTracker, LinkType
+from ipfs_datasets_py.cross_document_lineage_enhanced import DetailedLineageIntegrator
 
-# Initialize with audit and provenance integration
-manager = EnhancedProvenanceManager(enable_ipld_storage=True)
+# Initialize components
+audit_logger = AuditLogger.get_instance()
+provenance_manager = EnhancedProvenanceManager(enable_ipld_storage=True)
+lineage_tracker = CrossDocumentLineageTracker(
+    provenance_storage=provenance_manager,
+    audit_logger=audit_logger,
+    link_verification=True,  # Enable cryptographic verification of links
+    min_confidence_threshold=0.85  # Set minimum confidence threshold for links
+)
+
+# Create detailed lineage integrator for enhanced capabilities
+lineage_integrator = DetailedLineageIntegrator(
+    provenance_manager=provenance_manager,
+    lineage_tracker=lineage_tracker,
+    semantic_detection_level="high",  # Enable high-level semantic detection
+    flow_pattern_analysis=True  # Enable flow pattern analysis
+)
+
+# Create unified search integrator
 search = ProvenanceAuditSearchIntegrator(
     audit_logger=audit_logger,
-    provenance_manager=manager
+    provenance_manager=provenance_manager,
+    lineage_tracker=lineage_tracker,  # Include lineage tracker for enhanced capabilities
+    lineage_integrator=lineage_integrator  # Include the new detailed lineage integrator
+)
+
+# Create detailed lineage with semantic relationship enrichment
+integrated_lineage = lineage_integrator.integrate_provenance_with_lineage(
+    provenance_graph=provenance_manager.get_provenance_graph(),
+    lineage_graph=lineage_tracker.get_lineage_graph()
+)
+
+# Use the enhanced provenance manager to create detailed cross-document lineage
+detailed_lineage = provenance_manager.create_cross_document_lineage(
+    output_path="cross_document_lineage_report.html",
+    include_visualization=True
+)
+
+# Perform advanced security analysis with semantic understanding
+security_insights = lineage_integrator.analyze_security_boundaries(
+    integrated_lineage,
+    include_semantic_analysis=True,
+    include_flow_patterns=True,
+    detect_security_anomalies=True
 )
 
 # Trace PII data flows across document boundaries for GDPR compliance
@@ -934,26 +975,67 @@ pii_flows = search.search(
     query={
         "document_id": "customer_data_document",
         "max_depth": 3,
-        "link_types": ["contains_pii", "processes_pii", "transfers_pii", "anonymizes"],
+        "link_types": [LinkType.CONTAINS_PII, LinkType.PROCESSES, LinkType.ANONYMIZES],
+        "min_confidence": 0.9,  # Only include high-confidence links
         "timerange": {
             "start": (datetime.datetime.now() - datetime.timedelta(days=365)).isoformat(),
             "end": datetime.datetime.now().isoformat()
+        },
+        "security_context": {  # Add security context for more accurate analysis
+            "classification_min": "CONFIDENTIAL",
+            "require_verification": True
+        },
+        "semantic_context": {  # New semantic analysis capabilities
+            "relationship_semantics": ["transfers", "processes", "anonymizes"],
+            "detect_implied_relationships": True,
+            "confidence_threshold": 0.75
         }
     },
     include_audit=True,
     include_provenance=True,
-    include_cross_document=True  # Enable cross-document search
+    include_cross_document=True,  # Enable cross-document search
+    include_security_context=True,  # Include security information
+    include_detailed_lineage=True  # Use new detailed lineage capabilities
 )
 
-# Analyze PII data flows for compliance risks
+# Analyze PII data flows for compliance risks with enhanced detection
 if "cross_document_analysis" in pii_flows:
     analysis = pii_flows["cross_document_analysis"]
     print(f"Documents involved in PII processing: {analysis.get('document_count', 0)}")
     
+    # Get flow pattern insights from the new analysis capabilities
+    if "flow_patterns" in analysis:
+        patterns = analysis["flow_patterns"]
+        print(f"Identified {len(patterns)} common flow patterns in PII processing")
+        for pattern in patterns:
+            print(f"Flow pattern: {pattern['name']} (confidence: {pattern['confidence']})")
+            print(f"  Security impact: {pattern['security_impact']}")
+            print(f"  Compliance impact: {pattern['compliance_impact']}")
+    
     # Check for international transfers (GDPR risk)
-    if "relationship_types" in analysis and "international_transfer" in analysis["relationship_types"]:
-        print(f"WARNING: {analysis['relationship_types']['international_transfer']} international PII transfers detected")
+    if "relationship_types" in analysis and LinkType.INTERNATIONAL_TRANSFER in analysis["relationship_types"]:
+        transfer_count = analysis["relationship_types"][LinkType.INTERNATIONAL_TRANSFER]
+        print(f"WARNING: {transfer_count} international PII transfers detected")
         print("Action required: Document these transfers and ensure appropriate safeguards")
+        
+    # Check for cross-domain transfers without proper anonymization
+    if "security_insights" in analysis:
+        insights = analysis["security_insights"]
+        if "pii_transfer_without_anonymization" in insights and insights["pii_transfer_without_anonymization"] > 0:
+            print(f"CRITICAL: {insights['pii_transfer_without_anonymization']} PII transfers without proper anonymization")
+            print("Action required: Implement anonymization before transfer or obtain explicit consent")
+            
+        # New detailed document boundary analysis
+        if "document_boundaries" in insights:
+            boundaries = insights["document_boundaries"]
+            print(f"Document boundaries analyzed: {len(boundaries)}")
+            for boundary in boundaries:
+                print(f"Boundary: {boundary['source']} -> {boundary['target']}")
+                print(f"  Security classification: {boundary['security_classification']}")
+                print(f"  Security controls: {', '.join(boundary['security_controls'])}")
+                if boundary.get('potential_data_leakage', False):
+                    print(f"  ⚠️ ALERT: Potential data leakage path detected")
+                    print(f"  Recommended action: {boundary['recommended_action']}")
         
     # Check records with cross-document info
     for record in pii_flows.get("provenance_records", []):
@@ -961,24 +1043,306 @@ if "cross_document_analysis" in pii_flows:
             doc_info = record["cross_document_info"]
             print(f"Record {record['record_id']} in document {doc_info.get('document_id')}")
             print(f"  Distance from source: {doc_info.get('distance_from_source')}")
+            print(f"  Confidence: {doc_info.get('confidence', 'unknown')}")
             
             # Examine relationship path to detect unauthorized flows
             if "relationship_path" in doc_info:
                 path = doc_info["relationship_path"]
                 for step in path:
-                    if step["type"] in ["unauthorized_transfer", "high_risk_processing"]:
+                    if step["type"] in [LinkType.UNAUTHORIZED_TRANSFER, LinkType.HIGH_RISK_PROCESSING]:
                         print(f"  SECURITY ALERT: Unauthorized data flow: {step['from']} --({step['type']})--> {step['to']}")
+                        
+                    # Show verification status for each step in the path
+                    if "verification" in step:
+                        verification = step["verification"]
+                        status = "✓ Verified" if verification.get("verified", False) else "⚠ Not verified"
+                        print(f"    Verification: {status} ({verification.get('method', 'unknown')})")
+                    
+                    # New: Show semantic relationship insights
+                    if "semantic_insights" in step:
+                        semantics = step["semantic_insights"]
+                        print(f"    Semantic relationship: {semantics.get('relationship_type', 'unknown')}")
+                        print(f"    Data context: {semantics.get('data_context', 'unknown')}")
+                        print(f"    Semantic confidence: {semantics.get('confidence', 0.0)}")
+
+# Generate a comprehensive security lineage report with detailed insights
+security_report = lineage_integrator.generate_detailed_security_report(
+    integrated_lineage=integrated_lineage,
+    document_id="customer_data_document",
+    include_semantic_analysis=True,
+    include_flow_patterns=True,
+    include_boundary_analysis=True,
+    output_format="html",
+    output_path="security_lineage_report.html"
+)
 ```
 
-The enhanced cross-document lineage capabilities provide security benefits:
+#### Enhanced Security Features of Cross-Document Lineage
 
-1. **Sensitive Data Tracing**: Follow how sensitive data moves across document boundaries
-2. **Unauthorized Transfer Detection**: Identify when data crosses security boundaries improperly
-3. **Security Policy Enforcement**: Verify that data flows adhere to security policies across document boundaries
-4. **Compliance Documentation**: Automatically generate documentation of data flows for audits
-5. **Data Leakage Prevention**: Detect potential data leakage paths across document boundaries
-6. **Access Control Verification**: Ensure proper access controls at each document boundary
-7. **Privacy Impact Assessment**: Support automated privacy impact assessment for cross-document processes
+The cross-document lineage system provides comprehensive security and compliance capabilities through its specialized link types and verification mechanisms:
+
+```python
+from ipfs_datasets_py.cross_document_lineage import CrossDocumentLineageTracker, LinkType, SecurityLinkAnalyzer
+from ipfs_datasets_py.audit.integration import LineagePolicyEnforcer
+from ipfs_datasets_py.security import SecurityManager
+
+# Initialize components
+security_manager = SecurityManager.get_instance()
+lineage_tracker = CrossDocumentLineageTracker(
+    provenance_storage=provenance_manager,
+    audit_logger=audit_logger,
+    link_verification=True
+)
+
+# Create a security analyzer for cross-document links
+security_analyzer = SecurityLinkAnalyzer(
+    lineage_tracker=lineage_tracker,
+    security_manager=security_manager
+)
+
+# Define security policies for cross-document links
+policy_enforcer = LineagePolicyEnforcer(
+    audit_logger=audit_logger,
+    lineage_tracker=lineage_tracker
+)
+
+# Add a data classification preservation policy
+policy_enforcer.add_policy({
+    "id": "SEC-001",
+    "name": "Classification Preservation Policy",
+    "description": "Data flowing to lower classification domains must be properly sanitized",
+    "rule": {
+        "condition": {
+            "source_classification": ["CONFIDENTIAL", "RESTRICTED"],
+            "target_classification": ["INTERNAL", "PUBLIC"]
+        },
+        "requirement": {
+            "intermediate_link_types": [LinkType.ANONYMIZES, LinkType.SANITIZES, LinkType.DECLASSIFIES],
+            "required": True,
+            "verified": True
+        }
+    },
+    "action": {
+        "if_violated": {
+            "log_level": "WARNING",
+            "notification": ["security@example.com"],
+            "remediation": "Insert proper anonymization or declassification step"
+        }
+    }
+})
+
+# Create security-enhanced links with verification
+source_doc = "financial_data_document"  # CONFIDENTIAL classification
+target_doc = "analytics_document"       # INTERNAL classification
+
+# Create a proper flow with anonymization
+anonymize_link = lineage_tracker.create_link(
+    source_document_id=source_doc,
+    target_document_id="anonymized_data",
+    link_type=LinkType.ANONYMIZES,
+    confidence=0.98,
+    metadata={
+        "anonymization_method": "k-anonymity",
+        "k_value": 5,
+        "fields_anonymized": ["customer_id", "account_number"],
+        "verified_by": "data_privacy_officer",
+        "verification_date": datetime.datetime.now().isoformat()
+    },
+    security_context={
+        "source_classification": "CONFIDENTIAL",
+        "target_classification": "INTERNAL",
+        "requires_approval": True,
+        "approval_status": "APPROVED",
+        "approved_by": "compliance_team"
+    },
+    sign=True  # Cryptographically sign this link
+)
+
+# Create link from anonymized data to analytics document
+analytics_link = lineage_tracker.create_link(
+    source_document_id="anonymized_data",
+    target_document_id=target_doc,
+    link_type=LinkType.DERIVED_FROM,
+    confidence=0.95,
+    metadata={
+        "transformation": "aggregation",
+        "purpose": "quarterly_analytics"
+    },
+    security_context={
+        "source_classification": "INTERNAL",
+        "target_classification": "INTERNAL"
+    },
+    sign=True
+)
+
+# Verify the entire chain meets security policies
+verification_result = policy_enforcer.verify_path_compliance(
+    source_document_id=source_doc,
+    target_document_id=target_doc
+)
+
+print(f"Path compliance: {'Compliant' if verification_result['compliant'] else 'Non-compliant'}")
+if not verification_result['compliant']:
+    for violation in verification_result['violations']:
+        print(f"Violation: {violation['policy_id']} - {violation['description']}")
+        print(f"Severity: {violation['severity']}")
+        print(f"Remediation: {violation['remediation']}")
+
+# Create a comprehensive security report for cross-document flows
+security_report = security_analyzer.generate_security_report(
+    document_id=source_doc,
+    include_downstream=True,
+    max_depth=3,
+    include_verification=True,
+    include_audit_events=True
+)
+
+# Export the security report
+with open("cross_document_security_report.json", "w") as f:
+    json.dump(security_report, f, indent=2)
+
+# Generate visualization with security highlights
+visualization = lineage_tracker.generate_visualization_data(
+    document_id=source_doc,
+    include_downstream=True,
+    max_depth=3,
+    highlight_security_issues=True,
+    include_verification_status=True
+)
+
+# Verify cryptographic integrity of a document's complete lineage
+crypto_verification = lineage_tracker.verify_document_lineage(
+    document_id=target_doc,
+    include_upstream=True,
+    include_downstream=False,
+    max_depth=3
+)
+
+print(f"Lineage verification: {'Verified' if crypto_verification['verified'] else 'Failed'}")
+print(f"Links verified: {crypto_verification['links_verified']}")
+print(f"Links with issues: {crypto_verification['links_with_issues']}")
+
+# If verification fails, log security incident
+if not crypto_verification['verified']:
+    audit_logger.log(
+        level="CRITICAL",
+        category="SECURITY",
+        action="lineage_verification_failed",
+        resource_id=target_doc,
+        resource_type="document",
+        details={
+            "verification_result": crypto_verification,
+            "affected_links": crypto_verification['links_with_issues']
+        }
+    )
+```
+
+#### Security-Enhanced Link Types
+
+The cross-document lineage system provides specialized link types for security and compliance purposes:
+
+```python
+from ipfs_datasets_py.cross_document_lineage import LinkType, CrossDocumentLineageTracker
+
+# Create links with security-specific link types
+lineage_tracker = CrossDocumentLineageTracker(
+    provenance_storage=provenance_manager,
+    audit_logger=audit_logger
+)
+
+# Personal data protection links
+pii_link = lineage_tracker.create_link(
+    source_document_id="customer_database",
+    target_document_id="pii_dataset",
+    link_type=LinkType.CONTAINS_PII,
+    confidence=0.99,
+    metadata={
+        "pii_types": ["name", "email", "address", "phone", "dob"],
+        "has_consent": True,
+        "consent_reference": "CONSENT-456789",
+        "legal_basis": "GDPR Art. 6(1)(a)",
+        "data_controller": "Example Corp",
+        "retention_period": "24 months"
+    }
+)
+
+# Data sanitization and anonymization links
+anonymization_link = lineage_tracker.create_link(
+    source_document_id="pii_dataset",
+    target_document_id="anonymized_dataset",
+    link_type=LinkType.ANONYMIZES,
+    confidence=0.97,
+    metadata={
+        "anonymization_method": "k-anonymity",
+        "k_value": 5,
+        "techniques": ["generalization", "suppression"],
+        "fields_anonymized": ["name", "email", "address", "phone", "dob"],
+        "tools_used": ["anonymization_toolkit_v3"],
+        "verified_by": "privacy_officer",
+        "verification_date": "2023-06-20T14:30:00Z"
+    }
+)
+
+# International transfer links with appropriate safeguards
+transfer_link = lineage_tracker.create_link(
+    source_document_id="anonymized_dataset",
+    target_document_id="eu_to_us_transfer",
+    link_type=LinkType.INTERNATIONAL_TRANSFER,
+    confidence=0.95,
+    metadata={
+        "source_jurisdiction": "EU",
+        "target_jurisdiction": "US",
+        "transfer_mechanism": "standard_contractual_clauses",
+        "transfer_date": "2023-06-22T09:15:00Z",
+        "safeguards": ["encryption", "access_controls", "sccs"],
+        "impact_assessment": "DPIA-2023-005",
+        "approved_by": "legal_department"
+    }
+)
+
+# Declassification links for changing security classifications
+declassify_link = lineage_tracker.create_link(
+    source_document_id="classified_document",
+    target_document_id="public_document",
+    link_type=LinkType.DECLASSIFIES,
+    confidence=0.99,
+    metadata={
+        "original_classification": "CONFIDENTIAL",
+        "new_classification": "PUBLIC",
+        "declassification_authority": "security_committee",
+        "declassification_date": "2023-06-25T11:00:00Z",
+        "review_process": "multi_level_review",
+        "approval_reference": "DECL-2023-078"
+    }
+)
+
+# Query for all links related to personal data protection
+personal_data_links = lineage_tracker.query_links(
+    link_types=[
+        LinkType.CONTAINS_PII,
+        LinkType.ANONYMIZES,
+        LinkType.PROCESSES_PII,
+        LinkType.INTERNATIONAL_TRANSFER
+    ],
+    min_confidence=0.9
+)
+
+print(f"Found {len(personal_data_links)} links related to personal data protection")
+```
+
+The enhanced cross-document lineage capabilities provide comprehensive security benefits:
+
+1. **Sensitive Data Tracing**: Follow how sensitive data moves across document boundaries with cryptographic verification at each step
+2. **Unauthorized Transfer Detection**: Identify when data crosses security boundaries improperly with confidence scoring and automated alerts
+3. **Security Policy Enforcement**: Verify that data flows adhere to security policies across document boundaries with specialized link types
+4. **Compliance Documentation**: Automatically generate documentation of data flows for audits with complete verification metadata
+5. **Data Leakage Prevention**: Detect potential data leakage paths across document boundaries with integration to security monitoring
+6. **Access Control Verification**: Ensure proper access controls at each document boundary with security context propagation
+7. **Privacy Impact Assessment**: Support automated privacy impact assessment for cross-document processes with specialized PII link types
+8. **Classification Management**: Track and enforce data classification rules across document boundaries
+9. **Cryptographic Verification**: Ensure data lineage integrity with cryptographic signing and verification
+10. **Security Visualization**: Generate visual representations of data flows with security highlights for risk assessment
+11. **Automated Policy Enforcement**: Apply and verify security policies across document boundaries programmatically
 
 ### Data Provenance
 
