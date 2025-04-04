@@ -1,6 +1,6 @@
-# Comprehensive Audit Logging Module
+# Comprehensive Audit Logging and Security Module
 
-This module provides enterprise-grade audit logging capabilities for the IPFS Datasets library. It enables detailed tracking of all system activities for security, compliance, and operational monitoring.
+This module provides enterprise-grade audit logging and adaptive security capabilities for the IPFS Datasets library. It enables detailed tracking of all system activities for security, compliance, and operational monitoring, along with automated security responses to detected threats.
 
 ## Features
 
@@ -10,6 +10,9 @@ This module provides enterprise-grade audit logging capabilities for the IPFS Da
 - **Intrusion Detection**: Detect security threats with anomaly detection and pattern matching
 - **Security Alerting**: Real-time alerts for security-relevant events
 - **Detailed Provenance Tracking**: Integration with the existing provenance tracking system
+- **Adaptive Security Responses**: Automated responses to detected security threats
+- **Response Rule Engine**: Configurable rules for matching security alerts with appropriate responses
+- **Multiple Response Actions**: Various response types including lockout, throttling, monitoring, etc.
 
 ## Usage Examples
 
@@ -90,6 +93,63 @@ ids.add_alert_handler(alert_manager.add_alert)
 alerts = ids.process_events(recent_events)
 ```
 
+### Adaptive Security Responses
+
+```python
+from ipfs_datasets_py.audit import (
+    AdaptiveSecurityManager, ResponseAction, ResponseRule, RuleCondition,
+    IntrusionDetection, SecurityAlertManager, AuditLogger
+)
+
+# Create components
+audit_logger = AuditLogger.get_instance()
+alert_manager = SecurityAlertManager()
+ids = IntrusionDetection(alert_manager=alert_manager)
+
+# Create adaptive security manager
+adaptive_security = AdaptiveSecurityManager(
+    alert_manager=alert_manager,
+    audit_logger=audit_logger,
+    response_storage_path="security_responses.json"
+)
+
+# Create a response rule for brute force login attempts
+brute_force_rule = ResponseRule(
+    rule_id="brute-force-login",
+    name="Brute Force Login Protection",
+    description="Responds to brute force login attempts",
+    alert_type="brute_force_login",
+    severity_levels=["medium", "high"],
+    actions=[
+        {
+            "type": "LOCKOUT",
+            "duration_minutes": 30,
+            "account": "{{alert.source_entity}}"
+        },
+        {
+            "type": "NOTIFY",
+            "message": "Brute force login attempt detected from {{alert.source_entity}}",
+            "recipients": ["security@example.com"]
+        }
+    ],
+    conditions=[
+        RuleCondition("alert.attempt_count", ">=", 5)
+    ]
+)
+
+# Add rule to adaptive security manager
+adaptive_security.add_rule(brute_force_rule)
+
+# Process pending alerts
+processed_count = adaptive_security.process_pending_alerts()
+print(f"Processed {processed_count} pending alerts")
+
+# Get active security responses
+active_responses = adaptive_security.get_active_responses()
+for response in active_responses:
+    print(f"Active response: {response.response_id} - {response.response_type.name}")
+```
+
 ## Integration with Security Module
 
 The audit logging system integrates with the existing security module to provide a comprehensive security and compliance solution:
@@ -148,6 +208,33 @@ The intrusion detection system can detect and alert on various security threats,
 - **Privilege Escalation**: Unexpected privilege changes
 - **Data Exfiltration**: Unusual data export activities
 - **Unauthorized Configuration**: Attempts to modify sensitive configurations
+
+## Adaptive Security Response Actions
+
+The adaptive security system can automatically respond to detected threats with various actions:
+
+- **MONITOR**: Enhanced monitoring for specific users or resources
+- **RESTRICT**: Access restriction for resources or users
+- **THROTTLE**: Rate limiting to prevent abuse
+- **LOCKOUT**: Temporary account lockout
+- **ISOLATE**: Resource isolation to prevent contamination
+- **NOTIFY**: Security notification to administrators
+- **ESCALATE**: Escalate issues to security teams
+- **ROLLBACK**: Roll back unauthorized changes
+- **SNAPSHOT**: Create security snapshot for forensics
+- **ENCRYPT**: Enforce enhanced encryption
+- **AUDIT**: Enhanced audit logging for suspicious activities
+
+## Response Rule Configuration
+
+The adaptive security system uses configurable rules to determine appropriate responses to security alerts:
+
+- **Rule Matching**: Rules match alerts based on alert type, severity, and customizable conditions
+- **Conditional Rules**: Rules can include conditions on any alert field using comparison operators
+- **Dynamic Parameters**: Response actions can include dynamic parameters drawn from the alert details
+- **Multiple Actions**: Each rule can trigger multiple response actions with different parameters
+- **Response Lifecycle**: Responses have defined lifecycles with expiration or manual cancellation
+- **Persistence**: Active responses can be persisted across system restarts
 
 ## Supported Compliance Standards
 

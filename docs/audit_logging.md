@@ -1,10 +1,10 @@
-# Audit Logging System
+# Audit Logging and Adaptive Security System
 
-The IPFS Datasets Python library includes a comprehensive audit logging system that provides detailed tracking of all operations performed on datasets, with particular emphasis on security, compliance, and data lineage.
+The IPFS Datasets Python library includes a comprehensive audit logging and adaptive security system that provides detailed tracking of all operations performed on datasets, with particular emphasis on security, compliance, and data lineage, along with automated responses to detected security threats.
 
 ## Overview
 
-The audit logging system is designed to:
+The audit logging and adaptive security system is designed to:
 
 1. Record all significant operations on datasets and system components
 2. Provide detailed context for each operation, including who, what, when, and how
@@ -12,6 +12,9 @@ The audit logging system is designed to:
 4. Integrate with data provenance tracking for complete lineage information
 5. Support security monitoring and intrusion detection
 6. Enable cryptographic verification of audit records
+7. Automatically respond to detected security threats with configurable actions
+8. Enforce security policies through automated responses
+9. Provide comprehensive security response lifecycle management
 
 ## Core Components
 
@@ -665,14 +668,624 @@ The audit logging system includes features specifically designed to support comp
 6. **Export capabilities**: Data can be exported for compliance reporting
 7. **Segregation of duties**: Different handlers can route events to different systems
 
-## Security Features
+## Security and Adaptive Response Features
 
-The audit system supports security monitoring and intrusion detection:
+The audit system supports comprehensive security monitoring, intrusion detection, and adaptive security responses:
 
 1. **Real-time event listeners**: Can trigger alerts on suspicious activity
 2. **Cryptographic verification**: Detect tampering with audit or provenance records
 3. **Complete context**: Full details about operations for forensic analysis
 4. **Integration with security systems**: Events can be routed to SIEM systems
+5. **Adaptive security responses**: Automatically respond to detected threats
+6. **Response rules engine**: Match security alerts to appropriate responses
+7. **Multiple response actions**: Various types of automated responses (lockout, throttle, etc.)
+8. **Response lifecycle management**: Create, track, and expire security responses
+
+### Adaptive Security Components
+
+The adaptive security system provides automated responses to security threats:
+
+```python
+from ipfs_datasets_py.audit.adaptive_security import (
+    AdaptiveSecurityManager, ResponseAction, ResponseRule, RuleCondition,
+    SecurityResponse
+)
+from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlertManager
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+
+# Get the audit logger
+audit_logger = AuditLogger.get_instance()
+
+# Initialize components
+alert_manager = SecurityAlertManager(alert_storage_path="alerts.json")
+ids = IntrusionDetection(alert_manager=alert_manager)
+
+# Create adaptive security manager
+adaptive_security = AdaptiveSecurityManager(
+    alert_manager=alert_manager,
+    audit_logger=audit_logger,
+    response_storage_path="security_responses.json"
+)
+
+# Define a rule for brute force login attempts
+brute_force_rule = ResponseRule(
+    rule_id="brute-force-login",
+    name="Brute Force Login Protection",
+    description="Responds to brute force login attempts",
+    alert_type="brute_force_login",
+    severity_levels=["medium", "high"],
+    actions=[
+        {
+            "type": "LOCKOUT",
+            "duration_minutes": 30,
+            "account": "{{alert.source_entity}}"
+        },
+        {
+            "type": "NOTIFY",
+            "message": "Brute force login attempt detected from {{alert.source_entity}}",
+            "recipients": ["security@example.com"]
+        }
+    ],
+    conditions=[
+        RuleCondition("alert.attempt_count", ">=", 5)
+    ]
+)
+
+# Add rule to the adaptive security manager
+adaptive_security.add_rule(brute_force_rule)
+
+# Process any pending alerts
+processed_count = adaptive_security.process_pending_alerts()
+print(f"Processed {processed_count} pending alerts")
+
+# Get active security responses
+active_responses = adaptive_security.get_active_responses()
+for response in active_responses:
+    print(f"Active response: {response.response_id} - {response.response_type.name}")
+    print(f"Target: {response.target}")
+    print(f"Expires: {response.expires_at}")
+
+# Cancel a response if needed
+if active_responses:
+    adaptive_security.cancel_response(active_responses[0].response_id)
+```
+
+#### Response Actions
+
+The adaptive security system supports multiple types of automated responses:
+
+- **MONITOR**: Enhanced monitoring for specific users or resources
+- **RESTRICT**: Access restriction for resources or users
+- **THROTTLE**: Rate limiting to prevent abuse
+- **LOCKOUT**: Temporary account lockout
+- **ISOLATE**: Resource isolation to prevent contamination
+- **NOTIFY**: Security notification to administrators
+- **ESCALATE**: Escalate issues to security teams
+- **ROLLBACK**: Roll back unauthorized changes
+- **SNAPSHOT**: Create security snapshot for forensics
+- **ENCRYPT**: Enforce enhanced encryption
+- **AUDIT**: Enhanced audit logging for suspicious activities
+
+#### Response Rules
+
+Security responses are driven by configurable rules that match specific alert patterns:
+
+```python
+# Create a rule for data exfiltration
+exfiltration_rule = ResponseRule(
+    rule_id="data-exfiltration-response",
+    name="Data Exfiltration Response",
+    alert_type="data_exfiltration",  # Match this alert type
+    severity_levels=["high", "critical"],  # Match these severity levels
+    actions=[
+        {
+            "type": "RESTRICT",  # Restrict access
+            "duration_minutes": 60,
+            "parameters": {
+                "user_id": "{{alert.user_id}}",  # Dynamic parameter from alert
+                "reason": "Potential data exfiltration"
+            }
+        },
+        {
+            "type": "AUDIT",  # Enhanced auditing
+            "duration_minutes": 4320,  # 3 days
+            "parameters": {
+                "user_id": "{{alert.user_id}}",
+                "level": "forensic",
+                "reason": "Data exfiltration investigation"
+            }
+        }
+    ],
+    conditions=[
+        RuleCondition("alert.data_size", ">=", 50 * 1024 * 1024)  # 50MB threshold
+    ],
+    description="Respond to potential data exfiltration with access restriction and enhanced auditing"
+)
+```
+
+#### Response Lifecycle Management
+
+The system automatically manages the lifecycle of security responses:
+
+```python
+# Check for expired responses
+expired_count = adaptive_security.check_expired_responses()
+print(f"Found {expired_count} expired responses")
+
+# Create a manual response
+from datetime import datetime, timedelta
+
+manual_response = SecurityResponse(
+    response_id="manual-response-001",
+    alert_id="manual-alert",
+    rule_id="manual-rule",
+    rule_name="Manual Response Rule",
+    response_type=ResponseAction.ISOLATE,
+    created_at=datetime.now().isoformat(),
+    expires_at=(datetime.now() + timedelta(hours=2)).isoformat(),
+    status="active",
+    target="dataset-999",
+    parameters={
+        "isolation_level": "network",
+        "allow_admin_access": True,
+        "reason": "Manual security response for demonstration"
+    }
+)
+
+# Add the manual response
+adaptive_security.add_response(manual_response)
+```
+
+#### Integration with Security Monitoring
+
+The adaptive security system integrates with the rest of the security infrastructure:
+
+```python
+from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlertManager
+from ipfs_datasets_py.audit.adaptive_security import AdaptiveSecurityManager
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+
+# Initialize components
+audit_logger = AuditLogger.get_instance()
+alert_manager = SecurityAlertManager()
+ids = IntrusionDetection(alert_manager=alert_manager)
+adaptive_security = AdaptiveSecurityManager(
+    alert_manager=alert_manager,
+    audit_logger=audit_logger
+)
+
+# Set up event listeners for security alerts
+def handle_security_alert(alert):
+    print(f"Alert received: {alert.alert_id} ({alert.alert_type})")
+    print(f"Severity: {alert.severity}")
+    print(f"Description: {alert.description}")
+    
+    # The alert will be automatically processed by adaptive security
+
+alert_manager.add_notification_handler(handle_security_alert)
+
+# Connect intrusion detection system to alert manager
+ids.add_alert_handler(alert_manager.add_alert)
+
+# Simulate events for intrusion detection
+events = [
+    {"type": "login", "user": "test_user", "ip": "192.168.1.100", "timestamp": "2023-06-01T10:00:00Z", "success": False},
+    {"type": "login", "user": "test_user", "ip": "192.168.1.100", "timestamp": "2023-06-01T10:01:00Z", "success": False},
+    {"type": "login", "user": "test_user", "ip": "192.168.1.100", "timestamp": "2023-06-01T10:02:00Z", "success": False},
+    {"type": "login", "user": "test_user", "ip": "192.168.1.100", "timestamp": "2023-06-01T10:03:00Z", "success": False},
+    {"type": "login", "user": "test_user", "ip": "192.168.1.100", "timestamp": "2023-06-01T10:04:00Z", "success": False}
+]
+
+# Process events through IDS (will generate alerts for brute force detection)
+ids.process_events(events)
+
+# Security alerts will trigger the adaptive security system automatically
+# with responses based on the configured rules
+```
+
+## Cross-Document Lineage Integration
+
+The enhanced audit logging system now includes integration with the cross-document lineage tracking system, providing comprehensive visibility into data flows across document boundaries:
+
+```python
+from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
+from ipfs_datasets_py.cross_document_lineage import CrossDocumentLineageTracker, LinkType
+
+# Initialize components
+audit_logger = AuditLogger.get_instance()
+provenance_manager = EnhancedProvenanceManager(
+    audit_logger=audit_logger,
+    enable_ipld_storage=True
+)
+
+# Create lineage tracker
+lineage_tracker = CrossDocumentLineageTracker(
+    provenance_storage=provenance_manager,
+    audit_logger=audit_logger,
+    link_verification=True
+)
+
+# Set up integrator
+integrator = AuditProvenanceIntegrator(
+    audit_logger=audit_logger,
+    provenance_manager=provenance_manager,
+    lineage_tracker=lineage_tracker  # Now includes lineage tracker
+)
+
+# Create a cross-document relationship
+relationship_id = lineage_tracker.create_link(
+    source_document_id="document1",
+    target_document_id="document2",
+    link_type=LinkType.DERIVED_FROM,
+    confidence=0.95,
+    metadata={
+        "transformation": "summarization",
+        "creator": "user123"
+    }
+)
+
+# The relationship is automatically logged to the audit system
+audit_event_id = lineage_tracker.get_audit_event_id(relationship_id)
+audit_event = audit_logger.get_event(audit_event_id)
+
+# Querying cross-document lineage with audit context
+results = lineage_tracker.query_lineage(
+    document_id="document2",
+    include_audit_events=True,  # Include associated audit events
+    max_depth=3
+)
+
+# Access the audit events associated with lineage
+for node in results.get("nodes", []):
+    if "audit_events" in node:
+        print(f"Document {node['id']} has {len(node['audit_events'])} audit events")
+        
+        for event_id in node["audit_events"]:
+            event = audit_logger.get_event(event_id)
+            print(f"- {event.timestamp}: {event.action} by {event.user}")
+
+# Generate a lineage report with audit details
+report = lineage_tracker.generate_lineage_report(
+    document_id="document2",
+    include_audit_events=True,
+    format="json"
+)
+
+# Save the report
+with open("document2_lineage_report.json", "w") as f:
+    json.dump(report, f, indent=2)
+
+# Visualization with audit information
+viz_data = lineage_tracker.generate_visualization_data(
+    document_id="document2",
+    include_audit_events=True,
+    highlight_critical_paths=True
+)
+```
+
+### Semantic Link Types for Audit Integration
+
+The cross-document lineage system provides specialized semantic link types that are particularly relevant for audit logging and compliance:
+
+```python
+from ipfs_datasets_py.cross_document_lineage import LinkType, CrossDocumentLineageTracker
+
+# Initialize tracker
+lineage_tracker = CrossDocumentLineageTracker(
+    provenance_storage=provenance_manager,
+    audit_logger=audit_logger
+)
+
+# Using semantic link types for compliance-aware lineage tracking
+compliance_link = lineage_tracker.create_link(
+    source_document_id="document1",
+    target_document_id="document2",
+    link_type=LinkType.CONTAINS_PII,  # Special compliance link type
+    confidence=0.98,
+    metadata={
+        "pii_types": ["name", "email", "address"],
+        "has_consent": True,
+        "consent_reference": "CONSENT-123456",
+        "retention_period": "365 days",
+        "data_controller": "Company XYZ",
+        "legal_basis": "GDPR Art. 6(1)(a)"
+    }
+)
+
+# Create data transformation link with audit-relevant metadata
+transform_link = lineage_tracker.create_link(
+    source_document_id="document2",
+    target_document_id="document3",
+    link_type=LinkType.ANONYMIZES,  # Indicates PII anonymization
+    confidence=0.95,
+    metadata={
+        "transformation": "pii_anonymization",
+        "anonymization_method": "k-anonymity",
+        "k_value": 5,
+        "approved_by": "compliance_officer",
+        "approval_date": "2023-05-15T10:30:00Z",
+        "verification_method": "manual_review",
+        "verification_date": "2023-05-16T14:45:00Z"
+    }
+)
+
+# Create data processing link for GDPR Article 30 compliance
+processing_link = lineage_tracker.create_link(
+    source_document_id="document3",
+    target_document_id="document4",
+    link_type=LinkType.PROCESSES,  # General processing relationship
+    confidence=0.92,
+    metadata={
+        "processing_purpose": "analytics",
+        "retention_period": "90 days",
+        "responsible_processor": "Analytics Team",
+        "gdpr_art30_record": "PROC-2023-05-001",
+        "dpia_reference": "DPIA-2023-003"  # Data Protection Impact Assessment
+    }
+)
+
+# Query compliance-related links
+compliance_links = lineage_tracker.query_links(
+    link_types=[LinkType.CONTAINS_PII, LinkType.ANONYMIZES, LinkType.PROCESSES],
+    min_confidence=0.9
+)
+
+print(f"Found {len(compliance_links)} compliance-related document relationships")
+```
+
+### Comprehensive Lineage Audit Search
+
+The enhanced search capabilities now integrate cross-document lineage with audit logging for powerful queries:
+
+```python
+from ipfs_datasets_py.audit.integration import CrossDocumentLineageAuditSearch
+
+# Create search component
+search = CrossDocumentLineageAuditSearch(
+    audit_logger=audit_logger,
+    provenance_manager=provenance_manager,
+    lineage_tracker=lineage_tracker
+)
+
+# Comprehensive search across document boundaries with audit context
+results = search.search(
+    query={
+        "document_id": "document1",  # Start point
+        "max_depth": 3,              # How far to traverse
+        "link_types": ["derived_from", "influenced_by"],  # Types of links to follow
+        "min_confidence": 0.7,       # Minimum confidence threshold
+        "audit_filters": {           # Filter by audit properties
+            "user": "user123",
+            "timerange": {
+                "start": "2023-01-01T00:00:00Z",
+                "end": "2023-12-31T23:59:59Z"
+            },
+            "actions": ["create", "transform", "approve"]
+        },
+        "metadata_filters": {        # Filter by link metadata
+            "transformation": "summarization"
+        }
+    }
+)
+
+# Analyze results
+print(f"Found {len(results.get('documents', []))} related documents")
+print(f"Found {len(results.get('links', []))} relationships")
+print(f"Found {len(results.get('audit_events', []))} related audit events")
+
+# Examine lineage paths with audit events
+for path in results.get("paths", []):
+    print(f"Path from {path['source']} to {path['target']}:")
+    
+    for step in path.get("steps", []):
+        link = step.get("link", {})
+        audits = step.get("audit_events", [])
+        
+        print(f"  {link.get('source')} --({link.get('type')}, confidence: {link.get('confidence', 0):.2f})--> {link.get('target')}")
+        print(f"    Audit events: {len(audits)}")
+        
+        for audit_id in audits[:3]:  # Show first 3 events
+            event = audit_logger.get_event(audit_id)
+            print(f"    - {event.timestamp}: {event.action} by {event.user}")
+        
+        if len(audits) > 3:
+            print(f"    - ... and {len(audits) - 3} more events")
+```
+
+### Audit Event Link Analysis
+
+The system provides analysis of audit events associated with document links:
+
+```python
+from ipfs_datasets_py.audit.integration import LineageAuditAnalyzer
+
+# Create analyzer
+analyzer = LineageAuditAnalyzer(
+    audit_logger=audit_logger,
+    lineage_tracker=lineage_tracker
+)
+
+# Analyze audit events for document relationship
+analysis = analyzer.analyze_link_audit_events(relationship_id)
+
+# Show comprehensive analysis
+print(f"Link between {analysis['source_document']} and {analysis['target_document']}")
+print(f"Link type: {analysis['link_type']}")
+print(f"Confidence: {analysis['confidence']:.2f}")
+print(f"Created: {analysis['created_at']}")
+print(f"Creator: {analysis['created_by']}")
+
+print("\nAudit timeline:")
+for event in analysis.get("audit_timeline", []):
+    print(f"- {event['timestamp']}: {event['action']} by {event['user']}")
+    if "details" in event:
+        for key, value in event["details"].items():
+            print(f"  {key}: {value}")
+
+# Get risk assessment
+risk = analyzer.assess_link_risk(relationship_id)
+print(f"\nRisk assessment: {risk['risk_level']} ({risk['risk_score']:.2f})")
+print(f"Factors contributing to risk assessment:")
+for factor in risk.get("risk_factors", []):
+    print(f"- {factor['factor']}: {factor['score']:.2f} - {factor['reason']}")
+
+# Analyze document modification patterns
+mod_analysis = analyzer.analyze_document_modifications(
+    document_id="document2",
+    include_linked_documents=True,
+    timerange={
+        "start": "2023-01-01T00:00:00Z",
+        "end": "2023-12-31T23:59:59Z"
+    }
+)
+
+print("\nDocument modification analysis:")
+print(f"Total modifications: {mod_analysis['total_modifications']}")
+print(f"Modification frequency: {mod_analysis['modification_frequency']} per day")
+print(f"Most active users:")
+for user, count in mod_analysis.get("users", {}).items():
+    print(f"- {user}: {count} modifications")
+```
+
+### Cryptographic Verification of Cross-Document Lineage
+
+The system supports cryptographic verification of lineage relationships to ensure integrity of cross-document data flows:
+
+```python
+from ipfs_datasets_py.cross_document_lineage import CrossDocumentLineageTracker, verify_lineage_chain
+
+# Create lineage tracker with verification enabled
+lineage_tracker = CrossDocumentLineageTracker(
+    provenance_storage=provenance_manager,
+    audit_logger=audit_logger,
+    link_verification=True,  # Enable cryptographic verification
+    crypto_verifier=crypto_verifier  # Optional custom verifier
+)
+
+# Create signed link
+link_id = lineage_tracker.create_link(
+    source_document_id="document1",
+    target_document_id="document2",
+    link_type=LinkType.DERIVED_FROM,
+    confidence=0.95,
+    metadata={"transformation": "summarization"},
+    sign=True  # Sign this link
+)
+
+# Verify a specific link
+verification_result = lineage_tracker.verify_link(link_id)
+print(f"Link verified: {verification_result['verified']}")
+if not verification_result['verified']:
+    print(f"Verification failed: {verification_result['reason']}")
+
+# Verify an entire lineage chain
+chain_verification = verify_lineage_chain(
+    lineage_tracker=lineage_tracker,
+    document_id="document5",  # End of the chain
+    max_depth=5  # How far back to verify
+)
+
+print(f"Lineage chain verified: {chain_verification['verified']}")
+print(f"Links verified: {chain_verification['links_verified']}")
+print(f"Links with issues: {chain_verification['links_with_issues']}")
+
+# Integration with audit logging
+if not chain_verification['verified']:
+    # Log verification failure to audit system
+    audit_logger.log(
+        level=AuditLevel.WARNING,
+        category=AuditCategory.SECURITY,
+        action="lineage_verification_failed",
+        resource_id="document5",
+        resource_type="document",
+        details={
+            "verification_result": chain_verification,
+            "links_with_issues": chain_verification['links_with_issues']
+        }
+    )
+
+# Export verification report
+verification_report = lineage_tracker.generate_verification_report(
+    document_id="document5",
+    max_depth=5,
+    include_audit_events=True
+)
+
+with open("verification_report.json", "w") as f:
+    json.dump(verification_report, f, indent=2)
+```
+
+### Automated Audit Policy Enforcement
+
+The cross-document lineage system integrates with the audit system to enforce policies about data flows across document boundaries:
+
+```python
+from ipfs_datasets_py.audit.integration import LineagePolicyEnforcer
+from ipfs_datasets_py.cross_document_lineage import LinkType
+
+# Create policy enforcer
+enforcer = LineagePolicyEnforcer(
+    audit_logger=audit_logger,
+    lineage_tracker=lineage_tracker
+)
+
+# Define a policy about PII data flows
+enforcer.add_policy({
+    "id": "PII-001",
+    "name": "PII Data Anonymization Policy",
+    "description": "PII data must be anonymized before analytical processing",
+    "rule": {
+        "condition": {
+            "link_type": LinkType.CONTAINS_PII,
+            "target_has_link_type": LinkType.PROCESSES
+        },
+        "requirement": {
+            "intermediate_link_type": LinkType.ANONYMIZES,
+            "required": True
+        },
+        "exception": {
+            "metadata": {
+                "has_consent": True,
+                "legal_basis": "GDPR Art. 6(1)(a)"
+            }
+        }
+    },
+    "action": {
+        "if_violated": {
+            "log_level": AuditLevel.WARNING,
+            "notify": ["compliance@example.com", "security@example.com"],
+            "block_operation": False
+        }
+    }
+})
+
+# Check compliance of a document
+compliance_result = enforcer.check_document_compliance(
+    document_id="document3",
+    policies=["PII-001"]  # Specific policies to check
+)
+
+print(f"Document compliant: {compliance_result['compliant']}")
+if not compliance_result['compliant']:
+    print("Policy violations:")
+    for violation in compliance_result.get('violations', []):
+        print(f"- Policy {violation['policy_id']}: {violation['description']}")
+        print(f"  Violation details: {violation['details']}")
+
+# Check compliance during link creation (integrate with link creation)
+try:
+    processing_link = lineage_tracker.create_link(
+        source_document_id="document_with_pii",
+        target_document_id="analytics_document",
+        link_type=LinkType.PROCESSES,
+        confidence=0.95,
+        metadata={"processing_purpose": "analytics"},
+        enforce_policies=True  # Enable policy enforcement
+    )
+    print("Link created successfully - complies with policies")
+except Exception as e:
+    print(f"Link creation failed due to policy violation: {str(e)}")
+```
 
 ## API Reference
 
@@ -681,3 +1294,4 @@ For complete API reference, see the code documentation in:
 - `ipfs_datasets_py.audit.handlers`
 - `ipfs_datasets_py.audit.integration`
 - `ipfs_datasets_py.audit.provenance_consumer`
+- `ipfs_datasets_py.cross_document_lineage`

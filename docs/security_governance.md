@@ -850,19 +850,30 @@ Supported compliance standards include:
 - NIST 800-53 (NIST Special Publication 800-53)
 - ISO 27001 (ISO/IEC 27001)
 
-### Intrusion Detection
+### Intrusion Detection and Adaptive Security Response
 
-Identify and alert on potential security threats with enhanced integration:
+Identify and respond to potential security threats with the enhanced integrated security system:
 
 ```python
 from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlertManager
 from ipfs_datasets_py.audit.enhanced_security import EnhancedSecurityManager
+from ipfs_datasets_py.audit.adaptive_security import (
+    AdaptiveSecurityManager, ResponseRule, ResponseAction, RuleCondition, 
+    SecurityResponse
+)
 
 # Get the security manager
 security_manager = EnhancedSecurityManager.get_instance()
 
 # Create security alert manager
 alert_manager = SecurityAlertManager(alert_storage_path="logs/alerts.json")
+
+# Create adaptive security manager for automated responses
+adaptive_security = AdaptiveSecurityManager(
+    security_manager=security_manager,
+    alert_manager=alert_manager,
+    response_storage_path="logs/security_responses.json"
+)
 
 # Add an email alert handler
 def email_alert_handler(alert):
@@ -872,37 +883,248 @@ def email_alert_handler(alert):
 
 alert_manager.add_notification_handler(email_alert_handler)
 
-# Automated security response handler
-def security_response_handler(alert):
-    """Implement automated security responses based on alert type."""
-    # For high/critical severity alerts, take automatic action
-    if alert.level in ['high', 'critical']:
-        # Get affected resources and users
-        affected_user = alert.details.get("user")
-        affected_resources = []
-        
-        # Implement containment strategy based on alert type
-        if alert.type == "brute_force_login":
-            # Temporary account lockout
-            security_manager.set_enhanced_monitoring(affected_user, 60)
-        
-        elif alert.type == "data_exfiltration":
-            # Restrict access to affected resources
-            for resource in affected_resources:
-                security_manager.add_temporary_access_restriction(resource, 60)
-
-# Add the security response handler
-alert_manager.add_notification_handler(security_response_handler)
-
 # Create intrusion detection system
 ids = IntrusionDetection()
 
 # Connect IDS to alert manager
 ids.add_alert_handler(alert_manager.add_alert)
 
+# Define a custom response rule for a specific threat type
+custom_rule = ResponseRule(
+    rule_id="custom-sensitive-data-access",
+    name="Custom Sensitive Data Access Response",
+    alert_type="sensitive_data_access",
+    severity_levels=["medium", "high", "critical"],
+    actions=[
+        {
+            # Enhanced audit logging for 24 hours
+            "type": "AUDIT",
+            "duration_minutes": 1440,
+            "parameters": {
+                "user_id": "{{alert.user_id}}",
+                "level": "forensic",
+                "reason": "Suspicious sensitive data access"
+            }
+        },
+        {
+            # Throttle access for 2 hours
+            "type": "THROTTLE",
+            "duration_minutes": 120,
+            "parameters": {
+                "user_id": "{{alert.user_id}}",
+                "resource_type": "sensitive_data",
+                "rate_limit": 5,  # 5 requests per minute
+                "reason": "Unusual sensitive data access pattern"
+            }
+        },
+        {
+            # Notify security team
+            "type": "NOTIFY",
+            "parameters": {
+                "recipient": "security_team",
+                "message": "Suspicious sensitive data access detected",
+                "severity": "{{alert.severity}}",
+                "include_details": True
+            }
+        }
+    ],
+    conditions=[
+        # Multiple conditions that can be evaluated
+        RuleCondition("alert.user_type", "in", ["new_user", "contractor", "external"]),
+        RuleCondition("alert.resource_type", "in", ["financial", "personal_data", "credentials"]),
+        RuleCondition("alert.access_count", ">=", 10)
+    ],
+    description="Enhanced response for suspicious sensitive data access by high-risk users"
+)
+
+# Add the custom rule to the adaptive security manager
+adaptive_security.add_rule(custom_rule)
+
 # Process events through IDS
 alerts = ids.process_events(recent_events)
+
+# Process any pending alerts
+processed_count = adaptive_security.process_pending_alerts()
+print(f"Processed {processed_count} pending alerts")
+
+# The adaptive security manager will automatically:
+# 1. Receive alerts from the alert manager
+# 2. Match alerts against response rules
+# 3. Execute appropriate response actions
+# 4. Log all responses to the audit system
+# 5. Store response history for future reference
+
+# Check active security responses
+active_responses = adaptive_security.get_active_responses()
+print(f"Active security responses: {len(active_responses)}")
+
+# Get responses for a specific user
+user_responses = adaptive_security.get_active_responses(target="suspicious_user")
+for response in user_responses:
+    print(f"Response {response.response_id}: {response.response_type.name} until {response.expires_at}")
+
+# Create a manual response
+manual_response = SecurityResponse(
+    response_id="manual-response-001",
+    alert_id="manual-alert",
+    rule_id="manual-rule",
+    rule_name="Manual Response Rule",
+    response_type=ResponseAction.ISOLATE,
+    created_at=datetime.datetime.now().isoformat(),
+    expires_at=(datetime.datetime.now() + timedelta(hours=2)).isoformat(),
+    status="active",
+    target="dataset-999",
+    parameters={
+        "isolation_level": "network",
+        "allow_admin_access": True,
+        "reason": "Manual security response for demonstration"
+    }
+)
+
+# Add the manual response
+adaptive_security.add_response(manual_response)
+
+# Cancel a response if needed
+if user_responses:
+    adaptive_security.cancel_response(user_responses[0].response_id)
+    
+# Check for expired responses
+expired_count = adaptive_security.check_expired_responses()
+print(f"Found {expired_count} expired responses")
 ```
+
+The Adaptive Security Response System provides an advanced framework for automated security responses based on detected threats:
+
+#### Response Actions
+
+The system supports multiple types of automated responses:
+
+- **MONITOR**: Enhanced monitoring of users or resources
+- **RESTRICT**: Access restrictions for users or resources
+- **THROTTLE**: Rate limiting for specific operations
+- **LOCKOUT**: Temporary account lockout
+- **ISOLATE**: Resource isolation to contain threats
+- **NOTIFY**: Security notifications to appropriate teams
+- **ESCALATE**: Security incident escalation
+- **ROLLBACK**: Configuration rollback
+- **SNAPSHOT**: Security snapshots for forensics
+- **ENCRYPT**: Enforce encryption for sensitive data
+- **AUDIT**: Enhanced audit logging
+
+#### Response Rules
+
+Security responses are driven by configurable rules that match specific alert patterns:
+
+```python
+# Create a rule for data exfiltration
+exfiltration_rule = ResponseRule(
+    rule_id="data-exfiltration-response",
+    name="Data Exfiltration Response",
+    alert_type="data_exfiltration",  # Match this alert type
+    severity_levels=["high", "critical"],  # Match these severity levels
+    actions=[
+        {
+            "type": "RESTRICT",  # Restrict access
+            "duration_minutes": 60,
+            "parameters": {
+                "user_id": "$user",  # Dynamic parameter from alert
+                "reason": "Potential data exfiltration"
+            }
+        },
+        {
+            "type": "AUDIT",  # Enhanced auditing
+            "duration_minutes": 4320,  # 3 days
+            "parameters": {
+                "user_id": "$user",
+                "level": "forensic",
+                "reason": "Data exfiltration investigation"
+            }
+        },
+        {
+            "type": "ESCALATE",  # Escalate to incident response
+            "parameters": {
+                "priority": "high",
+                "team": "security_incident_response",
+                "message": "Potential data exfiltration detected"
+            }
+        }
+    ],
+    description="Respond to potential data exfiltration with access restriction and enhanced auditing"
+)
+
+# Add the rule to the adaptive security manager
+adaptive_security.add_response_rule(exfiltration_rule)
+```
+
+#### Dynamic Response Parameters
+
+Response actions can include dynamic parameters extracted from the security alert:
+
+```python
+# Rule with dynamic parameters
+rule = ResponseRule(
+    rule_id="brute-force-response",
+    name="Brute Force Login Response",
+    alert_type="brute_force_login",
+    severity_levels=["medium", "high", "critical"],
+    actions=[
+        {
+            "type": "LOCKOUT",
+            "duration_minutes": 30,
+            "parameters": {
+                "user_id": "$user",  # Will be replaced with alert.details["user"]
+                "source_ip": "$source_ip",  # Will be replaced with alert.details["source_ip"]
+                "failure_count": "$failure_count",  # Will be replaced with alert.details["failure_count"]
+                "reason": "Brute force login detection"
+            }
+        }
+    ]
+)
+```
+
+#### Conditional Rules
+
+Rules can include additional conditions to fine-tune when they apply:
+
+```python
+# Rule with conditions
+conditional_rule = ResponseRule(
+    rule_id="admin-account-protection",
+    name="Admin Account Protection",
+    alert_type="brute_force_login",
+    severity_levels=["medium", "high"],
+    actions=[
+        {
+            "type": "LOCKOUT",
+            "duration_minutes": 60,  # Longer lockout for admin accounts
+        },
+        {
+            "type": "NOTIFY",
+            "parameters": {
+                "recipient": "security_admin",
+                "message": "Admin account brute force attempt",
+                "severity": "critical"  # Higher severity notification
+            }
+        }
+    ],
+    conditions={
+        "user": ["admin", "root", "system"],  # Only for these users
+        "failure_count": lambda x: x > 3  # Custom condition function
+    }
+)
+```
+
+#### Response Lifecycle Management
+
+The system automatically manages the lifecycle of security responses:
+
+1. **Creation**: Responses are created when alerts match rules
+2. **Activation**: Responses are immediately activated and logged
+3. **Monitoring**: Active responses are tracked in memory and storage
+4. **Expiration**: Responses automatically expire after their duration
+5. **Cancellation**: Responses can be manually cancelled if needed
+
+This provides a complete audit trail of security responses and ensures temporary security measures are properly applied and removed.
 
 The enhanced intrusion detection system can detect:
 - Brute Force Login Attempts

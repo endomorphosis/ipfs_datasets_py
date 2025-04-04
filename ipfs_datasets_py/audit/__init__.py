@@ -12,6 +12,7 @@ Features:
 - Integration with existing provenance tracking
 - Support for multiple output formats and destinations
 - Real-time alerting for security-relevant events
+- Adaptive security responses to detected threats
 """
 
 from ipfs_datasets_py.audit.audit_logger import (
@@ -40,6 +41,13 @@ from ipfs_datasets_py.audit.intrusion import (
     AnomalyDetector,
     SecurityAlertManager
 )
+from ipfs_datasets_py.audit.adaptive_security import (
+    AdaptiveSecurityManager,
+    ResponseAction,
+    ResponseRule,
+    SecurityResponse,
+    RuleCondition
+)
 
 __all__ = [
     'AuditLogger',
@@ -59,5 +67,10 @@ __all__ = [
     'SOC2ComplianceReporter',
     'IntrusionDetection',
     'AnomalyDetector',
-    'SecurityAlertManager'
+    'SecurityAlertManager',
+    'AdaptiveSecurityManager',
+    'ResponseAction',
+    'ResponseRule',
+    'SecurityResponse',
+    'RuleCondition'
 ]

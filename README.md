@@ -329,7 +329,7 @@ def update_dataset(user_token, dataset_id, new_data):
     return True
 ```
 
-## Audit Logging
+## Audit Logging and Adaptive Security
 
 ```python
 from ipfs_datasets_py.audit import AuditLogger, AuditCategory, AuditLevel
@@ -356,6 +356,54 @@ from ipfs_datasets_py.audit import GDPRComplianceReporter
 reporter = GDPRComplianceReporter()
 report = reporter.generate_report(events)
 report.save_html("reports/gdpr_compliance.html")
+
+# Setup adaptive security response system
+from ipfs_datasets_py.audit import (
+    AdaptiveSecurityManager, ResponseRule, ResponseAction, RuleCondition,
+    IntrusionDetection, SecurityAlertManager
+)
+
+# Create security components
+alert_manager = SecurityAlertManager(alert_storage_path="security_alerts.json")
+intrusion_detection = IntrusionDetection(alert_manager=alert_manager)
+
+# Create adaptive security manager
+adaptive_security = AdaptiveSecurityManager(
+    alert_manager=alert_manager,
+    audit_logger=audit_logger,
+    response_storage_path="security_responses.json"
+)
+
+# Define a security response rule for brute force login attempts
+brute_force_rule = ResponseRule(
+    rule_id="brute-force-response",
+    name="Brute Force Login Response",
+    alert_type="brute_force_login",
+    severity_levels=["medium", "high"],
+    actions=[
+        {
+            "type": "LOCKOUT",
+            "duration_minutes": 30,
+            "account": "{{alert.source_entity}}"
+        },
+        {
+            "type": "NOTIFY",
+            "message": "Brute force login detected from {{alert.source_entity}}",
+            "recipients": ["security@example.com"]
+        }
+    ],
+    conditions=[
+        RuleCondition("alert.attempt_count", ">=", 5)
+    ],
+    description="Respond to brute force login attempts"
+)
+
+# Add rule to the security manager
+adaptive_security.add_rule(brute_force_rule)
+
+# Process any pending security alerts
+processed_count = adaptive_security.process_pending_alerts()
+print(f"Processed {processed_count} security alerts")
 ```
 
 ## Data Provenance and Lineage

@@ -88,6 +88,17 @@ try:
 except ImportError:
     HAVE_GRAPHRAG_INTEGRATION = False
 
+# Security and Audit Components
+try:
+    from ipfs_datasets_py.audit import (
+        AuditLogger, AuditEvent, AuditLevel, AuditCategory,
+        IntrusionDetection, SecurityAlertManager,
+        AdaptiveSecurityManager, ResponseRule, ResponseAction
+    )
+    HAVE_AUDIT = True
+except ImportError:
+    HAVE_AUDIT = False
+
 # Check for dependencies
 try:
     import ipfshttpclient
@@ -157,7 +168,8 @@ __all__ = [
     'HAVE_KG_EXTRACTION',
     'HAVE_LLM_INTERFACE',
     'HAVE_LLM_GRAPHRAG',
-    'HAVE_GRAPHRAG_INTEGRATION'
+    'HAVE_GRAPHRAG_INTEGRATION',
+    'HAVE_AUDIT'
 ]
 
 # Conditionally add exports based on available components
@@ -232,3 +244,16 @@ if HAVE_LLM_GRAPHRAG:
 
 if HAVE_GRAPHRAG_INTEGRATION:
     __all__.extend(['enhance_dataset_with_llm'])
+
+if HAVE_AUDIT:
+    __all__.extend([
+        'AuditLogger',
+        'AuditEvent',
+        'AuditLevel',
+        'AuditCategory',
+        'IntrusionDetection',
+        'SecurityAlertManager',
+        'AdaptiveSecurityManager',
+        'ResponseRule',
+        'ResponseAction'
+    ])
