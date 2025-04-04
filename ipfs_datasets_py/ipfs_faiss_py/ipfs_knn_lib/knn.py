@@ -14,6 +14,9 @@ import math
 from hf_embed import hf_embed as HFEmbed
 import random
 from s3_kit import s3_kit
+# New import for ipfs_kit_py
+from ipfs_kit_py.high_level_api import IPFSSimpleAPI
+# Keep old import for compatibility during transition
 from ipfs_kit import ipfs_kit
 import hnswlib
 import pickle
@@ -83,7 +86,15 @@ class KNN:
                 pass
 
         self.s3 = s3_kit(resources, meta)
-        self.ipfs_kit = ipfs_kit(resources, meta)
+        # Initialize both old and new implementations for transition period
+        self.ipfs_kit = ipfs_kit(resources, meta)  # Old implementation
+        # New implementation with High-Level API
+        try:
+            self.ipfs_api = IPFSSimpleAPI(metadata=meta)
+            self.use_new_ipfs = True
+        except Exception as e:
+            print(f"Warning: Failed to initialize new IPFS API: {e}")
+            self.use_new_ipfs = False
         self.openai = OpenAIAPI(resources, meta)
         self.datastore = {}
 
@@ -370,17 +381,30 @@ class KNN:
                     # vector_store_cid = self.web3.upload("vector_store.json",  None, json.dumps(vector_store))
                     # doc_index_cid = self.web3.upload("doc_index.json", None, json.dumps(doc_index))
                     # doc_store_cid = self.web3.upload("doc_store.json", None, json.dumps(doc_store))
-                    vector_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_store), **kwargs)
-                    vector_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_index), **kwargs)
-                    doc_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_index), **kwargs)
-                    doc_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_store), **kwargs)
+                    if self.use_new_ipfs:
+                        # New API
+                        vector_store_cid = self.ipfs_api.add(json.dumps(vector_store))
+                        vector_index_cid = self.ipfs_api.add(json.dumps(vector_index))
+                        doc_index_cid = self.ipfs_api.add(json.dumps(doc_index))
+                        doc_store_cid = self.ipfs_api.add(json.dumps(doc_store))
+                    else:
+                        # Old API
+                        vector_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_store), **kwargs)
+                        vector_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_index), **kwargs)
+                        doc_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_index), **kwargs)
+                        doc_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_store), **kwargs)
 
                     metadata_json = {}
                     metadata_json["vector_index.json"] = vector_index_cid
                     metadata_json["vector_store.json"] = vector_store_cid
                     metadata_json["doc_index.json"] = doc_index_cid
                     metadata_json["doc_store.json"] = doc_store_cid
-                    metadata_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(metadata_json), **kwargs)
+                    if self.use_new_ipfs:
+                        # New API
+                        metadata_cid = self.ipfs_api.add(json.dumps(metadata_json))
+                    else:
+                        # Old API
+                        metadata_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(metadata_json), **kwargs)
                     #metadata_cid = self.web3.upload("metadata.json", None,  json.dumps(metadata_json))
                 pass
             return metadata_cid
@@ -580,7 +604,12 @@ class KNN:
                 s3uri =  "s3://"+bucket+"/"+dir+"/"+filename
                 document_dict["__data__"]["s3uri"] = "s3://"+bucket+"/"+dir+"/"+filename
             if dst == "web3":
-                web3uri = self.ipfs_kit.ipfs_upload_object(document, **kwargs)
+                if self.use_new_ipfs:
+                    # New API
+                    web3uri = self.ipfs_api.add(document)
+                else:
+                    # Old API  
+                    web3uri = self.ipfs_kit.ipfs_upload_object(document, **kwargs)
                 #web3uri = self.web3.upload(filename, None, text)
                 document_dict["__data__"]["web3storage"] = "https://" + web3uri + ".ipfs.w3s.link",
             document_index[filename] = document_dict
