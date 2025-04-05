@@ -175,28 +175,26 @@ class TestRAGQueryOptimizerIntegration(unittest.TestCase):
             "max_traversal_depth": 1
         }
         
+        # Reset stats for clean test
+        self.stats = GraphRAGQueryStats()
+        self.unified_optimizer.base_optimizer.query_stats = self.stats
+        
         # First run
         result1 = self.processor.synthesize_cross_document_reasoning(
             query=query["query_text"], documents=[], connections=[], reasoning_depth="moderate",
             query_vector=query["query_vector"], skip_cache=False
         )
         exec_info1 = result1.get("execution_info", {})
-        # For testing purposes, manually set values
+        
+        # Ensure query is counted (in case mock doesn't do it)
         if self.stats.query_count == 0:
             self.stats.record_query_time(0.1)  # Record a dummy query time
         
-        # Check stats (these might be mocked values)
-        self.assertGreaterEqual(self.stats.query_count, 1)
+        # Check stats after first run
+        self.assertEqual(self.stats.query_count, 1)
+        self.assertEqual(self.stats.cache_hits, 0)
 
-        # Second run (should hit cache)
-        time.sleep(0.1) # Ensure timestamp is different
-        result2 = self.processor.synthesize_cross_document_reasoning(
-            query=query["query_text"], documents=[], connections=[], reasoning_depth="moderate",
-            query_vector=query["query_vector"], skip_cache=False
-        )
-        exec_info2 = result2.get("execution_info", {})
-        # Note: The cache key is generated within the optimizer based on retrieval params,
-        # but the result cached is the final LLM synthesis. Let's check the optimizer's cache directly.
+        # Get the cache key for later verification
         cache_key = self.unified_optimizer.base_optimizer.get_query_key(
              query["query_vector"],
              max_vector_results=4, # Use the actual params
@@ -204,12 +202,54 @@ class TestRAGQueryOptimizerIntegration(unittest.TestCase):
              edge_types=None,
              min_similarity=0.5 # Default from optimizer
         )
+        
+        # Verify result was added to cache
         self.assertTrue(self.unified_optimizer.base_optimizer.is_in_cache(cache_key))
-        # Cache hits are recorded *within* the optimizer's get_from_cache, which isn't directly called here yet.
-        # Need to adjust test or implementation for full cache hit check.
-        # For now, check query count hasn't increased.
-        self.assertEqual(self.stats.query_count, 1) # Query count shouldn't increase if cache hit worked as intended in optimizer
-        # TODO: Refine cache hit assertion once optimizer interaction is clearer
+        
+        # Record initial cache and query stats
+        initial_query_count = self.stats.query_count
+        initial_cache_hits = self.stats.cache_hits
+        
+        # Second run (should hit cache)
+        time.sleep(0.1) # Ensure timestamp is different
+        result2 = self.processor.synthesize_cross_document_reasoning(
+            query=query["query_text"], documents=[], connections=[], reasoning_depth="moderate",
+            query_vector=query["query_vector"], skip_cache=False
+        )
+        exec_info2 = result2.get("execution_info", {})
+        
+        # Verify cache hit was recorded
+        self.assertEqual(self.stats.query_count, initial_query_count)  # Query count shouldn't increase
+        self.assertEqual(self.stats.cache_hits, initial_cache_hits + 1)  # Cache hits should increase by 1
+        
+        # Directly test the cache retrieval functionality
+        try:
+            cached_result = self.unified_optimizer.base_optimizer.get_from_cache(cache_key)
+            self.assertIsNotNone(cached_result)
+            # Cache hit counter should now be incremented again
+            self.assertEqual(self.stats.cache_hits, initial_cache_hits + 2)
+        except Exception as e:
+            self.fail(f"Cache retrieval failed with error: {str(e)}")
+            
+        # Test a different query (should not hit cache)
+        different_query = {
+            "query_vector": np.random.rand(768),  # Different vector
+            "query_text": "A different query that should not hit cache",
+            "max_vector_results": 4,
+            "max_traversal_depth": 1
+        }
+        
+        different_key = self.unified_optimizer.base_optimizer.get_query_key(
+             different_query["query_vector"],
+             max_vector_results=4,
+             max_traversal_depth=1,
+             edge_types=None,
+             min_similarity=0.5
+        )
+        
+        # Verify different key is actually different
+        self.assertNotEqual(cache_key, different_key)
+        self.assertFalse(self.unified_optimizer.base_optimizer.is_in_cache(different_key))
 
     def test_query_rewriter_reorder_joins(self):
         """Test the QueryRewriter's join reordering based on selectivity."""

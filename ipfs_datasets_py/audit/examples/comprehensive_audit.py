@@ -1,9 +1,8 @@
 """
-Comprehensive Audit Logging Example
+Example of comprehensive audit visualization using interactive components.
 
-This example demonstrates the full capabilities of the enhanced audit logging
-system, including integration with data provenance tracking, various output
-handlers, comprehensive reporting, and intrusion detection.
+This example demonstrates how to create interactive visualizations of audit events,
+showing trends over time and correlations between different types of audit events.
 """
 
 import os

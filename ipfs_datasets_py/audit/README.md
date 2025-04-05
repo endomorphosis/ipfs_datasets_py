@@ -1,250 +1,161 @@
-# Comprehensive Audit Logging and Security Module
+# Audit Logging and Reporting System
 
-This module provides enterprise-grade audit logging and adaptive security capabilities for the IPFS Datasets library. It enables detailed tracking of all system activities for security, compliance, and operational monitoring, along with automated security responses to detected threats.
+This directory contains the audit logging and reporting system for the IPFS Datasets Python project.
 
-## Features
+## Components
 
-- **Comprehensive Event Logging**: Track authentication, authorization, data access, configuration changes, and security events
-- **Flexible Output Handlers**: Send audit logs to files, syslog, Elasticsearch, or custom destinations
-- **Compliance Reporting**: Generate compliance reports for various standards (GDPR, HIPAA, SOC2)
-- **Intrusion Detection**: Detect security threats with anomaly detection and pattern matching
-- **Security Alerting**: Real-time alerts for security-relevant events
-- **Detailed Provenance Tracking**: Integration with the existing provenance tracking system
-- **Adaptive Security Responses**: Automated responses to detected security threats
-- **Response Rule Engine**: Configurable rules for matching security alerts with appropriate responses
-- **Multiple Response Actions**: Various response types including lockout, throttling, monitoring, etc.
+### Core Components
+
+- **`audit_logger.py`**: Core audit logging functionality with the `AuditLogger` singleton
+- **`audit_visualization.py`**: Metrics collection and visualization tools
+- **`audit_reporting.py`**: Comprehensive reporting and analysis capabilities
+- **`handlers.py`**: Various handlers for audit events (file, database, alerting)
+- **`enhanced_security.py`**: Advanced security features for audit logging
+- **`intrusion.py`**: Intrusion detection based on audit events
+
+## Audit Reporting Features
+
+The audit reporting system provides comprehensive analysis of audit data with the following features:
+
+### Pattern Detection
+- Authentication anomalies (brute force attempts, unusual login patterns)
+- Access control anomalies (unusual resource access, unexpected modifications)
+- System health indicators (error rates, critical events)
+- Compliance violations and security breaches
+
+### Risk Assessment
+- Category-based risk scoring (authentication, access control, system integrity, compliance)
+- Anomaly detection with severity rating
+- Comprehensive risk trends and early warning indicators
+- Weighted overall risk score calculation
+
+### Compliance Analysis
+- Framework-based compliance evaluation (GDPR, HIPAA, SOC2)
+- Requirement-specific compliance checks
+- Compliance status reporting with percentage scores
+- Prioritized remediation recommendations
+
+### Report Generation
+- Multiple report types (security, compliance, operational, comprehensive)
+- Various output formats (JSON, HTML, PDF)
+- Executive summaries with actionable insights
+- Technical details for specialized analysis
 
 ## Usage Examples
 
-### Basic Audit Logging
+### Generating a Report
 
 ```python
-from ipfs_datasets_py.audit import AuditLogger, AuditCategory, AuditLevel
-
-# Get the global audit logger instance
-audit_logger = AuditLogger.get_instance()
-
-# Add a file handler
-from ipfs_datasets_py.audit import FileAuditHandler
-file_handler = FileAuditHandler(
-    name="file",
-    file_path="/path/to/audit.log",
-    min_level=AuditLevel.INFO,
-    rotate_size_mb=10
-)
-audit_logger.add_handler(file_handler)
-
-# Log events
-audit_logger.auth("login", user="john_doe", status="success")
-audit_logger.data_access("read", resource_id="dataset123", resource_type="dataset")
-audit_logger.security("permission_change", level=AuditLevel.WARNING,
-                     details={"target": "admin_role", "changes": "added_user"})
-```
-
-### Context-Aware Logging
-
-```python
-# Set thread-local context
-audit_logger.set_context(user="current_user", session_id="abc123")
-
-# All subsequent events will include this context
-audit_logger.data_access("read", resource_id="file456")
-audit_logger.data_modify("update", resource_id="file456")
-
-# Clear context when done
-audit_logger.clear_context()
-```
-
-### Compliance Reporting
-
-```python
-from ipfs_datasets_py.audit import GDPRComplianceReporter
-
-# Create a GDPR reporter
-reporter = GDPRComplianceReporter()
-
-# Generate report from audit events
-report = reporter.generate_report(events)
-
-# Save report in various formats
-report.save_json("gdpr_compliance.json")
-report.save_csv("gdpr_compliance.csv")
-report.save_html("gdpr_compliance.html")
-```
-
-### Intrusion Detection
-
-```python
-from ipfs_datasets_py.audit import IntrusionDetection, SecurityAlertManager
-
-# Create intrusion detection system
-ids = IntrusionDetection()
-alert_manager = SecurityAlertManager()
-
-# Set up alerting
-def handle_alert(alert):
-    print(f"SECURITY ALERT: {alert.level} - {alert.description}")
-alert_manager.add_notification_handler(handle_alert)
-
-# Connect IDS to alert manager
-ids.add_alert_handler(alert_manager.add_alert)
-
-# Process events through IDS
-alerts = ids.process_events(recent_events)
-```
-
-### Adaptive Security Responses
-
-```python
-from ipfs_datasets_py.audit import (
-    AdaptiveSecurityManager, ResponseAction, ResponseRule, RuleCondition,
-    IntrusionDetection, SecurityAlertManager, AuditLogger
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+from ipfs_datasets_py.audit.audit_visualization import setup_audit_visualization
+from ipfs_datasets_py.audit.audit_reporting import (
+    setup_audit_reporting, generate_comprehensive_audit_report
 )
 
-# Create components
+# Get the audit logger instance
 audit_logger = AuditLogger.get_instance()
-alert_manager = SecurityAlertManager()
-ids = IntrusionDetection(alert_manager=alert_manager)
 
-# Create adaptive security manager
-adaptive_security = AdaptiveSecurityManager(
-    alert_manager=alert_manager,
+# Set up the visualization system to collect metrics
+metrics, visualizer, _ = setup_audit_visualization(audit_logger)
+
+# Generate a comprehensive report
+report_path = generate_comprehensive_audit_report(
     audit_logger=audit_logger,
-    response_storage_path="security_responses.json"
+    metrics_aggregator=metrics,
+    report_format='html',
+    output_file='./audit_reports/comprehensive_report.html'
 )
 
-# Create a response rule for brute force login attempts
-brute_force_rule = ResponseRule(
-    rule_id="brute-force-login",
-    name="Brute Force Login Protection",
-    description="Responds to brute force login attempts",
-    alert_type="brute_force_login",
-    severity_levels=["medium", "high"],
-    actions=[
-        {
-            "type": "LOCKOUT",
-            "duration_minutes": 30,
-            "account": "{{alert.source_entity}}"
-        },
-        {
-            "type": "NOTIFY",
-            "message": "Brute force login attempt detected from {{alert.source_entity}}",
-            "recipients": ["security@example.com"]
-        }
-    ],
-    conditions=[
-        RuleCondition("alert.attempt_count", ">=", 5)
-    ]
-)
-
-# Add rule to adaptive security manager
-adaptive_security.add_rule(brute_force_rule)
-
-# Process pending alerts
-processed_count = adaptive_security.process_pending_alerts()
-print(f"Processed {processed_count} pending alerts")
-
-# Get active security responses
-active_responses = adaptive_security.get_active_responses()
-for response in active_responses:
-    print(f"Active response: {response.response_id} - {response.response_type.name}")
+print(f"Report generated at: {report_path}")
 ```
 
-## Integration with Security Module
+### Command-Line Report Generation
 
-The audit logging system integrates with the existing security module to provide a comprehensive security and compliance solution:
+Use the included `generate_audit_report.py` script to create reports from the command line:
+
+```bash
+# Generate a comprehensive HTML report
+python generate_audit_report.py --type comprehensive --format html --output ./audit_reports/report.html
+
+# Generate a security-focused JSON report
+python generate_audit_report.py --type security --format json
+
+# Generate a compliance report for the last 30 days
+python generate_audit_report.py --type compliance --days 30
+```
+
+### Custom Analysis
+
+For deeper customization, you can use the reporting components directly:
 
 ```python
-from ipfs_datasets_py.security import SecurityManager
-from ipfs_datasets_py.audit import AuditLogger, FileAuditHandler
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
+from ipfs_datasets_py.audit.audit_reporting import (
+    AuditPatternDetector, AuditComplianceAnalyzer, AuditReportGenerator
+)
 
-# Initialize security manager
-security = SecurityManager.initialize()
+# Get metrics aggregator with collected audit data
+metrics = AuditMetricsAggregator()
 
-# Set up audit logging
-audit_logger = AuditLogger.get_instance()
-audit_logger.add_handler(FileAuditHandler(name="file", file_path="audit.log"))
+# Initialize pattern detector for security analysis
+pattern_detector = AuditPatternDetector(metrics)
+risk_scores = pattern_detector.calculate_risk_scores()
+anomalies = pattern_detector.get_anomalies(threshold=0.7)
 
-# Security operations now generate audit events
-security.authenticate("username", "password")  # Generates auth event
-security.check_access("resource123", "read")   # Generates authz event
-security.encrypt_file("input.txt", "output.enc", "key1")  # Generates security event
+# Initialize compliance analyzer
+compliance_analyzer = AuditComplianceAnalyzer(
+    metrics_aggregator=metrics,
+    pattern_detector=pattern_detector,
+    frameworks=['gdpr', 'hipaa']  # Analyze only these frameworks
+)
+compliance_status = compliance_analyzer.analyze_compliance()
+compliance_summary = compliance_analyzer.get_compliance_summary()
+
+# Initialize report generator for custom reports
+report_generator = AuditReportGenerator(
+    metrics_aggregator=metrics,
+    pattern_detector=pattern_detector,
+    compliance_analyzer=compliance_analyzer,
+    output_dir="./custom_reports"
+)
+
+# Generate a security report with detected anomalies
+security_report = report_generator.generate_security_report()
+
+# Export report in desired format
+report_path = report_generator.export_report(
+    report=security_report,
+    format='json',
+    output_file='./custom_reports/security_analysis.json'
+)
 ```
 
-## Audit Event Categories
+## Report Types
 
-- **AUTHENTICATION**: User login/logout events
-- **AUTHORIZATION**: Permission checks and access control
-- **DATA_ACCESS**: Reading data or metadata
-- **DATA_MODIFICATION**: Writing, updating, or deleting data
-- **CONFIGURATION**: System configuration changes
-- **RESOURCE**: Resource creation, deletion, modification
-- **SECURITY**: Security-related events
-- **SYSTEM**: System-level events
-- **API**: API calls and responses
-- **COMPLIANCE**: Compliance-related events
-- **PROVENANCE**: Data provenance tracking
-- **OPERATIONAL**: General operational events
-- **INTRUSION_DETECTION**: Possible security breaches
+The audit reporting system provides four main report types:
 
-## Audit Event Severity Levels
+1. **Security Report**: Focuses on security anomalies, risk assessment, and security-related recommendations.
+2. **Compliance Report**: Evaluates compliance status against various frameworks, highlighting gaps and remediation actions.
+3. **Operational Report**: Analyzes system performance, error rates, and operational efficiency.
+4. **Comprehensive Report**: Combines all report types into a complete audit assessment with executive summary.
 
-- **DEBUG**: Fine-grained debugging information
-- **INFO**: Normal operational events
-- **NOTICE**: Significant but normal events
-- **WARNING**: Potential issues that don't affect operations
-- **ERROR**: Error conditions that affect operations
-- **CRITICAL**: Critical conditions requiring immediate attention
-- **EMERGENCY**: System is unusable
+## Output Formats
 
-## Security Alert Types
+Reports can be generated in the following formats:
 
-The intrusion detection system can detect and alert on various security threats, including:
+- **JSON**: Machine-readable format for further processing or API responses
+- **HTML**: User-friendly format with styling and interactive elements
+- **PDF**: Formal report format suitable for printing and distribution (requires WeasyPrint)
 
-- **Brute Force Login Attempts**: Multiple failed login attempts from the same source
-- **Multiple Access Denials**: Unusual patterns of access denials
-- **Sensitive Data Access**: Unusual access to sensitive data
-- **Account Compromise**: Behavioral anomalies indicating potential compromise
-- **Privilege Escalation**: Unexpected privilege changes
-- **Data Exfiltration**: Unusual data export activities
-- **Unauthorized Configuration**: Attempts to modify sensitive configurations
+## Dependencies
 
-## Adaptive Security Response Actions
+- Required: Core Python libraries (built-in)
+- Recommended for visualization: matplotlib, seaborn
+- Recommended for HTML reports: jinja2
+- Optional for PDF reports: weasyprint
 
-The adaptive security system can automatically respond to detected threats with various actions:
+## Configuration
 
-- **MONITOR**: Enhanced monitoring for specific users or resources
-- **RESTRICT**: Access restriction for resources or users
-- **THROTTLE**: Rate limiting to prevent abuse
-- **LOCKOUT**: Temporary account lockout
-- **ISOLATE**: Resource isolation to prevent contamination
-- **NOTIFY**: Security notification to administrators
-- **ESCALATE**: Escalate issues to security teams
-- **ROLLBACK**: Roll back unauthorized changes
-- **SNAPSHOT**: Create security snapshot for forensics
-- **ENCRYPT**: Enforce enhanced encryption
-- **AUDIT**: Enhanced audit logging for suspicious activities
-
-## Response Rule Configuration
-
-The adaptive security system uses configurable rules to determine appropriate responses to security alerts:
-
-- **Rule Matching**: Rules match alerts based on alert type, severity, and customizable conditions
-- **Conditional Rules**: Rules can include conditions on any alert field using comparison operators
-- **Dynamic Parameters**: Response actions can include dynamic parameters drawn from the alert details
-- **Multiple Actions**: Each rule can trigger multiple response actions with different parameters
-- **Response Lifecycle**: Responses have defined lifecycles with expiration or manual cancellation
-- **Persistence**: Active responses can be persisted across system restarts
-
-## Supported Compliance Standards
-
-The compliance reporting system supports generating reports for:
-
-- **GDPR**: General Data Protection Regulation
-- **HIPAA**: Health Insurance Portability and Accountability Act
-- **SOC2**: Service Organization Control 2
-- **PCI-DSS**: Payment Card Industry Data Security Standard
-- **CCPA**: California Consumer Privacy Act
-- **NIST 800-53**: NIST Special Publication 800-53
-- **ISO 27001**: ISO/IEC 27001
-- **Custom**: Custom compliance frameworks
+The audit reporting system inherits its configuration from the audit logging system.
+For customization, see the documentation in `audit_logger.py`.

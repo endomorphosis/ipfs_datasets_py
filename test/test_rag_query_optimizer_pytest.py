@@ -374,6 +374,98 @@ def test_end_to_end_optimization_execution(
     assert vector_called == True
     assert graph_called == True
 
+# Test JSON serialization with NumPy arrays
+def test_json_serialization_with_numpy(metrics_collector, temp_metrics_dir):
+    """Test that JSON serialization correctly handles NumPy arrays."""
+    try:
+        import numpy as np
+        
+        # Create metrics with NumPy values
+        metrics = {
+            "query_id": "numpy_test",
+            "start_time": time.time(),
+            "end_time": time.time() + 1.0,
+            "duration": 1.0,
+            "phases": {
+                "test_phase": {
+                    "duration": 0.5,
+                    "count": 1
+                }
+            },
+            "params": {},
+            "results": {
+                "count": 10,
+                "quality_score": 0.85
+            },
+            "resources": {
+                "peak_memory": 1024 * 1024
+            },
+            # Add NumPy values
+            "numpy_array": np.array([1, 2, 3, 4, 5]),
+            "numpy_scalar": np.float32(3.14),
+            "numpy_int": np.int64(42),
+            "numpy_bool": np.bool_(True),
+            "nested": {
+                "numpy_value": np.float64(2.718)
+            },
+            "statistics": {
+                "std_dev": np.std([1, 2, 3, 4, 5])
+            }
+        }
+        
+        # Call persist_metrics directly
+        metrics_collector._persist_metrics(metrics)
+        
+        # Check if file was created
+        files = [f for f in os.listdir(temp_metrics_dir) if "numpy_test" in f]
+        assert len(files) == 1, "Should have created one metrics file"
+        
+        # Read the file and parse JSON
+        filepath = os.path.join(temp_metrics_dir, files[0])
+        with open(filepath, 'r') as f:
+            parsed_metrics = json.load(f)
+        
+        # Check if NumPy array was converted to list
+        assert isinstance(parsed_metrics["numpy_array"], list), "NumPy array should be converted to list"
+        assert parsed_metrics["numpy_array"] == [1, 2, 3, 4, 5]
+        
+        # Check if NumPy scalar was converted to Python type
+        assert isinstance(parsed_metrics["numpy_scalar"], float), "NumPy scalar should be converted to float"
+        assert abs(parsed_metrics["numpy_scalar"] - 3.14) < 0.001
+        
+        # Check if NumPy int was converted to Python int
+        assert isinstance(parsed_metrics["numpy_int"], int), "NumPy int should be converted to int"
+        assert parsed_metrics["numpy_int"] == 42
+        
+        # Check if NumPy bool was converted to Python bool
+        assert isinstance(parsed_metrics["numpy_bool"], bool), "NumPy bool should be converted to bool"
+        assert parsed_metrics["numpy_bool"] == True
+        
+        # Check nested NumPy value
+        assert isinstance(parsed_metrics["nested"]["numpy_value"], float)
+        assert abs(parsed_metrics["nested"]["numpy_value"] - 2.718) < 0.001
+        
+        # Check calculated statistics
+        assert isinstance(parsed_metrics["statistics"]["std_dev"], float)
+        
+        # Test export_metrics_json
+        metrics_collector.query_metrics.append(metrics)
+        json_file = os.path.join(temp_metrics_dir, "metrics_export.json")
+        metrics_collector.export_metrics_json(json_file)
+        
+        # Check if file was created
+        assert os.path.exists(json_file), "JSON export file should exist"
+        
+        # Read and parse the file
+        with open(json_file, 'r') as f:
+            exported_data = json.load(f)
+        
+        # Verify content
+        assert len(exported_data) > 0, "Should have exported metrics"
+        
+    except ImportError:
+        pytest.skip("NumPy not available")
+
 # Performance testing
 @pytest.mark.parametrize("num_queries", [10, 50])
 def test_optimization_performance(unified_optimizer, random_query_vector, num_queries):

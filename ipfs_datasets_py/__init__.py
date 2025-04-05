@@ -55,7 +55,7 @@ except ImportError:
     HAVE_KNN = False
 
 try:
-    from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryOptimizer, GraphRAGQueryStats
+    from ipfs_datasets_py.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
     HAVE_RAG_OPTIMIZER = True
 except ImportError:
     HAVE_RAG_OPTIMIZER = False

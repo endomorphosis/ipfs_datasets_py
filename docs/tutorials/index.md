@@ -5,12 +5,13 @@ Welcome to the IPFS Datasets Python tutorials. These step-by-step guides will he
 ## Available Tutorials
 
 - [GraphRAG Tutorial](graphrag_tutorial.md) - Building knowledge-enhanced retrieval systems
+- [Security Compliance Tutorial](security_compliance_tutorial.md) - Implementing security and audit logging
+- [Security Visualization Tutorial](security_tutorial.md) - Visualizing security events and performance metrics
 
 ## Coming Soon
 
 - **Web Archive Processing** - Working with web archives using IPWB
 - **Distributed Dataset Management** - Managing datasets across multiple IPFS nodes
-- **Security Implementation** - Implementing security and governance features
 - **Vector Search Optimization** - Advanced techniques for optimizing vector search
 - **Cross-Document Reasoning** - Implementing reasoning across multiple documents
 
