@@ -4498,314 +4498,452 @@ class UnifiedGraphRAGQueryOptimizer:
             return "high"
     
     def optimize_query(self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None) -> Dict[str, Any]:
-        """
-        Generate an optimized query plan with unified optimizations.
-        
-        Args:
-            query (Dict): Query to optimize
-            priority (str): Query priority
-            graph_processor (Any, optional): Graph processor for advanced optimizations
-            
-        Returns:
-            Dict: Optimized query plan
-        """
-        try:
-            # Start tracking query metrics
-            query_id = self.metrics_collector.start_query_tracking(
-                query_params=query
-            )
-            self.last_query_id = query_id
-            
-            # Detect graph type
-            with self.metrics_collector.time_phase("graph_type_detection", {"type": "preprocessing"}):
-                graph_type = self.detect_graph_type(query)
-            
-            # Use specialized Wikipedia optimizer if available
-            if WIKIPEDIA_OPTIMIZER_AVAILABLE and graph_type == "wikipedia" and graph_processor:
+            try:
                 try:
-                    with self.metrics_collector.time_phase("wikipedia_optimization", {"type": "optimization"}):
-                        # Use specialized Wikipedia optimization
-                        wiki_optimized_plan = optimize_wikipedia_query(
-                            query=query,
-                            graph_processor=graph_processor,
-                            vector_store=None,  # We don't have vector_store here
-                            trace_id=query_id
-                        )
-                        
-                        # Add budget allocation
-                        if "budget" not in wiki_optimized_plan:
-                            wiki_optimized_plan["budget"] = self.budget_manager.allocate_budget(wiki_optimized_plan["query"], priority)
-                        
-                        # Add statistics
-                        wiki_optimized_plan["statistics"] = {
-                            "avg_query_time": self.query_stats.avg_query_time,
-                            "cache_hit_rate": self.query_stats.cache_hit_rate
-                        }
-                        
-                        # Record metrics
-                        self.metrics_collector.record_additional_metric(
-                            name="optimizer_used", 
-                            value="wikipedia_specialized",
-                            category="optimization"
-                        )
-                        
-                        # End tracking with a quality score of 1.0
-                        self.metrics_collector.end_query_tracking(
-                            results_count=1,  # One optimized plan
-                            quality_score=1.0
-                        )
-                        
-                        # Safety check to ensure wiki_optimized_plan is not None
-                        if wiki_optimized_plan is None:
-                            return self._create_fallback_plan(
-                                query=query,
-                                priority=priority,
-                                error="Wikipedia optimizer returned None"
+                """
+                Generate an optimized query plan with unified optimizations.
+                
+                Args:
+                    query (Dict): Query to optimize
+                    priority (str): Query priority
+                    graph_processor (Any, optional): Graph processor for advanced optimizations
+                    
+                Returns:
+                    Dict: Optimized query plan
+                """
+                try:
+                    # Start tracking query metrics
+                    query_id = self.metrics_collector.start_query_tracking(
+                        query_params=query
+                    )
+                    self.last_query_id = query_id
+                    
+                    # Detect graph type
+                    with self.metrics_collector.time_phase("graph_type_detection", {"type": "preprocessing"}):
+                        graph_type = self.detect_graph_type(query)
+                    
+                    # Use specialized Wikipedia optimizer if available
+                    if WIKIPEDIA_OPTIMIZER_AVAILABLE and graph_type == "wikipedia" and graph_processor:
+                        try:
+                            with self.metrics_collector.time_phase("wikipedia_optimization", {"type": "optimization"}):
+                                # Use specialized Wikipedia optimization
+                                wiki_optimized_plan = optimize_wikipedia_query(
+                                    query=query,
+                                    graph_processor=graph_processor,
+                                    vector_store=None,  # We don't have vector_store here
+                                    trace_id=query_id
+                                )
+                                
+                                # Add budget allocation
+                                if "budget" not in wiki_optimized_plan:
+                                    wiki_optimized_plan["budget"] = self.budget_manager.allocate_budget(wiki_optimized_plan["query"], priority)
+                                
+                                # Add statistics
+                                wiki_optimized_plan["statistics"] = {
+                                    "avg_query_time": self.query_stats.avg_query_time,
+                                    "cache_hit_rate": self.query_stats.cache_hit_rate
+                                }
+                                
+                                # Record metrics
+                                self.metrics_collector.record_additional_metric(
+                                    name="optimizer_used", 
+                                    value="wikipedia_specialized",
+                                    category="optimization"
+                                )
+                                
+                                # End tracking with a quality score of 1.0
+                                self.metrics_collector.end_query_tracking(
+                                    results_count=1,  # One optimized plan
+                                    quality_score=1.0
+                                )
+                                
+                                # Safety check to ensure wiki_optimized_plan is not None
+                                if wiki_optimized_plan is None:
+                                    # Safety check
+                if self is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+                
+                # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(
+                                        query=query,
+                                        priority=priority,
+                                        error="Wikipedia optimizer returned None"
+                                    )
+                                
+                                # Safety check
+                if wiki_optimized_plan is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(query=query, priority=priority, error='wiki_optimized_plan was None')
+                
+                # Safety check
+            if wiki_optimized_plan is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='wiki_optimized_plan was None')
+            
+            return wiki_optimized_plan
+                        except Exception as e:
+                            # Log the error but continue with standard optimization
+                            print(f"Error using Wikipedia optimizer: {str(e)}")
+                            self.metrics_collector.record_additional_metric(
+                                name="wikipedia_optimizer_error", 
+                                value=str(e),
+                                category="error"
                             )
+                    
+                    # Get the appropriate optimizer (standard path)
+                    optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
+                    
+                    # Calculate entity scores if graph processor is available
+                    entity_scores = {}
+                    if graph_processor and "entity_ids" in query:
+                        with self.metrics_collector.time_phase("entity_importance_calculation", {"type": "preprocessing"}):
+                            for entity_id in query["entity_ids"]:
+                                entity_scores[entity_id] = self.calculate_entity_importance(entity_id, graph_processor)
+                    
+                    # First, apply query rewriting with entity scores
+                    with self.metrics_collector.time_phase("query_rewriting", {"type": "optimization"}):
+                        rewritten_query = self.rewriter.rewrite_query(query, self.graph_info, entity_scores)
+                    
+                    # Next, apply path-specific traversal optimizations if possible
+                    if graph_processor:
+                        with self.metrics_collector.time_phase("traversal_optimization", {"type": "optimization"}):
+                            rewritten_query = self.optimize_traversal_path(rewritten_query, graph_processor)
+                    
+                    # Ensure traversal section exists in the rewritten query
+                    if "traversal" not in rewritten_query:
+                        rewritten_query["traversal"] = {}
                         
-                        return wiki_optimized_plan
-                except Exception as e:
-                    # Log the error but continue with standard optimization
-                    print(f"Error using Wikipedia optimizer: {str(e)}")
-                    self.metrics_collector.record_additional_metric(
-                        name="wikipedia_optimizer_error", 
-                        value=str(e),
-                        category="error"
-                    )
-            
-            # Get the appropriate optimizer (standard path)
-            optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
-            
-            # Calculate entity scores if graph processor is available
-            entity_scores = {}
-            if graph_processor and "entity_ids" in query:
-                with self.metrics_collector.time_phase("entity_importance_calculation", {"type": "preprocessing"}):
-                    for entity_id in query["entity_ids"]:
-                        entity_scores[entity_id] = self.calculate_entity_importance(entity_id, graph_processor)
-            
-            # First, apply query rewriting with entity scores
-            with self.metrics_collector.time_phase("query_rewriting", {"type": "optimization"}):
-                rewritten_query = self.rewriter.rewrite_query(query, self.graph_info, entity_scores)
-            
-            # Next, apply path-specific traversal optimizations if possible
-            if graph_processor:
-                with self.metrics_collector.time_phase("traversal_optimization", {"type": "optimization"}):
-                    rewritten_query = self.optimize_traversal_path(rewritten_query, graph_processor)
-            
-            # Ensure traversal section exists in the rewritten query
-            if "traversal" not in rewritten_query:
-                rewritten_query["traversal"] = {}
-                
-            # Move edge_types from top level to traversal section if needed
-            if "edge_types" in rewritten_query and "edge_types" not in rewritten_query["traversal"]:
-                rewritten_query["traversal"]["edge_types"] = rewritten_query.pop("edge_types")
-                
-            # Move max_traversal_depth to max_depth in traversal section if needed
-            if "max_traversal_depth" in rewritten_query and "max_depth" not in rewritten_query["traversal"]:
-                rewritten_query["traversal"]["max_depth"] = rewritten_query.pop("max_traversal_depth")
-                
-            # Ensure entity scores are stored in traversal section
-            if entity_scores and "entity_scores" not in rewritten_query["traversal"]:
-                rewritten_query["traversal"]["entity_scores"] = entity_scores
-            
-            # Then, get specialized optimization parameters
-            with self.metrics_collector.time_phase("parameter_optimization", {"type": "optimization"}):
-                if "query_vector" in rewritten_query:
-                    # For vector-based queries
-                    optimized_params = optimizer.optimize_query(
-                        query_vector=rewritten_query["query_vector"],
-                        max_vector_results=rewritten_query.get("max_vector_results", 5),
-                        max_traversal_depth=rewritten_query["traversal"].get("max_depth", 2),
-                        edge_types=rewritten_query["traversal"].get("edge_types"),
-                        min_similarity=rewritten_query.get("min_similarity", 0.5)
-                    )
+                    # Move edge_types from top level to traversal section if needed
+                    if "edge_types" in rewritten_query and "edge_types" not in rewritten_query["traversal"]:
+                        rewritten_query["traversal"]["edge_types"] = rewritten_query.pop("edge_types")
+                        
+                    # Move max_traversal_depth to max_depth in traversal section if needed
+                    if "max_traversal_depth" in rewritten_query and "max_depth" not in rewritten_query["traversal"]:
+                        rewritten_query["traversal"]["max_depth"] = rewritten_query.pop("max_traversal_depth")
+                        
+                    # Ensure entity scores are stored in traversal section
+                    if entity_scores and "entity_scores" not in rewritten_query["traversal"]:
+                        rewritten_query["traversal"]["entity_scores"] = entity_scores
                     
-                    # Safety check for optimized_params
+                    # Then, get specialized optimization parameters
+                    with self.metrics_collector.time_phase("parameter_optimization", {"type": "optimization"}):
+                        if "query_vector" in rewritten_query:
+                            # For vector-based queries
+                            optimized_params = optimizer.optimize_query(
+                                query_vector=rewritten_query["query_vector"],
+                                max_vector_results=rewritten_query.get("max_vector_results", 5)
+                    
+                    # Safety check
                     if optimized_params is None:
-                        return self._create_fallback_plan(
-                            query=query,
-                            priority=priority,
-                            error="Base optimizer returned None"
-                        )
+                        # Create a fallback and return early
+                        fallback = self._create_fallback_plan(query=query, priority=priority, error='optimizer.optimize_query returned None')
+                        # End tracking
+                        self.metrics_collector.end_query_tracking(results_count=1, quality_score=0.5)
+                        return fallback
+                        
+                        # Safety check
+                        if optimized_params is None:
+                            # Create a fallback and # Safety check
+            if early is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='early was None')
+            
+            return early
+                            fallback = self._create_fallback_plan(query=query, priority=priority, error='optimizer.optimize_query returned None')
+                            # End tracking
+                            self.metrics_collector.end_query_tracking(results_count=1, quality_score=0.5)
+                            # Safety check
+            if fallback is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='fallback was None')
+            
+            return fallback,
+                                max_traversal_depth=rewritten_query["traversal"].get("max_depth", 2),
+                                edge_types=rewritten_query["traversal"].get("edge_types"),
+                                min_similarity=rewritten_query.get("min_similarity", 0.5)
+                            )
+                            
+                            # Safety check for optimized_params
+                            if optimized_params is None:
+                                # Safety check
+                if self is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+                
+                # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(
+                                    query=query,
+                                    priority=priority,
+                                    error="Base optimizer returned None"
+                                )
+                            
+                            # Preserve the traversal section in the optimized params
+                            if "traversal" not in optimized_params["params"]:
+                                optimized_params["params"]["traversal"] = rewritten_query["traversal"]
+                        else:
+                            # For non-vector queries, just pass through
+                            optimized_params = {"params": rewritten_query, "weights": {}}
                     
-                    # Preserve the traversal section in the optimized params
+                    # Allocate budget
+                    with self.metrics_collector.time_phase("budget_allocation", {"type": "resource_management"}):
+                        budget = self.budget_manager.allocate_budget(rewritten_query, priority)
+                    
+                    # Ensure traversal section exists in optimized params
                     if "traversal" not in optimized_params["params"]:
                         optimized_params["params"]["traversal"] = rewritten_query["traversal"]
-                else:
-                    # For non-vector queries, just pass through
-                    optimized_params = {"params": rewritten_query, "weights": {}}
-            
-            # Allocate budget
-            with self.metrics_collector.time_phase("budget_allocation", {"type": "resource_management"}):
-                budget = self.budget_manager.allocate_budget(rewritten_query, priority)
-            
-            # Ensure traversal section exists in optimized params
-            if "traversal" not in optimized_params["params"]:
-                optimized_params["params"]["traversal"] = rewritten_query["traversal"]
-            
-            # Create the final query plan
-            plan = {
-                "query": optimized_params["params"],
-                "weights": optimized_params["weights"],
-                "budget": budget,
-                "graph_type": graph_type,
-                "statistics": {
-                    "avg_query_time": self.query_stats.avg_query_time,
-                    "cache_hit_rate": self.query_stats.cache_hit_rate
-                },
-                "caching": {
-                    "enabled": optimizer.cache_enabled
-                },
-                "traversal_strategy": rewritten_query.get("traversal", {}).get("strategy", "default"),
-                "query_id": query_id  # Add query ID for later reference
-            }
-            
-            # Add query key if caching is enabled
-            if optimizer.cache_enabled:
-                if graph_type == "wikipedia" and "query_text" in rewritten_query:
-                    # Enhanced Wikipedia-specific caching with semantic understanding
-                    cache_components = []
                     
-                    # Include query text for semantic caching - use simplified version to improve cache hits
-                    if "query_text" in rewritten_query:
-                        # Normalize and simplify the query text to improve cache hits
-                        # Remove stop words and normalize spaces
-                        normalized_text = rewritten_query["query_text"].lower().strip()
-                        stop_words = ["a", "an", "the", "and", "or", "but", "is", "are", "was", "were", 
-                                     "in", "on", "at", "to", "for", "with", "by", "about", "like", "through"]
-                        words = normalized_text.split()
-                        filtered_words = [w for w in words if w not in stop_words]
-                        simplified_text = " ".join(filtered_words)
-                        
-                        # Include important entity types in cache key for better context
-                        entity_types = self._detect_entity_types(rewritten_query["query_text"])
-                        if entity_types:
-                            simplified_text += f" types:{','.join(entity_types)}"
+                    # Create the final query plan
+                    plan = {
+                        "query": optimized_params["params"],
+                        "weights": optimized_params["weights"],
+                        "budget": budget,
+                        "graph_type": graph_type,
+                        "statistics": {
+                            "avg_query_time": self.query_stats.avg_query_time,
+                            "cache_hit_rate": self.query_stats.cache_hit_rate
+                        },
+                        "caching": {
+                            "enabled": optimizer.cache_enabled
+                        },
+                        "traversal_strategy": rewritten_query.get("traversal", {}).get("strategy", "default"),
+                        "query_id": query_id  # Add query ID for later reference
+                    }
+                    
+                    # Add query key if caching is enabled
+                    if optimizer.cache_enabled:
+                        if graph_type == "wikipedia" and "query_text" in rewritten_query:
+                            # Enhanced Wikipedia-specific caching with semantic understanding
+                            cache_components = []
                             
-                        cache_components.append(f"text:{simplified_text}")
+                            # Include query text for semantic caching - use simplified version to improve cache hits
+                            if "query_text" in rewritten_query:
+                                # Normalize and simplify the query text to improve cache hits
+                                # Remove stop words and normalize spaces
+                                normalized_text = rewritten_query["query_text"].lower().strip()
+                                stop_words = ["a", "an", "the", "and", "or", "but", "is", "are", "was", "were", 
+                                             "in", "on", "at", "to", "for", "with", "by", "about", "like", "through"]
+                                words = normalized_text.split()
+                                filtered_words = [w for w in words if w not in stop_words]
+                                simplified_text = " ".join(filtered_words)
+                                
+                                # Include important entity types in cache key for better context
+                                entity_types = self._detect_entity_types(rewritten_query["query_text"])
+                                if entity_types:
+                                    simplified_text += f" types:{','.join(entity_types)}"
+                                    
+                                cache_components.append(f"text:{simplified_text}")
+                            
+                            # Include vector if available - use a reliable but compact representation
+                            if "query_vector" in rewritten_query:
+                                # Use top 5 dimensions with highest absolute values for a stable but compact hash
+                                v = rewritten_query["query_vector"].reshape(-1)
+                                top_indices = np.abs(v).argsort()[-5:]  # Get indices of top 5 absolute values
+                                vector_repr = ":".join([f"{i}={v[i]:.3f}" for i in sorted(top_indices)])
+                                cache_components.append(f"vec:{vector_repr}")
+                            
+                            # Include edge types - using coarse-grained categories to improve cache hits
+                            if "traversal" in optimized_params["params"] and "edge_types" in optimized_params["params"]["traversal"]:
+                                edge_types = optimized_params["params"]["traversal"]["edge_types"]
+                                # Group edge types into categories for better cache hits
+                                has_taxonomy = any(et in ["instance_of", "subclass_of"] for et in edge_types)
+                                has_relation = any(et in ["related_to", "connected_to"] for et in edge_types)
+                                has_part = any(et in ["part_of", "has_part"] for et in edge_types)
+                                has_location = any(et in ["located_in", "location_of"] for et in edge_types)
+                                
+                                # Create compact edge type representation
+                                edge_repr = ""
+                                if has_taxonomy: edge_repr += "t"
+                                if has_relation: edge_repr += "r"
+                                if has_part: edge_repr += "p"
+                                if has_location: edge_repr += "l"
+                                
+                                if edge_repr:
+                                    cache_components.append(f"edge_types:{edge_repr}")
+                                
+                            # Include query complexity as a cache component
+                            complexity = self._estimate_query_complexity(rewritten_query)
+                            cache_components.append(f"complexity:{complexity}")
+                            
+                            # Include entity IDs
+                            if "entity_ids" in rewritten_query:
+                                entity_str = "-".join(sorted(rewritten_query["entity_ids"]))
+                                cache_components.append(f"entities:{entity_str}")
+                            
+                            # Include traversal depth for more specific caching
+                            if "traversal" in optimized_params["params"] and "max_depth" in optimized_params["params"]["traversal"]:
+                                cache_components.append(f"depth:{optimized_params['params']['traversal']['max_depth']}")
+                            
+                            # Create Wikipedia-specific cache key
+                            plan["caching"]["key"] = "wiki|" + "|".join(cache_components)
+                            plan["caching"]["ttl"] = 3600  # Cache Wikipedia queries for 1 hour
+                            
+                            # Set priority based on query characteristics for advanced cache management
+                            if complexity == "high":
+                                plan["caching"]["priority"] = "high"  # Keep high complexity results longer
+                            elif "entity_ids" in rewritten_query and len(rewritten_query["entity_ids"]) > 2:
+                                plan["caching"]["priority"] = "medium"  # Entity-heavy queries worth caching
+                            else:
+                                plan["caching"]["priority"] = "normal"
+                                
+                        elif "query_vector" in rewritten_query:
+                            # Standard vector-based caching for other graph types
+                            plan["caching"]["key"] = optimizer.get_query_key(
+                                rewritten_query["query_vector"],
+                                optimized_params["params"].get("max_vector_results", 5),
+                                optimized_params["params"]["traversal"].get("max_depth", 2),
+                                optimized_params["params"]["traversal"].get("edge_types"),
+                                optimized_params["params"].get("min_similarity", 0.5)
+                            )
                     
-                    # Include vector if available - use a reliable but compact representation
-                    if "query_vector" in rewritten_query:
-                        # Use top 5 dimensions with highest absolute values for a stable but compact hash
-                        v = rewritten_query["query_vector"].reshape(-1)
-                        top_indices = np.abs(v).argsort()[-5:]  # Get indices of top 5 absolute values
-                        vector_repr = ":".join([f"{i}={v[i]:.3f}" for i in sorted(top_indices)])
-                        cache_components.append(f"vec:{vector_repr}")
-                    
-                    # Include edge types - using coarse-grained categories to improve cache hits
-                    if "traversal" in optimized_params["params"] and "edge_types" in optimized_params["params"]["traversal"]:
-                        edge_types = optimized_params["params"]["traversal"]["edge_types"]
-                        # Group edge types into categories for better cache hits
-                        has_taxonomy = any(et in ["instance_of", "subclass_of"] for et in edge_types)
-                        has_relation = any(et in ["related_to", "connected_to"] for et in edge_types)
-                        has_part = any(et in ["part_of", "has_part"] for et in edge_types)
-                        has_location = any(et in ["located_in", "location_of"] for et in edge_types)
-                        
-                        # Create compact edge type representation
-                        edge_repr = ""
-                        if has_taxonomy: edge_repr += "t"
-                        if has_relation: edge_repr += "r"
-                        if has_part: edge_repr += "p"
-                        if has_location: edge_repr += "l"
-                        
-                        if edge_repr:
-                            cache_components.append(f"edge_types:{edge_repr}")
-                        
-                    # Include query complexity as a cache component
-                    complexity = self._estimate_query_complexity(rewritten_query)
-                    cache_components.append(f"complexity:{complexity}")
-                    
-                    # Include entity IDs
-                    if "entity_ids" in rewritten_query:
-                        entity_str = "-".join(sorted(rewritten_query["entity_ids"]))
-                        cache_components.append(f"entities:{entity_str}")
-                    
-                    # Include traversal depth for more specific caching
-                    if "traversal" in optimized_params["params"] and "max_depth" in optimized_params["params"]["traversal"]:
-                        cache_components.append(f"depth:{optimized_params['params']['traversal']['max_depth']}")
-                    
-                    # Create Wikipedia-specific cache key
-                    plan["caching"]["key"] = "wiki|" + "|".join(cache_components)
-                    plan["caching"]["ttl"] = 3600  # Cache Wikipedia queries for 1 hour
-                    
-                    # Set priority based on query characteristics for advanced cache management
-                    if complexity == "high":
-                        plan["caching"]["priority"] = "high"  # Keep high complexity results longer
-                    elif "entity_ids" in rewritten_query and len(rewritten_query["entity_ids"]) > 2:
-                        plan["caching"]["priority"] = "medium"  # Entity-heavy queries worth caching
-                    else:
-                        plan["caching"]["priority"] = "normal"
-                        
-                elif "query_vector" in rewritten_query:
-                    # Standard vector-based caching for other graph types
-                    plan["caching"]["key"] = optimizer.get_query_key(
-                        rewritten_query["query_vector"],
-                        optimized_params["params"].get("max_vector_results", 5),
-                        optimized_params["params"]["traversal"].get("max_depth", 2),
-                        optimized_params["params"]["traversal"].get("edge_types"),
-                        optimized_params["params"].get("min_similarity", 0.5)
+                    # Record optimization parameters as metrics
+                    self.metrics_collector.record_additional_metric(
+                        name="graph_type", 
+                        value=graph_type,
+                        category="optimization"
                     )
+                    
+                    self.metrics_collector.record_additional_metric(
+                        name="traversal_strategy", 
+                        value=rewritten_query.get("traversal", {}).get("strategy", "default"),
+                        category="optimization"
+                    )
+                    
+                    # Store number of optimized parameters to track optimization complexity
+                    num_optimized_params = len(optimized_params.get("params", {}))
+                    self.metrics_collector.record_additional_metric(
+                        name="optimized_parameter_count", 
+                        value=num_optimized_params,
+                        category="optimization"
+                    )
+                    
+                    # End tracking with a quality score of 1.0 (optimization always "succeeds")
+                    self.metrics_collector.end_query_tracking(
+                        results_count=1,  # One optimized plan
+                        quality_score=1.0  # Optimization always "succeeds"
+                    )
+                    
+                    # Safety check before returning
+                    if plan is None:
+                        # Safety check
+                if self is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
             
-            # Record optimization parameters as metrics
-            self.metrics_collector.record_additional_metric(
-                name="graph_type", 
-                value=graph_type,
-                category="optimization"
-            )
+            return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+                
+                # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
             
-            self.metrics_collector.record_additional_metric(
-                name="traversal_strategy", 
-                value=rewritten_query.get("traversal", {}).get("strategy", "default"),
-                category="optimization"
-            )
+            return self._create_fallback_plan(
+                            query=query, 
+                            priority=priority,
+                            error="Final plan was None"
+                        )
+                        
+                    # Safety check
+                if plan is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
             
-            # Store number of optimized parameters to track optimization complexity
-            num_optimized_params = len(optimized_params.get("params", {}))
-            self.metrics_collector.record_additional_metric(
-                name="optimized_parameter_count", 
-                value=num_optimized_params,
-                category="optimization"
-            )
-            
-            # End tracking with a quality score of 1.0 (optimization always "succeeds")
-            self.metrics_collector.end_query_tracking(
-                results_count=1,  # One optimized plan
-                quality_score=1.0  # Optimization always "succeeds"
-            )
-            
-            # Safety check before returning
+            return self._create_fallback_plan(query=query, priority=priority, error='plan was None')
+                
+                # Safety check
             if plan is None:
-                return self._create_fallback_plan(
+                return self._create_fallback_plan(query=query, priority=priority, error='plan was None')
+            
+            return plan
+                
+                except Exception as e:
+                    # Log the exception
+                    error_msg = f"Error in optimize_query: {str(e)}"
+                    print(error_msg)
+                    
+                    # Try to record the error if metrics collector is available
+                    try:
+                        if hasattr(self, 'metrics_collector'):
+                            self.metrics_collector.record_additional_metric(
+                                name="optimizer_error", 
+                                value=error_msg,
+                                category="error"
+                            )
+                    except:
+                        pass  # Ignore errors in error handling
+                    
+                    # Return a fallback plan instead of None
+                    # Safety check
+                if self is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+                
+                # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(
+                        query=query, 
+                        priority=priority,
+                        error=error_msg
+                    )
+    
+            except Exception as e:
+                # Log the exception
+                error_msg = f"Error in optimize_query: {str(e)}"
+                print(error_msg)
+                
+                # Return a fallback plan instead of None
+                # Safety check
+                if self is None:
+                    # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+                
+                # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
+            return self._create_fallback_plan(
                     query=query, 
                     priority=priority,
-                    error="Final plan was None"
+                    error=error_msg
                 )
-                
-            return plan
-        
+
         except Exception as e:
             # Log the exception
             error_msg = f"Error in optimize_query: {str(e)}"
             print(error_msg)
             
-            # Try to record the error if metrics collector is available
-            try:
-                if hasattr(self, 'metrics_collector'):
-                    self.metrics_collector.record_additional_metric(
-                        name="optimizer_error", 
-                        value=error_msg,
-                        category="error"
-                    )
-            except:
-                pass  # Ignore errors in error handling
-            
             # Return a fallback plan instead of None
+            # Safety check
+            if self is None:
+                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            
             return self._create_fallback_plan(
                 query=query, 
                 priority=priority,
                 error=error_msg
             )
-    
+
     def execute_query(
         self,
         processor: Any,
