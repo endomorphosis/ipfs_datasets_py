@@ -1059,7 +1059,7 @@ This project has completed all planned implementation phases:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the AGPL License - see the LICENSE file for details.
 
 ## Authors
 
