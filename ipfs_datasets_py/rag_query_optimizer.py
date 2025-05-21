@@ -81,6 +81,7 @@ import datetime
 import copy
 import math
 from io import StringIO
+import logging
 from typing import Dict, List, Any, Optional, Tuple, Callable, Union, Set, TYPE_CHECKING, Iterator
 from collections import defaultdict, OrderedDict, deque
 from contextlib import contextmanager
@@ -2231,17 +2232,27 @@ class GraphRAGQueryOptimizer:
                     del self.query_cache[query_key]
                 return False
                 
-            _, timestamp = entry
-            
-            # Verify timestamp is valid
-            if not isinstance(timestamp, (int, float)):
-                if query_key in self.query_cache:
-                    del self.query_cache[query_key]
-                return False
+            try:
+                # Validate cache entry structure
+                result, timestamp = cache_entry
                 
-            # Check expiration
-            if time.time() - timestamp > self.cache_ttl:
-                # Remove expired entry
+                if not isinstance(cache_entry, tuple) or len(cache_entry) != 2:
+                    raise ValueError(f"Invalid cache entry format for query {query_key}")
+                    
+                result, timestamp = cache_entry
+                
+                # Verify timestamp is valid
+                if not isinstance(timestamp, (int, float)):
+                    raise ValueError(f"Invalid timestamp type for query {query_key}")
+                    
+                # Check expiration
+                if time.time() - timestamp > self.cache_ttl:
+                    raise ValueError(f"Cache entry expired for query {query_key}")
+                    
+                return True
+                
+            except Exception as e:
+                # Remove invalid entry
                 if query_key in self.query_cache:
                     del self.query_cache[query_key]
                 return False
@@ -4636,63 +4647,27 @@ class UnifiedGraphRAGQueryOptimizer:
                     
                     # Then, get specialized optimization parameters
                     with self.metrics_collector.time_phase("parameter_optimization", {"type": "optimization"}):
-                        if "query_vector" in rewritten_query:
-                            # For vector-based queries
-                            optimized_params = optimizer.optimize_query(
-                                query_vector=rewritten_query["query_vector"],
-                                max_vector_results=rewritten_query.get("max_vector_results", 5)
-                    
-                    # Safety check
-                    if optimized_params is None:
-                        # Create a fallback and return early
-                        fallback = self._create_fallback_plan(query=query, priority=priority, error='optimizer.optimize_query returned None')
-                        # End tracking
-                        self.metrics_collector.end_query_tracking(results_count=1, quality_score=0.5)
-                        return fallback
-                        
-                        # Safety check
-                        if optimized_params is None:
-                            # Create a fallback and # Safety check
-            if early is None:
-                return self._create_fallback_plan(query=query, priority=priority, error='early was None')
-            
-            return early
-                            fallback = self._create_fallback_plan(query=query, priority=priority, error='optimizer.optimize_query returned None')
-                            # End tracking
-                            self.metrics_collector.end_query_tracking(results_count=1, quality_score=0.5)
-                            # Safety check
-            if fallback is None:
-                return self._create_fallback_plan(query=query, priority=priority, error='fallback was None')
-            
-            return fallback,
-                                max_traversal_depth=rewritten_query["traversal"].get("max_depth", 2),
-                                edge_types=rewritten_query["traversal"].get("edge_types"),
-                                min_similarity=rewritten_query.get("min_similarity", 0.5)
-                            )
-                            
-                            # Safety check for optimized_params
-                            if optimized_params is None:
-                                # Safety check
-                if self is None:
-                    # Safety check
-            if self is None:
-                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
-            
-            return self._create_fallback_plan(query=query, priority=priority, error='self was None')
+            if "query_vector" in rewritten_query:
+                # For vector-based queries
+                optimized_params = optimizer.optimize_query(
+                    query_vector=rewritten_query["query_vector"],
+                    max_vector_results=rewritten_query.get("max_vector_results", 5),
+                    max_traversal_depth=rewritten_query["traversal"].get("max_depth", 2),
+                    edge_types=rewritten_query["traversal"].get("edge_types"),
+                    min_similarity=rewritten_query.get("min_similarity", 0.5)
+                )
                 
                 # Safety check
-            if self is None:
-                return self._create_fallback_plan(query=query, priority=priority, error='self was None')
-            
-            return self._create_fallback_plan(
-                                    query=query,
-                                    priority=priority,
-                                    error="Base optimizer returned None"
-                                )
-                            
-                            # Preserve the traversal section in the optimized params
-                            if "traversal" not in optimized_params["params"]:
-                                optimized_params["params"]["traversal"] = rewritten_query["traversal"]
+                if optimized_params is None:
+                    # Create a fallback and return early
+                    fallback = self._create_fallback_plan(query=query, priority=priority, error='optimizer.optimize_query returned None')
+                    # End tracking
+                    self.metrics_collector.end_query_tracking(results_count=1, quality_score=0.5)
+                    return fallback
+
+                # Preserve the traversal section in the optimized params
+                if "traversal" not in optimized_params["params"]:
+                    optimized_params["params"]["traversal"] = rewritten_query["traversal"]
                         else:
                             # For non-vector queries, just pass through
                             optimized_params = {"params": rewritten_query, "weights": {}}
@@ -6547,16 +6522,15 @@ class UnifiedGraphRAGQueryOptimizer:
                         pass
                         
             except Exception as e:
-                # Log error but continue execution
+                error_msg = f"Error in learning cycle check: {str(e)}"
                 if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
                     try:
                         self.metrics_collector.record_additional_metric(
-                            name="learning_cycle_error",
-                            value=str(e),
+                            name="learning_check_error",
+                            value=error_msg,
                             category="error"
                         )
                     except Exception:
-                        # Ignore nested errors in error handling
                         pass
             
     def _numpy_json_serializable(self, obj):
@@ -8027,7 +8001,8 @@ def _generate_optimization_rules(self, patterns: Dict[str, Dict[str, Any]],
                     
                         # Rule 1: Prioritize high-performance entity types
                         try:
-                            # Only proceed if we have at least one valid entry
+                            # Only proceed if we have at least one valid entry:
+    pass  # Add a pass statement or the actual code block
                             if entity_type_avg_performance:
                                 # Sort by effectiveness (higher is better)
                                 sorted_entity_types = sorted(
@@ -8798,84 +8773,73 @@ def _generate_optimization_rules(self, patterns: Dict[str, Dict[str, Any]],
             Implements a circuit breaker pattern to disable learning after repeated failures.
             """
             # Skip if learning is not enabled
-            if not getattr(self, '_learning_enabled', False):
+if not getattr(self, '_learning_enabled', False):
+    return
+
+# Check circuit breaker for repeated failures
+if hasattr(self, '_learning_circuit_breaker_tripped') and self._learning_circuit_breaker_tripped:
+    retry_after_interval = getattr(self, '_circuit_breaker_retry_time', None)
+    if retry_after_interval is not None:
+        current_time = time.time()
+        if current_time >= retry_after_interval:
+            # Reset circuit breaker and failure counter but log the reset
+            self._learning_circuit_breaker_tripped = False
+            self._learning_failure_count = 0
+            if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
+                try:
+                    self.metrics_collector.record_additional_metric(
+                        name="circuit_breaker_reset",
+                        value="Circuit breaker for learning reset after timeout period",
+                        category="statistical_learning"
+                    )
+                except Exception:
+                    # Ignore errors in metrics collection
+                    pass
+        else:
+            # Circuit breaker still active, skip learning
             return
+    else:
+        # No retry time set, remain tripped
+        return
+
+# Skip if query_stats is not available
+if not hasattr(self, 'query_stats'):
+    return
+
+# Get the current query count consistently
+try:
+    current_count = self.query_stats.query_count
+except Exception as e:
+    # If we can't get the query count, log the error and return safely
+    print(f"Error retrieving query count: {str(e)}")
+    # Increment failure counter for circuit breaker
+    self._increment_failure_counter("Failed to retrieve query count")
+    return
+
+# Initialize last learning count if not present
+if not hasattr(self, '_last_learning_query_count'):
+    self._last_learning_query_count = current_count
+    return
+
+# Check if enough queries have been processed since last learning cycle
+try:
+    queries_since_last_learning = current_count - self._last_learning_query_count
+    self._queries_since_last_learning = queries_since_last_learning
+    if queries_since_last_learning >= self._learning_cycle:
+        try:
+            # Log learning attempt with consistent count
+            if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
+                try:
+                    self.metrics_collector.record_additional_metric(
+                        name="learning_cycle_triggered",
+                        value=f"After {queries_since_last_learning} queries",
+                        category="statistical_learning"
+                    )
+                except Exception:
+                    # Ignore metrics errors
+                    pass
             
-            # Check circuit breaker for repeated failures
-            if hasattr(self, '_learning_circuit_breaker_tripped') and self._learning_circuit_breaker_tripped:
-            # Check if enough time has passed to retry
-            retry_after_interval = getattr(self, '_circuit_breaker_retry_time', None)
-            
-            if retry_after_interval is not None:
-                    current_time = time.time()
-                
-                    # Only reset circuit breaker if enough time has passed
-                    if current_time >= retry_after_interval:
-                        # Reset circuit breaker and failure counter but log the reset
-                        self._learning_circuit_breaker_tripped = False
-                        self._learning_failure_count = 0
-                    
-                        if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                            try:
-                                self.metrics_collector.record_additional_metric(
-                                    name="circuit_breaker_reset",
-                                    value="Circuit breaker for learning reset after timeout period",
-                                    category="statistical_learning"
-                                )
-                            except Exception:
-                                # Ignore errors in metrics collection
-                                pass
-                    else:
-                        # Circuit breaker still active, skip learning
-                        return
-                else:
-                    # No retry time set, remain tripped
-                    return
-            
-            # Skip if query_stats is not available
-            if not hasattr(self, 'query_stats'):
-                return
-        
-            # Get the current query count consistently
-            try:
-                current_count = self.query_stats.query_count
-            except Exception as e:
-                # If we can't get the query count, log the error and return safely
-                print(f"Error retrieving query count: {str(e)}")
-            
-                # Increment failure counter for circuit breaker
-                self._increment_failure_counter("Failed to retrieve query count")
-            
-                return
-            
-            # Initialize last learning count if not set
-            if not hasattr(self, '_last_learning_query_count'):
-                self._last_learning_query_count = current_count
-                return
-            
-            # Check if enough queries have been processed since last learning cycle
-            try:
-                # Calculate queries processed since last learning cycle
-                queries_since_last_learning = current_count - self._last_learning_query_count
-            
-                # Store the queries_since_last_learning as an instance variable
-                # This ensures the same value is used in learning process and logs
-                self._queries_since_last_learning = queries_since_last_learning
-            
-                if queries_since_last_learning >= self._learning_cycle:
-                    try:
-                        # Log learning attempt with consistent count
-                        if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                            try:
-                                self.metrics_collector.record_additional_metric(
-                                    name="learning_cycle_triggered",
-                                    value=f"After {queries_since_last_learning} queries",
-                                    category="statistical_learning"
-                                )
-                            except Exception:
-                                # Ignore metrics errors
-                                pass
-                    
+            # Rest of the code remains the same...
                         # Record start time for metrics
                         start_time = time.time()
                     

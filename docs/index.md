@@ -2,12 +2,21 @@
 
 Welcome to the IPFS Datasets Python documentation. This comprehensive guide covers all aspects of using the library for data processing and distribution across decentralized networks.
 
+This documentation is organized into several sections:
+- **Getting Started**: Basic installation and usage instructions
+- **Core Features**: Overview of main capabilities
+- **Advanced Features**: Documentation of more complex functionality
+- **Tutorials & Examples**: Hands-on guides and example use cases
+- **Component Documentation**: Details about specific components
+- **Implementation Notes**: Technical details for developers
+
 ## Getting Started
 
 - [Getting Started Guide](getting_started.md) - Introduction to basic concepts and quick start
 - [Installation Guide](installation.md) - Detailed installation instructions
 - [User Guide](user_guide.md) - Comprehensive guide for using the library
 - [API Reference](api_reference.md) - Complete API documentation
+- [Developer Guide](developer_guide.md) - Guide for developers contributing to the project
 
 ## Core Features
 
@@ -31,13 +40,33 @@ Welcome to the IPFS Datasets Python documentation. This comprehensive guide cove
 
 - [Advanced Examples](advanced_examples.md) - Comprehensive examples for complex scenarios
 - [Docker Deployment](docker_deployment.md) - Guide for containerizing with Docker
+- [MCP Server Integration](mcp_server_integration.md) - AI assistant access via Model Context Protocol
+- [Examples Overview](examples/examples_overview.md) - Detailed overview of available examples
+- [Alert Visualization Integration](examples/alert_visualization_integration.md) - Documentation for alert visualization integration
+- [IPFS Kit Py Documentation](ipfs_kit_py/README.md) - Detailed documentation for IPFS Kit Py
+- [IPFS Model Manager Py Documentation](ipfs_model_manager_py/README.md) - Documentation for IPFS Model Manager Py
 
 ## Tutorials
 
 - [GraphRAG Tutorial](tutorials/graphrag_tutorial.md) - Building knowledge-enhanced retrieval systems
-- [Web Archive Processing](tutorials/web_archive_tutorial.md) - Working with web archives
+- [Web Archive Processing](tutorials/security_compliance_tutorial.md) - Working with web archives
 - [Distributed Dataset Management](tutorials/distributed_dataset_tutorial.md) - Managing datasets across nodes
 - [Security Implementation](tutorials/security_tutorial.md) - Implementing security features
+
+## Component Documentation
+
+- [IPFS Kit Py](ipfs_kit_py/README.md) - IPFS Kit Py documentation
+- [IPFS Model Manager Py](ipfs_model_manager_py/README.md) - IPFS Model Manager Py documentation
+- [IPWB](ipwb/README.md) - InterPlanetary Wayback (IPWB) documentation
+- [py-ipld-car](py-ipld-car/README.md) - IPLD CAR documentation
+- [py-ipld-dag-pb](py-ipld-dag-pb/README.md) - IPLD DAG-PB documentation
+- [py-ipld-unixfs](py-ipld-unixfs/README.md) - IPLD UnixFS documentation
+
+## Implementation Notes
+
+- [RAG Optimizer Learning Metrics](rag_optimizer/learning_metrics_implementation.md) - RAG Query Optimizer learning metrics implementation details
+- [RAG Optimizer Integration Plan](rag_optimizer/integration_plan.md) - Integration plan for RAG Query Optimizer metrics
+- [Audit System Implementation](implementation_notes/audit_system.md) - Audit logging and reporting system implementation details
 
 ## Examples
 

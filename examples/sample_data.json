@@ -1,0 +1,19 @@
+{
+    "name": "IPFS Dataset Example",
+    "description": "A sample dataset for testing the IPFS Datasets MCP server",
+    "version": "1.0.0",
+    "format": "json",
+    "created_at": "2025-05-14T18:35:00Z",
+    "metadata": {
+        "author": "IPFS Datasets Team",
+        "license": "MIT",
+        "tags": ["sample", "test", "ipfs", "mcp"]
+    },
+    "data": [
+        {"id": 1, "name": "Item 1", "value": 10.5, "tags": ["tag1", "tag2"]},
+        {"id": 2, "name": "Item 2", "value": 20.3, "tags": ["tag2", "tag3"]},
+        {"id": 3, "name": "Item 3", "value": 15.8, "tags": ["tag1", "tag3"]},
+        {"id": 4, "name": "Item 4", "value": 25.1, "tags": ["tag1", "tag4"]},
+        {"id": 5, "name": "Item 5", "value": 30.7, "tags": ["tag3", "tag4"]}
+    ]
+}

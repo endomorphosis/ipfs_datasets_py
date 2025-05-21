@@ -1,0 +1,1 @@
+   pip install -e /path/to/your/package

@@ -1,0 +1,49 @@
+{
+  "components": {
+    "passed": [
+      "configs.py",
+      "server.py",
+      "client.py",
+      "logger.py",
+      "utils",
+      "tools/dataset_tools",
+      "tools/ipfs_tools",
+      "tools/vector_tools",
+      "tools/graph_tools",
+      "tools/audit_tools",
+      "tools/security_tools",
+      "tools/provenance_tools"
+    ],
+    "failed": []
+  },
+  "core": {
+    "passed": [
+      "IPFSDatasetsMCPServer",
+      "start_server",
+      "Configs",
+      "SimpleIPFSDatasetsMCPServer"
+    ],
+    "failed": []
+  },
+  "tools": {
+    "present": [
+      "cli (1 tools)",
+      "security_tools (1 tools)",
+      "functions (1 tools)",
+      "ipfs_tools (2 tools)",
+      "graph_tools (1 tools)",
+      "audit_tools (2 tools)",
+      "vector_tools (2 tools)",
+      "provenance_tools (1 tools)",
+      "web_archive_tools (6 tools)",
+      "dataset_tools (4 tools)"
+    ],
+    "missing": []
+  },
+  "ipfs_kit_integration": {
+    "status": "found",
+    "details": "Integration type: direct; IPFS Kit MCP URL configuration: None; IPFS Kit integration in: get_from_ipfs; IPFS Kit integration in: pin_to_ipfs"
+  },
+  "total_passed": 27,
+  "total_failed": 0
+}
