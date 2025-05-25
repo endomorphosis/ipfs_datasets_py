@@ -19,8 +19,8 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from flask import Flask, request, jsonify
 
 # Local imports
-from .configs import Configs, configs
-from .logger import logger
+from ipfs_datasets_py.mcp_server.configs import Configs, configs
+from ipfs_datasets_py.mcp_server.logger import logger
 
 class SimpleCallResult:
     """Simple representation of a tool call result."""
@@ -149,8 +149,11 @@ class SimpleIPFSDatasetsMCPServer:
         # Register dataset tools
         self._register_tools_from_subdir(tools_path / "dataset_tools")
         
-        # Register IPFS tools
-        self._register_tools_from_subdir(tools_path / "ipfs_tools")
+        try:
+            # Register IPFS tools
+            self._register_tools_from_subdir(tools_path / "ipfs_tools")
+        except Exception as e:
+            logger.error(f"Failed to register IPFS tools: {e}")
         
         # Register vector tools
         self._register_tools_from_subdir(tools_path / "vector_tools")

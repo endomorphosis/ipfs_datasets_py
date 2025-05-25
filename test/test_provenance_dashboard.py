@@ -7,6 +7,10 @@ import unittest
 import tempfile
 from unittest.mock import MagicMock, patch
 
+# Define availability flags for optional dependencies
+TEMPLATE_ENGINE_AVAILABLE = False
+VISUALIZATION_LIBS_AVAILABLE = False
+
 from ipfs_datasets_py.data_provenance import ProvenanceManager
 from ipfs_datasets_py.provenance_dashboard import ProvenanceDashboard, setup_provenance_dashboard
 

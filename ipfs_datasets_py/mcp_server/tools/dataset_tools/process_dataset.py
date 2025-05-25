@@ -8,38 +8,33 @@ import asyncio
 from typing import Dict, Any, Optional, Union, List
 
 from ipfs_datasets_py.mcp_server.logger import logger
-
+from datasets import Dataset, DatasetDict # Import Hugging Face Dataset classes
 
 async def process_dataset(
-    dataset_id: str,
+    dataset_obj: Union[Dataset, DatasetDict], # Changed from dataset_id: str
     operations: List[Dict[str, Any]],
-    output_id: Optional[str] = None
+    output_id: Optional[str] = None # output_id is now just for naming, not for manager
 ) -> Dict[str, Any]:
     """
     Process a dataset with a series of operations.
 
     Args:
-        dataset_id: The ID of the dataset to process
-        operations: List of operations to apply to the dataset
-        output_id: Optional ID for the resulting dataset. If not provided, a new ID will be generated.
+        dataset_obj: The Hugging Face Dataset or DatasetDict object to process.
+        operations: List of operations to apply to the dataset.
+        output_id: Optional ID for the resulting dataset (for naming in return).
 
     Returns:
-        Dict containing information about the processed dataset
+        Dict containing information about the processed dataset.
     """
     try:
-        logger.info(f"Processing dataset {dataset_id} with {len(operations)} operations")
+        # If it's a DatasetDict, assume 'train' split for processing
+        if isinstance(dataset_obj, DatasetDict):
+            processed_dataset = dataset_obj["train"]
+        else:
+            processed_dataset = dataset_obj
+
+        logger.info(f"Processing dataset with {len(operations)} operations. Initial records: {len(processed_dataset)}")
         
-        # Import the dataset manager
-        from ipfs_datasets_py import DatasetManager
-        
-        # Create a manager instance
-        manager = DatasetManager()
-        
-        # Get the dataset
-        dataset = manager.get_dataset(dataset_id)
-        
-        # Process each operation
-        processed_dataset = dataset
         for i, operation in enumerate(operations):
             op_type = operation.get("type", "").lower()
             logger.info(f"Applying operation {i+1}/{len(operations)}: {op_type}")
@@ -98,13 +93,13 @@ async def process_dataset(
                 function_name = operation.get("function")
                 if function_name == "lower":
                     column = operation.get("column")
-                    processed_dataset = processed_dataset.map(lambda x: {**x, column: x[column].lower()})
+                    processed_dataset = processed_dataset.map(lambda x: {column: x[column].lower()}) # Map expects dict return
                 elif function_name == "upper":
                     column = operation.get("column")
-                    processed_dataset = processed_dataset.map(lambda x: {**x, column: x[column].upper()})
+                    processed_dataset = processed_dataset.map(lambda x: {column: x[column].upper()})
                 elif function_name == "trim":
                     column = operation.get("column")
-                    processed_dataset = processed_dataset.map(lambda x: {**x, column: x[column].strip()})
+                    processed_dataset = processed_dataset.map(lambda x: {column: x[column].strip()})
                 
             elif op_type == "flatten":
                 processed_dataset = processed_dataset.flatten()
@@ -114,26 +109,20 @@ async def process_dataset(
                 if column:
                     processed_dataset = processed_dataset.unique(column)
         
-        # Save the processed dataset if needed
-        if output_id:
-            manager.add_dataset(processed_dataset, dataset_id=output_id)
-            result_id = output_id
-        else:
-            result_id = manager.add_dataset(processed_dataset)
-        
         # Return information about the processed dataset
         return {
             "status": "success",
-            "original_dataset_id": dataset_id,
-            "dataset_id": result_id,
+            "original_dataset_id": getattr(dataset_obj, "id", "N/A"), # Use original dataset_obj for ID
+            "dataset_id": output_id if output_id else "processed_dataset", # Use output_id or a default
             "num_operations": len(operations),
             "num_records": len(processed_dataset),
-            "schema": str(processed_dataset.schema) if hasattr(processed_dataset, "schema") else None
+            "schema": str(processed_dataset.features) if hasattr(processed_dataset, "features") else None,
+            "processed_dataset_obj": processed_dataset # Return the actual processed dataset object
         }
     except Exception as e:
         logger.error(f"Error processing dataset: {e}")
         return {
             "status": "error",
             "message": str(e),
-            "dataset_id": dataset_id
+            "original_dataset_id": getattr(dataset_obj, "id", "N/A") # Use original dataset_obj for ID
         }

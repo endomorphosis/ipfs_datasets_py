@@ -43,3 +43,6 @@ py-libp2p>=0.1.0  # Optional: for distributed dataset management
 pytest>=7.3.1
 pytest-cov>=4.1.0
 pytest-asyncio>=0.21.0  # For testing async functions
+
+# MCP Server dependencies
+modelcontextprotocol>=0.1.0

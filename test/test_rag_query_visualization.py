@@ -18,6 +18,10 @@ import sys
 # Add the parent directory to the path to ensure imports work correctly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Define availability flags for optional dependencies
+TEMPLATE_ENGINE_AVAILABLE = False # Assuming not installed for this environment
+VISUALIZATION_LIBS_AVAILABLE = False # Assuming not installed for this environment
+
 # Try to import the modules we need to test
 try:
     from ipfs_datasets_py.rag_query_visualization import (
@@ -862,8 +866,8 @@ class TestRAGQueryDashboardLearningIntegration(unittest.TestCase):
                         strategy_name=strategy,
                         query_type="complex" if i % 2 == 0 else "simple",
                         effectiveness_score=0.7 + (i * 0.05),
-                        execution_time=0.3 + (i * 0.05),
-                        result_count=5 + i,
+                        execution_time=0.5 - (i * 0.1),  # Improving over time
+                        result_count=6 + i,
                         timestamp=cycle_time + 120 + (j * 60)
                     )
             
@@ -1035,9 +1039,9 @@ def simulate_rag_optimizer_learning():
                 analyzed_queries += 1
             
             # Record the learning cycle
-            cycle_time = time.time() - cycle_start_time
             learning_metrics.record_learning_cycle(
                 cycle_id=f"learning-cycle-{cycle+1}",
+                timestamp=cycle_start_time,
                 analyzed_queries=analyzed_queries,
                 patterns_identified=cycle + 2,
                 parameters_adjusted={
@@ -1054,7 +1058,8 @@ def simulate_rag_optimizer_learning():
                 old_value=2 + (cycle-1 if cycle > 0 else 0),
                 new_value=2 + cycle,
                 adaptation_reason="performance_optimization",
-                confidence=0.7 + (cycle * 0.1)
+                confidence=0.7 + (cycle * 0.1),
+                timestamp=cycle_start_time + 60
             )
             
             learning_metrics.record_parameter_adaptation(

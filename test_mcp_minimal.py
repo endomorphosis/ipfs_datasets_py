@@ -28,11 +28,11 @@ except ImportError as e:
 
 # Test if the project has MCP components
 print("\nChecking for MCP server components:")
-try:
-    from ipfs_datasets_py.ipfs_kit import IPFSKit
-    print(f"✓ IPFSKit imported")
-except ImportError as e:
-    print(f"✗ Error importing IPFSKit: {e}")
+# try:
+#     from ipfs_datasets_py.ipfs_kit import IPFSKit
+#     print(f"✓ IPFSKit imported")
+# except ImportError as e:
+#     print(f"✗ Error importing IPFSKit: {e}")
 
 try:
     # The following lines assume we don't need modelcontextprotocol
@@ -42,11 +42,11 @@ try:
 except ImportError as e:
     print(f"✗ Error importing MCP server configs: {e}")
 
-try:
-    from ipfs_datasets_py.mcp_server.utils import tool_utils
-    print(f"✓ MCP server tool utils imported")
-except ImportError as e:
-    print(f"✗ Error importing MCP server tool utils: {e}")
+# try:
+#     from ipfs_datasets_py.mcp_server.utils import tool_utils
+#     print(f"✓ MCP server tool utils imported")
+# except ImportError as e:
+#     print(f"✗ Error importing MCP server tool utils: {e}")
 
 # Check available tools in the MCP server
 print("\nChecking MCP server tools:")

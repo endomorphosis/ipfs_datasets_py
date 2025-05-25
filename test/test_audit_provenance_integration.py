@@ -15,9 +15,16 @@ import uuid
 from unittest.mock import MagicMock, patch
 import networkx as nx
 import sys
+import tempfile
 
 # Add the parent directory to the path to ensure imports work correctly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Define availability flags for optional dependencies
+LINEAGE_AVAILABLE = False
+PROVENANCE_AVAILABLE = False
+TEMPLATE_ENGINE_AVAILABLE = False # Assuming not installed for this environment
+VISUALIZATION_LIBS_AVAILABLE = False # Assuming not installed for this environment
 
 # Try to import the required modules, using mock objects if imports fail
 try:
@@ -40,6 +47,7 @@ try:
             EnhancedProvenanceManager, ProvenanceContext, IPLDProvenanceStorage,
             SourceRecord, TransformationRecord, VerificationRecord
         )
+        PROVENANCE_AVAILABLE = True
         
         # Try to import cross-document lineage module
         try:
@@ -52,7 +60,6 @@ try:
             print(f"Cross-document lineage module not available: {e}")
             LINEAGE_AVAILABLE = False
             
-        PROVENANCE_AVAILABLE = True
     except ImportError:
         PROVENANCE_AVAILABLE = False
         LINEAGE_AVAILABLE = False
@@ -469,7 +476,7 @@ class TestIntegratedComplianceReporting(unittest.TestCase):
         self.reporter.add_requirement(ComplianceRequirement(
             id="GDPR-Test1",
             standard=ComplianceStandard.GDPR,
-            description="Test GDPR requirement 1",
+            description="Records of processing activities",
             audit_categories=[AuditCategory.DATA_ACCESS],
             actions=["read", "query"]
         ))

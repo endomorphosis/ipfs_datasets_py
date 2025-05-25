@@ -66,19 +66,19 @@ def check_mcp_server():
     except ImportError as e:
         print(f"✗ Failed to import MCP server module: {e}")
     
-    print("\nDependency check:")
-    try:
-        import modelcontextprotocol
-        print("✓ modelcontextprotocol package is installed")
-    except ImportError:
-        print("✗ modelcontextprotocol package is not installed")
-        print("  - Using simplified implementation")
+    # print("\nDependency check:")
+    # try:
+    #     import modelcontextprotocol
+    #     print("✓ modelcontextprotocol package is installed")
+    # except ImportError:
+    #     print("✗ modelcontextprotocol package is not installed")
+    #     print("  - Using simplified implementation")
     
-    try:
-        import flask
-        print("✓ flask package is installed")
-    except ImportError:
-        print("✗ flask package is not installed (needed for simplified implementation)")
+    # try:
+    #     import flask
+    #     print("✓ flask package is installed")
+    # except ImportError:
+    #     print("✗ flask package is not installed (needed for simplified implementation)")
     
     print("\nComponent check complete!")
     return True

@@ -3,19 +3,19 @@ import os
 from pathlib import Path
 
 # Add the project root to the Python path
-project_root = Path('/home/barberb/ipfs_datasets_py').resolve()
+project_root = Path(__file__).resolve().parents[1] # Adjust based on actual project structure
 sys.path.insert(0, str(project_root))
 
 print(f"Python path: {sys.path}")
 print(f"Current directory: {os.getcwd()}")
 
 # Try importing the module directly
-try:
-    print("Trying to import modelcontextprotocol...")
-    import modelcontextprotocol
-    print(f"Successfully imported modelcontextprotocol version: {getattr(modelcontextprotocol, '__version__', 'unknown')}")
-except ImportError as e:
-    print(f"Failed to import modelcontextprotocol: {e}")
+# try:
+#     print("Trying to import modelcontextprotocol...")
+#     import modelcontextprotocol
+#     print(f"Successfully imported modelcontextprotocol version: {getattr(modelcontextprotocol, '__version__', 'unknown')}")
+# except ImportError as e:
+#     print(f"Failed to import modelcontextprotocol: {e}")
 
 # Try importing from ipfs_datasets_py
 try:

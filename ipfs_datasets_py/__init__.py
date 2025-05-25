@@ -31,6 +31,12 @@ except ImportError:
     HAVE_DATASET_SERIALIZATION = False
 
 try:
+    from ipfs_datasets_py.dataset_manager import DatasetManager
+    HAVE_DATASET_MANAGER = True
+except ImportError:
+    HAVE_DATASET_MANAGER = False
+
+try:
     from ipfs_datasets_py.car_conversion import DataInterchangeUtils
     HAVE_CAR_CONVERSION = True
 except ImportError:
@@ -191,6 +197,9 @@ if HAVE_DATASET_SERIALIZATION:
         'GraphNode',
         'VectorAugmentedGraphDataset'
     ])
+
+if HAVE_DATASET_MANAGER:
+    __all__.extend(['DatasetManager'])
 
 if HAVE_CAR_CONVERSION:
     __all__.extend(['DataInterchangeUtils'])

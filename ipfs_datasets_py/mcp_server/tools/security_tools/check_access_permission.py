@@ -38,29 +38,19 @@ async def check_access_permission(
         security_manager = SecurityManager()
         
         # Check permission
-        has_permission = security_manager.check_permission(
-            user_id=user_id,
+        has_permission = security_manager.check_access(
             resource_id=resource_id,
-            permission=permission_type,
-            resource_type=resource_type
-        )
-        
-        # Get detailed permission info
-        permission_info = security_manager.get_permission_details(
-            user_id=user_id,
-            resource_id=resource_id,
-            resource_type=resource_type
+            access_type=permission_type
         )
         
         # Return permission information
         return {
             "status": "success",
-            "has_permission": has_permission,
+            "allowed": has_permission,
             "user_id": user_id,
             "resource_id": resource_id,
             "permission_type": permission_type,
-            "resource_type": resource_type,
-            "permission_details": permission_info
+            "resource_type": resource_type
         }
     except Exception as e:
         logger.error(f"Error checking access permission: {e}")

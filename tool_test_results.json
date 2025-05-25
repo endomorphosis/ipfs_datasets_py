@@ -1,0 +1,98 @@
+{
+  "audit_tools": {
+    "record_audit_event": {
+      "status": "success",
+      "result": {
+        "status": "success",
+        "event_id": "dc8f6e6b-ca29-492d-9052-f5dfb3cc4a35",
+        "action": "test.operation",
+        "severity": "info",
+        "resource_id": "test",
+        "resource_type": null
+      }
+    }
+  },
+  "dataset_tools": {
+    "save_dataset": {
+      "status": "success",
+      "result": {
+        "status": "success",
+        "dataset_id": "test",
+        "destination": "/tmp/test.json",
+        "format": "json",
+        "location": "/tmp/test.json",
+        "size": 61
+      }
+    },
+    "load_dataset": {
+      "status": "error",
+      "error": "load_dataset() got an unexpected keyword argument 'dataset_path'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/comprehensive_tool_test.py\", line 54, in test_tool\n    result = await func(**test_args)\n                   ^^^^^^^^^^^^^^^^^\nTypeError: load_dataset() got an unexpected keyword argument 'dataset_path'\n"
+    },
+    "convert_dataset_format": {
+      "status": "success",
+      "result": {
+        "status": "success",
+        "dataset_id": "test",
+        "original_format": "json",
+        "target_format": "json",
+        "output_path": "/tmp/test.json",
+        "size": 1024
+      }
+    }
+  },
+  "security_tools": {
+    "check_access_permission": {
+      "status": "success",
+      "result": {
+        "status": "success",
+        "allowed": false,
+        "user_id": "user",
+        "resource_id": "test",
+        "permission_type": "read",
+        "resource_type": null
+      }
+    }
+  },
+  "vector_tools": {
+    "create_vector_index": {
+      "status": "success",
+      "result": {
+        "status": "error",
+        "message": "'list' object has no attribute 'shape'"
+      }
+    }
+  },
+  "graph_tools": {
+    "query_knowledge_graph": {
+      "status": "success",
+      "result": {
+        "status": "error",
+        "message": "cannot import name 'GraphRAGProcessor' from 'ipfs_datasets_py.rag_query_optimizer' (/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py)",
+        "graph_id": "test",
+        "query_type": "sparql"
+      }
+    }
+  },
+  "provenance_tools": {
+    "record_provenance": {
+      "status": "success",
+      "result": {
+        "status": "error",
+        "message": "'EnhancedProvenanceManager' object has no attribute 'record_operation'",
+        "dataset_id": "test",
+        "operation": "test_operation"
+      }
+    }
+  },
+  "ipfs_tools": {
+    "get_from_ipfs": {
+      "status": "success",
+      "result": {
+        "status": "error",
+        "message": "No module named 'ipfs_kit_py'",
+        "cid": "QmTest123"
+      }
+    }
+  }
+}

@@ -5,11 +5,6 @@ MCP Tools for IPFS Datasets Python.
 This module provides MCP tools that expose IPFS Datasets Python functionality to AI assistants.
 """
 
-# Import tools from submodules to make them available at top level
-from .dataset_tools import *
-from .ipfs_tools import *
-from .vector_tools import *
-from .graph_tools import *
-from .audit_tools import *
-from .security_tools import *
-from .provenance_tools import *
+# This __init__.py is intentionally left mostly empty.
+# Tools are dynamically loaded by simple_server.py from their respective subdirectories.
+# Avoid 'from .module import *' to prevent import issues and circular dependencies.

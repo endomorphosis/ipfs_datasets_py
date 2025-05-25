@@ -8,9 +8,9 @@ import asyncio
 from typing import Dict, Any, Optional, Union, List
 
 from ipfs_datasets_py.mcp_server.logger import logger
+from ipfs_datasets_py.audit import AuditLogger # Added import
 
-
-async def record_audit_event(
+def record_audit_event( # Changed to def
     action: str,
     resource_id: Optional[str] = None,
     resource_type: Optional[str] = None,
@@ -39,11 +39,8 @@ async def record_audit_event(
     try:
         logger.info(f"Recording audit event: {action}")
         
-        # Import the audit logger
-        from ipfs_datasets_py.audit import AuditLogger
-        
-        # Create an audit logger instance
-        audit_logger = AuditLogger()
+        # Get the audit logger instance
+        audit_logger = AuditLogger.get_instance()
         
         # Prepare the event
         event = {
@@ -69,15 +66,37 @@ async def record_audit_event(
         if tags:
             event["tags"] = tags
         
-        # Record the audit event
-        event_id = audit_logger.log_event(**event)
+        # Record the audit event - convert severity string to AuditLevel
+        from ipfs_datasets_py.audit import AuditLevel, AuditCategory
+        
+        # Map severity string to AuditLevel
+        severity_map = {
+            "info": AuditLevel.INFO,
+            "warning": AuditLevel.WARNING,
+            "error": AuditLevel.ERROR,
+            "critical": AuditLevel.CRITICAL,
+            "debug": AuditLevel.DEBUG
+        }
+        
+        audit_level = severity_map.get(severity.lower(), AuditLevel.INFO)
+        
+        # Use the correct method signature
+        event_id = audit_logger.log(
+            level=audit_level,
+            category=AuditCategory.OPERATIONAL,  # Default category
+            action=action,
+            user=user_id,
+            resource_id=resource_id,
+            resource_type=resource_type,
+            details=details,
+            client_ip=source_ip
+        )
         
         # Return information about the recorded event
         return {
             "status": "success",
             "event_id": event_id,
             "action": action,
-            "timestamp": audit_logger.last_event_timestamp,
             "severity": severity,
             "resource_id": resource_id,
             "resource_type": resource_type

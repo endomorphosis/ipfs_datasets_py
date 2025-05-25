@@ -12,9 +12,9 @@ print("\nInstalled packages:")
 for pkg in pkg_resources.working_set:
     print(f"  {pkg.project_name}=={pkg.version}")
 
-print("\nAttempting to import modelcontextprotocol:")
-try:
-    import modelcontextprotocol
-    print(f"Success! Version: {getattr(modelcontextprotocol, '__version__', 'unknown')}")
-except ImportError as e:
-    print(f"Failed: {e}")
+# print("\nAttempting to import modelcontextprotocol:")
+# try:
+#     import modelcontextprotocol
+#     print(f"Success! Version: {getattr(modelcontextprotocol, '__version__', 'unknown')}")
+# except ImportError as e:
+#     print(f"Failed: {e}")

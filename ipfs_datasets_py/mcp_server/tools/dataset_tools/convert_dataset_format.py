@@ -36,13 +36,13 @@ async def convert_dataset_format(
             options = {}
             
         # Import the dataset manager
-        from ipfs_datasets_py import DatasetManager
+        from ipfs_datasets_py.libp2p_kit import DistributedDatasetManager
         
         # Create a manager instance
-        manager = DatasetManager()
+        manager = DistributedDatasetManager()
         
         # Get the dataset
-        dataset = manager.get_dataset(dataset_id)
+        dataset = manager.shard_manager.get_dataset(dataset_id)
         
         # Get the original format
         original_format = dataset.format if hasattr(dataset, "format") else "unknown"
@@ -66,7 +66,7 @@ async def convert_dataset_format(
             converted_dataset = dataset.convert_format(target_format, **options)
             
             # Add the converted dataset to the manager
-            converted_id = manager.add_dataset(converted_dataset)
+            converted_id = manager.shard_manager.add_dataset(converted_dataset)
             
             # Return information about the conversion
             return {

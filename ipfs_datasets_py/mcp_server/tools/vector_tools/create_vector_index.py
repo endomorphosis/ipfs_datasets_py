@@ -48,7 +48,7 @@ async def create_vector_index(
         index = IPFSKnnIndex(dimension=dimension, metric=metric)
         
         # Convert vectors to numpy arrays
-        np_vectors = [np.array(vector) for vector in vectors]
+        np_vectors = np.array(vectors)
         
         # Add vectors to the index
         vector_ids = index.add_vectors(np_vectors, metadata=metadata)

@@ -220,7 +220,7 @@ class FederatedSearch:
         else:
             logging.warning("Node does not support protocol handlers, search handling will not be available")
     
-    async def _handle_federated_search(self, stream: INetStream):
+    async def _handle_federated_search(self, stream: 'INetStream'):
         """
         Handle incoming federated search requests.
         

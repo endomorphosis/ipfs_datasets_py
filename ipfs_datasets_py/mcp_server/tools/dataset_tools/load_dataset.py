@@ -8,7 +8,7 @@ import asyncio
 from typing import Dict, Any, Optional, Union
 
 from ipfs_datasets_py.mcp_server.logger import logger
-
+from datasets import load_dataset as hf_load_dataset # Import Hugging Face load_dataset
 
 async def load_dataset(
     source: str,
@@ -33,25 +33,26 @@ async def load_dataset(
         if options is None:
             options = {}
             
-        # Import the dataset loader
-        from ipfs_datasets_py import DatasetLoader
+        # Load the dataset directly using Hugging Face datasets
+        dataset = hf_load_dataset(source, format=format, **options)
         
-        # Create a loader instance
-        loader = DatasetLoader()
-        
-        # Load the dataset
-        dataset = await loader.load_async(source, format=format, **options)
+        # Hugging Face datasets can return DatasetDict if multiple splits, handle this
+        if isinstance(dataset, dict) and "train" in dataset:
+            # Assuming 'train' split is the primary one for summary purposes
+            dataset_obj = dataset["train"]
+        else:
+            dataset_obj = dataset
         
         # Return summary info
         return {
             "status": "success",
-            "dataset_id": dataset.id,
-            "metadata": dataset.metadata,
+            "dataset_id": getattr(dataset_obj, "id", "N/A"), # Hugging Face Dataset objects don't have an 'id' attribute
+            "metadata": getattr(dataset_obj, "info", {}).to_dict(), # Use .info for metadata
             "summary": {
-                "num_records": len(dataset),
-                "schema": str(dataset.schema) if hasattr(dataset, "schema") else None,
+                "num_records": len(dataset_obj),
+                "schema": str(dataset_obj.features) if hasattr(dataset_obj, "features") else None, # Use .features for schema
                 "source": source,
-                "format": dataset.format
+                "format": format if format else "auto-detected" # Use provided format or indicate auto-detected
             }
         }
     except Exception as e:

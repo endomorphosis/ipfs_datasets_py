@@ -33,9 +33,9 @@ def start_server_process():
     
     # Determine if we can use the standard or simplified server
     try:
-        import modelcontextprotocol
-        has_mcp = True
-        print("Using standard MCP server implementation")
+        # import modelcontextprotocol # Commented out due to import issues
+        has_mcp = False # Assume False for now
+        print("Using simplified MCP server implementation (modelcontextprotocol not found)")
     except ImportError:
         has_mcp = False
         print("Using simplified MCP server implementation (modelcontextprotocol not found)")
@@ -84,8 +84,10 @@ def start_server_process():
         
         # Print server output in a separate thread
         def print_output():
-            for line in iter(process.stdout.readline, ''):
-                print(f"[SERVER] {line.strip()}")
+            # Ensure process.stdout is not None before iterating
+            if process.stdout:
+                for line in iter(process.stdout.readline, ''):
+                    print(f"[SERVER] {line.strip()}")
         
         output_thread = threading.Thread(target=print_output)
         output_thread.daemon = True

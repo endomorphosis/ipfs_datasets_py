@@ -1,0 +1,303 @@
+{
+  "timestamp": "2025-05-24 16:01:18",
+  "tool_counts": {
+    "dataset_tools": 4,
+    "ipfs_tools": 2,
+    "vector_tools": 2,
+    "graph_tools": 1,
+    "audit_tools": 2,
+    "security_tools": 1,
+    "provenance_tools": 1,
+    "web_archive_tools": 6,
+    "cli": 1,
+    "functions": 1
+  },
+  "results": {
+    "files": {
+      "dataset_tools": {
+        "missing": [],
+        "present": [
+          "load_dataset",
+          "save_dataset",
+          "process_dataset",
+          "convert_dataset_format"
+        ]
+      },
+      "ipfs_tools": {
+        "missing": [],
+        "present": [
+          "get_from_ipfs",
+          "pin_to_ipfs"
+        ]
+      },
+      "vector_tools": {
+        "missing": [],
+        "present": [
+          "create_vector_index",
+          "search_vector_index"
+        ]
+      },
+      "graph_tools": {
+        "missing": [],
+        "present": [
+          "query_knowledge_graph"
+        ]
+      },
+      "audit_tools": {
+        "missing": [],
+        "present": [
+          "record_audit_event",
+          "generate_audit_report"
+        ]
+      },
+      "security_tools": {
+        "missing": [],
+        "present": [
+          "check_access_permission"
+        ]
+      },
+      "provenance_tools": {
+        "missing": [],
+        "present": [
+          "record_provenance"
+        ]
+      },
+      "web_archive_tools": {
+        "missing": [],
+        "present": [
+          "create_warc",
+          "index_warc",
+          "extract_dataset_from_cdxj",
+          "extract_text_from_warc",
+          "extract_links_from_warc",
+          "extract_metadata_from_warc"
+        ]
+      },
+      "cli": {
+        "missing": [],
+        "present": [
+          "execute_command"
+        ]
+      },
+      "functions": {
+        "missing": [],
+        "present": [
+          "execute_python_snippet"
+        ]
+      }
+    },
+    "implementations": {
+      "dataset_tools": {
+        "load_dataset": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "source",
+            "format",
+            "options"
+          ],
+          "errors": []
+        },
+        "save_dataset": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "dataset_id",
+            "destination",
+            "format",
+            "options"
+          ],
+          "errors": []
+        },
+        "process_dataset": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "dataset_obj",
+            "operations",
+            "output_id"
+          ],
+          "errors": []
+        },
+        "convert_dataset_format": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "dataset_id",
+            "target_format",
+            "output_path",
+            "options"
+          ],
+          "errors": []
+        }
+      },
+      "ipfs_tools": {
+        "get_from_ipfs": {
+          "status": "import_error",
+          "errors": [
+            "No module named 'ipfs_datasets_py.mcp_server.tools.ipfs_tools.convert_to_car'"
+          ]
+        },
+        "pin_to_ipfs": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "content_path",
+            "recursive",
+            "wrap_with_directory",
+            "hash_algo"
+          ],
+          "errors": []
+        }
+      },
+      "vector_tools": {
+        "create_vector_index": {
+          "status": "import_error",
+          "errors": [
+            "No module named 'ipfs_datasets_py.mcp_server.tools.vector_tools.vector_search'"
+          ]
+        },
+        "search_vector_index": {
+          "status": "import_error",
+          "errors": [
+            "No module named 'ipfs_datasets_py.mcp_server.tools.vector_tools.vector_search'"
+          ]
+        }
+      },
+      "graph_tools": {
+        "query_knowledge_graph": {
+          "status": "import_error",
+          "errors": [
+            "No module named 'ipfs_datasets_py.mcp_server.tools.graph_tools.extract_knowledge_graph'"
+          ]
+        }
+      },
+      "audit_tools": {
+        "record_audit_event": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "action",
+            "resource_id",
+            "resource_type",
+            "user_id",
+            "details",
+            "source_ip",
+            "severity",
+            "tags"
+          ],
+          "errors": []
+        },
+        "generate_audit_report": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "report_type",
+            "start_time",
+            "end_time",
+            "filters",
+            "output_format",
+            "output_path",
+            "include_details"
+          ],
+          "errors": []
+        }
+      },
+      "security_tools": {
+        "check_access_permission": {
+          "status": "import_error",
+          "errors": [
+            "No module named 'ipfs_datasets_py.mcp_server.tools.security_tools.manage_access_control'"
+          ]
+        }
+      },
+      "provenance_tools": {
+        "record_provenance": {
+          "status": "import_error",
+          "errors": [
+            "No module named 'ipfs_datasets_py.mcp_server.tools.provenance_tools.record_source'"
+          ]
+        }
+      },
+      "web_archive_tools": {
+        "create_warc": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "url",
+            "output_path",
+            "options"
+          ],
+          "errors": []
+        },
+        "index_warc": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "warc_path",
+            "output_path",
+            "encryption_key"
+          ],
+          "errors": []
+        },
+        "extract_dataset_from_cdxj": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "cdxj_path",
+            "output_format"
+          ],
+          "errors": []
+        },
+        "extract_text_from_warc": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "warc_path"
+          ],
+          "errors": []
+        },
+        "extract_links_from_warc": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "warc_path"
+          ],
+          "errors": []
+        },
+        "extract_metadata_from_warc": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "warc_path"
+          ],
+          "errors": []
+        }
+      },
+      "cli": {
+        "execute_command": {
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "command",
+            "args",
+            "timeout_seconds"
+          ],
+          "errors": []
+        }
+      },
+      "functions": {
+        "execute_python_snippet": {
+          "status": "valid",
+          "type": "sync",
+          "params": [
+            "code",
+            "timeout_seconds",
+            "context"
+          ],
+          "errors": []
+        }
+      }
+    }
+  }
+}

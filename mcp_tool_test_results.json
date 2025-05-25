@@ -1,0 +1,133 @@
+{
+  "total_tools": 19,
+  "tested_tools": 17,
+  "passed_tests": 1,
+  "failed_tests": 16,
+  "skipped_tests": 0,
+  "by_category": {
+    "security_tools": {
+      "total": 1,
+      "tested": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "tools": {
+        "check_access_permission": {
+          "status": "passed"
+        }
+      }
+    },
+    "ipfs_tools": {
+      "total": 2,
+      "tested": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "tools": {
+        "get_from_ipfs": {
+          "status": "error"
+        },
+        "pin_to_ipfs": {
+          "status": "error"
+        }
+      }
+    },
+    "graph_tools": {
+      "total": 1,
+      "tested": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "tools": {
+        "query_knowledge_graph": {
+          "status": "error"
+        }
+      }
+    },
+    "audit_tools": {
+      "total": 2,
+      "tested": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "tools": {
+        "generate_audit_report": {
+          "status": "error"
+        },
+        "record_audit_event": {
+          "status": "error"
+        }
+      }
+    },
+    "vector_tools": {
+      "total": 2,
+      "tested": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "tools": {
+        "create_vector_index": {
+          "status": "error"
+        },
+        "search_vector_index": {
+          "status": "error"
+        }
+      }
+    },
+    "provenance_tools": {
+      "total": 1,
+      "tested": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "tools": {
+        "record_provenance": {
+          "status": "error"
+        }
+      }
+    },
+    "web_archive_tools": {
+      "total": 6,
+      "tested": 4,
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0,
+      "tools": {
+        "create_warc": {
+          "status": "error"
+        },
+        "extract_dataset_from_cdxj": {
+          "status": "error"
+        },
+        "extract_text_from_warc": {
+          "status": "error"
+        },
+        "index_warc": {
+          "status": "error"
+        }
+      }
+    },
+    "dataset_tools": {
+      "total": 4,
+      "tested": 4,
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0,
+      "tools": {
+        "convert_dataset_format": {
+          "status": "error"
+        },
+        "load_dataset": {
+          "status": "error"
+        },
+        "process_dataset": {
+          "status": "error"
+        },
+        "save_dataset": {
+          "status": "error"
+        }
+      }
+    }
+  },
+  "success_rate": 5.88235294117647
+}

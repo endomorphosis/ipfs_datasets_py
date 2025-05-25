@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-05-24 20:06:46",
+  "tests_run": 21,
+  "failures": 6,
+  "errors": 3,
+  "skipped": 6,
+  "success_rate": 57.14285714285714,
+  "missing_tools": [
+    [
+      "ipfs_tools",
+      "get_from_ipfs"
+    ]
+  ],
+  "failure_details": [
+    {
+      "test": "test_load_dataset (__main__.DatasetToolsTest.test_load_dataset)",
+      "error": "Traceback (most recent call last):\n  File \"/usr/lib/python3.12/unittest/mock.py\", line 1390, in patched\n    return func(*newargs, **newkeywargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 86, in test_load_dataset\n    self.async_test(run_test())\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 43, in async_test\n    return self.loop.run_until_complete(coro)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 82, in run_test\n    self.assertEqual(result[\"status\"], \"success\")\nAssertionError: 'error' != 'success'\n- error\n+ success\n\n"
+    },
+    {
+      "test": "test_extract_dataset_from_cdxj (__main__.WebArchiveToolsTest.test_extract_dataset_from_cdxj)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 250, in test_extract_dataset_from_cdxj\n    self.assertEqual(result[\"status\"], \"success\")\nAssertionError: 'error' != 'success'\n- error\n+ success\n\n"
+    },
+    {
+      "test": "test_extract_links_from_warc (__main__.WebArchiveToolsTest.test_extract_links_from_warc)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 278, in test_extract_links_from_warc\n    self.assertEqual(result[\"status\"], \"success\")\nAssertionError: 'error' != 'success'\n- error\n+ success\n\n"
+    },
+    {
+      "test": "test_extract_metadata_from_warc (__main__.WebArchiveToolsTest.test_extract_metadata_from_warc)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 292, in test_extract_metadata_from_warc\n    self.assertEqual(result[\"status\"], \"success\")\nAssertionError: 'error' != 'success'\n- error\n+ success\n\n"
+    },
+    {
+      "test": "test_extract_text_from_warc (__main__.WebArchiveToolsTest.test_extract_text_from_warc)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 264, in test_extract_text_from_warc\n    self.assertEqual(result[\"status\"], \"success\")\nAssertionError: 'error' != 'success'\n- error\n+ success\n\n"
+    },
+    {
+      "test": "test_index_warc (__main__.WebArchiveToolsTest.test_index_warc)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 236, in test_index_warc\n    self.assertEqual(result[\"status\"], \"success\")\nAssertionError: 'error' != 'success'\n- error\n+ success\n\n"
+    }
+  ],
+  "error_details": [
+    {
+      "test": "test_convert_dataset_format (__main__.DatasetToolsTest.test_convert_dataset_format)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 150, in test_convert_dataset_format\n    self.async_test(run_test())\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 43, in async_test\n    return self.loop.run_until_complete(coro)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 133, in run_test\n    with patch('ipfs_datasets_py.libp2p_kit.DistributedDatasetManager') as mock_manager_class:\n  File \"/usr/lib/python3.12/unittest/mock.py\", line 1442, in __enter__\n    self.target = self.getter()\n                  ^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pkgutil.py\", line 518, in resolve_name\n    mod = importlib.import_module(s)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/importlib/__init__.py\", line 90, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1331, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/libp2p_kit.py\", line 134, in <module>\n    class LibP2PNode:\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/libp2p_kit.py\", line 209, in LibP2PNode\n    async def _handle_node_discovery(self, stream: INetStream):\n                                                   ^^^^^^^^^^\nNameError: name 'INetStream' is not defined\n"
+    },
+    {
+      "test": "test_save_dataset (__main__.DatasetToolsTest.test_save_dataset)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 110, in test_save_dataset\n    self.async_test(run_test())\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 43, in async_test\n    return self.loop.run_until_complete(coro)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 106, in run_test\n    with patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset.DatasetManager', mock_serializer_class):\n  File \"/usr/lib/python3.12/unittest/mock.py\", line 1458, in __enter__\n    original, local = self.get_original()\n                      ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/unittest/mock.py\", line 1431, in get_original\n    raise AttributeError(\nAttributeError: <module 'ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset' from '/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py'> does not have the attribute 'DatasetManager'\n"
+    },
+    {
+      "test": "test_get_from_ipfs (__main__.IPFSToolsExtendedTest.test_get_from_ipfs)",
+      "error": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 369, in test_get_from_ipfs\n    self.async_test(run_test())\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 43, in async_test\n    return self.loop.run_until_complete(coro)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/improved_mcp_tools_test.py\", line 356, in run_test\n    with patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs.ipfs_kit_py') as mock_ipfs_kit, \\\n  File \"/usr/lib/python3.12/unittest/mock.py\", line 1442, in __enter__\n    self.target = self.getter()\n                  ^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pkgutil.py\", line 528, in resolve_name\n    result = getattr(result, p)\n             ^^^^^^^^^^^^^^^^^^\nAttributeError: module 'ipfs_datasets_py.mcp_server.tools' has no attribute 'ipfs_tools'\n"
+    }
+  ]
+}
