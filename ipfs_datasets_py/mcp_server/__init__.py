@@ -33,10 +33,11 @@ Usage:
 """
 
 try:
-    from .server import start_server, IPFSDatasetsMCPServer
+    from .server import start_server, start_stdio_server, IPFSDatasetsMCPServer
 except ImportError:
     # Fallback to simplified implementation if modelcontextprotocol is not available
     from .simple_server import start_simple_server as start_server
+    start_stdio_server = None
     IPFSDatasetsMCPServer = None
     
 try:
@@ -55,6 +56,7 @@ except ImportError:
 __version__ = "0.1.0"
 __all__ = [
     "start_server", 
+    "start_stdio_server",
     "IPFSDatasetsMCPServer", 
     "SimpleIPFSDatasetsMCPServer",
     "IPFSDatasetsMCPClient",

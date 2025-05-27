@@ -12,8 +12,8 @@ import traceback
 import asyncio
 from pathlib import Path
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Import the configuration loading function
+from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml, configs
 
 def discover_tools():
     """Discover all available MCP tools."""
@@ -125,6 +125,16 @@ async def main():
     print("MCP TOOLS VERIFICATION AND TEST")
     print("="*60)
     
+    # Load configuration
+    config_path = Path(__file__).parent / "config" / "mcp_config.yaml"
+    loaded_configs = load_config_from_yaml(str(config_path))
+    # Update the global configs instance
+    configs.__dict__.update(loaded_configs.__dict__)
+
+    # Print configuration values for debugging
+    print(f"Debug: configs.ipfs_kit_integration = {configs.ipfs_kit_integration}")
+    print(f"Debug: configs.ipfs_kit_mcp_url = {configs.ipfs_kit_mcp_url}")
+
     # Discover tools
     tools = discover_tools()
     

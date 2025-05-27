@@ -38,7 +38,7 @@ setup(
             'ipld-dag-pb>=0.1.0',
         ],
         'web_archive': [
-            'archivenow>=2023.5.7',
+            'archivenow==2020.7.18.12.19.44',
             'ipwb>=0.2021.12.16',
             'beautifulsoup4>=4.11.1',
             'warcio>=1.7.4',
@@ -63,7 +63,7 @@ setup(
         'all': [
             'ipld-car>=0.1.0',
             'ipld-dag-pb>=0.1.0',
-            'archivenow>=2023.5.7',
+            'archivenow==2020.7.18.12.19.44',
             'ipwb>=0.2021.12.16',
             'beautifulsoup4>=4.11.1',
             'warcio>=1.7.4',

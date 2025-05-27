@@ -17,13 +17,15 @@ from unittest.mock import patch, MagicMock
 sys.modules['ipfs_datasets_py.llm_reasoning_tracer'] = MagicMock()
 sys.modules['ipfs_datasets_py.llm_reasoning_tracer'].WikipediaKnowledgeGraphTracer = MagicMock
 
-# Now import from rag_query_optimizer
-from ipfs_datasets_py.rag_query_optimizer import (
-    GraphRAGQueryOptimizer,
+# Now import from the package root
+from ipfs_datasets_py import (
     QueryRewriter,
     QueryBudgetManager,
     UnifiedGraphRAGQueryOptimizer
 )
+
+# Import GraphRAGQueryStats from the minimal optimizer if needed, or remove if not used
+# from ipfs_datasets_py.rag_query_optimizer_minimal import GraphRAGQueryStats
 
 
 class TestQueryRewriter(unittest.TestCase):

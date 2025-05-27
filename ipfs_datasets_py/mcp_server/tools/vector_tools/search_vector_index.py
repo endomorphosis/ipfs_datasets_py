@@ -2,7 +2,8 @@
 """
 MCP tool for searching vector indexes.
 
-This tool handles similarity search in vector indexes.
+This tool handles similarity search in vector indexes
+using the VectorSimilarityCalculator from vector_tools.
 """
 import asyncio
 from typing import Dict, Any, Optional, Union, List
@@ -10,6 +11,11 @@ from typing import Dict, Any, Optional, Union, List
 import numpy as np
 
 from ipfs_datasets_py.mcp_server.logger import logger
+from ....vector_tools import VectorSimilarityCalculator, VectorStore
+
+
+# Global manager instance to maintain state between calls
+from .shared_state import get_global_manager
 
 
 async def search_vector_index(
@@ -37,39 +43,24 @@ async def search_vector_index(
     try:
         logger.info(f"Searching vector index {index_id} for top {top_k} results")
         
-        # Import the vector index manager
-        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndexManager
+        # Get the global manager instance
+        manager = get_global_manager()
         
-        # Create a manager instance
-        manager = IPFSKnnIndexManager()
-        
-        # Get the index
-        index = manager.get_index(index_id)
-        
-        # Convert query vector to numpy array
-        np_query = np.array(query_vector)
-        
-        # Search the index
-        results = index.search(
-            np_query, 
-            top_k=top_k, 
-            include_metadata=include_metadata,
-            include_distances=include_distances,
-            metadata_filter=filter_metadata
-        )
+        # Search the index using the manager
+        results = manager.search_index(index_id, query_vector, k=top_k)
         
         # Format results
         formatted_results = []
-        for result in results:
+        for i, result in enumerate(results):
             formatted_result = {
-                "id": result.id
+                "id": result.get("id", i)
             }
             
             if include_distances:
-                formatted_result["distance"] = float(result.score)  # Convert numpy float to Python float
+                formatted_result["distance"] = result.get("score", 1.0)
                 
-            if include_metadata and result.metadata:
-                formatted_result["metadata"] = result.metadata
+            if include_metadata and result.get("metadata"):
+                formatted_result["metadata"] = result["metadata"]
                 
             formatted_results.append(formatted_result)
         

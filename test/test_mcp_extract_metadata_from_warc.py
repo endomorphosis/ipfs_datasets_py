@@ -21,7 +21,7 @@ class TestMCPExtractMetadataFromWARC(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.mock_processor = MockWebArchiveProcessor()
-        self.patcher = patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor', return_value=self.mock_processor)
+        self.patcher = patch('ipfs_datasets_py.web_archive.WebArchiveProcessor', return_value=self.mock_processor)
         self.patcher.start()
         self.addCleanup(self.patcher.stop)
 

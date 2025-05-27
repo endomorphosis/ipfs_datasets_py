@@ -55,7 +55,7 @@ from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent
 from ipfs_datasets_py.provenance_dashboard import ProvenanceDashboard
 from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
 from ipfs_datasets_py.data_provenance import ProvenanceManager
-from ipfs_datasets_py.cross_document_lineage import LineageTracker
+from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
 
 
 class AuditProvenanceDashboard:
@@ -91,9 +91,9 @@ class AuditProvenanceDashboard:
             provenance_manager = ProvenanceManager()
             lineage_tracker = None
             try:
-                lineage_tracker = LineageTracker()
+                lineage_tracker = EnhancedLineageTracker()
             except Exception as e:
-                logging.warning(f"Could not initialize LineageTracker: {str(e)}")
+                logging.warning(f"Could not initialize EnhancedLineageTracker: {str(e)}")
             
             provenance_dashboard = ProvenanceDashboard(
                 provenance_manager=provenance_manager,

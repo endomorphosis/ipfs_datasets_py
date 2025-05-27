@@ -6,7 +6,7 @@ using the WebArchiveProcessor from web_archive_utils.
 import os
 from typing import Dict, Optional, Any
 
-from ....web_archive_utils import WebArchiveProcessor
+from ....web_archive import WebArchiveProcessor
 
 def create_warc(
     url: str,

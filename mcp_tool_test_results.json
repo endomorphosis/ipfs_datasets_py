@@ -1,8 +1,8 @@
 {
   "total_tools": 19,
-  "tested_tools": 17,
-  "passed_tests": 1,
-  "failed_tests": 16,
+  "tested_tools": 19,
+  "passed_tests": 19,
+  "failed_tests": 0,
   "skipped_tests": 0,
   "by_category": {
     "security_tools": {
@@ -20,114 +20,120 @@
     "ipfs_tools": {
       "total": 2,
       "tested": 2,
-      "passed": 0,
-      "failed": 2,
+      "passed": 2,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "get_from_ipfs": {
-          "status": "error"
+          "status": "passed"
         },
         "pin_to_ipfs": {
-          "status": "error"
+          "status": "passed"
         }
       }
     },
     "graph_tools": {
       "total": 1,
       "tested": 1,
-      "passed": 0,
-      "failed": 1,
+      "passed": 1,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "query_knowledge_graph": {
-          "status": "error"
+          "status": "passed"
         }
       }
     },
     "audit_tools": {
       "total": 2,
       "tested": 2,
-      "passed": 0,
-      "failed": 2,
+      "passed": 2,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "generate_audit_report": {
-          "status": "error"
+          "status": "passed"
         },
         "record_audit_event": {
-          "status": "error"
+          "status": "passed"
         }
       }
     },
     "vector_tools": {
       "total": 2,
       "tested": 2,
-      "passed": 0,
-      "failed": 2,
+      "passed": 2,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "create_vector_index": {
-          "status": "error"
+          "status": "passed"
         },
         "search_vector_index": {
-          "status": "error"
+          "status": "passed"
         }
       }
     },
     "provenance_tools": {
       "total": 1,
       "tested": 1,
-      "passed": 0,
-      "failed": 1,
+      "passed": 1,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "record_provenance": {
-          "status": "error"
+          "status": "passed"
         }
       }
     },
     "web_archive_tools": {
       "total": 6,
-      "tested": 4,
-      "passed": 0,
-      "failed": 4,
+      "tested": 6,
+      "passed": 6,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "create_warc": {
-          "status": "error"
+          "status": "passed"
         },
         "extract_dataset_from_cdxj": {
-          "status": "error"
+          "status": "passed"
+        },
+        "extract_links_from_warc": {
+          "status": "passed"
+        },
+        "extract_metadata_from_warc": {
+          "status": "passed"
         },
         "extract_text_from_warc": {
-          "status": "error"
+          "status": "passed"
         },
         "index_warc": {
-          "status": "error"
+          "status": "passed"
         }
       }
     },
     "dataset_tools": {
       "total": 4,
       "tested": 4,
-      "passed": 0,
-      "failed": 4,
+      "passed": 4,
+      "failed": 0,
       "skipped": 0,
       "tools": {
         "convert_dataset_format": {
-          "status": "error"
+          "status": "passed"
         },
         "load_dataset": {
-          "status": "error"
+          "status": "passed"
         },
         "process_dataset": {
-          "status": "error"
+          "status": "passed"
         },
         "save_dataset": {
-          "status": "error"
+          "status": "passed"
         }
       }
     }
   },
-  "success_rate": 5.88235294117647
+  "success_rate": 100.0
 }

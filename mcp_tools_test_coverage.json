@@ -1,0 +1,93 @@
+{
+  "cli": {
+    "total": 1,
+    "tested": 1,
+    "missing": 0,
+    "tools": {
+      "execute_command": true
+    }
+  },
+  "security_tools": {
+    "total": 1,
+    "tested": 1,
+    "missing": 0,
+    "tools": {
+      "check_access_permission": true
+    }
+  },
+  "functions": {
+    "total": 1,
+    "tested": 1,
+    "missing": 0,
+    "tools": {
+      "execute_python_snippet": true
+    }
+  },
+  "ipfs_tools": {
+    "total": 2,
+    "tested": 2,
+    "missing": 0,
+    "tools": {
+      "get_from_ipfs": true,
+      "pin_to_ipfs": true
+    }
+  },
+  "graph_tools": {
+    "total": 1,
+    "tested": 1,
+    "missing": 0,
+    "tools": {
+      "query_knowledge_graph": true
+    }
+  },
+  "audit_tools": {
+    "total": 2,
+    "tested": 1,
+    "missing": 1,
+    "tools": {
+      "record_audit_event": true,
+      "generate_audit_report": false
+    }
+  },
+  "vector_tools": {
+    "total": 2,
+    "tested": 2,
+    "missing": 0,
+    "tools": {
+      "search_vector_index": true,
+      "create_vector_index": true
+    }
+  },
+  "provenance_tools": {
+    "total": 1,
+    "tested": 1,
+    "missing": 0,
+    "tools": {
+      "record_provenance": true
+    }
+  },
+  "web_archive_tools": {
+    "total": 6,
+    "tested": 6,
+    "missing": 0,
+    "tools": {
+      "extract_dataset_from_cdxj": true,
+      "create_warc": true,
+      "extract_links_from_warc": true,
+      "index_warc": true,
+      "extract_metadata_from_warc": true,
+      "extract_text_from_warc": true
+    }
+  },
+  "dataset_tools": {
+    "total": 4,
+    "tested": 4,
+    "missing": 0,
+    "tools": {
+      "save_dataset": true,
+      "convert_dataset_format": true,
+      "load_dataset": true,
+      "process_dataset": true
+    }
+  }
+}

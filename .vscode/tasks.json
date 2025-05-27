@@ -1,0 +1,149 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run MCP Tools Test",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"comprehensive_mcp_test.py"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Install Dependencies",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/pip",
+			"args": [
+				"install",
+				"-r",
+				"requirements.txt"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test Individual MCP Tool",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-c",
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.${input:toolCategory}.${input:toolName} import ${input:toolName}; result = asyncio.run(${input:toolName}('test')); print('Result:', result.get('status', 'unknown'))"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Start MCP Server",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_server",
+				"--stdio"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test Dataset Tools",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-c",
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset; result = asyncio.run(load_dataset('test_dataset')); print('Load Dataset Result:', result.get('status'))"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test IPFS Tools",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-c",
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs; result = asyncio.run(get_from_ipfs('QmTest123')); print('IPFS Get Result:', result.get('status'))"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test Vector Tools", 
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-c",
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index; result = asyncio.run(create_vector_index('test_index', [{'text': 'test', 'metadata': {}}])); print('Vector Index Result:', result.get('status'))"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test Audit Tools",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-c",
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report; result = asyncio.run(generate_audit_report('comprehensive')); print('Audit Report Result:', result.get('status'))"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		}
+	],
+	"inputs": [
+		{
+			"id": "toolCategory",
+			"description": "Tool category",
+			"default": "dataset_tools",
+			"type": "pickString",
+			"options": [
+				"dataset_tools",
+				"ipfs_tools",
+				"vector_tools",
+				"graph_tools",
+				"audit_tools",
+				"provenance_tools",
+				"security_tools"
+			]
+		},
+		{
+			"id": "toolName",
+			"description": "Tool name",
+			"default": "load_dataset",
+			"type": "promptString"
+		}
+	]
+}

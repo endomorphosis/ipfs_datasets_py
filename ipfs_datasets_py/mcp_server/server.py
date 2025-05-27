@@ -17,7 +17,9 @@ import sys
 import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from modelcontextprotocol.server import FastMCP, CallToolResult
+from mcp.server import FastMCP
+from mcp.types import Tool, TextContent
+from mcp import CallToolRequest
 
 from .configs import Configs, configs
 from .logger import logger, mcp_logger
@@ -46,8 +48,15 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
                 module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if callable(attr) and not attr_name.startswith('_'):
+                    # Only include functions defined in the module (not imported ones)
+                    # and exclude built-in types and typing constructs
+                    if (callable(attr) and 
+                        not attr_name.startswith('_') and
+                        hasattr(attr, '__module__') and
+                        attr.__module__ == module.__name__ and
+                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple']):
                         tools[attr_name] = attr
+                        logger.debug(f"Found tool function: {attr_name} in {module_name}")
             except ImportError as e:
                 logger.error(f"Failed to import {module_name}: {e}")
                 
@@ -114,7 +123,7 @@ class IPFSDatasetsMCPServer:
         tools = import_tools_from_directory(subdir_path)
         
         for tool_name, tool_func in tools.items():
-            self.mcp.register_tool(tool_name, tool_func)
+            self.mcp.add_tool(tool_func, name=tool_name)
             self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
             
@@ -143,7 +152,7 @@ class IPFSDatasetsMCPServer:
             ipfs_kit_mcp_url: URL of the ipfs_kit_py MCP server
         """
         try:
-            from modelcontextprotocol.client import MCPClient
+            from mcp.client import MCPClient
             
             # Create MCP client
             client = MCPClient(ipfs_kit_mcp_url)
@@ -164,7 +173,7 @@ class IPFSDatasetsMCPServer:
                         return {"error": str(e)}
                 
                 # Register proxy with MCP server
-                self.mcp.register_tool(f"ipfs_kit_{tool_name}", proxy_tool)
+                self.mcp.add_tool(proxy_tool, name=f"ipfs_kit_{tool_name}")
                 self.tools[f"ipfs_kit_{tool_name}"] = proxy_tool
                 logger.info(f"Registered ipfs_kit proxy tool: ipfs_kit_{tool_name}")
                 
@@ -183,7 +192,7 @@ class IPFSDatasetsMCPServer:
             for func_name in ['add', 'cat', 'get', 'ls', 'pin_add', 'pin_ls', 'pin_rm']:
                 if hasattr(ipfs_kit_py, func_name):
                     func = getattr(ipfs_kit_py, func_name)
-                    self.mcp.register_tool(f"ipfs_kit_{func_name}", func)
+                    self.mcp.add_tool(func, name=f"ipfs_kit_{func_name}")
                     self.tools[f"ipfs_kit_{func_name}"] = func
                     logger.info(f"Registered direct ipfs_kit tool: ipfs_kit_{func_name}")
             
@@ -192,9 +201,26 @@ class IPFSDatasetsMCPServer:
         except Exception as e:
             logger.error(f"Error registering direct ipfs_kit functions: {e}")
             
+    async def start_stdio(self):
+        """
+        Start the MCP server in stdio mode for VS Code integration.
+        """
+        # Register all tools
+        self.register_tools()
+        
+        # Register ipfs_kit tools based on configuration
+        if self.configs.ipfs_kit_mcp_url:
+            self.register_ipfs_kit_tools(self.configs.ipfs_kit_mcp_url)
+        else:
+            self.register_ipfs_kit_tools()
+        
+        # Start the server in stdio mode
+        await self.mcp.run_stdio_async()
+        logger.info("MCP server started in stdio mode")
+
     async def start(self, host: str = "0.0.0.0", port: int = 8000):
         """
-        Start the MCP server.
+        Start the MCP server in HTTP mode (legacy).
         
         Args:
             host: Host to bind the server to
@@ -209,14 +235,41 @@ class IPFSDatasetsMCPServer:
         else:
             self.register_ipfs_kit_tools()
         
-        # Start the server
-        await self.mcp.start_server(host=host, port=port)
+        # Start the server in HTTP mode
+        await self.mcp.run(host=host, port=port)
         logger.info(f"MCP server started at {host}:{port}")
+
+
+def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
+    """
+    Start the IPFS Datasets MCP server in stdio mode for VS Code integration.
+    
+    Args:
+        ipfs_kit_mcp_url: Optional URL of an ipfs_kit_py MCP server.
+                         If provided, tools will be proxied to this server.
+    """
+    # Update the configuration if ipfs_kit_mcp_url is provided
+    if ipfs_kit_mcp_url:
+        configs.ipfs_kit_mcp_url = ipfs_kit_mcp_url
+        configs.ipfs_kit_integration = "mcp"
+    
+    # Create server
+    server = IPFSDatasetsMCPServer()
+    
+    # Start server in stdio mode
+    try:
+        logger.info("Starting MCP server in stdio mode")
+        asyncio.run(server.start_stdio())
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
+    except Exception as e:
+        logger.error(f"Error starting stdio server: {e}")
+        traceback.print_exc()
 
 
 def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Optional[str] = None):
     """
-    Start the IPFS Datasets MCP server.
+    Start the IPFS Datasets MCP server in HTTP mode (legacy).
     
     Args:
         host: Host to bind the server to

@@ -1,12 +1,12 @@
 """Extract text content from WARC file.
 
 This tool extracts text content from a WARC file
-using the WebArchiveProcessor from web_archive_utils.
+using the WebArchiveProcessor from web_archive.
 """
 import os
 from typing import Dict, List, Any
 
-from ....web_archive_utils import WebArchiveProcessor
+from ....web_archive import WebArchiveProcessor
 
 def extract_text_from_warc(
     warc_path: str

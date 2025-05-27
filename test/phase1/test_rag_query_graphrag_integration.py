@@ -11,7 +11,7 @@ import numpy as np
 from unittest.mock import MagicMock, patch
 from typing import Dict, List, Any
 
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py import (
     UnifiedGraphRAGQueryOptimizer,
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer

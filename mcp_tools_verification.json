@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-05-24 16:01:18",
+  "timestamp": "2025-05-26 16:52:39",
   "tool_counts": {
     "dataset_tools": 4,
     "ipfs_tools": 2,
@@ -102,7 +102,7 @@
           "status": "valid",
           "type": "async",
           "params": [
-            "dataset_id",
+            "dataset_data",
             "destination",
             "format",
             "options"
@@ -113,7 +113,7 @@
           "status": "valid",
           "type": "async",
           "params": [
-            "dataset_obj",
+            "dataset_source",
             "operations",
             "output_id"
           ],
@@ -133,16 +133,20 @@
       },
       "ipfs_tools": {
         "get_from_ipfs": {
-          "status": "import_error",
-          "errors": [
-            "No module named 'ipfs_datasets_py.mcp_server.tools.ipfs_tools.convert_to_car'"
-          ]
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "cid",
+            "output_path",
+            "timeout_seconds"
+          ],
+          "errors": []
         },
         "pin_to_ipfs": {
           "status": "valid",
           "type": "async",
           "params": [
-            "content_path",
+            "content_source",
             "recursive",
             "wrap_with_directory",
             "hash_algo"
@@ -152,24 +156,44 @@
       },
       "vector_tools": {
         "create_vector_index": {
-          "status": "import_error",
-          "errors": [
-            "No module named 'ipfs_datasets_py.mcp_server.tools.vector_tools.vector_search'"
-          ]
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "vectors",
+            "dimension",
+            "metric",
+            "metadata",
+            "index_id",
+            "index_name"
+          ],
+          "errors": []
         },
         "search_vector_index": {
-          "status": "import_error",
-          "errors": [
-            "No module named 'ipfs_datasets_py.mcp_server.tools.vector_tools.vector_search'"
-          ]
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "index_id",
+            "query_vector",
+            "top_k",
+            "include_metadata",
+            "include_distances",
+            "filter_metadata"
+          ],
+          "errors": []
         }
       },
       "graph_tools": {
         "query_knowledge_graph": {
-          "status": "import_error",
-          "errors": [
-            "No module named 'ipfs_datasets_py.mcp_server.tools.graph_tools.extract_knowledge_graph'"
-          ]
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "graph_id",
+            "query",
+            "query_type",
+            "max_results",
+            "include_metadata"
+          ],
+          "errors": []
         }
       },
       "audit_tools": {
@@ -205,18 +229,32 @@
       },
       "security_tools": {
         "check_access_permission": {
-          "status": "import_error",
-          "errors": [
-            "No module named 'ipfs_datasets_py.mcp_server.tools.security_tools.manage_access_control'"
-          ]
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "resource_id",
+            "user_id",
+            "permission_type",
+            "resource_type"
+          ],
+          "errors": []
         }
       },
       "provenance_tools": {
         "record_provenance": {
-          "status": "import_error",
-          "errors": [
-            "No module named 'ipfs_datasets_py.mcp_server.tools.provenance_tools.record_source'"
-          ]
+          "status": "valid",
+          "type": "async",
+          "params": [
+            "dataset_id",
+            "operation",
+            "inputs",
+            "parameters",
+            "description",
+            "agent_id",
+            "timestamp",
+            "tags"
+          ],
+          "errors": []
         }
       },
       "web_archive_tools": {

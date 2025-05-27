@@ -20,7 +20,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable, Tuple, Set
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -179,130 +179,95 @@ class DatasetToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.asyncio')
-    def test_load_dataset(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset.hf_load_dataset')
+    async def test_load_dataset(self, mock_hf_load_dataset):
         """Test the load_dataset tool."""
-        # Import the tool
         load_dataset_module = import_tool("dataset_tools", "load_dataset")
         if not load_dataset_module:
             self.skipTest("load_dataset tool not found")
-        
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "dataset_info": {
-                "name": "Test Dataset",
-                "num_records": 3
-            }
-        }
-        
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = load_dataset_module.load_dataset(
+
+        mock_hf_load_dataset.return_value = MagicMock(
+            num_rows=3,
+            features={"id": "int", "text": "string", "value": "float"},
+            info=MagicMock(to_dict=lambda: {"description": "Mock Dataset"})
+        )
+
+        result = await load_dataset_module.load_dataset(
             source=self.test_env["dataset_file"],
             format="json"
         )
-        
-        # Verify the result
+
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
-    
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset.asyncio')
-    def test_save_dataset(self, mock_asyncio):
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["summary"]["num_records"], 3)
+        self.assertIn("id", result["summary"]["schema"])
+
+    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset.save_dataset_to_file')
+    async def test_save_dataset(self, mock_save_dataset_to_file):
         """Test the save_dataset tool."""
-        # Import the tool
         save_dataset_module = import_tool("dataset_tools", "save_dataset")
         if not save_dataset_module:
             self.skipTest("save_dataset tool not found")
-        
-        # Create output path
+
         output_path = os.path.join(self.test_env["test_dir"], "output_dataset.json")
-        
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "path": output_path
-        }
-        
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = save_dataset_module.save_dataset(
+        mock_save_dataset_to_file.return_value = {"status": "success", "path": output_path}
+
+        result = await save_dataset_module.save_dataset(
             dataset=SAMPLE_DATASET,
             destination=output_path,
             format="json"
         )
-        
-        # Verify the result
+
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
-    
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset.asyncio')
-    def test_process_dataset(self, mock_asyncio):
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["path"], output_path)
+
+    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset.process_dataset_data')
+    async def test_process_dataset(self, mock_process_dataset_data):
         """Test the process_dataset tool."""
-        # Import the tool
         process_dataset_module = import_tool("dataset_tools", "process_dataset")
         if not process_dataset_module:
             self.skipTest("process_dataset tool not found")
-        
-        # Create mock result
-        mock_result = {
+
+        mock_process_dataset_data.return_value = {
             "status": "success",
             "dataset": {
                 "data": [SAMPLE_DATASET["data"][1], SAMPLE_DATASET["data"][2]],
                 "metadata": SAMPLE_DATASET["metadata"]
             }
         }
-        
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = process_dataset_module.process_dataset(
+
+        result = await process_dataset_module.process_dataset(
             dataset=SAMPLE_DATASET,
             operations=[
                 {"type": "filter", "field": "value", "condition": "gt", "value": 15}
             ]
         )
-        
-        # Verify the result
+
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
-    
-    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format.asyncio')
-    def test_convert_dataset_format(self, mock_asyncio):
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(result["dataset"]["data"]), 2)
+
+    @patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format.convert_dataset')
+    async def test_convert_dataset_format(self, mock_convert_dataset):
         """Test the convert_dataset_format tool."""
-        # Import the tool
         convert_dataset_module = import_tool("dataset_tools", "convert_dataset_format")
         if not convert_dataset_module:
             self.skipTest("convert_dataset_format tool not found")
-        
-        # Create output path
+
         output_path = os.path.join(self.test_env["test_dir"], "converted_dataset.csv")
-        
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "path": output_path
-        }
-        
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = convert_dataset_module.convert_dataset_format(
+        mock_convert_dataset.return_value = {"status": "success", "path": output_path}
+
+        result = await convert_dataset_module.convert_dataset_format(
             source=self.test_env["dataset_file"],
             source_format="json",
             target_format="csv",
             output_path=output_path
         )
-        
-        # Verify the result
+
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["path"], output_path)
 
 class IPFSToolTests(unittest.TestCase):
     """Test cases for IPFS tools."""
@@ -313,62 +278,67 @@ class IPFSToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs.asyncio')
-    def test_get_from_ipfs(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs.ipfs_kit_py')
+    async def test_get_from_ipfs(self, mock_ipfs_kit_py):
         """Test the get_from_ipfs tool."""
-        # Import the tool
         get_from_ipfs_module = import_tool("ipfs_tools", "get_from_ipfs")
         if not get_from_ipfs_module:
             self.skipTest("get_from_ipfs tool not found")
         
-        # Create output path
         output_path = os.path.join(self.test_env["test_dir"], "ipfs_content.json")
         
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "path": output_path,
-            "cid": SAMPLE_CID
-        }
+        # Mock the async methods
+        mock_ipfs_kit_py.get_async = AsyncMock(return_value=None)
+        mock_ipfs_kit_py.cat_async = AsyncMock(return_value=b'{"key": "value"}')
         
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
+        # Test with output_path
+        with patch('os.path.exists', return_value=True), \
+             patch('os.path.getsize', return_value=100):
+            result = await get_from_ipfs_module.get_from_ipfs(
+                cid=SAMPLE_CID,
+                output_path=output_path
+            )
+            self.assertIsNotNone(result)
+            self.assertEqual(result["status"], "success")
+            self.assertEqual(result["output_path"], output_path)
+            mock_ipfs_kit_py.get_async.assert_called_once_with(SAMPLE_CID, output_path, timeout=60)
         
-        # Call the function (note: we're not using await)
-        result = get_from_ipfs_module.get_from_ipfs(
-            cid=SAMPLE_CID,
-            output_path=output_path
+        # Reset mocks for next test
+        mock_ipfs_kit_py.get_async.reset_mock()
+        mock_ipfs_kit_py.cat_async.reset_mock()
+
+        # Test without output_path (cat)
+        result = await get_from_ipfs_module.get_from_ipfs(
+            cid=SAMPLE_CID
         )
-        
-        # Verify the result
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["content"], '{"key": "value"}')
+        mock_ipfs_kit_py.cat_async.assert_called_once_with(SAMPLE_CID, timeout=60)
     
-    @patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs.asyncio')
-    def test_pin_to_ipfs(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs.ipfs_kit_py')
+    async def test_pin_to_ipfs(self, mock_ipfs_kit_py):
         """Test the pin_to_ipfs tool."""
-        # Import the tool
         pin_to_ipfs_module = import_tool("ipfs_tools", "pin_to_ipfs")
         if not pin_to_ipfs_module:
             self.skipTest("pin_to_ipfs tool not found")
         
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "cid": SAMPLE_CID
-        }
+        # Mock the async method
+        mock_ipfs_kit_py.add_async = AsyncMock(return_value={"Hash": SAMPLE_CID, "Size": 123, "Name": "test_dataset.json"})
         
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = pin_to_ipfs_module.pin_to_ipfs(
-            file_path=self.test_env["dataset_file"]
-        )
-        
-        # Verify the result
-        self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
+        with patch('os.path.exists', return_value=True):
+            result = await pin_to_ipfs_module.pin_to_ipfs(
+                content_path=self.test_env["dataset_file"]
+            )
+            self.assertIsNotNone(result)
+            self.assertEqual(result["status"], "success")
+            self.assertEqual(result["cid"], SAMPLE_CID)
+            mock_ipfs_kit_py.add_async.assert_called_once_with(
+                self.test_env["dataset_file"], 
+                recursive=True, 
+                wrap_with_directory=False, 
+                hash="sha2-256"
+            )
 
 class VectorToolTests(unittest.TestCase):
     """Test cases for vector tools."""
@@ -379,71 +349,55 @@ class VectorToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index.asyncio')
-    def test_create_vector_index(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index.IPFSKnnIndex')
+    async def test_create_vector_index(self, mock_ipfs_knn_index):
         """Test the create_vector_index tool."""
-        # Import the tool
         create_vector_index_module = import_tool("vector_tools", "create_vector_index")
         if not create_vector_index_module:
             self.skipTest("create_vector_index tool not found")
         
-        # Create index path
-        index_path = os.path.join(self.test_env["test_dir"], "vector_index")
-        
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "index_path": index_path
-        }
-        
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = create_vector_index_module.create_vector_index(
+        mock_instance = mock_ipfs_knn_index.return_value
+        mock_instance.add_vectors.return_value = ["vec1", "vec2", "vec3"]
+        mock_instance.index_id = "test_index_id"
+        mock_instance.index_name = "test_index_name"
+
+        result = await create_vector_index_module.create_vector_index(
             vectors=SAMPLE_VECTOR_DATA["vectors"],
             metadata=SAMPLE_VECTOR_DATA["metadata"],
-            index_type="flat",
-            index_path=index_path
+            metric="cosine"
         )
         
-        # Verify the result
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
-    
-    @patch('ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index.asyncio')
-    def test_search_vector_index(self, mock_asyncio):
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["index_id"], "test_index_id")
+        self.assertEqual(result["num_vectors"], 3)
+
+    @patch('ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index.IPFSKnnIndexManager')
+    async def test_search_vector_index(self, mock_ipfs_knn_index_manager):
         """Test the search_vector_index tool."""
-        # Import the tool
         search_vector_index_module = import_tool("vector_tools", "search_vector_index")
         if not search_vector_index_module:
             self.skipTest("search_vector_index tool not found")
         
-        # Create index path
-        index_path = os.path.join(self.test_env["test_dir"], "vector_index")
+        mock_manager_instance = mock_ipfs_knn_index_manager.return_value
+        mock_index_instance = MagicMock()
+        mock_manager_instance.get_index.return_value = mock_index_instance
         
-        # Create mock result
-        mock_result = {
-            "status": "success",
-            "results": [
-                {"id": 1, "score": 0.95, "metadata": {"id": 1, "text": "Vector 1"}},
-                {"id": 3, "score": 0.75, "metadata": {"id": 3, "text": "Vector 3"}}
-            ]
-        }
-        
-        # Configure mock
-        mock_asyncio.run.return_value = mock_result
-        
-        # Call the function (note: we're not using await)
-        result = search_vector_index_module.search_vector_index(
+        mock_index_instance.search.return_value = [
+            MagicMock(id=1, score=0.95, metadata={"id": 1, "text": "Vector 1"}),
+            MagicMock(id=3, score=0.75, metadata={"id": 3, "text": "Vector 3"})
+        ]
+
+        result = await search_vector_index_module.search_vector_index(
+            index_id="test_index_id",
             query_vector=[0.1, 0.2, 0.3, 0.4, 0.5],
-            index_path=index_path,
             top_k=2
         )
         
-        # Verify the result
         self.assertIsNotNone(result)
-        # In a real test, we'd check the actual result after running the coroutine
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["num_results"], 2)
+        self.assertEqual(result["results"][0]["id"], 1)
 
 class GraphToolTests(unittest.TestCase):
     """Test cases for graph tools."""
@@ -454,22 +408,30 @@ class GraphToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph.asyncio')
-    async def test_query_knowledge_graph(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph.GraphRAGProcessor')
+    async def test_query_knowledge_graph(self, mock_graph_rag_processor):
         """Test the query_knowledge_graph tool."""
-        # Import the tool
         query_knowledge_graph_module = import_tool("graph_tools", "query_knowledge_graph")
         if not query_knowledge_graph_module:
             self.skipTest("query_knowledge_graph tool not found")
         
-        # Test querying a knowledge graph
+        mock_processor_instance = mock_graph_rag_processor.return_value
+        mock_processor_instance.load_graph.return_value = MagicMock()
+        mock_processor_instance.execute_sparql.return_value = [
+            {"id": "n1", "label": "Node 1"},
+            {"id": "n3", "label": "Node 3"}
+        ]
+
         result = await query_knowledge_graph_module.query_knowledge_graph(
-            graph=SAMPLE_GRAPH_DATA,
-            query="MATCH (n) WHERE n.type = 'entity' RETURN n"
+            graph_id="test_graph_id",
+            query="MATCH (n) WHERE n.type = 'entity' RETURN n",
+            query_type="sparql"
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["num_results"], 2)
+        self.assertEqual(result["results"][0]["id"], "n1")
 
 class AuditToolTests(unittest.TestCase):
     """Test cases for audit tools."""
@@ -480,41 +442,49 @@ class AuditToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event.asyncio')
-    async def test_record_audit_event(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event.AuditLogger')
+    def test_record_audit_event(self, mock_audit_logger):
         """Test the record_audit_event tool."""
-        # Import the tool
         record_audit_event_module = import_tool("audit_tools", "record_audit_event")
         if not record_audit_event_module:
             self.skipTest("record_audit_event tool not found")
         
-        # Test recording an audit event
-        result = await record_audit_event_module.record_audit_event(
-            event=SAMPLE_AUDIT_EVENT
+        mock_instance = mock_audit_logger.get_instance.return_value
+        mock_instance.log.return_value = "mock_event_id"
+
+        result = record_audit_event_module.record_audit_event(
+            action=SAMPLE_AUDIT_EVENT["action"],
+            resource_id=SAMPLE_AUDIT_EVENT["resource"],
+            resource_type="test_resource_type", # Added resource_type
+            user_id=SAMPLE_AUDIT_EVENT["user_id"],
+            severity="info"
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["event_id"], "mock_event_id")
     
-    @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report.asyncio')
-    async def test_generate_audit_report(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report.AuditReportGenerator')
+    async def test_generate_audit_report(self, mock_audit_report_generator):
         """Test the generate_audit_report tool."""
-        # Import the tool
         generate_audit_report_module = import_tool("audit_tools", "generate_audit_report")
         if not generate_audit_report_module:
             self.skipTest("generate_audit_report tool not found")
         
-        # Test generating an audit report
+        mock_instance = mock_audit_report_generator.return_value
+        mock_instance.generate_comprehensive_report.return_value = {"report_id": "mock_report_id", "timestamp": "mock_timestamp"}
+        mock_instance.export_report.return_value = os.path.join(self.test_env["test_dir"], "audit_report.json")
+
         result = await generate_audit_report_module.generate_audit_report(
-            start_time="2025-05-01T00:00:00Z",
-            end_time="2025-05-22T00:00:00Z",
-            filters={"resource": "test_dataset"},
+            report_type="comprehensive",
             output_format="json",
             output_path=os.path.join(self.test_env["test_dir"], "audit_report.json")
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["report_type"], "comprehensive")
+        self.assertEqual(result["output_path"], os.path.join(self.test_env["test_dir"], "audit_report.json"))
 
 class SecurityToolTests(unittest.TestCase):
     """Test cases for security tools."""
@@ -525,23 +495,25 @@ class SecurityToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission.asyncio')
-    async def test_check_access_permission(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission.SecurityManager')
+    async def test_check_access_permission(self, mock_security_manager):
         """Test the check_access_permission tool."""
-        # Import the tool
         check_access_permission_module = import_tool("security_tools", "check_access_permission")
         if not check_access_permission_module:
             self.skipTest("check_access_permission tool not found")
         
-        # Test checking access permission
+        mock_instance = mock_security_manager.return_value
+        mock_instance.check_access.return_value = True
+
         result = await check_access_permission_module.check_access_permission(
             user_id="test_user",
             resource_id="test_dataset",
-            action="read"
+            permission_type="read"
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertTrue(result["allowed"])
 
 class ProvenanceToolTests(unittest.TestCase):
     """Test cases for provenance tools."""
@@ -552,21 +524,34 @@ class ProvenanceToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
     
-    @patch('ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance.asyncio')
-    async def test_record_provenance(self, mock_asyncio):
+    @patch('ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance.EnhancedProvenanceManager')
+    async def test_record_provenance(self, mock_provenance_manager):
         """Test the record_provenance tool."""
-        # Import the tool
         record_provenance_module = import_tool("provenance_tools", "record_provenance")
         if not record_provenance_module:
             self.skipTest("record_provenance tool not found")
         
-        # Test recording provenance data
+        mock_instance = mock_provenance_manager.return_value
+        mock_instance.record_operation.return_value = "mock_provenance_id"
+        mock_instance.get_record.return_value = {
+            "provenance_id": "mock_provenance_id",
+            "timestamp": "2025-05-21T12:34:56Z"
+        }
+
         result = await record_provenance_module.record_provenance(
-            provenance_data=SAMPLE_PROVENANCE_DATA
+            dataset_id="test_dataset_id",
+            operation="test_operation",
+            inputs=["input1"],
+            parameters={"param1": "value1"},
+            description="Test provenance record",
+            agent_id="test_agent",
+            timestamp="2025-05-21T12:34:56Z",
+            tags=["tag1", "tag2"]
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["provenance_id"], "mock_provenance_id")
 
 class WebArchiveToolTests(unittest.TestCase):
     """Test cases for web archive tools."""
@@ -578,90 +563,182 @@ class WebArchiveToolTests(unittest.TestCase):
         cleanup_test_environment()
     
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc.WebArchiveProcessor')
-    async def test_create_warc(self, mock_processor):
+    def test_create_warc(self, mock_processor):
         """Test the create_warc tool."""
-        # Set up mock
-        mock_instance = mock_processor.return_value
-        mock_instance.create_warc.return_value = os.path.join(self.test_env["test_dir"], "test.warc")
-        
-        # Import the tool
         create_warc_module = import_tool("web_archive_tools", "create_warc")
         if not create_warc_module:
             self.skipTest("create_warc tool not found")
         
-        # Test creating a WARC file
-        result = await create_warc_module.create_warc(
+        mock_instance = mock_processor.return_value
+        mock_instance.create_warc.return_value = os.path.join(self.test_env["test_dir"], "test.warc")
+        
+        result = create_warc_module.create_warc(
             url="https://example.com",
             output_path=os.path.join(self.test_env["test_dir"], "test.warc")
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
+        self.assertEqual(result["warc_path"], os.path.join(self.test_env["test_dir"], "test.warc"))
     
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc.WebArchiveProcessor')
-    async def test_index_warc(self, mock_processor):
+    def test_index_warc(self, mock_processor):
         """Test the index_warc tool."""
-        # Set up mock
-        mock_instance = mock_processor.return_value
-        mock_instance.index_warc.return_value = os.path.join(self.test_env["test_dir"], "test.cdxj")
-        
-        # Import the tool
         index_warc_module = import_tool("web_archive_tools", "index_warc")
         if not index_warc_module:
             self.skipTest("index_warc tool not found")
         
-        # Test indexing a WARC file
-        result = await index_warc_module.index_warc(
+        mock_instance = mock_processor.return_value
+        mock_instance.index_warc.return_value = os.path.join(self.test_env["test_dir"], "test.cdxj")
+        
+        result = index_warc_module.index_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc"),
             output_path=os.path.join(self.test_env["test_dir"], "test.cdxj")
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
         self.assertEqual(result["status"], "success")
+        self.assertEqual(result["cdxj_path"], os.path.join(self.test_env["test_dir"], "test.cdxj"))
     
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj.WebArchiveProcessor')
-    async def test_extract_dataset_from_cdxj(self, mock_processor):
+    def test_extract_dataset_from_cdxj(self, mock_processor):
         """Test the extract_dataset_from_cdxj tool."""
-        # Set up mock
-        mock_instance = mock_processor.return_value
-        mock_instance.extract_dataset_from_cdxj.return_value = SAMPLE_DATASET
-        
-        # Import the tool
         extract_dataset_module = import_tool("web_archive_tools", "extract_dataset_from_cdxj")
         if not extract_dataset_module:
             self.skipTest("extract_dataset_from_cdxj tool not found")
         
-        # Test extracting a dataset from a CDXJ file
-        result = await extract_dataset_module.extract_dataset_from_cdxj(
+        mock_instance = mock_processor.return_value
+        mock_instance.extract_dataset_from_cdxj.return_value = SAMPLE_DATASET
+        
+        result = extract_dataset_module.extract_dataset_from_cdxj(
             cdxj_path=os.path.join(self.test_env["test_dir"], "test.cdxj"),
-            output_path=os.path.join(self.test_env["test_dir"], "extracted_dataset.json")
+            output_format="dict"
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["dataset"], SAMPLE_DATASET)
     
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc.WebArchiveProcessor')
-    async def test_extract_text_from_warc(self, mock_processor):
+    def test_extract_text_from_warc(self, mock_processor):
         """Test the extract_text_from_warc tool."""
-        # Set up mock
-        mock_instance = mock_processor.return_value
-        mock_instance.extract_text_from_warc.return_value = {"text": "Sample extracted text"}
-        
-        # Import the tool
         extract_text_module = import_tool("web_archive_tools", "extract_text_from_warc")
         if not extract_text_module:
             self.skipTest("extract_text_from_warc tool not found")
         
-        # Test extracting text from a WARC file
-        result = await extract_text_module.extract_text_from_warc(
-            warc_path=os.path.join(self.test_env["test_dir"], "test.warc"),
-            output_path=os.path.join(self.test_env["test_dir"], "extracted_text.txt")
+        mock_instance = mock_processor.return_value
+        mock_instance.extract_text_from_warc.return_value = [{"uri": "http://example.com", "text": "Sample extracted text"}]
+        
+        result = extract_text_module.extract_text_from_warc(
+            warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
         )
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertIn("records", result)
+        self.assertEqual(len(result["records"]), 1)
+
+    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc.WebArchiveProcessor')
+    def test_extract_links_from_warc(self, mock_processor):
+        """Test the extract_links_from_warc tool."""
+        extract_links_module = import_tool("web_archive_tools", "extract_links_from_warc")
+        if not extract_links_module:
+            self.skipTest("extract_links_from_warc tool not found")
+        
+        mock_instance = mock_processor.return_value
+        mock_instance.extract_links_from_warc.return_value = [
+            {"uri": "http://example.com", "links": ["http://example.com/page1", "http://example.com/page2"]}
+        ]
+        
+        result = extract_links_module.extract_links_from_warc(
+            warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
+        )
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertIn("records", result)
+        self.assertEqual(len(result["records"]), 1)
+
+    @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc.WebArchiveProcessor')
+    def test_extract_metadata_from_warc(self, mock_processor):
+        """Test the extract_metadata_from_warc tool."""
+        extract_metadata_module = import_tool("web_archive_tools", "extract_metadata_from_warc")
+        if not extract_metadata_module:
+            self.skipTest("extract_metadata_from_warc tool not found")
+        
+        mock_instance = mock_processor.return_value
+        mock_instance.extract_metadata_from_warc.return_value = [
+            {"uri": "http://example.com", "metadata": {"title": "Example", "status": "200"}}
+        ]
+        
+        result = extract_metadata_module.extract_metadata_from_warc(
+            warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
+        )
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertIn("records", result)
+        self.assertEqual(len(result["records"]), 1)
+
+class CLIToolTests(unittest.TestCase):
+    """Test cases for CLI tools."""
+    
+    def setUp(self):
+        self.test_env = setup_test_environment()
+    
+    def tearDown(self):
+        cleanup_test_environment()
+    
+    @patch('subprocess.run')
+    async def test_execute_command(self, mock_subprocess_run):
+        """Test the execute_command tool."""
+        execute_command_module = import_tool("cli", "execute_command")
+        if not execute_command_module:
+            self.skipTest("execute_command tool not found")
+        
+        mock_subprocess_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Command executed successfully",
+            stderr=""
+        )
+        
+        result = await execute_command_module.execute_command(
+            command="echo 'test'",
+            timeout=30
+        )
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["return_code"], 0)
+        self.assertEqual(result["stdout"], "Command executed successfully")
+
+class FunctionToolTests(unittest.TestCase):
+    """Test cases for function tools."""
+    
+    def setUp(self):
+        self.test_env = setup_test_environment()
+    
+    def tearDown(self):
+        cleanup_test_environment()
+    
+    @patch('exec')
+    async def test_execute_python_snippet(self, mock_exec):
+        """Test the execute_python_snippet tool."""
+        execute_python_snippet_module = import_tool("functions", "execute_python_snippet")
+        if not execute_python_snippet_module:
+            self.skipTest("execute_python_snippet tool not found")
+        
+        # Mock successful execution
+        mock_exec.return_value = None
+        
+        result = await execute_python_snippet_module.execute_python_snippet(
+            code="result = 2 + 2",
+            globals_dict={},
+            timeout=30
+        )
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result["status"], "success")
 
 # Run tests for all tools
 def run_tool_tests(categories: Optional[List[str]] = None):
@@ -685,7 +762,9 @@ def run_tool_tests(categories: Optional[List[str]] = None):
         "audit_tools": AuditToolTests,
         "security_tools": SecurityToolTests,
         "provenance_tools": ProvenanceToolTests,
-        "web_archive_tools": WebArchiveToolTests
+        "web_archive_tools": WebArchiveToolTests,
+        "cli": CLIToolTests,
+        "functions": FunctionToolTests
     }
     
     # Results tracking
@@ -695,7 +774,8 @@ def run_tool_tests(categories: Optional[List[str]] = None):
         "passed_tests": 0,
         "failed_tests": 0,
         "skipped_tests": 0,
-        "by_category": {}
+        "by_category": {},
+        "success_rate": 0.0
     }
     
     # Run tests for each category
@@ -737,43 +817,40 @@ def run_tool_tests(categories: Optional[List[str]] = None):
                         "status": "pending"
                     }
         
-        # Run the test suite
-        result = unittest.TextTestRunner(verbosity=2).run(suite)
-        
-        # Get the number of tests run
-        tests_run = result.testsRun
+        # Run the tests for this category
+        runner = unittest.TextTestRunner(verbosity=2, stream=open(os.devnull, 'w'))
+        test_result = runner.run(suite)
         
         # Update results
-        results["tested_tools"] += tests_run
-        results["passed_tests"] += tests_run - len(result.errors) - len(result.failures) - len(result.skipped)
-        results["failed_tests"] += len(result.errors) + len(result.failures)
-        results["skipped_tests"] += len(result.skipped)
+        category_tested = test_result.testsRun
+        category_failed = len(test_result.failures) + len(test_result.errors)
+        category_skipped = len(test_result.skipped)
+        category_passed = category_tested - category_failed - category_skipped
         
-        results["by_category"][category]["tested"] = tests_run
-        results["by_category"][category]["passed"] = tests_run - len(result.errors) - len(result.failures) - len(result.skipped)
-        results["by_category"][category]["failed"] = len(result.errors) + len(result.failures)
-        results["by_category"][category]["skipped"] = len(result.skipped)
+        results["tested_tools"] += category_tested
+        results["passed_tests"] += category_passed
+        results["failed_tests"] += category_failed
+        results["skipped_tests"] += category_skipped
         
-        # Update individual tool results - we need a different approach as we don't have direct access to test objects
-        for error in result.errors:
-            test_method_name = error[0]._testMethodName
-            tool_name = test_method_name[5:]  # Remove "test_" prefix
+        results["by_category"][category]["tested"] = category_tested
+        results["by_category"][category]["passed"] = category_passed
+        results["by_category"][category]["failed"] = category_failed
+        results["by_category"][category]["skipped"] = category_skipped
+        
+        # Update individual tool results
+        for test, error in test_result.failures + test_result.errors:
+            tool_name = test._testMethodName[5:]  # Remove "test_" prefix
             if tool_name in results["by_category"][category]["tools"]:
-                results["by_category"][category]["tools"][tool_name]["status"] = "error"
-                
-        for failure in result.failures:
-            test_method_name = failure[0]._testMethodName
-            tool_name = test_method_name[5:]  # Remove "test_" prefix
-            if tool_name in results["by_category"][category]["tools"]:
-                results["by_category"][category]["tools"][tool_name]["status"] = "failure"
-                
-        for skip in result.skipped:
-            test_method_name = skip[0]._testMethodName
-            tool_name = test_method_name[5:]  # Remove "test_" prefix
+                results["by_category"][category]["tools"][tool_name]["status"] = "failed"
+                results["by_category"][category]["tools"][tool_name]["error"] = str(error)
+        
+        for test, reason in test_result.skipped:
+            tool_name = test._testMethodName[5:]  # Remove "test_" prefix
             if tool_name in results["by_category"][category]["tools"]:
                 results["by_category"][category]["tools"][tool_name]["status"] = "skipped"
+                results["by_category"][category]["tools"][tool_name]["reason"] = reason
         
-        # Mark successful tests
+        # Mark remaining as passed
         for tool_name in results["by_category"][category]["tools"]:
             if results["by_category"][category]["tools"][tool_name]["status"] == "pending":
                 results["by_category"][category]["tools"][tool_name]["status"] = "passed"
@@ -781,8 +858,6 @@ def run_tool_tests(categories: Optional[List[str]] = None):
     # Calculate overall success rate
     if results["tested_tools"] > 0:
         results["success_rate"] = (results["passed_tests"] / results["tested_tools"]) * 100
-    else:
-        results["success_rate"] = 0
     
     return results
 

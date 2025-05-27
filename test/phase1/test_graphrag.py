@@ -13,7 +13,8 @@ sys.path.append(parent_dir)
 # Import the modules to test
 try:
     from ipfs_datasets_py.dataset_serialization import GraphNode, GraphDataset, VectorAugmentedGraphDataset
-    from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryOptimizer, GraphRAGQueryStats, VectorIndexPartitioner
+    from ipfs_datasets_py.rag_query_optimizer_minimal import GraphRAGQueryStats
+    from ipfs_datasets_py.rag_query_optimizer import VectorIndexPartitioner
     MODULE_AVAILABLE = True
 except ImportError:
     MODULE_AVAILABLE = False

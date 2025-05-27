@@ -6,7 +6,7 @@ using the WebArchiveProcessor from web_archive_utils.
 import os
 from typing import Dict, List, Any
 
-from ....web_archive_utils import WebArchiveProcessor
+from ....web_archive import WebArchiveProcessor
 
 def extract_links_from_warc(
     warc_path: str

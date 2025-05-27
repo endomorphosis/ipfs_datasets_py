@@ -6,7 +6,7 @@ by IPWB using the WebArchiveProcessor from web_archive_utils.
 import os
 from typing import Dict, Any, Literal, Optional, Union
 
-from ....web_archive_utils import WebArchiveProcessor
+from ....web_archive import WebArchiveProcessor
 
 def extract_dataset_from_cdxj(
     cdxj_path: str,

@@ -6,7 +6,7 @@ WebArchiveProcessor in web_archive_utils.
 import os
 from typing import Dict, Optional
 
-from ....web_archive_utils import WebArchiveProcessor
+from ....web_archive import WebArchiveProcessor
 
 def index_warc(
     warc_path: str,

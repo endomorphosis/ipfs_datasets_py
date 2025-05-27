@@ -54,7 +54,7 @@ except ImportError:
 
 # Import related modules
 from ipfs_datasets_py.data_provenance import ProvenanceManager
-from ipfs_datasets_py.cross_document_lineage import LineageTracker
+from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
 from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
 
 
@@ -70,7 +70,7 @@ class ProvenanceDashboard:
     def __init__(
         self,
         provenance_manager: ProvenanceManager,
-        lineage_tracker: Optional[LineageTracker] = None,
+        lineage_tracker: Optional[EnhancedLineageTracker] = None,
         query_visualizer: Optional[RAGQueryVisualizer] = None
     ):
         """
@@ -78,7 +78,7 @@ class ProvenanceDashboard:
         
         Args:
             provenance_manager: ProvenanceManager for tracking data provenance
-            lineage_tracker: Optional LineageTracker for cross-document lineage
+            lineage_tracker: Optional EnhancedLineageTracker for cross-document lineage
             query_visualizer: Optional RAGQueryVisualizer for RAG query metrics
         """
         self.provenance_manager = provenance_manager
@@ -320,7 +320,7 @@ class ProvenanceDashboard:
             str: Base64-encoded image or None if visualization not available
         """
         if not self.lineage_tracker:
-            logging.warning("LineageTracker not available for cross-document lineage visualization")
+            logging.warning("EnhancedLineageTracker not available for cross-document lineage visualization")
             return None
         
         if not self.visualization_available:
@@ -1277,7 +1277,7 @@ def setup_provenance_dashboard(
     
     Args:
         provenance_manager: Optional ProvenanceManager instance
-        lineage_tracker: Optional LineageTracker instance
+        lineage_tracker: Optional EnhancedLineageTracker instance
         query_metrics: Optional QueryMetricsCollector instance
         audit_metrics: Optional AuditMetricsAggregator instance
         
@@ -1295,10 +1295,10 @@ def setup_provenance_dashboard(
     # Create lineage tracker if not provided and available
     if not lineage_tracker:
         try:
-            from ipfs_datasets_py.cross_document_lineage import LineageTracker
-            lineage_tracker = LineageTracker()
+            from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+            lineage_tracker = EnhancedLineageTracker()
         except ImportError:
-            logging.warning("LineageTracker not available")
+            logging.warning("EnhancedLineageTracker not available")
             lineage_tracker = None
         except Exception as e:
             logging.error(f"Error creating lineage tracker: {str(e)}")

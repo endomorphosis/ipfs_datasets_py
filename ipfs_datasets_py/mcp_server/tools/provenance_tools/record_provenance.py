@@ -46,19 +46,36 @@ async def record_provenance(
         provenance_manager = EnhancedProvenanceManager()
         
         # Record the provenance
-        provenance_id = provenance_manager.record_operation(
-            dataset_id=dataset_id,
-            operation_type=operation,
-            input_datasets=inputs or [],
+        provenance_id = provenance_manager.begin_transformation(
+            description=description or f"Operation: {operation}",
+            transformation_type=operation,
+            tool=agent_id or "mcp-tool",
+            input_ids=inputs or [],
             parameters=parameters or {},
-            description=description,
-            agent=agent_id,
-            timestamp=timestamp,
-            tags=tags or []
+            metadata={"tags": tags or [], "timestamp": timestamp}
         )
         
         # Get the provenance record
-        provenance_record = provenance_manager.get_record(provenance_id)
+        provenance_record = provenance_manager.records.get(provenance_id, None)
+        
+        # Extract record info, handling both dict and object types
+        if provenance_record:
+            if hasattr(provenance_record, 'timestamp'):
+                # It's a ProvenanceRecord object
+                record_timestamp = provenance_record.timestamp
+                record_dict = provenance_record.to_dict() if hasattr(provenance_record, 'to_dict') else {
+                    'id': getattr(provenance_record, 'id', provenance_id),
+                    'timestamp': record_timestamp,
+                    'description': getattr(provenance_record, 'description', ''),
+                    'operation': operation
+                }
+            else:
+                # It's a dict
+                record_timestamp = provenance_record.get("timestamp")
+                record_dict = provenance_record
+        else:
+            record_timestamp = None
+            record_dict = {}
         
         # Return information about the recorded provenance
         return {
@@ -66,8 +83,8 @@ async def record_provenance(
             "provenance_id": provenance_id,
             "dataset_id": dataset_id,
             "operation": operation,
-            "timestamp": provenance_record.get("timestamp"),
-            "record": provenance_record
+            "timestamp": record_timestamp,
+            "record": record_dict
         }
     except Exception as e:
         logger.error(f"Error recording provenance: {e}")

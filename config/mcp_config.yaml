@@ -1,0 +1,19 @@
+server:
+  log_level: INFO
+  verbose: True
+
+tools:
+  enabled_categories:
+    - dataset
+    - ipfs
+    - vector
+    - graph
+    - audit
+    - security
+    - provenance
+    - cli
+    - functions
+
+ipfs_kit:
+  integration: mcp
+  mcp_url: http://localhost:5001 # Placeholder URL for ipfs_kit_py MCP server

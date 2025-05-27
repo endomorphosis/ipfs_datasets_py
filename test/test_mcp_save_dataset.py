@@ -36,15 +36,12 @@ class MockDatasetManager:
     def add_dataset(self, dataset_id, dataset_instance):
         self.datasets[dataset_id] = dataset_instance
 
-@patch('ipfs_datasets_py.DatasetManager', new=MockDatasetManager)
+@patch('ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset.DatasetManager', new=MockDatasetManager)
 class TestMCPSaveDataset(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.mock_manager = MockDatasetManager()
-        # Ensure the patch is applied and we can interact with the mock
-        # The DatasetManager is a singleton, so we need to mock its get_instance method
-        with patch('ipfs_datasets_py.DatasetManager.get_instance', return_value=self.mock_manager):
-            pass # The patch is applied by the decorator, no need to do anything here
+        # The DatasetManager is now mocked directly, no need to mock get_instance
 
     async def test_save_dataset_success(self):
         from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset

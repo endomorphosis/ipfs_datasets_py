@@ -25,7 +25,11 @@ from ipfs_datasets_py.cross_document_reasoning import (
     InformationRelationType
 )
 from ipfs_datasets_py.llm_reasoning_tracer import LLMReasoningTracer
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py import (
+    UnifiedGraphRAGQueryOptimizer,
+    QueryRewriter,
+    QueryBudgetManager
+)
 
 
 class MockVectorStore:

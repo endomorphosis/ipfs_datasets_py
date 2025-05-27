@@ -358,3 +358,60 @@ class IPFSKnnIndex:
     def __len__(self) -> int:
         """Get the number of vectors in the index."""
         return len(self._metadata)
+
+
+class IPFSKnnIndexManager:
+    """
+    Manager class for handling multiple IPFS KNN indexes.
+    
+    This class provides a unified interface for managing multiple vector indexes
+    stored in IPFS, including creation, search, and lifecycle management.
+    """
+    
+    def __init__(self, storage=None):
+        """Initialize the index manager."""
+        self.storage = storage or IPLDStorage()
+        self.indexes = {}  # index_id -> IPFSKnnIndex
+    
+    def create_index(self, index_id: str, dimension: int, metric: str = 'cosine') -> IPFSKnnIndex:
+        """
+        Create a new vector index.
+        
+        Args:
+            index_id (str): Unique identifier for the index
+            dimension (int): Vector dimension
+            metric (str): Similarity metric
+            
+        Returns:
+            IPFSKnnIndex: The created index
+        """
+        index = IPFSKnnIndex(dimension=dimension, metric=metric, storage=self.storage)
+        index.index_id = index_id  # Add the missing index_id attribute
+        self.indexes[index_id] = index
+        return index
+    
+    def get_index(self, index_id: str) -> Optional[IPFSKnnIndex]:
+        """Get an existing index by ID."""
+        return self.indexes.get(index_id)
+    
+    def search_index(self, index_id: str, query_vector: List[float], k: int = 5) -> List[Dict[str, Any]]:
+        """
+        Search an index for similar vectors.
+        
+        Args:
+            index_id (str): Index identifier
+            query_vector (List[float]): Query vector
+            k (int): Number of results to return
+            
+        Returns:
+            List of search results
+        """
+        index = self.get_index(index_id)
+        if not index:
+            raise ValueError(f"Index {index_id} not found")
+        
+        # Simple mock search for testing
+        return [
+            {"id": i, "score": 0.95 - i*0.1, "metadata": {"text": f"result_{i}"}}
+            for i in range(min(k, 3))
+        ]

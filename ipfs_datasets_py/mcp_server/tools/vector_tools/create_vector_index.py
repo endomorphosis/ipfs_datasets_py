@@ -2,14 +2,21 @@
 """
 MCP tool for creating vector indexes.
 
-This tool handles creating vector indexes for similarity search.
+This tool handles creating vector indexes for similarity search
+using the VectorStore from vector_tools.
 """
 import asyncio
+import uuid
 from typing import Dict, Any, Optional, Union, List
 
 import numpy as np
 
 from ipfs_datasets_py.mcp_server.logger import logger
+from ....vector_tools import VectorStore, create_vector_store
+
+
+# Global manager instance to maintain state between calls
+from .shared_state import get_global_manager
 
 
 async def create_vector_index(
@@ -37,27 +44,25 @@ async def create_vector_index(
     try:
         logger.info(f"Creating vector index with {len(vectors)} vectors")
         
-        # Import the vector index manager
-        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        # Get the global manager
+        manager = get_global_manager()
         
         # Infer dimension if not provided
         if dimension is None and vectors:
             dimension = len(vectors[0])
         
-        # Create a vector index
-        index = IPFSKnnIndex(dimension=dimension, metric=metric)
+        # Generate index ID if not provided
+        if index_id is None:
+            index_id = f"index_{uuid.uuid4().hex[:8]}"
         
-        # Convert vectors to numpy arrays
-        np_vectors = np.array(vectors)
-        
-        # Add vectors to the index
-        vector_ids = index.add_vectors(np_vectors, metadata=metadata)
-        
-        # Set the index ID and name if provided
-        if index_id:
-            index.index_id = index_id
+        # Create a vector index using the manager
+        index = manager.create_index(index_id, dimension=dimension, metric=metric)
         if index_name:
             index.index_name = index_name
+        
+        # Convert vectors to numpy arrays and add to index
+        np_vectors = np.array(vectors)
+        vector_ids = index.add_vectors(np_vectors, metadata=metadata)
             
         # Return information about the index
         return {

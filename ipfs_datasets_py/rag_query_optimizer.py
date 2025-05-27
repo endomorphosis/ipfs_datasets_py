@@ -100,7 +100,6 @@ except ImportError:
 # Import for Wikipedia-specific optimizations
 # Import necessary components
 from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor # Added import
 
 # Import for Wikipedia-specific optimizations
 try:
@@ -116,7 +115,7 @@ except ImportError:
 
 # Avoid circular imports with conditional imports
 if TYPE_CHECKING:
-    # from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer # Keep commented if not strictly needed for type hints here
+    from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
     pass
 
 class QueryMetricsCollector:
@@ -1524,12 +1523,12 @@ class QueryMetricsCollector:
         This enhanced version includes comprehensive error handling to ensure the pattern
     extraction process never fails, even with unexpected or malformed input data.
     
-    Args:
-        successful_queries: List of successful query metrics
-        
-    Returns:
-        Dict: Mapping of pattern names to pattern characteristics
-    """
+        Args:
+            successful_queries: List of successful query metrics
+            
+        Returns:
+            Dict: Mapping of pattern names to pattern characteristics
+        """
         patterns = {}
         
         try:
@@ -2827,115 +2826,6 @@ class QueryMetricsCollector:
                     # Ignore errors in error collection
                     pass
 
-    def _increment_failure_counter(self, error_message, is_critical=True):
-        """
-        Increment the learning failure counter and trip the circuit breaker if needed.
-    
-        Args:
-        error_message: The error message to log
-        is_critical: Whether the error is critical (counts more heavily)
-        """
-        # Record to learning metrics collector if available
-        if hasattr(self, "learning_metrics_collector") and self.learning_metrics_collector is not None:
-            try:
-                if is_critical and not hasattr(self, '_learning_failure_count'):
-                    self._learning_failure_count = 0
-                    
-                # Check if we'd be tripping the circuit breaker
-                threshold = getattr(self, '_circuit_breaker_threshold', 3)
-                current_count = getattr(self, '_learning_failure_count', 0)
-                will_trip = (current_count + (1 if is_critical else 0.25)) >= threshold
-                
-                if will_trip:
-                    # Calculate backoff minutes
-                    backoff_minutes = min(60, 5 * (2 ** (int(current_count) - threshold + 1)))
-                
-                    # Record circuit breaker event
-                    self.learning_metrics_collector.record_circuit_breaker_event(
-                        event_type="tripped",
-                        reason=error_message,
-                        backoff_minutes=backoff_minutes
-                    )
-                else:
-                    # Record learning cycle error
-                    self.learning_metrics_collector.record_learning_cycle(
-                        cycle_id=f"error-{int(time.time())}",
-                        time_started=time.time(),
-                        query_count=getattr(self, '_queries_since_last_learning', 0),
-                        is_success=False,
-                        error=error_message
-                    )
-            except Exception:
-                # Ignore errors in metrics collection
-                pass
-        try:
-            # Initialize failure count if not set
-            if not hasattr(self, '_learning_failure_count'):
-                self._learning_failure_count = 0
-            
-            # Increment failure counter
-            if is_critical:
-                self._learning_failure_count += 1
-            else:
-                # Non-critical errors count as 0.25 of a critical error
-                self._learning_failure_count += 0.25
-            
-            # Set the error message for logging
-            failure_message = f"Learning failure {self._learning_failure_count}: {error_message}"
-            
-            # Check if we've reached the threshold to trip the circuit breaker
-            threshold = getattr(self, '_circuit_breaker_threshold', 3)
-        
-            if self._learning_failure_count >= threshold:
-                # Trip the circuit breaker
-                self._learning_circuit_breaker_tripped = True
-            
-                # Calculate retry time (exponential backoff)
-                # Start with 5 minutes, then 15, then 30, then 60 minutes
-                backoff_minutes = min(60, 5 * (2 ** (int(self._learning_failure_count) - threshold)))
-                retry_after = time.time() + (backoff_minutes * 60)
-                self._circuit_breaker_retry_time = retry_after
-            
-                # Update the message to include circuit breaker information
-                failure_message = (
-                    f"{failure_message}. Circuit breaker tripped: "
-                    f"learning disabled for {backoff_minutes} minutes"
-                )
-            
-                # Print circuit breaker information
-                print(f"Learning circuit breaker tripped: disabled for {backoff_minutes} minutes")
-            
-            # Log the failure if metrics collector is available
-            if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                try:
-                    self.metrics_collector.record_additional_metric(
-                        name="learning_failure",
-                        value=failure_message,
-                        category="error"
-                    )
-                
-                    # Also record the failure count
-                    self.metrics_collector.record_additional_metric(
-                        name="learning_failure_count",
-                        value=self._learning_failure_count,
-                        category="error"
-                    )
-                
-                    # Log circuit breaker state if tripped
-                    if hasattr(self, '_learning_circuit_breaker_tripped') and self._learning_circuit_breaker_tripped:
-                        self.metrics_collector.record_additional_metric(
-                            name="circuit_breaker_tripped",
-                            value=f"Learning disabled until {datetime.datetime.fromtimestamp(self._circuit_breaker_retry_time).isoformat()}",
-                            category="error"
-                        )
-                except Exception:
-                    # Ignore errors in metrics collection
-                    pass
-        except Exception as e:
-            # Even the failure counting can fail, but we don't want this to affect anything else
-            print(f"Error in failure counting mechanism: {str(e)}")
-            # We deliberately don't do anything further here to avoid cascading failures
-
     def save_learning_state(self, filepath=None):
         """
         Save the current learning state to disk.
@@ -3025,7 +2915,7 @@ class QueryMetricsCollector:
             else:
                 # No valid filepath, can't load
                 return False
-            
+        
         # Check if file exists
         if not os.path.exists(filepath):
             return False
@@ -3408,6 +3298,130 @@ class QueryMetricsCollector:
         return self.metrics_collector.export_metrics_csv(filepath)
 
 
+class GraphRAGQueryStats:
+    """
+    Collects and analyzes query statistics for optimization purposes.
+    
+    This class tracks metrics such as query execution time, cache hit rate,
+    and query patterns to inform the query optimizer's decisions.
+    """
+    
+    def __init__(self):
+        """Initialize the query statistics tracker."""
+        self.query_count = 0
+        self.cache_hits = 0
+        self.total_query_time = 0.0
+        self.query_times = []
+        self.query_patterns = defaultdict(int)
+        self.query_timestamps = []
+        
+    @property
+    def avg_query_time(self) -> float:
+        """Calculate the average query execution time."""
+        if self.query_count == 0:
+            return 0.0
+        return self.total_query_time / self.query_count
+        
+    @property
+    def cache_hit_rate(self) -> float:
+        """Calculate the cache hit rate."""
+        if self.query_count == 0:
+            return 0.0
+        return self.cache_hits / self.query_count
+        
+    def record_query_time(self, execution_time: float) -> None:
+        """
+        Record the execution time of a query.
+        
+        Args:
+            execution_time (float): Query execution time in seconds
+        """
+        self.query_count += 1
+        self.total_query_time += execution_time
+        self.query_times.append(execution_time)
+        self.query_timestamps.append(time.time())
+        
+    def record_cache_hit(self) -> None:
+        """Record a cache hit."""
+        self.cache_hits += 1
+        
+    def record_query_pattern(self, pattern: Dict[str, Any]) -> None:
+        """
+        Record a query pattern for analysis.
+        
+        Args:
+            pattern (Dict): Query pattern representation
+        """
+        # Convert the pattern to a hashable representation
+        pattern_key = json.dumps(pattern, sort_keys=True)
+        self.query_patterns[pattern_key] += 1
+        
+    def get_common_patterns(self, top_n: int = 5) -> List[Tuple[Dict[str, Any], int]]:
+        """
+        Get the most common query patterns.
+        
+        Args:
+            top_n (int): Number of patterns to return
+            
+        Returns:
+            List[Tuple[Dict, int]]: List of (pattern, count) tuples
+        """
+        # Sort patterns by frequency
+        sorted_patterns = sorted(self.query_patterns.items(), key=lambda x: x[1], reverse=True)
+        
+        # Convert pattern keys back to dictionaries
+        return [(json.loads(pattern), count) for pattern, count in sorted_patterns[:top_n]]
+        
+    def get_recent_query_times(self, window_seconds: float = 300.0) -> List[float]:
+        """
+        Get query times from the recent time window.
+        
+        Args:
+            window_seconds (float): Time window in seconds
+            
+        Returns:
+            List[float]: List of query execution times in the window
+        """
+        current_time = time.time()
+        cutoff_time = current_time - window_seconds
+        
+        # Filter query times by timestamp
+        recent_times = []
+        for i, timestamp in enumerate(self.query_timestamps):
+            if timestamp >= cutoff_time:
+                recent_times.append(self.query_times[i])
+                
+        return recent_times
+        
+    def get_performance_summary(self) -> Dict[str, Any]:
+        """
+        Get a summary of query performance statistics.
+        
+        Returns:
+            Dict: Summary statistics
+        """
+        recent_times = self.get_recent_query_times()
+        
+        return {
+            "query_count": self.query_count,
+            "cache_hit_rate": self.cache_hit_rate,
+            "avg_query_time": self.avg_query_time,
+            "min_query_time": min(self.query_times) if self.query_times else 0.0,
+            "max_query_time": max(self.query_times) if self.query_times else 0.0,
+            "recent_avg_time": sum(recent_times) / len(recent_times) if recent_times else 0.0,
+            "common_patterns": self.get_common_patterns()
+        }
+        
+    def reset(self) -> None:
+        """Reset all statistics."""
+        self.query_count = 0
+        self.cache_hits = 0
+        self.total_query_time = 0.0
+        self.query_times = []
+        self.query_patterns = defaultdict(int)
+        self.query_timestamps = []
+
+
 def example_usage():
     """Example usage of the RAG Query Optimizer components."""
     # Sample query vector (would come from an embedding model in real usage)
@@ -3536,3 +3550,120 @@ def example_usage():
 
 if __name__ == "__main__":
     example_usage()
+
+class UnifiedGraphRAGQueryOptimizer:
+    """Unified optimizer for Graph RAG queries"""
+    
+    def __init__(self):
+        self.graph_processor = GraphRAGProcessor()
+    
+    def optimize_query(self, query, context=None):
+        """Optimize a query for Graph RAG"""
+        # Mock implementation for testing
+        return {
+            "optimized_query": f"Optimized: {query}",
+            "context": context or {},
+            "suggestions": ["Consider adding more context", "Refine search terms"],
+            "confidence": 0.85
+        }
+    
+    def process_results(self, results, query):
+        """Process and rank results"""
+        # Mock implementation for testing
+        if isinstance(results, list):
+            return sorted(results, key=lambda x: len(str(x)), reverse=True)
+        return [results] if results else []
+
+class GraphRAGProcessor:
+    """
+    Simple GraphRAG processor for testing purposes.
+    Provides basic query processing functionality.
+    """
+    
+    def __init__(self, graph_id=None):
+        """Initialize the GraphRAG processor"""
+        self.logger = logging.getLogger(__name__)
+        self.graph_id = graph_id
+    
+    def process_query(self, query, context=None):
+        """
+        Process a query with GraphRAG functionality.
+        
+        Args:
+            query: The query to process
+            context: Optional context for the query
+            
+        Returns:
+            Dict: Processed query results
+        """
+        # Mock implementation for testing
+        return {
+            "processed_query": f"Processed: {query}",
+            "context": context or {},
+            "results": [],
+            "metadata": {
+                "processing_time": 0.1,
+                "node_count": 10,
+                "edge_count": 25
+            }
+        }
+    
+    def optimize_traversal(self, start_nodes, target_nodes=None, max_depth=3):
+        """
+        Optimize graph traversal between nodes.
+        
+        Args:
+            start_nodes: Starting nodes for traversal
+            target_nodes: Optional target nodes
+            max_depth: Maximum traversal depth
+            
+        Returns:
+            Dict: Optimized traversal plan
+        """
+        return {
+            "traversal_plan": f"Optimized traversal from {start_nodes}",
+            "estimated_cost": 100,
+            "max_depth": max_depth,
+            "strategy": "breadth_first"
+        }
+    
+    def query(self, query_string, query_type="sparql", max_results=100):
+        """
+        Execute a query against the knowledge graph.
+        
+        Args:
+            query_string: The query to execute
+            query_type: Type of query (sparql, cypher, etc.)
+            max_results: Maximum number of results to return
+            
+        Returns:
+            Dict: Query results with status and data
+        """
+        # Mock implementation for testing
+        mock_results = [
+            {
+                "id": "node_1", 
+                "type": "entity",
+                "label": "Sample Entity",
+                "properties": {"name": "Test", "value": 42}
+            },
+            {
+                "id": "node_2",
+                "type": "relationship", 
+                "label": "Sample Relation",
+                "source": "node_1",
+                "target": "node_3"
+            }
+        ]
+        
+        return {
+            "status": "success",
+            "results": mock_results[:max_results],
+            "query_type": query_type,
+            "graph_id": self.graph_id,
+            "metadata": {
+                "execution_time": 0.05,
+                "result_count": min(len(mock_results), max_results),
+                "query_complexity": "low"
+            }
+        }

@@ -1,5 +1,12 @@
+# -*- coding: utf-8 -*-
+
 """
-Test package for IPFS Datasets Python
+Test suite for MCP server tools.
+
+This file is kept minimal to avoid import cascade failures.
+Individual test modules can be run independently.
 """
-# Remove problematic import
-# from .ipfs_datasets_py import load_dataset
+
+# Keep this file minimal to avoid import cascade failures
+# Individual test files should be discovered and run by pytest
+pass

@@ -16,20 +16,23 @@ fsspec
 
 ## Phase 1 dependencies
 # IPFS integration
-ipfshttpclient>=0.8.0
+ipfshttpclient>=0.8.0a2
 
 # IPLD components
 multiformats>=0.2.1
 
 # Optional but recommended IPLD implementations
-ipld-car>=0.1.0
-ipld-dag-pb>=0.1.0
+ipld-car>=0.0.1
+ipld-dag-pb>=0.0.1
 
 # Web Archive integration
-archivenow>=2023.5.7
-ipwb>=0.2021.12.16
+archivenow>=2020.7.18.12.19.44
+ipwb>=0.2024.10.24.1853
 beautifulsoup4>=4.11.1
 warcio>=1.7.4
+matplotlib>=3.10.0
+jsonschema>=4.23.0
+networkx>=3.1
 
 # Data processing
 pyarrow>=10.0.0
@@ -37,7 +40,7 @@ pandas>=1.5.0
 datasets>=2.10.0
 
 # P2P communication
-py-libp2p>=0.1.0  # Optional: for distributed dataset management
+libp2p>=0.2.7  # Optional: for distributed dataset management
 
 # Testing
 pytest>=7.3.1
@@ -45,4 +48,4 @@ pytest-cov>=4.1.0
 pytest-asyncio>=0.21.0  # For testing async functions
 
 # MCP Server dependencies
-modelcontextprotocol>=0.1.0
+mcp>=1.9.1  # Replace with actual MCP server package name

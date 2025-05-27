@@ -25,80 +25,47 @@ except ImportError:
     has_requests = True
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# sys.path.insert(0, str(Path(__file__).resolve().parent)) # Removed this line
 
 def start_server_process():
     """Start the MCP server as a separate process."""
     print("Starting MCP server...")
     
-    # Determine if we can use the standard or simplified server
-    try:
-        # import modelcontextprotocol # Commented out due to import issues
-        has_mcp = False # Assume False for now
-        print("Using simplified MCP server implementation (modelcontextprotocol not found)")
-    except ImportError:
-        has_mcp = False
-        print("Using simplified MCP server implementation (modelcontextprotocol not found)")
-    
     # Determine server script path
-    server_dir = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server"
+    server_script_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server" / "server.py"
     
-    # Check if the MCP server directory exists
-    if not server_dir.exists():
-        print(f"Error: MCP server directory not found at {server_dir}")
-        parent_dir = server_dir.parent
-        if parent_dir.exists():
-            print(f"Contents of {parent_dir}:")
-            for item in parent_dir.iterdir():
-                print(f"  {item.name}")
+    # Check if the MCP server script exists
+    if not server_script_path.exists():
+        print(f"Error: MCP server script not found at {server_script_path}")
         return None
     
-    # Start the server as a module
-    try:
-        if not has_mcp:
-            print("Starting simplified server directly...")
-            cmd = [
-                sys.executable, 
-                "-c", 
-                "import sys; sys.path.insert(0, '.'); "
-                "from ipfs_datasets_py.mcp_server.simple_server import start_simple_server; "
-                "start_simple_server()"
-            ]
-        else:
-            print("Starting standard server...")
-            cmd = [
-                sys.executable, 
-                "-c", 
-                "import sys; sys.path.insert(0, '.'); "
-                "from ipfs_datasets_py.mcp_server.server import start_server; "
-                "start_server()"
-            ]
-            
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1
-        )
-        
-        # Print server output in a separate thread
-        def print_output():
-            # Ensure process.stdout is not None before iterating
-            if process.stdout:
-                for line in iter(process.stdout.readline, ''):
-                    print(f"[SERVER] {line.strip()}")
+    # Start the standard server by executing the script file directly
+    print(f"Starting standard server from: {server_script_path}")
+    cmd = [
+        sys.executable, # Use the Python executable from the activated venv
+        str(server_script_path) # Execute the server script file directly
+    ]
+    
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1
+    )
+    
+    # Print server output in a separate thread
+    def print_output():
+        # Ensure process.stdout is not None before iterating
+        if process.stdout:
+            for line in iter(process.stdout.readline, ''):
+                print(f"[SERVER] {line.strip()}")
         
         output_thread = threading.Thread(target=print_output)
         output_thread.daemon = True
         output_thread.start()
         
         return process
-    except Exception as e:
-        print(f"Error starting server process: {e}")
-        return None
-    
-    return process
 
 def test_server_tools():
     """Make requests to the server to test its tools."""
@@ -106,74 +73,11 @@ def test_server_tools():
     
     # List available tools
     try:
-        response = requests.get("http://127.0.0.1:5000/tools")
-        if response.status_code == 200:
-            tools_data = response.json()
-            tools = tools_data.get("tools", {})
-            print(f"Found {len(tools)} available tools:")
-            for tool_name in tools:
-                print(f"  - {tool_name}")
-            
-            # Create examples directory if it doesn't exist
-            examples_dir = Path(__file__).resolve().parent / "examples"
-            examples_dir.mkdir(exist_ok=True)
-            
-            # Test dataset tools if available
-            test_dataset_path = examples_dir / "sample_data.json"
-            if not test_dataset_path.exists():
-                print(f"Creating sample dataset at {test_dataset_path}")
-                with open(test_dataset_path, "w") as f:
-                    json.dump({
-                        "name": "Sample Dataset",
-                        "data": [
-                            {"id": 1, "value": 10},
-                            {"id": 2, "value": 20},
-                            {"id": 3, "value": 30}
-                        ]
-                    }, f)
-            
-            # Try a few tool requests based on what we found
-            for tool_name in ["load_dataset", "search_vector_index", "record_audit_event"]:
-                if tool_name in tools:
-                    print(f"\nTesting {tool_name}...")
-                    
-                    # Prepare parameters based on the tool
-                    if tool_name == "load_dataset":
-                        params = {
-                            "source": str(test_dataset_path),
-                            "format": "json"
-                        }
-                    elif tool_name == "search_vector_index":
-                        params = {
-                            "query": "Sample vector search",
-                            "top_k": 3
-                        }
-                    elif tool_name == "record_audit_event":
-                        params = {
-                            "event_type": "MCP_SERVER_TEST",
-                            "description": "Testing MCP server audit logging",
-                            "level": "INFO"
-                        }
-                    else:
-                        params = {}
-                    
-                    # Call the tool
-                    try:
-                        response = requests.post(
-                            f"http://127.0.0.1:5000/tools/{tool_name}",
-                            json=params
-                        )
-                        print(f"Response status: {response.status_code}")
-                        if response.status_code == 200:
-                            print(json.dumps(response.json(), indent=2))
-                        else:
-                            print(f"Error: {response.text}")
-                    except Exception as e:
-                        print(f"Error calling {tool_name}: {e}")
-        else:
-            print(f"Error listing tools: {response.status_code}")
-            if response.text:
-                print(response.text)
+        # Note: This test function is designed for the simplified HTTP server.
+        # It will not work with the standard stdio MCP server.
+        # We will rely on the system's MCP connection status instead.
+        print("Skipping HTTP tool tests as standard MCP server uses stdio transport.")
+        
     except Exception as e:
         print(f"Error testing server: {e}")
 
@@ -198,28 +102,20 @@ def main():
                 print("Failed to start server process")
                 return 1
             
-            # Wait for server to start
+            # Wait for server to start (This check might not work for stdio server)
             print("Waiting for server to start...")
-            max_retries = 30
-            for i in range(max_retries):
-                try:
-                    response = requests.get("http://127.0.0.1:5000")
-                    if response.status_code == 200:
-                        print(f"Server started successfully! ({i+1} attempts)")
-                        server_info = response.json()
-                        print(f"Server info: {json.dumps(server_info, indent=2)}")
-                        break
-                except Exception as e:
-                    if i == max_retries - 1:
-                        print(f"Timed out waiting for server to start: {e}")
-                        return 1
-                    print(f"Waiting for server... ({i+1}/{max_retries})")
-                    time.sleep(1)
+            # We will rely on the system's "Connected MCP Servers" list instead
+            print("Please check 'Connected MCP Servers' in the environment details.")
+            print("Press Ctrl+C to stop the server once it's running or you see errors.")
+            
+            # Keep the main thread alive while the server runs in the background
+            while True:
+                time.sleep(1)
+
         else:
             print("Testing pre-existing server...")
-        
-        # Test the server's tools
-        test_server_tools()
+            # This test logic is for the simplified HTTP server and is now obsolete
+            print("Test-only mode for HTTP server is not applicable to standard MCP server.")
         
     except KeyboardInterrupt:
         print("\nInterrupted by user")

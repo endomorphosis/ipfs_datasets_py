@@ -13,7 +13,7 @@ import numpy as np
 from unittest.mock import MagicMock, patch
 from typing import Dict, List, Any, Optional, Tuple
 
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py import (
     GraphRAGQueryStats,
     GraphRAGQueryOptimizer,
     VectorIndexPartitioner,
