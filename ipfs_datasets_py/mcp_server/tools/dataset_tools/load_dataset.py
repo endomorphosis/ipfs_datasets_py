@@ -29,6 +29,23 @@ async def load_dataset(
     try:
         logger.info(f"Loading dataset from {source} with format {format if format else 'auto'}")
 
+        # Input validation - reject Python files and dangerous sources
+        if not source or not isinstance(source, str) or len(source.strip()) == 0:
+            raise ValueError("Source must be a non-empty string")
+            
+        # Reject Python files for security
+        if source.lower().endswith('.py'):
+            raise ValueError(
+                "Python files (.py) are not valid dataset sources. "
+                "Please provide a dataset identifier from Hugging Face Hub, "
+                "a directory path, or a data file (JSON, CSV, Parquet, etc.)"
+            )
+        
+        # Reject other executable files
+        executable_extensions = ['.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.sh', '.bat']
+        if any(source.lower().endswith(ext) for ext in executable_extensions):
+            raise ValueError(f"Executable files are not valid dataset sources: {source}")
+
         # Default options
         if options is None:
             options = {}

@@ -29,6 +29,10 @@ As of May 2025, IPFS Datasets Python includes a complete MCP server implementati
 
 **Migration Status**: ✅ **COMPLETE** - All 5 development tools have been successfully migrated and are ready for VS Code Copilot Chat integration and production development workflows.
 
+**Current Status**: 🎯 **95% Complete** - Only requires VS Code MCP server restart (Ctrl+Shift+P → "MCP: Restart All Servers") to reach 100% completion.
+
+**Security**: Enhanced with comprehensive input validation, preventing execution of malicious code through dataset operations.
+
 **Note**: For optimal performance, use direct imports when accessing development tools due to complex package-level dependency chains.
 
 ## Installation

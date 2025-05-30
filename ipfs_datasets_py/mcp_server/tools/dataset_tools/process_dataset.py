@@ -27,6 +27,27 @@ async def process_dataset(
         Dict containing information about the processed dataset.
     """
     try:
+        # Input validation - check for dangerous operations
+        if not isinstance(operations, list):
+            raise ValueError("Operations must be a list")
+            
+        for operation in operations:
+            if not isinstance(operation, dict):
+                raise ValueError("Each operation must be a dictionary")
+                
+            op_type = operation.get("type", "").lower()
+            
+            # Block dangerous operations for security
+            dangerous_ops = ["exec", "eval", "import", "compile", "__import__", "subprocess", "os.system"]
+            if op_type in dangerous_ops:
+                raise ValueError(f"Operation type '{op_type}' is not allowed for security reasons")
+                
+            # Check for dangerous code in operation parameters
+            if "code" in operation or "function" in operation:
+                code_value = operation.get("code", operation.get("function", ""))
+                if any(danger in str(code_value).lower() for danger in dangerous_ops):
+                    raise ValueError("Dangerous code detected in operation parameters")
+
         # Handle different input types
         if isinstance(dataset_source, str):
             # If it's a string, treat as dataset ID for loading
