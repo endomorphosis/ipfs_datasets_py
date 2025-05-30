@@ -47,16 +47,16 @@ class TestMCPConvertDatasetFormat(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         # Create a mock for DistributedDatasetManager
         self.mock_distributed_dataset_manager = MagicMock()
-        
+
         # Create an instance of our MockDatasetShardManager
         self.mock_shard_manager_instance = MockDatasetShardManager()
-        
+
         # Set the shard_manager attribute on the mock DistributedDatasetManager
         self.mock_distributed_dataset_manager.shard_manager = self.mock_shard_manager_instance
-        
+
         # Configure the mock DistributedDatasetManager to return itself when instantiated
         self.patcher_distributed_manager = patch(
-            'ipfs_datasets_py.libp2p_kit.DistributedDatasetManager', 
+            'ipfs_datasets_py.libp2p_kit.DistributedDatasetManager',
             return_value=self.mock_distributed_dataset_manager
         )
         self.patcher_distributed_manager.start()
@@ -65,12 +65,12 @@ class TestMCPConvertDatasetFormat(unittest.IsolatedAsyncioTestCase):
         # Populate the mock shard_manager with an initial dataset
         self.initial_dataset = MockDataset({"key": "value"}, format="json")
         self.initial_dataset_id = self.mock_shard_manager_instance.add_dataset(self.initial_dataset)
-        
+
         # Patch the get_dataset method of the mock shard_manager_instance
         # This ensures that when the tool calls manager.shard_manager.get_dataset, it gets our mock dataset
         patcher_get_dataset = patch.object(
-            self.mock_shard_manager_instance, 
-            'get_dataset', 
+            self.mock_shard_manager_instance,
+            'get_dataset',
             side_effect=self.mock_shard_manager_instance.get_dataset
         )
         self.mock_get_dataset = patcher_get_dataset.start()
@@ -78,8 +78,8 @@ class TestMCPConvertDatasetFormat(unittest.IsolatedAsyncioTestCase):
 
         # Patch the add_dataset method of the mock shard_manager_instance
         patcher_add_dataset = patch.object(
-            self.mock_shard_manager_instance, 
-            'add_dataset', 
+            self.mock_shard_manager_instance,
+            'add_dataset',
             side_effect=self.mock_shard_manager_instance.add_dataset
         )
         self.mock_add_dataset = patcher_add_dataset.start()

@@ -34,24 +34,24 @@ except ImportError:
 @unittest.skipIf(not MODULE_AVAILABLE, "rag_query_optimizer module not available")
 class TestJsonSerialization(unittest.TestCase):
     """Test the JSON serialization fixes."""
-    
+
     def setUp(self):
         """Set up the test environment."""
         # Create a temporary directory for metrics
         self.temp_dir = tempfile.mkdtemp()
-        
+
         # Create the metrics collector
         self.metrics_collector = QueryMetricsCollector(
             max_history_size=10,
             metrics_dir=self.temp_dir,
             track_resources=True
         )
-    
+
     def tearDown(self):
         """Clean up after tests."""
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
-    
+
     @unittest.skipIf(not NUMPY_AVAILABLE, "NumPy not available")
     def test_numpy_serialization(self):
         """Test serialization of NumPy arrays and types."""
@@ -76,7 +76,7 @@ class TestJsonSerialization(unittest.TestCase):
                 "peak_memory": 1024 * 1024
             }
         }
-        
+
         # Add NumPy objects
         metrics["numpy_array"] = np.array([1, 2, 3, 4, 5])
         metrics["numpy_float"] = np.float32(3.14159)
@@ -86,33 +86,33 @@ class TestJsonSerialization(unittest.TestCase):
         metrics["statistics"] = {
             "std_dev": np.std([1, 2, 3, 4, 5])
         }
-        
+
         # Persist metrics
         self.metrics_collector._persist_metrics(metrics)
-        
+
         # Check for created files
         files = [f for f in os.listdir(self.temp_dir) if f.endswith('.json')]
         self.assertEqual(len(files), 1, "A metrics file should have been created")
-        
+
         # Load the file and check contents
         with open(os.path.join(self.temp_dir, files[0]), 'r') as f:
             loaded_metrics = json.load(f)
-        
+
         # Check if NumPy types are correctly serialized
         self.assertIsInstance(loaded_metrics["numpy_array"], list)
         self.assertEqual(loaded_metrics["numpy_array"], [1, 2, 3, 4, 5])
-        
+
         self.assertIsInstance(loaded_metrics["numpy_float"], float)
         self.assertAlmostEqual(loaded_metrics["numpy_float"], 3.14159, places=5)
-        
+
         self.assertIsInstance(loaded_metrics["numpy_int"], int)
         self.assertEqual(loaded_metrics["numpy_int"], 42)
-        
+
         self.assertIsInstance(loaded_metrics["numpy_bool"], bool)
         self.assertTrue(loaded_metrics["numpy_bool"])
-        
+
         self.assertIsInstance(loaded_metrics["statistics"]["std_dev"], float)
-    
+
     @unittest.skipIf(not NUMPY_AVAILABLE, "NumPy not available")
     def test_export_metrics_json(self):
         """Test that export_metrics_json correctly handles NumPy arrays."""
@@ -127,24 +127,24 @@ class TestJsonSerialization(unittest.TestCase):
             "results": {"count": 0, "quality_score": 0.0},
             "resources": {}
         }
-        
+
         # Add NumPy array
         metrics["numpy_array"] = np.array([1, 2, 3])
-        
+
         # Add to collector
         self.metrics_collector.query_metrics.append(metrics)
-        
+
         # Export to file
         export_file = os.path.join(self.temp_dir, "export.json")
         self.metrics_collector.export_metrics_json(export_file)
-        
+
         # Check file exists
         self.assertTrue(os.path.exists(export_file))
-        
+
         # Load and verify
         with open(export_file, 'r') as f:
             exported_data = json.load(f)
-        
+
         self.assertEqual(len(exported_data), 1)
         self.assertIsInstance(exported_data[0]["numpy_array"], list)
         self.assertEqual(exported_data[0]["numpy_array"], [1, 2, 3])

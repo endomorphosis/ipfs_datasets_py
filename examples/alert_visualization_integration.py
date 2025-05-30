@@ -26,11 +26,11 @@ from ipfs_datasets_py.optimizer_visualization_integration import LiveOptimizerVi
 class SimulatedOptimizer:
     """
     Simulates a RAG Query Optimizer with controlled anomalies for demonstration.
-    
+
     This class mimics the behavior of a real optimizer but allows injection of
     deliberate anomalies to demonstrate the alert and visualization systems.
     """
-    
+
     def __init__(self):
         """Initialize the simulated optimizer."""
         self.current_cycle = 0
@@ -57,11 +57,11 @@ class SimulatedOptimizer:
         self.last_update = datetime.now()
         self.learning_history = []
         self.lock = threading.RLock()
-    
+
     def simulate_query(self, anomaly=None):
         """
         Simulate processing a query, optionally with a specific anomaly.
-        
+
         Args:
             anomaly (str, optional): Type of anomaly to simulate:
                 - "oscillation": Make parameters oscillate
@@ -71,52 +71,52 @@ class SimulatedOptimizer:
         """
         with self.lock:
             self.metrics["query_count"] += 1
-            
+
             # Simulate success/failure
             success = random.random() < 0.9  # 90% success rate by default
             if anomaly == "performance_decline" and self.metrics["query_count"] % 5 == 0:
                 # Force failure every 5th query for this anomaly
                 success = False
-            
+
             if success:
                 self.metrics["successful_queries"] += 1
             else:
                 self.metrics["failed_queries"] += 1
-            
+
             # Simulate latency (80-120ms normally)
             latency = random.uniform(80, 120)
             if anomaly == "performance_decline":
                 # Increase latency by 5ms per query for this anomaly
                 latency += self.metrics["query_count"] * 5
-            
+
             # Update average latency
             old_avg = self.metrics["avg_latency"]
             query_count = self.metrics["query_count"]
             self.metrics["avg_latency"] = (old_avg * (query_count - 1) + latency) / query_count
-            
+
             # Simulate strategy effectiveness changes
             if anomaly == "strategy_issue" and self.metrics["query_count"] % 3 == 0:
                 # Decrease effectiveness of vector_first strategy
                 self.metrics["strategy_effectiveness"]["vector_first"] = max(
                     0.1, self.metrics["strategy_effectiveness"]["vector_first"] - 0.05
                 )
-            
+
             # Every 10 queries, simulate a learning cycle
             if self.metrics["query_count"] % 10 == 0 and self.learning_enabled:
                 self._simulate_learning_cycle(anomaly)
-    
+
     def _simulate_learning_cycle(self, anomaly=None):
         """
         Simulate a learning cycle with parameter adaptations.
-        
+
         Args:
             anomaly (str, optional): Type of anomaly to simulate
         """
         self.current_cycle += 1
-        
+
         # Record old parameters
         old_params = self.parameters.copy()
-        
+
         # Simulate parameter changes based on anomaly type
         if anomaly == "oscillation":
             # Oscillate max_vector_results between 5 and 15
@@ -124,28 +124,28 @@ class SimulatedOptimizer:
                 self.parameters["max_vector_results"] = 5 if self.current_cycle % 2 == 0 else 15
             else:
                 self.parameters["max_vector_results"] = 10
-            
+
             # Oscillate min_similarity between 0.6 and 0.8
             if self.parameters["min_similarity"] == 0.7:
                 self.parameters["min_similarity"] = 0.6 if self.current_cycle % 2 == 0 else 0.8
             else:
                 self.parameters["min_similarity"] = 0.7
-                
+
         elif anomaly == "stalled":
             # Don't change any parameters
             pass
-            
+
         else:
             # Normal learning: make small adjustments
             self.parameters["max_vector_results"] += random.choice([-1, 0, 1])
             self.parameters["min_similarity"] += random.choice([-0.05, 0, 0.05])
             self.parameters["traversal_depth"] += random.choice([-1, 0, 1])
-            
+
             # Keep parameters in reasonable ranges
             self.parameters["max_vector_results"] = max(3, min(20, self.parameters["max_vector_results"]))
             self.parameters["min_similarity"] = max(0.3, min(0.9, self.parameters["min_similarity"]))
             self.parameters["traversal_depth"] = max(1, min(4, self.parameters["traversal_depth"]))
-        
+
         # Record parameter changes
         changes = {}
         for param, new_value in self.parameters.items():
@@ -156,10 +156,10 @@ class SimulatedOptimizer:
                     "new": new_value,
                     "change": new_value - old_value
                 }
-        
+
         # Update metrics
         self.metrics["parameter_changes"] = changes
-        
+
         # Record learning history
         self.learning_history.append({
             "cycle": self.current_cycle,
@@ -172,13 +172,13 @@ class SimulatedOptimizer:
                 "strategy_effectiveness": self.metrics["strategy_effectiveness"].copy()
             }
         })
-        
+
         self.last_update = datetime.now()
-    
+
     def get_learning_metrics(self):
         """
         Get current learning metrics for visualization and alerting.
-        
+
         Returns:
             dict: Current metrics and learning history
         """
@@ -195,29 +195,29 @@ class SimulatedOptimizer:
 
 class VisualizationAlertHandler:
     """Custom alert handler that integrates with the visualization system."""
-    
+
     def __init__(self, visualizer):
         """
         Initialize the alert handler.
-        
+
         Args:
             visualizer (LiveOptimizerVisualization): Visualization system
         """
         self.visualizer = visualizer
         self.alerts = []
-    
+
     def __call__(self, anomaly: LearningAnomaly):
         """
         Handle an anomaly by adding it to the visualization.
-        
+
         Args:
             anomaly: The detected anomaly
         """
         self.alerts.append(anomaly)
-        
-        # Instead of trying to add markers (which the existing visualization system 
+
+        # Instead of trying to add markers (which the existing visualization system
         # doesn't support), we'll just record the alerts and save them separately
-        
+
         # Print debug info
         print(f"[VISUALIZATION] Recorded alert for {anomaly.anomaly_type} at {anomaly.timestamp}")
 
@@ -225,7 +225,7 @@ class VisualizationAlertHandler:
 def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizations"):
     """
     Run the integrated alert and visualization simulation.
-    
+
     Args:
         duration (int): Duration in seconds to run the simulation
         anomaly_schedule (dict, optional): Schedule of anomalies to inject
@@ -234,10 +234,10 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
     """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Create simulated optimizer
     optimizer = SimulatedOptimizer()
-    
+
     # Set up visualization system
     visualizer = LiveOptimizerVisualization(
         optimizer=None,  # We'll use metrics_source function directly
@@ -245,16 +245,16 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
         visualization_dir=output_dir,
         visualization_interval=5  # Update every 5 seconds
     )
-    
+
     # Add a method to directly pass metrics from our simulator
     def update_visualizer_with_metrics():
         """Update visualizer with metrics from our simulator."""
         metrics = optimizer.get_learning_metrics()
         visualizer.last_metrics = metrics
-    
+
     # Set up custom alert handler
     custom_handler = VisualizationAlertHandler(visualizer)
-    
+
     # Create metrics collector adapter for the simulator
     class SimulatedMetricsCollector:
         def __init__(self, optimizer):
@@ -263,18 +263,18 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
             self.parameter_adaptations = []
             self.strategy_effectiveness = []
             self.update_metrics()
-            
+
             # Add some sample data to trigger anomalies for testing
             self._add_sample_oscillations()
-        
+
         def update_metrics(self):
             metrics = self.optimizer.get_learning_metrics()
-            
+
             # Convert learning history to the format expected by LearningAlertSystem
             self.learning_cycles = []
             self.parameter_adaptations = []
             self.strategy_effectiveness = []
-            
+
             for cycle in metrics.get('learning_history', []):
                 # Add learning cycle data
                 self.learning_cycles.append({
@@ -285,7 +285,7 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                     'patterns_identified': random.randint(1, 3),  # Simulated value
                     'execution_time': random.uniform(0.5, 3.0)  # Simulated value
                 })
-                
+
                 # Add parameter adaptations
                 for param_name, change_data in cycle.get('changes', {}).items():
                     self.parameter_adaptations.append({
@@ -295,7 +295,7 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                         'reason': f"Learning cycle {cycle.get('cycle', 0)}",
                         'timestamp': cycle.get('timestamp', datetime.now())
                     })
-                
+
                 # Add strategy effectiveness data
                 cycle_metrics = cycle.get('metrics', {})
                 if 'strategy_effectiveness' in cycle_metrics:
@@ -308,16 +308,16 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                             'sample_size': random.randint(10, 30),  # Simulated value
                             'timestamp': cycle.get('timestamp', datetime.now())
                         })
-        
+
         def _add_sample_oscillations(self):
             """Add sample data to trigger anomalies for testing."""
             # Add oscillating parameter adaptations
             param_name = "max_vector_results"
             base_time = datetime.now() - timedelta(minutes=20)
-            
+
             # Create an oscillating pattern: 10 -> 5 -> 10 -> 15 -> 10 -> 5
             values = [10, 5, 10, 15, 10, 5]
-            
+
             for i in range(len(values) - 1):
                 self.parameter_adaptations.append({
                     'parameter_name': param_name,
@@ -326,15 +326,15 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                     'reason': f"Testing oscillation {i}",
                     'timestamp': base_time + timedelta(minutes=i*2)
                 })
-            
+
             # Add declining strategy effectiveness
             strategy = "vector_first"
             base_effectiveness = 0.9
-            
+
             for i in range(5):
                 # Gradually decreasing effectiveness
                 current_effectiveness = base_effectiveness - (i * 0.1)
-                
+
                 self.strategy_effectiveness.append({
                     'strategy': strategy,
                     'query_type': 'general',
@@ -343,10 +343,10 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                     'sample_size': 20,
                     'timestamp': base_time + timedelta(minutes=i*3)
                 })
-    
+
     # Create metrics collector for the optimizer
     metrics_collector = SimulatedMetricsCollector(optimizer)
-    
+
     # Manually create some anomalies for testing since our simulation is too short
     # to trigger the detection mechanisms
     oscillation_anomaly = LearningAnomaly(
@@ -362,7 +362,7 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
             'recent_values': [10, 5, 10, 15, 10]
         }
     )
-    
+
     performance_anomaly = LearningAnomaly(
         anomaly_type='performance_decline',
         severity='critical',
@@ -377,7 +377,7 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
             'current_latency': 142
         }
     )
-    
+
     stall_anomaly = LearningAnomaly(
         anomaly_type='learning_stall',
         severity='info',
@@ -390,7 +390,7 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
             'cycles_considered': 3
         }
     )
-    
+
     # Set up alert system with custom handler
     alert_system = LearningAlertSystem(
         metrics_collector=metrics_collector,
@@ -398,7 +398,7 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
         check_interval=5,  # Check every 5 seconds
         alerts_dir=output_dir
     )
-    
+
     # Default anomaly schedule if none provided
     if anomaly_schedule is None:
         anomaly_schedule = {
@@ -407,29 +407,29 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
             180: "strategy_issue",   # Start strategy issues at 3 minutes
             240: "stalled"           # Start stalled learning at 4 minutes
         }
-    
+
     # Start alert system
     alert_system.start_monitoring()
-    
+
     # Manually process the test anomalies we created
     custom_handler(oscillation_anomaly)
     custom_handler(performance_anomaly)
     custom_handler(stall_anomaly)
-    
+
     # Also process through the console handler for demo
     console_alert_handler(oscillation_anomaly)
     console_alert_handler(performance_anomaly)
     console_alert_handler(stall_anomaly)
-    
+
     # Start auto-update for visualizer
     visualizer.start_auto_update()
-    
+
     try:
         print(f"Starting simulation for {duration} seconds...")
         start_time = time.time()
         current_anomaly = None
         update_counter = 0
-        
+
         while time.time() - start_time < duration:
             # Check if we need to change the anomaly
             elapsed = int(time.time() - start_time)
@@ -439,30 +439,30 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                     print(f"[{elapsed}s] Injecting anomaly: {anomaly_type}")
                     # Mark this anomaly as processed
                     anomaly_schedule[schedule_time] = -1
-            
+
             # Simulate a query with the current anomaly
             optimizer.simulate_query(current_anomaly)
-            
+
             # Update metrics collector every 5 queries
             update_counter += 1
             if update_counter % 5 == 0:
                 metrics_collector.update_metrics()
                 update_visualizer_with_metrics()
-            
+
             # Sleep for a random interval (0.5-1.5s) to simulate real query patterns
             time.sleep(random.uniform(0.5, 1.5))
-    
+
     except KeyboardInterrupt:
         print("\nSimulation interrupted by user.")
-    
+
     finally:
         # Stop alert system and visualization
         alert_system.stop_monitoring()
         visualizer.stop_auto_update()
-        
+
         # Generate final dashboard with all data and alerts
         final_dashboard_path = os.path.join(output_dir, "final_dashboard.html")
-        
+
         # Since visualizer doesn't have a parameter for alerts, let's save them separately
         alerts_path = os.path.join(output_dir, "alerts.json")
         with open(alerts_path, 'w') as f:
@@ -476,10 +476,10 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                     "data": anomaly.metric_values
                 })
             json.dump(alert_data, f, indent=2)
-        
+
         # Update metrics for visualization one last time
         update_visualizer_with_metrics()
-        
+
         # We'll create a simple HTML dashboard instead of using the existing visualizer
         # which has parameter compatibility issues
         dashboard_path = os.path.join(output_dir, "integrated_dashboard.html")
@@ -492,10 +492,10 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
                 <style>
                     body {{ font-family: Arial, sans-serif; margin: 20px; }}
                     h1, h2 {{ color: #333; }}
-                    .alert {{ 
-                        padding: 10px; 
-                        margin: 10px 0; 
-                        border-radius: 5px; 
+                    .alert {{
+                        padding: 10px;
+                        margin: 10px 0;
+                        border-radius: 5px;
                     }}
                     .oscillation {{ background-color: #fff3cd; }}
                     .performance {{ background-color: #f8d7da; }}
@@ -509,40 +509,40 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
             <body>
                 <h1>RAG Query Optimizer Monitoring Dashboard</h1>
                 <p>Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-                
+
                 <h2>Alert Summary</h2>
                 <div class="alerts">
             """)
-            
+
             # Add alerts to dashboard
             for anomaly in custom_handler.alerts:
                 alert_class = anomaly.anomaly_type.lower()
                 f.write(f"""
                     <div class="alert {alert_class}">
-                        <strong>{anomaly.severity.upper()} - {anomaly.anomaly_type}:</strong> 
+                        <strong>{anomaly.severity.upper()} - {anomaly.anomaly_type}:</strong>
                         {anomaly.description} <br>
                         <small>Detected at: {anomaly.timestamp}</small>
                     </div>
                 """)
-            
+
             # Close the HTML structure
             f.write("""
                 </div>
-                
+
                 <h2>Visualizations</h2>
                 <p>Visualizations can be found in the output directory.</p>
-                
+
                 <h2>Raw Metrics</h2>
                 <p>Detailed metrics data is available in the metrics files.</p>
             </body>
             </html>
             """)
-        
+
         dashboard_result = {'dashboard': dashboard_path}
-        
+
         print(f"\nSimulation completed.")
         print(f"Alert data saved to: {alerts_path}")
-        
+
         if 'dashboard' in dashboard_result:
             print(f"Final dashboard saved to: {dashboard_result['dashboard']}")
         else:
@@ -552,27 +552,27 @@ def run_simulation(duration=300, anomaly_schedule=None, output_dir="./visualizat
 def main():
     """Main entry point with command-line argument parsing."""
     parser = argparse.ArgumentParser(description="Run an integrated alert and visualization demo")
-    
+
     parser.add_argument(
         "--duration", type=int, default=300,
         help="Duration of the simulation in seconds (default: 300)"
     )
-    
+
     parser.add_argument(
         "--output-dir", type=str, default="./visualizations",
         help="Directory to save visualization outputs (default: ./visualizations)"
     )
-    
+
     parser.add_argument(
         "--anomaly-free", action="store_true",
         help="Run the simulation without injecting anomalies"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Use custom anomaly schedule if anomaly-free option is set
     anomaly_schedule = None if not args.anomaly_free else {}
-    
+
     run_simulation(
         duration=args.duration,
         anomaly_schedule=anomaly_schedule,

@@ -4,11 +4,12 @@ IPFS Datasets Python
 A unified interface for data processing and distribution across decentralized networks.
 """
 
-# Original imports
-from .ipfs_datasets import load_dataset
-from .s3_kit import s3_kit
-from .test_fio import test_fio
-from .config import config
+# Original imports - commented out to avoid hanging imports
+# from .ipfs_datasets import load_dataset
+# from .s3_kit import s3_kit  
+# from .test_fio import test_fio
+# Delay config import to avoid circular dependencies
+# from .config import config
 
 # Use conditional imports to handle missing modules gracefully
 try:
@@ -21,7 +22,7 @@ try:
     HAVE_IPLD = True
 except ImportError:
     HAVE_IPLD = False
-    
+
 try:
     from .dataset_serialization import (
         DatasetSerializer, GraphDataset, GraphNode, VectorAugmentedGraphDataset,
@@ -99,7 +100,7 @@ except ImportError:
 # LLM Integration Components
 try:
     from .llm_interface import (
-        LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate, 
+        LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
         LLMInterfaceFactory, GraphRAGPromptTemplates
     )
     HAVE_LLM_INTERFACE = True
@@ -179,7 +180,7 @@ __all__ = [
     's3_kit',
     'test_fio',
     'config',
-    
+
     # Dependencies availability flags
     'HAVE_IPFS',
     'HAVE_IPLD_CAR',

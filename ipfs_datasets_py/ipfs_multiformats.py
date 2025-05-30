@@ -4,10 +4,10 @@ import tempfile
 import os
 import sys
 class ipfs_multiformats_py:
-    def __init__(self, resources, metadata): 
+    def __init__(self, resources, metadata):
         self.multihash = multihash
         return None
-    
+
     # Step 1: Hash the file content with SHA-256
     def get_file_sha256(self, file_path):
         hasher = hashlib.sha256()

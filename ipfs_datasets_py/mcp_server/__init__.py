@@ -11,22 +11,22 @@ Usage:
     # Start the server with default settings
     from ipfs_datasets_py.mcp_server import start_server
     start_server()
-    
+
     # Or with custom settings
     start_server(host="127.0.0.1", port=5000, ipfs_kit_mcp_url="http://localhost:8001")
-    
+
     # Or create and configure your own server instance
     from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer
     server = IPFSDatasetsMCPServer()
     server.register_tools()
     server.register_ipfs_kit_tools()
     await server.start(host="127.0.0.1", port=5000)
-    
+
     # Client Usage:
     # ------------
     # Connect to a running MCP server
     from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPClient
-    
+
     async def main():
         client = IPFSDatasetsMCPClient("http://localhost:8000")
         dataset_info = await client.load_dataset("/path/to/dataset.json")
@@ -39,7 +39,7 @@ except ImportError:
     from .simple_server import start_simple_server as start_server
     start_stdio_server = None
     IPFSDatasetsMCPServer = None
-    
+
 try:
     from .client import IPFSDatasetsMCPClient
 except ImportError:
@@ -55,12 +55,12 @@ except ImportError:
 
 __version__ = "0.1.0"
 __all__ = [
-    "start_server", 
+    "start_server",
     "start_stdio_server",
-    "IPFSDatasetsMCPServer", 
+    "IPFSDatasetsMCPServer",
     "SimpleIPFSDatasetsMCPServer",
     "IPFSDatasetsMCPClient",
-    "Configs", 
-    "configs", 
+    "Configs",
+    "configs",
     "load_config_from_yaml"
 ]

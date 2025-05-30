@@ -31,48 +31,48 @@ async def test_web_archive_tools():
     except ImportError as e:
         print(f"✗ Error importing web archive tool functions: {e}")
         return False
-    
+
     # Create test directory
     test_dir = Path("/tmp/mcp_web_archive_test")
     os.makedirs(test_dir, exist_ok=True)
     print(f"✓ Created test directory: {test_dir}")
-    
+
     # Test paths
     url = "https://example.com"
     warc_path = test_dir / "test.warc"
     cdxj_path = test_dir / "test.cdxj"
     output_path = test_dir / "output.json"
-    
+
     # Create empty test files
     warc_path.touch()
     cdxj_path.touch()
     print("✓ Created test files")
-    
+
     # Hack: replace WebArchiveProcessor with a mock
     class MockWebArchiveProcessor:
         def create_warc(self, url: str, output_path: str):
             return {"status": "success", "message": "WARC created (mock)", "warc_path": output_path}
-        
+
         def index_warc(self, warc_path: str, output_path: str):
             return {"status": "success", "message": "WARC indexed (mock)", "cdxj_path": output_path}
-        
+
         def extract_dataset_from_cdxj(self, cdxj_path: str, output_format: str):
             return {"status": "success", "message": "Dataset extracted (mock)", "data": [{"id": 1, "text": "Sample"}]}
-        
+
         def extract_text_from_warc(self, warc_path: str):
             return {"status": "success", "message": "Text extracted (mock)", "text": "Sample extracted text"}
-        
+
         def extract_links_from_warc(self, warc_path: str):
             return {"status": "success", "message": "Links extracted (mock)", "links": ["https://example.com/page1", "https://example.com/page2"]}
-        
+
         def extract_metadata_from_warc(self, warc_path: str):
             return {"status": "success", "message": "Metadata extracted (mock)", "metadata": {"title": "Example Page", "description": "Sample description"}}
-    
+
     # Modify the original WebArchiveProcessor to use our mock
     import ipfs_datasets_py.web_archive_utils
     original_processor = ipfs_datasets_py.web_archive_utils.WebArchiveProcessor
     ipfs_datasets_py.web_archive_utils.WebArchiveProcessor = MockWebArchiveProcessor
-    
+
     try:
         # Test create_warc
         print("\nTesting create_warc...")
@@ -85,7 +85,7 @@ async def test_web_archive_tools():
             print("✓ create_warc test passed")
         else:
             print("✗ create_warc test failed")
-        
+
         # Test index_warc
         print("\nTesting index_warc...")
         result = index_warc( # Removed await
@@ -97,7 +97,7 @@ async def test_web_archive_tools():
             print("✓ index_warc test passed")
         else:
             print("✗ index_warc test failed")
-        
+
         # Test extract_dataset_from_cdxj
         print("\nTesting extract_dataset_from_cdxj...")
         result = extract_dataset_from_cdxj( # Removed await
@@ -109,7 +109,7 @@ async def test_web_archive_tools():
             print("✓ extract_dataset_from_cdxj test passed")
         else:
             print("✗ extract_dataset_from_cdxj test failed")
-        
+
         # Test extract_text_from_warc
         print("\nTesting extract_text_from_warc...")
         result = extract_text_from_warc( # Removed await
@@ -120,7 +120,7 @@ async def test_web_archive_tools():
             print("✓ extract_text_from_warc test passed")
         else:
             print("✗ extract_text_from_warc test failed")
-        
+
         # Test extract_links_from_warc
         print("\nTesting extract_links_from_warc...")
         result = extract_links_from_warc( # Removed await
@@ -131,7 +131,7 @@ async def test_web_archive_tools():
             print("✓ extract_links_from_warc test passed")
         else:
             print("✗ extract_links_from_warc test failed")
-        
+
         # Test extract_metadata_from_warc
         print("\nTesting extract_metadata_from_warc...")
         result = extract_metadata_from_warc( # Removed await
@@ -142,10 +142,10 @@ async def test_web_archive_tools():
             print("✓ extract_metadata_from_warc test passed")
         else:
             print("✗ extract_metadata_from_warc test failed")
-        
+
         print("\nAll web archive tools tests completed")
         return True
-    
+
     except Exception as e:
         print(f"Error during testing: {e}")
         import traceback
@@ -154,7 +154,7 @@ async def test_web_archive_tools():
     finally:
         # Restore original WebArchiveProcessor
         ipfs_datasets_py.web_archive_utils.WebArchiveProcessor = original_processor
-        
+
         # Clean up test directory
         import shutil
         shutil.rmtree(test_dir)

@@ -65,29 +65,29 @@ EXPECTED_TOOLS = {
 def check_mcp_server_existence():
     """Check if the MCP server directory exists."""
     print("Checking MCP server directory...")
-    
+
     if not MCP_SERVER_PATH.exists():
         print(f"ERROR: MCP server directory does not exist: {MCP_SERVER_PATH}")
         return False
-    
+
     print(f"Found MCP server directory: {MCP_SERVER_PATH}")
     return True
 
 def check_tools_directory():
     """Check if the tools directory exists."""
     print("\nChecking tools directory...")
-    
+
     if not TOOLS_PATH.exists():
         print(f"ERROR: Tools directory does not exist: {TOOLS_PATH}")
         return False
-    
+
     print(f"Found tools directory: {TOOLS_PATH}")
     return True
 
 def check_tool_categories():
     """Check if expected tool category directories exist."""
     print("\nChecking tool category directories...")
-    
+
     missing_categories = []
     for category in EXPECTED_TOOLS:
         category_path = TOOLS_PATH / category
@@ -96,28 +96,28 @@ def check_tool_categories():
         else:
             print(f"Missing category directory: {category}")
             missing_categories.append(category)
-    
+
     if missing_categories:
         print(f"\nMissing {len(missing_categories)} category directories: {', '.join(missing_categories)}")
     else:
         print("\nAll expected category directories exist.")
-    
+
     return len(missing_categories) == 0
 
 def check_tool_files():
     """Check if expected tool files exist."""
     print("\nChecking tool files...")
-    
+
     results = {}
     missing_count = 0
-    
+
     for category, tools in EXPECTED_TOOLS.items():
         category_path = TOOLS_PATH / category
         if not category_path.exists():
             results[category] = {"present": [], "missing": tools}
             missing_count += len(tools)
             continue
-        
+
         category_results = {"present": [], "missing": []}
         for tool in tools:
             tool_file = category_path / f"{tool}.py"
@@ -128,39 +128,39 @@ def check_tool_files():
                 category_results["missing"].append(tool)
                 print(f"Missing tool file: {category}/{tool}.py")
                 missing_count += 1
-        
+
         results[category] = category_results
-    
+
     total_tools = sum(len(tools) for tools in EXPECTED_TOOLS.values())
     present_count = total_tools - missing_count
-    
+
     print(f"\nFound {present_count}/{total_tools} expected tool files ({present_count/total_tools*100:.1f}%)")
     if missing_count > 0:
         print(f"Missing {missing_count}/{total_tools} tool files ({missing_count/total_tools*100:.1f}%)")
-    
+
     return results
 
 def generate_missing_tool_templates():
     """Generate template files for missing tools."""
     print("\nGenerating templates for missing tools...")
-    
+
     results = check_tool_files()
     generated_count = 0
-    
+
     for category, category_results in results.items():
         if not category_results["missing"]:
             continue
-        
+
         # Ensure category directory exists
         category_path = TOOLS_PATH / category
         os.makedirs(category_path, exist_ok=True)
-        
+
         # Create __init__.py if it doesn't exist
         init_file = category_path / "__init__.py"
         if not init_file.exists():
             with open(init_file, "w") as f:
                 f.write(f'"""\n{category} tools for the MCP server.\n"""\n')
-        
+
         # Generate templates for missing tools
         for tool in category_results["missing"]:
             tool_file = category_path / f"{tool}.py"
@@ -169,7 +169,7 @@ def generate_missing_tool_templates():
                     f.write(generate_tool_template(category, tool))
                 print(f"Generated template for: {category}/{tool}.py")
                 generated_count += 1
-    
+
     print(f"\nGenerated {generated_count} tool template files.")
     return generated_count
 
@@ -189,12 +189,12 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         dataset: Dataset to process (if applicable)
         path: Path to dataset file (if applicable)
         format: Format of the dataset (json, csv, etc.)
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -206,7 +206,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import datasets
         # result = datasets.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Operation completed successfully",
@@ -218,7 +218,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "ipfs_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -231,11 +231,11 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         cid: Content identifier (if applicable)
         path: Path to file (if applicable)
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -247,7 +247,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import ipfs
         # result = ipfs.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Operation completed successfully",
@@ -259,7 +259,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "vector_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -273,12 +273,12 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         vectors: Vector data (if applicable)
         path: Path to vector index (if applicable)
         k: Number of results (if applicable)
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -290,7 +290,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import vector_utils
         # result = vector_utils.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Operation completed successfully",
@@ -302,7 +302,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "graph_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -315,11 +315,11 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         graph_path: Path to the knowledge graph
         query: Query to execute
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -331,7 +331,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import knowledge_graph
         # result = knowledge_graph.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Query executed successfully",
@@ -343,7 +343,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "audit_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -358,13 +358,13 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         event: Audit event data (if applicable)
         start_date: Start date for report (if applicable)
         end_date: End date for report (if applicable)
         output_path: Path to save report (if applicable)
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -376,7 +376,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import audit
         # result = audit.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Operation completed successfully",
@@ -388,7 +388,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "security_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -402,12 +402,12 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         user_id: User identifier
         resource_id: Resource identifier
         action: Action to check permission for (read, write, etc.)
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -419,7 +419,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import security
         # result = security.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Permission check completed",
@@ -431,7 +431,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "provenance_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -443,10 +443,10 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         provenance_data: Provenance information to record
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -458,7 +458,7 @@ def {tool_name}(
         # Example:
         # from ipfs_datasets_py import provenance
         # result = provenance.{tool_function}(...)
-        
+
         return {{
             "status": "success",
             "message": "Provenance recorded successfully",
@@ -470,7 +470,7 @@ def {tool_name}(
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "web_archive_tools": """\"\"\"
 {tool_description}
 \"\"\"
@@ -487,13 +487,13 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         url: URL to archive (if applicable)
         warc_path: Path to WARC file (if applicable)
         cdxj_path: Path to CDXJ file (if applicable)
         output_path: Path for output (if applicable)
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -502,7 +502,7 @@ def {tool_name}(
     \"\"\"
     try:
         processor = WebArchiveProcessor()
-        
+
         # Implement the tool functionality here based on the tool name
         if "{tool_name}" == "create_warc":
             result = processor.create_warc(url, output_path)
@@ -511,7 +511,7 @@ def {tool_name}(
                 "message": f"WARC file created for {{url}}",
                 "warc_path": result
             }}
-        
+
         elif "{tool_name}" == "index_warc":
             result = processor.index_warc(warc_path, output_path)
             return {{
@@ -519,79 +519,79 @@ def {tool_name}(
                 "message": f"WARC file indexed",
                 "cdxj_path": result
             }}
-        
+
         elif "{tool_name}" == "extract_dataset_from_cdxj":
             result = processor.extract_dataset_from_cdxj(cdxj_path)
-            
+
             # Save to output path if specified
             if output_path:
                 import json
                 with open(output_path, 'w') as f:
                     json.dump(result, f)
-            
+
             return {{
                 "status": "success",
                 "message": "Dataset extracted from CDXJ",
                 "dataset": result
             }}
-        
+
         elif "{tool_name}" == "extract_text_from_warc":
             result = processor.extract_text_from_warc(warc_path)
-            
+
             # Save to output path if specified
             if output_path:
                 import json
                 with open(output_path, 'w') as f:
                     json.dump(result, f)
-            
+
             return {{
                 "status": "success",
                 "message": "Text extracted from WARC",
                 "text": result
             }}
-        
+
         elif "{tool_name}" == "extract_links_from_warc":
             result = processor.extract_links_from_warc(warc_path)
-            
+
             # Save to output path if specified
             if output_path:
                 import json
                 with open(output_path, 'w') as f:
                     json.dump(result, f)
-            
+
             return {{
                 "status": "success",
                 "message": "Links extracted from WARC",
                 "links": result
             }}
-        
+
         elif "{tool_name}" == "extract_metadata_from_warc":
             result = processor.extract_metadata_from_warc(warc_path)
-            
+
             # Save to output path if specified
             if output_path:
                 import json
                 with open(output_path, 'w') as f:
                     json.dump(result, f)
-            
+
             return {{
                 "status": "success",
                 "message": "Metadata extracted from WARC",
                 "metadata": result
             }}
-        
+
         return {{
             "status": "success",
             "message": "Operation completed successfully"
         }}
-        
+
     except Exception as e:
         return {{
             "status": "error",
             "message": f"Error: {{str(e)}}"
         }}
 """,
-        
+
         "cli": """\"\"\"
 {tool_description}
 \"\"\"
@@ -604,10 +604,10 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         command: Command to execute
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -623,7 +623,7 @@ def {tool_name}(
             capture_output=True,
             text=True
         )
-        
+
         return {{
             "status": "success" if result.returncode == 0 else "error",
             "message": "Command executed",
@@ -637,7 +637,7 @@ def {tool_name}(
             "message": f"Error executing command: {{str(e)}}"
         }}
 """,
-        
+
         "functions": """\"\"\"
 {tool_description}
 \"\"\"
@@ -649,10 +649,10 @@ def {tool_name}(
 ) -> Dict[str, Any]:
     \"\"\"
     {tool_description}
-    
+
     Args:
         code: Python code to execute
-        
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -662,13 +662,13 @@ def {tool_name}(
     try:
         # Create a sandbox environment
         local_vars = {{}}
-        
+
         # Execute the code
         exec(code, {{}}, local_vars)
-        
+
         # Extract the result if available
         result = local_vars.get("result", None)
-        
+
         return {{
             "status": "success",
             "message": "Code executed successfully",
@@ -681,7 +681,7 @@ def {tool_name}(
         }}
 """
     }
-    
+
     # Tool descriptions mapping
     tool_descriptions = {
         "load_dataset": "Load a dataset from a file or source",
@@ -706,7 +706,7 @@ def {tool_name}(
         "execute_command": "Execute a shell command",
         "execute_python_snippet": "Execute a Python code snippet"
     }
-    
+
     # Tool function names (for templates that need it)
     tool_functions = {
         "load_dataset": "load_dataset",
@@ -723,16 +723,16 @@ def {tool_name}(
         "check_access_permission": "check_permission",
         "record_provenance": "record_provenance"
     }
-    
+
     # Get the appropriate template
     template = tool_templates.get(category, tool_templates["web_archive_tools"])
-    
+
     # Get the tool description
     tool_description = tool_descriptions.get(tool_name, f"{tool_name.replace('_', ' ').title()} tool")
-    
+
     # Get the tool function name
     tool_function = tool_functions.get(tool_name, tool_name)
-    
+
     # Format the template
     return template.format(
         tool_name=tool_name,
@@ -743,22 +743,22 @@ def {tool_name}(
 def create_test_files():
     """Create test files for the MCP tools."""
     print("\nGenerating test files for MCP tools...")
-    
+
     # Create test directory if it doesn't exist
     test_dir = project_root / "tests"
     os.makedirs(test_dir, exist_ok=True)
-    
+
     # Create test files for each category
     test_files = {}
     for category in EXPECTED_TOOLS:
         test_file = test_dir / f"test_{category}.py"
-        
+
         if not test_file.exists():
             with open(test_file, "w") as f:
                 f.write(generate_test_template(category, EXPECTED_TOOLS[category]))
             print(f"Generated test file: {test_file}")
             test_files[category] = str(test_file)
-    
+
     print(f"\nGenerated {len(test_files)} test files.")
     return test_files
 
@@ -781,18 +781,18 @@ sys.path.insert(0, str(project_root))
 
 class {test_class_name}(unittest.TestCase):
     \"\"\"Test cases for {category} tools.\"\"\"
-    
+
 {test_methods}
 
 if __name__ == "__main__":
     unittest.main()
 """
-    
+
     # Generate test methods
     test_methods = []
     for tool in tools:
         test_methods.append(generate_test_method(category, tool))
-    
+
     # Format the template
     return template.format(
         category=category,
@@ -810,205 +810,205 @@ def generate_test_method(category, tool):
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.datasets', MagicMock()) as mock_datasets:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "ipfs_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.ipfs', MagicMock()) as mock_ipfs:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "vector_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.vector_utils', MagicMock()) as mock_vector_utils:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "graph_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.knowledge_graph', MagicMock()) as mock_kg:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "audit_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.audit', MagicMock()) as mock_audit:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "security_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.security', MagicMock()) as mock_security:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "provenance_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.provenance', MagicMock()) as mock_provenance:
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "web_archive_tools": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor') as MockProcessor:
             # Set up mock instance
             mock_processor = MagicMock()
             MockProcessor.return_value = mock_processor
-            
+
             # Set up test data
             # TODO: Add appropriate test data for {tool}
-            
+
             # Call the tool function
             result = {tool}()
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             # TODO: Add more assertions specific to {tool}
 """,
-        
+
         "cli": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('subprocess.run') as mock_run:
             # Set up mock return value
             mock_process = MagicMock()
             mock_process.stdout = "Command output"
             mock_process.returncode = 0
             mock_run.return_value = mock_process
-            
+
             # Set up test data
             command = "echo 'Hello World'"
-            
+
             # Call the tool function
             result = {tool}(command)
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             self.assertIn("output", result)
             mock_run.assert_called_once()
 """,
-        
+
         "functions": """    def test_{tool}(self):
         \"\"\"Test the {tool} tool.\"\"\"
         try:
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
         except ImportError:
             self.skipTest("{tool} tool not found")
-        
+
         with patch('builtins.exec') as mock_exec:
             # Set up test data
             code = "result = 2 + 2"
-            
+
             # Call the tool function
             result = {tool}(code)
-            
+
             # Check results
             self.assertEqual(result["status"], "success")
             mock_exec.assert_called_once()
 """
     }
-    
+
     # Get the appropriate template
     template = test_method_templates.get(category, test_method_templates["web_archive_tools"])
-    
+
     # Format the template
     return template.format(
         tool=tool,
@@ -1019,28 +1019,28 @@ def main():
     """Main function."""
     print("MCP Tools File Verification")
     print("=" * 30)
-    
+
     # Check MCP server existence
     if not check_mcp_server_existence():
         return
-    
+
     # Check tools directory
     if not check_tools_directory():
         return
-    
+
     # Check tool categories
     check_tool_categories()
-    
+
     # Check tool files
     check_tool_files()
-    
+
     # Generate templates for missing tools
     tools_generated = generate_missing_tool_templates()
-    
+
     # Create test files if tools were generated
     if tools_generated > 0:
         create_test_files()
-    
+
     print("\nVerification completed.")
 
 if __name__ == "__main__":

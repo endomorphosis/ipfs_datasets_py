@@ -49,3 +49,7 @@ pytest-asyncio>=0.21.0  # For testing async functions
 
 # MCP Server dependencies
 mcp>=1.9.1  # Replace with actual MCP server package name
+jinja2
+pyyaml
+aiofile
+flake8

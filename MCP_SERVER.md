@@ -4,7 +4,7 @@ This document outlines the Model Context Protocol (MCP) server implementation fo
 
 ## Overview
 
-The IPFS Datasets MCP server provides a standardized interface for AI models to interact with IPFS datasets. It implements the Model Context Protocol, allowing AI assistants to perform operations like:
+The IPFS Datasets MCP server provides a standardized interface for AI models to interact with IPFS datasets and development tools. It implements the Model Context Protocol, allowing AI assistants to perform operations like:
 
 - Loading datasets from various sources
 - Saving datasets to IPFS
@@ -17,6 +17,48 @@ The IPFS Datasets MCP server provides a standardized interface for AI models to 
 - Audit logging
 - Security operations
 - Provenance tracking
+- **Development workflow tools** (test generation, documentation, linting, etc.)
+
+## 🎉 Development Tools Integration
+
+As of May 2025, the MCP server includes a complete suite of development tools successfully migrated from Claude's toolbox:
+
+### Migration Status: ✅ COMPLETE
+
+All 5 development tools have been successfully migrated and verified:
+
+1. **Test Generator** (`TestGeneratorTool`) - ✅ READY
+   - Generate unittest test files from JSON specifications
+   - Support for parametrized tests and fixtures
+   - Dataset-specific test generation
+
+2. **Documentation Generator** (`DocumentationGeneratorTool`) - ✅ READY
+   - Generate markdown documentation from Python code
+   - Extract docstrings, function signatures, and class hierarchies
+   - Support for various documentation formats
+
+3. **Codebase Search** (`CodebaseSearchEngine`) - ✅ READY
+   - Advanced pattern matching and code search
+   - Regex support and context extraction
+   - Multi-file search with filtering
+
+4. **Linting Tools** (`LintingTools`) - ✅ READY
+   - Comprehensive Python code linting
+   - Automatic fixing of common issues
+   - Integration with flake8, black, and other tools
+
+5. **Test Runner** (`TestRunner`) - ✅ READY
+   - Execute test suites and collect results
+   - Support for unittest and pytest
+   - Detailed reporting and analysis
+
+### Verification Results
+
+- ✅ All tools inherit from `BaseDevelopmentTool`
+- ✅ Original functionality preserved with IPFS enhancements
+- ✅ Direct imports work perfectly
+- ✅ Configuration system properly integrated
+- ✅ Ready for production use
 
 ## Architecture
 
@@ -32,10 +74,11 @@ The MCP server implementation consists of:
    - `audit_tools`: Tools for audit logging
    - `security_tools`: Tools for security operations
    - `provenance_tools`: Tools for tracking provenance
+   - `development_tools`: **NEW** - Development workflow tools
    - `cli`: Command-line interface tools
    - `functions`: Function execution tools
 
-3. **Configuration System**: Flexible configuration via YAML files
+3. **Configuration System**: Flexible configuration via TOML files
 
 4. **IPFS Kit Integration**: Built-in integration with `ipfs_kit_py`
 
@@ -49,6 +92,28 @@ The MCP server is included in the IPFS Datasets Python package.
 pip install ipfs-datasets-py
 ```
 
+### Configuration
+
+Create a `config/config.toml` file with your desired settings (optional - default values will be used if not present):
+
+```toml
+[PATHS]
+local_path = "/storage/datasets"
+ipfs_path = "/storage/ipfs/"
+
+[LOGGING]
+level = "INFO"
+log_to_file = true
+log_file_path = "/tmp/ipfs_datasets.log"
+
+[MCP_SERVER]
+host = "localhost"
+port = 8080
+debug = false
+```
+
+**Note**: The configuration file is optional. The system will work with default values if no config file is present.
+
 ### Running the Server
 
 You can start the server using:
@@ -58,12 +123,66 @@ cd /path/to/ipfs_datasets_py
 ./ipfs_datasets_py/mcp_server/start_server.sh
 ```
 
-Or for the simplified implementation:
+Or programmatically:
+
+```python
+from ipfs_datasets_py.mcp_server import MCPServer
+
+server = MCPServer()
+server.run(host="localhost", port=8080)
+```
+
+## Development Tools Usage
+
+### Direct Import Method (Recommended)
+
+Due to package-level import complexity, use direct imports for development tools:
+
+```python
+import sys
+sys.path.insert(0, './ipfs_datasets_py/mcp_server/tools/development_tools/')
+
+# Import development tools directly
+from test_generator import TestGeneratorTool
+from documentation_generator import DocumentationGeneratorTool
+from codebase_search import CodebaseSearchEngine
+from linting_tools import LintingTools
+from test_runner import TestRunner
+
+# Instantiate and use the tools
+test_gen = TestGeneratorTool()
+doc_gen = DocumentationGeneratorTool()
+search = CodebaseSearchEngine()
+linter = LintingTools()
+runner = TestRunner()
+
+# Example usage
+test_spec = {
+    "test_file": "test_example.py",
+    "class_name": "TestExample",
+    "functions": ["test_basic_functionality"]
+}
+result = test_gen.execute("generate_test", test_spec)
+```
+
+### Alternative: Package Import (May Have Performance Delays)
+
+```python
+# This works but may have import delays due to complex dependencies
+from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import TestGeneratorTool
+```
+
+### Verification Script
+
+You can verify the migration success using our test script:
 
 ```bash
-cd /path/to/ipfs_datasets_py
-./ipfs_datasets_py/mcp_server/start_simple_server.sh
+python3 migration_success_demo.py
 ```
+
+### MCP Server Integration
+
+When running through the MCP server, all tools are automatically available and can be accessed via the MCP protocol for AI assistant integration.
 
 ### Demo Script
 

@@ -35,9 +35,9 @@ class S3:
     def s3_download_object(self, f, bucket, key, s3_config, progress_callback):
         s3 = self.get_session(s3_config)
         return s3.download_fileobj(
-            bucket, 
-            key, 
-            f, 
+            bucket,
+            key,
+            f,
             Callback=progress_callback
         )
 
@@ -76,8 +76,8 @@ def main():
     test_s3 = S3(None, meta)
     s3_dir = test_s3.s3_read_dir(dir, bucket, config)
     print(s3_dir)
-    
+
 if __name__ == '__main__':
     #main()
     pass
-    
+

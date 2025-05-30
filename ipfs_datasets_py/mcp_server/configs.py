@@ -30,7 +30,7 @@ class Configs:
         transport: Transport protocol for the MCP server
         ipfs_kit_integration: Integration method for ipfs_kit_py ('direct' or 'mcp')
         ipfs_kit_mcp_url: URL of the ipfs_kit_py MCP server (if using 'mcp' integration)
-    
+
     Properties:
         ROOT_DIR: The root directory of the project
         PROJECT_NAME: The name of the project
@@ -65,7 +65,7 @@ class Configs:
     def PROJECT_NAME(self) -> str:
         """The name of the project."""
         return "ipfs_datasets_mcp"
-    
+
     @property
     def CONFIG_DIR(self) -> Path:
         """The directory containing configuration files."""
@@ -75,44 +75,44 @@ class Configs:
 def load_config_from_yaml(config_path: Optional[str] = None) -> Configs:
     """
     Load configuration from a YAML file.
-    
+
     Args:
         config_path: Path to the YAML configuration file
-        
+
     Returns:
         Configs: Configuration settings
     """
     default_config = Configs()
-    
+
     if not config_path:
         return default_config
-    
+
     config_file = Path(config_path)
     if not config_file.exists():
         return default_config
-    
+
     try:
         with open(config_file, "r") as f:
             yaml_config = yaml.safe_load(f)
-        
+
         # Convert YAML to Configs
         config_dict = {}
-        
+
         # Server settings
         if "server" in yaml_config:
             server_config = yaml_config["server"]
             for key in ["verbose", "host", "port", "reload", "tool_timeout", "transport"]:
                 if key in server_config:
                     config_dict[key] = server_config[key]
-            
+
             if "log_level" in server_config:
                 level_name = server_config["log_level"].upper()
                 config_dict["log_level"] = getattr(logging, level_name, logging.INFO)
-        
+
         # Tool categories
         if "tools" in yaml_config and "enabled_categories" in yaml_config["tools"]:
             config_dict["enabled_tool_categories"] = yaml_config["tools"]["enabled_categories"]
-        
+
         # Tool-specific configurations
         if "tools" in yaml_config:
             tool_configs = {}
@@ -120,7 +120,7 @@ def load_config_from_yaml(config_path: Optional[str] = None) -> Configs:
                 if category in yaml_config["tools"]:
                     tool_configs[category] = yaml_config["tools"][category]
             config_dict["tool_configs"] = tool_configs
-        
+
         # IPFS Kit integration
         if "ipfs_kit" in yaml_config:
             ipfs_kit_config = yaml_config["ipfs_kit"]
@@ -128,9 +128,9 @@ def load_config_from_yaml(config_path: Optional[str] = None) -> Configs:
                 config_dict["ipfs_kit_integration"] = ipfs_kit_config["integration"]
             if "mcp_url" in ipfs_kit_config:
                 config_dict["ipfs_kit_mcp_url"] = ipfs_kit_config["mcp_url"]
-        
+
         return Configs(**config_dict)
-    
+
     except (yaml.YAMLError, KeyError, AttributeError) as e:
         logging.error(f"Error loading configuration from {config_path}: {e}")
         return default_config

@@ -55,7 +55,7 @@ try:
     if tools_dir.exists():
         tools_categories = [d.name for d in tools_dir.iterdir() if d.is_dir() and not d.name.startswith("__")]
         print(f"Found tool categories: {tools_categories}")
-        
+
         for category in tools_categories:
             category_dir = tools_dir / category
             tools = [f.stem for f in category_dir.iterdir() if f.is_file() and f.name.endswith('.py') and not f.name.startswith('__')]

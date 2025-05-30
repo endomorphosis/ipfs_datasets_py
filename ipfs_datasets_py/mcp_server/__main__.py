@@ -26,21 +26,21 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--stdio', action='store_true', help='Run in stdio mode (default for VS Code)')
     parser.add_argument('--http', action='store_true', help='Run in HTTP mode (legacy)')
-    
+
     args = parser.parse_args()
-    
+
     # Configure logging level
     if args.debug:
         import logging
         logging.basicConfig(level=logging.DEBUG)
-    
+
     # Determine mode: default to stdio unless --http is specified
     use_stdio = not args.http or args.stdio
-    
+
     try:
         # Import the server modules
         from ipfs_datasets_py.mcp_server import start_stdio_server, start_server, configs
-        
+
         if use_stdio:
             # Use stdio mode for VS Code integration
             try:
@@ -60,17 +60,17 @@ def main():
                 print(f"Using simple server fallback (main server error: {e})")
                 from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
                 from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml
-                
+
                 # Update configs for host/port
                 server_configs = load_config_from_yaml(args.config)
                 server_configs.host = args.host
                 server_configs.port = args.port
-                
+
                 # Create and start server
                 server = SimpleIPFSDatasetsMCPServer(server_configs)
                 server.register_tools()
                 server.run(host=args.host, port=args.port)
-            
+
     except KeyboardInterrupt:
         print("\nServer stopped by user")
     except Exception as e:

@@ -17,37 +17,37 @@ class ipfs_embeddings_py:
         self.knn_index = {}
         self.endpoint_status = {}
         return None
-    
+
     def load_index(self, index):
         self.index = index
-        return None 
-    
+        return None
+
     def add_tei_https_endpoint(self, model, endpoint, batch_size):
         if model not in self.tei_https_endpoints:
             self.tei_https_endpoints[model] = {}
-        if endpoint not in self.tei_https_endpoints[model]:  
+        if endpoint not in self.tei_https_endpoints[model]:
             self.tei_https_endpoints[model][endpoint] = batch_size
         return None
-    
+
     def add_libp2p_endpoint(self, model, endpoint, batch_size):
         if model not in self.libp2p_endpoints:
             self.libp2p_endpoints[model] = {}
-        if endpoint not in self.libp2p_endpoints[model]:  
+        if endpoint not in self.libp2p_endpoints[model]:
             self.libp2p_endpoints[model][endpoint] = batch_size
         return None
-    
+
     def rm_tei_https_endpoint(self, model, endpoint):
         if model in self.tei_https_endpoints and endpoint in self.tei_https_endpoints[model]:
             del self.tei_https_endpoints[model][endpoint]
             del self.endpoint_status[endpoint]
         return None
-    
+
     def rm_libp2p_endpoint(self, model, endpoint):
         if model in self.libp2p_endpoints and endpoint in self.libp2p_endpoints[model]:
             del self.libp2p_endpoints[model][endpoint]
             del self.endpoint_status[endpoint]
         return None
-    
+
     def test_tei_https_endpoint(self, model, endpoint):
         if model in self.tei_https_endpoints and endpoint in self.tei_https_endpoints[model]:
             return True
@@ -85,7 +85,7 @@ class ipfs_embeddings_py:
                 this_sample_cid = self.multiformats.get_cid(this_sample)
                 self.cid_index[this_sample_cid] = this_sample
         return None
-    
+
     def index_knn(self, samples):
         if type(samples) is None:
             raise ValueError("samples must be a list")
@@ -101,7 +101,7 @@ class ipfs_embeddings_py:
                 this_sample_cid = self.multiformats.get_cid(this_sample)
                 self.knn_index[this_sample_cid] = this_sample
         return None
-    
+
     def queue_index_cid(self, samples):
         if type(samples) is None:
             raise ValueError("samples must be a list")
@@ -116,7 +116,7 @@ class ipfs_embeddings_py:
                 self.cid_queue.append(this_sample)
 
         return None
-    
+
     def choose_endpoint(self):
         filtered_endpoints = {}
         filtered_endpoints = {k: v for k, v in self.endpoint_status.items() if v == 1}
@@ -124,7 +124,7 @@ class ipfs_embeddings_py:
             return None
         else:
             return filtered_endpoints
-        
+
     def https_index_cid(self, samples, endpoint):
         endpoint_chunk_size = self.tei_https_endpoints[endpoint]
         all_chunk = []
@@ -134,7 +134,7 @@ class ipfs_embeddings_py:
             ## request endpoint
             pass
         return None
-    
+
     def pop_https_index_cid(self, samples):
 
         choose_endpoint = self.choose_endpoint()
@@ -161,13 +161,13 @@ class ipfs_embeddings_py:
         for data in test_data:
             test_cid_index = self.index_ipfs(data)
             test_knn_index = self.index_knn(data)
-        
+
 
         print("test")
 
     def status(self):
         return self.endpointStatus
-    
+
     def setStatus(self,endpoint , status):
         self.endpointStatus[endpoint] = status
         return None

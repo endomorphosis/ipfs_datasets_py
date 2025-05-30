@@ -1,7 +1,7 @@
 import subprocess
 import json
 import os
-import asyncio 
+import asyncio
 import multiprocessing
 import time
 from multiprocessing import Pool
@@ -11,21 +11,21 @@ class ipfs_parquet_to_car_py:
         self.resources = resources
         self.metadata = metadata
         self.ipfs_parquet_to_car_py_version = "1.0.0"
-        
+
     async def  __call__(self, src, dst):
         if os.path.isdir(src):
             return await self.run_batch(src, dst)
         else:
             return await self.run(src, dst)
-        
+
     async def install(self):
         cmd = ["npm", "install", "ipfs_parquet_to_car_js"]
         try:
-            subprocess.run(cmd, check=True) 
+            subprocess.run(cmd, check=True)
         except:
             return False
         return True
-    
+
     async def update(self):
         cmd = ["npm", "update", "ipfs_parquet_to_car_js"]
         try:
@@ -33,7 +33,7 @@ class ipfs_parquet_to_car_py:
         except:
             return False
         return True
-    
+
     async def test(self):
         ipfs_parquet_to_car_py_version_cmd = ["nodejs", "-e", "console.log(require('ipfs_parquet_to_car_js').version)"]
         ipfs_parquet_to_car_py_version = subprocess.run(ipfs_parquet_to_car_py_version_cmd, stdout=subprocess.PIPE)
@@ -45,7 +45,7 @@ class ipfs_parquet_to_car_py:
             else:
                 return True
         return False
-    
+
     async def run(self, src, dst):
         cmd = ["nodejs"]
         cmd.append(self.resources["ipfs_parquet_to_car.js"])
@@ -56,7 +56,7 @@ class ipfs_parquet_to_car_py:
         except:
             return False
         return True
-    
+
     async def run_batch(self, src, dst):
         files = os.listdir(src)
         cmds = []
@@ -67,9 +67,9 @@ class ipfs_parquet_to_car_py:
             cmd.append(dst + "/" + files[i].replace(".parquet", ".car"))
             cmds.append(cmd)
         with Pool(multiprocessing.cpu_count()) as p:
-            p.map(subprocess.run, cmds)    
+            p.map(subprocess.run, cmds)
         return True
-    
+
 if __name__ == "__main__":
     resources = {
         "ipfs_parquet_to_car.js": "/mnt/data/ipfs_parquet_to_car.js"
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     import subprocess
 import json
 import os
-import asyncio 
+import asyncio
 import multiprocessing
 import time
 from multiprocessing import Pool
@@ -98,21 +98,21 @@ class ipfs_parquet_to_car_py:
         self.resources = resources
         self.metadata = metadata
         self.ipfs_parquet_to_car_py_version = "1.0.0"
-        
+
     async def  __call__(self, src, dst):
         if os.path.isdir(src):
             return await self.run_batch(src, dst)
         else:
             return await self.run(src, dst)
-        
+
     async def install(self):
         cmd = ["npm", "install", "ipfs_parquet_to_car_js"]
         try:
-            subprocess.run(cmd, check=True) 
+            subprocess.run(cmd, check=True)
         except:
             return False
         return True
-    
+
     async def update(self):
         cmd = ["npm", "update", "ipfs_parquet_to_car_js"]
         try:
@@ -120,7 +120,7 @@ class ipfs_parquet_to_car_py:
         except:
             return False
         return True
-    
+
     async def test(self):
         ipfs_parquet_to_car_py_version_cmd = ["nodejs", "-e", "console.log(require('ipfs_parquet_to_car_js').version)"]
         ipfs_parquet_to_car_py_version = subprocess.run(ipfs_parquet_to_car_py_version_cmd, stdout=subprocess.PIPE)
@@ -132,7 +132,7 @@ class ipfs_parquet_to_car_py:
             else:
                 return True
         return False
-    
+
     async def run(self, src, dst):
         cmd = ["nodejs"]
         cmd.append(self.resources["ipfs_parquet_to_car.js"])
@@ -143,7 +143,7 @@ class ipfs_parquet_to_car_py:
         except:
             return False
         return True
-    
+
     async def run_batch(self, src, dst):
         files = os.listdir(src)
         cmds = []
@@ -154,7 +154,7 @@ class ipfs_parquet_to_car_py:
             cmd.append(dst + "/" + files[i].replace(".parquet", ".car"))
             cmds.append(cmd)
         with Pool(multiprocessing.cpu_count()) as p:
-            p.map(subprocess.run, cmds)    
+            p.map(subprocess.run, cmds)
         return True
 ipfs_parquet_to_car_py = ipfs_parquet_to_car_py
 ipfs_parquet_to_car = ipfs_parquet_to_car_py
@@ -174,4 +174,4 @@ if __name__ == "__main__":
     ipfs_parquet_to_car.install()
     ipfs_parquet_to_car.test()
     asyncio.run(ipfs_parquet_to_car.run("/mnt/data/parquet", "/mnt/data/car"))
-    
+

@@ -42,7 +42,7 @@ class test_fio:
                                 device = mount[0]
                                 return device
         return "rootfs"
-    
+
     def disk_device_total_capacity(self, device):
         command = "df -h"
         df = subprocess.check_output(command, shell=True)
@@ -56,7 +56,7 @@ class test_fio:
                 capacity = line.split(" ")[1]
                 return capacity
         return None
-    
+
     def disk_device_used_capacity(self, device):
         command = "df -h"
         df = subprocess.check_output(command, shell=True)
@@ -99,7 +99,7 @@ class test_fio:
             read_speed = 32 / (timestamp_2 - timestamp_1).total_seconds()
             command3 = "rm " + temp_file.name
             return read_speed, write_speed
-            
+
     def stats(self,location, **kwargs):
         disk_device = self.disk_device_name_from_location(location)
         disk_capacity = self.disk_device_total_capacity(disk_device)
@@ -119,6 +119,6 @@ class test_fio:
 #if __name__ == "__main__":
 #    this_test = test_fio(None)
 #    results = this_test.test("/tmp/")
-#    print(results)    
+#    print(results)
 #    print("Test complete")
 #    sys.exit(0)

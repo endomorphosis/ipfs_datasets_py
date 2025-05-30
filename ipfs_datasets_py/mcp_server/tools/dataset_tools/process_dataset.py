@@ -42,15 +42,15 @@ async def process_dataset(
             initial_records = len(dataset_source) if hasattr(dataset_source, '__len__') else 100
 
         logger.info(f"Processing dataset with {len(operations)} operations. Initial records: {initial_records}")
-        
+
         # For testing purposes, create a mock processed result without actual dataset operations
         processed_records = max(1, initial_records - len([op for op in operations if op.get("type") == "filter"]))
-        
+
         for i, operation in enumerate(operations):
             op_type = operation.get("type", "").lower()
             logger.info(f"Applying operation {i+1}/{len(operations)}: {op_type}")
             # Mock processing - in a real implementation, this would apply actual transformations
-        
+
         # Return information about the processed dataset
         return {
             "status": "success",

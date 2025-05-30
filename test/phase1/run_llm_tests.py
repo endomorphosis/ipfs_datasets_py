@@ -35,26 +35,26 @@ def run_llm_tests():
     """Run LLM integration tests and report results"""
     # Create test suite
     test_suite = unittest.TestSuite()
-    
+
     # Add LLM Integration test classes
     test_suite.addTest(unittest.makeSuite(TestAdaptivePrompting))
     test_suite.addTest(unittest.makeSuite(TestDomainSpecificProcessor))
     test_suite.addTest(unittest.makeSuite(TestPerformanceMonitor))
-    
+
     # Add LLM GraphRAG Processor test classes
     test_suite.addTest(unittest.makeSuite(TestGraphRAGLLMProcessor))
     test_suite.addTest(unittest.makeSuite(TestReasoningEnhancer))
-    
+
     # Add LLM Semantic Validation test classes
     test_suite.addTest(unittest.makeSuite(TestSchemaRegistry))
     test_suite.addTest(unittest.makeSuite(TestSchemaValidator))
     test_suite.addTest(unittest.makeSuite(TestSemanticAugmenter))
     test_suite.addTest(unittest.makeSuite(TestSemanticValidator))
-    
+
     # Run tests
     test_runner = unittest.TextTestRunner(verbosity=2)
     result = test_runner.run(test_suite)
-    
+
     # Return success/failure
     return result.wasSuccessful()
 

@@ -27,7 +27,7 @@ class TestMCPSearchVectorIndex(unittest.IsolatedAsyncioTestCase):
         index_name = "test_index"
         query_vector = [0.1, 0.2]
         top_k = 5
-        
+
         result = await search_vector_index(index_name=index_name, query_vector=query_vector, top_k=top_k)
 
         self.assertEqual(result["status"], "success")

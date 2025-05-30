@@ -9,7 +9,7 @@ class test_ipfs_embeddings:
         self.dataset = {}
         self.ipfs_embeddings = ipfs_embeddings.ipfs_embeddings_py(resources, metadata)
         return None
-    
+
     def process(self, dataset, output):
         num_rows = dataset.num_rows['data']
         processed_data = {}
@@ -29,7 +29,7 @@ class test_ipfs_embeddings:
         print(len(self.dataset))
         self.ipfs_embeddings
         return None
-    
+
 if __name__ == '__main__':
     test = test_ipfs_embeddings()
     test.test()

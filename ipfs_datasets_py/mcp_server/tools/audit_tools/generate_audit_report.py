@@ -38,14 +38,14 @@ async def generate_audit_report(
     """
     try:
         logger.info(f"Generating {report_type} audit report")
-        
+
         # Create a basic metrics aggregator for the reporter.
         # In a real scenario, this would be populated with actual audit data.
         metrics_aggregator = AuditMetricsAggregator()
-        
+
         # Create a reporter instance
         reporter = AuditReportGenerator(metrics_aggregator=metrics_aggregator)
-        
+
         # Generate the specific report type
         report = {}
         if report_type == "security":
@@ -58,7 +58,7 @@ async def generate_audit_report(
             report = reporter.generate_comprehensive_report()
         else:
             raise ValueError(f"Unsupported report_type: {report_type}")
-        
+
         # Export the report if an output path is provided
         if output_path:
             exported_path = reporter.export_report(
@@ -66,7 +66,7 @@ async def generate_audit_report(
                 format=output_format,
                 output_file=output_path
             )
-            
+
             # Return information about the saved report
             return {
                 "status": "success",

@@ -3,7 +3,7 @@ Example demonstrating the use of RAG Query Optimizers for both Wikipedia and IPL
 
 This example shows how to use:
 1. The WikipediaKnowledgeGraphOptimizer for Wikipedia-derived knowledge graphs
-2. The IPLDGraphRAGQueryOptimizer for IPLD-based knowledge graphs 
+2. The IPLDGraphRAGQueryOptimizer for IPLD-based knowledge graphs
 3. The UnifiedGraphRAGQueryOptimizer for mixed environments
 """
 
@@ -45,13 +45,13 @@ def print_plan(plan: Dict[str, Any], indent: int = 2) -> None:
 def wikipedia_optimizer_example() -> None:
     """Example of using the Wikipedia-specific optimizer."""
     print_section("Wikipedia Knowledge Graph Optimizer Example")
-    
+
     # Create a mock tracer for demonstration purposes
     class MockWikipediaTracer(WikipediaKnowledgeGraphTracer):
         def __init__(self):
             super().__init__()
             self.query_plans = {}
-            
+
         def get_trace_info(self, trace_id):
             # Return mock data for demonstration
             return {
@@ -78,25 +78,25 @@ def wikipedia_optimizer_example() -> None:
                     ]
                 }
             }
-            
+
         def record_query_plan(self, trace_id, plan):
             # Store the query plan
             self.query_plans[trace_id] = plan
-    
+
     # Initialize tracer and optimizer with mock implementation
     tracer = MockWikipediaTracer()
     optimizer = WikipediaKnowledgeGraphOptimizer(tracer=tracer)
-    
+
     # Mock a trace_id that would be returned from knowledge graph extraction
     trace_id = "wikipedia-trace-123456"
-    
+
     # Create a query vector (in a real scenario this would be from an embedding model)
     query_vector = np.random.rand(768)
-    
+
     # Example 1: Simple query optimization
     print("Example 1: Simple query optimization")
     query_text = "Who founded Microsoft and what products did they create?"
-    
+
     # Optimize the query
     print(f"Optimizing query: \"{query_text}\"")
     plan = optimizer.optimize_query(
@@ -104,15 +104,15 @@ def wikipedia_optimizer_example() -> None:
         query_vector=query_vector,
         trace_id=trace_id
     )
-    
+
     # Print the optimized plan
     print("\nOptimized Query Plan:")
     print_plan(plan)
-    
+
     # Example 2: Query with specific entity types
     print("\nExample 2: Query with specific entity types")
     entity_types = ["person", "organization", "technology"]
-    
+
     # Optimize the query with entity types
     print(f"Optimizing query with entity types: {entity_types}")
     plan = optimizer.optimize_query(
@@ -121,15 +121,15 @@ def wikipedia_optimizer_example() -> None:
         entity_types=entity_types,
         trace_id=trace_id
     )
-    
+
     # Print the optimized plan
     print("\nOptimized Query Plan:")
     print_plan(plan)
-    
+
     # Example 3: Cross-document query
     print("\nExample 3: Cross-document query")
     doc_trace_ids = ["trace-microsoft", "trace-windows", "trace-office"]
-    
+
     # Optimize a cross-document query
     print("Optimizing cross-document query across Microsoft, Windows, and Office pages")
     plan = optimizer.optimize_cross_document_query(
@@ -137,7 +137,7 @@ def wikipedia_optimizer_example() -> None:
         query_vector=query_vector,
         doc_trace_ids=doc_trace_ids
     )
-    
+
     # Print the optimized plan
     print("\nCross-Document Query Plan:")
     print_plan(plan)
@@ -145,7 +145,7 @@ def wikipedia_optimizer_example() -> None:
 def ipld_optimizer_example() -> None:
     """Example of using the IPLD-specific optimizer."""
     print_section("IPLD-Based Knowledge Graph Optimizer Example")
-    
+
     # Initialize optimizer
     optimizer = IPLDGraphRAGQueryOptimizer(
         vector_weight=0.6,
@@ -154,14 +154,14 @@ def ipld_optimizer_example() -> None:
         enable_block_batching=True,
         dag_traversal_strategy="breadth_first"
     )
-    
+
     # Create a query vector (in a real scenario this would be from an embedding model)
     query_vector = np.random.rand(768)
-    
+
     # Example 1: Content-type specific optimization
     print("Example 1: Content-type specific optimization")
     content_types = ["application/json", "application/ld+json"]
-    
+
     # Optimize the query with content types
     print(f"Optimizing query for content types: {content_types}")
     plan = optimizer.optimize_query(
@@ -170,11 +170,11 @@ def ipld_optimizer_example() -> None:
         content_types=content_types,
         root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"]
     )
-    
+
     # Print the optimized plan
     print("\nOptimized Query Plan:")
     print_plan(plan)
-    
+
     # Example 2: Multi-CID optimization
     print("\nExample 2: Multi-CID optimization")
     root_cids = [
@@ -182,7 +182,7 @@ def ipld_optimizer_example() -> None:
         "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",  # Libp2p docs
         "QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx"   # Filecoin docs
     ]
-    
+
     # Optimize the query with multiple CIDs
     print(f"Optimizing query across {len(root_cids)} different documents")
     plan = optimizer.optimize_query(
@@ -190,14 +190,14 @@ def ipld_optimizer_example() -> None:
         query_text="Compare DHT implementations across IPFS, libp2p, and Filecoin",
         root_cids=root_cids
     )
-    
+
     # Print the optimized plan
     print("\nMulti-CID Query Plan:")
     print_plan(plan)
-    
+
     # Example 3: Multi-graph query optimization
     print("\nExample 3: Multi-graph query optimization")
-    
+
     # Optimize a multi-graph query
     print("Optimizing query across multiple IPLD graphs")
     plan = optimizer.optimize_multi_graph_query(
@@ -205,15 +205,15 @@ def ipld_optimizer_example() -> None:
         query_text="How do distributed hash tables compare to other distributed data structures?",
         graph_cids=root_cids
     )
-    
+
     # Print the optimized plan
     print("\nMulti-Graph Query Plan:")
     print_plan(plan)
-    
+
     # Example 4: Content-type specific weights
     print("\nExample 4: Content-type specific weights")
     content_types = ["text/plain", "application/json", "text/html", "image/png"]
-    
+
     # Print optimized weights for each content type
     for content_type in content_types:
         weights = optimizer.optimize_for_content_type(content_type)
@@ -222,13 +222,13 @@ def ipld_optimizer_example() -> None:
 def unified_optimizer_example() -> None:
     """Example of using the Unified optimizer for mixed environments."""
     print_section("Unified GraphRAG Query Optimizer Example")
-    
+
     # Create a mock tracer for demonstration purposes
     class MockWikipediaTracer(WikipediaKnowledgeGraphTracer):
         def __init__(self):
             super().__init__()
             self.query_plans = {}
-            
+
         def get_trace_info(self, trace_id):
             # Return mock data for demonstration
             return {
@@ -246,30 +246,30 @@ def unified_optimizer_example() -> None:
                     }
                 }
             }
-            
+
         def record_query_plan(self, trace_id, plan):
             # Store the query plan
             self.query_plans[trace_id] = plan
-    
+
     # Initialize components
     tracer = MockWikipediaTracer()
     wikipedia_optimizer = WikipediaKnowledgeGraphOptimizer(tracer=tracer)
     ipld_optimizer = IPLDGraphRAGQueryOptimizer()
-    
+
     # Create unified optimizer
     optimizer = UnifiedGraphRAGQueryOptimizer(
         wikipedia_optimizer=wikipedia_optimizer,
         ipld_optimizer=ipld_optimizer,
         auto_detect_graph_type=True
     )
-    
+
     # Create a query vector
     query_vector = np.random.rand(768)
     query_text = "Compare distributed storage approaches in decentralized systems"
-    
+
     # Example 1: Auto-detection of graph type
     print("Example 1: Auto-detection of graph type")
-    
+
     # Wikipedia query (detected by trace_id)
     print("Wikipedia query (with trace_id):")
     wiki_plan = optimizer.optimize_query(
@@ -278,7 +278,7 @@ def unified_optimizer_example() -> None:
         trace_id="wikipedia-trace-123"
     )
     print(f"  Detected optimizer type: {wiki_plan.get('optimizer_type', 'unknown')}")
-    
+
     # IPLD query (detected by root_cids)
     print("\nIPLD query (with root_cids):")
     ipld_plan = optimizer.optimize_query(
@@ -287,10 +287,10 @@ def unified_optimizer_example() -> None:
         root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"]
     )
     print(f"  Detected optimizer type: {ipld_plan.get('optimizer_type', 'unknown')}")
-    
+
     # Example 2: Explicit graph type specification
     print("\nExample 2: Explicit graph type specification")
-    
+
     # Force Wikipedia optimizer
     print("Forcing Wikipedia optimizer with graph_type='wikipedia':")
     force_wiki_plan = optimizer.optimize_query(
@@ -300,24 +300,24 @@ def unified_optimizer_example() -> None:
         graph_type="wikipedia"  # Force Wikipedia
     )
     print(f"  Optimizer type: {force_wiki_plan.get('optimizer_type', 'unknown')}")
-    
+
     # Example 3: Multi-graph query with mixed types
     print("\nExample 3: Multi-graph query with mixed types")
-    
+
     # Define graph specifications
     graph_specs = [
         {
-            "graph_type": "wikipedia", 
-            "trace_id": "wiki-123", 
+            "graph_type": "wikipedia",
+            "trace_id": "wiki-123",
             "weight": 0.4
         },
         {
-            "graph_type": "ipld", 
-            "root_cid": "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco", 
+            "graph_type": "ipld",
+            "root_cid": "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco",
             "weight": 0.6
         }
     ]
-    
+
     # Optimize multi-graph query
     print("Optimizing query across Wikipedia and IPLD graphs:")
     multi_plan = optimizer.optimize_multi_graph_query(
@@ -325,26 +325,26 @@ def unified_optimizer_example() -> None:
         query_text=query_text,
         graph_specs=graph_specs
     )
-    
+
     # Print key aspects of the plan
     print(f"  Optimizer type: {multi_plan.get('optimizer_type', 'unknown')}")
     print(f"  Number of graph plans: {len(multi_plan.get('graph_plans', {}))}")
-    
+
     # Check plan types
     graph_plans = multi_plan.get('graph_plans', {})
     for graph_id, plan in graph_plans.items():
         print(f"  - Graph {graph_id}: {plan.get('optimizer_type', 'unknown')}")
-    
+
     # Print weights from combination plan
     combination_plan = multi_plan.get('combination_plan', {})
     weights = combination_plan.get('graph_weights', {})
     print("  Graph weights:")
     for graph_id, weight in weights.items():
         print(f"  - {graph_id}: {weight:.2f}")
-    
+
     # Example 4: Get optimizer statistics
     print("\nExample 4: Get optimizer statistics")
-    
+
     # Create and run a few more queries
     for _ in range(3):
         optimizer.optimize_query(
@@ -352,14 +352,14 @@ def unified_optimizer_example() -> None:
             query_text="Random query for stats",
             trace_id=f"wiki-{np.random.randint(1000)}"
         )
-    
+
     for _ in range(2):
         optimizer.optimize_query(
             query_vector=np.random.rand(768),
             query_text="Another random query",
             root_cids=[f"Qm{np.random.randint(1000)}"]
         )
-    
+
     # Get and print statistics
     stats = optimizer.get_optimization_stats()
     print("Optimizer Statistics:")
@@ -370,10 +370,10 @@ def unified_optimizer_example() -> None:
           f"({stats.get('ipld_percentage', 0):.1f}%)")
     print(f"  Mixed queries: {stats.get('mixed_queries', 0)} " +
           f"({stats.get('mixed_percentage', 0):.1f}%)")
-    
+
     # Example 5: Performance analysis
     print("\nExample 5: Performance analysis")
-    
+
     analysis = optimizer.analyze_query_performance()
     print("Performance Analysis:")
     print("  Recommendations:")

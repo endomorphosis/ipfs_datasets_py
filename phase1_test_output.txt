@@ -1,0 +1,77 @@
+nohup: ignoring input
+2025-05-27 01:49:57,294 - ipfs_datasets - INFO - Monitoring system initialized
+2025-05-27 01:49:58,953 - ipfs_datasets.mcp_server - INFO - Registered tool: save_dataset
+2025-05-27 01:49:58,963 - ipfs_datasets.mcp_server - INFO - Registered tool: convert_dataset_format
+2025-05-27 01:49:58,973 - ipfs_datasets.mcp_server - INFO - Registered tool: load_dataset
+2025-05-27 01:49:58,980 - ipfs_datasets.mcp_server - INFO - Registered tool: ClaudesDatasetTool
+2025-05-27 01:49:58,986 - ipfs_datasets.mcp_server - INFO - Registered tool: process_dataset
+2025-05-27 01:49:58,995 - ipfs_datasets.mcp_server - INFO - Registered tool: get_from_ipfs
+2025-05-27 01:49:59,000 - ipfs_datasets.mcp_server - INFO - Registered tool: pin_to_ipfs
+2025-05-27 01:49:59,004 - ipfs_datasets.mcp_server - INFO - Registered tool: ClaudesIPFSTool
+2025-05-27 01:49:59,015 - ipfs_datasets.mcp_server - INFO - Registered tool: get_global_manager
+2025-05-27 01:49:59,019 - ipfs_datasets.mcp_server - INFO - Registered tool: reset_global_manager
+2025-05-27 01:49:59,030 - ipfs_datasets.mcp_server - INFO - Registered tool: search_vector_index
+2025-05-27 01:49:59,040 - ipfs_datasets.mcp_server - INFO - Registered tool: create_vector_index
+2025-05-27 01:49:59,048 - ipfs_datasets.mcp_server - INFO - Registered tool: query_knowledge_graph
+2025-05-27 01:49:59,070 - ipfs_datasets.mcp_server - INFO - Registered tool: AuditTool
+2025-05-27 01:49:59,081 - ipfs_datasets.mcp_server - INFO - Registered tool: record_audit_event
+2025-05-27 01:49:59,096 - ipfs_datasets.mcp_server - INFO - Registered tool: generate_audit_report
+2025-05-27 01:49:59,104 - ipfs_datasets.mcp_server - INFO - Registered tool: BaseDevelopmentTool
+2025-05-27 01:49:59,109 - ipfs_datasets.mcp_server - INFO - Registered tool: DatasetTestRunner
+2025-05-27 01:49:59,112 - ipfs_datasets.mcp_server - INFO - Registered tool: TestExecutor
+2025-05-27 01:49:59,120 - ipfs_datasets.mcp_server - INFO - Registered tool: TestResult
+2025-05-27 01:49:59,144 - ipfs_datasets.mcp_server - INFO - Registered tool: TestRunSummary
+2025-05-27 01:49:59,149 - ipfs_datasets.mcp_server - INFO - Registered tool: TestRunner
+2025-05-27 01:49:59,170 - ipfs_datasets.mcp_server - INFO - Registered tool: TestSuiteResult
+2025-05-27 01:49:59,175 - ipfs_datasets.mcp_server - INFO - Registered tool: development_tool_mcp_wrapper
+2025-05-27 01:49:59,178 - ipfs_datasets.mcp_server - INFO - Registered tool: run_comprehensive_tests
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_phase1_status.py", line 43, in test_phase1_status
+    server.register_tools()
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/server.py", line 121, in register_tools
+    self._register_tools_from_subdir(tools_path / "development_tools")
+  File "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/server.py", line 141, in _register_tools_from_subdir
+    self.mcp.add_tool(tool_func, name=tool_name)
+  File "/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/mcp/server/fastmcp/server.py", line 340, in add_tool
+    self._tool_manager.add_tool(
+  File "/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/mcp/server/fastmcp/tools/tool_manager.py", line 53, in add_tool
+    tool = Tool.from_function(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/mcp/server/fastmcp/tools/base.py", line 59, in from_function
+    sig = inspect.signature(fn)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/inspect.py", line 3310, in signature
+    return Signature.from_callable(obj, follow_wrapped=follow_wrapped,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/inspect.py", line 3054, in from_callable
+    return _signature_from_callable(obj, sigcls=cls,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/inspect.py", line 2635, in _signature_from_callable
+    raise ValueError(
+ValueError: no signature found for builtin type <class 'ipfs_datasets_py.mcp_server.tools.development_tools.base_tool.DevelopmentToolError'>
+Traceback (most recent call last):
+  File "/home/barberb/ipfs_datasets_py/test_phase1_status.py", line 82, in test_phase1_status
+    if result and 'success' in result and result['success']:
+                                          ~~~~~~^^^^^^^^^^^
+TypeError: string indices must be integers, not 'str'
+Phase 1 Status Check
+====================
+
+1. Testing development tools imports...
+✓ All 5 development tools imported successfully
+
+2. Testing server tool registration...
+✗ Server registration failed: no signature found for builtin type <class 'ipfs_datasets_py.mcp_server.tools.development_tools.base_tool.DevelopmentToolError'>
+
+3. Testing basic tool execution...
+✗ Tool execution failed: string indices must be integers, not 'str'
+
+==============================
+PHASE 1 STATUS SUMMARY
+==============================
+Imports: ✓ PASS
+Registration: ✗ FAIL
+Execution: ✗ FAIL
+
+⚠️  Phase 1 has issues that need resolution
+2025-05-27 01:50:09,594 - ipfs_datasets - INFO - Monitoring system shutdown

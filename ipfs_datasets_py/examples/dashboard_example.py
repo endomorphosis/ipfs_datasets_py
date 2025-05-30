@@ -15,7 +15,7 @@ import threading
 from pathlib import Path
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, 
+logging.basicConfig(level=logging.INFO,
                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Add parent directory to import path
@@ -41,16 +41,16 @@ def generate_sample_metrics():
     """Generate sample metrics for demonstration."""
     # Create query metrics collector
     query_metrics = QueryMetricsCollector()
-    
+
     # Add sample query metrics
     for i in range(50):
         query_type = random.choice(["vector", "hybrid", "graph", "keyword"])
         duration = random.uniform(50, 500)  # Random duration between 50-500ms
         status = random.choices(["success", "failure"], weights=[0.9, 0.1])[0]
-        
+
         # Create query with timestamp in the past 24 hours
         timestamp = time.time() - random.uniform(0, 24 * 3600)
-        
+
         # Add to metrics
         query_metrics.record_query(
             query_id=f"query_{i}",
@@ -60,38 +60,38 @@ def generate_sample_metrics():
             status=status,
             timestamp=timestamp
         )
-    
+
     # Create sample audit metrics if available
     if AUDIT_COMPONENTS_AVAILABLE:
         audit_metrics = AuditMetricsAggregator(
             window_size=30 * 86400,  # 30 days
             bucket_size=3600  # 1 hour buckets
         )
-        
+
         # Generate sample audit events
         audit_logger = AuditLogger()
         audit_logger.add_handler(lambda event: audit_metrics.process_event(event))
-        
+
         categories = [c.name for c in AuditCategory]
         levels = [l.name for l in AuditLevel]
         actions = ["login", "logout", "create", "read", "update", "delete", "query"]
         users = ["user1", "user2", "admin1", "admin2"]
-        
+
         # Generate events over the past 30 days
         now = time.time()
         start_time = now - (30 * 86400)
-        
+
         for i in range(500):
             # Create random timestamp
             event_time = start_time + random.random() * (now - start_time)
             event_datetime = datetime.datetime.fromtimestamp(event_time)
-            
+
             # Create event
             category = random.choice(categories)
             level = random.choice(levels)
             action = random.choice(actions)
             user = random.choice(users)
-            
+
             # Add some patterns for correlation analysis
             # Make some query-time errors correlated with authentication events
             if action == "query" and random.random() < 0.2:
@@ -106,7 +106,7 @@ def generate_sample_metrics():
                     status=random.choices(["success", "failure"], weights=[0.6, 0.4])[0],
                     timestamp=query_time
                 )
-            
+
             # Create the event
             audit_event = AuditEvent(
                 category=category,
@@ -116,19 +116,19 @@ def generate_sample_metrics():
                 user=user,
                 timestamp=event_datetime.isoformat()
             )
-            
+
             # Log the event
             audit_logger.log_event(audit_event)
     else:
         audit_metrics = None
-    
+
     return query_metrics, audit_metrics
 
 
 def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=300):
     """
     Generate continuous sample data for real-time updates.
-    
+
     Args:
         query_metrics: QueryMetricsCollector to update
         audit_metrics: AuditMetricsAggregator to update (or None)
@@ -137,18 +137,18 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
     """
     start_time = time.time()
     iteration = 0
-    
+
     try:
         while runtime is None or (time.time() - start_time) < runtime:
             iteration += 1
             logging.info(f"Generating new data (iteration {iteration})...")
-            
+
             # Add new query metrics
             for i in range(random.randint(1, 5)):
                 query_type = random.choice(["vector", "hybrid", "graph", "keyword"])
                 duration = random.uniform(50, 500)
                 status = random.choices(["success", "failure"], weights=[0.9, 0.1])[0]
-                
+
                 query_metrics.record_query(
                     query_id=f"rt_query_{iteration}_{i}",
                     query_type=query_type,
@@ -156,7 +156,7 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                     result_count=random.randint(1, 20),
                     status=status
                 )
-            
+
             # Add new audit events if available
             if AUDIT_COMPONENTS_AVAILABLE and audit_metrics:
                 for i in range(random.randint(1, 10)):
@@ -164,7 +164,7 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                     level = random.choice([l.name for l in AuditLevel])
                     action = random.choice(["login", "logout", "create", "read", "update", "delete", "query"])
                     user = random.choice(["user1", "user2", "admin1", "admin2"])
-                    
+
                     # Create the event
                     audit_event = AuditEvent(
                         category=category,
@@ -174,7 +174,7 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                         user=user,
                         timestamp=datetime.datetime.now().isoformat()
                     )
-                    
+
                     # Add security event spike occasionally
                     if iteration % 10 == 0 and i == 0:
                         for j in range(random.randint(5, 15)):
@@ -188,13 +188,13 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                                 timestamp=datetime.datetime.now().isoformat()
                             )
                             audit_metrics.process_event(security_event)
-                    
+
                     # Process regular event
                     audit_metrics.process_event(audit_event)
-            
+
             # Sleep until next update
             time.sleep(interval)
-            
+
     except KeyboardInterrupt:
         logging.info("Data generation stopped by user")
 
@@ -204,15 +204,15 @@ def main():
     print("=" * 80)
     print("Unified Dashboard with Real-Time Monitoring Example")
     print("=" * 80)
-    
+
     # Create output directory
     dashboard_dir = os.path.join(os.getcwd(), "dashboard_example")
     os.makedirs(dashboard_dir, exist_ok=True)
-    
+
     # Generate sample metrics
     print("\nGenerating sample metrics...")
     query_metrics, audit_metrics = generate_sample_metrics()
-    
+
     # Create dashboard
     print("\nCreating unified dashboard...")
     dashboard = UnifiedDashboard(
@@ -220,12 +220,12 @@ def main():
         enable_realtime=True,
         port=8888
     )
-    
+
     # Register metrics with dashboard
     dashboard.register_metrics_collector(query_metrics)
     if audit_metrics:
         dashboard.register_metrics_collector(audit_metrics)
-    
+
     # Create a thread to generate continuous data
     if audit_metrics:
         data_thread = threading.Thread(
@@ -233,7 +233,7 @@ def main():
             args=(query_metrics, audit_metrics, 5, None)
         )
         data_thread.daemon = True
-    
+
     # Generate dashboard
     dashboard_path = dashboard.generate_dashboard(
         query_metrics_collector=query_metrics,
@@ -242,22 +242,22 @@ def main():
         theme="light",
         include_interactive=True
     )
-    
+
     print("\nDashboard generated!")
     print(f"Dashboard file: {dashboard_path}")
     print(f"Real-time dashboard URL: http://localhost:8888")
-    
+
     # Start continuous data generation
     if audit_metrics:
         print("\nStarting continuous data generation...")
         data_thread.start()
-    
+
     # Display instructions
     print("\nInstructions:")
     print("1. Open a web browser and navigate to: http://localhost:8888")
     print("2. The dashboard will update automatically with new data")
     print("3. Press Ctrl+C to stop the server")
-    
+
     try:
         print("\nServer running. Press Ctrl+C to stop...")
         # Keep main thread alive
@@ -267,7 +267,7 @@ def main():
         print("\nStopping server...")
         if dashboard.server:
             dashboard.server.stop()
-    
+
     print("\nExample complete. Dashboard files are available in the dashboard_example directory.")
 
 

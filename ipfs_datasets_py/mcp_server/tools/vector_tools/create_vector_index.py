@@ -43,27 +43,27 @@ async def create_vector_index(
     """
     try:
         logger.info(f"Creating vector index with {len(vectors)} vectors")
-        
+
         # Get the global manager
         manager = get_global_manager()
-        
+
         # Infer dimension if not provided
         if dimension is None and vectors:
             dimension = len(vectors[0])
-        
+
         # Generate index ID if not provided
         if index_id is None:
             index_id = f"index_{uuid.uuid4().hex[:8]}"
-        
+
         # Create a vector index using the manager
         index = manager.create_index(index_id, dimension=dimension, metric=metric)
         if index_name:
             index.index_name = index_name
-        
+
         # Convert vectors to numpy arrays and add to index
         np_vectors = np.array(vectors)
         vector_ids = index.add_vectors(np_vectors, metadata=metadata)
-            
+
         # Return information about the index
         return {
             "status": "success",

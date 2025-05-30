@@ -11,17 +11,17 @@ class MockHFDataset(Dataset):
         # Default data if none provided, ensuring consistent types
         if data is None:
             data = [{"col1": 1, "col2": "A"}, {"col1": 2, "col2": "B_str"}, {"col1": 3, "col2": "C"}]
-        
+
         # Explicitly define features for default data to avoid inference issues
         if features is None:
             features = Features({
                 "col1": Value("int32"),
                 "col2": Value("string")
             })
-        
+
         # Create a PyArrow Schema from the Features object
         arrow_schema = features.arrow_schema
-        
+
         # Create a PyArrow Table from the data with the explicit schema
         arrow_table = pa.Table.from_pylist(data, schema=arrow_schema)
 
@@ -66,7 +66,7 @@ class MockHFDataset(Dataset):
         for row in self._data:
             new_row = {col: row[col] for col in column_names if col in row}
             new_data.append(new_row)
-        
+
         new_features = Features({col: self.info.features[col] for col in column_names if col in self.info.features})
         return MockHFDataset(data=new_data, features=new_features, info=self.info, split=self.split)
 
@@ -78,7 +78,7 @@ class MockHFDataset(Dataset):
                 if old_name in new_row:
                     new_row[new_name] = new_row.pop(old_name)
             new_data.append(new_row)
-        
+
         new_features = self.info.features.copy()
         for old_name, new_name in column_mapping.items():
             if old_name in new_features:
@@ -88,7 +88,7 @@ class MockHFDataset(Dataset):
     def sort(self, column_names, reverse=False, kind=None, indices_cache_file_name=None, writer_batch_size=1000, load_from_cache_file=True, keep_in_memory=None, **kwargs):
         if isinstance(column_names, str):
             column_names = [column_names]
-        
+
         sorted_data = sorted(self._data, key=lambda x: tuple(x[col] for col in column_names), reverse=reverse)
         return MockHFDataset(data=sorted_data, features=self.info.features, info=self.info, split=self.split)
 
@@ -106,7 +106,7 @@ class MockHFDataset(Dataset):
                     mapped_batch = function(batch, indices_batch)
                 else:
                     mapped_batch = function(batch)
-                
+
                 # Assuming mapped_batch is a dictionary of lists for columns
                 # Convert it back to a list of dictionaries (rows)
                 if isinstance(mapped_batch, dict):
@@ -124,7 +124,7 @@ class MockHFDataset(Dataset):
                 else:
                     updated_row = function(row)
                 mapped_data.append(updated_row)
-        
+
         # Re-infer features if not provided, or use existing ones
         new_features = features if features is not None else self.info.features
         return MockHFDataset(data=mapped_data, features=new_features, info=self.info, split=self.split)

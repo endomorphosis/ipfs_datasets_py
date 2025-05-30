@@ -23,7 +23,7 @@ class TestMCPExecuteCommand(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["command"], command)
         self.assertEqual(result["args"], args)
         self.assertIn("Command 'ls' received but not executed for security reasons", result["message"])
-        
+
         # Verify that the command was logged
         mock_logger_info.assert_called_once_with("Executing command: ls -l /tmp")
 
@@ -33,13 +33,13 @@ class TestMCPExecuteCommand(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
 
         command = "invalid_command"
-        
+
         result = await execute_command(command=command) # Added await back
 
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["command"], command)
         self.assertIn("Simulated error", result["error"])
-        
+
         # Verify that the error was logged
         mock_logger_error.assert_called_once()
 

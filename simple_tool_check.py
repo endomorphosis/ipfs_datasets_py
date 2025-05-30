@@ -34,18 +34,18 @@ def main():
         ("provenance_tools", "record_provenance"),
         ("ipfs_tools", "get_from_ipfs"),
     ]
-    
+
     print("=== Tool Import Status ===")
     success_count = 0
     total_count = len(tools)
-    
+
     for module_name, function_name in tools:
         success, message = check_tool_import(module_name, function_name)
         status = "✓" if success else "✗"
         print(f"{status} {module_name}.{function_name}: {message}")
         if success:
             success_count += 1
-    
+
     print(f"\n=== Summary ===")
     print(f"Successful imports: {success_count}/{total_count}")
     print(f"Success rate: {(success_count/total_count)*100:.1f}%")

@@ -28,35 +28,35 @@ from ipfs_datasets_py.llm_graphrag import (
 
 class TestAdaptivePrompting(unittest.TestCase):
     """Tests for adaptive prompting capabilities."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.library = PromptLibrary()
-        
+
         # Add test templates to library
         self.library.add_template(
             name="test_template",
             template="This is a test template for {task}.",
             tags=["general"]
         )
-        
+
         self.library.add_template(
             name="test_template",
             template="This is an academic template for {task}.",
             version="1.1.0",
             tags=["academic"]
         )
-        
+
         self.library.add_template(
             name="test_template",
             template="This is a medical template for {task}.",
             version="2.0.0",
             tags=["medical"]
         )
-        
+
         # Initialize adaptive prompting
         self.adaptive_prompting = AdaptivePrompting(self.library)
-        
+
     def test_template_selection_basic(self):
         """Test basic template selection."""
         # Select a template with default parameters
@@ -64,20 +64,20 @@ class TestAdaptivePrompting(unittest.TestCase):
             task="test_task",
             default_template="test_template"
         )
-        
+
         # Should get the latest version (2.0.0, medical)
         self.assertEqual(template.template, "This is a medical template for {task}.")
-        
+
         # Select a specific version
         template = self.adaptive_prompting.select_prompt(
             task="test_task",
             default_template="test_template",
             default_version="1.1.0"
         )
-        
+
         # Should get the specified version (1.1.0, academic)
         self.assertEqual(template.template, "This is an academic template for {task}.")
-    
+
     def test_rule_based_selection(self):
         """Test rule-based template selection."""
         # Add a rule for academic context
@@ -87,7 +87,7 @@ class TestAdaptivePrompting(unittest.TestCase):
             template_selector=lambda ctx: ("test_template", "1.1.0"),
             priority=10
         )
-        
+
         # Add a rule for medical context
         self.adaptive_prompting.add_rule(
             name="medical_rule",
@@ -95,31 +95,31 @@ class TestAdaptivePrompting(unittest.TestCase):
             template_selector=lambda ctx: ("test_template", "2.0.0"),
             priority=10
         )
-        
+
         # Update context with academic domain
         self.adaptive_prompting.update_context({"domain": "academic"})
-        
+
         # Select a template - should use academic rule
         template = self.adaptive_prompting.select_prompt(
             task="test_task",
             default_template="test_template"
         )
-        
+
         # Should get the academic template
         self.assertEqual(template.template, "This is an academic template for {task}.")
-        
+
         # Update context with medical domain
         self.adaptive_prompting.update_context({"domain": "medical"})
-        
+
         # Select a template - should use medical rule
         template = self.adaptive_prompting.select_prompt(
             task="test_task",
             default_template="test_template"
         )
-        
+
         # Should get the medical template
         self.assertEqual(template.template, "This is a medical template for {task}.")
-    
+
     def test_performance_tracking(self):
         """Test performance tracking for templates."""
         # Track performance for a template
@@ -132,7 +132,7 @@ class TestAdaptivePrompting(unittest.TestCase):
                 "token_count": 100
             }
         )
-        
+
         # Track another performance metric
         self.adaptive_prompting.track_performance(
             template_name="test_template",
@@ -143,15 +143,15 @@ class TestAdaptivePrompting(unittest.TestCase):
                 "token_count": 120
             }
         )
-        
+
         # Check that metrics are recorded
         key = "test_template:1.1.0"
         self.assertEqual(len(self.adaptive_prompting.metrics_tracker.get(key, [])), 2)
-        
+
         # Check that the library has updated metrics
         templates = self.library.get_all_templates()
         versions = templates.get("test_template", [])
-        
+
         # Find version 1.1.0
         for version_info in versions:
             if version_info.get("version") == "1.1.0":
@@ -162,39 +162,39 @@ class TestAdaptivePrompting(unittest.TestCase):
 
 class TestDomainSpecificProcessor(unittest.TestCase):
     """Tests for domain-specific processing capabilities."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Create prompt library
         self.library = PromptLibrary()
-        
+
         # Add template versions for different domains
         self.library.add_template(
             name="cross_document_reasoning",
             template="General reasoning for {query}",
             tags=["general"]
         )
-        
+
         self.library.add_template(
             name="cross_document_reasoning",
             template="Academic reasoning for {query}",
             version="1.1.0",
             tags=["academic", "research"]
         )
-        
+
         self.library.add_template(
             name="cross_document_reasoning",
             template="Medical reasoning for {query}",
             version="1.2.0",
             tags=["medical", "healthcare"]
         )
-        
+
         # Create adaptive prompting
         self.adaptive_prompting = AdaptivePrompting(self.library)
-        
+
         # Create domain processor
         self.domain_processor = DomainSpecificProcessor(self.adaptive_prompting)
-    
+
     def test_domain_detection(self):
         """Test domain detection from context."""
         # Academic context
@@ -208,7 +208,7 @@ class TestDomainSpecificProcessor(unittest.TestCase):
                 }
             }
         }
-        
+
         # Medical context
         medical_context = {
             "query": "Compare treatment outcomes for patients",
@@ -220,7 +220,7 @@ class TestDomainSpecificProcessor(unittest.TestCase):
                 }
             }
         }
-        
+
         # Legal context
         legal_context = {
             "query": "Analyze the case precedents for contract law",
@@ -232,17 +232,17 @@ class TestDomainSpecificProcessor(unittest.TestCase):
                 }
             }
         }
-        
+
         # Detect domains
         academic_domain = self.domain_processor.detect_domain(academic_context)
         medical_domain = self.domain_processor.detect_domain(medical_context)
         legal_domain = self.domain_processor.detect_domain(legal_context)
-        
+
         # Check that domains are detected correctly
         self.assertEqual(academic_domain, "academic")
         self.assertEqual(medical_domain, "medical")
         self.assertEqual(legal_domain, "legal")
-    
+
     def test_context_enhancement(self):
         """Test enhancing context with domain information."""
         # Create a context
@@ -253,20 +253,20 @@ class TestDomainSpecificProcessor(unittest.TestCase):
                 "relationship_types": ["authored_by", "cites", "uses"]
             }
         }
-        
+
         # Enhance context
         enhanced = self.domain_processor.enhance_context_with_domain(context)
-        
+
         # Check that domain is added
         self.assertIn("domain", enhanced)
         self.assertEqual(enhanced["domain"], "academic")
-        
+
         # Check that domain info is added
         self.assertIn("domain_info", enhanced)
         self.assertIn("entity_types", enhanced["domain_info"])
         self.assertIn("relationship_types", enhanced["domain_info"])
         self.assertIn("prompt_tags", enhanced["domain_info"])
-    
+
     def test_domain_specific_template_selection(self):
         """Test domain-specific template selection."""
         # Academic context
@@ -278,7 +278,7 @@ class TestDomainSpecificProcessor(unittest.TestCase):
                 "relationship_types": ["authored_by", "cites", "uses"]
             }
         }
-        
+
         # Medical context
         medical_context = {
             "task": "cross_document_reasoning",
@@ -288,29 +288,29 @@ class TestDomainSpecificProcessor(unittest.TestCase):
                 "relationship_types": ["treats", "causes", "prevents"]
             }
         }
-        
+
         # Update adaptive prompting with academic context
         self.adaptive_prompting.update_context(
             self.domain_processor.enhance_context_with_domain(academic_context)
         )
-        
+
         # Select template - should select academic version
         academic_template = self.adaptive_prompting.select_prompt(
             task="cross_document_reasoning",
             default_template="cross_document_reasoning"
         )
-        
+
         # Update adaptive prompting with medical context
         self.adaptive_prompting.update_context(
             self.domain_processor.enhance_context_with_domain(medical_context)
         )
-        
+
         # Select template - should select medical version
         medical_template = self.adaptive_prompting.select_prompt(
             task="cross_document_reasoning",
             default_template="cross_document_reasoning"
         )
-        
+
         # Check templates
         self.assertEqual(academic_template.template, "Academic reasoning for {query}")
         self.assertEqual(medical_template.template, "Medical reasoning for {query}")
@@ -318,11 +318,11 @@ class TestDomainSpecificProcessor(unittest.TestCase):
 
 class TestPerformanceMonitor(unittest.TestCase):
     """Tests for the LLM performance monitoring capabilities."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.monitor = GraphRAGPerformanceMonitor(max_history=100)
-    
+
     def test_recording_interactions(self):
         """Test recording LLM interactions."""
         # Record successful interaction
@@ -335,7 +335,7 @@ class TestPerformanceMonitor(unittest.TestCase):
             success=True,
             metadata={"domain": "academic"}
         )
-        
+
         # Record failed interaction
         self.monitor.record_interaction(
             task="test_task",
@@ -347,7 +347,7 @@ class TestPerformanceMonitor(unittest.TestCase):
             error_msg="Test error",
             metadata={"domain": "academic"}
         )
-        
+
         # Record interaction for different task
         self.monitor.record_interaction(
             task="other_task",
@@ -358,15 +358,15 @@ class TestPerformanceMonitor(unittest.TestCase):
             success=True,
             metadata={"domain": "medical"}
         )
-        
+
         # Check history length
         recent = self.monitor.get_recent_interactions()
         self.assertEqual(len(recent), 3)
-        
+
         # Check task-specific history
         task_history = self.monitor.get_recent_interactions(task="test_task")
         self.assertEqual(len(task_history), 2)
-    
+
     def test_task_metrics(self):
         """Test getting task metrics."""
         # Record interactions for a task
@@ -380,10 +380,10 @@ class TestPerformanceMonitor(unittest.TestCase):
                 success=i < 8,  # 8 successes, 2 failures
                 error_msg="Test error" if i >= 8 else None
             )
-        
+
         # Get metrics for the task
         metrics = self.monitor.get_task_metrics("test_task")
-        
+
         # Check metrics
         self.assertEqual(metrics["count"], 10)
         self.assertEqual(metrics["success_count"], 8)
@@ -391,7 +391,7 @@ class TestPerformanceMonitor(unittest.TestCase):
         self.assertEqual(metrics["success_rate"], 0.8)
         self.assertAlmostEqual(metrics["avg_tokens"], 150.0)
         self.assertAlmostEqual(metrics["avg_latency"], 0.5)
-    
+
     def test_model_metrics(self):
         """Test getting model metrics."""
         # Record interactions for a model
@@ -404,10 +404,10 @@ class TestPerformanceMonitor(unittest.TestCase):
                 latency=0.5,
                 success=i < 8  # 8 successes, 2 failures
             )
-        
+
         # Get metrics for the model
         metrics = self.monitor.get_model_metrics("test-model")
-        
+
         # Check metrics
         self.assertEqual(metrics["count"], 10)
         self.assertEqual(metrics["success_count"], 8)
@@ -415,7 +415,7 @@ class TestPerformanceMonitor(unittest.TestCase):
         self.assertEqual(metrics["success_rate"], 0.8)
         self.assertAlmostEqual(metrics["avg_tokens"], 150.0)
         self.assertAlmostEqual(metrics["avg_latency"], 0.5)
-    
+
     def test_error_tracking(self):
         """Test tracking of errors."""
         # Record interactions with different errors
@@ -429,17 +429,17 @@ class TestPerformanceMonitor(unittest.TestCase):
                 success=False,
                 error_msg=f"Error {i%3}"  # 3 different error types
             )
-        
+
         # Get error summary
         errors = self.monitor.get_error_summary()
-        
+
         # Check error counts
         self.assertEqual(sum(errors.values()), 10)
         self.assertEqual(len(errors), 3)
         self.assertEqual(errors["Error 0"], 4)
         self.assertEqual(errors["Error 1"], 3)
         self.assertEqual(errors["Error 2"], 3)
-    
+
     def test_latency_percentiles(self):
         """Test latency percentile calculations."""
         # Record interactions with various latencies
@@ -452,10 +452,10 @@ class TestPerformanceMonitor(unittest.TestCase):
                 latency=i/100.0,  # 0.0 to 0.99
                 success=True
             )
-        
+
         # Get latency percentiles
         percentiles = self.monitor.get_latency_percentiles()
-        
+
         # Check percentiles
         self.assertAlmostEqual(percentiles["p50"], 0.5, places=2)
         self.assertAlmostEqual(percentiles["p90"], 0.9, places=2)
@@ -464,11 +464,11 @@ class TestPerformanceMonitor(unittest.TestCase):
         self.assertAlmostEqual(percentiles["min"], 0.0, places=2)
         self.assertAlmostEqual(percentiles["max"], 0.99, places=2)
         self.assertAlmostEqual(percentiles["mean"], 0.495, places=2)
-        
+
         # Get model-specific percentiles
         model_percentiles = self.monitor.get_latency_percentiles(model="test-model")
         self.assertAlmostEqual(model_percentiles["p50"], 0.5, places=2)
-        
+
         # Get task-specific percentiles
         task_percentiles = self.monitor.get_latency_percentiles(task="test_task")
         self.assertAlmostEqual(task_percentiles["p50"], 0.5, places=2)

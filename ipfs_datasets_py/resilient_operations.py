@@ -99,36 +99,36 @@ class NodeHealth:
     def update_response_time(self, response_time_ms: int, max_samples: int = 10):
         """Update response time metrics."""
         self.response_times_ms.append(response_time_ms)
-        
+
         # Keep only the most recent samples
         if len(self.response_times_ms) > max_samples:
             self.response_times_ms = self.response_times_ms[-max_samples:]
-        
+
         # Update average
         self.avg_response_time_ms = sum(self.response_times_ms) / len(self.response_times_ms)
-    
+
     def record_success(self):
         """Record a successful operation."""
         self.last_check_time = time.time()
         self.status = HealthStatus.HEALTHY
-        
+
         # Improve availability score
         self.availability_score = min(1.0, self.availability_score + 0.1)
-    
+
     def record_failure(self):
         """Record a failed operation."""
         self.failure_count += 1
         self.last_failure_time = time.time()
-        
+
         # Degrade availability score
         self.availability_score = max(0.0, self.availability_score - 0.2)
-        
+
         # Update status based on failure count
         if self.failure_count >= DEFAULT_NODE_FAILURE_THRESHOLD:
             self.status = HealthStatus.UNHEALTHY
         else:
             self.status = HealthStatus.DEGRADED
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
@@ -148,7 +148,7 @@ class NodeHealth:
 class CircuitBreaker:
     """
     Implements the circuit breaker pattern to prevent cascading failures.
-    
+
     The circuit breaker has three states:
     - CLOSED: Operations are allowed to proceed normally
     - OPEN: Operations immediately fail without attempting execution
@@ -157,32 +157,32 @@ class CircuitBreaker:
     name: str
     failure_threshold: int = DEFAULT_CIRCUIT_BREAKER_THRESHOLD
     reset_timeout_sec: int = DEFAULT_CIRCUIT_BREAKER_RESET_TIMEOUT_SEC
-    
+
     # State
     failures: int = 0
     state: str = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
     last_failure_time: Optional[float] = None
     last_success_time: Optional[float] = None
     trip_time: Optional[float] = None
-    
+
     def execute(self, func: Callable[[], T]) -> T:
         """
         Execute a function with circuit breaker protection.
-        
+
         Args:
             func: Function to execute
-            
+
         Returns:
             The result of the function
-            
+
         Raises:
             Exception: If the circuit is open or the function fails
         """
         self._check_state()
-        
+
         if self.state == "OPEN":
             raise CircuitBreakerOpenError(f"Circuit '{self.name}' is open")
-        
+
         try:
             result = func()
             self._record_success()
@@ -190,25 +190,25 @@ class CircuitBreaker:
         except Exception as e:
             self._record_failure()
             raise
-    
+
     async def execute_async(self, func: Callable[[], Awaitable[T]]) -> T:
         """
         Execute an async function with circuit breaker protection.
-        
+
         Args:
             func: Async function to execute
-            
+
         Returns:
             The result of the function
-            
+
         Raises:
             Exception: If the circuit is open or the function fails
         """
         self._check_state()
-        
+
         if self.state == "OPEN":
             raise CircuitBreakerOpenError(f"Circuit '{self.name}' is open")
-        
+
         try:
             result = await func()
             self._record_success()
@@ -216,32 +216,32 @@ class CircuitBreaker:
         except Exception as e:
             self._record_failure()
             raise
-    
+
     def _check_state(self):
         """Check and update the circuit state."""
         now = time.time()
-        
+
         if self.state == "OPEN":
             # Check if reset timeout has elapsed
             if self.trip_time and now - self.trip_time >= self.reset_timeout_sec:
                 self.state = "HALF_OPEN"
                 logger.info(f"Circuit '{self.name}' changed from OPEN to HALF_OPEN")
-    
+
     def _record_success(self):
         """Record a successful operation."""
         self.last_success_time = time.time()
-        
+
         if self.state == "HALF_OPEN":
             # Reset the circuit
             self.state = "CLOSED"
             self.failures = 0
             logger.info(f"Circuit '{self.name}' changed from HALF_OPEN to CLOSED")
-    
+
     def _record_failure(self):
         """Record a failed operation."""
         now = time.time()
         self.last_failure_time = now
-        
+
         if self.state == "CLOSED":
             self.failures += 1
             if self.failures >= self.failure_threshold:
@@ -252,7 +252,7 @@ class CircuitBreaker:
             self.state = "OPEN"
             self.trip_time = now
             logger.warning(f"Circuit '{self.name}' returned to OPEN from HALF_OPEN due to failure")
-    
+
     def reset(self):
         """Manually reset the circuit to closed state."""
         self.state = "CLOSED"
@@ -275,7 +275,7 @@ class RetryConfig:
     backoff_factor: float = DEFAULT_BACKOFF_FACTOR
     jitter_factor: float = DEFAULT_JITTER_FACTOR
     retry_on_exceptions: List[type] = field(default_factory=list)
-    
+
     def __post_init__(self):
         # Default retry on P2PError if not specified
         if not self.retry_on_exceptions:
@@ -297,32 +297,32 @@ class OperationResult:
     results: Dict[str, Any] = field(default_factory=dict)
     error_message: Optional[str] = None
     execution_time_ms: int = 0
-    
+
     def add_success(self, node_id: str, result: Any = None):
         """Add a successful node operation."""
         self.success_count += 1
         if node_id not in self.successful_nodes:
             self.successful_nodes.append(node_id)
-        
+
         if node_id not in self.affected_nodes:
             self.affected_nodes.append(node_id)
-        
+
         if result is not None:
             self.results[node_id] = result
-    
+
     def add_failure(self, node_id: str, error_message: str):
         """Add a failed node operation."""
         self.failure_count += 1
         self.failed_nodes[node_id] = error_message
-        
+
         if node_id not in self.affected_nodes:
             self.affected_nodes.append(node_id)
-    
+
     def complete(self, status: OperationStatus = OperationStatus.COMPLETED):
         """Mark the operation as complete."""
         self.end_time = time.time()
         self.execution_time_ms = int((self.end_time - self.start_time) * 1000)
-        
+
         # Determine final status if not specified
         if status == OperationStatus.COMPLETED:
             if self.failure_count == 0:
@@ -333,17 +333,17 @@ class OperationResult:
                 self.status = OperationStatus.FAILED
         else:
             self.status = status
-        
+
         return self
-    
+
     def is_successful(self) -> bool:
         """Check if the operation was successful overall."""
         return self.status == OperationStatus.COMPLETED
-    
+
     def is_partially_successful(self) -> bool:
         """Check if the operation was at least partially successful."""
         return self.status in [OperationStatus.COMPLETED, OperationStatus.PARTIALLY_COMPLETED]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
@@ -370,28 +370,28 @@ class Checkpoint:
     completed_items: List[str] = field(default_factory=list)
     pending_items: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def save(self, directory: str):
         """Save checkpoint to file."""
         os.makedirs(directory, exist_ok=True)
-        
+
         # Create filename
         filename = os.path.join(directory, f"{self.operation_id}_{self.checkpoint_id}.json")
-        
+
         # Write to file
         with open(filename, "w") as f:
             json.dump(asdict(self), f)
-        
+
         return filename
-    
+
     @classmethod
     def load(cls, filename: str) -> 'Checkpoint':
         """Load checkpoint from file."""
         with open(filename, "r") as f:
             data = json.load(f)
-        
+
         return cls(**data)
-    
+
     @classmethod
     def find_latest(cls, directory: str, operation_id: str) -> Optional['Checkpoint']:
         """Find the latest checkpoint for an operation."""
@@ -400,31 +400,31 @@ class Checkpoint:
             f for f in os.listdir(directory)
             if f.startswith(prefix) and f.endswith(".json")
         ]
-        
+
         if not checkpoint_files:
             return None
-        
+
         # Sort by timestamp in filename
         checkpoint_files.sort(reverse=True)
         latest_file = os.path.join(directory, checkpoint_files[0])
-        
+
         return cls.load(latest_file)
 
 
 class resilient(object):
     """
     Decorator for making functions resilient with automatic retries.
-    
+
     Usage:
     @resilient()
     def my_function():
         # Function that might fail
-        
+
     @resilient(max_retries=5, initial_backoff_ms=200)
     async def my_async_function():
         # Async function that might fail
     """
-    
+
     def __init__(
         self,
         max_retries: int = DEFAULT_RETRY_COUNT,
@@ -436,7 +436,7 @@ class resilient(object):
     ):
         """
         Initialize the resilient decorator.
-        
+
         Args:
             max_retries: Maximum number of retry attempts
             initial_backoff_ms: Initial backoff time in milliseconds
@@ -453,10 +453,10 @@ class resilient(object):
             jitter_factor=jitter_factor,
             retry_on_exceptions=retry_on_exceptions or []
         )
-    
+
     def __call__(self, func):
         """Apply the decorator to the function."""
-        
+
         # Handle both async and sync functions
         if asyncio.iscoroutinefunction(func):
             @asyncio.coroutine
@@ -467,85 +467,85 @@ class resilient(object):
             def wrapper(*args, **kwargs):
                 return self._execute_sync(func, args, kwargs)
             return wrapper
-    
+
     def _execute_sync(self, func, args, kwargs):
         """Execute a synchronous function with retries."""
         retry_count = 0
         last_exception = None
-        
+
         while retry_count <= self.config.max_retries:
             try:
                 return func(*args, **kwargs)
             except tuple(self.config.retry_on_exceptions) as e:
                 last_exception = e
                 retry_count += 1
-                
+
                 if retry_count > self.config.max_retries:
                     break
-                
+
                 # Calculate backoff time
                 backoff_ms = min(
                     self.config.initial_backoff_ms * (self.config.backoff_factor ** (retry_count - 1)),
                     self.config.max_backoff_ms
                 )
-                
+
                 # Add jitter
                 jitter = random.uniform(-self.config.jitter_factor, self.config.jitter_factor)
                 backoff_ms = backoff_ms * (1 + jitter)
-                
+
                 # Log retry attempt
                 logger.info(
                     f"Retrying {func.__name__} after error: {str(e)}. "
                     f"Retry {retry_count}/{self.config.max_retries} in {backoff_ms:.1f}ms"
                 )
-                
+
                 # Sleep for backoff time
                 time.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
-        
+
         # If we get here, all retries failed
         logger.error(f"All {self.config.max_retries} retries failed for {func.__name__}")
         raise last_exception
-    
+
     async def _execute_async(self, func, args, kwargs):
         """Execute an asynchronous function with retries."""
         retry_count = 0
         last_exception = None
-        
+
         while retry_count <= self.config.max_retries:
             try:
                 return await func(*args, **kwargs)
             except tuple(self.config.retry_on_exceptions) as e:
                 last_exception = e
                 retry_count += 1
-                
+
                 if retry_count > self.config.max_retries:
                     break
-                
+
                 # Calculate backoff time
                 backoff_ms = min(
                     self.config.initial_backoff_ms * (self.config.backoff_factor ** (retry_count - 1)),
                     self.config.max_backoff_ms
                 )
-                
+
                 # Add jitter
                 jitter = random.uniform(-self.config.jitter_factor, self.config.jitter_factor)
                 backoff_ms = backoff_ms * (1 + jitter)
-                
+
                 # Log retry attempt
                 logger.info(
                     f"Retrying {func.__name__} after error: {str(e)}. "
                     f"Retry {retry_count}/{self.config.max_retries} in {backoff_ms:.1f}ms"
                 )
-                
+
                 # Sleep for backoff time
                 await asyncio.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
-        
+
         # If we get here, all retries failed
         logger.error(f"All {self.config.max_retries} retries failed for {func.__name__}")
         raise last_exception
@@ -554,7 +554,7 @@ class resilient(object):
 class ResilienceManager:
     """
     Manager for resilient operations across distributed nodes.
-    
+
     This class provides tools for enhanced resilience when working with
     distributed IPFS nodes, including:
     - Health checks and monitoring
@@ -562,7 +562,7 @@ class ResilienceManager:
     - Automatic retries with exponential backoff
     - Operation tracking and recovery
     """
-    
+
     def __init__(
         self,
         node: LibP2PNode,
@@ -573,7 +573,7 @@ class ResilienceManager:
     ):
         """
         Initialize the resilience manager.
-        
+
         Args:
             node: The P2P node for network communication
             storage_dir: Directory for storing resilience data
@@ -586,32 +586,32 @@ class ResilienceManager:
             os.getcwd(), ".ipfs_datasets", "resilience"
         )
         self.health_check_interval_sec = health_check_interval_sec
-        
+
         # Create storage directories
         os.makedirs(os.path.join(self.storage_dir, "checkpoints"), exist_ok=True)
         os.makedirs(os.path.join(self.storage_dir, "health_data"), exist_ok=True)
-        
+
         # Initialize state
         self.node_health: Dict[str, NodeHealth] = {}
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         self.operations: Dict[str, OperationResult] = {}
-        
+
         # Create circuit breakers
         cb_config = circuit_breaker_config or {}
         self._create_circuit_breakers(cb_config)
-        
+
         # Set default retry config
         self.retry_config = retry_config or RetryConfig()
-        
+
         # Start health check scheduler
         self._start_health_checker()
-        
+
         # Register protocol handlers
         self._setup_protocol_handlers()
-        
+
         # Status
         self.running = True
-    
+
     def _create_circuit_breakers(self, config: Dict[str, Any]):
         """Create default circuit breakers for common operations."""
         default_circuits = [
@@ -622,17 +622,17 @@ class ResilienceManager:
             "dataset_sync",
             "search"
         ]
-        
+
         for circuit_name in default_circuits:
             threshold = config.get(f"{circuit_name}_threshold", DEFAULT_CIRCUIT_BREAKER_THRESHOLD)
             timeout = config.get(f"{circuit_name}_timeout", DEFAULT_CIRCUIT_BREAKER_RESET_TIMEOUT_SEC)
-            
+
             self.circuit_breakers[circuit_name] = CircuitBreaker(
                 name=circuit_name,
                 failure_threshold=threshold,
                 reset_timeout_sec=timeout
             )
-    
+
     def _setup_protocol_handlers(self):
         """Set up protocol handlers for resilience operations."""
         if hasattr(self.node, 'register_protocol_handler'):
@@ -641,7 +641,7 @@ class ResilienceManager:
                 NetworkProtocol.HEALTH_CHECK,
                 self._handle_health_check
             )
-    
+
     def _start_health_checker(self):
         """Start the background health checker."""
         checker_thread = threading.Thread(
@@ -649,18 +649,18 @@ class ResilienceManager:
             daemon=True
         )
         checker_thread.start()
-    
+
     def _health_check_loop(self):
         """Background loop for conducting health checks."""
         while self.running:
             # Sleep first to allow initialization to complete
             time.sleep(self.health_check_interval_sec)
-            
+
             try:
                 # Get all known peers
                 if hasattr(self.node, 'get_connected_peers'):
                     peers = self.node.get_connected_peers()
-                    
+
                     # Check each peer
                     for peer_id in peers:
                         # Skip check if too recent
@@ -668,27 +668,27 @@ class ResilienceManager:
                             last_check = self.node_health[peer_id].last_check_time
                             if last_check and time.time() - last_check < self.health_check_interval_sec:
                                 continue
-                        
+
                         # Perform health check asynchronously
                         asyncio.run(self._check_node_health(peer_id))
             except Exception as e:
                 logger.error(f"Error in health check loop: {str(e)}")
-    
+
     async def _check_node_health(self, node_id: str):
         """
         Perform a health check on a node.
-        
+
         Args:
             node_id: ID of the node to check
         """
         # Initialize health record if needed
         if node_id not in self.node_health:
             self.node_health[node_id] = NodeHealth(node_id=node_id)
-        
+
         try:
             # Measure response time
             start_time = time.time()
-            
+
             # Send health check request
             response = await self.node.send_message(
                 peer_id=node_id,
@@ -696,35 +696,35 @@ class ResilienceManager:
                 data={"action": "health_check", "requester_id": self.node.node_id},
                 timeout_ms=DEFAULT_HEALTH_CHECK_TIMEOUT_MS
             )
-            
+
             # Calculate response time
             response_time_ms = int((time.time() - start_time) * 1000)
-            
+
             # Update health record
             health_record = self.node_health[node_id]
             health_record.update_response_time(response_time_ms)
             health_record.record_success()
-            
+
             # Update with capabilities and load info from response
             if isinstance(response, dict):
                 if "capabilities" in response:
                     health_record.capabilities = response["capabilities"]
                 if "load_metrics" in response:
                     health_record.load_metrics = response["load_metrics"]
-            
+
             logger.debug(f"Health check for {node_id} successful: {response_time_ms}ms")
-            
+
         except Exception as e:
             # Record failure
             health_record = self.node_health[node_id]
             health_record.record_failure()
-            
+
             logger.warning(f"Health check for {node_id} failed: {str(e)}")
-    
+
     async def _handle_health_check(self, stream):
         """
         Handle incoming health check requests.
-        
+
         Args:
             stream: The network stream
         """
@@ -732,7 +732,7 @@ class ResilienceManager:
             # Read request data
             data = await stream.read()
             request = json.loads(data.decode())
-            
+
             # Prepare response with capabilities and load metrics
             response = {
                 "status": "healthy",
@@ -741,7 +741,7 @@ class ResilienceManager:
                 "capabilities": self._get_node_capabilities(),
                 "load_metrics": self._get_load_metrics()
             }
-            
+
             # Send response
             await stream.write(json.dumps(response).encode())
         except Exception as e:
@@ -759,7 +759,7 @@ class ResilienceManager:
         finally:
             # Always close the stream
             await stream.close()
-    
+
     def _get_node_capabilities(self) -> Dict[str, Any]:
         """Get capabilities of this node."""
         capabilities = {
@@ -767,21 +767,21 @@ class ResilienceManager:
             "protocols": [],
             "features": []
         }
-        
+
         # Detect node role
         if hasattr(self.node, 'role'):
             capabilities["roles"].append(self.node.role)
-        
+
         # Detect protocols
         if hasattr(self.node, 'supported_protocols'):
             capabilities["protocols"] = [p.value for p in self.node.supported_protocols]
-        
+
         # Detect features based on available managers
         if hasattr(self.node, 'shard_manager'):
             capabilities["features"].append("shard_management")
-        
+
         return capabilities
-    
+
     def _get_load_metrics(self) -> Dict[str, Any]:
         """Get load metrics for this node."""
         metrics = {
@@ -791,55 +791,55 @@ class ResilienceManager:
             "network_connections": 0,
             "active_operations": 0
         }
-        
+
         try:
             import psutil
-            
+
             # CPU
             metrics["cpu_percent"] = psutil.cpu_percent(interval=0.1)
-            
+
             # Memory
             memory = psutil.virtual_memory()
             metrics["memory_percent"] = memory.percent
-            
+
             # Disk
             disk = psutil.disk_usage('/')
             metrics["disk_percent"] = disk.percent
-            
+
             # Network connections
             metrics["network_connections"] = len(psutil.net_connections())
-            
+
         except ImportError:
             # psutil not available, use minimal metrics
             metrics["active_operations"] = len(self.operations)
-        
+
         return metrics
-    
+
     def get_node_health(self, node_id: str) -> Optional[NodeHealth]:
         """
         Get health information for a node.
-        
+
         Args:
             node_id: ID of the node
-            
+
         Returns:
             NodeHealth: Health information or None if not available
         """
         return self.node_health.get(node_id)
-    
+
     def get_all_node_health(self) -> Dict[str, NodeHealth]:
         """
         Get health information for all known nodes.
-        
+
         Returns:
             Dict[str, NodeHealth]: Mapping of node IDs to health information
         """
         return self.node_health
-    
+
     def get_healthy_nodes(self) -> List[str]:
         """
         Get a list of healthy node IDs.
-        
+
         Returns:
             List[str]: List of healthy node IDs
         """
@@ -847,20 +847,20 @@ class ResilienceManager:
             node_id for node_id, health in self.node_health.items()
             if health.status == HealthStatus.HEALTHY
         ]
-    
+
     def select_best_nodes(self, count: int, exclude_nodes: List[str] = None) -> List[str]:
         """
         Select the best nodes based on health metrics.
-        
+
         Args:
             count: Number of nodes to select
             exclude_nodes: Nodes to exclude from selection
-            
+
         Returns:
             List[str]: Selected node IDs
         """
         exclude_set = set(exclude_nodes or [])
-        
+
         # Sort nodes by availability score (descending)
         sorted_nodes = sorted(
             [
@@ -870,10 +870,10 @@ class ResilienceManager:
             key=lambda x: x[1].availability_score,
             reverse=True
         )
-        
+
         # Take the top nodes
         return [node_id for node_id, _ in sorted_nodes[:count]]
-    
+
     def create_circuit_breaker(
         self,
         name: str,
@@ -882,12 +882,12 @@ class ResilienceManager:
     ) -> CircuitBreaker:
         """
         Create a new circuit breaker.
-        
+
         Args:
             name: Name of the circuit breaker
             failure_threshold: Number of failures before opening the circuit
             reset_timeout_sec: Time in seconds before trying to close the circuit again
-            
+
         Returns:
             CircuitBreaker: The created circuit breaker
         """
@@ -896,22 +896,22 @@ class ResilienceManager:
             failure_threshold=failure_threshold,
             reset_timeout_sec=reset_timeout_sec
         )
-        
+
         self.circuit_breakers[name] = breaker
         return breaker
-    
+
     def get_circuit_breaker(self, name: str) -> Optional[CircuitBreaker]:
         """
         Get a circuit breaker by name.
-        
+
         Args:
             name: Name of the circuit breaker
-            
+
         Returns:
             CircuitBreaker: The circuit breaker or None if not found
         """
         return self.circuit_breakers.get(name)
-    
+
     def execute_with_circuit_breaker(
         self,
         circuit_name: str,
@@ -919,14 +919,14 @@ class ResilienceManager:
     ) -> T:
         """
         Execute a function with circuit breaker protection.
-        
+
         Args:
             circuit_name: Name of the circuit breaker to use
             func: Function to execute
-            
+
         Returns:
             The result of the function
-            
+
         Raises:
             CircuitBreakerOpenError: If the circuit is open
             Exception: If the function fails
@@ -935,9 +935,9 @@ class ResilienceManager:
         if not breaker:
             # No circuit breaker, execute directly
             return func()
-        
+
         return breaker.execute(func)
-    
+
     async def execute_with_circuit_breaker_async(
         self,
         circuit_name: str,
@@ -945,14 +945,14 @@ class ResilienceManager:
     ) -> T:
         """
         Execute an async function with circuit breaker protection.
-        
+
         Args:
             circuit_name: Name of the circuit breaker to use
             func: Async function to execute
-            
+
         Returns:
             The result of the function
-            
+
         Raises:
             CircuitBreakerOpenError: If the circuit is open
             Exception: If the function fails
@@ -961,9 +961,9 @@ class ResilienceManager:
         if not breaker:
             # No circuit breaker, execute directly
             return await func()
-        
+
         return await breaker.execute_async(func)
-    
+
     async def retry_async(
         self,
         func: Callable[[], Awaitable[T]],
@@ -971,57 +971,57 @@ class ResilienceManager:
     ) -> T:
         """
         Execute an async function with automatic retries.
-        
+
         Args:
             func: Async function to execute
             config: Retry configuration (uses default if None)
-            
+
         Returns:
             The result of the function
-            
+
         Raises:
             Exception: If all retries fail
         """
         retry_config = config or self.retry_config
         retry_count = 0
         last_exception = None
-        
+
         while retry_count <= retry_config.max_retries:
             try:
                 return await func()
             except tuple(retry_config.retry_on_exceptions) as e:
                 last_exception = e
                 retry_count += 1
-                
+
                 if retry_count > retry_config.max_retries:
                     break
-                
+
                 # Calculate backoff time
                 backoff_ms = min(
                     retry_config.initial_backoff_ms * (retry_config.backoff_factor ** (retry_count - 1)),
                     retry_config.max_backoff_ms
                 )
-                
+
                 # Add jitter
                 jitter = random.uniform(-retry_config.jitter_factor, retry_config.jitter_factor)
                 backoff_ms = backoff_ms * (1 + jitter)
-                
+
                 # Log retry attempt
                 logger.info(
                     f"Retrying after error: {str(e)}. "
                     f"Retry {retry_count}/{retry_config.max_retries} in {backoff_ms:.1f}ms"
                 )
-                
+
                 # Sleep for backoff time
                 await asyncio.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
-        
+
         # If we get here, all retries failed
         logger.error(f"All {retry_config.max_retries} retries failed")
         raise last_exception
-    
+
     def retry(
         self,
         func: Callable[[], T],
@@ -1029,64 +1029,64 @@ class ResilienceManager:
     ) -> T:
         """
         Execute a function with automatic retries.
-        
+
         Args:
             func: Function to execute
             config: Retry configuration (uses default if None)
-            
+
         Returns:
             The result of the function
-            
+
         Raises:
             Exception: If all retries fail
         """
         retry_config = config or self.retry_config
         retry_count = 0
         last_exception = None
-        
+
         while retry_count <= retry_config.max_retries:
             try:
                 return func()
             except tuple(retry_config.retry_on_exceptions) as e:
                 last_exception = e
                 retry_count += 1
-                
+
                 if retry_count > retry_config.max_retries:
                     break
-                
+
                 # Calculate backoff time
                 backoff_ms = min(
                     retry_config.initial_backoff_ms * (retry_config.backoff_factor ** (retry_count - 1)),
                     retry_config.max_backoff_ms
                 )
-                
+
                 # Add jitter
                 jitter = random.uniform(-retry_config.jitter_factor, retry_config.jitter_factor)
                 backoff_ms = backoff_ms * (1 + jitter)
-                
+
                 # Log retry attempt
                 logger.info(
                     f"Retrying after error: {str(e)}. "
                     f"Retry {retry_count}/{retry_config.max_retries} in {backoff_ms:.1f}ms"
                 )
-                
+
                 # Sleep for backoff time
                 time.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
-        
+
         # If we get here, all retries failed
         logger.error(f"All {retry_config.max_retries} retries failed")
         raise last_exception
-    
+
     def create_operation(self, operation_type: str) -> OperationResult:
         """
         Create a new operation tracking object.
-        
+
         Args:
             operation_type: Type of operation
-            
+
         Returns:
             OperationResult: The created operation result
         """
@@ -1096,22 +1096,22 @@ class ResilienceManager:
             status=OperationStatus.PENDING,
             start_time=time.time()
         )
-        
+
         self.operations[operation_id] = operation
         return operation
-    
+
     def get_operation(self, operation_id: str) -> Optional[OperationResult]:
         """
         Get an operation by ID.
-        
+
         Args:
             operation_id: ID of the operation
-            
+
         Returns:
             OperationResult: The operation or None if not found
         """
         return self.operations.get(operation_id)
-    
+
     def create_checkpoint(
         self,
         operation_id: str,
@@ -1121,13 +1121,13 @@ class ResilienceManager:
     ) -> Checkpoint:
         """
         Create a checkpoint for a long-running operation.
-        
+
         Args:
             operation_id: ID of the operation
             completed_items: IDs of completed items
             pending_items: IDs of pending items
             metadata: Additional metadata
-            
+
         Returns:
             Checkpoint: The created checkpoint
         """
@@ -1137,26 +1137,26 @@ class ResilienceManager:
             pending_items=pending_items,
             metadata=metadata or {}
         )
-        
+
         # Save to disk
         checkpoint_dir = os.path.join(self.storage_dir, "checkpoints")
         checkpoint.save(checkpoint_dir)
-        
+
         return checkpoint
-    
+
     def get_latest_checkpoint(self, operation_id: str) -> Optional[Checkpoint]:
         """
         Get the latest checkpoint for an operation.
-        
+
         Args:
             operation_id: ID of the operation
-            
+
         Returns:
             Checkpoint: The latest checkpoint or None if not found
         """
         checkpoint_dir = os.path.join(self.storage_dir, "checkpoints")
         return Checkpoint.find_latest(checkpoint_dir, operation_id)
-    
+
     async def send_message_with_retry(
         self,
         peer_id: str,
@@ -1167,17 +1167,17 @@ class ResilienceManager:
     ) -> Any:
         """
         Send a message to a peer with automatic retries.
-        
+
         Args:
             peer_id: ID of the peer
             protocol: Protocol to use
             data: Data to send
             timeout_ms: Timeout in milliseconds
             retry_config: Retry configuration
-            
+
         Returns:
             The response from the peer
-            
+
         Raises:
             Exception: If sending fails after all retries
         """
@@ -1186,17 +1186,17 @@ class ResilienceManager:
             health = self.node_health[peer_id]
             if health.status == HealthStatus.UNHEALTHY:
                 logger.warning(f"Node {peer_id} is marked as unhealthy, using circuit breaker")
-        
+
         # Create circuit breaker function
         async def send_with_circuit_breaker():
             return await self.execute_with_circuit_breaker_async(
                 "message_send",
                 lambda: self.node.send_message(peer_id, protocol, data, timeout_ms)
             )
-        
+
         # Execute with retries
         return await self.retry_async(send_with_circuit_breaker, retry_config)
-    
+
     async def connect_to_peer_with_retry(
         self,
         peer_id: str,
@@ -1204,30 +1204,30 @@ class ResilienceManager:
     ) -> bool:
         """
         Connect to a peer with automatic retries.
-        
+
         Args:
             peer_id: ID of the peer
             retry_config: Retry configuration
-            
+
         Returns:
             bool: True if connection successful
-            
+
         Raises:
             Exception: If connection fails after all retries
         """
         if not hasattr(self.node, 'connect_to_peer'):
             raise NotImplementedError("Node does not support connect_to_peer")
-        
+
         # Create circuit breaker function
         async def connect_with_circuit_breaker():
             return await self.execute_with_circuit_breaker_async(
                 "node_connection",
                 lambda: self.node.connect_to_peer(peer_id)
             )
-        
+
         # Execute with retries
         return await self.retry_async(connect_with_circuit_breaker, retry_config)
-    
+
     async def resilient_shard_transfer(
         self,
         shard_id: str,
@@ -1236,27 +1236,27 @@ class ResilienceManager:
     ) -> OperationResult:
         """
         Transfer a shard to target nodes with resilience to failures.
-        
+
         Args:
             shard_id: ID of the shard to transfer
             target_node_ids: IDs of target nodes
             alternative_nodes: Alternative nodes to try if primary targets fail
-            
+
         Returns:
             OperationResult: Result of the operation
         """
         if not hasattr(self.node, 'shard_manager'):
             raise NotImplementedError("Node does not have a shard manager")
-        
+
         # Create operation tracker
         operation = self.create_operation("shard_transfer")
-        
+
         # Get shard from manager
         shard = self.node.shard_manager.get_shard(shard_id)
         if not shard:
             operation.error_message = f"Shard {shard_id} not found"
             return operation.complete(OperationStatus.FAILED)
-        
+
         # Try transfer to each target node
         for node_id in target_node_ids:
             try:
@@ -1266,40 +1266,40 @@ class ResilienceManager:
                         "shard_transfer",
                         lambda: self.node.shard_manager.transfer_shard(shard_id, node_id)
                     )
-                
+
                 result = await self.retry_async(transfer_with_circuit_breaker)
-                
+
                 # Record success
                 operation.add_success(node_id, result)
-                
+
                 # Update node health
                 if node_id in self.node_health:
                     self.node_health[node_id].record_success()
-                
+
             except Exception as e:
                 # Record failure
                 operation.add_failure(node_id, str(e))
-                
+
                 # Update node health
                 if node_id in self.node_health:
                     self.node_health[node_id].record_failure()
-                
+
                 logger.warning(f"Failed to transfer shard {shard_id} to node {node_id}: {str(e)}")
-        
+
         # If any primary targets failed, try alternatives
         if operation.failure_count > 0 and alternative_nodes:
             failed_count = operation.failure_count
             logger.info(f"Trying alternative nodes for {failed_count} failed transfers")
-            
+
             # Get untried alternatives
             untried_alternatives = [
                 node for node in alternative_nodes
                 if node not in operation.affected_nodes
             ]
-            
+
             # Try transferring to alternatives (up to the number of failures)
             alternatives_to_try = untried_alternatives[:failed_count]
-            
+
             for node_id in alternatives_to_try:
                 try:
                     # Send with circuit breaker and retry
@@ -1308,29 +1308,29 @@ class ResilienceManager:
                             "shard_transfer",
                             lambda: self.node.shard_manager.transfer_shard(shard_id, node_id)
                         )
-                    
+
                     result = await self.retry_async(transfer_with_circuit_breaker)
-                    
+
                     # Record success
                     operation.add_success(node_id, result)
-                    
+
                     # Update node health
                     if node_id in self.node_health:
                         self.node_health[node_id].record_success()
-                    
+
                 except Exception as e:
                     # Record failure
                     operation.add_failure(node_id, str(e))
-                    
+
                     # Update node health
                     if node_id in self.node_health:
                         self.node_health[node_id].record_failure()
-                    
+
                     logger.warning(f"Failed to transfer shard {shard_id} to alternative node {node_id}: {str(e)}")
-        
+
         # Complete operation
         return operation.complete()
-    
+
     async def resilient_dataset_sync(
         self,
         dataset_id: str,
@@ -1339,32 +1339,32 @@ class ResilienceManager:
     ) -> OperationResult:
         """
         Synchronize dataset metadata with target nodes with resilience to failures.
-        
+
         Args:
             dataset_id: ID of the dataset to sync
             target_node_ids: IDs of target nodes
             max_concurrent: Maximum concurrent sync operations
-            
+
         Returns:
             OperationResult: Result of the operation
         """
         if not hasattr(self.node, 'shard_manager'):
             raise NotImplementedError("Node does not have a shard manager")
-        
+
         # Create operation tracker
         operation = self.create_operation("dataset_sync")
-        
+
         # Get dataset from manager
         dataset = self.node.shard_manager.get_dataset(dataset_id)
         if not dataset:
             operation.error_message = f"Dataset {dataset_id} not found"
             return operation.complete(OperationStatus.FAILED)
-        
+
         # Run sync operations concurrently in batches
         for i in range(0, len(target_node_ids), max_concurrent):
             batch = target_node_ids[i:i+max_concurrent]
             tasks = []
-            
+
             for node_id in batch:
                 # Create sync task
                 async def sync_with_node(node_id):
@@ -1375,36 +1375,36 @@ class ResilienceManager:
                                 "dataset_sync",
                                 lambda: self.node.shard_manager.sync_dataset_with_node(dataset_id, node_id)
                             )
-                        
+
                         result = await self.retry_async(sync_with_circuit_breaker)
-                        
+
                         # Record success
                         operation.add_success(node_id, result)
-                        
+
                         # Update node health
                         if node_id in self.node_health:
                             self.node_health[node_id].record_success()
-                        
+
                         return True
                     except Exception as e:
                         # Record failure
                         operation.add_failure(node_id, str(e))
-                        
+
                         # Update node health
                         if node_id in self.node_health:
                             self.node_health[node_id].record_failure()
-                        
+
                         logger.warning(f"Failed to sync dataset {dataset_id} with node {node_id}: {str(e)}")
                         return False
-                
+
                 tasks.append(sync_with_node(node_id))
-            
+
             # Wait for batch to complete
             await asyncio.gather(*tasks)
-        
+
         # Complete operation
         return operation.complete()
-    
+
     async def resilient_rebalance_shards(
         self,
         dataset_id: Optional[str] = None,
@@ -1414,36 +1414,36 @@ class ResilienceManager:
     ) -> OperationResult:
         """
         Rebalance shards with resilience to failures.
-        
+
         Args:
             dataset_id: ID of the dataset to rebalance (all datasets if None)
             target_replication: Target replication factor
             max_concurrent: Maximum concurrent transfers
             use_healthy_nodes_only: Only use nodes marked as healthy
-            
+
         Returns:
             OperationResult: Result of the operation
         """
         if not hasattr(self.node, 'shard_manager'):
             raise NotImplementedError("Node does not have a shard manager")
-        
+
         # Create operation tracker
         operation = self.create_operation("rebalance_shards")
-        
+
         try:
             # Get all connected peers
             all_peers = self.node.get_connected_peers()
-            
+
             # Filter to healthy nodes if requested
             target_nodes = all_peers
             if use_healthy_nodes_only:
                 target_nodes = self.get_healthy_nodes()
-                
+
                 # If no healthy nodes, use all connected peers
                 if not target_nodes:
                     logger.warning("No healthy nodes found, using all connected peers")
                     target_nodes = all_peers
-            
+
             # Rebalance with circuit breaker
             async def rebalance_with_circuit_breaker():
                 return await self.execute_with_circuit_breaker_async(
@@ -1455,33 +1455,33 @@ class ResilienceManager:
                         max_concurrent=max_concurrent
                     )
                 )
-            
+
             # Execute with retries
             result = await self.retry_async(rebalance_with_circuit_breaker)
-            
+
             # Process result
             if isinstance(result, dict):
                 # Record successful transfers
                 for shard_id, node_results in result.get("successful_transfers", {}).items():
                     for node_id in node_results:
                         operation.add_success(node_id, {"shard_id": shard_id})
-                
+
                 # Record failed transfers
                 for shard_id, node_results in result.get("failed_transfers", {}).items():
                     for node_id, error in node_results.items():
                         operation.add_failure(node_id, error)
-                
+
                 # Add to operation results
                 operation.results.update(result)
-            
+
         except Exception as e:
             # Record overall failure
             operation.error_message = str(e)
             logger.error(f"Failed to rebalance shards: {str(e)}")
-        
+
         # Complete operation
         return operation.complete()
-    
+
     async def execute_on_healthy_nodes(
         self,
         func: Callable[[str], Awaitable[T]],
@@ -1491,26 +1491,26 @@ class ResilienceManager:
     ) -> Dict[str, Union[T, Exception]]:
         """
         Execute a function on all healthy nodes.
-        
+
         Args:
             func: Async function to execute, taking node_id as parameter
             min_success_count: Minimum number of successful executions required
             max_concurrent: Maximum concurrent executions
             timeout_sec: Timeout in seconds
-            
+
         Returns:
             Dict[str, Union[T, Exception]]: Results for each node
         """
         # Get healthy nodes
         healthy_nodes = self.get_healthy_nodes()
-        
+
         if not healthy_nodes:
             raise ValueError("No healthy nodes available")
-        
+
         # Execute function on each node concurrently
         results = {}
         semaphore = asyncio.Semaphore(max_concurrent)
-        
+
         async def execute_with_timeout(node_id):
             async with semaphore:
                 try:
@@ -1519,44 +1519,44 @@ class ResilienceManager:
                     return TimeoutError(f"Operation timed out after {timeout_sec} seconds")
                 except Exception as e:
                     return e
-        
+
         # Create tasks
         tasks = {node_id: execute_with_timeout(node_id) for node_id in healthy_nodes}
-        
+
         # Wait for all tasks to complete or until min_success_count is reached
         pending = set(asyncio.create_task(coro) for coro in tasks.values())
         success_count = 0
-        
+
         while pending and success_count < min_success_count:
             done, pending = await asyncio.wait(
                 pending,
                 return_when=asyncio.FIRST_COMPLETED
             )
-            
+
             # Process completed tasks
             for task in done:
                 result = task.result()
                 # Count successes (not exceptions)
                 if not isinstance(result, Exception):
                     success_count += 1
-        
+
         # Cancel any pending tasks if we have enough successes
         if success_count >= min_success_count and pending:
             for task in pending:
                 task.cancel()
-        
+
         # Wait for all tasks to complete
         done, pending = await asyncio.wait(tasks.values(), return_when=asyncio.ALL_COMPLETED)
-        
+
         # Map results back to node IDs
         for node_id, task in zip(tasks.keys(), tasks.values()):
             try:
                 results[node_id] = task.result()
             except Exception as e:
                 results[node_id] = e
-        
+
         return results
-    
+
     async def lazy_broadcast(
         self,
         protocol: NetworkProtocol,
@@ -1566,43 +1566,43 @@ class ResilienceManager:
     ) -> Tuple[int, int]:
         """
         Broadcast a message with a lazy propagation strategy.
-        
+
         Instead of sending to all nodes, this sends to a subset and
         lets the P2P network propagate the message.
-        
+
         Args:
             protocol: Protocol to use
             data: Data to send
             min_reach: Minimum number of nodes to reach directly
             timeout_ms: Timeout in milliseconds
-            
+
         Returns:
             Tuple[int, int]: (success_count, failure_count)
         """
         # Get healthy nodes
         healthy_nodes = self.get_healthy_nodes()
-        
+
         if not healthy_nodes:
             logger.warning("No healthy nodes available for broadcast")
             return (0, 0)
-        
+
         # Select nodes to send to (prioritize most reliable nodes)
         target_nodes = sorted(
             [(node_id, self.node_health[node_id].availability_score) for node_id in healthy_nodes],
             key=lambda x: x[1],
             reverse=True
         )
-        
+
         # Take top nodes based on min_reach
         target_count = min(min_reach, len(target_nodes))
         success_count = 0
         failure_count = 0
-        
+
         # Send messages asynchronously
         tasks = []
         for i in range(target_count):
             node_id = target_nodes[i][0]
-            
+
             async def send_to_node(node_id):
                 try:
                     await self.send_message_with_retry(
@@ -1615,21 +1615,21 @@ class ResilienceManager:
                 except Exception as e:
                     logger.warning(f"Failed to broadcast to node {node_id}: {str(e)}")
                     return False
-            
+
             tasks.append(send_to_node(node_id))
-        
+
         # Wait for all sends to complete
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # Count successes and failures
         for result in results:
             if result is True:
                 success_count += 1
             else:
                 failure_count += 1
-        
+
         return (success_count, failure_count)
-    
+
     async def find_consistent_data(
         self,
         protocol: NetworkProtocol,
@@ -1639,27 +1639,27 @@ class ResilienceManager:
     ) -> Tuple[Any, int]:
         """
         Query multiple nodes and return the data that a quorum agrees on.
-        
+
         Useful for ensuring consistency in a distributed system.
-        
+
         Args:
             protocol: Protocol to use
             request: Request data to send
             quorum_percentage: Percentage of nodes required for quorum
             timeout_ms: Timeout in milliseconds
-            
+
         Returns:
             Tuple[Any, int]: (consensus_data, agreement_count)
         """
         # Get healthy nodes
         healthy_nodes = self.get_healthy_nodes()
-        
+
         if not healthy_nodes:
             raise ValueError("No healthy nodes available")
-        
+
         # Calculate quorum count
         quorum_count = max(1, (len(healthy_nodes) * quorum_percentage) // 100)
-        
+
         # Query all nodes asynchronously
         async def query_node(node_id):
             try:
@@ -1672,10 +1672,10 @@ class ResilienceManager:
             except Exception as e:
                 logger.warning(f"Failed to query node {node_id}: {str(e)}")
                 return None
-        
+
         # Create tasks for all nodes
         tasks = {node_id: query_node(node_id) for node_id in healthy_nodes}
-        
+
         # Wait for all to complete
         results = {}
         for node_id, coro in tasks.items():
@@ -1684,7 +1684,7 @@ class ResilienceManager:
                 results[node_id] = result
             except Exception:
                 pass
-        
+
         # Count occurrences of each distinct result
         result_counts = {}
         for result in results.values():
@@ -1693,37 +1693,37 @@ class ResilienceManager:
                 result_str = json.dumps(result, sort_keys=True)
                 if result_str not in result_counts:
                     result_counts[result_str] = (0, result)
-                
+
                 count, value = result_counts[result_str]
                 result_counts[result_str] = (count + 1, value)
-        
+
         # Find the most common result
         best_count = 0
         consensus_data = None
-        
+
         for count, value in result_counts.values():
             if count > best_count:
                 best_count = count
                 consensus_data = value
-        
+
         # Check if quorum was reached
         if best_count >= quorum_count:
             return (consensus_data, best_count)
         else:
             raise ValueError(f"No quorum reached. Best agreement: {best_count}/{len(healthy_nodes)}, required: {quorum_count}")
-    
+
     def get_operations_by_status(self, status: OperationStatus) -> List[OperationResult]:
         """
         Get operations by status.
-        
+
         Args:
             status: Status to filter by
-            
+
         Returns:
             List[OperationResult]: Matching operations
         """
         return [op for op in self.operations.values() if op.status == status]
-    
+
     def shutdown(self):
         """Shutdown the resilience manager."""
         self.running = False

@@ -30,19 +30,19 @@ async def check_access_permission(
     """
     try:
         logger.info(f"Checking {permission_type} permission for user {user_id} on resource {resource_id}")
-        
+
         # Import the security manager
         from ipfs_datasets_py.security import SecurityManager
-        
+
         # Create a security manager instance
         security_manager = SecurityManager()
-        
+
         # Check permission
         has_permission = security_manager.check_access(
             resource_id=resource_id,
             access_type=permission_type
         )
-        
+
         # Return permission information
         return {
             "status": "success",

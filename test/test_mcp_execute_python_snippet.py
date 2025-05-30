@@ -23,7 +23,7 @@ class TestMCPExecutePythonSnippet(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Code snippet received", result["message"])
         self.assertIn(f"(length: {len(code_snippet)} chars)", result["message"])
         self.assertEqual(result["execution_time_ms"], 0)
-        
+
         # Verify that the code execution was logged
         mock_logger_info.assert_called_once_with(f"Executing Python snippet (length: {len(code_snippet)} chars)")
 
@@ -33,12 +33,12 @@ class TestMCPExecutePythonSnippet(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import execute_python_snippet
 
         code_snippet = "raise ValueError('Test error')"
-        
+
         result = execute_python_snippet(code=code_snippet)
 
         self.assertEqual(result["status"], "error")
         self.assertIn("Simulated error", result["error"])
-        
+
         # Verify that the error was logged
         mock_logger_error.assert_called_once()
 

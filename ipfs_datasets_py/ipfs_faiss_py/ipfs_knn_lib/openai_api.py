@@ -111,7 +111,7 @@ class OpenAIAPI:
             pass
         #else:
         #    raise Exception('bad api_key: %s' % self.api_key)
-            
+
         self.resources = resources
         self.meta = meta
         if resources is not None:
@@ -120,7 +120,7 @@ class OpenAIAPI:
             self.model = None
 
     def __call__(self, method, **kwargs):
-        
+
         self.messages = None
         self.input = None
         if "openai_api_key" in kwargs:
@@ -134,7 +134,7 @@ class OpenAIAPI:
                 raise Exception('bad api_key: %s' % self.meta["openai_api_key"])
         else:
             raise Exception('no key found in meta: %s' % self.meta)
-        if self.model is not None:    
+        if self.model is not None:
             kwargs['model'] = self.model
         if method == 'chat':
             return self.chat(**kwargs)
@@ -181,7 +181,7 @@ class OpenAIAPI:
         self.method = 'moderation'
         moderation = openai.moderations.create(input=text)
         return moderation
-    
+
     def speech_to_text(self, model, audio, **kwargs):
         if model not in speech_to_text:
             raise Exception('bad model: %s' % model)
@@ -198,7 +198,7 @@ class OpenAIAPI:
             'done': True
         }
 
-    
+
     def text_to_image(self, model, size, n, prompt, **kwargs):
         sizes = {
             "dall-e-3":
@@ -218,7 +218,7 @@ class OpenAIAPI:
             raise Exception('bad model: %s' % model)
         if size not in sizes[model]:
             raise Exception('bad size: %s' % size)
-        
+
         if n is None:
             n = 1
         if int(n):
@@ -232,7 +232,7 @@ class OpenAIAPI:
             if model == "dall-e-2":
                 raise Exception('bad n: %s' % n)
             raise Exception('bad n: %s' % n)
-        
+
         self.model = model
         self.prompt = prompt
         self.n = n
@@ -240,10 +240,10 @@ class OpenAIAPI:
         self.method = 'text_to_image'
 
         image = self.moderated_text_to_image(self.model, self.size, self.n, self.prompt)
-        
+
         return image
 
-    
+
     def moderated_text_to_image(self, model, size, n, prompt, **kwargs):
         json_messages = json.dumps(prompt)
         requested_model = self.model
@@ -273,7 +273,7 @@ class OpenAIAPI:
                         this_image['url'] = this_data.url
                         this_image['revised_prompt'] = this_data.revised_prompt
                         images.append(this_image)
-                        
+
                     return {
                         'text': json.dumps(images),
                         'done': True
@@ -318,7 +318,7 @@ class OpenAIAPI:
                 'audio': response,
                 'done': True
             }
-        
+
     def embedding(self, model, input, format, **kwargs):
         encoding_formats = [
             "float",
@@ -343,15 +343,15 @@ class OpenAIAPI:
             this_image = {}
             this_image['embedding'] = this_data.embedding
             embeddings.append(this_image)
-            
+
         return {
             'text': json.dumps(embeddings[0]),
             'done': True
         }
 
 
-    
-    
+
+
     def tokenize(self, text , model, **kwargs):
         self.model = model
         self.text = text
@@ -374,7 +374,7 @@ class OpenAIAPI:
         encoding = tiktoken.get_encoding("cl100k_base")
         encoding = tiktoken.encoding_for_model(self.model)
         return encoding.decode(tokens)
-    
+
     def moderated_chat_complete(self, stopping_regex=None, **kwargs):
         json_messages = json.dumps(self.messages)
         requested_model = self.model
@@ -424,11 +424,11 @@ class OpenAIAPI:
                         speed=speed,
                         response_format=response_format
                     )
-                    
+
                     return {
                         'text': response,
                         'done': True
-                    }            
+                    }
 
 
     def request_complete(self, stopping_regex=None, **kwargs):
@@ -437,7 +437,7 @@ class OpenAIAPI:
 
         if self.model is None or self.model not in all_models:
             raise Exception('bad model: %s' % self.model)
-        
+
         if stopping_regex:
             try:
                 stopping_regex = re.compile(stopping_regex)
@@ -449,16 +449,16 @@ class OpenAIAPI:
             openai_error = False
             try:
                 if self.method is not None and self.method == 'image_to_text':
-    
+
                     response = self.moderated_chat_complete(stopping_regex)
 
                 elif self.method is not None and self.method == 'chat':
 
                     response = self.moderated_chat_complete(stopping_regex)
-                    
+
                 else:
                     raise Exception('bad method in request_complete: %s' % self.method)
-                
+
                 openai_error = False
             except Exception as e:
                 openai_error = True
@@ -485,7 +485,7 @@ class OpenAIAPI:
                     'text': response.choices[0].text,
                     'done': True
                 }
-        
+
     def image_to_text(self, model, prompt, images, max_tokens, system, **kwargs):
         qualities  = ["low", "high", "auto"]
         self.images = images
@@ -502,8 +502,8 @@ class OpenAIAPI:
             if image['detail'] not in qualities:
                 raise Exception('bad quality: %s' % image['quality'])
 
-        return self.request_complete(**kwargs) 
-    
+        return self.request_complete(**kwargs)
+
     def chat(self, model, messages, prompt, system, temperature, max_tokens, **kwargs):
         self.max_tokens = max_tokens
         if ("files" in kwargs):
@@ -521,7 +521,7 @@ class OpenAIAPI:
         self.files = files
         self.method = 'chat'
         return self.request_complete( **kwargs)
-    
+
 
 
     def audio_chat(self, model, messages, voice, system, temperature, max_tokens, **kwargs):
@@ -543,7 +543,7 @@ class OpenAIAPI:
             pass
         if prompt is None and audio is None:
             raise Exception('no prompt or audio: %s' % prompt)
-        
+
         if prompt is not None and audio is not None:
             raise Exception('you have both prompt and audio: %s' % prompt)
         file_types = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']
@@ -569,7 +569,7 @@ class OpenAIAPI:
             self.prompt = self.speech_to_text("whisper-1", audio)["text"]
             prompt = self.prompt
             pass
-        
+
         messages = self.process_messages(messages, prompt.text, None, system)
         model = self.determine_model(model, messages)
         self.method = 'chat'
@@ -585,7 +585,7 @@ class OpenAIAPI:
             'text': audio["audio"],
             'done': True
         }
-        
+
     def determine_model(self, model, messages):
         model_type = ""
         this_max_tokens = self.max_tokens
@@ -597,7 +597,7 @@ class OpenAIAPI:
 
         if "instruct" in model:
             model_type = "instruct"
-        
+
         if "vision" in model:
             model_type = "vision"
 
@@ -631,7 +631,7 @@ class OpenAIAPI:
                     else:
                         pass
                 if chosen_model is None:
-                    model_type = "gpt-4"    
+                    model_type = "gpt-4"
                 pass
             if model_type == "gpt-4":
                 for model in max_tokens:
@@ -695,7 +695,7 @@ class OpenAIAPI:
                 image['detail'] = this_detail
                 new_files.append(image)
             pass
- 
+
         template = chat_templates[0]
 
         if system is not None:
@@ -749,7 +749,7 @@ class OpenAIAPI:
             if addToMessages == False:
                 raise Exception("bad prompt: %s" % prompt)
                 pass
-    
+
             if messages[-1]['role'] == 'user':
                 if addToMessages == False:
                     self.messages = messagesList

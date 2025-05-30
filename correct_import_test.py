@@ -28,10 +28,10 @@ if __name__ == "__main__":
         ("ipfs_datasets_py.mcp_server.tools.provenance_tools", "record_provenance"),
         ("ipfs_datasets_py.mcp_server.tools.ipfs_tools", "get_from_ipfs"),
     ]
-    
+
     success_count = 0
     for module_path, function_name in imports_to_test:
         if test_import(module_path, function_name):
             success_count += 1
-    
+
     print(f"\nSummary: {success_count}/{len(imports_to_test)} imports successful")

@@ -21,7 +21,7 @@ def load_module_directly(file_path, module_name):
 
 # Load the rag_query_optimizer module directly
 rag_query_optimizer = load_module_directly(
-    "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py", 
+    "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py",
     "rag_query_optimizer"
 )
 
@@ -36,7 +36,7 @@ def test_integration():
                 self.initialization_params = {
                     "traversal_stats_provided": traversal_stats is not None
                 }
-        
+
         # Create a mock TraversalStats
         traversal_stats = {
             "paths_explored": [],
@@ -45,21 +45,21 @@ def test_integration():
             "entity_connectivity": {},
             "relation_usefulness": defaultdict(float)
         }
-        
+
         # Create a rewriter with traversal stats
         rewriter = MockQueryRewriter(traversal_stats)
-        
+
         # Verify the rewriter got the traversal stats
         initialization_correct = rewriter.initialization_params["traversal_stats_provided"]
         logger.info(f"Rewriter initialized with traversal stats: {initialization_correct}")
-        
+
         # Modify stats and check reference sharing
         traversal_stats["relation_usefulness"]["test_relation"] = 0.75
         rewriter_sees_changes = rewriter.traversal_stats["relation_usefulness"]["test_relation"] == 0.75
         logger.info(f"Rewriter sees changes to traversal stats: {rewriter_sees_changes}")
-        
+
         return initialization_correct and rewriter_sees_changes
-    
+
     except Exception as e:
         logger.error(f"Test failed with error: {str(e)}")
         return False

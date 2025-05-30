@@ -21,26 +21,26 @@ def setup_components():
     """Set up the adaptive security components."""
     # Create audit logger
     audit_logger = AuditLogger("adaptive_security_example")
-    
+
     # Create security alert manager
     alert_manager = SecurityAlertManager(
         alert_storage_path="examples/security_alerts.json",
         audit_logger=audit_logger
     )
-    
+
     # Create intrusion detection system
     intrusion_detection = IntrusionDetection(
         alert_manager=alert_manager,
         audit_logger=audit_logger
     )
-    
+
     # Create adaptive security manager
     adaptive_security = AdaptiveSecurityManager(
         alert_manager=alert_manager,
         audit_logger=audit_logger,
         response_storage_path="examples/security_responses.json"
     )
-    
+
     return audit_logger, alert_manager, intrusion_detection, adaptive_security
 
 
@@ -69,7 +69,7 @@ def create_sample_rules(adaptive_security):
             RuleCondition("alert.attempt_count", ">=", 5)
         ]
     )
-    
+
     # Rule 2: Suspicious data access
     data_access_rule = ResponseRule(
         rule_id="suspicious-data-access",
@@ -92,7 +92,7 @@ def create_sample_rules(adaptive_security):
             }
         ]
     )
-    
+
     # Rule 3: Data exfiltration attempt
     exfiltration_rule = ResponseRule(
         rule_id="data-exfiltration",
@@ -119,12 +119,12 @@ def create_sample_rules(adaptive_security):
             }
         ]
     )
-    
+
     # Add rules to the adaptive security manager
     adaptive_security.add_rule(brute_force_rule)
     adaptive_security.add_rule(data_access_rule)
     adaptive_security.add_rule(exfiltration_rule)
-    
+
     print(f"Added {len(adaptive_security.rules)} security response rules")
 
 
@@ -148,7 +148,7 @@ def simulate_security_alerts(alert_manager):
     }
     alert_manager.add_alert(brute_force_alert)
     print(f"Added brute force login alert: {brute_force_alert['alert_id']}")
-    
+
     # Suspicious data access alert
     data_access_alert = {
         "alert_id": f"sa-{int(time.time())}",
@@ -166,7 +166,7 @@ def simulate_security_alerts(alert_manager):
     }
     alert_manager.add_alert(data_access_alert)
     print(f"Added suspicious access alert: {data_access_alert['alert_id']}")
-    
+
     # Data exfiltration alert
     exfiltration_alert = {
         "alert_id": f"ex-{int(time.time())}",
@@ -191,7 +191,7 @@ def demonstrate_response_lifecycle(adaptive_security):
     # Process all pending alerts
     processed_count = adaptive_security.process_pending_alerts()
     print(f"Processed {processed_count} pending alerts")
-    
+
     # Get active responses
     active_responses = adaptive_security.get_active_responses()
     print(f"\nActive security responses ({len(active_responses)}):")
@@ -202,7 +202,7 @@ def demonstrate_response_lifecycle(adaptive_security):
         print(f"    Expires: {resp.expires_at}")
         print(f"    Status: {resp.status}")
         print()
-    
+
     # Manually create a response for demonstration
     manual_response = SecurityResponse(
         response_id="manual-response-001",
@@ -220,10 +220,10 @@ def demonstrate_response_lifecycle(adaptive_security):
             "reason": "Manual security response for demonstration"
         }
     )
-    
+
     adaptive_security.add_response(manual_response)
     print(f"Added manual security response: {manual_response.response_id}")
-    
+
     # Simulate response expiration
     print("\nSimulating response expiration check...")
     expired_count = adaptive_security.check_expired_responses()
@@ -233,19 +233,19 @@ def demonstrate_response_lifecycle(adaptive_security):
 def main():
     """Run the adaptive security example."""
     print("=== Adaptive Security Response Example ===\n")
-    
+
     # Set up components
     audit_logger, alert_manager, intrusion_detection, adaptive_security = setup_components()
-    
+
     # Create sample rules
     create_sample_rules(adaptive_security)
-    
+
     # Simulate security alerts
     simulate_security_alerts(alert_manager)
-    
+
     # Demonstrate response lifecycle
     demonstrate_response_lifecycle(adaptive_security)
-    
+
     print("\n=== Example Complete ===")
 
 

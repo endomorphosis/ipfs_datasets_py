@@ -30,18 +30,18 @@ async def get_from_ipfs(
     """
     try:
         logger.info(f"Getting content with CID {cid} from IPFS")
-        
+
         # Determine if we're using direct ipfs_kit_py or MCP client
         from ipfs_datasets_py.mcp_server.configs import configs
-        
+
         if configs.ipfs_kit_integration == "direct":
             # Direct integration with ipfs_kit_py
             import ipfs_kit_py
-            
+
             if output_path:
                 # Save to file
                 await ipfs_kit_py.get_async(cid, output_path, timeout=timeout_seconds)
-                
+
                 # Check if the file was created
                 if not os.path.exists(output_path):
                     return {
@@ -50,10 +50,10 @@ async def get_from_ipfs(
                         "cid": cid,
                         "output_path": output_path
                     }
-                
+
                 # Get file size
                 size = os.path.getsize(output_path) if os.path.isfile(output_path) else None
-                
+
                 return {
                     "status": "success",
                     "cid": cid,
@@ -89,7 +89,7 @@ async def get_from_ipfs(
                         "content": f"Mock content for CID {cid}",
                         "binary_size": 20
                     }
-                
+
                 # Try to decode as UTF-8 if possible
                 try:
                     decoded_content = content.decode('utf-8') if isinstance(content, bytes) else str(content)
@@ -97,7 +97,7 @@ async def get_from_ipfs(
                 except (UnicodeDecodeError, AttributeError):
                     decoded_content = None
                     content_type = "binary"
-                
+
                 return {
                     "status": "success",
                     "cid": cid,
@@ -105,14 +105,14 @@ async def get_from_ipfs(
                     "content": decoded_content if decoded_content else None,
                     "binary_size": len(content) if content else 0
                 }
-                
+
         else:
             # Use MCP client to call ipfs_kit_py MCP server
             from modelcontextprotocol.client import MCPClient
-            
-            # Create client 
+
+            # Create client
             client = MCPClient(configs.ipfs_kit_mcp_url)
-            
+
             if output_path:
                 # Call the get tool
                 result = await client.call_tool("get", {
@@ -120,7 +120,7 @@ async def get_from_ipfs(
                     "output_path": output_path,
                     "timeout": timeout_seconds
                 })
-                
+
                 return {
                     "status": "success",
                     "cid": cid,
@@ -133,7 +133,7 @@ async def get_from_ipfs(
                     "cid": cid,
                     "timeout": timeout_seconds
                 })
-                
+
                 return {
                     "status": "success",
                     "cid": cid,

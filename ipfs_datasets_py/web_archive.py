@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 
 class WebArchive:
     """Web archive functionality for storing and retrieving web content."""
-    
+
     def __init__(self, storage_path: Optional[str] = None):
         """Initialize web archive with optional storage path."""
         self.storage_path = storage_path
         self.archived_items = {}
-        
+
     def archive_url(self, url: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Archive a URL with optional metadata."""
         try:
@@ -35,24 +35,24 @@ class WebArchive:
         except Exception as e:
             logger.error(f"Failed to archive URL {url}: {e}")
             return {"status": "error", "message": str(e)}
-    
+
     def retrieve_archive(self, archive_id: str) -> Dict[str, Any]:
         """Retrieve archived content by ID."""
         if archive_id in self.archived_items:
             return {"status": "success", "data": self.archived_items[archive_id]}
         return {"status": "error", "message": "Archive not found"}
-    
+
     def list_archives(self) -> List[Dict[str, Any]]:
         """List all archived items."""
         return list(self.archived_items.values())
 
 class WebArchiveProcessor:
     """Processor for web archive operations."""
-    
+
     def __init__(self):
         """Initialize web archive processor."""
         self.archive = WebArchive()
-        
+
     def process_urls(self, urls: List[str]) -> Dict[str, Any]:
         """Process multiple URLs for archiving."""
         results = []
@@ -60,7 +60,7 @@ class WebArchiveProcessor:
             result = self.archive.archive_url(url)
             results.append(result)
         return {"status": "success", "results": results}
-    
+
     def search_archives(self, query: str) -> List[Dict[str, Any]]:
         """Search archived content."""
         matching_archives = []
@@ -68,7 +68,7 @@ class WebArchiveProcessor:
             if query.lower() in archive.get("url", "").lower():
                 matching_archives.append(archive)
         return matching_archives
-    
+
     def extract_text_from_html(self, html_content: str) -> Dict[str, Any]:
         """Extract text content from HTML."""
         try:
@@ -81,7 +81,7 @@ class WebArchiveProcessor:
             text = re.sub(r'<[^>]+>', '', text)
             # Clean up whitespace
             text = re.sub(r'\s+', ' ', text).strip()
-            
+
             return {
                 "status": "success",
                 "text": text,
@@ -90,14 +90,14 @@ class WebArchiveProcessor:
         except Exception as e:
             logger.error(f"Failed to extract text from HTML: {e}")
             return {"status": "error", "message": str(e)}
-    
+
     def process_html_content(self, html: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Process HTML content and extract useful information."""
         try:
             text_result = self.extract_text_from_html(html)
             if text_result["status"] == "error":
                 return text_result
-            
+
             return {
                 "status": "success",
                 "text": text_result["text"],
@@ -109,14 +109,14 @@ class WebArchiveProcessor:
         except Exception as e:
             logger.error(f"Failed to process HTML content: {e}")
             return {"status": "error", "message": str(e)}
-    
+
     def extract_text_from_warc(self, warc_path: str) -> List[Dict[str, Any]]:
         """Extract text content from a WARC file."""
         try:
             # Mock implementation - in reality would parse actual WARC files
             if not os.path.exists(warc_path):
                 raise FileNotFoundError(f"WARC file not found: {warc_path}")
-            
+
             # Simulate extracting text from WARC records
             records = [
                 {
@@ -126,26 +126,26 @@ class WebArchiveProcessor:
                     "timestamp": "2024-01-01T00:00:00Z"
                 },
                 {
-                    "uri": "https://example.com/page2", 
+                    "uri": "https://example.com/page2",
                     "text": "Sample text content from page 2",
                     "content_type": "text/html",
                     "timestamp": "2024-01-01T01:00:00Z"
                 }
             ]
-            
+
             logger.info(f"Extracted text from {len(records)} records in WARC file")
             return records
-            
+
         except Exception as e:
             logger.error(f"Failed to extract text from WARC: {e}")
             raise
-    
+
     def extract_metadata_from_warc(self, warc_path: str) -> Dict[str, Any]:
         """Extract metadata from a WARC file."""
         try:
             if not os.path.exists(warc_path):
                 raise FileNotFoundError(f"WARC file not found: {warc_path}")
-            
+
             # Mock metadata extraction
             metadata = {
                 "filename": os.path.basename(warc_path),
@@ -157,20 +157,20 @@ class WebArchiveProcessor:
                 "domains": ["example.com"],
                 "total_urls": 2
             }
-            
+
             logger.info(f"Extracted metadata from WARC file: {warc_path}")
             return metadata
-            
+
         except Exception as e:
             logger.error(f"Failed to extract metadata from WARC: {e}")
             raise
-    
+
     def extract_links_from_warc(self, warc_path: str) -> List[Dict[str, Any]]:
         """Extract links from a WARC file."""
         try:
             if not os.path.exists(warc_path):
                 raise FileNotFoundError(f"WARC file not found: {warc_path}")
-            
+
             # Mock link extraction
             links = [
                 {
@@ -186,23 +186,23 @@ class WebArchiveProcessor:
                     "link_type": "href"
                 }
             ]
-            
+
             logger.info(f"Extracted {len(links)} links from WARC file")
             return links
-            
+
         except Exception as e:
             logger.error(f"Failed to extract links from WARC: {e}")
             raise
-    
+
     def index_warc(self, warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> str:
         """Create an index for a WARC file."""
         try:
             if not os.path.exists(warc_path):
                 raise FileNotFoundError(f"WARC file not found: {warc_path}")
-            
+
             if output_path is None:
                 output_path = warc_path + ".idx"
-            
+
             # Mock indexing
             index_data = {
                 "warc_file": warc_path,
@@ -223,19 +223,19 @@ class WebArchiveProcessor:
                     }
                 ]
             }
-            
+
             # Simulate writing index file
             with open(output_path, 'w') as f:
                 import json
                 json.dump(index_data, f, indent=2)
-            
+
             logger.info(f"Created WARC index: {output_path}")
             return output_path
-            
+
         except Exception as e:
             logger.error(f"Failed to index WARC: {e}")
             raise
-    
+
     def create_warc(self, urls: List[str], output_path: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Create a WARC file from a list of URLs."""
         try:
@@ -248,26 +248,26 @@ class WebArchiveProcessor:
                 "metadata": metadata or {},
                 "file_size": len(urls) * 1024  # Mock file size
             }
-            
+
             # Simulate creating WARC file
             with open(output_path, 'w') as f:
                 f.write(f"WARC/1.0\nCreated: {warc_data['creation_date']}\nURLs: {len(urls)}\n")
                 for url in urls:
                     f.write(f"URL: {url}\n")
-            
+
             logger.info(f"Created WARC file: {output_path}")
             return warc_data
-            
+
         except Exception as e:
             logger.error(f"Failed to create WARC: {e}")
             raise
-    
+
     def extract_dataset_from_cdxj(self, cdxj_path: str, output_format: str = "json") -> Dict[str, Any]:
         """Extract dataset from CDXJ file."""
         try:
             if not os.path.exists(cdxj_path):
                 raise FileNotFoundError(f"CDXJ file not found: {cdxj_path}")
-            
+
             # Mock dataset extraction
             dataset = {
                 "source_file": cdxj_path,
@@ -283,16 +283,16 @@ class WebArchiveProcessor:
                     },
                     {
                         "url": "https://example.com/page2",
-                        "timestamp": "20240101010000", 
+                        "timestamp": "20240101010000",
                         "status": "200",
                         "content_type": "text/html"
                     }
                 ]
             }
-            
+
             logger.info(f"Extracted dataset from CDXJ file: {cdxj_path}")
             return dataset
-            
+
         except Exception as e:
             logger.error(f"Failed to extract dataset from CDXJ: {e}")
             raise

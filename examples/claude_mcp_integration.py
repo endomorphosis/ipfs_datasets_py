@@ -20,17 +20,17 @@ from ipfs_datasets_py.mcp_server import start_server
 def start_mcp_server_background():
     """Start the MCP server in the background."""
     print("Starting IPFS Datasets MCP server in the background...")
-    
+
     # Start the server as a subprocess
     process = subprocess.Popen(
         [sys.executable, "-c", "from ipfs_datasets_py.mcp_server import start_server; start_server(host='localhost', port=8123)"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    
+
     # Give the server some time to start
     time.sleep(3)
-    
+
     return process
 
 
@@ -38,18 +38,18 @@ def main():
     """Run the demonstration."""
     # Start the MCP server
     server_process = start_mcp_server_background()
-    
+
     try:
         print("\nMCP server is now running. Claude can access IPFS datasets through the MCP API.")
         print("You can use the following server URL in your Claude conversations:")
         print("http://localhost:8123")
-        
+
         print("\nPress Ctrl+C to stop the server and exit...")
-        
+
         # Wait for user to press Ctrl+C
         while True:
             time.sleep(1)
-            
+
     except KeyboardInterrupt:
         print("\nStopping the MCP server...")
     finally:

@@ -32,11 +32,11 @@ class HFEmbed:
                 )
         elif "bge" in resources['checkpoint']:
             self.model = None
-            
+
     def __call__(self, method, **kwargs):
         if method == 'embed':
             return self.embed(**kwargs)
-	
+
     def embed(self, modelName, instruction, input, **kwargs):
         if "modelName" not in embedding_models:
             Exception("Model not found")

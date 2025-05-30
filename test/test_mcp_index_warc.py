@@ -27,7 +27,7 @@ class TestMCPIndexWARC(unittest.TestCase):
 
         warc_path = "test.warc"
         output_path = "test.cdxj"
-        
+
         result = index_warc(warc_path=warc_path, output_path=output_path)
 
         self.assertEqual(result["status"], "success")
@@ -37,7 +37,7 @@ class TestMCPIndexWARC(unittest.TestCase):
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc import index_warc
 
         warc_path = "fail.warc"
-        
+
         result = index_warc(warc_path=warc_path)
 
         self.assertEqual(result["status"], "error")

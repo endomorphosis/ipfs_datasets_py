@@ -30,19 +30,19 @@ async def save_dataset(
     """
     try:
         logger.info(f"Saving dataset {dataset_data} to {destination} with format {format if format else 'default'}")
-        
+
         # Default options
         if options is None:
             options = {}
-        
+
         # Handle both dataset ID strings and direct data dictionaries
         if isinstance(dataset_data, dict):
             # Direct data provided - create a mock save
             dataset_id = f"mock_dataset_{hash(str(dataset_data))}"
             data_size = len(str(dataset_data))
-            
+
             logger.info(f"Processing dataset with {len(dataset_data.get('data', []))} records. Initial records: {len(dataset_data.get('data', []))}")
-            
+
             return {
                 "status": "success",
                 "dataset_id": dataset_id,
@@ -55,20 +55,20 @@ async def save_dataset(
         else:
             # Dataset ID provided - try to use the dataset manager
             dataset_id = str(dataset_data)
-            
+
         # Import the dataset manager
         try:
             from ipfs_datasets_py.dataset_manager import DatasetManager
-            
+
             # Create a manager instance
             manager = DatasetManager()
-            
+
             # Get the dataset
             dataset = manager.get_dataset(dataset_id)
-            
+
             # Save the dataset
             result = await dataset.save_async(destination, format=format, **options)
-            
+
         except ImportError as e:
             # For testing, create a mock save response
             logger.warning(f"Dataset manager not available, creating mock response: {e}")
@@ -80,7 +80,7 @@ async def save_dataset(
                 "location": destination,
                 "size": 1024  # Mock size
             }
-        
+
         # Return information about the saved dataset
         return {
             "status": "success",

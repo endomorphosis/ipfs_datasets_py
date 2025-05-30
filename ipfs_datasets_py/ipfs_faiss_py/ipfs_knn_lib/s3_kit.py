@@ -119,8 +119,8 @@ class s3_kit:
 			}
 			directory.append(results)
 		return directory
-	
-	
+
+
 	def s3_cp_dir(self, src_path , dst_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -161,7 +161,7 @@ class s3_kit:
 				}
 				directory[obj.key] = results
 		return directory
-	
+
 	def s3_mv_dir(self, src_path , dst_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -204,7 +204,7 @@ class s3_kit:
 				}
 				directory[obj.key] = results
 		return directory
-	
+
 	def s3_dl_dir(self, remote_path, local_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -238,12 +238,12 @@ class s3_kit:
 			directory[obj.key] = results
 
 		return directory
-			
+
 	def s3_ul_dir(self, local_path, remote_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
 		else:
-			s3_config = self.config		
+			s3_config = self.config
 		s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
 		objects = s3bucket.objects.filter(Prefix=remote_path).all()
 		files = [os.path.join(local_path, file) for file in os.listdir(local_path)]
@@ -265,7 +265,7 @@ class s3_kit:
 			}
 			results[response.key] = result
 		return results
-	
+
 	def s3_ls_file(self, filekey, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -289,7 +289,7 @@ class s3_kit:
 			}
 			directory[obj.key] = metadata
 		return directory
-	
+
 	def s3_rm_file(self, this_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -311,7 +311,7 @@ class s3_kit:
 			"last_modified": datetime.datetime.timestamp(last_modified),
 			"size": content_length,
 		}
-		return results	
+		return results
 
 	def s3_cp_file(self, src_path, dst_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
@@ -344,7 +344,7 @@ class s3_kit:
 			"size": content_length,
 		}
 		return results
-	
+
 	def s3_mv_file(self, src_path, dst_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -372,7 +372,7 @@ class s3_kit:
 						e_tag = request_result[result]
 					elif result == "LastModified":
 						last_modified = request_result[result]
-						pass	
+						pass
 		request2 = this_object.delete(
 		)
 		results = {
@@ -382,8 +382,8 @@ class s3_kit:
 			"size": content_length,
 		}
 		return results
-	
-	
+
+
 	def s3_dl_file(self, remote_path, local_path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -392,7 +392,7 @@ class s3_kit:
 		if "s3://" in remote_path:
 			remote_path = remote_path.replace("s3://", "")
 			remote_path = remote_path.replace(bucket + "/", "")
-		
+
 		s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
 		this_object = s3bucket.Object(remote_path)
 		response = this_object.get()
@@ -406,8 +406,8 @@ class s3_kit:
 			"e_tag": this_object.e_tag,
 			"local_path": local_path,
 		}
-		return results		
-	
+		return results
+
 	def s3_ul_file(self, upload_file, path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -434,7 +434,7 @@ class s3_kit:
 			"e_tag": response.e_tag,
 		}
 		return results
-	
+
 	def s3_mk_dir(self, path, bucket, **kwargs):
 		if "s3cfg" in kwargs:
 			s3_config = kwargs['s3cfg']
@@ -449,40 +449,40 @@ class s3_kit:
 			"e_tag": response.e_tag,
 		}
 		return results
-	
+
 
 	def s3_upload_object(self, f, bucket, key, s3_config, progress_callback):
 		s3 = self.get_session(s3_config)
 		return s3.upload_fileobj(
-			f, 
-			bucket, 
-			key, 
+			f,
+			bucket,
+			key,
 			Callback=progress_callback
 		)
-	
+
 	def s3_download_object(self, f, bucket, key, s3_config, progress_callback):
 		s3 = self.get_session(s3_config)
 		return s3.download_fileobj(
-			bucket, 
-			key, 
-			f, 
+			bucket,
+			key,
+			f,
 			Callback=progress_callback
 		)
-	
+
 
 	def upload_dir(self, dir, bucket, s3_config, progress_callback):
 		s3 = self.get_session(s3_config)
 		return s3.upload_file(
-			dir, 
-			bucket, 
+			dir,
+			bucket,
 			progress_callback
 		)
-	
+
 	def download_dir(self, dir, bucket, s3_config, progress_callback):
 		s3 = self.get_session(s3_config)
 		return s3.download_file(
-			bucket, 
-			dir, 
+			bucket,
+			dir,
 			progress_callback
 		)
 
@@ -507,12 +507,12 @@ class s3_kit:
 	def s3_download_object(self, f, bucket, key, s3_config, progress_callback):
 		s3 = self.get_session(s3_config)
 		return s3.download_fileobj(
-			bucket, 
-			key, 
-			f, 
+			bucket,
+			key,
+			f,
 			Callback=progress_callback
 		)
-	
+
 	def s3_mkdir(self, dir, bucket, s3_config):
 		s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
 		return s3bucket.put_object(Key=dir)
@@ -521,7 +521,7 @@ class s3_kit:
 
 		if "session" not in self.__dict__:
 			self.session = Session().client(**self.config_to_boto(s3_config))
-		return self.session 
+		return self.session
 
 	def config_to_boto(self, s3_config):
 		if "accessKey" in s3_config.keys():
@@ -576,7 +576,7 @@ class s3_kit:
 			}
 			directory[obj.key] = metadata
 		return directory
-	
+
 	def test2(self):
 		session = None
 		endpoint = "https://object.ord1.coreweave.com"
@@ -631,4 +631,4 @@ class s3_kit:
 #	test_this.test3()
 #
 #	pass
-	
+

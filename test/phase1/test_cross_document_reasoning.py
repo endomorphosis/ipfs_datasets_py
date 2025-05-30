@@ -34,20 +34,20 @@ from ipfs_datasets_py import (
 
 class MockVectorStore:
     """Mock vector store for testing."""
-    
+
     def __init__(self, documents: List[Dict[str, Any]]):
         self.documents = documents
-        
+
     def embed_query(self, query: str) -> np.ndarray:
         """Mock method to embed a query."""
         return np.random.rand(768)
-        
+
     def search(self, query_vector: np.ndarray, top_k: int = 5, min_score: float = 0.0) -> List[Any]:
         """Mock method to search for similar vectors."""
         # Create mock search results
         from collections import namedtuple
         SearchResult = namedtuple('SearchResult', ['id', 'score', 'metadata'])
-        
+
         results = []
         for i, doc in enumerate(self.documents[:top_k]):
             score = 0.9 - (i * 0.05)
@@ -62,16 +62,16 @@ class MockVectorStore:
                     }
                 )
                 results.append(result)
-                
+
         return results
 
 
 class MockKnowledgeGraph:
     """Mock knowledge graph for testing."""
-    
+
     def __init__(self, entities: Dict[str, Dict[str, Any]]):
         self.entities = entities
-        
+
     def get_entity(self, entity_id: str) -> Dict[str, Any]:
         """Get entity by ID."""
         return self.entities.get(entity_id, None)
@@ -79,15 +79,15 @@ class MockKnowledgeGraph:
 
 class TestCrossDocumentReasoning(unittest.TestCase):
     """Test cases for the cross-document reasoning module."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Initialize reasoning tracer
         self.reasoning_tracer = LLMReasoningTracer()
-        
+
         # Initialize query optimizer
         self.query_optimizer = UnifiedGraphRAGQueryOptimizer()
-        
+
         # Sample documents for testing
         self.sample_documents = [
             {
@@ -126,7 +126,7 @@ class TestCrossDocumentReasoning(unittest.TestCase):
                 "entities": ["ipfs", "filecoin", "decentralized", "storage"]
             }
         ]
-        
+
         # Sample entities for testing
         self.sample_entities = {
             "ipfs": {
@@ -150,25 +150,25 @@ class TestCrossDocumentReasoning(unittest.TestCase):
                 "description": "Decentralized storage network"
             }
         }
-        
+
         # Initialize vector store with sample documents
         self.vector_store = MockVectorStore(self.sample_documents)
-        
+
         # Initialize knowledge graph with sample entities
         self.knowledge_graph = MockKnowledgeGraph(self.sample_entities)
-        
+
         # Initialize cross-document reasoner
         self.reasoner = CrossDocumentReasoner(
             query_optimizer=self.query_optimizer,
             reasoning_tracer=self.reasoning_tracer
         )
-    
+
     def test_initialization(self):
         """Test initializing the cross-document reasoner."""
         self.assertIsNotNone(self.reasoner)
         self.assertEqual(self.reasoner.total_queries, 0)
         self.assertEqual(self.reasoner.successful_queries, 0)
-    
+
     def test_document_retrieval(self):
         """Test retrieving relevant documents for a query."""
         documents = self.reasoner._get_relevant_documents(
@@ -179,12 +179,12 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             max_documents=3,
             min_relevance=0.5
         )
-        
+
         self.assertEqual(len(documents), 3)
         self.assertEqual(documents[0].id, "doc1")
         self.assertEqual(documents[0].source, "IPFS Documentation")
         self.assertGreaterEqual(documents[0].relevance_score, documents[1].relevance_score)
-    
+
     def test_entity_connections(self):
         """Test finding entity-mediated connections between documents."""
         # Create document nodes
@@ -199,24 +199,24 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             )
             for i, doc in enumerate(self.sample_documents)
         ]
-        
+
         # Find entity connections
         connections = self.reasoner._find_entity_connections(
             documents=documents,
             knowledge_graph=self.knowledge_graph,
             max_hops=2
         )
-        
+
         self.assertGreater(len(connections), 0)
-        
+
         # Check that we found a connection between docs with "ipfs" entity
         ipfs_connections = [c for c in connections if c.entity_id == "ipfs"]
         self.assertGreater(len(ipfs_connections), 0)
-        
+
         # Check that we found connection types
         relation_types = set(c.relation_type for c in connections)
         self.assertGreater(len(relation_types), 0)
-    
+
     def test_traversal_paths(self):
         """Test generating traversal paths for reasoning."""
         # Create document nodes
@@ -231,7 +231,7 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             )
             for i, doc in enumerate(self.sample_documents[:3])  # Use just first 3 docs
         ]
-        
+
         # Create sample connections
         connections = [
             EntityMediatedConnection(
@@ -253,17 +253,17 @@ class TestCrossDocumentReasoning(unittest.TestCase):
                 connection_strength=0.75
             )
         ]
-        
+
         # Generate traversal paths
         paths = self.reasoner._generate_traversal_paths(
             documents=documents,
             entity_connections=connections,
             reasoning_depth="moderate"
         )
-        
+
         self.assertGreater(len(paths), 0)
         self.assertIsInstance(paths[0], list)
-        
+
         # Check that at least one path connects multiple documents
         has_multi_doc_path = False
         for path in paths:
@@ -271,7 +271,7 @@ class TestCrossDocumentReasoning(unittest.TestCase):
                 has_multi_doc_path = True
                 break
         self.assertTrue(has_multi_doc_path)
-    
+
     def test_answer_synthesis(self):
         """Test synthesizing an answer from connected information."""
         # Create document nodes
@@ -286,7 +286,7 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             )
             for i, doc in enumerate(self.sample_documents)
         ]
-        
+
         # Create sample connections
         connections = [
             EntityMediatedConnection(
@@ -308,10 +308,10 @@ class TestCrossDocumentReasoning(unittest.TestCase):
                 connection_strength=0.75
             )
         ]
-        
+
         # Sample traversal paths
         paths = [["doc1", "doc2"], ["doc2", "doc3"]]
-        
+
         # Synthesize answer
         answer, confidence = self.reasoner._synthesize_answer(
             query="How does IPFS use content addressing?",
@@ -320,14 +320,14 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             traversal_paths=paths,
             reasoning_depth="moderate"
         )
-        
+
         self.assertIsNotNone(answer)
         self.assertIsInstance(answer, str)
         self.assertGreater(len(answer), 0)
         self.assertIsInstance(confidence, float)
         self.assertGreaterEqual(confidence, 0.0)
         self.assertLessEqual(confidence, 1.0)
-    
+
     def test_cross_document_reasoning(self):
         """Test the complete cross-document reasoning process."""
         result = self.reasoner.reason_across_documents(
@@ -336,26 +336,26 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             reasoning_depth="moderate",
             return_trace=True
         )
-        
+
         self.assertIsNotNone(result)
         self.assertIn("answer", result)
         self.assertIn("documents", result)
         self.assertIn("entity_connections", result)
         self.assertIn("confidence", result)
-        
+
         # If we requested a trace, check that it's included
         self.assertIn("reasoning_trace", result)
-        
+
         # Check the content of the result
         self.assertIsInstance(result["answer"], str)
         self.assertGreater(len(result["answer"]), 0)
         self.assertGreaterEqual(result["confidence"], 0.0)
         self.assertLessEqual(result["confidence"], 1.0)
         self.assertGreater(len(result["documents"]), 0)
-        
+
         # At minimum, the docs with "ipfs" and "content_addressing" should be connected
         self.assertGreater(len(result["entity_connections"]), 0)
-    
+
     def test_get_statistics(self):
         """Test getting statistics about cross-document reasoning."""
         # Perform a query to generate statistics
@@ -363,9 +363,9 @@ class TestCrossDocumentReasoning(unittest.TestCase):
             query="How does IPFS use content addressing?",
             input_documents=self.sample_documents[:3]
         )
-        
+
         stats = self.reasoner.get_statistics()
-        
+
         self.assertIsNotNone(stats)
         self.assertIn("total_queries", stats)
         self.assertIn("successful_queries", stats)
@@ -373,7 +373,7 @@ class TestCrossDocumentReasoning(unittest.TestCase):
         self.assertIn("avg_document_count", stats)
         self.assertIn("avg_connection_count", stats)
         self.assertIn("avg_confidence", stats)
-        
+
         self.assertEqual(stats["total_queries"], 1)
         self.assertEqual(stats["successful_queries"], 1)
         self.assertEqual(stats["success_rate"], 1.0)

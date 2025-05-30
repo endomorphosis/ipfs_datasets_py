@@ -7,7 +7,7 @@ import numpy as np
 try:
     from .ipfs_parquet_to_car import ipfs_parquet_to_car_py
 except Exception as e:
-    try: 
+    try:
         from ipfs_parquet_to_car import ipfs_parquet_to_car_py
     except Exception as e:
         pass
@@ -47,7 +47,7 @@ def process_hashed_dataset_shard(shard, datatype=None, split=None):
                 datatype = shard["datatype"]
             if "split" in list(shard.keys()):
                 split = shard["split"]
-                
+
     if datatype is None:
         if os.path.exists(shard.replace(".parquet","")+"_cids.parquet"):
             datatype = "cids"
@@ -55,7 +55,7 @@ def process_hashed_dataset_shard(shard, datatype=None, split=None):
             if os.path.exists(shard.replace(".parquet","")+".parquet"):
                 datatype = "items"
             else:
-                return ValueError("No dataset found")      
+                return ValueError("No dataset found")
     elif "cids" in datatype:
         if os.path.exists(shard.replace(".parquet","")+"_cids.parquet"):
             if split is not None:
@@ -120,8 +120,8 @@ def process_hashed_dataset_shard(shard, datatype=None, split=None):
             return ValueError("No dataset found")
     else:
         return ValueError("datatype must be 'cids' or 'items' , received: '" + str(datatype) + "'")
-            
-    return [ cids , items, schema ]            
+
+    return [ cids , items, schema ]
 
 def process_index_shard(shard, datatype=None, split="train"):
     items = None
@@ -142,7 +142,7 @@ def process_index_shard(shard, datatype=None, split="train"):
                 datatype = shard["datatype"]
             if "split" in list(shard.keys()):
                 split = shard["split"]
-                
+
     if datatype is None:
         if os.path.exists(shard.replace(".parquet","")+"_cids.parquet"):
             datatype = "cids"
@@ -150,7 +150,7 @@ def process_index_shard(shard, datatype=None, split="train"):
             if os.path.exists(shard.replace(".parquet","")+".parquet"):
                 datatype = "items"
             else:
-                return ValueError("No dataset found")      
+                return ValueError("No dataset found")
     elif "cids" in datatype:
         if os.path.exists(shard.replace(".parquet","")+"_cids.parquet"):
             tmp_hashed_dataset_cid_dataset = load_dataset('parquet', data_files=shard.replace(".parquet","")+"_cids.parquet")[split]
@@ -181,8 +181,8 @@ def process_index_shard(shard, datatype=None, split="train"):
             return ValueError("No dataset found")
     else:
         return ValueError("datatype must be 'cids' or 'items' , received: '" + str(datatype) + "'")
-            
-    return [ cids , items, schema ]            
+
+    return [ cids , items, schema ]
 
 class ipfs_datasets_py:
     def __init__(self, resources, metadata):
@@ -217,9 +217,9 @@ class ipfs_datasets_py:
         self.ipfs_cid_list = []
         self.all_cid_list = {}
         self.all_cid_set = {}
-        self.schemas = {} 
+        self.schemas = {}
         return None
-    
+
     async def load_combined_checkpoints(self, dataset, split, dst_path, models, method="cids"):
         if "hashed_dataset" not in list(dir(self)):
             self.hashed_dataset = None
@@ -261,15 +261,15 @@ class ipfs_datasets_py:
                             if schemas is not None:
                                 self.schemas["hashed_dataset"] = schemas
                         # Update the shared variables in bulk
-                        
+
                         self.all_cid_list["hashed_dataset"] += total_cids
                         self.all_cid_set["hashed_dataset"].update(set(total_cids))
                         self.caches["hashed_dataset"]["items"] += total_items
-                        
+
                 if self.hashed_dataset is None or isinstance(self.hashed_dataset, dict):
                     if len(hashed_dataset_shards) > 0:
                         self.hashed_dataset = load_dataset('parquet', data_files=hashed_dataset_shards)[split]
-                        
+
         for model in models:
             if model not in list(self.index.keys()):
                 self.index[model] = None
@@ -305,7 +305,7 @@ class ipfs_datasets_py:
                         self.all_cid_list[model] += total_cids
                         self.all_cid_set[model].update(set(total_cids))
                         self.caches[model]["items"] += total_items
-                        
+
                 if model not in list(self.index.keys()) or self.index[model] is None or isinstance(self.index[model], dict):
                     if len(this_model_shards) > 0:
                         self.index[model] = load_dataset('parquet', data_files=this_model_shards)[split]
@@ -324,7 +324,7 @@ class ipfs_datasets_py:
                         self.cid_chunk_set.add(this_cid)
                         self.cid_chunk_list.append(this_cid)
         return None
-        
+
     async def load_chunk_checkpoints(self, dataset, split, src_path, models):
         files = []
         if "doc_cid" not in list(dir(self)):
@@ -346,10 +346,10 @@ class ipfs_datasets_py:
                     if doc_cid not in self.chunk_cache_set[model]:
                         self.chunk_cache_set[model].add(doc_cid)
                     self.doc_cid[model][doc_cid]["items"] += items
-                    
+
         return None
-    
-    
+
+
     async def load_checkpoints(self, dataset, split, dst_path, models):
         if "hashed_dataset" not in list(dir(self)):
             self.hashed_dataset = None
@@ -394,11 +394,11 @@ class ipfs_datasets_py:
                         self.all_cid_list["hashed_dataset"] += total_cids
                         self.all_cid_set["hashed_dataset"].update(set(total_cids))
                         self.caches["hashed_dataset"]["items"] += total_items
-                                            
+
                 if self.hashed_dataset is None or isinstance(self.hashed_dataset, dict):
                     if len(hashed_dataset_shards) > 0:
                         self.hashed_dataset = load_dataset('parquet', data_files=hashed_dataset_shards)[split]
-        
+
         for model in models:
             if model not in list(self.index.keys()):
                 self.index[model] = None
@@ -434,7 +434,7 @@ class ipfs_datasets_py:
                         self.all_cid_list[model] += total_cids
                         self.all_cid_set[model].update(set(total_cids))
                         self.caches[model]["items"] += total_items
-        
+
                 if model not in list(self.index.keys()) or self.index[model] is None or isinstance(self.index[model], dict):
                     if len(this_model_shards) > 0:
                         self.index[model] = load_dataset('parquet', data_files=this_model_shards)[split]
@@ -463,7 +463,7 @@ class ipfs_datasets_py:
         self.cid_set = set.intersection(*self.all_cid_set.values())
         self.cid_list = list(self.cid_set)
         return None
-    
+
     async def load_dataset(self, dataset, split=None):
         if split is None:
             try:
@@ -503,7 +503,7 @@ class ipfs_datasets_py:
         return None
 
     async def load_combined(self, models, dataset, split, column, dst_path):
-        print("load combined") 
+        print("load combined")
         await self.load_original_dataset(dataset, split)
         combined_checkpoint = os.path.join(dst_path, "ipfs_" + dataset.replace("/", "___") + ".parquet")
         combind_cid_checkpoint = os.path.join(dst_path, "ipfs_" + dataset.replace("/", "___") + "_cids.parquet")
@@ -520,7 +520,7 @@ class ipfs_datasets_py:
         this_hashed_dataset_cids = this_hashed_dataset_cids["cids"]
         self.all_cid_list["hashed_dataset"] = list(this_hashed_dataset_cids)
         self.all_cid_set["hashed_dataset"] = set(list(this_hashed_dataset_cids))
-        
+
         try:
             len_hashed_dataset = len(this_hashed_dataset_cids)
         except Exception as e:
@@ -540,7 +540,7 @@ class ipfs_datasets_py:
                 tmp_unique_column = list(set(tmp_unique_column))
                 len_unique_column = len(tmp_unique_column)
                 pass
-            
+
             if len_unique_column > len_hashed_dataset:
                 this_hashed_dataset_checkpoints = load_dataset('parquet', data_files=combinded_cid_checkpoint_dir_files_cid)[split]
                 len_this_hashed_dataset_checkpoints = this_hashed_dataset_checkpoints_cids.num_rows
@@ -564,7 +564,7 @@ class ipfs_datasets_py:
                 this_hashed_dataset_cids = this_hashed_dataset.map(lambda x: {"cid": x["cid"]})
                 self.all_cid_list["hashed_dataset"] = list(this_hashed_dataset_cids)
                 self.all_cid_set["hashed_dataset"] = set(this_hashed_dataset_cids)
-                pass             
+                pass
         else:
             if this_hashed_dataset is None:
                 this_hashed_dataset = load_dataset('parquet', data_files=combined_checkpoint)[split]
@@ -574,7 +574,7 @@ class ipfs_datasets_py:
             pass
         del self.dataset
         return this_hashed_dataset
-    
+
     async def combine_checkpoints(self, dataset, split, column, dst_path, models):
         await self.load_dataset(dataset, split)
         await self.load_checkpoints(dataset, split, dst_path, models)
@@ -587,13 +587,13 @@ class ipfs_datasets_py:
         self.unique_cid_set = set()
         self.unique_cid_list = []
         if not os.path.exists(os.path.join(dst_path, "combined", "rm_secondary_cid_" + dataset.replace("/","___") + ".parquet")):
-            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints(self.hashed_dataset))            
+            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints(self.hashed_dataset))
             self.hashed_dataset_combined.to_parquet(os.path.join(dst_path, "combined",  "rm_secondary_cid_" + dataset.replace("/","___") + ".parquet"))
             combined_dataset_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
             combined_dataset_cids.to_parquet(os.path.join(dst_path, "combined", "rm_secondary_cid_" + "ipfs_" + dataset.replace("/","___") + "_cids.parquet"))
 
         if not os.path.exists(os.path.join(dst_path, "combined", "rm_cid_" + dataset.replace("/","___") + ".parquet")):
-            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints2(self.hashed_dataset))            
+            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints2(self.hashed_dataset))
             self.hashed_dataset_combined.to_parquet(os.path.join(dst_path, "combined", "rm_cid_" + dataset.replace("/","___") + ".parquet"))
             combined_dataset_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
             combined_dataset_cids.to_parquet(os.path.join(dst_path, "combined", "rm_cid_" + "ipfs_" + dataset.replace("/","___") + "_cids.parquet"))
@@ -604,7 +604,7 @@ class ipfs_datasets_py:
                 combined_embedding_datasets.to_parquet(os.path.join(dst_path, "combined", + dataset.replace("/","___") + model.replace("/","___") + ".parquet"))
                 combined_embedding_datasets_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
                 combined_embedding_datasets_cids.to_parquet(os.path.join(dst_path, "combined", dataset.replace("/","___") + model.replace("/","___") + "_cids.parquet"))
-        
+
         for model in list(self.metadata["models"]):
             if not os.path.exists(os.path.join(dst_path, "combined", model.replace("/","___"))):
                 combined_embedding_datasets = datasets.Dataset.from_generator(lambda: self.demux_checkpoints(self.index[model]))
@@ -612,12 +612,12 @@ class ipfs_datasets_py:
                 combined_embedding_datasets_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
                 combined_embedding_datasets_cids.to_parquet(os.path.join(dst_path, "secondary_combined", dataset.replace("/","___") + model.replace("/","___") + "_cids.parquet"))
         return None
-        
+
     async def generate_clusters(self, dataset, split, dst_path):
-        
+
         return None
 
-    
+
     async def combine_checkpoints(self, dataset, split, column, dst_path, models):
         await self.load_dataset(dataset, split)
         await self.load_checkpoints(dataset, split, dst_path, models)
@@ -630,13 +630,13 @@ class ipfs_datasets_py:
         self.unique_cid_set = set()
         self.unique_cid_list = []
         if not os.path.exists(os.path.join(dst_path, "combined", "rm_secondary_cid_" + dataset.replace("/","___") + ".parquet")):
-            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints(self.hashed_dataset))            
+            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints(self.hashed_dataset))
             self.hashed_dataset_combined.to_parquet(os.path.join(dst_path, "combined",  "rm_secondary_cid_" + dataset.replace("/","___") + ".parquet"))
             combined_dataset_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
             combined_dataset_cids.to_parquet(os.path.join(dst_path, "combined", "rm_secondary_cid_" + "ipfs_" + dataset.replace("/","___") + "_cids.parquet"))
 
         if not os.path.exists(os.path.join(dst_path, "combined", "rm_cid_" + dataset.replace("/","___") + ".parquet")):
-            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints2(self.hashed_dataset))            
+            self.hashed_dataset_combined = datasets.Dataset.from_generator(lambda: self.demux_checkpoints2(self.hashed_dataset))
             self.hashed_dataset_combined.to_parquet(os.path.join(dst_path, "combined", "rm_cid_" + dataset.replace("/","___") + ".parquet"))
             combined_dataset_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
             combined_dataset_cids.to_parquet(os.path.join(dst_path, "combined", "rm_cid_" + "ipfs_" + dataset.replace("/","___") + "_cids.parquet"))
@@ -647,17 +647,17 @@ class ipfs_datasets_py:
                 combined_embedding_datasets.to_parquet(os.path.join(dst_path, "combined", + dataset.replace("/","___") + model.replace("/","___") + ".parquet"))
                 combined_embedding_datasets_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
                 combined_embedding_datasets_cids.to_parquet(os.path.join(dst_path, "combined", dataset.replace("/","___") + model.replace("/","___") + "_cids.parquet"))
-        
+
         for model in list(self.metadata["models"]):
             if not os.path.exists(os.path.join(dst_path, "combined", model.replace("/","___"))):
                 combined_embedding_datasets = datasets.Dataset.from_generator(lambda: self.demux_checkpoints(self.index[model]))
                 combined_embedding_datasets.to_parquet(os.path.join(dst_path, "secondary_combined", + dataset.replace("/","___") + model.replace("/","___") + ".parquet"))
                 combined_embedding_datasets_cids = datasets.Dataset.from_dict({"cids": self.unique_cid_list})
                 combined_embedding_datasets_cids.to_parquet(os.path.join(dst_path, "secondary_combined", dataset.replace("/","___") + model.replace("/","___") + "_cids.parquet"))
-        return None              
-    
+        return None
+
     async def generate_clusters(self, dataset, split, dst_path):
-        
+
         return None
 
     async def load_clusters(self, dataset, split, dst_path):
@@ -691,9 +691,9 @@ class ipfs_datasets_py:
             self.ipfs_cid_set = ipfs_cid_set
         self.cid_set = self.ipfs_cid_set
         return cluster_cids_dataset, ipfs_cid_clusters_list, ipfs_cid_clusters_set, ipfs_cid_list, ipfs_cid_set
-        
-    
-    
+
+
+
     async def load_checkpoints(self, dataset, split, dst_path, models, method="cids"):
         if "hashed_dataset" not in list(dir(self)):
             self.hashed_dataset = None
@@ -708,27 +708,27 @@ class ipfs_datasets_py:
             # hashed_dataset_dst_path = os.path.join(dst_path, "ipfs_" + dataset.replace("/","___") + ".parquet")
             hashed_dataset_dst_path = os.path.join(dst_path, "ipfs_" + dataset.replace("/","___") + ".parquet")
             hash_dataset_cid_dst_path = os.path.join(dst_path, "ipfs_" + dataset.replace("/","___") + "_cids.parquet")
-             
+
             if os.path.isfile(hash_dataset_cid_dst_path):
                 hashed_dataset_cids = load_dataset('parquet', data_files=hash_dataset_cid_dst_path)[split]
                 hashed_dataset_cids = list(hashed_dataset_cids["cids"])
-            
+
             if os.path.isfile(hashed_dataset_dst_path):
                 self.hashed_dataset = load_dataset('parquet', data_files=hashed_dataset_dst_path)[split]
 
             cid_rows = self.hashed_dataset.num_rows
             hashed_dataset_rows = len(hashed_dataset_cids)
-            
+
             if hashed_dataset_cids is not None and hashed_dataset_rows == cid_rows:
                 self.all_cid_list["hashed_dataset"] = hashed_dataset_cids
                 self.all_cid_set["hashed_dataset"] = set(hashed_dataset_cids)
-            else:   
+            else:
                 self.all_cid_list["hashed_dataset"] = self.hashed_dataset["cid"]
                 self.all_cid_set["hashed_dataset"] = set(self.all_cid_list["hashed_dataset"] )
-        
-        if (self.hashed_dataset is None or self.hashed_dataset.num_rows == 0 ) and os.path.exists(os.path.join(dst_path, "checkpoints")):           
+
+        if (self.hashed_dataset is None or self.hashed_dataset.num_rows == 0 ) and os.path.exists(os.path.join(dst_path, "checkpoints")):
             ls_checkpoints = os.listdir(os.path.join(dst_path, "checkpoints"))
-            hashed_dataset_shards = [os.path.join(dst_path, "checkpoints", x) for x in ls_checkpoints if "ipfs_" + dataset.replace("/", "___") + "_shard" in x and "_cids" not in x ]                                
+            hashed_dataset_shards = [os.path.join(dst_path, "checkpoints", x) for x in ls_checkpoints if "ipfs_" + dataset.replace("/", "___") + "_shard" in x and "_cids" not in x ]
             if self.hashed_dataset is None or isinstance(self.hashed_dataset, dict):
                 if len(hashed_dataset_shards) > 0:
                     self.hashed_dataset = load_dataset('parquet', data_files=hashed_dataset_shards)[split]
@@ -755,11 +755,11 @@ class ipfs_datasets_py:
                                 self.schemas["hashed_dataset"] = schemas  # Assuming schemas won't conflict
                         # Update the shared variables in bulk
                         self.all_cid_list["hashed_dataset"] += total_cids
-                        self.all_cid_set["hashed_dataset"].update(set(total_cids))    
+                        self.all_cid_set["hashed_dataset"].update(set(total_cids))
                         if "hashed_dataset" not in list(self.caches.keys()):
                             self.caches["hashed_dataset"] = {"items" : []}
                         self.caches["hashed_dataset"]["items"] += total_items
-                        self.hashed_dataset = datasets.Dataset.from_dict({"items": self.caches["hashed_dataset"]["items"]})                        
+                        self.hashed_dataset = datasets.Dataset.from_dict({"items": self.caches["hashed_dataset"]["items"]})
 
         for model in models:
             if model not in list(self.index.keys()):
@@ -770,7 +770,7 @@ class ipfs_datasets_py:
                 self.all_cid_set[model] = set()
             if model not in list(self.caches.keys()):
                 self.caches[model] = {"items" : []}
-            model_checkpoints_dst_path = os.path.join(dst_path, "checkpoints",  dataset.replace("/","___") + "__" + model.replace("/","___")) 
+            model_checkpoints_dst_path = os.path.join(dst_path, "checkpoints",  dataset.replace("/","___") + "__" + model.replace("/","___"))
             model_dst_path = os.path.join(dst_path, "ipfs_" +  dataset.replace("/","___") + "__" + model.replace("/","___") + ".parquet")
             model_clusters_dst_path = os.path.join(dst_path, "clusters",  dataset.replace("/","___") + "__" + model.replace("/","___"))
             len_hashed_dataset = self.hashed_dataset.num_rows
@@ -786,7 +786,7 @@ class ipfs_datasets_py:
                 this_model_len = 0
                 if len(this_model_cid_checkpoints) == len(this_model_checkpoints):
                     try:
-                        if split is None:                     
+                        if split is None:
                             self.index[model] = load_dataset('parquet', data_files=this_model_cid_checkpoints)
                         else:
                             self.index[model] = load_dataset('parquet', data_files=this_model_cid_checkpoints)[split]
@@ -817,7 +817,7 @@ class ipfs_datasets_py:
                     ls_checkpoints = os.listdir(model_checkpoints_dst_path)
                     this_model_checkpoints = [os.path.join(dst_path, "checkpoints", dataset.replace("/","___") + "__" + model.replace("/","___"), x) for x in ls_checkpoints if model.replace("/", "___") + "_shard" in x and "_cids" not in x]
                     this_model_cid_checkpoints = [os.path.join(dst_path, "checkpoints", dataset.replace("/","___") + "__" + model.replace("/","___"), x) for x in ls_checkpoints if model.replace("/", "___") + "_shard" in x and "_cids" in x]
-                    if split is None:                     
+                    if split is None:
                         self.index[model] = load_dataset('parquet', data_files=this_model_cid_checkpoints)
                     else:
                         self.index[model] = load_dataset('parquet', data_files=this_model_cid_checkpoints)[split]
@@ -847,7 +847,7 @@ class ipfs_datasets_py:
                             self.all_cid_list[model] += total_cids
                             self.all_cid_set[model].update(set(total_cids))
                             self.caches[model]["items"] += total_items
-                        self.index[model] = datasets.Dataset.from_dict({"items": self.caches[model]["items"]} )        
+                        self.index[model] = datasets.Dataset.from_dict({"items": self.caches[model]["items"]} )
             if model not in list(self.index.keys()) or self.index[model] is None or isinstance(self.index[model], dict):
                 ls_checkpoints = os.listdir(model_clusters_dst_path)
                 this_model_clusters = [os.path.join(dst_path, "clusters",  dataset.replace("/","___") + "__" + model.replace("/","___"), x) for x in ls_checkpoints if model.replace("/", "___") + "_cluster" in x and "_cids" not in x]
@@ -870,8 +870,8 @@ class ipfs_datasets_py:
         self.cid_set = set.intersection(*self.all_cid_set.values())
         self.cid_list = list(self.cid_set)
         return None
-    
-    
+
+
     async def load_clusters(self, dataset, split, dst_path):
         ipfs_cid_clusters_list = []
         ipfs_cid_clusters_set = ()
@@ -904,15 +904,15 @@ class ipfs_datasets_py:
             self.ipfs_cid_set = ipfs_cid_set
         self.cid_set = self.ipfs_cid_set
         return cluster_cids_dataset, ipfs_cid_clusters_list, ipfs_cid_clusters_set, ipfs_cid_list, ipfs_cid_set
-        
-    def test(self):    
+
+    def test(self):
         return None
 
     def process_chunk_files(path, datatype="cids"):
         cids = None
         items = None
         schema = None
-        
+
         if type(path) is not str:
             if type(path) is list:
                 if len(path) == 1:
@@ -924,15 +924,15 @@ class ipfs_datasets_py:
                     path = path["file"]
                 if "type" in list(path.keys()):
                     datatype = path["type"]
-        
+
         if datatype == "cids":
             if os.path.exists(path):
                 cid_path = path.replace(".parquet","")+"_cids.parquet"
                 if os.path.exists(cid_path):
                     cids = load_dataset('parquet', data_files=cid_path)["cids"]
             else:
-                return ValueError("No dataset found") 
-            
+                return ValueError("No dataset found")
+
         elif datatype == "items":
             cid_path = path.replace(".parquet","")+"_cids.parquet"
             chunk_dataset = None
@@ -948,7 +948,7 @@ class ipfs_datasets_py:
                 else:
                     return ValueError("No dataset found")
             if chunk_dataset is None:
-                chunk_dataset = load_dataset('parquet', data_files = path)   
+                chunk_dataset = load_dataset('parquet', data_files = path)
                 if cids is None and os.path.exists(cid_path):
                     cids = load_dataset('parquet', data_files = cid_path)["cids"]
                 else:
@@ -957,7 +957,7 @@ class ipfs_datasets_py:
                     tmp_dataset.to_parquet(cid_path)
                 pass
             items = {key: [item["items"][key] for item in chunk_dataset] for key in chunk_dataset[0]["items"].keys()}
-            schema = None        
+            schema = None
         elif datatype == "schema":
             schema = None
 

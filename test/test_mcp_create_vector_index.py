@@ -32,7 +32,7 @@ class TestMCPCreateVectorIndex(unittest.IsolatedAsyncioTestCase):
 
         vectors = [[0.1]*128, [0.2]*128]
         dimension = 128
-        
+
         result = await create_vector_index(vectors=vectors, dimension=dimension)
 
         self.assertEqual(result["status"], "success")

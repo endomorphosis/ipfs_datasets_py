@@ -65,7 +65,7 @@ SELECT ?source ?intermediate ?intermediateLabel ?p1 ?p1Label ?p2 ?p2Label ?targe
 WHERE {
   VALUES ?source { wd:%s }
   VALUES ?target { wd:%s }
-  
+
   # Direct path
   { ?source ?p1 ?target . }
   UNION
@@ -75,11 +75,11 @@ WHERE {
     ?intermediate ?p2 ?target .
     FILTER(?intermediate != ?source && ?intermediate != ?target)
   }
-  
+
   # Get property labels
   ?prop1 wikibase:directClaim ?p1 .
   OPTIONAL { ?prop2 wikibase:directClaim ?p2 . }
-  
+
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
 LIMIT 10
@@ -91,7 +91,7 @@ SELECT ?item ?itemLabel ?score
 WHERE {
   # Entity we're comparing with
   VALUES ?entity { wd:%s }
-  
+
   # Properties of the entity
   {
     SELECT ?entity ?prop (count(*) as ?entityPropCount)
@@ -101,30 +101,30 @@ WHERE {
     }
     GROUP BY ?entity ?prop
   }
-  
+
   # Find other entities with the same properties
   {
     SELECT ?item ?prop (count(*) as ?itemPropCount)
     WHERE {
       ?item ?p ?o .
       ?prop wikibase:directClaim ?p .
-      
+
       # Exclude the entity itself
       FILTER(?item != wd:%s)
-      
+
       # Optionally filter by type
       %s
     }
     GROUP BY ?item ?prop
   }
-  
+
   # Properties that both entities have
   FILTER(?prop = ?prop)
-  
+
   # Calculate similarity score (Jaccard similarity)
   BIND((?entityPropCount + ?itemPropCount) as ?unionCount)
   BIND((?entityPropCount * ?itemPropCount / ?unionCount) as ?score)
-  
+
   # Sort by score
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
@@ -138,19 +138,19 @@ SELECT ?property ?propertyLabel (COUNT(?item) as ?count) (COUNT(?item) * 100 / ?
 WHERE {
   # Get all items of a specific type
   ?item wdt:P31 wd:%s .
-  
+
   # Count total number of such items
   {
-    SELECT (COUNT(?allItems) as ?totalCount) 
-    WHERE { 
-      ?allItems wdt:P31 wd:%s 
+    SELECT (COUNT(?allItems) as ?totalCount)
+    WHERE {
+      ?allItems wdt:P31 wd:%s
     }
   }
-  
+
   # Get their properties
   ?item ?p ?value .
   ?property wikibase:directClaim ?p .
-  
+
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
 GROUP BY ?property ?propertyLabel ?totalCount
@@ -168,33 +168,33 @@ WHERE {
     WHERE {
       # All items of this type
       ?item wdt:P31 wd:%s .
-      
+
       # Total count
       {
-        SELECT (COUNT(?allItems) as ?totalCount) 
-        WHERE { 
-          ?allItems wdt:P31 wd:%s 
+        SELECT (COUNT(?allItems) as ?totalCount)
+        WHERE {
+          ?allItems wdt:P31 wd:%s
         }
       }
-      
+
       # Their properties
       ?item ?p ?value .
       ?property wikibase:directClaim ?p .
-      
+
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
     }
     GROUP BY ?property ?propertyLabel ?totalCount
     HAVING (?expectedPercentage > 30)  # Only include common properties (>30%%)
   }
-  
+
   # Check if our entity has each property
   OPTIONAL {
     wd:%s ?p ?value .
     ?property wikibase:directClaim ?p .
   }
-  
+
   BIND(IF(BOUND(?value), true, false) as ?hasProperty)
-  
+
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
 ORDER BY DESC(?expectedPercentage)

@@ -12,7 +12,7 @@ Main components:
 - knowledge_graph: IPLD-based knowledge graph with entity and relationship modeling
 
 These components provide the foundation for GraphRAG (Graph Retrieval Augmented Generation),
-combining vector similarity search with knowledge graph traversal for enhanced retrieval 
+combining vector similarity search with knowledge graph traversal for enhanced retrieval
 and reasoning capabilities.
 """
 

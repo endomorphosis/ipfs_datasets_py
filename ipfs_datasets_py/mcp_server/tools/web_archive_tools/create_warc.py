@@ -14,14 +14,14 @@ def create_warc(
     options: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Create a WARC file from a URL.
-    
+
     Args:
         url: URL to archive
         output_path: Path for the output WARC file (optional)
         options: Options for the archiving tool (optional)
             - agent: "wget" or "squidwarc"
             - depth: crawl depth (for squidwarc)
-            
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -29,7 +29,7 @@ def create_warc(
             - error: Error message (if failed)
     """
     processor = WebArchiveProcessor()
-    
+
     try:
         warc_path = processor.create_warc(url, output_path, options)
         return {

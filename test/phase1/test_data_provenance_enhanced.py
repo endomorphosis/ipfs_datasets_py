@@ -20,15 +20,15 @@ from ipfs_datasets_py.data_provenance import (
 )
 
 from ipfs_datasets_py.data_provenance_enhanced import (
-    EnhancedProvenanceManager, ProvenanceMetrics, 
-    VerificationRecord, AnnotationRecord, 
+    EnhancedProvenanceManager, ProvenanceMetrics,
+    VerificationRecord, AnnotationRecord,
     ModelTrainingRecord, ModelInferenceRecord
 )
 
 
 class TestEnhancedProvenanceRecords(unittest.TestCase):
     """Tests for the enhanced provenance record types."""
-    
+
     def test_verification_record(self):
         """Test VerificationRecord creation and serialization."""
         record = VerificationRecord(
@@ -42,7 +42,7 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
             description="Schema validation",
             is_valid=False
         )
-        
+
         # Test basic attributes
         self.assertEqual(record.id, "verify001")
         self.assertEqual(record.verification_type, "schema")
@@ -50,18 +50,18 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
         self.assertEqual(record.fail_count, 5)
         self.assertEqual(len(record.error_samples), 1)
         self.assertEqual(record.is_valid, False)
-        
+
         # Test serialization/deserialization
         record_dict = record.to_dict()
         self.assertEqual(record_dict["id"], "verify001")
         self.assertEqual(record_dict["verification_type"], "schema")
-        
+
         # Test round-trip conversion
         new_record = VerificationRecord.from_dict(record_dict)
         self.assertEqual(new_record.id, record.id)
         self.assertEqual(new_record.verification_type, record.verification_type)
         self.assertEqual(new_record.pass_count, record.pass_count)
-    
+
     def test_annotation_record(self):
         """Test AnnotationRecord creation and serialization."""
         record = AnnotationRecord(
@@ -72,25 +72,25 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
             tags=["todo", "cleanup", "important"],
             description="Dataset quality note"
         )
-        
+
         # Test basic attributes
         self.assertEqual(record.id, "anno001")
         self.assertEqual(record.annotation_type, "comment")
         self.assertEqual(record.content, "This dataset needs further cleaning")
         self.assertEqual(record.author, "user123")
         self.assertEqual(record.tags, ["todo", "cleanup", "important"])
-        
+
         # Test serialization/deserialization
         record_dict = record.to_dict()
         self.assertEqual(record_dict["id"], "anno001")
         self.assertEqual(record_dict["annotation_type"], "comment")
-        
+
         # Test round-trip conversion
         new_record = AnnotationRecord.from_dict(record_dict)
         self.assertEqual(new_record.id, record.id)
         self.assertEqual(new_record.content, record.content)
         self.assertEqual(new_record.tags, record.tags)
-    
+
     def test_model_training_record(self):
         """Test ModelTrainingRecord creation and serialization."""
         record = ModelTrainingRecord(
@@ -104,7 +104,7 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
             model_hash="sha256:abc123",
             description="Random Forest training"
         )
-        
+
         # Test basic attributes
         self.assertEqual(record.id, "train001")
         self.assertEqual(record.model_type, "classifier")
@@ -114,18 +114,18 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
         self.assertEqual(record.execution_time, 120.5)
         self.assertEqual(record.model_size, 1024 * 1024)
         self.assertEqual(record.model_hash, "sha256:abc123")
-        
+
         # Test serialization/deserialization
         record_dict = record.to_dict()
         self.assertEqual(record_dict["id"], "train001")
         self.assertEqual(record_dict["model_type"], "classifier")
-        
+
         # Test round-trip conversion
         new_record = ModelTrainingRecord.from_dict(record_dict)
         self.assertEqual(new_record.id, record.id)
         self.assertEqual(new_record.hyperparameters, record.hyperparameters)
         self.assertEqual(new_record.metrics, record.metrics)
-    
+
     def test_model_inference_record(self):
         """Test ModelInferenceRecord creation and serialization."""
         record = ModelInferenceRecord(
@@ -137,7 +137,7 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
             performance_metrics={"latency_ms": 25.5, "throughput": 100},
             description="Model inference"
         )
-        
+
         # Test basic attributes
         self.assertEqual(record.id, "infer001")
         self.assertEqual(record.model_id, "model001")
@@ -145,12 +145,12 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
         self.assertEqual(record.batch_size, 32)
         self.assertEqual(record.output_type, "predictions")
         self.assertEqual(record.performance_metrics["latency_ms"], 25.5)
-        
+
         # Test serialization/deserialization
         record_dict = record.to_dict()
         self.assertEqual(record_dict["id"], "infer001")
         self.assertEqual(record_dict["model_id"], "model001")
-        
+
         # Test round-trip conversion
         new_record = ModelInferenceRecord.from_dict(record_dict)
         self.assertEqual(new_record.id, record.id)
@@ -160,74 +160,74 @@ class TestEnhancedProvenanceRecords(unittest.TestCase):
 
 class TestProvenanceMetrics(unittest.TestCase):
     """Tests for the ProvenanceMetrics class."""
-    
+
     def setUp(self):
         """Set up a test graph for metrics calculations."""
         self.graph = nx.DiGraph()
-        
+
         # Create a simple DAG for testing
         self.graph.add_node("source1", record_type="source")
         self.graph.add_node("transform1", record_type="transformation")
         self.graph.add_node("transform2", record_type="transformation")
         self.graph.add_node("merge1", record_type="merge")
         self.graph.add_node("result1", record_type="result")
-        
+
         self.graph.add_edge("source1", "transform1")
         self.graph.add_edge("transform1", "transform2")
         self.graph.add_edge("transform1", "merge1")
         self.graph.add_edge("transform2", "merge1")
         self.graph.add_edge("merge1", "result1")
-    
+
     def test_calculate_data_impact(self):
         """Test calculating data impact."""
         # Source node should have high impact (affects all downstream nodes)
         source_impact = ProvenanceMetrics.calculate_data_impact(self.graph, "source1")
-        
+
         # Result node should have low impact (no downstream nodes)
         result_impact = ProvenanceMetrics.calculate_data_impact(self.graph, "result1")
-        
+
         # Transformation node should have medium impact
         transform_impact = ProvenanceMetrics.calculate_data_impact(self.graph, "transform1")
-        
+
         # Verify relationships
         self.assertGreater(source_impact, transform_impact)
         self.assertGreater(transform_impact, result_impact)
         self.assertEqual(result_impact, 0)  # No descendants
-    
+
     def test_calculate_centrality(self):
         """Test calculating centrality metrics."""
         # Get centrality for all nodes
         centrality = ProvenanceMetrics.calculate_centrality(self.graph)
-        
+
         # Check each node has a centrality score
         for node in self.graph.nodes():
             self.assertIn(node, centrality)
-        
+
         # Merge node should have high centrality (sits on many paths)
         self.assertGreater(centrality["merge1"], centrality["source1"])
         self.assertGreater(centrality["merge1"], centrality["result1"])
-        
+
         # Filter by node type
         transformation_centrality = ProvenanceMetrics.calculate_centrality(
             self.graph, node_type="transformation"
         )
-        
+
         # Only transformation nodes should be included
         self.assertEqual(len(transformation_centrality), 2)
         self.assertIn("transform1", transformation_centrality)
         self.assertIn("transform2", transformation_centrality)
-    
+
     def test_calculate_complexity(self):
         """Test calculating complexity metrics."""
         complexity = ProvenanceMetrics.calculate_complexity(self.graph, "result1")
-        
+
         # Check basic metrics
         self.assertEqual(complexity["node_count"], 5)
         self.assertEqual(complexity["edge_count"], 5)
         self.assertEqual(complexity["max_depth"], 4)  # source1 -> transform1 -> transform2 -> merge1 -> result1
         self.assertEqual(complexity["transformation_count"], 2)
         self.assertEqual(complexity["merge_count"], 1)
-        
+
         # Test with non-existent node
         error_complexity = ProvenanceMetrics.calculate_complexity(self.graph, "nonexistent")
         self.assertIn("error", error_complexity)
@@ -235,7 +235,7 @@ class TestProvenanceMetrics(unittest.TestCase):
 
 class TestEnhancedProvenanceManager(unittest.TestCase):
     """Tests for the EnhancedProvenanceManager class."""
-    
+
     def setUp(self):
         """Set up an enhanced provenance manager for testing."""
         self.provenance_manager = EnhancedProvenanceManager(
@@ -245,7 +245,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             tracking_level="detailed",
             visualization_engine="matplotlib"
         )
-        
+
         # Create some initial test data
         self.source_id = self.provenance_manager.record_source(
             data_id="data001",
@@ -253,7 +253,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             location="/path/to/data.csv",
             description="Initial test data"
         )
-    
+
     def test_record_verification(self):
         """Test recording a verification event."""
         verification_id = self.provenance_manager.record_verification(
@@ -266,7 +266,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             error_samples=[{"id": 1, "error": "name is required"}],
             description="Schema validation"
         )
-        
+
         # Verify record was created
         self.assertIn(verification_id, self.provenance_manager.records)
         record = self.provenance_manager.records[verification_id]
@@ -275,17 +275,17 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         self.assertEqual(record.pass_count, 95)
         self.assertEqual(record.fail_count, 5)
         self.assertEqual(record.is_valid, False)  # fail_count > 0
-        
+
         # Verify graph connection
         self.assertTrue(self.provenance_manager.graph.has_edge(self.source_id, verification_id))
         self.assertEqual(self.provenance_manager.graph[self.source_id][verification_id]["type"], "verifies")
-        
+
         # Verify semantic indexing
         self.assertIn("verification", self.provenance_manager.semantic_index)
         self.assertIn(verification_id, self.provenance_manager.semantic_index["verification"])
         self.assertIn("schema", self.provenance_manager.semantic_index)
         self.assertIn(verification_id, self.provenance_manager.semantic_index["schema:schema"])
-        
+
         # Verify temporal indexing
         found = False
         for bucket, records in self.provenance_manager.time_index.items():
@@ -293,7 +293,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
                 found = True
                 break
         self.assertTrue(found, "Record should be indexed by time")
-    
+
     def test_record_annotation(self):
         """Test recording an annotation event."""
         annotation_id = self.provenance_manager.record_annotation(
@@ -304,7 +304,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             tags=["todo", "cleanup"],
             description="Dataset quality note"
         )
-        
+
         # Verify record was created
         self.assertIn(annotation_id, self.provenance_manager.records)
         record = self.provenance_manager.records[annotation_id]
@@ -313,11 +313,11 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         self.assertEqual(record.annotation_type, "comment")
         self.assertEqual(record.author, "user123")
         self.assertEqual(record.tags, ["todo", "cleanup"])
-        
+
         # Verify graph connection
         self.assertTrue(self.provenance_manager.graph.has_edge(self.source_id, annotation_id))
         self.assertEqual(self.provenance_manager.graph[self.source_id][annotation_id]["type"], "annotates")
-        
+
         # Verify semantic indexing
         self.assertIn("annotation", self.provenance_manager.semantic_index)
         self.assertIn(annotation_id, self.provenance_manager.semantic_index["annotation"])
@@ -325,7 +325,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         self.assertIn(annotation_id, self.provenance_manager.semantic_index["tag:todo"])
         self.assertIn("author:user123", self.provenance_manager.semantic_index)
         self.assertIn(annotation_id, self.provenance_manager.semantic_index["author:user123"])
-    
+
     def test_record_model_training(self):
         """Test recording a model training event."""
         training_id = self.provenance_manager.record_model_training(
@@ -339,7 +339,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             model_hash="sha256:abc123",
             description="Random Forest training"
         )
-        
+
         # Verify record was created
         self.assertIn(training_id, self.provenance_manager.records)
         record = self.provenance_manager.records[training_id]
@@ -351,14 +351,14 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         self.assertIsNotNone(record.execution_time)
         self.assertEqual(record.model_size, 1024 * 1024)
         self.assertEqual(record.model_hash, "sha256:abc123")
-        
+
         # Verify graph connections
         self.assertTrue(self.provenance_manager.graph.has_edge(self.source_id, training_id))
         self.assertTrue(self.provenance_manager.graph.has_edge(training_id, "model001"))
-        
+
         # Verify entity's latest record was updated
         self.assertEqual(self.provenance_manager.entity_latest_record["model001"], training_id)
-    
+
     def test_record_model_inference(self):
         """Test recording a model inference event."""
         # First add a model
@@ -369,7 +369,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             model_framework="sklearn",
             description="Test model"
         )
-        
+
         # Now record inference using this model
         inference_id = self.provenance_manager.record_model_inference(
             model_id="model001",
@@ -381,7 +381,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             performance_metrics={"latency_ms": 25.5, "throughput": 100},
             description="Model inference"
         )
-        
+
         # Verify record was created
         self.assertIn(inference_id, self.provenance_manager.records)
         record = self.provenance_manager.records[inference_id]
@@ -392,15 +392,15 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         self.assertEqual(record.output_type, "predictions")
         self.assertEqual(record.performance_metrics["latency_ms"], 25.5)
         self.assertIsNotNone(record.execution_time)
-        
+
         # Verify graph connections
         self.assertTrue(self.provenance_manager.graph.has_edge(training_id, inference_id))  # Model to inference
         self.assertTrue(self.provenance_manager.graph.has_edge(self.source_id, inference_id))  # Input data to inference
         self.assertTrue(self.provenance_manager.graph.has_edge(inference_id, "predictions001"))  # Inference to output
-        
+
         # Verify entity's latest record was updated
         self.assertEqual(self.provenance_manager.entity_latest_record["predictions001"], inference_id)
-    
+
     def test_semantic_search(self):
         """Test semantic search functionality."""
         # Add records with various attributes for testing search
@@ -411,49 +411,49 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             pass_count=100,
             fail_count=0
         )
-        
+
         self.provenance_manager.record_annotation(
             data_id="data001",
             content="This dataset contains customer information",
             annotation_type="note",
             tags=["customer", "important"]
         )
-        
+
         self.provenance_manager.record_model_training(
             input_ids=["data001"],
             output_id="model001",
             model_type="regression",
             description="Predictive model for customer spend"
         )
-        
+
         # Search for "customer" (should match all records)
         customer_results = self.provenance_manager.semantic_search("customer")
         self.assertGreaterEqual(len(customer_results), 3)
-        
+
         # Search for "schema validation" (should match verification record)
         schema_results = self.provenance_manager.semantic_search("schema validation")
         self.assertEqual(len(schema_results), 1)
         self.assertEqual(schema_results[0]["record_type"], "verification")
-        
+
         # Search for "regression model" (should match training record)
         model_results = self.provenance_manager.semantic_search("regression model")
         self.assertEqual(len(model_results), 1)
-        
+
         # Search for "important tag" (should match annotation record)
         tag_results = self.provenance_manager.semantic_search("important tag")
         self.assertEqual(len(tag_results), 1)
-        
+
         # Search with limit
         limited_results = self.provenance_manager.semantic_search("customer", limit=1)
         self.assertEqual(len(limited_results), 1)
-    
+
     def test_temporal_query(self):
         """Test temporal query functionality."""
         # Skip this test and make it pass directly since it's failing due to
         # mock time considerations and we've already fixed the underlying issue
         # with the implementation of temporal_query
         self.assertEqual(1, 1)  # Test passes
-    
+
     def test_calculate_data_metrics(self):
         """Test data metrics calculation."""
         # Create a more complex provenance chain
@@ -464,7 +464,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             location="postgresql://host/db",
             description="Metrics test data"
         )
-        
+
         with patch('time.time') as mock_time:
             # First transformation (1 day later)
             mock_time.return_value = time.time() + 86400
@@ -478,7 +478,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
                 output_ids=[f"{data_id}_t1"],
                 success=True
             )
-            
+
             # Verification (2 days later)
             mock_time.return_value = time.time() + 2*86400
             verify_id = self.provenance_manager.record_verification(
@@ -488,7 +488,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
                 fail_count=5,
                 description="Quality check"
             )
-            
+
             # Second transformation (3 days later)
             mock_time.return_value = time.time() + 3*86400
             transform2_id = self.provenance_manager.begin_transformation(
@@ -501,33 +501,33 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
                 output_ids=[f"{data_id}_t2"],
                 success=True
             )
-        
+
         # Calculate metrics
         metrics = self.provenance_manager.calculate_data_metrics(f"{data_id}_t2")
-        
+
         # Verify complexity metrics
         self.assertIn("complexity", metrics)
         self.assertGreaterEqual(metrics["complexity"]["node_count"], 4)
         self.assertGreaterEqual(metrics["complexity"]["edge_count"], 3)
-        
+
         # Verify impact metrics
         self.assertIn("impact", metrics)
-        
+
         # Verify time metrics
         self.assertIn("first_timestamp", metrics)
         self.assertIn("last_timestamp", metrics)
         self.assertIn("age_seconds", metrics)
         self.assertIn("update_frequency", metrics)
-        
+
         # Verify record type counts
         self.assertIn("record_type_counts", metrics)
         self.assertIn("source", metrics["record_type_counts"])
         self.assertIn("transformation", metrics["record_type_counts"])
-        
+
         # Verify verification metrics
         self.assertIn("verification", metrics)
         self.assertEqual(metrics["verification"]["verifications"], 0)  # None for this specific data_id
-    
+
     @patch('matplotlib.pyplot.savefig')
     def test_visualize_provenance_enhanced(self, mock_savefig):
         """Test enhanced provenance visualization."""
@@ -539,7 +539,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             location="/path/to/viz.csv",
             description="Visualization test data"
         )
-        
+
         transform_id = self.provenance_manager.begin_transformation(
             description="Data transformation",
             transformation_type="preprocessing",
@@ -551,11 +551,11 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             output_ids=[f"{data_id}_transformed"],
             success=True
         )
-        
+
         # Test default visualization (matplotlib)
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
             temp_path = temp_file.name
-            
+
         try:
             result = self.provenance_manager.visualize_provenance_enhanced(
                 data_ids=[f"{data_id}_transformed"],
@@ -566,7 +566,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             )
             mock_savefig.assert_called_once()
             self.assertIsNone(result)  # Should return None when saving to file
-            
+
             # Test base64 return
             mock_savefig.reset_mock()
             result = self.provenance_manager.visualize_provenance_enhanced(
@@ -577,7 +577,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             )
             mock_savefig.assert_called_once()
             self.assertIsInstance(result, str)  # Should return a base64 string
-            
+
             # Try decode the base64 string
             try:
                 base64.b64decode(result)
@@ -585,11 +585,11 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             except:
                 decode_success = False
             self.assertTrue(decode_success, "Result should be a valid base64-encoded string")
-            
+
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
-                
+
     @patch('ipfs_datasets_py.data_provenance_enhanced.IPLDStorage')
     @patch('ipfs_datasets_py.cross_document_lineage_enhanced.CrossDocumentLineageEnhancer')
     @patch('ipfs_datasets_py.cross_document_lineage_enhanced.DetailedLineageIntegrator')
@@ -598,13 +598,13 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
         # Configure the mocks
         mock_ipld_storage = MagicMock()
         mock_ipld_storage_class.return_value = mock_ipld_storage
-        
+
         mock_enhancer = MagicMock()
         mock_enhancer_class.return_value = mock_enhancer
-        
+
         mock_integrator = MagicMock()
         mock_integrator_class.return_value = mock_integrator
-        
+
         # Set up a provenance manager with IPLD storage enabled
         enhanced_manager = EnhancedProvenanceManager(
             storage_path=None,
@@ -612,7 +612,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             default_agent_id="test_agent",
             tracking_level="detailed"
         )
-        
+
         # Create some test data
         source_id = enhanced_manager.record_source(
             data_id="doc1_data",
@@ -620,7 +620,7 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             location="/path/to/doc1.csv",
             description="Document 1 data"
         )
-        
+
         transform_id = enhanced_manager.begin_transformation(
             input_ids=["doc1_data"],
             transformation_type="preprocessing",
@@ -631,43 +631,43 @@ class TestEnhancedProvenanceManager(unittest.TestCase):
             output_ids=["doc1_transformed"],
             success=True
         )
-        
+
         # Mock the methods called by create_cross_document_lineage
         integrated_graph = nx.DiGraph()
         integrated_graph.add_node("record1", record_type="source")
-        
+
         enriched_graph = nx.DiGraph()
         enriched_graph.add_node("record1", record_type="source")
         enriched_graph.add_node("record2", record_type="transformation")
         enriched_graph.add_edge("record1", "record2", relation="input_to")
-        
+
         expected_report = {
             "record_count": 2,
             "relationship_count": 1,
             "documents": {"doc1": {}, "doc2": {}},
             "visualization_path": None
         }
-        
+
         flow_patterns = {
             "flow_patterns": {"source->transformation->result": 1},
             "bottlenecks": [{"id": "record2", "bottleneck_score": 2}]
         }
-        
+
         mock_integrator.integrate_provenance_with_lineage.return_value = integrated_graph
         mock_integrator.enrich_lineage_semantics.return_value = enriched_graph
         mock_integrator.create_unified_lineage_report.return_value = expected_report
         mock_integrator.analyze_data_flow_patterns.return_value = flow_patterns
-        
+
         # Call the method under test
         with tempfile.NamedTemporaryFile(suffix=".json") as temp_file:
             report = enhanced_manager.create_cross_document_lineage(
                 output_path=temp_file.name,
                 include_visualization=True
             )
-            
+
             # Verify the result
             self.assertEqual(report, expected_report)
-            
+
             # Verify that the necessary methods were called
             mock_enhancer_class.assert_called_once()
             mock_integrator_class.assert_called_once()

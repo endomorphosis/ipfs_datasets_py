@@ -12,10 +12,10 @@ def extract_links_from_warc(
     warc_path: str
 ) -> Dict[str, Any]:
     """Extract links from a WARC file.
-    
+
     Args:
         warc_path: Path to the WARC file
-            
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -23,7 +23,7 @@ def extract_links_from_warc(
             - error: Error message (if failed)
     """
     processor = WebArchiveProcessor()
-    
+
     try:
         links = processor.extract_links_from_warc(warc_path)
         return {

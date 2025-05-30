@@ -12,7 +12,7 @@ class MockWebArchiveProcessor:
     def extract_dataset_from_cdxj(self, cdxj_path, output_format):
         if "fail" in cdxj_path:
             raise Exception("Simulated CDXJ extraction failure")
-        
+
         if cdxj_path == "test.cdxj" and output_format == "dict":
             return [{"url": "http://example.com", "timestamp": "2023-01-01T00:00:00Z"}]
         return []
@@ -30,7 +30,7 @@ class TestMCPExtractDatasetFromCDXJ(unittest.IsolatedAsyncioTestCase):
 
         cdxj_path = "test.cdxj"
         output_format = "dict"
-        
+
         result = extract_dataset_from_cdxj(cdxj_path=cdxj_path, output_format=output_format)
 
         self.assertEqual(result["status"], "success")

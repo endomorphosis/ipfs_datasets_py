@@ -28,15 +28,15 @@ async def load_dataset(
     """
     try:
         logger.info(f"Loading dataset from {source} with format {format if format else 'auto'}")
-        
+
         # Default options
         if options is None:
             options = {}
-            
+
         # Load the dataset directly using Hugging Face datasets
         try:
             dataset = hf_load_dataset(source, format=format, **options)
-            
+
             # Hugging Face datasets can return DatasetDict if multiple splits, handle this
             if isinstance(dataset, dict) and "train" in dataset:
                 # Assuming 'train' split is the primary one for summary purposes
@@ -61,7 +61,7 @@ async def load_dataset(
                     "format": format if format else "mock"
                 }
             }
-        
+
         # Return summary info
         return {
             "status": "success",

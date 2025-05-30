@@ -12,7 +12,7 @@ class MockWebArchiveProcessor:
     def extract_links_from_warc(self, warc_path):
         if "fail" in warc_path:
             raise Exception("Simulated link extraction failure")
-        
+
         if warc_path == "test.warc":
             return [{"source": "http://example.com", "target": "http://example.org", "text": "Example Link"}]
         return []
@@ -29,7 +29,7 @@ class TestMCPExtractLinksFromWARC(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import extract_links_from_warc
 
         warc_path = "test.warc"
-        
+
         result = extract_links_from_warc(warc_path=warc_path)
 
         self.assertEqual(result["status"], "success")

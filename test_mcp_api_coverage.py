@@ -125,26 +125,26 @@ def get_tools_in_category(category: str) -> List[str]:
     category_path = TOOLS_PATH / category
     if not category_path.exists():
         return []
-    
+
     return [
-        f.name 
-        for f in category_path.iterdir() 
+        f.name
+        for f in category_path.iterdir()
         if f.is_file() and f.name.endswith('.py') and not f.name.startswith('__')
     ]
 
 def check_feature_coverage() -> Dict[str, Any]:
     """Check if all expected features are covered by MCP tools."""
     results = {}
-    
+
     for feature_name, feature_info in EXPECTED_FEATURES.items():
         print_header(f"Checking feature: {feature_name}")
-        
+
         feature_results = {
             "present_tools": [],
             "missing_tools": [],
             "coverage_percentage": 0.0
         }
-        
+
         # Check each expected tool
         for tool_path in feature_info["expected_tools"]:
             if check_tool_exists(tool_path):
@@ -153,31 +153,31 @@ def check_feature_coverage() -> Dict[str, Any]:
             else:
                 feature_results["missing_tools"].append(tool_path)
                 print(f"✗ Tool missing: {tool_path}")
-        
+
         # Calculate coverage percentage
         total_tools = len(feature_info["expected_tools"])
         present_tools = len(feature_results["present_tools"])
-        
+
         if total_tools > 0:
             feature_results["coverage_percentage"] = (present_tools / total_tools) * 100
-        
+
         print(f"Coverage: {present_tools}/{total_tools} tools ({feature_results['coverage_percentage']:.1f}%)")
-        
+
         # Store the results
         results[feature_name] = feature_results
-    
+
     return results
 
 def get_all_available_tools() -> Dict[str, List[str]]:
     """Get all available tools in the MCP server."""
     tools_by_category = {}
-    
+
     for category_dir in TOOLS_PATH.iterdir():
         if category_dir.is_dir() and not category_dir.name.startswith('__'):
             category_name = category_dir.name
             tools = get_tools_in_category(category_name)
             tools_by_category[category_name] = tools
-    
+
     return tools_by_category
 
 def analyze_library_coverage() -> Dict[str, Any]:
@@ -188,21 +188,21 @@ def analyze_library_coverage() -> Dict[str, Any]:
         "overall_coverage": 0.0,
         "missing_features": []
     }
-    
+
     # Get feature coverage
     results["feature_coverage"] = check_feature_coverage()
-    
+
     # Get all available tools
     results["available_tools"] = get_all_available_tools()
-    
+
     # Calculate overall coverage
     total_expected_tools = 0
     total_present_tools = 0
-    
+
     for feature_name, feature_results in results["feature_coverage"].items():
         total_expected_tools += len(EXPECTED_FEATURES[feature_name]["expected_tools"])
         total_present_tools += len(feature_results["present_tools"])
-        
+
         # Track missing features
         if feature_results["coverage_percentage"] < 100:
             results["missing_features"].append({
@@ -210,38 +210,38 @@ def analyze_library_coverage() -> Dict[str, Any]:
                 "coverage": feature_results["coverage_percentage"],
                 "missing_tools": feature_results["missing_tools"]
             })
-    
+
     if total_expected_tools > 0:
         results["overall_coverage"] = (total_present_tools / total_expected_tools) * 100
-    
+
     return results
 
 def main():
     """Main entry point."""
     print_header("IPFS Datasets MCP Server API Coverage Test")
     print(f"Checking MCP server at: {MCP_SERVER_PATH}")
-    
+
     # Run the analysis
     results = analyze_library_coverage()
-    
+
     # Print overall results
     print_header("Overall Results")
     print(f"Overall API coverage: {results['overall_coverage']:.1f}%")
-    
+
     if results["missing_features"]:
         print("\nMissing features:")
         for feature in results["missing_features"]:
             print(f"  - {feature['feature']}: {feature['coverage']:.1f}% coverage")
             for tool in feature["missing_tools"]:
                 print(f"    - Missing: {tool}")
-    
+
     # Save results to JSON file
     output_file = PROJECT_ROOT / "mcp_api_coverage_results.json"
     with open(output_file, "w") as f:
         json.dump(results, f, indent=2)
-    
+
     print(f"\nResults saved to: {output_file}")
-    
+
     # Return exit code based on coverage
     if results["overall_coverage"] < 100:
         print("\nSome features are not fully covered by MCP tools.")

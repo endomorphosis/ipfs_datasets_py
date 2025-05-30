@@ -14,16 +14,16 @@ async def test_tool_execution(module_name, function_name, test_args):
         module_path = f"ipfs_datasets_py.mcp_server.tools.{module_name}"
         module = importlib.import_module(module_path)
         func = getattr(module, function_name)
-        
+
         # Call the function
         if asyncio.iscoroutinefunction(func):
             result = await func(**test_args)
         else:
             result = func(**test_args)
-        
+
         status = result.get('status', 'unknown')
         return True, status, str(result)[:100] + "..." if len(str(result)) > 100 else str(result)
-        
+
     except Exception as e:
         return False, "error", str(e)[:100] + "..." if len(str(e)) > 100 else str(e)
 
@@ -40,18 +40,18 @@ async def main():
         ("provenance_tools", "record_provenance", {"dataset_id": "test", "operation": "test_op"}),
         ("ipfs_tools", "get_from_ipfs", {"cid": "QmTest123"}),
     ]
-    
+
     print("=== Tool Execution Test ===")
     success_count = 0
     total_count = len(tools)
-    
+
     for module_name, function_name, test_args in tools:
         success, status, result = await test_tool_execution(module_name, function_name, test_args)
         symbol = "✓" if success and status == "success" else "✗" if not success else "~"
         print(f"{symbol} {module_name}.{function_name}: {status}")
         if success and status == "success":
             success_count += 1
-    
+
     print(f"\n=== Summary ===")
     print(f"Successfully executed: {success_count}/{total_count}")
     print(f"Success rate: {(success_count/total_count)*100:.1f}%")

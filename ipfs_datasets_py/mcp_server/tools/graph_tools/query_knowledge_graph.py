@@ -34,16 +34,16 @@ async def query_knowledge_graph(
     """
     try:
         logger.info(f"Querying knowledge graph {graph_id} with {query_type} query")
-        
+
         # Import the graph processor
         from ipfs_datasets_py.rag_query_optimizer import GraphRAGProcessor
-        
+
         # Create a graph processor instance
         processor = GraphRAGProcessor(graph_id=graph_id)
-        
+
         # Execute the query using the simplified interface
         result = processor.query(query, query_type=query_type, max_results=max_results)
-        
+
         if result["status"] == "success":
             return {
                 "status": "success",
@@ -54,7 +54,7 @@ async def query_knowledge_graph(
             }
         else:
             return result
-            
+
     except Exception as e:
         logger.error(f"Error querying knowledge graph: {e}")
         return {

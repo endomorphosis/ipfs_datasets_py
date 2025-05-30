@@ -22,14 +22,14 @@ from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractorW
 def extract_from_text_example():
     """Example of extracting and validating a knowledge graph from text."""
     print("\n=== Extract and Validate Knowledge Graph from Text Example ===")
-    
+
     # Initialize extractor with validation
     extractor = KnowledgeGraphExtractorWithValidation(
         validate_during_extraction=True,
         auto_correct_suggestions=True,
         cache_validation_results=True
     )
-    
+
     # Sample text about IPFS
     text = """
     IPFS (InterPlanetary File System) is a protocol and peer-to-peer network for storing and sharing data
@@ -39,7 +39,7 @@ def extract_from_text_example():
     in a global namespace connecting all computing devices. Filecoin is a cryptocurrency built on top
     of IPFS, developed by Protocol Labs. IPFS is written in Go and JavaScript.
     """
-    
+
     # Extract and validate knowledge graph
     result = extractor.extract_knowledge_graph(
         text=text,
@@ -47,7 +47,7 @@ def extract_from_text_example():
         structure_temperature=0.6,
         validation_depth=2  # Include relationship validation
     )
-    
+
     # Print extraction results
     kg = result["knowledge_graph"]
     print(f"Extracted Knowledge Graph: {kg.name}")
@@ -59,13 +59,13 @@ def extract_from_text_example():
     print(f"Relationship types:")
     for rel_type, rel_ids in kg.relationship_types.items():
         print(f"  - {rel_type}: {len(rel_ids)}")
-    
+
     # Print validation results if available
     if "validation_metrics" in result:
         print("\nValidation Metrics:")
         for metric, value in result["validation_metrics"].items():
             print(f"  - {metric}: {value:.2f}")
-    
+
     # Print correction suggestions if available
     if "corrections" in result:
         print("\nCorrection Suggestions:")
@@ -75,7 +75,7 @@ def extract_from_text_example():
                 entity = kg.get_entity_by_id(entity_id)
                 if entity:
                     print(f"    - {entity.name}: Suggestions available")
-        
+
         if "relationships" in result["corrections"]:
             print("  Relationship corrections:")
             for rel_id, correction in result["corrections"]["relationships"].items():
@@ -84,7 +84,7 @@ def extract_from_text_example():
                     source = rel.source_entity.name if rel.source_entity else "Unknown"
                     target = rel.target_entity.name if rel.target_entity else "Unknown"
                     print(f"    - {source} {rel.relationship_type} {target}: {correction['suggestions']}")
-    
+
     # Apply corrections if available
     if "corrections" in result:
         print("\nApplying corrections...")
@@ -98,14 +98,14 @@ def extract_from_text_example():
 def extract_from_wikipedia_example():
     """Example of extracting and validating a knowledge graph from a Wikipedia page."""
     print("\n=== Extract and Validate Knowledge Graph from Wikipedia Example ===")
-    
+
     # Initialize extractor with validation
     extractor = KnowledgeGraphExtractorWithValidation(
         validate_during_extraction=True,
         auto_correct_suggestions=True,
         cache_validation_results=True
     )
-    
+
     # Extract from Wikipedia
     result = extractor.extract_from_wikipedia(
         page_title="InterPlanetary File System",
@@ -114,12 +114,12 @@ def extract_from_wikipedia_example():
         validation_depth=2,
         focus_validation_on_main_entity=True
     )
-    
+
     # Print extraction results
     if "error" in result:
         print(f"Error: {result['error']}")
         return
-    
+
     kg = result["knowledge_graph"]
     print(f"Extracted Knowledge Graph from Wikipedia: {kg.name}")
     print(f"Entities: {len(kg.entities)}")
@@ -130,13 +130,13 @@ def extract_from_wikipedia_example():
     print(f"Relationship types:")
     for rel_type, rel_ids in kg.relationship_types.items():
         print(f"  - {rel_type}: {len(rel_ids)}")
-    
+
     # Print validation results if available
     if "validation_metrics" in result:
         print("\nValidation Metrics:")
         for metric, value in result["validation_metrics"].items():
             print(f"  - {metric}: {value:.2f}")
-    
+
     # Print path analysis if available
     if "path_analysis" in result:
         print("\nEntity Path Analysis:")
@@ -146,7 +146,7 @@ def extract_from_wikipedia_example():
             print(f"  Direct paths found: {len(direct_paths)}")
             for i, path in enumerate(direct_paths[:3]):  # Show max 3 paths
                 print(f"    {i+1}. {path['property']}")
-        
+
         if "two_hop_paths" in pa.get("data", {}):
             two_hop_paths = pa["data"]["two_hop_paths"]
             print(f"  Two-hop paths found: {len(two_hop_paths)}")
@@ -156,14 +156,14 @@ def extract_from_wikipedia_example():
 def extract_from_documents_example():
     """Example of extracting and validating a knowledge graph from multiple documents."""
     print("\n=== Extract and Validate Knowledge Graph from Multiple Documents Example ===")
-    
+
     # Initialize extractor with validation
     extractor = KnowledgeGraphExtractorWithValidation(
         validate_during_extraction=True,
         auto_correct_suggestions=True,
         cache_validation_results=True
     )
-    
+
     # Sample documents about AI models
     documents = [
         {
@@ -172,7 +172,7 @@ def extract_from_documents_example():
             GPT-4 is a large multimodal model created by OpenAI, announced on March 14, 2023.
             It is the successor to GPT-3.5 and has shown human-level performance on various
             professional and academic benchmarks. GPT-4 was trained using both publicly available
-            data and data licensed from third-party providers. The training was completed in 
+            data and data licensed from third-party providers. The training was completed in
             August 2022. OpenAI CEO Sam Altman has called GPT-4 "OpenAI's most capable model."
             """
         },
@@ -200,7 +200,7 @@ def extract_from_documents_example():
             """
         }
     ]
-    
+
     # Extract and validate knowledge graph
     result = extractor.extract_from_documents(
         documents=documents,
@@ -209,7 +209,7 @@ def extract_from_documents_example():
         structure_temperature=0.6,
         validation_depth=2  # Include relationship validation
     )
-    
+
     # Print extraction results
     kg = result["knowledge_graph"]
     print(f"Extracted Knowledge Graph from multiple documents: {kg.name}")
@@ -223,13 +223,13 @@ def extract_from_documents_example():
     for rel_type, rel_ids in kg.relationship_types.items():
         if rel_ids:  # Only show non-empty types
             print(f"  - {rel_type}: {len(rel_ids)}")
-    
+
     # Print validation results if available
     if "validation_metrics" in result:
         print("\nValidation Metrics:")
         for metric, value in result["validation_metrics"].items():
             print(f"  - {metric}: {value:.2f}")
-    
+
     # Print path analysis if available
     if "path_analysis" in result:
         print("\nEntity Path Analysis:")
@@ -247,12 +247,12 @@ def main():
     """Main function demonstrating different extraction and validation examples."""
     print("=== Knowledge Graph Extraction and Validation Examples ===")
     print("This script demonstrates the integration of knowledge graph extraction and validation.")
-    
+
     # Run examples
     extract_from_text_example()
     extract_from_wikipedia_example()
     extract_from_documents_example()
-    
+
     print("\nExamples completed.")
 
 if __name__ == "__main__":

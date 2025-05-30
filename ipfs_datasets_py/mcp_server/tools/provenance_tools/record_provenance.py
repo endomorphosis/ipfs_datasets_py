@@ -38,13 +38,13 @@ async def record_provenance(
     """
     try:
         logger.info(f"Recording provenance for dataset {dataset_id}, operation: {operation}")
-        
+
         # Import the provenance manager
         from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
-        
+
         # Create a provenance manager instance
         provenance_manager = EnhancedProvenanceManager()
-        
+
         # Record the provenance
         provenance_id = provenance_manager.begin_transformation(
             description=description or f"Operation: {operation}",
@@ -54,10 +54,10 @@ async def record_provenance(
             parameters=parameters or {},
             metadata={"tags": tags or [], "timestamp": timestamp}
         )
-        
+
         # Get the provenance record
         provenance_record = provenance_manager.records.get(provenance_id, None)
-        
+
         # Extract record info, handling both dict and object types
         if provenance_record:
             if hasattr(provenance_record, 'timestamp'):
@@ -76,7 +76,7 @@ async def record_provenance(
         else:
             record_timestamp = None
             record_dict = {}
-        
+
         # Return information about the recorded provenance
         return {
             "status": "success",

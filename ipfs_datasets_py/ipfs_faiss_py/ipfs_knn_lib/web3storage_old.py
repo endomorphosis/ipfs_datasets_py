@@ -24,7 +24,7 @@ class Web3StorageAPI:
             return self.init(**kwargs)
         else:
             raise Exception('bad method: %s' % method)
-        
+
     def list(self, **kwargs):
         some_uploads = self.w3.user_uploads(size=25)
         return some_uploads
@@ -34,9 +34,9 @@ class Web3StorageAPI:
         print(url)
         results = requests.get(url)
         return results
-    
+
     def upload(self, cname, file, data, **kwargs):
-        
+
         if file is not None:
             with open( self.  cname, 'rb') as f:
                 file_size = os.path.getsize(f.name)

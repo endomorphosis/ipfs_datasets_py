@@ -20,13 +20,13 @@ setup(
         "pyarrow>=10.0.0",
         "fsspec",
         "datasets>=2.10.0",
-        
+
         # IPFS integration
         "ipfshttpclient>=0.8.0",
-        
+
         # IPLD components
         "multiformats>=0.2.1",
-        
+
         # Data provenance components
         "networkx>=2.8.0",
         "matplotlib>=3.5.0",

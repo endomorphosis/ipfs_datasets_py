@@ -14,12 +14,12 @@ def index_warc(
     encryption_key: Optional[str] = None
 ) -> Dict[str, str]:
     """Index a WARC file to IPFS using IPWB.
-    
+
     Args:
         warc_path: Path to the WARC file
         output_path: Path for the output CDXJ file (optional)
         encryption_key: Key for encrypting the archive (optional)
-            
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -27,7 +27,7 @@ def index_warc(
             - error: Error message (if failed)
     """
     processor = WebArchiveProcessor()
-    
+
     try:
         cdxj_path = processor.index_warc(warc_path, output_path, encryption_key)
         return {

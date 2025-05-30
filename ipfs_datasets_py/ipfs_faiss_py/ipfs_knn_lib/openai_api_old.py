@@ -45,7 +45,7 @@ class OpenAIAPI:
                     self.openai_api_key = meta['openai_api_key']
         if self.openai_api_key is not None:
             openai.api_key = self.openai_api_key
-            
+
         self.resources = resources
         self.meta = meta
         if resources is not None:
@@ -63,7 +63,7 @@ class OpenAIAPI:
             openai.api_key = self.openai_api_key
         else:
             raise Exception('bad api_key: %s' % self.openai_api_key)
-        if self.model is not None:    
+        if self.model is not None:
             kwargs['model'] = self.model
         if method == 'text_complete':
             return self.complete(**kwargs)
@@ -73,7 +73,7 @@ class OpenAIAPI:
             return self.edit(**kwargs)
         elif method == 'embedding':
             return self.embedding(**kwargs)
-        
+
     def embedding(self, model, input, **kwargs):
         self.model = model
         self.input = input
@@ -81,7 +81,7 @@ class OpenAIAPI:
         self.prompt = None
         self.method = 'embedding'
         return self.text_complete(**kwargs, stream=False)
-        
+
     def complete(self, model, prompt, temperature, max_tokens, **kwargs):
         self.model = model
         self.prompt = prompt
@@ -89,7 +89,7 @@ class OpenAIAPI:
         self.max_tokens = max_tokens
         self.method = 'complete'
         return self.text_complete(**kwargs, stream=False)
-        
+
     def edit(self, model, input, instruct, max_tokens, **kwargs):
         self.model = model
         self.input = input
@@ -97,7 +97,7 @@ class OpenAIAPI:
         self.max_tokens = max_tokens
         self.method = 'edit'
         return self.text_complete(**kwargs, stream=False)
-    
+
     def tokenize(self, text , model, max_tokens, **kwargs):
         self.model = model
         self.text = text
@@ -125,7 +125,7 @@ class OpenAIAPI:
         template = chat_templates[0]
         if self.model is None or (self.model not in template['models'] and self.model not in text_complete_models and self.model not in edit_models and self.model not in embedding_models):
             raise Exception('bad model: %s' % self.model)
-        
+
         if stopping_regex:
             try:
                 stopping_regex = re.compile(stopping_regex)
@@ -205,7 +205,7 @@ class OpenAIAPI:
 				'text': response.choices[0].text,
 				'done': True
 			}
-		
+
     def chat(self, model, messages, system, temperature, max_tokens, **kwargs):
         self.temperature = temperature
         self.max_tokens = max_tokens

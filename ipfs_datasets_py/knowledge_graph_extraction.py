@@ -35,11 +35,11 @@ from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 class Entity:
     """
     Represents an entity in a knowledge graph.
-    
+
     Entities are nodes in the knowledge graph with a type, name,
     and optional properties.
     """
-    
+
     def __init__(
         self,
         entity_id: str = None,
@@ -51,7 +51,7 @@ class Entity:
     ):
         """
         Initialize a new entity.
-        
+
         Args:
             entity_id (str, optional): Unique identifier for the entity
             entity_type (str): Type of the entity (e.g., "person", "organization")
@@ -66,11 +66,11 @@ class Entity:
         self.properties = properties or {}
         self.confidence = confidence
         self.source_text = source_text
-        
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert the entity to a dictionary representation.
-        
+
         Returns:
             Dict: Dictionary representation of the entity
         """
@@ -81,20 +81,20 @@ class Entity:
             "properties": self.properties,
             "confidence": self.confidence
         }
-        
+
         if self.source_text:
             entity_dict["source_text"] = self.source_text
-            
+
         return entity_dict
-        
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Entity':
         """
         Create an entity from a dictionary representation.
-        
+
         Args:
             data (Dict): Dictionary representation of the entity
-            
+
         Returns:
             Entity: The created entity
         """
@@ -111,11 +111,11 @@ class Entity:
 class Relationship:
     """
     Represents a relationship between entities in a knowledge graph.
-    
+
     Relationships are directed edges in the knowledge graph with a type,
     source and target entities, and optional properties.
     """
-    
+
     def __init__(
         self,
         relationship_id: str = None,
@@ -129,7 +129,7 @@ class Relationship:
     ):
         """
         Initialize a new relationship.
-        
+
         Args:
             relationship_id (str, optional): Unique identifier for the relationship
             relationship_type (str): Type of the relationship
@@ -148,24 +148,24 @@ class Relationship:
         self.confidence = confidence
         self.source_text = source_text
         self.bidirectional = bidirectional
-        
+
     @property
     def source_id(self) -> Optional[str]:
         """Get the ID of the source entity."""
         return self.source_entity.entity_id if self.source_entity else None
-        
+
     @property
     def target_id(self) -> Optional[str]:
         """Get the ID of the target entity."""
         return self.target_entity.entity_id if self.target_entity else None
-        
+
     def to_dict(self, include_entities: bool = True) -> Dict[str, Any]:
         """
         Convert the relationship to a dictionary representation.
-        
+
         Args:
             include_entities (bool): Whether to include full entity details
-            
+
         Returns:
             Dict: Dictionary representation of the relationship
         """
@@ -176,47 +176,47 @@ class Relationship:
             "confidence": self.confidence,
             "bidirectional": self.bidirectional
         }
-        
+
         if self.source_text:
             rel_dict["source_text"] = self.source_text
-            
+
         if include_entities:
             rel_dict["source"] = self.source_entity.to_dict() if self.source_entity else None
             rel_dict["target"] = self.target_entity.to_dict() if self.target_entity else None
         else:
             rel_dict["source"] = self.source_id
             rel_dict["target"] = self.target_id
-            
+
         return rel_dict
-        
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any], entity_map: Dict[str, Entity] = None) -> 'Relationship':
         """
         Create a relationship from a dictionary representation.
-        
+
         Args:
             data (Dict): Dictionary representation of the relationship
             entity_map (Dict, optional): Map from entity IDs to Entity objects
-            
+
         Returns:
             Relationship: The created relationship
         """
         entity_map = entity_map or {}
-        
+
         # Handle source and target entities
         source = None
         target = None
-        
+
         if isinstance(data.get("source"), dict):
             source = Entity.from_dict(data["source"])
         elif data.get("source") in entity_map:
             source = entity_map[data["source"]]
-            
+
         if isinstance(data.get("target"), dict):
             target = Entity.from_dict(data["target"])
         elif data.get("target") in entity_map:
             target = entity_map[data["target"]]
-            
+
         return cls(
             relationship_id=data.get("relationship_id"),
             relationship_type=data.get("relationship_type", "related_to"),
@@ -232,28 +232,28 @@ class Relationship:
 class KnowledgeGraph:
     """
     A knowledge graph containing entities and relationships.
-    
+
     Provides methods for adding, querying, and manipulating entities
     and relationships in the knowledge graph.
     """
-    
+
     def __init__(self, name: str = None):
         """
         Initialize a new knowledge graph.
-        
+
         Args:
             name (str, optional): Name of the knowledge graph
         """
         self.name = name or f"kg_{str(uuid.uuid4())[:8]}"
         self.entities: Dict[str, Entity] = {}
         self.relationships: Dict[str, Relationship] = {}
-        
+
         # Indexes for efficient querying
         self.entity_types: Dict[str, Set[str]] = defaultdict(set)
         self.entity_names: Dict[str, Set[str]] = defaultdict(set)
         self.relationship_types: Dict[str, Set[str]] = defaultdict(set)
         self.entity_relationships: Dict[str, Set[str]] = defaultdict(set)
-        
+
     def add_entity(
         self,
         entity_type: str,
@@ -265,7 +265,7 @@ class KnowledgeGraph:
     ) -> Entity:
         """
         Add an entity to the knowledge graph.
-        
+
         Args:
             entity_type (str): Type of the entity
             name (str): Name of the entity
@@ -273,7 +273,7 @@ class KnowledgeGraph:
             entity_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
             source_text (str, optional): Source text
-            
+
         Returns:
             Entity: The added entity
         """
@@ -286,16 +286,16 @@ class KnowledgeGraph:
             confidence=confidence,
             source_text=source_text
         )
-        
+
         # Add to graph
         self.entities[entity.entity_id] = entity
-        
+
         # Update indexes
         self.entity_types[entity_type].add(entity.entity_id)
         self.entity_names[name].add(entity.entity_id)
-        
+
         return entity
-        
+
     def add_relationship(
         self,
         relationship_type: str,
@@ -309,7 +309,7 @@ class KnowledgeGraph:
     ) -> Relationship:
         """
         Add a relationship to the knowledge graph.
-        
+
         Args:
             relationship_type (str): Type of the relationship
             source (Entity): Source entity
@@ -319,7 +319,7 @@ class KnowledgeGraph:
             confidence (float): Confidence score
             source_text (str, optional): Source text
             bidirectional (bool): Whether the relationship is bidirectional
-            
+
         Returns:
             Relationship: The added relationship
         """
@@ -334,101 +334,101 @@ class KnowledgeGraph:
             source_text=source_text,
             bidirectional=bidirectional
         )
-        
+
         # Add to graph
         self.relationships[relationship.relationship_id] = relationship
-        
+
         # Update indexes
         self.relationship_types[relationship_type].add(relationship.relationship_id)
         self.entity_relationships[source.entity_id].add(relationship.relationship_id)
         self.entity_relationships[target.entity_id].add(relationship.relationship_id)
-        
+
         return relationship
-        
+
     def get_entity_by_id(self, entity_id: str) -> Optional[Entity]:
         """
         Get an entity by its ID.
-        
+
         Args:
             entity_id (str): Entity ID
-            
+
         Returns:
             Optional[Entity]: The entity, or None if not found
         """
         return self.entities.get(entity_id)
-        
+
     def get_relationship_by_id(self, relationship_id: str) -> Optional[Relationship]:
         """
         Get a relationship by its ID.
-        
+
         Args:
             relationship_id (str): Relationship ID
-            
+
         Returns:
             Optional[Relationship]: The relationship, or None if not found
         """
         return self.relationships.get(relationship_id)
-        
+
     def get_entities_by_type(self, entity_type: str) -> List[Entity]:
         """
         Get all entities of a specific type.
-        
+
         Args:
             entity_type (str): Entity type
-            
+
         Returns:
             List[Entity]: List of entities of the specified type
         """
         entity_ids = self.entity_types.get(entity_type, set())
         return [self.entities[entity_id] for entity_id in entity_ids]
-        
+
     def get_entities_by_name(self, name: str) -> List[Entity]:
         """
         Get all entities with a specific name.
-        
+
         Args:
             name (str): Entity name
-            
+
         Returns:
             List[Entity]: List of entities with the specified name
         """
         entity_ids = self.entity_names.get(name, set())
         return [self.entities[entity_id] for entity_id in entity_ids]
-        
+
     def get_relationships_by_type(self, relationship_type: str) -> List[Relationship]:
         """
         Get all relationships of a specific type.
-        
+
         Args:
             relationship_type (str): Relationship type
-            
+
         Returns:
             List[Relationship]: List of relationships of the specified type
         """
         relationship_ids = self.relationship_types.get(relationship_type, set())
         return [self.relationships[rel_id] for rel_id in relationship_ids]
-        
+
     def get_relationships_by_entity(self, entity: Entity) -> List[Relationship]:
         """
         Get all relationships involving a specific entity.
-        
+
         Args:
             entity (Entity): The entity
-            
+
         Returns:
             List[Relationship]: List of relationships involving the entity
         """
         relationship_ids = self.entity_relationships.get(entity.entity_id, set())
         return [self.relationships[rel_id] for rel_id in relationship_ids]
-        
+
     def get_relationships_between(self, source: Entity, target: Entity) -> List[Relationship]:
         """
         Get all relationships between two entities.
-        
+
         Args:
             source (Entity): Source entity
             target (Entity): Target entity
-            
+
         Returns:
             List[Relationship]: List of relationships between the entities
         """
@@ -436,7 +436,7 @@ class KnowledgeGraph:
         source_rels = self.entity_relationships.get(source.entity_id, set())
         target_rels = self.entity_relationships.get(target.entity_id, set())
         common_rels = source_rels.intersection(target_rels)
-        
+
         # Filter for relationships where source is the source and target is the target
         result = []
         for rel_id in common_rels:
@@ -444,9 +444,9 @@ class KnowledgeGraph:
             if (rel.source_id == source.entity_id and rel.target_id == target.entity_id) or \
                (rel.bidirectional and rel.source_id == target.entity_id and rel.target_id == source.entity_id):
                 result.append(rel)
-                
+
         return result
-        
+
     def find_paths(
         self,
         source: Entity,
@@ -456,62 +456,62 @@ class KnowledgeGraph:
     ) -> List[List[Tuple[Entity, Relationship, Entity]]]:
         """
         Find all paths between two entities up to a maximum depth.
-        
+
         Args:
             source (Entity): Source entity
             target (Entity): Target entity
             max_depth (int): Maximum path depth
             relationship_types (List[str], optional): Types of relationships to follow
-            
+
         Returns:
             List[List[Tuple[Entity, Relationship, Entity]]]: List of paths
         """
         # List to store all paths
         all_paths = []
-        
+
         # Set to track visited entities
         visited = set()
-        
+
         # DFS to find all paths
         def dfs(current_entity, path, depth):
             if depth > max_depth:
                 return
-                
+
             if current_entity.entity_id == target.entity_id:
                 all_paths.append(path.copy())
                 return
-                
+
             visited.add(current_entity.entity_id)
-            
+
             # Get all relationships involving the current entity
             rels = self.get_relationships_by_entity(current_entity)
-            
+
             for rel in rels:
                 # Check if relationship type is allowed
                 if relationship_types and rel.relationship_type not in relationship_types:
                     continue
-                    
+
                 # Follow outgoing relationships
                 if rel.source_id == current_entity.entity_id and rel.target_id not in visited:
                     next_entity = self.entities[rel.target_id]
                     path.append((current_entity, rel, next_entity))
                     dfs(next_entity, path, depth + 1)
                     path.pop()
-                    
+
                 # Follow incoming relationships if bidirectional
                 elif rel.bidirectional and rel.target_id == current_entity.entity_id and rel.source_id not in visited:
                     next_entity = self.entities[rel.source_id]
                     path.append((current_entity, rel, next_entity))
                     dfs(next_entity, path, depth + 1)
                     path.pop()
-                    
+
             visited.remove(current_entity.entity_id)
-            
+
         # Start DFS from source entity
         dfs(source, [], 0)
-        
+
         return all_paths
-        
+
     def query_by_properties(
         self,
         entity_type: Optional[str] = None,
@@ -519,11 +519,11 @@ class KnowledgeGraph:
     ) -> List[Entity]:
         """
         Query entities by type and properties.
-        
+
         Args:
             entity_type (str, optional): Entity type to filter by
             properties (Dict, optional): Properties to filter by
-            
+
         Returns:
             List[Entity]: List of matching entities
         """
@@ -532,7 +532,7 @@ class KnowledgeGraph:
             entities = self.get_entities_by_type(entity_type)
         else:
             entities = list(self.entities.values())
-            
+
         # Filter by properties
         if properties:
             filtered_entities = []
@@ -545,33 +545,33 @@ class KnowledgeGraph:
                 if match:
                     filtered_entities.append(entity)
             entities = filtered_entities
-            
+
         return entities
-        
+
     def merge(self, other: 'KnowledgeGraph') -> 'KnowledgeGraph':
         """
         Merge another knowledge graph into this one.
-        
+
         Args:
             other (KnowledgeGraph): The knowledge graph to merge
-            
+
         Returns:
             KnowledgeGraph: Self, after merging
         """
         # Create entity ID mapping for the other graph
         entity_id_map = {}
-        
+
         # Add entities from the other graph
         for entity_id, entity in other.entities.items():
             # Check if entity already exists by name and type
             existing_entities = [e for e in self.get_entities_by_name(entity.name)
                                if e.entity_type == entity.entity_type]
-            
+
             if existing_entities:
                 # Use existing entity
                 existing_entity = existing_entities[0]
                 entity_id_map[entity_id] = existing_entity.entity_id
-                
+
                 # Merge properties
                 for key, value in entity.properties.items():
                     if key not in existing_entity.properties:
@@ -586,17 +586,17 @@ class KnowledgeGraph:
                     source_text=entity.source_text
                 )
                 entity_id_map[entity_id] = new_entity.entity_id
-                
+
         # Add relationships from the other graph
         for rel_id, rel in other.relationships.items():
             if rel.source_id in entity_id_map and rel.target_id in entity_id_map:
                 source_entity = self.entities[entity_id_map[rel.source_id]]
                 target_entity = self.entities[entity_id_map[rel.target_id]]
-                
+
                 # Check if relationship already exists
                 existing_rels = self.get_relationships_between(source_entity, target_entity)
                 rel_exists = any(r.relationship_type == rel.relationship_type for r in existing_rels)
-                
+
                 if not rel_exists:
                     # Add new relationship
                     self.add_relationship(
@@ -608,13 +608,13 @@ class KnowledgeGraph:
                         source_text=rel.source_text,
                         bidirectional=rel.bidirectional
                     )
-                    
+
         return self
-        
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert the knowledge graph to a dictionary representation.
-        
+
         Returns:
             Dict: Dictionary representation of the knowledge graph
         """
@@ -623,28 +623,28 @@ class KnowledgeGraph:
             "entities": [entity.to_dict() for entity in self.entities.values()],
             "relationships": [rel.to_dict(include_entities=False) for rel in self.relationships.values()]
         }
-        
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'KnowledgeGraph':
         """
         Create a knowledge graph from a dictionary representation.
-        
+
         Args:
             data (Dict): Dictionary representation of the knowledge graph
-            
+
         Returns:
             KnowledgeGraph: The created knowledge graph
         """
         # Create new knowledge graph
         kg = cls(name=data.get("name"))
-        
+
         # Add entities
         for entity_data in data.get("entities", []):
             entity = Entity.from_dict(entity_data)
             kg.entities[entity.entity_id] = entity
             kg.entity_types[entity.entity_type].add(entity.entity_id)
             kg.entity_names[entity.name].add(entity.entity_id)
-            
+
         # Add relationships
         for rel_data in data.get("relationships", []):
             rel = Relationship.from_dict(rel_data, entity_map=kg.entities)
@@ -653,42 +653,42 @@ class KnowledgeGraph:
                 kg.relationship_types[rel.relationship_type].add(rel.relationship_id)
                 kg.entity_relationships[rel.source_id].add(rel.relationship_id)
                 kg.entity_relationships[rel.target_id].add(rel.relationship_id)
-                
+
         return kg
-        
+
     def to_json(self, indent: int = 2) -> str:
         """
         Convert the knowledge graph to a JSON string.
-        
+
         Args:
             indent (int): Indentation level for JSON formatting
-            
+
         Returns:
             str: JSON representation of the knowledge graph
         """
         return json.dumps(self.to_dict(), indent=indent)
-        
+
     @classmethod
     def from_json(cls, json_str: str) -> 'KnowledgeGraph':
         """
         Create a knowledge graph from a JSON string.
-        
+
         Args:
             json_str (str): JSON representation of the knowledge graph
-            
+
         Returns:
             KnowledgeGraph: The created knowledge graph
         """
         data = json.loads(json_str)
         return cls.from_dict(data)
-        
+
     def export_to_rdf(self, format: str = "turtle") -> str:
         """
         Export the knowledge graph to RDF format.
-        
+
         Args:
             format (str): RDF format ("turtle", "xml", "json-ld", "n3")
-            
+
         Returns:
             str: RDF representation of the knowledge graph
         """
@@ -697,31 +697,31 @@ class KnowledgeGraph:
             from rdflib.namespace import RDF, RDFS, XSD
         except ImportError:
             return f"Error: rdflib is required for RDF export. Install with: pip install rdflib"
-            
+
         # Create RDF graph
         g = Graph()
-        
+
         # Create namespaces
         KG = Namespace(f"http://example.org/kg/{self.name}/")
         ENT = Namespace(f"http://example.org/kg/{self.name}/entity/")
         REL = Namespace(f"http://example.org/kg/{self.name}/relation/")
-        
+
         # Bind namespaces
         g.bind("kg", KG)
         g.bind("ent", ENT)
         g.bind("rel", REL)
-        
+
         # Add entities
         for entity in self.entities.values():
             # Create entity URI
             entity_uri = ENT[entity.entity_id]
-            
+
             # Add entity type
             g.add((entity_uri, RDF.type, KG[entity.entity_type]))
-            
+
             # Add entity name
             g.add((entity_uri, RDFS.label, Literal(entity.name)))
-            
+
             # Add entity properties
             for key, value in entity.properties.items():
                 if isinstance(value, str):
@@ -734,26 +734,26 @@ class KnowledgeGraph:
                     g.add((entity_uri, KG[key], Literal(value, datatype=XSD.boolean)))
                 else:
                     g.add((entity_uri, KG[key], Literal(str(value))))
-        
+
         # Add relationships
         for rel in self.relationships.values():
             # Create relationship URI
             rel_uri = REL[rel.relationship_id]
-            
+
             # Get source and target URIs
             source_uri = ENT[rel.source_id]
             target_uri = ENT[rel.target_id]
-            
+
             # Add relationship type
             g.add((source_uri, KG[rel.relationship_type], target_uri))
-            
+
             # For relationships with properties, add reification
             if rel.properties:
                 g.add((rel_uri, RDF.type, RDF.Statement))
                 g.add((rel_uri, RDF.subject, source_uri))
                 g.add((rel_uri, RDF.predicate, KG[rel.relationship_type]))
                 g.add((rel_uri, RDF.object, target_uri))
-                
+
                 # Add relationship properties
                 for key, value in rel.properties.items():
                     if isinstance(value, str):
@@ -766,7 +766,7 @@ class KnowledgeGraph:
                         g.add((rel_uri, KG[key], Literal(value, datatype=XSD.boolean)))
                     else:
                         g.add((rel_uri, KG[key], Literal(str(value))))
-        
+
         # Serialize to requested format
         return g.serialize(format=format)
 
@@ -774,13 +774,13 @@ class KnowledgeGraph:
 class KnowledgeGraphExtractor:
     """
     Extracts knowledge graphs from text.
-    
+
     Uses rule-based and optionally model-based approaches to extract
     entities and relationships from text. Supports Wikipedia integration for
     extracting knowledge graphs from Wikipedia pages and SPARQL validation
     against Wikidata's structured data. Includes detailed tracing functionality
     through integration with WikipediaKnowledgeGraphTracer.
-    
+
     Key Features:
     - Extraction of entities and relationships from text with confidence scoring
     - Temperature-controlled extraction with tunable parameters
@@ -788,7 +788,7 @@ class KnowledgeGraphExtractor:
     - SPARQL validation against Wikidata's structured data
     - Detailed tracing of extraction and validation reasoning
     """
-    
+
     def __init__(
         self,
         use_spacy: bool = False,
@@ -799,7 +799,7 @@ class KnowledgeGraphExtractor:
     ):
         """
         Initialize the knowledge graph extractor.
-        
+
         Args:
             use_spacy (bool): Whether to use spaCy for extraction
             use_transformers (bool): Whether to use Transformers for extraction
@@ -811,15 +811,15 @@ class KnowledgeGraphExtractor:
         self.use_transformers = use_transformers
         self.min_confidence = min_confidence
         self.use_tracer = use_tracer
-        
+
         # Initialize the Wikipedia knowledge graph tracer if enabled
         self.tracer = WikipediaKnowledgeGraphTracer() if use_tracer else None
-        
+
         # Initialize NLP tools if requested
         self.nlp = None
         self.ner_model = None
         self.re_model = None
-        
+
         if use_spacy:
             try:
                 import spacy
@@ -834,25 +834,25 @@ class KnowledgeGraphExtractor:
                 print("Warning: spaCy not installed. Running in rule-based mode only.")
                 print("Install spaCy with: pip install spacy")
                 self.use_spacy = False
-                
+
         if use_transformers:
             try:
                 from transformers import pipeline
                 self.ner_model = pipeline("ner")
-                self.re_model = pipeline("text-classification", 
+                self.re_model = pipeline("text-classification",
                                         model="Rajkumar-Murugesan/roberta-base-finetuned-tacred-relation")
             except ImportError:
                 print("Warning: transformers not installed. Running without Transformer models.")
                 print("Install transformers with: pip install transformers")
                 self.use_transformers = False
-                
+
         # Initialize relation patterns
         self.relation_patterns = relation_patterns or self._default_relation_patterns()
-        
+
     def _default_relation_patterns(self) -> List[Dict[str, Any]]:
         """
         Create default relation extraction patterns.
-        
+
         Returns:
             List[Dict]: List of relation patterns
         """
@@ -1098,32 +1098,32 @@ class KnowledgeGraphExtractor:
                 "confidence": 0.8
             }
         ]
-        
+
     def extract_entities(self, text: str) -> List[Entity]:
         """
         Extract entities from text.
-        
+
         Args:
             text (str): Text to extract entities from
-            
+
         Returns:
             List[Entity]: List of extracted entities
         """
         entities = []
-        
+
         # Use different methods based on available tools
         if self.use_spacy and self.nlp:
             # Use spaCy for NER
             doc = self.nlp(text)
-            
+
             for ent in doc.ents:
                 # Map spaCy entity types to our entity types
                 entity_type = self._map_spacy_entity_type(ent.label_)
-                
+
                 # Skip entities with low confidence
                 if ent._.get("confidence", 1.0) < self.min_confidence:
                     continue
-                    
+
                 # Create entity
                 entity = Entity(
                     entity_type=entity_type,
@@ -1131,24 +1131,24 @@ class KnowledgeGraphExtractor:
                     confidence=ent._.get("confidence", 0.8),
                     source_text=text[max(0, ent.start_char - 20):min(len(text), ent.end_char + 20)]
                 )
-                
+
                 # Add to entities list
                 entities.append(entity)
-                
+
         elif self.use_transformers and self.ner_model:
             # Use Transformers for NER
             try:
                 ner_results = self.ner_model(text)
-                
+
                 # Group results by entity
                 entity_groups = {}
                 for result in ner_results:
                     if result["score"] < self.min_confidence:
                         continue
-                        
+
                     entity_text = result["word"]
                     entity_type = self._map_transformers_entity_type(result["entity"])
-                    
+
                     # Use entity text as key to group entities
                     if entity_text not in entity_groups:
                         entity_groups[entity_text] = {
@@ -1161,7 +1161,7 @@ class KnowledgeGraphExtractor:
                             "type": entity_type,
                             "confidence": result["score"]
                         }
-                
+
                 # Create entities from groups
                 for entity_text, entity_info in entity_groups.items():
                     entity = Entity(
@@ -1170,32 +1170,32 @@ class KnowledgeGraphExtractor:
                         confidence=entity_info["confidence"],
                         source_text=text
                     )
-                    
+
                     entities.append(entity)
-                    
+
             except Exception as e:
                 print(f"Warning: Error in transformers NER: {e}")
                 # Fall back to rule-based extraction
                 entities.extend(self._rule_based_entity_extraction(text))
-                
+
         else:
             # Use rule-based entity extraction
             entities.extend(self._rule_based_entity_extraction(text))
-            
+
         return entities
-        
+
     def _rule_based_entity_extraction(self, text: str) -> List[Entity]:
         """
         Extract entities using rule-based patterns.
-        
+
         Args:
             text (str): Text to extract entities from
-            
+
         Returns:
             List[Entity]: List of extracted entities
         """
         entities = []
-        
+
         # Simple rules for common entity types
         # Person: capitalize
         person_pattern = r"(?:Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s+(\w+(?:\s+\w+){0,2})"
@@ -1208,7 +1208,7 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         # Organization: Capitalized words followed by Inc, Corp, Ltd, etc.
         org_pattern = r"(\w+(?:\s+\w+){0,5}?)\s+(?:Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|LLC|LLP|Group|Foundation)"
         for match in re.finditer(org_pattern, text):
@@ -1220,7 +1220,7 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         # Location: Look for prepositions + capitalized words
         loc_pattern = r"(?:in|at|from|to)\s+([A-Z]\w+(?:\s+[A-Z]\w+){0,2})"
         for match in re.finditer(loc_pattern, text):
@@ -1232,7 +1232,7 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         # Date: Simple date patterns
         date_pattern = r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4})"
         for match in re.finditer(date_pattern, text):
@@ -1243,7 +1243,7 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         # Technology: Common technology terms
         tech_pattern = r"(\w+(?:\s+\w+){0,3}?)\s+(?:algorithm|framework|library|language|platform|system|technology|tool)"
         for match in re.finditer(tech_pattern, text):
@@ -1254,7 +1254,7 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         # AI/ML specific patterns
         ai_pattern = r"((?:Deep|Machine|Reinforcement)\s+Learning|Neural\s+Networks?|(?:Large\s+Language|Generative|Transformer)\s+Models?)"
         for match in re.finditer(ai_pattern, text, re.IGNORECASE):
@@ -1265,7 +1265,7 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         # AI model names
         model_pattern = r"((?:GPT|BERT|T5|LLaMA|Stable\s+Diffusion|DALL-E|PaLM|Gemini|Claude)(?:-\d+)?(?:\s+\w+)?)"
         for match in re.finditer(model_pattern, text):
@@ -1276,16 +1276,16 @@ class KnowledgeGraphExtractor:
                 source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
             )
             entities.append(entity)
-            
+
         return entities
-        
+
     def _map_spacy_entity_type(self, spacy_type: str) -> str:
         """
         Map spaCy entity types to our entity types.
-        
+
         Args:
             spacy_type (str): spaCy entity type
-            
+
         Returns:
             str: Mapped entity type
         """
@@ -1310,16 +1310,16 @@ class KnowledgeGraphExtractor:
             "NORP": "group",
             "FAC": "location",
         }
-        
+
         return mapping.get(spacy_type, "entity")
-        
+
     def _map_transformers_entity_type(self, transformers_type: str) -> str:
         """
         Map Transformers entity types to our entity types.
-        
+
         Args:
             transformers_type (str): Transformers entity type
-            
+
         Returns:
             str: Mapped entity type
         """
@@ -1362,50 +1362,50 @@ class KnowledgeGraphExtractor:
             "I-MISC": "entity",
             "B-MISC": "entity",
         }
-        
+
         return mapping.get(transformers_type, "entity")
-        
+
     def extract_relationships(self, text: str, entities: List[Entity]) -> List[Relationship]:
         """
         Extract relationships between entities from text.
-        
+
         Args:
             text (str): Text to extract relationships from
             entities (List[Entity]): List of entities to consider
-            
+
         Returns:
             List[Relationship]: List of extracted relationships
         """
         relationships = []
-        
+
         # Create a map from entity names to entities
         entity_map = {}
         for entity in entities:
             entity_map[entity.name] = entity
-            
+
         # Use different methods based on available tools
         if self.use_transformers and self.re_model:
             # Not implemented yet - would require a more specific RE model
             pass
-        
+
         # Use rule-based relationship extraction
         relationships.extend(self._rule_based_relationship_extraction(text, entity_map))
-            
+
         return relationships
-        
+
     def _rule_based_relationship_extraction(self, text: str, entity_map: Dict[str, Entity]) -> List[Relationship]:
         """
         Extract relationships using rule-based patterns.
-        
+
         Args:
             text (str): Text to extract relationships from
             entity_map (Dict): Map from entity names to Entity objects
-            
+
         Returns:
             List[Relationship]: List of extracted relationships
         """
         relationships = []
-        
+
         # Apply relationship patterns
         for pattern_info in self.relation_patterns:
             pattern = pattern_info["pattern"]
@@ -1414,16 +1414,16 @@ class KnowledgeGraphExtractor:
             target_type = pattern_info["target_type"]
             confidence = pattern_info.get("confidence", 0.7)
             bidirectional = pattern_info.get("bidirectional", False)
-            
+
             # Find matches
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 source_text = match.group(1).strip()
                 target_text = match.group(2).strip()
-                
+
                 # Look for entities that match or contain the matched text
                 source_entity = self._find_best_entity_match(source_text, entity_map)
                 target_entity = self._find_best_entity_match(target_text, entity_map)
-                
+
                 if source_entity and target_entity:
                     # Create relationship
                     rel = Relationship(
@@ -1434,42 +1434,42 @@ class KnowledgeGraphExtractor:
                         source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
                         bidirectional=bidirectional
                     )
-                    
+
                     relationships.append(rel)
-                    
+
         return relationships
-        
+
     def _find_best_entity_match(self, text: str, entity_map: Dict[str, Entity]) -> Optional[Entity]:
         """
         Find the best matching entity for a text.
-        
+
         Args:
             text (str): Text to match
             entity_map (Dict): Map from entity names to Entity objects
-            
+
         Returns:
             Optional[Entity]: Best matching entity, or None if no match
         """
         # Direct match
         if text in entity_map:
             return entity_map[text]
-            
+
         # Case-insensitive match
         for name, entity in entity_map.items():
             if name.lower() == text.lower():
                 return entity
-                
+
         # Substring match
         for name, entity in entity_map.items():
             if text.lower() in name.lower() or name.lower() in text.lower():
                 return entity
-                
+
         return None
-        
+
     def extract_knowledge_graph(self, text: str, extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
         """
         Extract a knowledge graph from text with tunable parameters.
-        
+
         Args:
             text (str): Text to extract knowledge graph from
             extraction_temperature (float): Controls level of detail (0.0-1.0)
@@ -1480,22 +1480,22 @@ class KnowledgeGraphExtractor:
                 - Lower values (0.1-0.3): Flatter structure with fewer relationship types
                 - Medium values (0.4-0.7): Balanced hierarchical structure
                 - Higher values (0.8-1.0): Rich, multi-level concept hierarchies with diverse relationship types
-            
+
         Returns:
             KnowledgeGraph: Extracted knowledge graph
         """
         # Create a new knowledge graph
         kg = KnowledgeGraph()
-        
+
         # Apply extraction temperature to confidence thresholds
         # Lower extraction temperature = higher confidence threshold (fewer entities)
         adjusted_confidence = max(0.1, min(0.9, 1.0 - 0.5 * extraction_temperature))
         original_confidence = self.min_confidence
         self.min_confidence = adjusted_confidence
-        
+
         # Extract entities
         entities = self.extract_entities(text)
-        
+
         # Apply extraction temperature to entity filtering
         # Higher extraction temperature = more entities included
         if extraction_temperature < 0.5:
@@ -1505,16 +1505,16 @@ class KnowledgeGraphExtractor:
             # For high temperature, try to extract additional entities
             # (In a real implementation, this could use more aggressive extraction techniques)
             pass
-        
+
         # Add entities to the knowledge graph
         for entity in entities:
             kg.entities[entity.entity_id] = entity
             kg.entity_types[entity.entity_type].add(entity.entity_id)
             kg.entity_names[entity.name].add(entity.entity_id)
-            
+
         # Extract relationships
         relationships = self.extract_relationships(text, entities)
-        
+
         # Apply structure temperature to relationship inclusion
         # Lower structure temperature = simpler relationship structure
         if structure_temperature < 0.3:
@@ -1526,24 +1526,24 @@ class KnowledgeGraphExtractor:
             # additional hierarchical relationships
             # (In a real implementation, this would add more complex relationship inference)
             pass
-        
+
         # Add relationships to the knowledge graph
         for rel in relationships:
             kg.relationships[rel.relationship_id] = rel
             kg.relationship_types[rel.relationship_type].add(rel.relationship_id)
             kg.entity_relationships[rel.source_id].add(rel.relationship_id)
             kg.entity_relationships[rel.target_id].add(rel.relationship_id)
-        
+
         # Restore original confidence threshold
         self.min_confidence = original_confidence
-            
+
         return kg
-        
-    def extract_enhanced_knowledge_graph(self, text: str, use_chunking: bool = True, 
+
+    def extract_enhanced_knowledge_graph(self, text: str, use_chunking: bool = True,
                                    extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
         """
         Extract a knowledge graph with enhanced processing and tunable parameters.
-        
+
         Args:
             text (str): Text to extract knowledge graph from
             use_chunking (bool): Whether to process the text in chunks
@@ -1555,47 +1555,47 @@ class KnowledgeGraphExtractor:
                 - Lower values (0.1-0.3): Flatter structure with fewer relationship types
                 - Medium values (0.4-0.7): Balanced hierarchical structure
                 - Higher values (0.8-1.0): Rich, multi-level concept hierarchies with diverse relationship types
-            
+
         Returns:
             KnowledgeGraph: Extracted knowledge graph
         """
         # Create a new knowledge graph
         kg = KnowledgeGraph()
-        
+
         # Process text in chunks if requested
         if use_chunking and len(text) > 2000:
             # Split into chunks with some overlap
             chunk_size = 1000
             overlap = 200
             chunks = []
-            
+
             for i in range(0, len(text), chunk_size - overlap):
                 chunk = text[i:i + chunk_size]
                 chunks.append(chunk)
-                
+
             # Process each chunk and merge the results
             for i, chunk in enumerate(chunks):
                 # Extract knowledge graph from chunk using temperature parameters
                 chunk_kg = self.extract_knowledge_graph(chunk, extraction_temperature, structure_temperature)
-                
+
                 # For the first chunk, use it as the base
                 if i == 0:
                     kg = chunk_kg
                 else:
                     # Merge subsequent chunks
                     kg.merge(chunk_kg)
-                    
+
         else:
             # Process the entire text at once with temperature parameters
             kg = self.extract_knowledge_graph(text, extraction_temperature, structure_temperature)
-            
+
         return kg
-        
+
     def extract_from_documents(self, documents: List[Dict[str, str]], text_key: str = "text",
                              extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
         """
         Extract a knowledge graph from a collection of documents with tunable parameters.
-        
+
         Args:
             documents (List[Dict]): List of document dictionaries
             text_key (str): Key for the text field in the documents
@@ -1607,27 +1607,27 @@ class KnowledgeGraphExtractor:
                 - Lower values (0.1-0.3): Flatter structure with fewer relationship types
                 - Medium values (0.4-0.7): Balanced hierarchical structure
                 - Higher values (0.8-1.0): Rich, multi-level concept hierarchies with diverse relationship types
-            
+
         Returns:
             KnowledgeGraph: Extracted knowledge graph
         """
         # Create a master knowledge graph
         master_kg = KnowledgeGraph()
-        
+
         # Process each document
         for i, doc in enumerate(documents):
             if text_key not in doc:
                 print(f"Warning: Document {i} does not contain key '{text_key}'")
                 continue
-                
+
             # Extract KG from document with temperature parameters
             doc_kg = self.extract_enhanced_knowledge_graph(
-                doc[text_key], 
+                doc[text_key],
                 use_chunking=True,
-                extraction_temperature=extraction_temperature, 
+                extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
             # Add document metadata to entities
             for entity_id, entity in doc_kg.entities.items():
                 if not entity.properties:
@@ -1635,19 +1635,19 @@ class KnowledgeGraphExtractor:
                 entity.properties["document_id"] = doc.get("id", str(i))
                 if "title" in doc:
                     entity.properties["document_title"] = doc["title"]
-                    
+
             # Merge into master KG
             master_kg.merge(doc_kg)
-            
+
         return master_kg
-        
+
     def enrich_with_types(self, kg: KnowledgeGraph) -> KnowledgeGraph:
         """
         Enrich a knowledge graph with inferred entity types.
-        
+
         Args:
             kg (KnowledgeGraph): Knowledge graph to enrich
-            
+
         Returns:
             KnowledgeGraph: Enriched knowledge graph
         """
@@ -1671,27 +1671,27 @@ class KnowledgeGraphExtractor:
             "subfield_of": {"source": "field", "target": "field"},
             "pioneered": {"source": "person", "target": "field"},
         }
-        
+
         # Apply type inference rules
         for rel_id, rel in kg.relationships.items():
             if rel.relationship_type in type_rules:
                 rule = type_rules[rel.relationship_type]
-                
+
                 # Update source type if generic
                 if rel.source_entity.entity_type == "entity":
                     rel.source_entity.entity_type = rule["source"]
-                    
+
                 # Update target type if generic
                 if rel.target_entity.entity_type == "entity":
                     rel.target_entity.entity_type = rule["target"]
-                    
+
         return kg
-        
-    def extract_from_wikipedia(self, page_title: str, extraction_temperature: float = 0.7, 
+
+    def extract_from_wikipedia(self, page_title: str, extraction_temperature: float = 0.7,
                            structure_temperature: float = 0.5) -> KnowledgeGraph:
         """
         Extract a knowledge graph from a Wikipedia page with tunable parameters.
-        
+
         Args:
             page_title (str): Title of the Wikipedia page
             extraction_temperature (float): Controls level of detail (0.0-1.0)
@@ -1702,7 +1702,7 @@ class KnowledgeGraphExtractor:
                 - Lower values (0.1-0.3): Flatter structure with fewer relationship types
                 - Medium values (0.4-0.7): Balanced hierarchical structure
                 - Higher values (0.8-1.0): Rich, multi-level concept hierarchies with diverse relationship types
-                
+
         Returns:
             KnowledgeGraph: Extracted knowledge graph
         """
@@ -1714,7 +1714,7 @@ class KnowledgeGraphExtractor:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-        
+
         # Fetch Wikipedia content
         try:
             # Make API request to get Wikipedia page content
@@ -1727,14 +1727,14 @@ class KnowledgeGraphExtractor:
                 "exintro": 0,  # Include the full page, not just intro
                 "explaintext": 1  # Get plain text
             }
-            
+
             response = requests.get(url, params=params)
             data = response.json()
-            
+
             # Extract the page content
             pages = data["query"]["pages"]
             page_id = list(pages.keys())[0]
-            
+
             # Check if page exists
             if page_id == "-1":
                 error_msg = f"Wikipedia page '{page_title}' not found."
@@ -1746,20 +1746,20 @@ class KnowledgeGraphExtractor:
                         error=error_msg
                     )
                 raise ValueError(error_msg)
-                
+
             page_content = pages[page_id]["extract"]
-            
+
             # Create knowledge graph from the content with temperature parameters
             kg = self.extract_enhanced_knowledge_graph(
-                page_content, 
+                page_content,
                 use_chunking=True,
-                extraction_temperature=extraction_temperature, 
+                extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
             # Add metadata about the source
             kg.name = f"wikipedia_{page_title}"
-            
+
             # Add the Wikipedia page as a source entity
             page_entity = Entity(
                 entity_type="wikipedia_page",
@@ -1767,11 +1767,11 @@ class KnowledgeGraphExtractor:
                 properties={"url": f"https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}"},
                 confidence=1.0
             )
-            
+
             kg.entities[page_entity.entity_id] = page_entity
             kg.entity_types["wikipedia_page"].add(page_entity.entity_id)
             kg.entity_names[page_title].add(page_entity.entity_id)
-            
+
             # Create "source_from" relationships
             for entity_id, entity in list(kg.entities.items()):
                 if entity.entity_id != page_entity.entity_id:
@@ -1781,12 +1781,12 @@ class KnowledgeGraphExtractor:
                         target=page_entity,
                         confidence=1.0
                     )
-                    
+
                     kg.relationships[rel.relationship_id] = rel
                     kg.relationship_types["sourced_from"].add(rel.relationship_id)
                     kg.entity_relationships[entity.entity_id].add(rel.relationship_id)
                     kg.entity_relationships[page_entity.entity_id].add(rel.relationship_id)
-            
+
             # Update trace with results if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_extraction_trace(
@@ -1798,9 +1798,9 @@ class KnowledgeGraphExtractor:
                     entity_types=dict(kg.entity_types),
                     relationship_types=dict(kg.relationship_types)
                 )
-            
+
             return kg
-            
+
         except Exception as e:
             error_msg = f"Error extracting knowledge graph from Wikipedia: {e}"
             # Update trace with error if tracer is enabled
@@ -1811,15 +1811,15 @@ class KnowledgeGraphExtractor:
                     error=error_msg
                 )
             raise RuntimeError(error_msg)
-            
+
     def validate_against_wikidata(self, kg: KnowledgeGraph, entity_name: str) -> Dict[str, Any]:
         """
         Validate a knowledge graph against Wikidata's structured data.
-        
+
         Args:
             kg (KnowledgeGraph): Knowledge graph to validate
             entity_name (str): Name of the main entity to validate against
-            
+
         Returns:
             Dict: Validation results including:
                 - coverage: Percentage of Wikidata statements covered
@@ -1834,11 +1834,11 @@ class KnowledgeGraphExtractor:
                 kg_name=kg.name,
                 entity_name=entity_name
             )
-            
+
         try:
             # Map the entity to Wikidata
             wikidata_id = self._get_wikidata_id(entity_name)
-            
+
             if not wikidata_id:
                 error_result = {
                     "error": f"Could not find Wikidata entity for '{entity_name}'",
@@ -1847,7 +1847,7 @@ class KnowledgeGraphExtractor:
                     "additional_relationships": [],
                     "entity_mapping": {}
                 }
-                
+
                 # Update trace with error if tracer is enabled
                 if self.use_tracer and self.tracer and trace_id:
                     self.tracer.update_validation_trace(
@@ -1856,15 +1856,15 @@ class KnowledgeGraphExtractor:
                         error=error_result["error"],
                         validation_results=error_result
                     )
-                
+
                 return error_result
-                
+
             # Get structured data from Wikidata
             wikidata_statements = self._get_wikidata_statements(wikidata_id)
-            
+
             # Find corresponding entity in the knowledge graph
             kg_entities = kg.get_entities_by_name(entity_name)
-            
+
             if not kg_entities:
                 error_result = {
                     "error": f"Entity '{entity_name}' not found in the knowledge graph",
@@ -1873,7 +1873,7 @@ class KnowledgeGraphExtractor:
                     "additional_relationships": [],
                     "entity_mapping": {}
                 }
-                
+
                 # Update trace with error if tracer is enabled
                 if self.use_tracer and self.tracer and trace_id:
                     self.tracer.update_validation_trace(
@@ -1882,18 +1882,18 @@ class KnowledgeGraphExtractor:
                         error=error_result["error"],
                         validation_results=error_result
                     )
-                
+
                 return error_result
-                
+
             kg_entity = kg_entities[0]
-            
+
             # Find relationships in the KG involving this entity
             kg_relationships = kg.get_relationships_by_entity(kg_entity)
-            
+
             # Convert to simplified format for comparison
             kg_statements = []
             entity_mapping = {kg_entity.entity_id: wikidata_id}
-            
+
             for rel in kg_relationships:
                 if rel.source_id == kg_entity.entity_id:
                     # This is an outgoing relationship
@@ -1909,64 +1909,64 @@ class KnowledgeGraphExtractor:
                         "value": rel.source_entity.name,
                         "value_entity": rel.source_entity.entity_id
                     })
-            
+
             # Compare statements
             covered_statements = []
             missing_statements = []
-            
+
             for wk_stmt in wikidata_statements:
                 # Try to find a matching statement in the KG
                 found = False
                 best_match = None
                 best_score = 0.0
-                
+
                 for kg_stmt in kg_statements:
                     # Compare property names (inexact)
                     prop_match = self._string_similarity(
                         wk_stmt["property"].lower(),
                         kg_stmt["property"].lower()
                     )
-                    
+
                     # Compare values (inexact)
                     value_match = self._string_similarity(
                         wk_stmt["value"].lower(),
                         kg_stmt["value"].lower()
                     )
-                    
+
                     # Calculate overall match score
                     score = (prop_match + value_match) / 2.0
-                    
+
                     if score > 0.7 and score > best_score:  # Threshold for considering a match
                         found = True
                         best_match = kg_stmt
                         best_score = score
-                
+
                 if found:
                     covered_statements.append({
                         "wikidata": wk_stmt,
                         "kg": best_match,
                         "match_score": best_score
                     })
-                    
+
                     # Add to entity mapping
                     if "value_id" in wk_stmt and "value_entity" in best_match:
                         entity_mapping[best_match["value_entity"]] = wk_stmt["value_id"]
                 else:
                     missing_statements.append(wk_stmt)
-            
+
             # Find additional statements in the KG
             additional_statements = []
-            
+
             for kg_stmt in kg_statements:
                 if not any(covered["kg"] == kg_stmt for covered in covered_statements):
                     additional_statements.append(kg_stmt)
-            
+
             # Calculate coverage
             if len(wikidata_statements) > 0:
                 coverage = len(covered_statements) / len(wikidata_statements)
             else:
                 coverage = 1.0  # No statements to cover
-            
+
             result = {
                 "coverage": coverage,
                 "covered_relationships": covered_statements,
@@ -1974,7 +1974,7 @@ class KnowledgeGraphExtractor:
                 "additional_relationships": additional_statements,
                 "entity_mapping": entity_mapping
             }
-            
+
             # Update trace with results if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_validation_trace(
@@ -1989,9 +1989,9 @@ class KnowledgeGraphExtractor:
                     additional_count=len(additional_statements),
                     validation_results=result
                 )
-            
+
             return result
-            
+
         except Exception as e:
             error_result = {
                 "error": f"Error validating against Wikidata: {e}",
@@ -2000,7 +2000,7 @@ class KnowledgeGraphExtractor:
                 "additional_relationships": [],
                 "entity_mapping": {}
             }
-            
+
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_validation_trace(
@@ -2009,16 +2009,16 @@ class KnowledgeGraphExtractor:
                     error=str(e),
                     validation_results=error_result
                 )
-            
+
             return error_result
-            
+
     def _get_wikidata_id(self, entity_name: str) -> Optional[str]:
         """
         Get the Wikidata ID for an entity name.
-        
+
         Args:
             entity_name (str): Name of the entity
-            
+
         Returns:
             str: Wikidata ID (Qxxxxx) or None if not found
         """
@@ -2031,33 +2031,33 @@ class KnowledgeGraphExtractor:
                 "search": entity_name,
                 "language": "en"
             }
-            
+
             response = requests.get(url, params=params)
             data = response.json()
-            
+
             # Get the first result if available
             if "search" in data and len(data["search"]) > 0:
                 return data["search"][0]["id"]
             else:
                 return None
-                
+
         except Exception:
             return None
-            
+
     def _get_wikidata_statements(self, entity_id: str) -> List[Dict[str, Any]]:
         """
         Get structured statements for a Wikidata entity.
-        
+
         Args:
             entity_id (str): Wikidata entity ID (Qxxxxx)
-            
+
         Returns:
             List[Dict]: List of simplified statements
         """
         try:
             # Query the Wikidata SPARQL endpoint
             sparql_endpoint = "https://query.wikidata.org/sparql"
-            
+
             # SPARQL query to get all direct relations
             query = f"""
             SELECT ?property ?propertyLabel ?value ?valueLabel ?valueId
@@ -2065,90 +2065,90 @@ class KnowledgeGraphExtractor:
               wd:{entity_id} ?p ?value .
               ?property wikibase:directClaim ?p .
               OPTIONAL {{ ?value wdt:P31 ?type . }}
-              OPTIONAL {{ 
+              OPTIONAL {{
                 FILTER(isIRI(?value))
                 BIND(STRAFTER(STR(?value), 'http://www.wikidata.org/entity/') AS ?valueId)
               }}
               SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
             }}
             """
-            
+
             headers = {
                 'User-Agent': 'KnowledgeGraphValidator/1.0 (https://example.org/; info@example.org)',
                 'Accept': 'application/json'
             }
-            
+
             response = requests.get(
                 sparql_endpoint,
                 params={"query": query, "format": "json"},
                 headers=headers
             )
-            
+
             data = response.json()
-            
+
             # Process and simplify the results
             statements = []
-            
+
             for result in data.get("results", {}).get("bindings", []):
                 # Skip some administrative properties
                 property_id = result.get("property", {}).get("value", "")
                 if property_id.endswith("/P31") or property_id.endswith("/P279"):  # Instance of, subclass of
                     continue
-                    
+
                 statement = {
                     "property": result.get("propertyLabel", {}).get("value", "Unknown property"),
                     "value": result.get("valueLabel", {}).get("value", "Unknown value")
                 }
-                
+
                 # Include Wikidata IDs if available
                 if "valueId" in result and result["valueId"].get("value"):
                     statement["value_id"] = result["valueId"]["value"]
-                    
+
                 statements.append(statement)
-                
+
             return statements
-            
+
         except Exception as e:
             print(f"Error querying Wikidata: {e}")
             return []
-            
+
     def _string_similarity(self, str1: str, str2: str) -> float:
         """
         Calculate similarity between two strings.
-        
+
         Args:
             str1 (str): First string
             str2 (str): Second string
-            
+
         Returns:
             float: Similarity score (0-1)
         """
         # Simple Jaccard similarity on words
         words1 = set(str1.lower().split())
         words2 = set(str2.lower().split())
-        
+
         if not words1 or not words2:
             return 0.0
-            
+
         intersection = words1.intersection(words2)
         union = words1.union(words2)
-        
+
         return len(intersection) / len(union)
-        
-    def extract_and_validate_wikipedia_graph(self, page_title: str, extraction_temperature: float = 0.7, 
+
+    def extract_and_validate_wikipedia_graph(self, page_title: str, extraction_temperature: float = 0.7,
                                         structure_temperature: float = 0.5) -> Dict[str, Any]:
         """
         Extract knowledge graph from a Wikipedia page and validate against Wikidata SPARQL.
-        
-        This function extracts a knowledge graph from a Wikipedia page, then queries the 
-        Wikidata SPARQL endpoint to validate that the extraction contains at least the 
+
+        This function extracts a knowledge graph from a Wikipedia page, then queries the
+        Wikidata SPARQL endpoint to validate that the extraction contains at least the
         structured data already present in Wikidata.
-        
+
         Args:
             page_title (str): Title of the Wikipedia page
             extraction_temperature (float): Controls level of detail (0.0-1.0)
             structure_temperature (float): Controls structural complexity (0.0-1.0)
-            
+
         Returns:
             Dict: Result containing:
                 - knowledge_graph: The extracted knowledge graph
@@ -2165,7 +2165,7 @@ class KnowledgeGraphExtractor:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
         try:
             # Extract knowledge graph from Wikipedia
             kg = self.extract_from_wikipedia(
@@ -2173,10 +2173,10 @@ class KnowledgeGraphExtractor:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
             # Validate against Wikidata
             validation_results = self.validate_against_wikidata(kg, page_title)
-            
+
             # Calculate additional metrics
             metrics = {
                 "entity_count": len(kg.entities),
@@ -2187,7 +2187,7 @@ class KnowledgeGraphExtractor:
                 "extraction_temperature": extraction_temperature,
                 "structure_temperature": structure_temperature
             }
-            
+
             # Create comprehensive result
             result = {
                 "knowledge_graph": kg,
@@ -2195,11 +2195,11 @@ class KnowledgeGraphExtractor:
                 "coverage": validation_results.get("coverage", 0.0),
                 "metrics": metrics
             }
-            
+
             # Add trace ID if tracing is enabled
             if self.use_tracer and self.tracer and trace_id:
                 result["trace_id"] = trace_id
-                
+
                 # Update combined trace with results
                 self.tracer.update_extraction_and_validation_trace(
                     trace_id=trace_id,
@@ -2211,9 +2211,9 @@ class KnowledgeGraphExtractor:
                     relationship_count=len(kg.relationships),
                     coverage=validation_results.get("coverage", 0.0)
                 )
-            
+
             return result
-            
+
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating graph: {e}",
@@ -2222,29 +2222,29 @@ class KnowledgeGraphExtractor:
                 "coverage": 0.0,
                 "metrics": {}
             }
-            
+
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 error_result["trace_id"] = trace_id
-                
+
                 self.tracer.update_extraction_and_validation_trace(
                     trace_id=trace_id,
                     status="failed",
                     error=str(e)
                 )
-            
+
             return error_result
 
 
 class KnowledgeGraphExtractorWithValidation:
     """
     Enhanced knowledge graph extractor with integrated validation.
-    
+
     This class extends the knowledge graph extraction functionality with automated
     validation against external knowledge bases like Wikidata through SPARQL queries.
     It provides a unified interface for extracting and validating knowledge graphs,
     with options for automatic correction suggestions and continuous improvement.
-    
+
     Key Features:
     - Automated validation during extraction
     - Entity property validation against Wikidata
@@ -2254,9 +2254,9 @@ class KnowledgeGraphExtractorWithValidation:
     - Detailed validation reports
     - Integrated with WikipediaKnowledgeGraphTracer for tracing
     """
-    
+
     def __init__(
-        self, 
+        self,
         use_spacy: bool = False,
         use_transformers: bool = False,
         relation_patterns: Optional[List[Dict[str, Any]]] = None,
@@ -2269,7 +2269,7 @@ class KnowledgeGraphExtractorWithValidation:
     ):
         """
         Initialize the knowledge graph extractor with validation.
-        
+
         Args:
             use_spacy: Whether to use spaCy for extraction
             use_transformers: Whether to use Transformers for extraction
@@ -2289,10 +2289,10 @@ class KnowledgeGraphExtractorWithValidation:
             min_confidence=min_confidence,
             use_tracer=use_tracer
         )
-        
+
         # Initialize tracer if enabled
         self.tracer = WikipediaKnowledgeGraphTracer() if use_tracer else None
-        
+
         # Initialize validator
         try:
             from ipfs_datasets_py.llm_semantic_validation import SPARQLValidator
@@ -2306,28 +2306,28 @@ class KnowledgeGraphExtractorWithValidation:
             print("Warning: SPARQLValidator not available. Validation will be disabled.")
             self.validator = None
             self.validator_available = False
-        
+
         # Configuration options
         self.validate_during_extraction = validate_during_extraction and self.validator_available
         self.auto_correct_suggestions = auto_correct_suggestions
         self.min_confidence = min_confidence
-    
+
     def extract_knowledge_graph(
-        self, 
-        text: str, 
-        extraction_temperature: float = 0.7, 
+        self,
+        text: str,
+        extraction_temperature: float = 0.7,
         structure_temperature: float = 0.5,
         validation_depth: int = 1
     ) -> Dict[str, Any]:
         """
         Extract and validate a knowledge graph from text.
-        
+
         Args:
             text: Text to extract knowledge graph from
             extraction_temperature: Controls level of detail (0.0-1.0)
             structure_temperature: Controls structural complexity (0.0-1.0)
             validation_depth: Depth of validation (1=entities, 2=relationships)
-            
+
         Returns:
             Dict containing:
                 - knowledge_graph: The extracted knowledge graph
@@ -2343,7 +2343,7 @@ class KnowledgeGraphExtractorWithValidation:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-        
+
         try:
             # Extract knowledge graph
             kg = self.extractor.extract_enhanced_knowledge_graph(
@@ -2352,13 +2352,13 @@ class KnowledgeGraphExtractorWithValidation:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
             result = {
                 "knowledge_graph": kg,
                 "entity_count": len(kg.entities),
                 "relationship_count": len(kg.relationships)
             }
-            
+
             # Perform validation if enabled
             if self.validate_during_extraction and self.validator:
                 validation_result = self.validator.validate_knowledge_graph(
@@ -2366,18 +2366,18 @@ class KnowledgeGraphExtractorWithValidation:
                     validation_depth=validation_depth,
                     min_confidence=self.min_confidence
                 )
-                
+
                 result["validation_results"] = validation_result.to_dict()
                 result["validation_metrics"] = {
                     "entity_coverage": validation_result.data.get("entity_coverage", 0.0),
                     "relationship_coverage": validation_result.data.get("relationship_coverage", 0.0),
                     "overall_coverage": validation_result.data.get("overall_coverage", 0.0)
                 }
-                
+
                 # Generate correction suggestions if enabled
                 if self.auto_correct_suggestions:
                     corrections = {}
-                    
+
                     # Entity corrections
                     if "entity_validations" in validation_result.data:
                         entity_corrections = {}
@@ -2391,10 +2391,10 @@ class KnowledgeGraphExtractorWithValidation:
                                     "entity_name": validation.get("name", ""),
                                     "suggestions": explanation
                                 }
-                        
+
                         if entity_corrections:
                             corrections["entities"] = entity_corrections
-                    
+
                     # Relationship corrections
                     if "relationship_validations" in validation_result.data:
                         rel_corrections = {}
@@ -2406,13 +2406,13 @@ class KnowledgeGraphExtractorWithValidation:
                                     "target": validation.get("target", ""),
                                     "suggestions": f"Consider using '{validation.get('wikidata_match', '')}' instead"
                                 }
-                        
+
                         if rel_corrections:
                             corrections["relationships"] = rel_corrections
-                    
+
                     if corrections:
                         result["corrections"] = corrections
-            
+
             # Update trace if enabled
             if self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
@@ -2424,15 +2424,15 @@ class KnowledgeGraphExtractorWithValidation:
                     relationship_count=len(kg.relationships),
                     coverage=result.get("validation_metrics", {}).get("overall_coverage", 0.0)
                 )
-            
+
             return result
-            
+
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating knowledge graph: {e}",
                 "knowledge_graph": None
             }
-            
+
             # Update trace with error if tracer is enabled
             if self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
@@ -2440,27 +2440,27 @@ class KnowledgeGraphExtractorWithValidation:
                     status="failed",
                     error=str(e)
                 )
-            
+
             return error_result
-    
+
     def extract_from_wikipedia(
-        self, 
-        page_title: str, 
-        extraction_temperature: float = 0.7, 
+        self,
+        page_title: str,
+        extraction_temperature: float = 0.7,
         structure_temperature: float = 0.5,
         validation_depth: int = 2,
         focus_validation_on_main_entity: bool = True
     ) -> Dict[str, Any]:
         """
         Extract and validate a knowledge graph from a Wikipedia page.
-        
+
         Args:
             page_title: Title of the Wikipedia page
             extraction_temperature: Controls level of detail (0.0-1.0)
             structure_temperature: Controls structural complexity (0.0-1.0)
             validation_depth: Depth of validation (1=entities, 2=relationships)
             focus_validation_on_main_entity: Whether to focus validation on main entity
-            
+
         Returns:
             Dict containing:
                 - knowledge_graph: The extracted knowledge graph
@@ -2476,7 +2476,7 @@ class KnowledgeGraphExtractorWithValidation:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-        
+
         try:
             # Extract knowledge graph from Wikipedia
             kg = self.extractor.extract_from_wikipedia(
@@ -2484,13 +2484,13 @@ class KnowledgeGraphExtractorWithValidation:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
             result = {
                 "knowledge_graph": kg,
                 "entity_count": len(kg.entities),
                 "relationship_count": len(kg.relationships)
             }
-            
+
             # Perform validation if enabled
             if self.validate_during_extraction and self.validator:
                 if focus_validation_on_main_entity:
@@ -2508,9 +2508,9 @@ class KnowledgeGraphExtractorWithValidation:
                         validation_depth=validation_depth,
                         min_confidence=self.min_confidence
                     )
-                
+
                 result["validation_results"] = validation_result.to_dict()
-                
+
                 # Extract validation metrics
                 if "entity_name" in validation_result.data:
                     # Single entity focus validation
@@ -2526,7 +2526,7 @@ class KnowledgeGraphExtractorWithValidation:
                         "relationship_coverage": validation_result.data.get("relationship_coverage", 0.0),
                         "overall_coverage": validation_result.data.get("overall_coverage", 0.0)
                     }
-                
+
                 # Generate correction suggestions if enabled
                 if self.auto_correct_suggestions:
                     explanation = self.validator.generate_validation_explanation(
@@ -2534,35 +2534,35 @@ class KnowledgeGraphExtractorWithValidation:
                         explanation_type="fix"
                     )
                     result["corrections"] = explanation
-                
+
                 # Perform path finding between key entities
                 if len(kg.entities) >= 2:
                     # Find main entity
                     main_entities = [e for e in kg.entities.values() if e.name.lower() == page_title.lower()]
-                    
+
                     if main_entities and validation_depth > 1:
                         main_entity = main_entities[0]
-                        
+
                         # Find path to at least one other important entity
                         other_entities = []
                         for entity in kg.entities.values():
                             if entity.entity_id != main_entity.entity_id and hasattr(entity, "confidence") and entity.confidence > 0.8:
                                 other_entities.append(entity)
-                        
+
                         if other_entities:
                             # Take the entity with highest confidence
                             other_entity = max(other_entities, key=lambda e: getattr(e, "confidence", 0))
-                            
+
                             # Find paths between entities
                             path_result = self.validator.find_entity_paths(
                                 source_entity=main_entity.name,
                                 target_entity=other_entity.name,
                                 max_path_length=2
                             )
-                            
+
                             if path_result.is_valid:
                                 result["path_analysis"] = path_result.to_dict()
-            
+
             # Update trace if enabled
             if self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
@@ -2574,15 +2574,15 @@ class KnowledgeGraphExtractorWithValidation:
                     relationship_count=len(kg.relationships),
                     coverage=result.get("validation_metrics", {}).get("overall_coverage", 0.0)
                 )
-            
+
             return result
-            
+
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating Wikipedia knowledge graph: {e}",
                 "knowledge_graph": None
             }
-            
+
             # Update trace with error if tracer is enabled
             if self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
@@ -2590,27 +2590,27 @@ class KnowledgeGraphExtractorWithValidation:
                     status="failed",
                     error=str(e)
                 )
-            
+
             return error_result
-    
+
     def extract_from_documents(
-        self, 
-        documents: List[Dict[str, str]], 
+        self,
+        documents: List[Dict[str, str]],
         text_key: str = "text",
-        extraction_temperature: float = 0.7, 
+        extraction_temperature: float = 0.7,
         structure_temperature: float = 0.5,
         validation_depth: int = 1
     ) -> Dict[str, Any]:
         """
         Extract and validate a knowledge graph from multiple documents.
-        
+
         Args:
             documents: List of document dictionaries
             text_key: Key for the text field in the documents
             extraction_temperature: Controls level of detail (0.0-1.0)
             structure_temperature: Controls structural complexity (0.0-1.0)
             validation_depth: Depth of validation (1=entities, 2=relationships)
-            
+
         Returns:
             Dict containing:
                 - knowledge_graph: The extracted knowledge graph
@@ -2626,7 +2626,7 @@ class KnowledgeGraphExtractorWithValidation:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-        
+
         try:
             # Extract knowledge graph from documents
             kg = self.extractor.extract_from_documents(
@@ -2635,16 +2635,16 @@ class KnowledgeGraphExtractorWithValidation:
                 extraction_temperature=extraction_temperature,
                 structure_temperature=structure_temperature
             )
-            
+
             # Enrich with inferred types
             kg = self.extractor.enrich_with_types(kg)
-            
+
             result = {
                 "knowledge_graph": kg,
                 "entity_count": len(kg.entities),
                 "relationship_count": len(kg.relationships)
             }
-            
+
             # Perform validation if enabled
             if self.validate_during_extraction and self.validator:
                 validation_result = self.validator.validate_knowledge_graph(
@@ -2652,14 +2652,14 @@ class KnowledgeGraphExtractorWithValidation:
                     validation_depth=validation_depth,
                     min_confidence=self.min_confidence
                 )
-                
+
                 result["validation_results"] = validation_result.to_dict()
                 result["validation_metrics"] = {
                     "entity_coverage": validation_result.data.get("entity_coverage", 0.0),
                     "relationship_coverage": validation_result.data.get("relationship_coverage", 0.0),
                     "overall_coverage": validation_result.data.get("overall_coverage", 0.0)
                 }
-                
+
                 # Generate correction suggestions if enabled
                 if self.auto_correct_suggestions:
                     explanation = self.validator.generate_validation_explanation(
@@ -2667,7 +2667,7 @@ class KnowledgeGraphExtractorWithValidation:
                         explanation_type="fix"
                     )
                     result["corrections"] = explanation
-                
+
                 # Additional validation: find entity paths
                 if validation_depth > 1:
                     # Select top entities by confidence
@@ -2676,30 +2676,30 @@ class KnowledgeGraphExtractorWithValidation:
                         key=lambda e: getattr(e, "confidence", 0),
                         reverse=True
                     )[:5]  # Top 5 entities
-                    
+
                     # Find paths between pairs of top entities
                     path_results = []
                     for i in range(len(top_entities)):
                         for j in range(i + 1, len(top_entities)):
                             entity1 = top_entities[i]
                             entity2 = top_entities[j]
-                            
+
                             path_result = self.validator.find_entity_paths(
                                 source_entity=entity1.name,
                                 target_entity=entity2.name,
                                 max_path_length=2
                             )
-                            
+
                             if path_result.is_valid:
                                 path_results.append({
                                     "source": entity1.name,
                                     "target": entity2.name,
                                     "paths": path_result.data
                                 })
-                    
+
                     if path_results:
                         result["path_analysis"] = path_results
-            
+
             # Update trace if enabled
             if self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
@@ -2711,15 +2711,15 @@ class KnowledgeGraphExtractorWithValidation:
                     relationship_count=len(kg.relationships),
                     coverage=result.get("validation_metrics", {}).get("overall_coverage", 0.0)
                 )
-            
+
             return result
-            
+
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating multi-document knowledge graph: {e}",
                 "knowledge_graph": None
             }
-            
+
             # Update trace with error if tracer is enabled
             if self.tracer and trace_id:
                 self.tracer.update_extraction_and_validation_trace(
@@ -2727,37 +2727,37 @@ class KnowledgeGraphExtractorWithValidation:
                     status="failed",
                     error=str(e)
                 )
-            
+
             return error_result
-    
+
     def apply_validation_corrections(
-        self, 
-        kg: KnowledgeGraph, 
+        self,
+        kg: KnowledgeGraph,
         corrections: Dict[str, Any]
     ) -> KnowledgeGraph:
         """
         Apply correction suggestions to a knowledge graph.
-        
+
         Args:
             kg: Knowledge graph to correct
             corrections: Correction suggestions from validation
-            
+
         Returns:
             KnowledgeGraph: Corrected knowledge graph
         """
         # Create a copy of the knowledge graph to avoid modifying the original
         corrected_kg = KnowledgeGraph(name=kg.name)
-        
+
         # Create maps for tracking corrections
         entity_corrections = {}
         relationship_type_corrections = {}
-        
+
         # Parse entity corrections
         if "entities" in corrections:
             for entity_id, entity_correction in corrections["entities"].items():
                 entity_name = entity_correction.get("entity_name", "")
                 suggestions = entity_correction.get("suggestions", "")
-                
+
                 # Process suggestions to extract corrections
                 # This is simplified - in a real implementation, more sophisticated
                 # parsing of the suggestion text would be needed
@@ -2772,31 +2772,31 @@ class KnowledgeGraphExtractorWithValidation:
                             key, value = line.split(":", 1)
                             correction_map[key.strip()] = value.strip()
                     entity_corrections[entity_id] = correction_map
-        
+
         # Parse relationship corrections
         if "relationships" in corrections:
             for rel_id, rel_correction in corrections["relationships"].items():
                 rel_type = rel_correction.get("relationship_type", "")
                 suggestions = rel_correction.get("suggestions", "")
-                
+
                 # Extract suggested relationship type
                 if "instead" in suggestions and "'" in suggestions:
                     import re
                     match = re.search(r"'([^']+)'", suggestions)
                     if match:
                         relationship_type_corrections[rel_type] = match.group(1)
-        
+
         # Apply entity corrections
         for original_entity_id, entity in kg.entities.items():
             # Create a copy of the entity
             entity_properties = entity.properties.copy() if hasattr(entity, "properties") else {}
-            
+
             # Apply property corrections if available
             if original_entity_id in entity_corrections:
                 for prop, correction in entity_corrections[original_entity_id].items():
                     if prop in entity_properties:
                         entity_properties[prop] = correction
-            
+
             # Add the corrected entity
             corrected_entity = corrected_kg.add_entity(
                 entity_type=entity.entity_type if hasattr(entity, "entity_type") else "entity",
@@ -2806,19 +2806,19 @@ class KnowledgeGraphExtractorWithValidation:
                 confidence=entity.confidence if hasattr(entity, "confidence") else 1.0,
                 source_text=entity.source_text if hasattr(entity, "source_text") else None
             )
-        
+
         # Apply relationship corrections
         for rel_id, rel in kg.relationships.items():
             # Get source and target entities
             source_entity = corrected_kg.get_entity_by_id(rel.source_id)
             target_entity = corrected_kg.get_entity_by_id(rel.target_id)
-            
+
             if source_entity and target_entity:
                 # Correct relationship type if needed
                 rel_type = rel.relationship_type if hasattr(rel, "relationship_type") else "related_to"
                 if rel_type in relationship_type_corrections:
                     rel_type = relationship_type_corrections[rel_type]
-                
+
                 # Create the corrected relationship
                 corrected_kg.add_relationship(
                     relationship_type=rel_type,
@@ -2830,5 +2830,5 @@ class KnowledgeGraphExtractorWithValidation:
                     source_text=rel.source_text if hasattr(rel, "source_text") else None,
                     bidirectional=rel.bidirectional if hasattr(rel, "bidirectional") else False
                 )
-        
+
         return corrected_kg

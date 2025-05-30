@@ -45,7 +45,7 @@ class config:
                     base[key] = value
         else:
             return base
-    
+
     def findConfig(self):
         paths = [
             os.path.join(os.path.dirname(os.path.realpath(__file__)),'config.toml'),
@@ -63,7 +63,7 @@ class config:
                 foundPath = this_path
             elif os.path.exists(path):
                 foundPath = path
-        
+
         print("foundPath: ", foundPath)
         # print(paths)
         return foundPath if foundPath != None else None
@@ -88,7 +88,7 @@ class config:
             configPath = opts['config']
         elif opts is None and "findConfig" in dir(self):
             configPath = self.findConfig(this_config)
-        
+
         if not configPath:
             print('this_dir: ')
             print(this_dir)

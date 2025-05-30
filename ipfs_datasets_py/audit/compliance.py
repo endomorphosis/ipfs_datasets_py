@@ -47,7 +47,7 @@ class ComplianceRequirement:
 class ComplianceReport:
     """
     A report demonstrating compliance with a set of requirements.
-    
+
     This class represents a compliance report generated from audit logs,
     showing whether and how compliance requirements are being met.
     """
@@ -60,30 +60,30 @@ class ComplianceReport:
     compliant: bool
     details: Dict[str, Any] = field(default_factory=dict)
     remediation_suggestions: Dict[str, List[str]] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert the report to a dictionary."""
         report_dict = asdict(self)
         report_dict['standard'] = self.standard.name
         return report_dict
-    
+
     def to_json(self, pretty=False) -> str:
         """Serialize the report to JSON."""
         if pretty:
             return json.dumps(self.to_dict(), indent=2)
         return json.dumps(self.to_dict())
-    
+
     def save_json(self, file_path: str, pretty=True) -> None:
         """Save the report to a JSON file."""
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(self.to_json(pretty=pretty))
-    
+
     def save_csv(self, file_path: str) -> None:
         """Save requirements status to a CSV file."""
         with open(file_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['Requirement ID', 'Description', 'Status', 'Evidence Count', 'Notes'])
-            
+
             for req in self.requirements:
                 writer.writerow([
                     req['id'],
@@ -92,7 +92,7 @@ class ComplianceReport:
                     req.get('evidence_count', 0),
                     req.get('notes', '')
                 ])
-    
+
     def save_html(self, file_path: str) -> None:
         """Save the report as an HTML document."""
         # Simple HTML template for the report
@@ -128,7 +128,7 @@ class ComplianceReport:
         <p><strong>Time Period:</strong> {self.time_period['start']} to {self.time_period['end']}</p>
         <p><strong>Overall Status:</strong> <span class="{'compliant' if self.compliant else 'non-compliant'}">{self.get_status_text(self.compliant)}</span></p>
     </div>
-    
+
     <div class="summary">
         <div class="summary-box">
             <h3>Summary</h3>
@@ -139,7 +139,7 @@ class ComplianceReport:
             <p><strong>Compliance Rate:</strong> {self.summary.get('compliance_rate', 0)}%</p>
         </div>
     </div>
-    
+
     <h2>Requirements</h2>
     <table>
         <tr>
@@ -156,27 +156,27 @@ class ComplianceReport:
                 <td class="status-{req['status'].lower()}">{req['status']}</td>
                 <td>{req.get('evidence_count', 0)}</td>
                 <td>{req.get('notes', '')}</td>
-            </tr>''' 
+            </tr>'''
             for req in self.requirements
         )}
     </table>
-    
+
     {"".join(
         f'''<div class="remediation">
             <h3>Remediation Suggestions for {req_id}</h3>
             <ul>
                 {"".join(f'<li>{suggestion}</li>' for suggestion in suggestions)}
             </ul>
-        </div>''' 
+        </div>'''
         for req_id, suggestions in self.remediation_suggestions.items()
     )}
 </body>
 </html>
 """
-        
+
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(html)
-    
+
     @staticmethod
     def get_status_text(status: bool) -> str:
         """Convert boolean status to text."""
@@ -186,42 +186,42 @@ class ComplianceReport:
 class ComplianceReporter:
     """
     Base class for generating compliance reports from audit logs.
-    
+
     This class provides the foundation for compliance reporting against
     various regulatory standards and frameworks.
     """
-    
+
     def __init__(self, standard: ComplianceStandard):
         """
         Initialize the compliance reporter.
-        
+
         Args:
             standard: The compliance standard to report against
         """
         self.standard = standard
         self.requirements: List[ComplianceRequirement] = []
         self.logger = logging.getLogger(__name__)
-    
+
     def add_requirement(self, requirement: ComplianceRequirement) -> None:
         """
         Add a compliance requirement to check.
-        
+
         Args:
             requirement: The compliance requirement to add
         """
         self.requirements.append(requirement)
-    
-    def generate_report(self, events: List[AuditEvent], 
+
+    def generate_report(self, events: List[AuditEvent],
                        start_time: Optional[str] = None,
                        end_time: Optional[str] = None) -> ComplianceReport:
         """
         Generate a compliance report from audit events.
-        
+
         Args:
             events: List of audit events to analyze
             start_time: Start time for the report period (ISO format)
             end_time: End time for the report period (ISO format)
-            
+
         Returns:
             ComplianceReport: The generated compliance report
         """
@@ -232,26 +232,26 @@ class ComplianceReporter:
             start = end - datetime.timedelta(days=30)
             end_time = end_time or end.isoformat() + 'Z'
             start_time = start_time or start.isoformat() + 'Z'
-        
+
         # Filter events by time period
         filtered_events = []
         for event in events:
             event_time = event.timestamp.rstrip('Z')
             if start_time <= event_time <= end_time:
                 filtered_events.append(event)
-        
+
         # Check each requirement
         requirement_results = []
         remediation_suggestions = {}
         all_compliant = True
-        
+
         for req in self.requirements:
             # Filter events relevant to this requirement
             relevant_events = self._filter_events_for_requirement(filtered_events, req)
-            
+
             # Check if requirement is met
             requirement_status, details = self._check_requirement(req, relevant_events)
-            
+
             # Add to results
             result = {
                 'id': req.id,
@@ -262,20 +262,20 @@ class ComplianceReporter:
                 'notes': details.get('notes', '')
             }
             requirement_results.append(result)
-            
+
             # Update overall compliance status
             if requirement_status == 'Non-Compliant':
                 all_compliant = False
                 remediation_suggestions[req.id] = self._generate_remediation(req, details)
             elif requirement_status == 'Partial' and all_compliant:
                 all_compliant = False
-            
+
         # Generate summary
         compliant_count = sum(1 for r in requirement_results if r['status'] == 'Compliant')
         non_compliant_count = sum(1 for r in requirement_results if r['status'] == 'Non-Compliant')
         partial_count = sum(1 for r in requirement_results if r['status'] == 'Partial')
         total = len(requirement_results)
-        
+
         summary = {
             'total_requirements': total,
             'compliant_count': compliant_count,
@@ -283,7 +283,7 @@ class ComplianceReporter:
             'partial_count': partial_count,
             'compliance_rate': round((compliant_count / total) * 100, 1) if total else 0
         }
-        
+
         # Create the report
         report = ComplianceReport(
             report_id=f"{self.standard.name}-{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
@@ -295,37 +295,37 @@ class ComplianceReporter:
             compliant=all_compliant,
             remediation_suggestions=remediation_suggestions
         )
-        
+
         return report
-    
-    def _filter_events_for_requirement(self, events: List[AuditEvent], 
+
+    def _filter_events_for_requirement(self, events: List[AuditEvent],
                                      requirement: ComplianceRequirement) -> List[AuditEvent]:
         """
         Filter events relevant to a specific compliance requirement.
-        
+
         Args:
             events: List of all audit events
             requirement: The compliance requirement to filter for
-            
+
         Returns:
             List[AuditEvent]: Events relevant to the requirement
         """
         result = []
-        
+
         for event in events:
             # Check level
             if event.level.value < requirement.min_level.value:
                 continue
-            
+
             # Check category
-            if (requirement.audit_categories and 
+            if (requirement.audit_categories and
                 event.category not in requirement.audit_categories):
                 continue
-            
+
             # Check action
             if requirement.actions and event.action not in requirement.actions:
                 continue
-            
+
             # Check required fields
             if requirement.required_fields:
                 missing_fields = False
@@ -340,26 +340,26 @@ class ComplianceReporter:
                     elif not hasattr(event, field) or getattr(event, field) is None:
                         missing_fields = True
                         break
-                
+
                 if missing_fields:
                     continue
-            
+
             # Event passes all filters
             result.append(event)
-        
+
         return result
-    
-    def _check_requirement(self, requirement: ComplianceRequirement, 
+
+    def _check_requirement(self, requirement: ComplianceRequirement,
                          events: List[AuditEvent]) -> tuple:
         """
         Check if a compliance requirement is met.
-        
+
         Args:
             requirement: The compliance requirement to check
             events: Relevant audit events
-            
+
         Returns:
-            tuple: (status, details) where status is one of 'Compliant', 
+            tuple: (status, details) where status is one of 'Compliant',
                   'Non-Compliant', or 'Partial'
         """
         # Use custom verification function if provided
@@ -371,23 +371,23 @@ class ComplianceReporter:
             except Exception as e:
                 self.logger.error(f"Error in verification function for {requirement.id}: {str(e)}")
                 return 'Non-Compliant', {'error': str(e)}
-        
+
         # Default verification based on event presence
         if not events:
             return 'Non-Compliant', {'notes': 'No relevant audit events found'}
-        
+
         # Simple presence check
         return 'Compliant', {'notes': f'Found {len(events)} relevant audit events'}
-    
-    def _generate_remediation(self, requirement: ComplianceRequirement, 
+
+    def _generate_remediation(self, requirement: ComplianceRequirement,
                             details: Dict[str, Any]) -> List[str]:
         """
         Generate remediation suggestions for a failed requirement.
-        
+
         Args:
             requirement: The failed compliance requirement
             details: Details about the failure
-            
+
         Returns:
             List[str]: Remediation suggestions
         """
@@ -397,7 +397,7 @@ class ComplianceReporter:
             f"Verify that required actions ({', '.join(requirement.actions)}) are being audited",
             f"Check that audit level is at least {requirement.min_level.name}"
         ]
-        
+
         # Add specific suggestions based on requirement
         if requirement.id.startswith('GDPR'):
             suggestions.append("Verify data access controls and consent tracking")
@@ -407,22 +407,22 @@ class ComplianceReporter:
             suggestions.append("Review system integrity and availability monitoring")
         elif requirement.id.startswith('PCI'):
             suggestions.append("Verify cardholder data protection measures")
-        
+
         return suggestions
 
 
 class GDPRComplianceReporter(ComplianceReporter):
     """
     Compliance reporter for GDPR (General Data Protection Regulation).
-    
+
     This class provides predefined compliance requirements specific to GDPR,
     focusing on data access, processing, and subject rights.
     """
-    
+
     def __init__(self):
         """Initialize the GDPR compliance reporter with predefined requirements."""
         super().__init__(ComplianceStandard.GDPR)
-        
+
         # Add GDPR-specific requirements
         self.add_requirement(ComplianceRequirement(
             id="GDPR-Art30",
@@ -433,7 +433,7 @@ class GDPRComplianceReporter(ComplianceReporter):
             min_level=AuditLevel.INFO,
             required_fields=["user", "resource_id", "timestamp"]
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="GDPR-Art32",
             standard=ComplianceStandard.GDPR,
@@ -442,7 +442,7 @@ class GDPRComplianceReporter(ComplianceReporter):
             actions=["login", "logout", "access_denied", "permission_changed"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="GDPR-Art33",
             standard=ComplianceStandard.GDPR,
@@ -451,7 +451,7 @@ class GDPRComplianceReporter(ComplianceReporter):
             actions=["security_incident", "breach_detected", "unauthorized_access"],
             min_level=AuditLevel.WARNING
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="GDPR-Art15",
             standard=ComplianceStandard.GDPR,
@@ -460,7 +460,7 @@ class GDPRComplianceReporter(ComplianceReporter):
             actions=["subject_access_request", "data_export"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="GDPR-Art17",
             standard=ComplianceStandard.GDPR,
@@ -474,15 +474,15 @@ class GDPRComplianceReporter(ComplianceReporter):
 class HIPAAComplianceReporter(ComplianceReporter):
     """
     Compliance reporter for HIPAA (Health Insurance Portability and Accountability Act).
-    
+
     This class provides predefined compliance requirements specific to HIPAA,
     focusing on PHI (Protected Health Information) access and security.
     """
-    
+
     def __init__(self):
         """Initialize the HIPAA compliance reporter with predefined requirements."""
         super().__init__(ComplianceStandard.HIPAA)
-        
+
         # Add HIPAA-specific requirements
         self.add_requirement(ComplianceRequirement(
             id="HIPAA-164.312.a.1",
@@ -493,7 +493,7 @@ class HIPAAComplianceReporter(ComplianceReporter):
             min_level=AuditLevel.INFO,
             required_fields=["user", "client_ip", "timestamp"]
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="HIPAA-164.312.b",
             standard=ComplianceStandard.HIPAA,
@@ -503,7 +503,7 @@ class HIPAAComplianceReporter(ComplianceReporter):
             min_level=AuditLevel.INFO,
             required_fields=["user", "resource_id", "timestamp"]
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="HIPAA-164.312.c.1",
             standard=ComplianceStandard.HIPAA,
@@ -512,7 +512,7 @@ class HIPAAComplianceReporter(ComplianceReporter):
             actions=["update", "delete", "checksum_validation"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="HIPAA-164.312.d",
             standard=ComplianceStandard.HIPAA,
@@ -521,7 +521,7 @@ class HIPAAComplianceReporter(ComplianceReporter):
             actions=["login", "mfa_challenge", "password_change"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="HIPAA-164.312.e.1",
             standard=ComplianceStandard.HIPAA,
@@ -535,16 +535,16 @@ class HIPAAComplianceReporter(ComplianceReporter):
 class SOC2ComplianceReporter(ComplianceReporter):
     """
     Compliance reporter for SOC 2 (Service Organization Control 2).
-    
+
     This class provides predefined compliance requirements specific to SOC 2,
     covering the five trust services criteria: security, availability,
     processing integrity, confidentiality, and privacy.
     """
-    
+
     def __init__(self):
         """Initialize the SOC2 compliance reporter with predefined requirements."""
         super().__init__(ComplianceStandard.SOC2)
-        
+
         # Add SOC2-specific requirements
         self.add_requirement(ComplianceRequirement(
             id="SOC2-CC1.1",
@@ -554,7 +554,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["role_assignment", "permission_changed", "policy_update"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-CC5.1",
             standard=ComplianceStandard.SOC2,
@@ -563,7 +563,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["login", "logout", "access_denied", "password_change", "mfa_challenge"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-CC5.2",
             standard=ComplianceStandard.SOC2,
@@ -572,7 +572,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["system_update", "configuration_change", "deployment"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-CC6.1",
             standard=ComplianceStandard.SOC2,
@@ -581,7 +581,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["vulnerability_scan", "security_incident", "patch_applied"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-A1.1",
             standard=ComplianceStandard.SOC2,
@@ -590,7 +590,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["system_startup", "system_shutdown", "service_status_change"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-PI1.1",
             standard=ComplianceStandard.SOC2,
@@ -599,7 +599,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["data_validation", "processing_complete", "error_detected"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-C1.1",
             standard=ComplianceStandard.SOC2,
@@ -608,7 +608,7 @@ class SOC2ComplianceReporter(ComplianceReporter):
             actions=["data_access", "data_deletion", "encryption_status"],
             min_level=AuditLevel.INFO
         ))
-        
+
         self.add_requirement(ComplianceRequirement(
             id="SOC2-P1.1",
             standard=ComplianceStandard.SOC2,

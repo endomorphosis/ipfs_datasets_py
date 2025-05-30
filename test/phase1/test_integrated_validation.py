@@ -40,7 +40,7 @@ from ipfs_datasets_py.llm_semantic_validation import ValidationResult
 
 class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
     """Tests for the integrated knowledge graph extractor with validation."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Mock the ValidationResult
@@ -59,7 +59,7 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
                 }
             }
         )
-        
+
         # Mock the validator
         self.mock_validator = MagicMock()
         self.mock_validator.validate_knowledge_graph.return_value = self.mock_validation_result
@@ -71,37 +71,37 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
                 "two_hop_paths": []
             }
         )
-        
+
         # Create a test knowledge graph
         self.test_kg = KnowledgeGraph(name="test_kg")
-        
+
         # Add entities
         self.entity1 = self.test_kg.add_entity(
             entity_type="technology",
             name="IPFS",
             properties={"description": "InterPlanetary File System"}
         )
-        
+
         self.entity2 = self.test_kg.add_entity(
             entity_type="organization",
             name="Protocol Labs",
             properties={"founder": "Juan Benet"}
         )
-        
+
         # Add relationship
         self.test_kg.add_relationship(
             relationship_type="developed_by",
             source=self.entity1,
             target=self.entity2
         )
-        
+
         # Mock the base extractor
         self.mock_extractor = MagicMock()
         self.mock_extractor.extract_enhanced_knowledge_graph.return_value = self.test_kg
         self.mock_extractor.extract_from_wikipedia.return_value = self.test_kg
         self.mock_extractor.extract_from_documents.return_value = self.test_kg
         self.mock_extractor.enrich_with_types.return_value = self.test_kg
-        
+
         # Create extractor with validation using mocks
         with patch('ipfs_datasets_py.knowledge_graph_extraction.KnowledgeGraphExtractor', return_value=self.mock_extractor):
             with patch('ipfs_datasets_py.llm_semantic_validation.SPARQLValidator', return_value=self.mock_validator):
@@ -112,7 +112,7 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
                 self.extractor_with_validation.validator = self.mock_validator
                 self.extractor_with_validation.validator_available = True
                 self.extractor_with_validation.extractor = self.mock_extractor
-    
+
     def test_extract_knowledge_graph(self):
         """Test extracting a knowledge graph from text with validation."""
         # Call the method to test
@@ -122,25 +122,25 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
             structure_temperature=0.5,
             validation_depth=2
         )
-        
+
         # Check that the base extractor was called
         self.mock_extractor.extract_enhanced_knowledge_graph.assert_called_once()
-        
+
         # Check that the validator was called
         self.mock_validator.validate_knowledge_graph.assert_called_once()
-        
+
         # Check the result structure
         self.assertIn("knowledge_graph", result)
         self.assertIn("validation_results", result)
         self.assertIn("validation_metrics", result)
         self.assertEqual(result["entity_count"], 2)
         self.assertEqual(result["relationship_count"], 1)
-        
+
         # Check validation metrics
         self.assertEqual(result["validation_metrics"]["entity_coverage"], 0.8)
         self.assertEqual(result["validation_metrics"]["relationship_coverage"], 0.7)
         self.assertEqual(result["validation_metrics"]["overall_coverage"], 0.75)
-    
+
     def test_extract_from_wikipedia(self):
         """Test extracting a knowledge graph from Wikipedia with validation."""
         # Call the method to test
@@ -150,18 +150,18 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
             structure_temperature=0.5,
             validation_depth=2
         )
-        
+
         # Check that the base extractor was called
         self.mock_extractor.extract_from_wikipedia.assert_called_once()
-        
+
         # Check that the validator was called
         self.mock_validator.validate_knowledge_graph.assert_called_once()
-        
+
         # Check the result structure
         self.assertIn("knowledge_graph", result)
         self.assertIn("validation_results", result)
         self.assertIn("validation_metrics", result)
-    
+
     def test_extract_from_documents(self):
         """Test extracting a knowledge graph from multiple documents with validation."""
         # Sample documents
@@ -169,7 +169,7 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
             {"text": "Document 1"},
             {"text": "Document 2"}
         ]
-        
+
         # Call the method to test
         result = self.extractor_with_validation.extract_from_documents(
             documents=documents,
@@ -178,19 +178,19 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
             structure_temperature=0.5,
             validation_depth=2
         )
-        
+
         # Check that the base extractor was called
         self.mock_extractor.extract_from_documents.assert_called_once()
         self.mock_extractor.enrich_with_types.assert_called_once()
-        
+
         # Check that the validator was called
         self.mock_validator.validate_knowledge_graph.assert_called_once()
-        
+
         # Check the result structure
         self.assertIn("knowledge_graph", result)
         self.assertIn("validation_results", result)
         self.assertIn("validation_metrics", result)
-    
+
     def test_apply_validation_corrections(self):
         """Test applying validation corrections to a knowledge graph."""
         # Sample corrections
@@ -212,17 +212,17 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
                 }
             }
         }
-        
+
         # Call the method to test
         corrected_kg = self.extractor_with_validation.apply_validation_corrections(
             kg=self.test_kg,
             corrections=corrections
         )
-        
+
         # Check the corrected knowledge graph
         self.assertEqual(len(corrected_kg.entities), 2)
         self.assertEqual(len(corrected_kg.relationships), 1)
-        
+
         # Check that entity properties were corrected
         ipfs_entities = [e for e in corrected_kg.entities.values() if e.name == "IPFS"]
         self.assertTrue(len(ipfs_entities) > 0)

@@ -13,11 +13,11 @@ def extract_dataset_from_cdxj(
     output_format: Literal["arrow", "huggingface", "dict"] = "arrow"
 ) -> Dict[str, Any]:
     """Extract a dataset from a CDXJ index file.
-    
+
     Args:
         cdxj_path: Path to the CDXJ file
         output_format: Output format - "arrow", "huggingface", or "dict"
-            
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -26,7 +26,7 @@ def extract_dataset_from_cdxj(
             - error: Error message (if failed)
     """
     processor = WebArchiveProcessor()
-    
+
     try:
         dataset = processor.extract_dataset_from_cdxj(cdxj_path, output_format)
         return {

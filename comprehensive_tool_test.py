@@ -43,21 +43,21 @@ async def test_tool(module_name: str, function_name: str, test_args: Dict[str, A
     """Test a single tool function."""
     try:
         print(f"Testing {module_name}.{function_name}...")
-        
+
         # Import the module and function
         module_path = f"ipfs_datasets_py.mcp_server.tools.{module_name}"
         module = importlib.import_module(module_path)
         func = getattr(module, function_name)
-        
+
         # Call the function
         if asyncio.iscoroutinefunction(func):
             result = await func(**test_args)
         else:
             result = func(**test_args)
-        
+
         print(f"✓ {function_name}: {result.get('status', 'success')}")
         return {"status": "success", "result": result}
-        
+
     except Exception as e:
         print(f"✗ {function_name}: {e}")
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
@@ -67,21 +67,21 @@ async def main():
     results = {}
     total_tools = 0
     successful_tools = 0
-    
+
     for module_name, tool_list in TOOLS.items():
         print(f"\n=== Testing {module_name} ===")
         module_results = {}
-        
+
         for function_name, test_args in tool_list:
             total_tools += 1
             result = await test_tool(module_name, function_name, test_args)
             module_results[function_name] = result
-            
+
             if result["status"] == "success":
                 successful_tools += 1
-        
+
         results[module_name] = module_results
-    
+
     # Print summary
     success_rate = (successful_tools / total_tools) * 100 if total_tools > 0 else 0
     print(f"\n=== SUMMARY ===")
@@ -89,12 +89,12 @@ async def main():
     print(f"Successful: {successful_tools}")
     print(f"Failed: {total_tools - successful_tools}")
     print(f"Success rate: {success_rate:.1f}%")
-    
+
     # Save detailed results
     import json
     with open("tool_test_results.json", "w") as f:
         json.dump(results, f, indent=2)
-    
+
     print(f"\nDetailed results saved to tool_test_results.json")
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ class TestMCPGetFromIPFS(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs
 
         cid = "QmTestHash"
-        
+
         # Mock the cat method to return file content
         self.mock_ipfs_client.cat = MagicMock(return_value=b"file content")
 

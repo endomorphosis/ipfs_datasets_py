@@ -21,30 +21,30 @@ class LibP2PNotAvailableError(Exception):
 
 class DistributedDatasetManager:
     """Stub implementation of DistributedDatasetManager."""
-    
+
     def __init__(self, *args, **kwargs):
         """Initialize stub manager."""
         self.shard_manager = MockShardManager()
-    
+
     def create_distributed_dataset(self, *args, **kwargs):
         """Stub method."""
         return {"status": "success", "message": "Stub implementation"}
 
 class MockShardManager:
     """Mock shard manager for testing."""
-    
+
     def get_dataset(self, dataset_id: str):
         """Return a mock dataset."""
         return MockDataset(dataset_id)
 
 class MockDataset:
     """Mock dataset for testing."""
-    
+
     def __init__(self, dataset_id: str):
         """Initialize mock dataset."""
         self.dataset_id = dataset_id
         self.format = "json"
-    
+
     async def save_async(self, *args, **kwargs):
         """Mock save method."""
         return {"size": 1024, "location": "/tmp/mock.json"}
@@ -52,6 +52,6 @@ class MockDataset:
 # Export the main classes
 __all__ = [
     "NodeRole",
-    "LibP2PNotAvailableError", 
+    "LibP2PNotAvailableError",
     "DistributedDatasetManager"
 ]

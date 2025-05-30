@@ -1,0 +1,82 @@
+# {{ title }}
+
+{% if description %}
+{{ description }}
+{% endif %}
+
+## Table of Contents
+{% for module in modules %}
+- [{{ module.name }}](#{{ module.name|lower|replace('.', '') }})
+  {% for cls in module.classes %}
+  - [{{ cls.name }}](#{{ cls.name|lower }})
+  {% endfor %}
+  {% for func in module.functions %}
+  - [{{ func.name }}()](#{{ func.name|lower }})
+  {% endfor %}
+{% endfor %}
+
+---
+
+{% for module in modules %}
+## {{ module.name }}
+
+{% if module.docstring %}
+{{ module.docstring }}
+{% endif %}
+
+{% if module.classes %}
+### Classes
+{% for cls in module.classes %}
+
+#### {{ cls.name }}
+
+{% if cls.docstring %}
+{{ cls.docstring }}
+{% endif %}
+
+{% if cls.methods %}
+**Methods:**
+{% for method in cls.methods %}
+- `{{ method.name }}()` - {{ method.docstring.split('\n')[0] if method.docstring else 'No description' }}
+{% endfor %}
+{% endif %}
+
+{% if cls.attributes %}
+**Attributes:**
+{% for attr in cls.attributes %}
+- `{{ attr.name }}` - {{ attr.docstring if attr.docstring else 'No description' }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if module.functions %}
+### Functions
+{% for func in module.functions %}
+
+#### {{ func.name }}()
+
+{% if func.docstring %}
+{{ func.docstring }}
+{% endif %}
+
+{% if func.parameters %}
+**Parameters:**
+{% for param in func.parameters %}
+- `{{ param.name }}` ({{ param.type_annotation if param.type_annotation else 'Any' }}){% if param.default %} = {{ param.default }}{% endif %} - {{ param.description if param.description else 'No description' }}
+{% endfor %}
+{% endif %}
+
+{% if func.returns %}
+**Returns:**
+- {{ func.returns.type_annotation if func.returns.type_annotation else 'Any' }} - {{ func.returns.description if func.returns.description else 'No description' }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+---
+*Generated on {{ generation_date }} by Documentation Generator*

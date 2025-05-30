@@ -22,19 +22,19 @@ class MCPCompletionPlan:
             "integration_tasks": [],
             "priority_actions": []
         }
-    
+
     def analyze_current_state(self):
         """Analyze what's currently working and what needs fixing."""
-        
+
         # Working tools - these are already complete
         working_tools = {
             "audit_tools": ["generate_audit_report", "record_audit_event"],
-            "cli": ["execute_command"], 
+            "cli": ["execute_command"],
             "functions": ["execute_python_snippet"],
             "dataset_tools": ["process_dataset"],
             "web_archive_tools": ["create_warc"]
         }
-        
+
         # Tools ready for testing (fixed but not yet tested)
         ready_for_testing = {
             "security_tools": ["check_access_permission"],
@@ -42,17 +42,17 @@ class MCPCompletionPlan:
             "graph_tools": ["query_knowledge_graph"],
             "provenance_tools": ["record_provenance"]
         }
-        
+
         # Failing tools that need specific fixes
         failing_tools = {
             "dataset_tools": {
                 "load_dataset": "Dataset Hub access issues - needs better mocking",
-                "save_dataset": "Missing DatasetManager class implementation", 
+                "save_dataset": "Missing DatasetManager class implementation",
                 "convert_dataset_format": "libp2p_kit hanging on import"
             },
             "web_archive_tools": {
                 "extract_dataset_from_cdxj": "Returns error status - needs investigation",
-                "extract_links_from_warc": "Returns error status - needs investigation", 
+                "extract_links_from_warc": "Returns error status - needs investigation",
                 "extract_metadata_from_warc": "Returns error status - needs investigation",
                 "extract_text_from_warc": "Returns error status - needs investigation",
                 "index_warc": "Returns error status - needs investigation"
@@ -62,14 +62,14 @@ class MCPCompletionPlan:
                 "pin_to_ipfs": "Same import issues as get_from_ipfs"
             }
         }
-        
+
         return working_tools, ready_for_testing, failing_tools
-    
+
     def generate_completion_plan(self):
         """Generate the specific action plan to complete the project."""
-        
+
         working, ready, failing = self.analyze_current_state()
-        
+
         # Critical fixes needed (highest priority)
         self.completion_status["critical_fixes_needed"] = [
             {
@@ -94,7 +94,7 @@ class MCPCompletionPlan:
                 "priority": "HIGH"
             }
         ]
-        
+
         # Dependency issues to resolve
         self.completion_status["dependency_issues"] = [
             {
@@ -113,7 +113,7 @@ class MCPCompletionPlan:
                 "solution": "Fix configuration or provide mock implementation"
             }
         ]
-        
+
         # Implementation gaps
         self.completion_status["implementation_gaps"] = [
             {
@@ -123,13 +123,13 @@ class MCPCompletionPlan:
                 "tools_affected": list(failing["web_archive_tools"].keys())
             },
             {
-                "area": "Dataset Loading Mock Strategy", 
+                "area": "Dataset Loading Mock Strategy",
                 "description": "load_dataset needs better mocking for Hub datasets",
                 "action": "Improve mock strategy or use local test datasets",
                 "tools_affected": ["load_dataset"]
             }
         ]
-        
+
         # Testing gaps (tools ready but not yet verified)
         self.completion_status["testing_gaps"] = [
             {
@@ -138,13 +138,13 @@ class MCPCompletionPlan:
                 "action": "Run tests on tools with fixed imports"
             },
             {
-                "category": "vector_tools", 
+                "category": "vector_tools",
                 "tools": ready["vector_tools"],
                 "action": "Run tests on tools with fixed imports"
             },
             {
                 "category": "graph_tools",
-                "tools": ready["graph_tools"], 
+                "tools": ready["graph_tools"],
                 "action": "Run tests on tools with fixed imports"
             },
             {
@@ -153,17 +153,17 @@ class MCPCompletionPlan:
                 "action": "Run tests on tools with fixed imports"
             }
         ]
-        
+
         # Integration tasks
         self.completion_status["integration_tasks"] = [
             "Test complete MCP server startup and tool registration",
-            "Verify all library features are properly exposed via MCP tools", 
+            "Verify all library features are properly exposed via MCP tools",
             "Create integration tests with actual MCP clients",
             "Validate async/sync compatibility across all tools",
             "Performance testing for working tools",
             "Documentation updates for completed tools"
         ]
-        
+
         # Priority action sequence
         self.completion_status["priority_actions"] = [
             {
@@ -173,7 +173,7 @@ class MCPCompletionPlan:
                 "estimated_effort": "1-2 hours"
             },
             {
-                "step": 2, 
+                "step": 2,
                 "action": "Implement DatasetManager or refactor save_dataset",
                 "reason": "Critical dataset functionality missing",
                 "estimated_effort": "2-3 hours"
@@ -209,7 +209,7 @@ class MCPCompletionPlan:
                 "estimated_effort": "1 hour"
             }
         ]
-    
+
     def estimate_completion_time(self):
         """Estimate time to complete remaining work."""
         total_hours = sum(
@@ -217,57 +217,57 @@ class MCPCompletionPlan:
             for action in self.completion_status["priority_actions"]
         )
         return f"{total_hours}-{total_hours + 5} hours"
-    
+
     def generate_next_actions(self):
         """Generate specific next actions to take."""
         return [
             "🔧 IMMEDIATE: Fix libp2p_kit.py hanging imports (create stub or mock)",
-            "📝 CRITICAL: Implement DatasetManager class or refactor save_dataset", 
+            "📝 CRITICAL: Implement DatasetManager class or refactor save_dataset",
             "🔗 HIGH: Resolve ipfs_kit_py import paths and configuration",
             "🧪 QUICK WIN: Test 5 tools with fixed imports (security, vector, graph, provenance)",
             "🔍 INVESTIGATE: Debug why 5 web archive tools return error status",
             "📊 TESTING: Run comprehensive integration tests after fixes",
             "📋 VALIDATE: Ensure all library features are exposed via MCP tools"
         ]
-    
+
     def save_completion_plan(self):
-        """Save the completion plan to a file.""" 
+        """Save the completion plan to a file."""
         self.generate_completion_plan()
-        
+
         # Add metadata
         self.completion_status["generated_at"] = datetime.now().isoformat()
         self.completion_status["estimated_completion_time"] = self.estimate_completion_time()
         self.completion_status["next_actions"] = self.generate_next_actions()
-        
+
         # Save to file
         plan_file = self.project_root / "mcp_completion_plan.json"
         with open(plan_file, 'w') as f:
             json.dump(self.completion_status, f, indent=2)
-        
+
         return plan_file
-    
+
     def print_summary(self):
         """Print a summary of what needs to be done."""
         self.generate_completion_plan()
-        
+
         print("🚀 IPFS Datasets MCP Server - Completion Plan")
         print("=" * 60)
         print(f"Current Status: {self.completion_status['current_status']}")
         print(f"Estimated Completion Time: {self.estimate_completion_time()}")
         print()
-        
+
         print("🎯 Next Actions (in priority order):")
         for action in self.generate_next_actions():
             print(f"  {action}")
         print()
-        
+
         print("🔥 Critical Fixes Needed:")
         for fix in self.completion_status["critical_fixes_needed"]:
             print(f"  • {fix['issue']} ({fix['priority']})")
             print(f"    Impact: {fix['impact']}")
             print(f"    Solution: {fix['solution']}")
             print()
-        
+
         print("📊 Success Projection:")
         print("  After fixing critical issues: ~85-90% success rate")
         print("  After web archive investigation: ~95-100% success rate")

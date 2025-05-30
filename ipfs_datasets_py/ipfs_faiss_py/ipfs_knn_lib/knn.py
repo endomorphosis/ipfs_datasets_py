@@ -608,7 +608,7 @@ class KNN:
                     # New API
                     web3uri = self.ipfs_api.add(document)
                 else:
-                    # Old API  
+                    # Old API
                     web3uri = self.ipfs_kit.ipfs_upload_object(document, **kwargs)
                 #web3uri = self.web3.upload(filename, None, text)
                 document_dict["__data__"]["web3storage"] = "https://" + web3uri + ".ipfs.w3s.link",

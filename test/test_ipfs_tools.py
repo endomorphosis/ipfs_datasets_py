@@ -26,58 +26,58 @@ class TestPinToIPFS:
         mock_client = MagicMock()
         mock_client.add = MagicMock(return_value=[{'Hash': 'QmTest', 'Name': 'test_file'}])
         return mock_client
-    
+
     @pytest.mark.asyncio
     async def test_pin_to_ipfs_file(self, mock_ipfs_client):
         # Create a temporary file
         with tempfile.NamedTemporaryFile(delete=False) as temp:
             temp.write(b"Test data")
             temp_path = temp.name
-        
+
         try:
             # Mock the IPFS client
             with patch('ipfs_datasets_py.ipfs_kit.IPFSClient', return_value=mock_ipfs_client):
                 # Call the function
                 result = await pin_to_ipfs(temp_path)
-                
+
                 # Assertions
                 assert result is not None
                 assert 'cid' in result
                 assert result['cid'] == 'QmTest'
-                
+
                 # Verify the mock was called correctly
                 mock_ipfs_client.add.assert_called_once()
         finally:
             # Clean up the temporary file
             os.unlink(temp_path)
-    
+
     @pytest.mark.asyncio
     async def test_pin_to_ipfs_directory(self, mock_ipfs_client):
         # Create a temporary directory
         temp_dir = tempfile.mkdtemp()
-        
+
         try:
             # Create a file in the temporary directory
             with open(os.path.join(temp_dir, 'test.txt'), 'w') as f:
                 f.write("Test data")
-            
+
             # Mock the IPFS client
             with patch('ipfs_datasets_py.ipfs_kit.IPFSClient', return_value=mock_ipfs_client):
                 # Call the function
                 result = await pin_to_ipfs(temp_dir)
-                
+
                 # Assertions
                 assert result is not None
                 assert 'cid' in result
                 assert result['cid'] == 'QmTest'
-                
+
                 # Verify the mock was called correctly
                 mock_ipfs_client.add.assert_called_once()
         finally:
             # Clean up the temporary directory
             import shutil
             shutil.rmtree(temp_dir)
-    
+
     @pytest.mark.asyncio
     async def test_pin_to_ipfs_invalid_path(self):
         # Test with an invalid path
@@ -97,46 +97,46 @@ class TestGetFromIPFS:
     @pytest.fixture
     def mock_ipfs_client(self):
         mock_client = MagicMock()
-        
+
         # Mock the get method to create a temporary file with test data
         def mock_get(cid, filepath):
             with open(filepath, 'w') as f:
                 f.write("Test data from IPFS")
             return filepath
-        
+
         mock_client.get = MagicMock(side_effect=mock_get)
         return mock_client
-    
+
     @pytest.mark.asyncio
     async def test_get_from_ipfs(self, mock_ipfs_client):
         # Create a temporary directory for output
         temp_dir = tempfile.mkdtemp()
-        
+
         try:
             # Mock the IPFS client
             with patch('ipfs_datasets_py.ipfs_kit.IPFSClient', return_value=mock_ipfs_client):
                 # Call the function
                 result = await get_from_ipfs('QmTest', temp_dir)
-                
+
                 # Assertions
                 assert result is not None
                 assert os.path.exists(result)
                 with open(result, 'r') as f:
                     content = f.read()
                 assert content == "Test data from IPFS"
-                
+
                 # Verify the mock was called correctly
                 mock_ipfs_client.get.assert_called_once()
         finally:
             # Clean up the temporary directory
             import shutil
             shutil.rmtree(temp_dir)
-    
+
     @pytest.mark.asyncio
     async def test_get_from_ipfs_invalid_cid(self, mock_ipfs_client):
         # Mock the get method to raise an exception for invalid CID
         mock_ipfs_client.get.side_effect = Exception("Invalid CID")
-        
+
         # Mock the IPFS client
         with patch('ipfs_datasets_py.ipfs_kit.IPFSClient', return_value=mock_ipfs_client):
             # Test with an invalid CID

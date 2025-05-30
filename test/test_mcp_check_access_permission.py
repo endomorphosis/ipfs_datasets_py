@@ -29,7 +29,7 @@ class TestMCPCheckAccessPermission(unittest.IsolatedAsyncioTestCase):
         user_id = "admin"
         resource_id = "data_record_123"
         permission_type = "read"
-        
+
         result = await check_access_permission(user_id=user_id, resource_id=resource_id, permission_type=permission_type)
 
         self.assertEqual(result["status"], "success")
@@ -45,7 +45,7 @@ class TestMCPCheckAccessPermission(unittest.IsolatedAsyncioTestCase):
         user_id = "guest"
         resource_id = "data_record_123"
         permission_type = "read"
-        
+
         result = await check_access_permission(user_id=user_id, resource_id=resource_id, permission_type=permission_type)
 
         self.assertEqual(result["status"], "success")

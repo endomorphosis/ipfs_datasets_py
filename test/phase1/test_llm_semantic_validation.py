@@ -26,11 +26,11 @@ from ipfs_datasets_py.llm_semantic_validation import (
 
 class TestSchemaRegistry(unittest.TestCase):
     """Tests for schema registry functionality."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.registry = SchemaRegistry()
-        
+
         # Register test schemas
         self.test_schema = {
             "type": "object",
@@ -39,9 +39,9 @@ class TestSchemaRegistry(unittest.TestCase):
             },
             "required": ["test"]
         }
-        
+
         self.registry.register_schema("test_domain", "test_task", self.test_schema)
-        
+
         # Register a default schema
         self.default_schema = {
             "type": "object",
@@ -50,29 +50,29 @@ class TestSchemaRegistry(unittest.TestCase):
             },
             "required": ["default"]
         }
-        
+
         self.registry.register_default_schema("test_task", self.default_schema)
-    
+
     def test_register_and_get_schema(self):
         """Test registering and retrieving schemas."""
         # Get the schema we registered
         schema = self.registry.get_schema("test_domain", "test_task")
-        
+
         # Should match the test schema
         self.assertEqual(schema, self.test_schema)
-        
+
         # Try with a non-existent domain
         schema = self.registry.get_schema("non_existent", "test_task")
-        
+
         # Should get the default schema
         self.assertEqual(schema, self.default_schema)
-        
+
         # Try with a non-existent task
         schema = self.registry.get_schema("test_domain", "non_existent")
-        
+
         # Should be None (no default for this task)
         self.assertIsNone(schema)
-    
+
     def test_schema_versioning(self):
         """Test schema versioning."""
         # Register a newer version of the schema
@@ -84,17 +84,17 @@ class TestSchemaRegistry(unittest.TestCase):
             },
             "required": ["test", "additional"]
         }
-        
+
         self.registry.register_schema("test_domain", "test_task", new_schema, version="2.0.0")
-        
+
         # Get without specifying version (should get latest)
         schema = self.registry.get_schema("test_domain", "test_task")
         self.assertEqual(schema, new_schema)
-        
+
         # Get specific version
         schema = self.registry.get_schema("test_domain", "test_task", version="1.0.0")
         self.assertEqual(schema, self.test_schema)
-        
+
         # Get specific version
         schema = self.registry.get_schema("test_domain", "test_task", version="2.0.0")
         self.assertEqual(schema, new_schema)
@@ -102,11 +102,11 @@ class TestSchemaRegistry(unittest.TestCase):
 
 class TestSchemaValidator(unittest.TestCase):
     """Tests for schema validator functionality."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.registry = SchemaRegistry()
-        
+
         # Register test schemas
         self.test_schema = {
             "type": "object",
@@ -116,12 +116,12 @@ class TestSchemaValidator(unittest.TestCase):
             },
             "required": ["answer", "confidence"]
         }
-        
+
         self.registry.register_schema("test_domain", "test_task", self.test_schema)
-        
+
         # Create validator
         self.validator = SchemaValidator(self.registry)
-    
+
     def test_validation_success(self):
         """Test successful validation."""
         # Valid data
@@ -129,49 +129,49 @@ class TestSchemaValidator(unittest.TestCase):
             "answer": "Test answer",
             "confidence": 0.9
         }
-        
+
         # Validate
         result = self.validator.validate(data, "test_domain", "test_task")
-        
+
         # Should be valid
         self.assertTrue(result.is_valid)
         self.assertEqual(result.data, data)
         self.assertEqual(result.errors, [])
-    
+
     def test_validation_failure(self):
         """Test validation failure."""
         # Invalid data (missing required field)
         data = {
             "answer": "Test answer"
         }
-        
+
         # Validate
         result = self.validator.validate(data, "test_domain", "test_task")
-        
+
         # Should not be valid
         self.assertFalse(result.is_valid)
         self.assertEqual(result.data, data)
         self.assertGreater(len(result.errors), 0)
-        
+
         # Invalid data (wrong type)
         data = {
             "answer": "Test answer",
             "confidence": "high"  # Should be a number
         }
-        
+
         # Validate
         result = self.validator.validate(data, "test_domain", "test_task")
-        
+
         # Should not be valid
         self.assertFalse(result.is_valid)
         self.assertEqual(result.data, data)
         self.assertGreater(len(result.errors), 0)
-    
+
     def test_non_existent_schema(self):
         """Test validation with non-existent schema."""
         # Validate with non-existent schema
         result = self.validator.validate({}, "non_existent", "non_existent")
-        
+
         # Should not be valid
         self.assertFalse(result.is_valid)
         self.assertGreater(len(result.errors), 0)
@@ -179,11 +179,11 @@ class TestSchemaValidator(unittest.TestCase):
 
 class TestSemanticAugmenter(unittest.TestCase):
     """Tests for semantic augmenter functionality."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.augmenter = SemanticAugmenter()
-    
+
     def test_basic_augmentation(self):
         """Test basic augmentation."""
         # Data to augment
@@ -191,17 +191,17 @@ class TestSemanticAugmenter(unittest.TestCase):
             "answer": "Test answer",
             "confidence": 0.9
         }
-        
+
         # Augment
         augmented = self.augmenter.augment(data, "test_domain", "test_task")
-        
+
         # Check basic augmentation
         self.assertEqual(augmented["answer"], "Test answer")
         self.assertEqual(augmented["confidence"], 0.9)
         self.assertEqual(augmented["domain"], "test_domain")
         self.assertEqual(augmented["task"], "test_task")
         self.assertIn("augmented_at", augmented)
-    
+
     def test_cross_document_reasoning_augmentation(self):
         """Test cross-document reasoning augmentation."""
         # Data to augment
@@ -210,22 +210,22 @@ class TestSemanticAugmenter(unittest.TestCase):
             "reasoning": "Neural Networks are a subset of Machine Learning techniques that use Deep Learning architectures. Traditional methods like Decision Trees and Support Vector Machines rely on different principles.",
             "confidence": 0.85
         }
-        
+
         # Augment
         augmented = self.augmenter.augment(data, "academic", "cross_document_reasoning")
-        
+
         # Check domain-specific augmentation
         self.assertIn("key_concepts", augmented)
         self.assertIn("uncertainty_assessment", augmented)
         self.assertIn("scholarly_context", augmented)
-        
+
         # Check key concepts extraction
         self.assertTrue(any("Neural Networks" in concept for concept in augmented["key_concepts"]))
-        
+
         # Check uncertainty assessment
         self.assertIn("score", augmented["uncertainty_assessment"])
         self.assertIn("interpretation", augmented["uncertainty_assessment"])
-    
+
     def test_evidence_chain_augmentation(self):
         """Test evidence chain augmentation."""
         # Data to augment
@@ -235,26 +235,26 @@ class TestSemanticAugmenter(unittest.TestCase):
             "inference": "By combining information from both documents, we get a more complete picture.",
             "confidence": 0.9
         }
-        
+
         # Augment
         augmented = self.augmenter.augment(data, "test_domain", "evidence_chain_analysis")
-        
+
         # Check specific augmentation
         self.assertIn("confidence_interpretation", augmented)
         self.assertEqual(augmented["confidence_interpretation"], "high")
-        
+
         self.assertIn("relationship_strength", augmented)
         self.assertEqual(augmented["relationship_strength"], "strong")
 
 
 class TestSemanticValidator(unittest.TestCase):
     """Tests for semantic validator functionality."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Create registry
         self.registry = SchemaRegistry()
-        
+
         # Register test schema
         self.test_schema = {
             "type": "object",
@@ -264,16 +264,16 @@ class TestSemanticValidator(unittest.TestCase):
             },
             "required": ["answer", "confidence"]
         }
-        
+
         self.registry.register_schema("test_domain", "test_task", self.test_schema)
-        
+
         # Create validator and augmenter
         self.schema_validator = SchemaValidator(self.registry)
         self.augmenter = SemanticAugmenter()
-        
+
         # Create semantic validator
         self.validator = SemanticValidator(self.schema_validator, self.augmenter)
-    
+
     def test_valid_processing(self):
         """Test processing valid data."""
         # Valid data
@@ -281,19 +281,19 @@ class TestSemanticValidator(unittest.TestCase):
             "answer": "Test answer",
             "confidence": 0.9
         }
-        
+
         # Process
         success, processed, errors = self.validator.process(data, "test_domain", "test_task")
-        
+
         # Should succeed
         self.assertTrue(success)
         self.assertEqual(len(errors), 0)
-        
+
         # Should have basic augmentation
         self.assertEqual(processed["domain"], "test_domain")
         self.assertEqual(processed["task"], "test_task")
         self.assertIn("augmented_at", processed)
-    
+
     def test_invalid_processing(self):
         """Test processing invalid data."""
         # Invalid data
@@ -301,47 +301,47 @@ class TestSemanticValidator(unittest.TestCase):
             "answer": "Test answer"
             # Missing confidence
         }
-        
+
         # Process without auto-repair
         success, processed, errors = self.validator.process(
             data, "test_domain", "test_task", auto_repair=False
         )
-        
+
         # Should fail
         self.assertFalse(success)
         self.assertGreater(len(errors), 0)
-        
+
         # Processed data should be the original
         self.assertEqual(processed, data)
 
 
 class TestSPARQLValidator(unittest.TestCase):
     """Tests for SPARQL validator functionality."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Create a validator with mocked responses
         self.validator = SPARQLValidator(cache_results=True)
-        
+
         # Mock the _get_wikidata_entity method
         self.original_get_wikidata_entity = self.validator._get_wikidata_entity
         self.validator._get_wikidata_entity = self._mock_get_wikidata_entity
-        
+
         # Mock the _get_entity_properties method
         self.original_get_entity_properties = self.validator._get_entity_properties
         self.validator._get_entity_properties = self._mock_get_entity_properties
-        
+
         # Mock the _check_relationship method
         self.original_check_relationship = self.validator._check_relationship
         self.validator._check_relationship = self._mock_check_relationship
-    
+
     def tearDown(self):
         """Tear down test fixtures."""
         # Restore original methods
         self.validator._get_wikidata_entity = self.original_get_wikidata_entity
         self.validator._get_entity_properties = self.original_get_entity_properties
         self.validator._check_relationship = self.original_check_relationship
-    
+
     def _mock_get_wikidata_entity(self, entity_name, entity_type=None):
         """Mock method for retrieving Wikidata entities."""
         entity_map = {
@@ -364,9 +364,9 @@ class TestSPARQLValidator(unittest.TestCase):
                 "url": "https://www.wikidata.org/wiki/Q54872189"
             }
         }
-        
+
         return entity_map.get(entity_name)
-    
+
     def _mock_get_entity_properties(self, entity_id):
         """Mock method for retrieving Wikidata entity properties."""
         property_map = {
@@ -431,9 +431,9 @@ class TestSPARQLValidator(unittest.TestCase):
                 }
             ]
         }
-        
+
         return property_map.get(entity_id, [])
-    
+
     def _mock_check_relationship(self, source_id, target_id, relationship_type, bidirectional=False):
         """Mock method for checking relationships between Wikidata entities."""
         # Define a map of known relationships
@@ -469,12 +469,12 @@ class TestSPARQLValidator(unittest.TestCase):
                 "confidence": 0.95
             }
         }
-        
+
         # Check direct relationship
         key = (source_id, target_id, relationship_type)
         if key in relationship_map:
             return relationship_map[key]
-            
+
         # Check reverse relationship if bidirectional
         if bidirectional:
             key = (target_id, source_id, relationship_type)
@@ -485,7 +485,7 @@ class TestSPARQLValidator(unittest.TestCase):
                     result["relationship"] = result["relationship"].copy()
                     result["relationship"]["direction"] = "reverse"
                 return result
-        
+
         # No relationship found
         return {
             "exists": False,
@@ -496,7 +496,7 @@ class TestSPARQLValidator(unittest.TestCase):
             },
             "confidence": 0.3
         }
-    
+
     def test_validate_entity_success(self):
         """Test successful validation of an entity."""
         # Validate IPFS entity
@@ -508,14 +508,14 @@ class TestSPARQLValidator(unittest.TestCase):
                 "inception": "2015"
             }
         )
-        
+
         # Should be valid
         self.assertTrue(result.is_valid)
         self.assertEqual(result.data["entity"], "IPFS")
         self.assertEqual(result.data["wikidata_entity"]["id"], "Q22661306")
         self.assertIn("developer", result.data["validated_properties"])
         self.assertIn("inception", result.data["validated_properties"])
-    
+
     def test_validate_entity_failure(self):
         """Test failed validation of an entity."""
         # Validate IPFS with incorrect properties
@@ -527,14 +527,14 @@ class TestSPARQLValidator(unittest.TestCase):
                 "inception": "2020"
             }
         )
-        
+
         # Should not be valid
         self.assertFalse(result.is_valid)
         self.assertEqual(result.data["entity"], "IPFS")
         self.assertEqual(result.data["wikidata_entity"]["id"], "Q22661306")
         self.assertGreater(len(result.data["property_mismatches"]), 0)
         self.assertGreater(len(result.errors), 0)
-    
+
     def test_validate_relationship_success(self):
         """Test successful validation of a relationship."""
         # Validate Protocol Labs founded by Juan Benet
@@ -543,14 +543,14 @@ class TestSPARQLValidator(unittest.TestCase):
             relationship_type="founded_by",
             target_entity="Juan Benet"
         )
-        
+
         # Should be valid
         self.assertTrue(result.is_valid)
         self.assertEqual(result.data["source"], "Protocol Labs")
         self.assertEqual(result.data["target"], "Juan Benet")
         self.assertEqual(result.data["relationship"], "founded_by")
         self.assertEqual(result.data["wikidata_relationship"]["property"], "founded by")
-    
+
     def test_validate_relationship_failure(self):
         """Test failed validation of a relationship."""
         # Validate non-existent relationship
@@ -559,14 +559,14 @@ class TestSPARQLValidator(unittest.TestCase):
             relationship_type="invented_by",
             target_entity="Juan Benet"
         )
-        
+
         # Should not be valid
         self.assertFalse(result.is_valid)
         self.assertEqual(result.data["source"], "IPFS")
         self.assertEqual(result.data["target"], "Juan Benet")
         self.assertEqual(result.data["relationship"], "invented_by")
         self.assertGreater(len(result.errors), 0)
-    
+
     def test_validate_bidirectional_relationship(self):
         """Test validation of a bidirectional relationship."""
         # Validate works_for relationship in both directions
@@ -576,46 +576,46 @@ class TestSPARQLValidator(unittest.TestCase):
             target_entity="Protocol Labs",
             bidirectional=False
         )
-        
+
         result2 = self.validator.validate_relationship(
             source_entity="Protocol Labs",
             relationship_type="works_for",
             target_entity="Juan Benet",
             bidirectional=True  # Allow checking reverse direction
         )
-        
+
         # First direction should be valid
         self.assertTrue(result1.is_valid)
-        
+
         # Second direction should be valid with bidirectional=True
         self.assertTrue(result2.is_valid)
         self.assertEqual(result2.data["wikidata_relationship"]["direction"], "reverse")
-    
+
     def test_string_similarity(self):
         """Test the string similarity calculation."""
         similarity = self.validator._string_similarity(
             "developer of protocol",
             "protocol developer"
         )
-        
+
         # Jaccard similarity with some overlap
         self.assertGreater(similarity, 0.3)
         self.assertLess(similarity, 1.0)
-        
+
         # Identical strings
         similarity = self.validator._string_similarity(
             "identical string",
             "identical string"
         )
         self.assertEqual(similarity, 1.0)
-        
+
         # No overlap
         similarity = self.validator._string_similarity(
             "completely different",
             "entirely unique"
         )
         self.assertEqual(similarity, 0.0)
-    
+
     def test_explanation_generation(self):
         """Test generation of human-readable explanations."""
         # First validate an entity
@@ -627,25 +627,25 @@ class TestSPARQLValidator(unittest.TestCase):
                 "inception": "2015"
             }
         )
-        
+
         # Generate different types of explanations
         summary = self.validator.generate_validation_explanation(
             validation_result,
             explanation_type="summary"
         )
-        
+
         detailed = self.validator.generate_validation_explanation(
             validation_result,
             explanation_type="detailed"
         )
-        
+
         # Check that explanations are generated
         self.assertIsInstance(summary, str)
         self.assertIsInstance(detailed, str)
-        
+
         # Summary should be shorter than detailed
         self.assertLess(len(summary), len(detailed))
-        
+
         # Detailed should contain more information
         self.assertIn("Property Validations", detailed)
         self.assertIn("IPFS", detailed)

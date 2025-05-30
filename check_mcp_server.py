@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 def check_mcp_server():
     """Check the MCP server implementation components."""
     print("\nIPFS Datasets MCP Server Component Check\n" + "=" * 40)
-    
+
     # Check for MCP server directory
     mcp_server_dir = Path(__file__).resolve().parent / "ipfs_datasets_py" / "mcp_server"
     if mcp_server_dir.exists():
@@ -23,7 +23,7 @@ def check_mcp_server():
     else:
         print(f"✗ MCP server directory not found: {mcp_server_dir}")
         return False
-    
+
     # List key files
     print("\nKey files:")
     key_files = ["__init__.py", "server.py", "client.py", "configs.py", "logger.py", "simple_server.py"]
@@ -33,7 +33,7 @@ def check_mcp_server():
             print(f"  ✓ {file}")
         else:
             print(f"  ✗ {file} (missing)")
-    
+
     # Check tools directory
     tools_dir = mcp_server_dir / "tools"
     if tools_dir.exists():
@@ -46,13 +46,13 @@ def check_mcp_server():
                 print(f"  ✓ {item.name} ({tool_count} tools)")
     else:
         print("\n✗ Tools directory not found")
-    
+
     # Try to import the MCP server module
     print("\nModule import check:")
     try:
         mcp_server_module = importlib.import_module("ipfs_datasets_py.mcp_server")
         print("✓ Successfully imported ipfs_datasets_py.mcp_server")
-        
+
         # Check for important attributes
         check_attrs = ["configs", "IPFSDatasetsMCPServer", "SimpleIPFSDatasetsMCPServer", "start_server"]
         for attr in check_attrs:
@@ -65,7 +65,7 @@ def check_mcp_server():
                 print(f"  ✗ Error checking {attr}: {e}")
     except ImportError as e:
         print(f"✗ Failed to import MCP server module: {e}")
-    
+
     # print("\nDependency check:")
     # try:
     #     import modelcontextprotocol
@@ -73,13 +73,13 @@ def check_mcp_server():
     # except ImportError:
     #     print("✗ modelcontextprotocol package is not installed")
     #     print("  - Using simplified implementation")
-    
+
     # try:
     #     import flask
     #     print("✓ flask package is installed")
     # except ImportError:
     #     print("✗ flask package is not installed (needed for simplified implementation)")
-    
+
     print("\nComponent check complete!")
     return True
 

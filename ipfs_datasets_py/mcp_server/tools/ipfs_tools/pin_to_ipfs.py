@@ -32,14 +32,14 @@ async def pin_to_ipfs(
     """
     try:
         logger.info(f"Pinning content from {content_source} to IPFS")
-        
+
         # Handle different input types
         if isinstance(content_source, dict):
             # Data dictionary provided - create a mock pin response
             import json
             data_size = len(json.dumps(content_source))
             mock_cid = f"Qm{hash(str(content_source)) % 1000000000:09d}"
-            
+
             return {
                 "status": "success",
                 "cid": mock_cid,
@@ -49,9 +49,9 @@ async def pin_to_ipfs(
                 "recursive": recursive,
                 "wrap_with_directory": wrap_with_directory
             }
-        
+
         content_path = str(content_source)
-        
+
         # Check if the path exists
         if not os.path.exists(content_path):
             return {
@@ -59,22 +59,22 @@ async def pin_to_ipfs(
                 "message": f"Path does not exist: {content_path}",
                 "content_path": content_path
             }
-            
+
         # Determine if we're using direct ipfs_kit_py or MCP client
         from ipfs_datasets_py.mcp_server.configs import configs
-        
+
         if configs.ipfs_kit_integration == "direct":
             # Direct integration with ipfs_kit_py
             import ipfs_kit_py
-            
+
             # Pin the content
             result = await ipfs_kit_py.add_async(
-                content_path, 
+                content_path,
                 recursive=recursive,
                 wrap_with_directory=wrap_with_directory,
                 hash=hash_algo
             )
-            
+
             return {
                 "status": "success",
                 "cid": result["Hash"],
@@ -85,10 +85,10 @@ async def pin_to_ipfs(
         else:
             # Use MCP client to call ipfs_kit_py MCP server
             from modelcontextprotocol.client import MCPClient
-            
-            # Create client 
+
+            # Create client
             client = MCPClient(configs.ipfs_kit_mcp_url)
-            
+
             # Call the add tool
             result = await client.call_tool("add", {
                 "path": content_path,
@@ -96,7 +96,7 @@ async def pin_to_ipfs(
                 "wrap_with_directory": wrap_with_directory,
                 "hash": hash_algo
             })
-            
+
             return {
                 "status": "success",
                 "cid": result["Hash"],

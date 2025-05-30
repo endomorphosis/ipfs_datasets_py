@@ -55,7 +55,7 @@ def analyze_function_signature(func):
 def generate_audit_report_test():
     try:
         params, return_type = analyze_function_signature(generate_audit_report)
-        
+
         test_content = f"""
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
@@ -71,7 +71,7 @@ class TestGenerateAuditReport:
     @pytest.fixture
     def mock_audit_manager(self):
         mock_manager = MagicMock()
-        
+
         # Sample audit events data
         sample_events = [
             {{
@@ -93,53 +93,53 @@ class TestGenerateAuditReport:
                 'status': 'success'
             }}
         ]
-        
+
         mock_manager.get_audit_events = AsyncMock(return_value=sample_events)
         return mock_manager
-    
+
     @pytest.mark.asyncio
     async def test_generate_audit_report_default(self, mock_audit_manager):
         # Create a temporary directory for output
         temp_dir = tempfile.mkdtemp()
         output_path = os.path.join(temp_dir, 'audit_report.json')
-        
+
         try:
             # Mock the audit manager
             with patch('ipfs_datasets_py.audit_kit.AuditManager', return_value=mock_audit_manager):
                 # Call the function
                 result = await generate_audit_report(output_path=output_path)
-                
+
                 # Assertions
                 assert result is not None
                 assert os.path.exists(output_path)
-                
+
                 # Verify the content of the report
                 with open(output_path, 'r') as f:
                     report_content = json.load(f)
-                
+
                 assert 'audit_events' in report_content
                 assert len(report_content['audit_events']) == 2
-                
+
                 # Verify the mock was called correctly
                 mock_audit_manager.get_audit_events.assert_called_once()
         finally:
             # Clean up the temporary directory
             import shutil
             shutil.rmtree(temp_dir)
-    
+
     @pytest.mark.asyncio
     async def test_generate_audit_report_with_filters(self, mock_audit_manager):
         # Create a temporary directory for output
         temp_dir = tempfile.mkdtemp()
         output_path = os.path.join(temp_dir, 'audit_report.json')
-        
+
         try:
             # Set up filter parameters
             start_date = datetime.datetime.now() - datetime.timedelta(days=7)
             end_date = datetime.datetime.now()
             event_type = 'dataset_access'
             user_id = 'user123'
-            
+
             # Mock the audit manager
             with patch('ipfs_datasets_py.audit_kit.AuditManager', return_value=mock_audit_manager):
                 # Call the function
@@ -150,11 +150,11 @@ class TestGenerateAuditReport:
                     user_id=user_id,
                     output_path=output_path
                 )
-                
+
                 # Assertions
                 assert result is not None
                 assert os.path.exists(output_path)
-                
+
                 # Verify the mock was called correctly with filters
                 mock_audit_manager.get_audit_events.assert_called_once()
                 call_kwargs = mock_audit_manager.get_audit_events.call_args[1]
@@ -178,7 +178,7 @@ class TestGenerateAuditReport:
 def generate_record_audit_event_test():
     try:
         params, return_type = analyze_function_signature(record_audit_event)
-        
+
         test_content = f"""
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
@@ -193,7 +193,7 @@ class TestRecordAuditEvent:
         mock_manager = MagicMock()
         mock_manager.record_event = AsyncMock(return_value={{'event_id': 'test_event_123'}})
         return mock_manager
-    
+
     @pytest.mark.asyncio
     async def test_record_audit_event_minimal(self, mock_audit_manager):
         # Mock the audit manager
@@ -202,25 +202,25 @@ class TestRecordAuditEvent:
             event_type = 'dataset_access'
             resource_id = 'dataset_abc'
             action = 'read'
-            
+
             result = await record_audit_event(
                 event_type=event_type,
                 resource_id=resource_id,
                 action=action
             )
-            
+
             # Assertions
             assert result is not None
             assert 'event_id' in result
             assert result['event_id'] == 'test_event_123'
-            
+
             # Verify the mock was called correctly
             mock_audit_manager.record_event.assert_called_once()
             call_args = mock_audit_manager.record_event.call_args[1]
             assert call_args['event_type'] == event_type
             assert call_args['resource_id'] == resource_id
             assert call_args['action'] == action
-    
+
     @pytest.mark.asyncio
     async def test_record_audit_event_full(self, mock_audit_manager):
         # Mock the audit manager
@@ -232,7 +232,7 @@ class TestRecordAuditEvent:
             user_id = 'user456'
             status = 'success'
             metadata = {{'changed_fields': ['title', 'description'], 'reason': 'update'}}
-            
+
             result = await record_audit_event(
                 event_type=event_type,
                 resource_id=resource_id,
@@ -241,11 +241,11 @@ class TestRecordAuditEvent:
                 status=status,
                 metadata=metadata
             )
-            
+
             # Assertions
             assert result is not None
             assert 'event_id' in result
-            
+
             # Verify the mock was called correctly with all parameters
             mock_audit_manager.record_event.assert_called_once()
             call_args = mock_audit_manager.record_event.call_args[1]
@@ -255,12 +255,12 @@ class TestRecordAuditEvent:
             assert call_args['user_id'] == user_id
             assert call_args['status'] == status
             assert call_args['metadata'] == metadata
-    
+
     @pytest.mark.asyncio
     async def test_record_audit_event_error_handling(self, mock_audit_manager):
         # Mock the audit manager to raise an exception
         mock_audit_manager.record_event.side_effect = Exception("Error recording audit event")
-        
+
         # Mock the audit manager
         with patch('ipfs_datasets_py.audit_kit.AuditManager', return_value=mock_audit_manager):
             # Test error handling
@@ -280,7 +280,7 @@ class TestRecordAuditEvent:
 def generate_test_file():
     generate_audit_report_test_content = generate_audit_report_test()
     record_audit_event_test_content = generate_record_audit_event_test()
-    
+
     test_file_content = """#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -297,21 +297,21 @@ import os
 import sys
 import pytest
 """
-    
+
     if generate_audit_report_test_content:
         test_file_content += "\n" + generate_audit_report_test_content
-    
+
     if record_audit_event_test_content:
         test_file_content += "\n" + record_audit_event_test_content
-    
+
     # Create the test file
     test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test")
     os.makedirs(test_dir, exist_ok=True)
     test_file_path = os.path.join(test_dir, "test_audit_tools.py")
-    
+
     with open(test_file_path, "w") as f:
         f.write(test_file_content)
-    
+
     print(f"Generated test file: {test_file_path}")
 
 # Main function

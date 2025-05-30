@@ -28,24 +28,24 @@ from ipfs_datasets_py.audit.audit_reporting import (
 
 def generate_sample_audit_events(audit_logger: AuditLogger, count: int = 100):
     """Generate sample audit events for demonstration."""
-    categories = [AuditCategory.AUTHENTICATION, 
-                 AuditCategory.DATA_ACCESS, 
+    categories = [AuditCategory.AUTHENTICATION,
+                 AuditCategory.DATA_ACCESS,
                  AuditCategory.SECURITY,
                  AuditCategory.SYSTEM,
                  AuditCategory.DATA_MODIFICATION]
-    
+
     levels = [AuditLevel.INFO, AuditLevel.INFO, AuditLevel.INFO,  # More common
              AuditLevel.WARNING, AuditLevel.WARNING,
-             AuditLevel.ERROR, 
+             AuditLevel.ERROR,
              AuditLevel.CRITICAL]  # Less common
-    
-    actions = ["read", "write", "update", "delete", "login", "logout", 
+
+    actions = ["read", "write", "update", "delete", "login", "logout",
               "query", "configure", "backup", "restore"]
-    
+
     users = ["user1", "user2", "admin", "system", None]
-    
+
     resources = ["dataset1", "dataset2", "model1", "index1", "config", None]
-    
+
     # Generate events
     for i in range(count):
         level = levels[i % len(levels)]
@@ -53,13 +53,13 @@ def generate_sample_audit_events(audit_logger: AuditLogger, count: int = 100):
         action = actions[i % len(actions)]
         user = users[i % len(users)]
         resource_id = resources[i % len(resources)]
-        
+
         # Some status failures based on level
         status = "success" if level == AuditLevel.INFO else (
-            "failure" if level in [AuditLevel.ERROR, AuditLevel.CRITICAL] else 
+            "failure" if level in [AuditLevel.ERROR, AuditLevel.CRITICAL] else
             "success" if i % 3 == 0 else "failure"
         )
-        
+
         # Create event
         event = AuditEvent(
             event_id=f"test-{i}",
@@ -80,10 +80,10 @@ def generate_sample_audit_events(audit_logger: AuditLogger, count: int = 100):
                 "duration_ms": i * 10 if action in ["read", "query"] else i * 50
             }
         )
-        
+
         # Log event
         audit_logger.log_event(event)
-        
+
     # Add some compliance-related events
     audit_logger.log_event(AuditEvent(
         event_id="compliance-1",
@@ -94,7 +94,7 @@ def generate_sample_audit_events(audit_logger: AuditLogger, count: int = 100):
         status="failure",
         details={"requirement": "data_access_logging", "violation": "Missing user tracking"}
     ))
-    
+
     # Add some security alerts
     audit_logger.log_event(AuditEvent(
         event_id="security-1",
@@ -105,7 +105,7 @@ def generate_sample_audit_events(audit_logger: AuditLogger, count: int = 100):
         status="failure",
         details={"alert": "Multiple failed login attempts", "source_ip": "10.0.0.5"}
     ))
-    
+
     # Add some login failures for pattern detection
     for i in range(10):
         audit_logger.log_event(AuditEvent(
@@ -124,18 +124,18 @@ def main():
     """Run the audit reporting example."""
     print("Audit Reporting Example")
     print("======================\n")
-    
+
     # Set up audit logger
     audit_logger = AuditLogger.get_instance()
-    
+
     # Generate sample audit events
     print("Generating sample audit events...")
     generate_sample_audit_events(audit_logger, count=100)
     print("Generated 100 sample audit events plus special test cases\n")
-    
+
     # Set up visualization and metrics collection
     metrics_aggregator, visualizer, _ = setup_audit_visualization(audit_logger)
-    
+
     # Process the events to populate metrics
     print("Collecting metrics from audit events...")
     # Normally this would happen automatically as events are logged,
@@ -150,7 +150,7 @@ def main():
     ))
     time.sleep(1)  # Give time for metrics collection to happen
     print("Metrics collection complete\n")
-    
+
     # Set up the reporting system
     print("Setting up audit reporting system...")
     report_generator, pattern_detector, compliance_analyzer = setup_audit_reporting(
@@ -159,11 +159,11 @@ def main():
         visualizer=visualizer
     )
     print("Audit reporting system ready\n")
-    
+
     # Generate various report types
     reports_dir = os.path.join(os.path.dirname(__file__), "../audit_reports")
     os.makedirs(reports_dir, exist_ok=True)
-    
+
     # Security report
     print("Generating security report...")
     security_report = report_generator.generate_security_report()
@@ -173,7 +173,7 @@ def main():
         output_file=os.path.join(reports_dir, "security_report.json")
     )
     print(f"Security report generated: {security_report_path}")
-    
+
     # Comprehensive report
     print("\nGenerating comprehensive HTML report...")
     html_report_path = generate_comprehensive_audit_report(

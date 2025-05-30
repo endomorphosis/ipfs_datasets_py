@@ -8,9 +8,9 @@ def test():
 	from datasets import load_dataset
 	from ipfs_datasets_py import load_dataset
 
-	# Test loading a dataset 
+	# Test loading a dataset
 	dataset = load_dataset.from_auto_download("cifar10")
-	
+
 
 	# Test loading a dataset from IPFS
 	# dataset = load_dataset.from_ipfs("QmQJzW8bQX2W5w8Zf2QzQD9k8zq5J3Z8qfX6X4V3V5W5W8")
@@ -21,7 +21,7 @@ def ws_test():
 
 	from datasets import load_dataset
 	from orbit_kit import orbit_kit
-	
+
 	db = orbit_kit()
 
 	# Test loading indexed key/value dataset

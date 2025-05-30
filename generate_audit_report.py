@@ -68,79 +68,79 @@ except ImportError:
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Generate audit reports")
-    
+
     parser.add_argument(
         "--type",
         choices=["security", "compliance", "operational", "comprehensive"],
         default="comprehensive",
         help="Type of report to generate (default: comprehensive)"
     )
-    
+
     parser.add_argument(
         "--format",
         choices=["json", "html", "pdf"],
         default="html",
         help="Output format (default: html)"
     )
-    
+
     parser.add_argument(
         "--output",
         type=str,
         help="Output file path (default: ./audit_reports/[type]_report_[timestamp].[format])"
     )
-    
+
     parser.add_argument(
         "--days",
         type=int,
         default=7,
         help="Number of days of audit data to include (default: 7)"
     )
-    
+
     parser.add_argument(
         "--include-graphics",
         action="store_true",
         help="Include visualization graphics in the report"
     )
-    
+
     return parser.parse_args()
 
 
 def main():
     """Main entry point."""
     args = parse_args()
-    
+
     # Check format requirements
     if args.format == "html" and not TEMPLATE_ENGINE_AVAILABLE:
         print("ERROR: HTML format requires Jinja2 template engine.")
         print("Install it with: pip install jinja2")
         sys.exit(1)
-    
+
     if args.format == "pdf" and not PDF_EXPORT_AVAILABLE:
         print("ERROR: PDF format requires WeasyPrint.")
         print("Install it with: pip install weasyprint")
         sys.exit(1)
-    
+
     if args.include_graphics and not VISUALIZATION_AVAILABLE:
         print("WARNING: Visualization libraries not available. Graphics will not be included.")
         print("Install them with: pip install matplotlib seaborn")
         args.include_graphics = False
-    
+
     # Generate default output path if not provided
     if args.output is None:
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         output_dir = os.path.join(os.path.dirname(__file__), "audit_reports")
         os.makedirs(output_dir, exist_ok=True)
         args.output = os.path.join(
-            output_dir, 
+            output_dir,
             f"{args.type}_report_{timestamp}.{args.format}"
         )
-    
+
     # Get audit logger
     audit_logger = AuditLogger.get_instance()
-    
+
     # Set up visualization components
     metrics, visualizer, _ = setup_audit_visualization(audit_logger)
-    
+
     # Set up reporting components
     report_generator, pattern_detector, compliance_analyzer = setup_audit_reporting(
         audit_logger=audit_logger,
@@ -148,10 +148,10 @@ def main():
         visualizer=visualizer,
         output_dir=os.path.dirname(args.output)
     )
-    
+
     # Generate report based on type
     print(f"Generating {args.type} report in {args.format} format...")
-    
+
     try:
         if args.type == "security":
             report = report_generator.generate_security_report()
@@ -161,16 +161,16 @@ def main():
             report = report_generator.generate_operational_report()
         else:  # comprehensive is default
             report = report_generator.generate_comprehensive_report()
-        
+
         # Export report
         output_path = report_generator.export_report(
             report=report,
             format=args.format,
             output_file=args.output
         )
-        
+
         print(f"Report successfully generated at: {output_path}")
-        
+
     except Exception as e:
         print(f"Error generating report: {str(e)}")
         import traceback

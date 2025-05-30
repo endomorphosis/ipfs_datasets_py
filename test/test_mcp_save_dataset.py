@@ -20,7 +20,7 @@ class MockDataset:
         # Simulate saving the dataset
         if "simulate_error" in kwargs and kwargs["simulate_error"]:
             raise Exception("Simulated save error")
-        
+
         # For simplicity, just return a success message and a dummy size
         return {"location": destination, "size": 1024}
 

@@ -12,7 +12,7 @@ class MockWebArchiveProcessor:
     def extract_metadata_from_warc(self, warc_path):
         if "fail" in warc_path:
             raise Exception("Simulated metadata extraction failure")
-        
+
         if warc_path == "test.warc":
             return {"filename": "test.warc", "size": 100, "records": 1, "content_types": {"text/html": 1}, "domains": {"example.com": 1}}
         return {}
@@ -29,7 +29,7 @@ class TestMCPExtractMetadataFromWARC(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import extract_metadata_from_warc
 
         warc_path = "test.warc"
-        
+
         result = extract_metadata_from_warc(warc_path=warc_path)
 
         self.assertEqual(result["status"], "success")

@@ -14,7 +14,7 @@ class MockWebArchiveProcessor:
     def extract_text_from_warc(self, warc_path):
         if "fail" in warc_path:
             raise Exception("Simulated text extraction failure")
-        
+
         if warc_path == "test.warc":
             return [{"uri": "http://example.com", "text": "This is some test content from the WARC."}]
         return []
@@ -27,7 +27,7 @@ class TestMCPExtractTextFromWARC(unittest.TestCase): # Changed to unittest.TestC
     def test_extract_text_from_warc_success(self): # Changed to synchronous test method
         # The tool function will now use MockWebArchiveProcessor when it instantiates WebArchiveProcessor
         warc_path = "test.warc"
-        
+
         result = extract_text_from_warc(warc_path=warc_path)
 
         self.assertEqual(result["status"], "success")
@@ -40,7 +40,7 @@ class TestMCPExtractTextFromWARC(unittest.TestCase): # Changed to unittest.TestC
         warc_path = "fail.warc"
         # The MockWebArchiveProcessor's own logic handles the "fail" case by raising an exception.
         # The tool function catches this and returns an error status.
-        
+
         result = extract_text_from_warc(warc_path=warc_path)
 
         self.assertEqual(result["status"], "error")

@@ -44,7 +44,7 @@ class config():
                     base[key] = value
         else:
             return base
-    
+
     def findConfig(self):
         paths = [
             './config.toml',
@@ -55,11 +55,11 @@ class config():
         foundPath = None
 
         for path in paths:
-            thisdir = path.dirname(os.path.realpath(__file__))
+            thisdir = os.path.dirname(os.path.realpath(__file__))
             this_path = os.path.realpath(os.path.join(thisdir, path))
             if os.path.exists(this_path):
                 foundPath = this_path
-        
+
         print("foundPath: ", foundPath)
         return foundPath if foundPath != None else None
 
@@ -82,8 +82,8 @@ class config():
         elif  type(opts) == dict and 'config' in opts and os.path.exists(opts['config']) and opts['config'] is not None:
             configPath = opts['config']
         elif opts is None and "findConfig" in dir(self):
-            configPath = self.findConfig(this_config)
-        
+            configPath = self.findConfig()
+
         if not configPath:
             print('this_dir: ')
             print(this_dir)

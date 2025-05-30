@@ -12,7 +12,7 @@ from pathlib import Path
 
 def generate_final_summary():
     """Generate a comprehensive final test summary."""
-    
+
     # Read the latest test report
     try:
         with open('mcp_tools_test_report.json', 'r') as f:
@@ -20,20 +20,20 @@ def generate_final_summary():
     except FileNotFoundError:
         print("No test report found. Please run the tests first.")
         return
-    
+
     # Read the tool verification results
     try:
         with open('mcp_tools_verification.json', 'r') as f:
             verification_report = json.load(f)
     except FileNotFoundError:
         verification_report = {}
-    
+
     print("=" * 80)
     print("FINAL MCP TOOLS TESTING SUMMARY")
     print("=" * 80)
     print(f"Report Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-    
+
     # Overall Statistics
     print("OVERALL TEST STATISTICS:")
     print("-" * 40)
@@ -42,9 +42,9 @@ def generate_final_summary():
     errors = test_report.get('errors', 0)
     skipped = test_report.get('skipped', 0)
     success_rate = test_report.get('success_rate', 0)
-    
+
     successful = tests_run - failures - errors - skipped
-    
+
     print(f"Total Tests Run:      {tests_run}")
     print(f"Successful Tests:     {successful}")
     print(f"Failed Tests:         {failures}")
@@ -52,11 +52,11 @@ def generate_final_summary():
     print(f"Skipped Tests:        {skipped}")
     print(f"Success Rate:         {success_rate:.1f}%")
     print()
-    
+
     # Tool Categories Status
     print("TOOL CATEGORIES STATUS:")
     print("-" * 40)
-    
+
     categories = {
         'dataset_tools': {'total': 4, 'working': 1, 'description': 'Dataset processing and conversion'},
         'audit_tools': {'total': 2, 'working': 2, 'description': 'Security and compliance auditing'},
@@ -69,32 +69,32 @@ def generate_final_summary():
         'security_tools': {'total': 1, 'working': 0, 'description': 'Security and access control'},
         'provenance_tools': {'total': 1, 'working': 0, 'description': 'Data provenance tracking'}
     }
-    
+
     for category, info in categories.items():
         working = info['working']
         total = info['total']
         percentage = (working / total * 100) if total > 0 else 0
         status = "✓" if working == total else "⚠" if working > 0 else "✗"
         print(f"{status} {category:15} {working}/{total:2} ({percentage:5.1f}%) - {info['description']}")
-    
+
     print()
-    
+
     # Working Tools
     working_tools = [
         'dataset_tools/process_dataset',
-        'audit_tools/generate_audit_report', 
+        'audit_tools/generate_audit_report',
         'audit_tools/record_audit_event',
         'web_archive_tools/create_warc',
         'cli/execute_command',
         'functions/execute_python_snippet'
     ]
-    
+
     print("WORKING TOOLS:")
     print("-" * 40)
     for tool in working_tools:
         print(f"✓ {tool}")
     print()
-    
+
     # Issues Found
     print("MAJOR ISSUES IDENTIFIED:")
     print("-" * 40)
@@ -109,12 +109,12 @@ def generate_final_summary():
     print()
     print("3. Missing Implementation Modules:")
     print("   - vector_tools/vector_search module missing")
-    print("   - graph_tools/extract_knowledge_graph module missing") 
+    print("   - graph_tools/extract_knowledge_graph module missing")
     print("   - security_tools/manage_access_control module missing")
     print("   - provenance_tools/record_source module missing")
     print("   - ipfs_tools/convert_to_car module missing")
     print()
-    
+
     # Recommendations
     print("RECOMMENDATIONS:")
     print("-" * 40)
@@ -134,26 +134,26 @@ def generate_final_summary():
     print("   - Add integration tests for working tools")
     print("   - Create end-to-end test scenarios")
     print()
-    
+
     # Generate missing test file
     missing_tests = []
     if test_report.get('missing_tools'):
         for tool_path in test_report['missing_tools']:
             category, tool_name = tool_path
             missing_tests.append(f"{category}/{tool_name}")
-    
+
     if missing_tests:
         print("MISSING TESTS:")
         print("-" * 40)
         for tool in missing_tests:
             print(f"⚠ {tool}")
         print()
-    
+
     print("=" * 80)
     print(f"SUMMARY: {successful}/{tests_run} tools working ({success_rate:.1f}% success rate)")
     print("Next steps: Fix import issues and implement missing modules")
     print("=" * 80)
-    
+
     # Save detailed report
     summary_report = {
         'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -175,14 +175,14 @@ def generate_final_summary():
         ],
         'recommendations': [
             'Fix import issues',
-            'Complete tool implementations', 
+            'Complete tool implementations',
             'Improve test infrastructure'
         ]
     }
-    
+
     with open('final_test_summary.json', 'w') as f:
         json.dump(summary_report, f, indent=2)
-    
+
     print(f"Detailed report saved to: final_test_summary.json")
 
 if __name__ == "__main__":

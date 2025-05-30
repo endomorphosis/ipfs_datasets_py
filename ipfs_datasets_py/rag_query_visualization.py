@@ -2,7 +2,7 @@
 RAG Query Visualization Module
 
 This module provides visualization and analytics for RAG queries, enabling performance
-analysis, trend detection, and integration with the security and audit systems for 
+analysis, trend detection, and integration with the security and audit systems for
 comprehensive monitoring of query patterns and anomalies.
 """
 
@@ -56,16 +56,16 @@ from ipfs_datasets_py.audit.audit_visualization import create_query_audit_timeli
 class QueryMetricsCollector:
     """
     Collects and analyzes metrics for RAG queries.
-    
+
     This class records detailed metrics about query execution, including timing data,
     query parameters, and results. It provides methods for analyzing query performance,
     detecting anomalies, and generating statistical summaries.
     """
-    
+
     def __init__(self, window_size=3600):
         """
         Initialize the metrics collector.
-        
+
         Args:
             window_size (int): Time window for metrics in seconds (default: 1 hour)
         """
@@ -79,11 +79,11 @@ class QueryMetricsCollector:
             'error_rate': 0.1  # 10% error rate threshold
         }
         self._lock = threading.RLock()  # Thread safety for metrics updates
-        
+
     def record_query_start(self, query_id, query_params):
         """
         Record the start of a query execution.
-        
+
         Args:
             query_id (str): Unique identifier for the query
             query_params (dict): Parameters of the query
@@ -97,11 +97,11 @@ class QueryMetricsCollector:
                 'status': 'running'
             }
             self.current_queries.add(query_id)
-            
+
     def record_query_end(self, query_id, results=None, error=None, metrics=None):
         """
         Record the end of a query execution with results or error.
-        
+
         Args:
             query_id (str): Unique identifier for the query
             results (list, optional): Query results
@@ -110,7 +110,7 @@ class QueryMetricsCollector:
         """
         with self._lock:
             end_time = time.time()
-            
+
             # Check if query exists in metrics
             if query_id not in self.query_metrics:
                 # Create a minimal record if query wasn't started properly
@@ -120,15 +120,15 @@ class QueryMetricsCollector:
                     'query_params': {},
                     'status': 'unknown'
                 }
-            
+
             # Update the query record
             query_data = self.query_metrics[query_id]
             query_data['end_time'] = end_time
-            
+
             # Calculate duration
             start_time = query_data.get('start_time', end_time)
             query_data['duration'] = end_time - start_time
-            
+
             # Update status and results
             if error:
                 query_data['status'] = 'error'
@@ -138,25 +138,25 @@ class QueryMetricsCollector:
                 query_data['status'] = 'completed'
                 query_data['results'] = results or []
                 query_data['results_count'] = len(results) if results else 0
-            
+
             # Add any additional metrics
             if metrics:
                 query_data.update(metrics)
-                
+
             # Remove from current queries set
             if query_id in self.current_queries:
                 self.current_queries.remove(query_id)
-                
+
             # Check for anomalies after recording metrics
             self._check_for_anomalies(query_id, query_data)
-            
+
     def get_performance_metrics(self, time_window=None):
         """
         Get performance metrics based on recorded queries.
-        
+
         Args:
             time_window (int, optional): Time window in seconds, defaults to instance window_size
-            
+
         Returns:
             dict: Performance metrics and statistics
         """
@@ -164,13 +164,13 @@ class QueryMetricsCollector:
             current_time = time.time()
             window = time_window or self.window_size
             cutoff_time = current_time - window
-            
+
             # Filter queries by time window
             recent_queries = {
                 qid: data for qid, data in self.query_metrics.items()
                 if data.get('start_time', 0) >= cutoff_time
             }
-            
+
             if not recent_queries:
                 return {
                     'total_queries': 0,
@@ -182,20 +182,20 @@ class QueryMetricsCollector:
                     'hourly_trends': {},
                     'current_queries': len(self.current_queries)
                 }
-            
+
             # Calculate basic metrics
             total_queries = len(recent_queries)
             completed_queries = sum(1 for q in recent_queries.values() if q.get('status') == 'completed')
             error_queries = sum(1 for q in recent_queries.values() if q.get('status') == 'error')
-            
+
             # Calculate derived metrics
             success_rate = completed_queries / total_queries if total_queries > 0 else 0
             avg_duration = np.mean([q.get('duration', 0) for q in recent_queries.values()])
             avg_results = np.mean([q.get('results_count', 0) for q in recent_queries.values()])
-            
+
             # Calculate hourly trends
             hourly_trends = self._calculate_hourly_trends(recent_queries)
-            
+
             # Return comprehensive metrics
             return {
                 'total_queries': total_queries,
@@ -209,30 +209,30 @@ class QueryMetricsCollector:
                 'peak_duration': max((q.get('duration', 0) for q in recent_queries.values()), default=0),
                 'anomalies_detected': sum(1 for q in recent_queries.values() if q.get('is_anomaly', False))
             }
-            
+
     def _calculate_hourly_trends(self, queries):
         """
         Calculate hourly trends from query data.
-        
+
         Args:
             queries (dict): Query data dictionary
-            
+
         Returns:
             dict: Hourly trends statistics
         """
         if not queries:
             return {}
-            
+
         # Extract timestamps and convert to hourly buckets
         hours = {}
         for query_id, data in queries.items():
             timestamp = data.get('timestamp')
             if not timestamp:
                 continue
-                
+
             # Create hourly bucket key
             hour_key = timestamp.strftime('%Y-%m-%d %H:00')
-            
+
             if hour_key not in hours:
                 hours[hour_key] = {
                     'count': 0,
@@ -240,27 +240,27 @@ class QueryMetricsCollector:
                     'success_count': 0,
                     'error_count': 0
                 }
-                
+
             # Update bucket stats
             hours[hour_key]['count'] += 1
             hours[hour_key]['duration_sum'] += data.get('duration', 0)
-            
+
             if data.get('status') == 'completed':
                 hours[hour_key]['success_count'] += 1
             elif data.get('status') == 'error':
                 hours[hour_key]['error_count'] += 1
-                
+
         # Calculate averages for each hour
         for hour, stats in hours.items():
             stats['avg_duration'] = stats['duration_sum'] / stats['count'] if stats['count'] > 0 else 0
             stats['success_rate'] = stats['success_count'] / stats['count'] if stats['count'] > 0 else 0
-            
+
         return hours
-        
+
     def _check_for_anomalies(self, query_id, query_data):
         """
         Check if a query is anomalous based on defined thresholds.
-        
+
         Args:
             query_id (str): Query identifier
             query_data (dict): Query metrics data
@@ -268,22 +268,22 @@ class QueryMetricsCollector:
         # Initialize anomaly flag
         query_data['is_anomaly'] = False
         anomaly_reasons = []
-        
+
         # Check duration
         if query_data.get('duration', 0) > self.anomaly_thresholds['duration']:
             query_data['is_anomaly'] = True
             anomaly_reasons.append('duration')
-            
+
         # Check vector search time
         if query_data.get('vector_search_time', 0) > self.anomaly_thresholds['vector_search_time']:
             query_data['is_anomaly'] = True
             anomaly_reasons.append('vector_search_time')
-            
+
         # Check graph search time
         if query_data.get('graph_search_time', 0) > self.anomaly_thresholds['graph_search_time']:
             query_data['is_anomaly'] = True
             anomaly_reasons.append('graph_search_time')
-            
+
         # Add anomaly reasons if any were found
         if anomaly_reasons:
             query_data['anomaly_reasons'] = anomaly_reasons
@@ -294,15 +294,15 @@ class QueryMetricsCollector:
 class RAGQueryVisualizer:
     """
     Visualizes metrics and performance data for RAG queries.
-    
+
     This class generates various visualizations for analyzing RAG query performance,
     including timelines, histograms, and statistical charts.
     """
-    
+
     def __init__(self, metrics_collector):
         """
         Initialize the query visualizer.
-        
+
         Args:
             metrics_collector (QueryMetricsCollector): Metrics collector with query data
         """
@@ -317,36 +317,36 @@ class RAGQueryVisualizer:
             "running": "#2196f3",
             "anomaly": "#ff9800"
         }
-        
+
     def plot_query_performance(self, time_window=None, figsize=None, output_file=None, show_plot=True):
         """
         Create a performance visualization for RAG queries.
-        
+
         Args:
             time_window (int, optional): Time window in seconds
             figsize (tuple, optional): Figure size (width, height) in inches
             output_file (str, optional): Path to save the visualization
             show_plot (bool): Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         # Get performance metrics
         metrics = self.metrics_collector.get_performance_metrics(time_window)
         if metrics['total_queries'] == 0:
             logging.warning("No queries available for visualization")
             return None
-            
+
         # Create figure with multiple subplots
         fig, axes = plt.subplots(2, 2, figsize=figsize or self.default_figsize)
-        
+
         # Set figure title
         fig.suptitle('RAG Query Performance Overview', fontsize=16)
-        
+
         # Plot 1: Query counts by status
         ax1 = axes[0, 0]
         status_counts = [
@@ -356,187 +356,187 @@ class RAGQueryVisualizer:
         ]
         status_labels = ['Completed', 'Error', 'Running']
         status_colors = [self.colors['completed'], self.colors['error'], self.colors['running']]
-        
+
         bars = ax1.bar(status_labels, status_counts, color=status_colors)
         ax1.set_title('Query Status Distribution')
         ax1.set_ylabel('Count')
-        
+
         # Add count labels on top of bars
         for bar in bars:
             height = bar.get_height()
             ax1.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                     f'{int(height)}', ha='center', va='bottom')
-        
+
         # Plot 2: Success rate
         ax2 = axes[0, 1]
         success_rate = metrics['success_rate'] * 100  # Convert to percentage
-        
+
         # Create a gauge-like visualization
         ax2.set_title('Query Success Rate')
         ax2.set_aspect('equal')
-        
+
         # Clear axis and set limits
         ax2.clear()
         ax2.set_xlim(0, 10)
         ax2.set_ylim(0, 10)
-        
+
         # Draw a circular gauge
         circle = plt.Circle((5, 5), 4, fill=False, color='#cccccc', linewidth=2)
         ax2.add_artist(circle)
-        
+
         # Add text in the center
         ax2.text(5, 5, f"{success_rate:.1f}%", ha='center', va='center', fontsize=24)
         ax2.text(5, 3.5, "Success Rate", ha='center', va='center', fontsize=12)
-        
+
         # Remove axis ticks and labels
         ax2.set_xticks([])
         ax2.set_yticks([])
-        
+
         # Plot 3: Duration distribution
         ax3 = axes[1, 0]
-        
+
         # Extract durations from queries
         durations = [q.get('duration', 0) for q in self.metrics_collector.query_metrics.values()
                      if 'duration' in q]
-        
+
         if durations:
             # Create histogram
             ax3.hist(durations, bins=10, color=self.colors['completed'], alpha=0.7)
             ax3.set_title('Query Duration Distribution')
             ax3.set_xlabel('Duration (seconds)')
             ax3.set_ylabel('Count')
-            
+
             # Add mean line
             mean_duration = np.mean(durations)
             ax3.axvline(mean_duration, color='red', linestyle='dashed', linewidth=1)
-            ax3.text(mean_duration + 0.1, ax3.get_ylim()[1] * 0.9, 
+            ax3.text(mean_duration + 0.1, ax3.get_ylim()[1] * 0.9,
                     f'Mean: {mean_duration:.2f}s', color='red')
         else:
-            ax3.text(0.5, 0.5, 'No duration data available', 
+            ax3.text(0.5, 0.5, 'No duration data available',
                     ha='center', va='center', transform=ax3.transAxes)
-        
+
         # Plot 4: Hourly trends
         ax4 = axes[1, 1]
-        
+
         if metrics['hourly_trends']:
             # Extract data
             hours = list(metrics['hourly_trends'].keys())
             counts = [h['count'] for h in metrics['hourly_trends'].values()]
-            
+
             # Sort by time
             sorted_data = sorted(zip(hours, counts))
             hours, counts = zip(*sorted_data) if sorted_data else ([], [])
-            
+
             # Plot trend
             ax4.plot(hours, counts, marker='o', linestyle='-', color=self.colors['running'])
             ax4.set_title('Query Volume by Hour')
             ax4.set_ylabel('Query Count')
-            
+
             # Rotate x labels for better readability
             plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
         else:
-            ax4.text(0.5, 0.5, 'No hourly trend data available', 
+            ax4.text(0.5, 0.5, 'No hourly trend data available',
                     ha='center', va='center', transform=ax4.transAxes)
-        
+
         # Adjust layout
         plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust for the suptitle
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
-        
+
     def plot_query_term_frequency(self, max_terms=20, figsize=None, output_file=None, show_plot=True):
         """
         Plot frequency of terms used in queries.
-        
+
         Args:
             max_terms (int): Maximum number of terms to include
             figsize (tuple, optional): Figure size (width, height) in inches
             output_file (str, optional): Path to save the visualization
             show_plot (bool): Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         # Extract query texts from metrics
         query_texts = []
         for query_data in self.metrics_collector.query_metrics.values():
             query_params = query_data.get('query_params', {})
             if 'query_text' in query_params:
                 query_texts.append(query_params['query_text'])
-                
+
         if not query_texts:
             logging.warning("No query texts available for term frequency analysis")
             return None
-            
+
         # Process text to extract terms
         all_terms = []
         for text in query_texts:
             # Simple tokenization by splitting on spaces and removing punctuation
             terms = text.lower().replace('.', ' ').replace(',', ' ').replace('?', ' ').split()
             all_terms.extend(terms)
-            
+
         # Count term frequencies
         term_counts = Counter(all_terms)
-        
+
         # Remove very common words if needed (stopwords)
         stopwords = {'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'with', 'by'}
         for word in stopwords:
             if word in term_counts:
                 del term_counts[word]
-                
+
         # Get top terms
         top_terms = term_counts.most_common(max_terms)
-        
+
         if not top_terms:
             logging.warning("No terms found for frequency analysis")
             return None
-            
+
         # Create figure
         fig, ax = plt.subplots(figsize=figsize or (12, 8))
-        
+
         # Extract data for plotting
         terms, counts = zip(*top_terms)
-        
+
         # Create horizontal bar chart
         bars = ax.barh(terms, counts, color=self.colors['running'])
-        
+
         # Add count labels
         for i, bar in enumerate(bars):
             width = bar.get_width()
             ax.text(width + 0.3, bar.get_y() + bar.get_height()/2,
                    f'{int(width)}', ha='left', va='center')
-        
+
         # Set labels and title
         ax.set_title('Most Common Query Terms', fontsize=16)
         ax.set_xlabel('Frequency')
         ax.set_ylabel('Term')
-        
+
         # Adjust layout
         plt.tight_layout()
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
 
 
@@ -545,40 +545,40 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
     Enhanced version of query visualizer with additional interactive
     and advanced visualization capabilities.
     """
-    
+
     def __init__(self, metrics_collector):
         """
         Initialize the enhanced query visualizer.
-        
+
         Args:
             metrics_collector (QueryMetricsCollector): Metrics collector with query data
         """
         super().__init__(metrics_collector)
-        
-    def visualize_query_performance_timeline(self, time_window=None, figsize=None, 
+
+    def visualize_query_performance_timeline(self, time_window=None, figsize=None,
                                            output_file=None, show_plot=True):
         """
         Create a timeline visualization of query performance.
-        
+
         Args:
             time_window (int, optional): Time window in seconds
             figsize (tuple, optional): Figure size (width, height) in inches
             output_file (str, optional): Path to save the visualization
             show_plot (bool): Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         # Extract query data
         queries = self.metrics_collector.query_metrics
         if not queries:
             logging.warning("No queries available for visualization")
             return None
-            
+
         # Filter by time window if specified
         if time_window:
             current_time = time.time()
@@ -587,17 +587,17 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 qid: data for qid, data in queries.items()
                 if data.get('start_time', 0) >= cutoff_time
             }
-            
+
         if not queries:
             logging.warning("No queries in the specified time window")
             return None
-            
+
         # Extract timestamps and durations
         timestamps = []
         durations = []
         statuses = []
         is_anomaly = []
-        
+
         for query_id, data in queries.items():
             if 'start_time' in data and 'duration' in data:
                 timestamp = datetime.datetime.fromtimestamp(data['start_time'])
@@ -605,14 +605,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 durations.append(data['duration'])
                 statuses.append(data.get('status', 'unknown'))
                 is_anomaly.append(data.get('is_anomaly', False))
-        
+
         if not timestamps:
             logging.warning("No valid timestamp/duration data for visualization")
             return None
-            
+
         # Create figure
         fig, ax = plt.subplots(figsize=figsize or (12, 6))
-        
+
         # Define colors for different statuses
         status_colors = {
             'completed': self.colors['completed'],
@@ -620,41 +620,41 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
             'running': self.colors['running'],
             'unknown': '#999999'
         }
-        
+
         # Create colormap for points
         colors = [
             self.colors['anomaly'] if anom else status_colors.get(status, '#999999')
             for status, anom in zip(statuses, is_anomaly)
         ]
-        
+
         # Create scatter plot
         scatter = ax.scatter(timestamps, durations, c=colors, alpha=0.7, s=50)
-        
+
         # Connect points with line
         ax.plot(timestamps, durations, 'k-', alpha=0.3)
-        
+
         # Set labels and title
         ax.set_title('Query Performance Timeline', fontsize=16)
         ax.set_xlabel('Time')
         ax.set_ylabel('Duration (seconds)')
-        
+
         # Format x-axis as dates
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
         plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-        
+
         # Create legend
         legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['completed'], 
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['completed'],
                       label='Completed', markersize=10),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['error'], 
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['error'],
                       label='Error', markersize=10),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['running'], 
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['running'],
                       label='Running', markersize=10),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['anomaly'], 
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['anomaly'],
                       label='Anomaly', markersize=10)
         ]
         ax.legend(handles=legend_elements, loc='best')
-        
+
         # Add trendline
         if len(timestamps) > 1:
             try:
@@ -662,57 +662,57 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 time_nums = mdates.date2num(timestamps)
                 z = np.polyfit(time_nums, durations, 1)
                 p = np.poly1d(z)
-                
+
                 # Add trendline to plot
                 ax.plot(timestamps, p(time_nums), "r--", alpha=0.8, label="Trend")
-                
+
                 # Calculate trend direction
                 trend_direction = 'increasing' if z[0] > 0 else 'decreasing'
                 trend_text = f"Trend: {trend_direction} ({z[0]:.6f})"
-                ax.text(0.02, 0.95, trend_text, transform=ax.transAxes, 
+                ax.text(0.02, 0.95, trend_text, transform=ax.transAxes,
                        fontsize=10, verticalalignment='top')
             except Exception as e:
                 logging.warning(f"Error calculating trendline: {str(e)}")
-        
+
         # Adjust layout
         plt.tight_layout()
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
-        
+
     def create_interactive_dashboard(self, output_dir, time_window=None):
         """
         Create an interactive HTML dashboard with multiple visualizations.
-        
+
         Args:
             output_dir (str): Directory to save dashboard files
             time_window (int, optional): Time window in seconds
-            
+
         Returns:
             str: Path to the generated dashboard HTML file
         """
         if not TEMPLATE_ENGINE_AVAILABLE or not INTERACTIVE_VISUALIZATION_AVAILABLE:
             logging.warning("Interactive dashboard requires Jinja2 and Plotly")
             return None
-            
+
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
-        
+
         # Generate performance metrics
         metrics = self.metrics_collector.get_performance_metrics(time_window)
-        
+
         # Create interactive plots
         plots = {}
-        
+
         # 1. Timeline plot
         queries = self.metrics_collector.query_metrics
         if queries:
@@ -724,7 +724,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     duration = query_data['duration']
                     status = query_data.get('status', 'unknown')
                     is_anomaly = query_data.get('is_anomaly', False)
-                    
+
                     data.append({
                         'timestamp': timestamp,
                         'duration': duration,
@@ -733,18 +733,18 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         'query_id': query_id,
                         'query_text': query_data.get('query_params', {}).get('query_text', 'Unknown')
                     })
-            
+
             if data:
                 # Create DataFrame
                 df = pd.DataFrame(data)
-                
+
                 # Create color mapping
                 df['color'] = df.apply(
-                    lambda row: self.colors['anomaly'] if row['is_anomaly'] else 
+                    lambda row: self.colors['anomaly'] if row['is_anomaly'] else
                                 self.colors.get(row['status'], '#999999'),
                     axis=1
                 )
-                
+
                 # Create hover text
                 df['hover_text'] = df.apply(
                     lambda row: f"Query: {row['query_text']}<br>" +
@@ -754,10 +754,10 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                 f"Anomaly: {'Yes' if row['is_anomaly'] else 'No'}",
                     axis=1
                 )
-                
+
                 # Create figure
                 fig = go.Figure()
-                
+
                 # Add scatter plot
                 fig.add_trace(go.Scatter(
                     x=df['timestamp'],
@@ -775,7 +775,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     text=df['hover_text'],
                     hoverinfo='text'
                 ))
-                
+
                 # Update layout
                 fig.update_layout(
                     title='Query Performance Timeline',
@@ -783,12 +783,12 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     yaxis_title='Duration (seconds)',
                     template='plotly_white'
                 )
-                
+
                 # Save to HTML
                 timeline_path = os.path.join(output_dir, 'timeline.html')
                 fig.write_html(timeline_path)
                 plots['timeline'] = 'timeline.html'
-        
+
         # 2. Query status distribution
         status_counts = {
             'Completed': metrics['completed_queries'],
@@ -796,14 +796,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
             'Running': metrics['current_queries'],
             'Anomaly': metrics.get('anomalies_detected', 0)
         }
-        
+
         status_colors = {
             'Completed': self.colors['completed'],
             'Error': self.colors['error'],
             'Running': self.colors['running'],
             'Anomaly': self.colors['anomaly']
         }
-        
+
         fig = go.Figure(data=[
             go.Bar(
                 x=list(status_counts.keys()),
@@ -811,18 +811,18 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 marker_color=list(status_colors.values())
             )
         ])
-        
+
         fig.update_layout(
             title='Query Status Distribution',
             xaxis_title='Status',
             yaxis_title='Count',
             template='plotly_white'
         )
-        
+
         status_path = os.path.join(output_dir, 'status.html')
         fig.write_html(status_path)
         plots['status'] = 'status.html'
-        
+
         # Create dashboard HTML
         dashboard_template = Template('''
         <!DOCTYPE html>
@@ -846,7 +846,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 <h1>RAG Query Performance Dashboard</h1>
                 <p>Generated: {{ timestamp }}</p>
             </div>
-            
+
             <div class="metrics">
                 <div class="metric-card">
                     <h3>Total Queries</h3>
@@ -865,7 +865,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     <div class="metric-value">{{ metrics.anomalies_detected|default(0) }}</div>
                 </div>
             </div>
-            
+
             {% for name, file in plots.items() %}
             <div class="plot-container">
                 <h2>{{ name|capitalize }}</h2>
@@ -875,34 +875,34 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
         </body>
         </html>
         ''')
-        
+
         # Render template
         dashboard_html = dashboard_template.render(
             timestamp=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             metrics=metrics,
             plots=plots
         )
-        
+
         # Write dashboard file
         dashboard_path = os.path.join(output_dir, 'dashboard.html')
         with open(dashboard_path, 'w') as f:
             f.write(dashboard_html)
-            
+
         return dashboard_path
 
 
 class RAGQueryDashboard:
     """
     Interactive dashboard for monitoring and analyzing RAG query performance.
-    
+
     This class integrates query metrics, visualization, and audit logs to
     provide a comprehensive monitoring system.
     """
-    
+
     def __init__(self, metrics_collector, visualizer=None, dashboard_dir=None, audit_logger=None):
         """
         Initialize the RAG query dashboard.
-        
+
         Args:
             metrics_collector (QueryMetricsCollector): Query metrics collector
             visualizer (EnhancedQueryVisualizer, optional): Query visualizer
@@ -913,50 +913,50 @@ class RAGQueryDashboard:
         self.visualizer = visualizer or EnhancedQueryVisualizer(metrics_collector)
         self.dashboard_dir = dashboard_dir or os.path.join(tempfile.gettempdir(), 'rag_dashboard')
         self.audit_logger = audit_logger
-        
+
         # Create dashboard directory if it doesn't exist
         os.makedirs(self.dashboard_dir, exist_ok=True)
-        
+
     def generate_dashboard(self, time_window=None):
         """
         Generate the query monitoring dashboard.
-        
+
         Args:
             time_window (int, optional): Time window in seconds
-            
+
         Returns:
             str: Path to the generated dashboard
         """
         return self.visualizer.create_interactive_dashboard(
             self.dashboard_dir, time_window=time_window
         )
-        
+
     def generate_performance_report(self, output_file=None, time_window=None):
         """
         Generate a comprehensive performance report with visualizations.
-        
+
         Args:
             output_file (str, optional): Output file path
             time_window (int, optional): Time window in seconds
-            
+
         Returns:
             str: Path to the generated report
         """
         # Get metrics
         metrics = self.metrics_collector.get_performance_metrics(time_window)
-        
+
         # Default output file
         if not output_file:
             timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
             output_file = os.path.join(self.dashboard_dir, f'performance_report_{timestamp}.html')
-            
+
         # Create report directory
         report_dir = os.path.dirname(output_file)
         os.makedirs(report_dir, exist_ok=True)
-        
+
         # Generate visualizations
         plot_files = {}
-        
+
         # Timeline plot
         timeline_path = os.path.join(report_dir, 'timeline.png')
         self.visualizer.visualize_query_performance_timeline(
@@ -966,7 +966,7 @@ class RAGQueryDashboard:
         )
         if os.path.exists(timeline_path):
             plot_files['timeline'] = os.path.basename(timeline_path)
-            
+
         # Performance plot
         performance_path = os.path.join(report_dir, 'performance.png')
         self.visualizer.plot_query_performance(
@@ -976,7 +976,7 @@ class RAGQueryDashboard:
         )
         if os.path.exists(performance_path):
             plot_files['performance'] = os.path.basename(performance_path)
-            
+
         # Term frequency plot
         terms_path = os.path.join(report_dir, 'terms.png')
         self.visualizer.plot_query_term_frequency(
@@ -985,7 +985,7 @@ class RAGQueryDashboard:
         )
         if os.path.exists(terms_path):
             plot_files['terms'] = os.path.basename(terms_path)
-            
+
         # Generate HTML report
         report_template = Template('''
         <!DOCTYPE html>
@@ -1009,7 +1009,7 @@ class RAGQueryDashboard:
                 <p>Generated: {{ timestamp }}</p>
                 <p>Time Window: {{ time_window_text }}</p>
             </div>
-            
+
             <div class="section">
                 <h2>Performance Metrics</h2>
                 <table class="metrics-table">
@@ -1051,7 +1051,7 @@ class RAGQueryDashboard:
                     </tr>
                 </table>
             </div>
-            
+
             {% for name, file in plot_files.items() %}
             <div class="section">
                 <h2>{{ name|capitalize }} Visualization</h2>
@@ -1060,7 +1060,7 @@ class RAGQueryDashboard:
                 </div>
             </div>
             {% endfor %}
-            
+
             <div class="section">
                 <h2>Hourly Trends</h2>
                 <table class="metrics-table">
@@ -1083,7 +1083,7 @@ class RAGQueryDashboard:
         </body>
         </html>
         ''')
-        
+
         # Format time window text
         if time_window:
             hours = time_window / 3600
@@ -1094,7 +1094,7 @@ class RAGQueryDashboard:
                 time_window_text = f"{hours:.1f} hours"
         else:
             time_window_text = "All available data"
-            
+
         # Render template
         report_html = report_template.render(
             timestamp=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -1103,22 +1103,22 @@ class RAGQueryDashboard:
             plot_files=plot_files,
             hourly_trends=metrics.get('hourly_trends', {})
         )
-        
+
         # Write report file
         with open(output_file, 'w') as f:
             f.write(report_html)
-            
+
         return output_file
-        
+
     def visualize_query_audit_metrics(self, time_window=None, output_file=None, show_plot=True):
         """
         Visualize audit metrics related to queries.
-        
+
         Args:
             time_window (int, optional): Time window in seconds
             output_file (str, optional): Output file path
             show_plot (bool): Whether to display the plot
-            
+
         Returns:
             object: The generated visualization
         """
@@ -1126,20 +1126,20 @@ class RAGQueryDashboard:
         if 'create_query_audit_timeline' not in globals():
             logging.warning("Audit visualization not available")
             return None
-            
+
         return create_query_audit_timeline(
             time_window=time_window,
             output_file=output_file,
             show_plot=show_plot
         )
-        
+
     def generate_interactive_audit_trends(self, output_file=None):
         """
         Generate interactive audit trend visualization.
-        
+
         Args:
             output_file (str, optional): Output file path
-            
+
         Returns:
             str: Path to the generated visualization
         """
@@ -1155,10 +1155,10 @@ class RAGQueryDashboard:
 def create_integrated_monitoring_system(dashboard_dir=None):
     """
     Create an integrated monitoring system for RAG queries.
-    
+
     Args:
         dashboard_dir (str, optional): Directory for dashboard files
-        
+
     Returns:
         tuple: (audit_logger, audit_metrics, query_metrics, dashboard)
     """
@@ -1172,7 +1172,7 @@ def create_integrated_monitoring_system(dashboard_dir=None):
         logging.warning("Audit components not available")
         audit_logger = None
         audit_metrics = None
-        
+
     # Create query metrics and dashboard
     query_metrics = QueryMetricsCollector()
     dashboard = RAGQueryDashboard(
@@ -1180,27 +1180,27 @@ def create_integrated_monitoring_system(dashboard_dir=None):
         dashboard_dir=dashboard_dir,
         audit_logger=audit_logger
     )
-    
+
     # Connect audit logger to metrics collector if available
     if audit_logger and audit_metrics:
         audit_logger.add_handler(audit_metrics.process_event)
-        
+
     return audit_logger, audit_metrics, query_metrics, dashboard
 
 
 class PerformanceMetricsVisualizer:
     """
     Specialized visualizer for query performance metrics analysis.
-    
+
     This class focuses on visualizing the detailed performance metrics of RAG queries,
     including processing time breakdowns, component contributions to latency,
     throughput analysis, and resource utilization patterns.
     """
-    
+
     def __init__(self, metrics_collector):
         """
         Initialize the performance metrics visualizer.
-        
+
         Args:
             metrics_collector: QueryMetricsCollector instance with query metrics
         """
@@ -1220,11 +1220,11 @@ class PerformanceMetricsVisualizer:
         }
         # Set default theme based on matplotlib style
         self.theme = "light"
-        
+
     def set_theme(self, theme="light"):
         """
         Set visualization theme (light or dark).
-        
+
         Args:
             theme: Theme name ('light' or 'dark')
         """
@@ -1240,7 +1240,7 @@ class PerformanceMetricsVisualizer:
                 "error": "#ff6b6b",
                 "warning": "#ffb347",
                 "success": "#88d498",
-                "total": "#bd93f9" 
+                "total": "#bd93f9"
             }
         else:
             self.colors = {
@@ -1255,55 +1255,55 @@ class PerformanceMetricsVisualizer:
                 "success": "#4caf50",
                 "total": "#9467bd"
             }
-    
-    def visualize_processing_time_breakdown(self, 
-                                          time_window=None, 
+
+    def visualize_processing_time_breakdown(self,
+                                          time_window=None,
                                           figsize=None,
                                           output_file=None,
                                           show_plot=True,
                                           interactive=False):
         """
         Visualize the breakdown of processing time across query phases.
-        
+
         Args:
             time_window: Optional time window in seconds to include
             figsize: Figure size (width, height) in inches
             output_file: Path to save the visualization
             show_plot: Whether to display the plot
             interactive: Whether to create an interactive plot
-            
+
         Returns:
             Figure object or None if visualization libraries not available
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         if interactive and not INTERACTIVE_VISUALIZATION_AVAILABLE:
             logging.warning("Interactive visualization libraries not available")
             interactive = False
-            
+
         # Get metrics from the collector
         metrics = self.metrics_collector.query_metrics
         if not metrics:
             logging.warning("No query metrics available")
             return None
-            
+
         # Filter by time window if specified
         if time_window:
             current_time = time.time()
             cutoff_time = current_time - time_window
             filtered_metrics = {
-                qid: m for qid, m in metrics.items() 
+                qid: m for qid, m in metrics.items()
                 if m.get("start_time", 0) >= cutoff_time
             }
         else:
             filtered_metrics = metrics
-            
+
         if not filtered_metrics:
             logging.warning("No query metrics in the specified time window")
             return None
-        
+
         # Extract phase durations
         phase_durations = {
             "vector_search": [],
@@ -1312,36 +1312,36 @@ class PerformanceMetricsVisualizer:
             "other": [],
             "total": []
         }
-        
+
         for qid, m in filtered_metrics.items():
             # Get all phases
             phases = m.get("phases", {})
-            
+
             # Track total and get individual phases
             total = 0
-            
+
             # Handle known phases
             for phase in ["vector_search", "graph_traversal", "post_processing"]:
                 duration = phases.get(phase, 0)
                 phase_durations[phase].append(duration)
                 total += duration
-                
+
             # Calculate other time (total - known phases)
             query_duration = m.get("duration", 0)
             other_time = max(0, query_duration - total)
             phase_durations["other"].append(other_time)
-            
+
             # Record total duration
             phase_durations["total"].append(query_duration)
-        
+
         if interactive:
             # Create interactive visualization with plotly
             fig = make_subplots(
                 rows=2, cols=2,
                 subplot_titles=[
-                    "Average Phase Duration", 
+                    "Average Phase Duration",
                     "Phase Duration Distribution",
-                    "Percentage Breakdown", 
+                    "Percentage Breakdown",
                     "Duration Timeline"
                 ],
                 specs=[
@@ -1349,31 +1349,31 @@ class PerformanceMetricsVisualizer:
                     [{"type": "pie"}, {"type": "scatter"}]
                 ]
             )
-            
+
             # Calculate average durations
             avg_durations = {
-                phase: np.mean(durations) if durations else 0 
+                phase: np.mean(durations) if durations else 0
                 for phase, durations in phase_durations.items()
                 if phase != "total"  # Exclude total from bar chart
             }
-            
+
             # Bar chart of average durations
             phases = list(avg_durations.keys())
             durations = list(avg_durations.values())
-            
+
             fig.add_trace(
                 go.Bar(
                     x=phases,
                     y=durations,
                     marker_color=[
-                        self.colors.get(phase, self.colors["vector_search"]) 
+                        self.colors.get(phase, self.colors["vector_search"])
                         for phase in phases
                     ],
                     name="Average Duration"
                 ),
                 row=1, col=1
             )
-            
+
             # Box plot of duration distributions
             for phase, values in phase_durations.items():
                 if phase != "total" and values:  # Skip total and empty phases
@@ -1385,20 +1385,20 @@ class PerformanceMetricsVisualizer:
                         ),
                         row=1, col=2
                     )
-            
+
             # Pie chart of percentage breakdown
             total_avg = sum(avg_durations.values())
             if total_avg > 0:
                 labels = phases
                 values = [d / total_avg * 100 for d in durations]
-                
+
                 fig.add_trace(
                     go.Pie(
                         labels=labels,
                         values=values,
                         marker=dict(
                             colors=[
-                                self.colors.get(phase, self.colors["vector_search"]) 
+                                self.colors.get(phase, self.colors["vector_search"])
                                 for phase in phases
                             ]
                         ),
@@ -1408,11 +1408,11 @@ class PerformanceMetricsVisualizer:
                     ),
                     row=2, col=1
                 )
-            
+
             # Time series plot of durations
             timestamps = [m.get("start_time", 0) for m in filtered_metrics.values()]
             timestamps = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            
+
             for phase in ["vector_search", "graph_traversal", "post_processing", "other"]:
                 if phase_durations[phase]:
                     fig.add_trace(
@@ -1431,7 +1431,7 @@ class PerformanceMetricsVisualizer:
                         ),
                         row=2, col=2
                     )
-            
+
             # Update layout
             fig.update_layout(
                 title="Query Processing Time Breakdown",
@@ -1453,7 +1453,7 @@ class PerformanceMetricsVisualizer:
                     color=self.colors["text"]
                 )
             )
-            
+
             # Update axes
             fig.update_xaxes(
                 showgrid=True,
@@ -1461,7 +1461,7 @@ class PerformanceMetricsVisualizer:
                 gridcolor=self.colors["grid"],
                 linecolor=self.colors["text"]
             )
-            
+
             fig.update_yaxes(
                 title_text="Duration (seconds)",
                 showgrid=True,
@@ -1469,60 +1469,60 @@ class PerformanceMetricsVisualizer:
                 gridcolor=self.colors["grid"],
                 linecolor=self.colors["text"]
             )
-            
+
             # Save if output file specified
             if output_file:
                 if output_file.endswith(".html"):
                     fig.write_html(output_file)
                 else:
                     fig.write_image(output_file)
-            
+
             # Show plot if requested
             if show_plot:
                 fig.show()
-                
+
             return fig
-            
+
         else:
             # Create static visualization with matplotlib
             figsize = figsize or self.default_figsize
             fig = plt.figure(figsize=(figsize[0] * 2, figsize[1] * 2))
-            
+
             # Set style
             plt.style.use('seaborn-v0_8-darkgrid' if self.theme == 'dark' else 'seaborn-v0_8-whitegrid')
-            
+
             # Create grid of subplots
             gs = plt.GridSpec(2, 2, figure=fig)
             ax1 = fig.add_subplot(gs[0, 0])  # Average durations
             ax2 = fig.add_subplot(gs[0, 1])  # Distribution
             ax3 = fig.add_subplot(gs[1, 0])  # Percentage breakdown
             ax4 = fig.add_subplot(gs[1, 1])  # Timeline
-            
+
             # Calculate average durations
             avg_durations = {
-                phase: np.mean(durations) if durations else 0 
+                phase: np.mean(durations) if durations else 0
                 for phase, durations in phase_durations.items()
                 if phase != "total"  # Exclude total from bar chart
             }
-            
+
             # Bar chart of average durations
             phases = list(avg_durations.keys())
             durations = list(avg_durations.values())
-            
+
             bars = ax1.bar(
-                phases, 
+                phases,
                 durations,
                 color=[self.colors.get(phase, self.colors["vector_search"]) for phase in phases]
             )
-            
+
             ax1.set_title("Average Phase Duration")
             ax1.set_ylabel("Duration (seconds)")
             ax1.set_xlabel("Query Phase")
-            
+
             # Box plot of duration distributions
             box_data = [phase_durations[phase] for phase in phases if phase_durations[phase]]
             box_labels = [phase for phase in phases if phase_durations[phase]]
-            
+
             ax2.boxplot(
                 box_data,
                 labels=box_labels,
@@ -1530,16 +1530,16 @@ class PerformanceMetricsVisualizer:
                 boxprops=dict(facecolor=self.colors["background"]),
                 medianprops=dict(color=self.colors["text"])
             )
-            
+
             ax2.set_title("Phase Duration Distribution")
             ax2.set_ylabel("Duration (seconds)")
             ax2.set_xlabel("Query Phase")
-            
+
             # Pie chart of percentage breakdown
             total_avg = sum(avg_durations.values())
             if total_avg > 0:
                 phase_percentages = [d / total_avg * 100 for d in durations]
-                
+
                 ax3.pie(
                     phase_percentages,
                     labels=phases,
@@ -1547,20 +1547,20 @@ class PerformanceMetricsVisualizer:
                     colors=[self.colors.get(phase, self.colors["vector_search"]) for phase in phases],
                     startangle=90
                 )
-                
+
                 ax3.set_title("Percentage Breakdown")
-                
+
             else:
-                ax3.text(0.5, 0.5, "No duration data available", 
-                     horizontalalignment='center', 
+                ax3.text(0.5, 0.5, "No duration data available",
+                     horizontalalignment='center',
                      verticalalignment='center',
                      transform=ax3.transAxes,
                      fontsize=12, color=self.colors["text"])
-            
+
             # Time series plot of durations
             timestamps = [m.get("start_time", 0) for m in filtered_metrics.values()]
             datetimes = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            
+
             for phase in ["vector_search", "graph_traversal", "post_processing", "other"]:
                 if phase_durations[phase]:
                     ax4.plot(
@@ -1570,35 +1570,35 @@ class PerformanceMetricsVisualizer:
                         label=phase,
                         color=self.colors.get(phase, self.colors["vector_search"])
                     )
-            
+
             ax4.set_title("Duration Timeline")
             ax4.set_ylabel("Duration (seconds)")
             ax4.set_xlabel("Query Time")
             ax4.legend()
-            
+
             # Format datetime x-axis
             ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
             plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45)
-            
+
             # Add overall title
             fig.suptitle("Query Processing Time Breakdown", fontsize=16)
-            
+
             # Adjust layout
             plt.tight_layout()
             plt.subplots_adjust(top=0.9)
-            
+
             # Save if output file specified
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
-            
+
             # Show plot if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close(fig)
-                
+
             return fig
-    
+
     def visualize_latency_distribution(self,
                                      time_window=None,
                                      figsize=None,
@@ -1607,75 +1607,75 @@ class PerformanceMetricsVisualizer:
                                      interactive=False):
         """
         Visualize the distribution of query latency.
-        
+
         Args:
             time_window: Optional time window in seconds to include
             figsize: Figure size (width, height) in inches
             output_file: Path to save the visualization
             show_plot: Whether to display the plot
             interactive: Whether to create an interactive plot
-            
+
         Returns:
             Figure object or None if visualization libraries not available
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         if interactive and not INTERACTIVE_VISUALIZATION_AVAILABLE:
             logging.warning("Interactive visualization libraries not available")
             interactive = False
-            
+
         # Get metrics from the collector
         metrics = self.metrics_collector.query_metrics
         if not metrics:
             logging.warning("No query metrics available")
             return None
-            
+
         # Filter by time window if specified
         if time_window:
             current_time = time.time()
             cutoff_time = current_time - time_window
             filtered_metrics = {
-                qid: m for qid, m in metrics.items() 
+                qid: m for qid, m in metrics.items()
                 if m.get("start_time", 0) >= cutoff_time
             }
         else:
             filtered_metrics = metrics
-            
+
         if not filtered_metrics:
             logging.warning("No query metrics in the specified time window")
             return None
-        
+
         # Extract query durations and timestamps
         durations = []
         timestamps = []
-        
+
         for qid, m in filtered_metrics.items():
             if "duration" in m:
                 durations.append(m["duration"])
                 timestamps.append(m.get("start_time", 0))
-        
+
         if not durations:
             logging.warning("No duration data available")
             return None
-            
+
         # Sort data by timestamp
         sorted_data = sorted(zip(timestamps, durations), key=lambda x: x[0])
         timestamps = [x[0] for x in sorted_data]
         durations = [x[1] for x in sorted_data]
-        
+
         # Convert timestamps to datetime
         datetimes = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        
+
         if interactive:
             # Create interactive visualization with plotly
             fig = make_subplots(
                 rows=2, cols=2,
                 subplot_titles=[
-                    "Latency Distribution", 
+                    "Latency Distribution",
                     "Latency Histogram",
-                    "Latency Over Time", 
+                    "Latency Over Time",
                     "Statistics"
                 ],
                 specs=[
@@ -1683,7 +1683,7 @@ class PerformanceMetricsVisualizer:
                     [{"type": "scatter"}, {"type": "domain"}]
                 ]
             )
-            
+
             # Violin plot of latency distribution
             fig.add_trace(
                 go.Violin(
@@ -1696,7 +1696,7 @@ class PerformanceMetricsVisualizer:
                 ),
                 row=1, col=1
             )
-            
+
             # Histogram of latencies
             fig.add_trace(
                 go.Histogram(
@@ -1707,7 +1707,7 @@ class PerformanceMetricsVisualizer:
                 ),
                 row=1, col=2
             )
-            
+
             # Time series plot of latencies
             fig.add_trace(
                 go.Scatter(
@@ -1725,7 +1725,7 @@ class PerformanceMetricsVisualizer:
                 ),
                 row=2, col=1
             )
-            
+
             # Calculate statistics
             mean_latency = np.mean(durations)
             median_latency = np.median(durations)
@@ -1733,7 +1733,7 @@ class PerformanceMetricsVisualizer:
             p99_latency = np.percentile(durations, 99)
             min_latency = min(durations)
             max_latency = max(durations)
-            
+
             # Create statistics table
             stats_table = go.Table(
                 header=dict(
@@ -1746,9 +1746,9 @@ class PerformanceMetricsVisualizer:
                     values=[
                         ["Mean", "Median", "95th Percentile", "99th Percentile", "Min", "Max"],
                         [
-                            f"{mean_latency:.3f}", 
-                            f"{median_latency:.3f}", 
-                            f"{p95_latency:.3f}", 
+                            f"{mean_latency:.3f}",
+                            f"{median_latency:.3f}",
+                            f"{p95_latency:.3f}",
                             f"{p99_latency:.3f}",
                             f"{min_latency:.3f}",
                             f"{max_latency:.3f}"
@@ -1759,9 +1759,9 @@ class PerformanceMetricsVisualizer:
                     font=dict(color=self.colors["text"], size=12)
                 )
             )
-            
+
             fig.add_trace(stats_table, row=2, col=2)
-            
+
             # Update layout
             fig.update_layout(
                 title="Query Latency Analysis",
@@ -1776,7 +1776,7 @@ class PerformanceMetricsVisualizer:
                     color=self.colors["text"]
                 )
             )
-            
+
             # Update axes
             fig.update_xaxes(
                 showgrid=True,
@@ -1784,7 +1784,7 @@ class PerformanceMetricsVisualizer:
                 gridcolor=self.colors["grid"],
                 linecolor=self.colors["text"]
             )
-            
+
             fig.update_yaxes(
                 title_text="Duration (seconds)",
                 showgrid=True,
@@ -1792,60 +1792,60 @@ class PerformanceMetricsVisualizer:
                 gridcolor=self.colors["grid"],
                 linecolor=self.colors["text"]
             )
-            
+
             # Save if output file specified
             if output_file:
                 if output_file.endswith(".html"):
                     fig.write_html(output_file)
                 else:
                     fig.write_image(output_file)
-            
+
             # Show plot if requested
             if show_plot:
                 fig.show()
-                
+
             return fig
-            
+
         else:
             # Create static visualization with matplotlib
             figsize = figsize or self.default_figsize
             fig = plt.figure(figsize=(figsize[0] * 2, figsize[1] * 2))
-            
+
             # Set style
             plt.style.use('seaborn-v0_8-darkgrid' if self.theme == 'dark' else 'seaborn-v0_8-whitegrid')
-            
+
             # Create grid of subplots
             gs = plt.GridSpec(2, 2, figure=fig)
             ax1 = fig.add_subplot(gs[0, 0])  # Distribution plot
             ax2 = fig.add_subplot(gs[0, 1])  # Histogram
             ax3 = fig.add_subplot(gs[1, 0])  # Time series
             ax4 = fig.add_subplot(gs[1, 1])  # Statistics
-            
+
             # Distribution plot (violin plot or box plot)
             if len(durations) >= 10:  # Only use violin plot with enough data
                 sns.violinplot(y=durations, ax=ax1, color=self.colors["vector_search"])
             else:
                 sns.boxplot(y=durations, ax=ax1, color=self.colors["vector_search"])
-                
+
             ax1.set_title("Latency Distribution")
             ax1.set_ylabel("Duration (seconds)")
-            
+
             # Histogram
             sns.histplot(durations, ax=ax2, color=self.colors["vector_search"], kde=True)
             ax2.set_title("Latency Histogram")
             ax2.set_xlabel("Duration (seconds)")
             ax2.set_ylabel("Count")
-            
+
             # Time series plot
             ax3.plot(datetimes, durations, 'o-', color=self.colors["vector_search"])
             ax3.set_title("Latency Over Time")
             ax3.set_ylabel("Duration (seconds)")
             ax3.set_xlabel("Query Time")
-            
+
             # Format datetime x-axis
             ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
             plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45)
-            
+
             # Calculate statistics
             mean_latency = np.mean(durations)
             median_latency = np.median(durations)
@@ -1853,11 +1853,11 @@ class PerformanceMetricsVisualizer:
             p99_latency = np.percentile(durations, 99)
             min_latency = min(durations)
             max_latency = max(durations)
-            
+
             # Statistics table
             ax4.axis('off')
             ax4.set_title("Statistics")
-            
+
             table_data = [
                 ["Mean", f"{mean_latency:.3f} s"],
                 ["Median", f"{median_latency:.3f} s"],
@@ -1866,52 +1866,52 @@ class PerformanceMetricsVisualizer:
                 ["Min", f"{min_latency:.3f} s"],
                 ["Max", f"{max_latency:.3f} s"]
             ]
-            
+
             table = ax4.table(
                 cellText=table_data,
                 colLabels=["Metric", "Value"],
                 loc='center',
                 cellLoc='left'
             )
-            
+
             table.auto_set_font_size(False)
             table.set_fontsize(10)
             table.scale(1.2, 1.5)
-            
+
             # Add overall title
             fig.suptitle("Query Latency Analysis", fontsize=16)
-            
+
             # Adjust layout
             plt.tight_layout()
             plt.subplots_adjust(top=0.9)
-            
+
             # Save if output file specified
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
-            
+
             # Show plot if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close(fig)
-                
+
             return fig
-    
+
     def _extract_summary_metrics(self, time_window=None):
         """Extract summary metrics from query collector for dashboard display."""
         metrics = self.metrics_collector.query_metrics
-        
+
         # Filter by time window if specified
         if time_window:
             current_time = time.time()
             cutoff_time = current_time - time_window
             filtered_metrics = {
-                qid: m for qid, m in metrics.items() 
+                qid: m for qid, m in metrics.items()
                 if m.get("start_time", 0) >= cutoff_time
             }
         else:
             filtered_metrics = metrics
-            
+
         # Default values
         summary = {
             "total_queries": 0,
@@ -1921,67 +1921,67 @@ class PerformanceMetricsVisualizer:
             "p95_latency": None,
             "error_rate": None
         }
-        
+
         if not filtered_metrics:
             return summary
-            
+
         # Calculate basic metrics
         summary["total_queries"] = len(filtered_metrics)
-        
+
         # Calculate success and error rates
         completed = sum(1 for m in filtered_metrics.values() if m.get("status") == "completed")
         errors = sum(1 for m in filtered_metrics.values() if m.get("status") == "error")
-        
+
         if summary["total_queries"] > 0:
             summary["success_rate"] = f"{completed / summary['total_queries'] * 100:.1f}"
             summary["error_rate"] = f"{errors / summary['total_queries'] * 100:.1f}"
-        
+
         # Calculate duration statistics
         durations = [m.get("duration", 0) for m in filtered_metrics.values() if "duration" in m]
         if durations:
             summary["avg_duration"] = f"{sum(durations) / len(durations):.3f}"
-            
+
             # Calculate 95th percentile if we have enough data
             if len(durations) >= 20:
                 summary["p95_latency"] = f"{np.percentile(durations, 95):.3f}"
-        
+
         # Estimate peak throughput from timestamps
         if len(filtered_metrics) >= 2:
             timestamps = [m.get("start_time", 0) for m in filtered_metrics.values()]
             timestamps.sort()
-            
+
             # Use rolling window to find max queries per second
             window_size = 60  # 1 minute window
             max_qps = 0
-            
+
             for i in range(len(timestamps)):
                 window_end = timestamps[i]
                 window_start = window_end - window_size
-                
+
                 # Count queries in this window
                 queries_in_window = sum(1 for ts in timestamps if window_start <= ts <= window_end)
-                
+
                 # Calculate queries per second
                 qps = queries_in_window / window_size
                 max_qps = max(max_qps, qps)
-            
+
             summary["peak_throughput"] = f"{max_qps:.2f}"
-        
+
         return summary
 
 
 class QueryMetricsCollector:
     """
     Collects and aggregates metrics from RAG query executions.
-    
+
     This class tracks query performance, results, and patterns to identify trends,
     anomalies, and optimization opportunities in RAG system usage.
     """
-    
+
     def __init__(self, window_size: int = 86400):  # 24 hour default window
         """
         Initialize the query metrics collector.
-        
+
         Args:
             window_size: Time window in seconds for metrics retention
         """
@@ -1992,11 +1992,11 @@ class QueryMetricsCollector:
         self.query_patterns = {}
         self.alert_handlers = []
         self.last_cleanup_time = time.time()
-    
+
     def record_query_start(self, query_id: str, query_params: Dict[str, Any]) -> None:
         """
         Record the start of a query execution.
-        
+
         Args:
             query_id: Unique identifier for the query
             query_params: Parameters of the query including query text, filters, etc.
@@ -2006,12 +2006,12 @@ class QueryMetricsCollector:
             'query_params': query_params,
             'status': 'running'
         }
-    
-    def record_query_end(self, query_id: str, results: Optional[List[Dict[str, Any]]] = None, 
+
+    def record_query_end(self, query_id: str, results: Optional[List[Dict[str, Any]]] = None,
                         error: Optional[str] = None, metrics: Optional[Dict[str, Any]] = None) -> None:
         """
         Record the completion of a query execution.
-        
+
         Args:
             query_id: Unique identifier for the query
             results: Optional query results
@@ -2024,24 +2024,24 @@ class QueryMetricsCollector:
                 'start_time': time.time(),
                 'status': 'unknown'
             }
-        
+
         # Record end time and duration
         end_time = time.time()
         self.query_metrics[query_id]['end_time'] = end_time
-        
+
         # Calculate duration if we have start time
         if 'start_time' in self.query_metrics[query_id]:
             start_time = self.query_metrics[query_id]['start_time']
             duration = end_time - start_time
             self.query_metrics[query_id]['duration'] = duration
-        
+
         # Update status
         if error:
             self.query_metrics[query_id]['status'] = 'error'
             self.query_metrics[query_id]['error'] = error
         else:
             self.query_metrics[query_id]['status'] = 'completed'
-        
+
         # Add results information
         if results:
             self.query_metrics[query_id]['results_count'] = len(results)
@@ -2051,43 +2051,43 @@ class QueryMetricsCollector:
                 # Record average score
                 avg_score = sum(r.get('score', 0) for r in results) / len(results)
                 self.query_metrics[query_id]['avg_score'] = avg_score
-        
+
         # Add any additional metrics
         if metrics:
             for key, value in metrics.items():
                 self.query_metrics[query_id][key] = value
-        
+
         # Clean up old queries periodically
         current_time = time.time()
         if current_time - self.last_cleanup_time > 3600:  # Clean up once per hour
             self._cleanup_old_queries()
             self.last_cleanup_time = current_time
-        
+
         # Analyze patterns and check for anomalies
         self._analyze_query_patterns()
         self._check_for_anomalies(query_id)
-    
+
     def _cleanup_old_queries(self) -> None:
         """Remove queries older than the specified window size."""
         current_time = time.time()
         cutoff_time = current_time - self.window_size
-        
+
         # Create a list of query IDs to remove
         to_remove = []
         for query_id, metrics in self.query_metrics.items():
             if metrics.get('start_time', current_time) < cutoff_time:
                 to_remove.append(query_id)
-        
+
         # Remove old queries
         for query_id in to_remove:
             del self.query_metrics[query_id]
-    
+
     def _analyze_query_patterns(self) -> None:
         """Analyze query patterns to identify trends and optimization opportunities."""
         # Skip if we don't have enough queries
         if len(self.query_metrics) < 10:
             return
-        
+
         # Group queries by type/category/pattern
         query_types = {}
         for query_id, metrics in self.query_metrics.items():
@@ -2096,13 +2096,13 @@ class QueryMetricsCollector:
                 if query_type not in query_types:
                     query_types[query_type] = []
                 query_types[query_type].append(metrics)
-        
+
         # Calculate performance metrics by query type
         performance_by_type = {}
         for query_type, queries in query_types.items():
             if not queries:
                 continue
-                
+
             durations = [q.get('duration', 0) for q in queries if 'duration' in q]
             if durations:
                 performance_by_type[query_type] = {
@@ -2112,54 +2112,54 @@ class QueryMetricsCollector:
                     'min_duration': min(durations),
                     'success_rate': sum(1 for q in queries if q.get('status') == 'completed') / len(queries)
                 }
-        
+
         self.performance_trends = performance_by_type
-        
+
         # Identify frequently occurring query patterns
-        query_texts = [m.get('query_params', {}).get('query_text', '') 
-                     for m in self.query_metrics.values() 
+        query_texts = [m.get('query_params', {}).get('query_text', '')
+                     for m in self.query_metrics.values()
                      if 'query_params' in m and 'query_text' in m['query_params']]
-        
+
         # Count frequency of query terms (basic implementation)
         term_counts = {}
         for text in query_texts:
             if not text:
                 continue
-                
+
             # Simple tokenization by whitespace
             terms = text.lower().split()
             for term in terms:
                 if term not in term_counts:
                     term_counts[term] = 0
                 term_counts[term] += 1
-        
+
         # Sort by frequency
         sorted_terms = sorted(term_counts.items(), key=lambda x: x[1], reverse=True)
         self.query_patterns['common_terms'] = dict(sorted_terms[:20])  # Top 20 terms
-    
+
     def _check_for_anomalies(self, query_id: str) -> None:
         """
         Check for anomalies in the query metrics.
-        
+
         Args:
             query_id: The ID of the query to check
         """
         if query_id not in self.query_metrics:
             return
-        
+
         metrics = self.query_metrics[query_id]
         anomalies = []
-        
+
         # Check for unusually long execution time
         if 'duration' in metrics:
             # Calculate average duration of previous queries
-            other_durations = [q.get('duration', 0) for qid, q in self.query_metrics.items() 
+            other_durations = [q.get('duration', 0) for qid, q in self.query_metrics.items()
                               if qid != query_id and 'duration' in q]
-            
+
             if other_durations and len(other_durations) >= 5:
                 avg_duration = sum(other_durations) / len(other_durations)
                 current_duration = metrics['duration']
-                
+
                 # If query took more than 3x the average time
                 if current_duration > avg_duration * 3 and current_duration > 1.0:  # At least 1 second
                     anomalies.append({
@@ -2172,13 +2172,13 @@ class QueryMetricsCollector:
                         'timestamp': datetime.datetime.now(UTC).isoformat() + 'Z',
                         'severity': 'medium' if current_duration > avg_duration * 5 else 'low'
                     })
-        
+
         # Check for empty results anomaly
         if 'results_count' in metrics and metrics.get('status') == 'completed':
             if metrics['results_count'] == 0:
                 # Get the query text if available
                 query_text = metrics.get('query_params', {}).get('query_text', 'Unknown query')
-                
+
                 anomalies.append({
                     'type': 'empty_results_anomaly',
                     'query_id': query_id,
@@ -2186,11 +2186,11 @@ class QueryMetricsCollector:
                     'timestamp': datetime.datetime.now(UTC).isoformat() + 'Z',
                     'severity': 'low'
                 })
-        
+
         # Check for low relevance scores
         if 'avg_score' in metrics and metrics.get('status') == 'completed':
             avg_score = metrics['avg_score']
-            
+
             # If average score is below threshold
             if avg_score < 0.3:  # Threshold for concern
                 anomalies.append({
@@ -2201,7 +2201,7 @@ class QueryMetricsCollector:
                     'timestamp': datetime.datetime.now(UTC).isoformat() + 'Z',
                     'severity': 'low' if avg_score >= 0.2 else 'medium'
                 })
-        
+
         # Notify handlers of anomalies
         if anomalies and self.alert_handlers:
             for handler in self.alert_handlers:
@@ -2210,20 +2210,20 @@ class QueryMetricsCollector:
                         handler(anomaly)
                     except Exception as e:
                         logging.error(f"Error in query anomaly handler: {str(e)}")
-    
+
     def add_alert_handler(self, handler: Callable[[Dict[str, Any]], None]) -> None:
         """
         Add a handler for query anomaly alerts.
-        
+
         Args:
             handler: Function that processes anomaly notifications
         """
         self.alert_handlers.append(handler)
-    
+
     def get_performance_metrics(self) -> Dict[str, Any]:
         """
         Get performance metrics summary.
-        
+
         Returns:
             Dict[str, Any]: Summary of query performance metrics
         """
@@ -2234,18 +2234,18 @@ class QueryMetricsCollector:
                 'success_rate': 0,
                 'error_rate': 0
             }
-        
+
         # Calculate performance metrics
         total_queries = len(self.query_metrics)
         completed_queries = sum(1 for m in self.query_metrics.values() if m.get('status') == 'completed')
         error_queries = sum(1 for m in self.query_metrics.values() if m.get('status') == 'error')
-        
+
         durations = [m.get('duration', 0) for m in self.query_metrics.values() if 'duration' in m]
         avg_duration = sum(durations) / len(durations) if durations else 0
-        
+
         success_rate = completed_queries / total_queries if total_queries > 0 else 0
         error_rate = error_queries / total_queries if total_queries > 0 else 0
-        
+
         # Get performance by hour (for trends)
         hourly_stats = {}
         current_time = time.time()
@@ -2254,20 +2254,20 @@ class QueryMetricsCollector:
                 # Calculate hour bucket
                 hour_start = int((metrics['start_time'] - current_time) / 3600) * 3600 + current_time
                 hour_key = datetime.datetime.fromtimestamp(hour_start).strftime('%Y-%m-%d %H:00')
-                
+
                 if hour_key not in hourly_stats:
                     hourly_stats[hour_key] = {
                         'count': 0,
                         'total_duration': 0,
                         'errors': 0
                     }
-                
+
                 hourly_stats[hour_key]['count'] += 1
                 hourly_stats[hour_key]['total_duration'] += metrics.get('duration', 0)
-                
+
                 if metrics.get('status') == 'error':
                     hourly_stats[hour_key]['errors'] += 1
-        
+
         # Calculate hourly averages
         hourly_trends = {}
         for hour, stats in hourly_stats.items():
@@ -2276,7 +2276,7 @@ class QueryMetricsCollector:
                 'avg_duration': stats['total_duration'] / stats['count'] if stats['count'] > 0 else 0,
                 'error_rate': stats['errors'] / stats['count'] if stats['count'] > 0 else 0
             }
-        
+
         return {
             'total_queries': total_queries,
             'completed_queries': completed_queries,
@@ -2287,11 +2287,11 @@ class QueryMetricsCollector:
             'hourly_trends': hourly_trends,
             'performance_by_type': self.performance_trends
         }
-    
+
     def get_query_patterns(self) -> Dict[str, Any]:
         """
         Get query pattern insights.
-        
+
         Returns:
             Dict[str, Any]: Information about query patterns and trends
         """
@@ -2300,16 +2300,16 @@ class QueryMetricsCollector:
             'common_terms': self.query_patterns.get('common_terms', {}),
             'term_correlations': self.query_patterns.get('term_correlations', {})
         }
-    
+
     def get_optimization_opportunities(self) -> Dict[str, Any]:
         """
         Get recommended optimization opportunities based on query patterns.
-        
+
         Returns:
             Dict[str, Any]: Optimization suggestions
         """
         opportunities = []
-        
+
         # Check for slow queries
         slow_queries = []
         if self.query_metrics:
@@ -2318,7 +2318,7 @@ class QueryMetricsCollector:
             if durations and len(durations) >= 10:
                 durations.sort()
                 p95 = durations[int(0.95 * len(durations))]
-                
+
                 # Find queries above 95th percentile
                 for query_id, metrics in self.query_metrics.items():
                     if 'duration' in metrics and metrics['duration'] > p95:
@@ -2331,14 +2331,14 @@ class QueryMetricsCollector:
                                 metrics.get('start_time', time.time())
                             ).isoformat()
                         })
-                
+
                 if slow_queries:
                     opportunities.append({
                         'type': 'slow_queries',
                         'description': f'Identified {len(slow_queries)} queries above 95th percentile',
                         'queries': slow_queries[:5]  # Top 5 slowest
                     })
-        
+
         # Check for common zero-result queries
         zero_result_queries = []
         for query_id, metrics in self.query_metrics.items():
@@ -2351,22 +2351,22 @@ class QueryMetricsCollector:
                         metrics.get('start_time', time.time())
                     ).isoformat()
                 })
-        
+
         if zero_result_queries:
             opportunities.append({
                 'type': 'zero_result_queries',
                 'description': f'Found {len(zero_result_queries)} queries with zero results',
                 'queries': zero_result_queries[:5]  # Top 5 examples
             })
-        
+
         return {
             'opportunities': opportunities
         }
-    
+
     def to_json(self) -> Dict[str, Any]:
         """
         Convert metrics to JSON-serializable format.
-        
+
         Returns:
             Dict[str, Any]: Complete metrics in JSON-serializable format
         """
@@ -2381,23 +2381,23 @@ class QueryMetricsCollector:
 class RAGQueryVisualizer:
     """
     Visualization tools for RAG query metrics.
-    
+
     This class provides methods for creating visualizations of query performance,
-    patterns, and optimization opportunities to help understand and improve 
+    patterns, and optimization opportunities to help understand and improve
     RAG system behavior.
     """
-    
+
     def __init__(self, metrics_collector: QueryMetricsCollector):
         """
         Initialize the visualizer with a metrics collector.
-        
+
         Args:
             metrics_collector: QueryMetricsCollector instance with query metrics
         """
         self.metrics = metrics_collector
         self.visualization_available = VISUALIZATION_LIBS_AVAILABLE
-    
-    def plot_query_performance(self, 
+
+    def plot_query_performance(self,
                              period: str = 'hourly',
                              days: int = 1,
                              figsize: Tuple[int, int] = (10, 6),
@@ -2405,93 +2405,93 @@ class RAGQueryVisualizer:
                              show_plot: bool = False) -> Optional[Any]:
         """
         Create a plot of query performance over time.
-        
+
         Args:
             period: Aggregation period ('hourly', 'daily')
             days: Number of days to include
             figsize: Figure size (width, height) in inches
             output_file: Optional path to save the plot
             show_plot: Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure or None if visualization not available
         """
         if not self.visualization_available:
             logging.warning("Visualization libraries not available. Cannot create plot.")
             return None
-        
+
         try:
             # Get performance metrics
             performance = self.metrics.get_performance_metrics()
             hourly_trends = performance.get('hourly_trends', {})
-            
+
             if not hourly_trends:
                 logging.warning("No performance data available for plotting.")
                 return None
-            
+
             # Convert hourly data to series
             sorted_hours = sorted(hourly_trends.keys())
             timestamps = [datetime.datetime.strptime(h, '%Y-%m-%d %H:00') for h in sorted_hours]
             query_counts = [hourly_trends[h]['query_count'] for h in sorted_hours]
             durations = [hourly_trends[h]['avg_duration'] for h in sorted_hours]
             error_rates = [hourly_trends[h]['error_rate'] for h in sorted_hours]
-            
+
             # Create figure with two subplots (counts and durations)
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize, sharex=True)
-            
+
             # Plot query counts
-            ax1.plot(timestamps, query_counts, marker='o', linewidth=2, 
+            ax1.plot(timestamps, query_counts, marker='o', linewidth=2,
                     color='#5E81AC', markersize=6, label='Query Count')
             ax1.set_ylabel('Query Count', fontsize=12)
             ax1.set_title('RAG Query Volume Over Time', fontsize=14)
             ax1.grid(True, linestyle='--', alpha=0.7)
-            
+
             # Plot error rate on secondary axis
             ax1_twin = ax1.twinx()
-            ax1_twin.plot(timestamps, [r * 100 for r in error_rates], marker='s', 
-                        linewidth=2, color='#BF616A', markersize=6, 
+            ax1_twin.plot(timestamps, [r * 100 for r in error_rates], marker='s',
+                        linewidth=2, color='#BF616A', markersize=6,
                         linestyle='--', label='Error Rate')
             ax1_twin.set_ylabel('Error Rate (%)', color='#BF616A', fontsize=12)
             ax1_twin.tick_params(axis='y', colors='#BF616A')
-            
+
             # Add combined legend
             lines1, labels1 = ax1.get_legend_handles_labels()
             lines2, labels2 = ax1_twin.get_legend_handles_labels()
             ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
-            
+
             # Plot durations
-            ax2.plot(timestamps, durations, marker='o', linewidth=2, 
+            ax2.plot(timestamps, durations, marker='o', linewidth=2,
                     color='#A3BE8C', markersize=6)
             ax2.set_xlabel('Time', fontsize=12)
             ax2.set_ylabel('Avg. Duration (s)', fontsize=12)
             ax2.set_title('RAG Query Average Duration', fontsize=14)
             ax2.grid(True, linestyle='--', alpha=0.7)
-            
+
             # Format time axis
             ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
             fig.autofmt_xdate()
-            
+
             # Adjust layout
             plt.tight_layout()
-            
+
             # Save to file if output_file is specified
             if output_file:
                 plt.savefig(output_file, dpi=100, bbox_inches='tight')
-            
+
             # Show plot if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close()
-            
+
             return fig
-        
+
         except Exception as e:
             logging.error(f"Error creating query performance plot: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-    
+
     def plot_query_term_frequency(self,
                                 top_n: int = 15,
                                 figsize: Tuple[int, int] = (10, 8),
@@ -2499,153 +2499,153 @@ class RAGQueryVisualizer:
                                 show_plot: bool = False) -> Optional[Any]:
         """
         Create a bar chart of most frequent query terms.
-        
+
         Args:
             top_n: Number of top terms to include
             figsize: Figure size (width, height) in inches
             output_file: Optional path to save the plot
             show_plot: Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure or None if visualization not available
         """
         if not self.visualization_available:
             logging.warning("Visualization libraries not available. Cannot create plot.")
             return None
-        
+
         try:
             # Get query patterns
             patterns = self.metrics.get_query_patterns()
             common_terms = patterns.get('common_terms', {})
-            
+
             if not common_terms:
                 logging.warning("No term frequency data available for plotting.")
                 return None
-            
+
             # Sort terms by frequency and get top N
             sorted_terms = sorted(common_terms.items(), key=lambda x: x[1], reverse=True)[:top_n]
-            
+
             # Create figure
             fig, ax = plt.subplots(figsize=figsize)
-            
+
             # Extract data for plotting
             terms = [term for term, _ in sorted_terms]
             counts = [count for _, count in sorted_terms]
-            
+
             # Create horizontal bar chart
             bars = ax.barh(terms, counts, color='#5E81AC')
-            
+
             # Add count labels
             for i, bar in enumerate(bars):
                 width = bar.get_width()
                 ax.text(width + 0.5, bar.get_y() + bar.get_height()/2,
                       str(int(width)), ha='left', va='center', fontsize=10)
-            
+
             # Set labels and title
             ax.set_xlabel('Frequency', fontsize=12)
             ax.set_title('Most Common RAG Query Terms', fontsize=14)
-            
+
             # Remove top and right spines
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
-            
+
             # Add grid lines
             ax.grid(axis='x', linestyle='--', alpha=0.7)
-            
+
             # Adjust layout
             plt.tight_layout()
-            
+
             # Save to file if output_file is specified
             if output_file:
                 plt.savefig(output_file, dpi=100, bbox_inches='tight')
-            
+
             # Show plot if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close()
-            
+
             return fig
-        
+
         except Exception as e:
             logging.error(f"Error creating query term frequency plot: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-    
+
     def plot_query_duration_distribution(self,
                                        figsize: Tuple[int, int] = (10, 6),
                                        output_file: Optional[str] = None,
                                        show_plot: bool = False) -> Optional[Any]:
         """
         Create a histogram of query durations.
-        
+
         Args:
             figsize: Figure size (width, height) in inches
             output_file: Optional path to save the plot
             show_plot: Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure or None if visualization not available
         """
         if not self.visualization_available:
             logging.warning("Visualization libraries not available. Cannot create plot.")
             return None
-        
+
         try:
             # Extract query durations
-            durations = [m.get('duration', 0) for m in self.metrics.query_metrics.values() 
+            durations = [m.get('duration', 0) for m in self.metrics.query_metrics.values()
                         if 'duration' in m]
-            
+
             if not durations or len(durations) < 5:
                 logging.warning("Not enough duration data available for plotting.")
                 return None
-            
+
             # Create figure
             fig, ax = plt.subplots(figsize=figsize)
-            
+
             # Create histogram
             sns.histplot(durations, bins=20, kde=True, color='#5E81AC', ax=ax)
-            
+
             # Add percentile lines
             durations.sort()
             p50 = durations[int(0.5 * len(durations))]
             p90 = durations[int(0.9 * len(durations))]
             p95 = durations[int(0.95 * len(durations))]
-            
+
             ax.axvline(p50, color='green', linestyle='--', alpha=0.8, label=f'50th percentile ({p50:.2f}s)')
             ax.axvline(p90, color='orange', linestyle='--', alpha=0.8, label=f'90th percentile ({p90:.2f}s)')
             ax.axvline(p95, color='red', linestyle='--', alpha=0.8, label=f'95th percentile ({p95:.2f}s)')
-            
+
             # Set labels and title
             ax.set_xlabel('Duration (seconds)', fontsize=12)
             ax.set_ylabel('Frequency', fontsize=12)
             ax.set_title('RAG Query Duration Distribution', fontsize=14)
-            
+
             # Add legend
             ax.legend()
-            
+
             # Adjust layout
             plt.tight_layout()
-            
+
             # Save to file if output_file is specified
             if output_file:
                 plt.savefig(output_file, dpi=100, bbox_inches='tight')
-            
+
             # Show plot if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close()
-            
+
             return fig
-        
+
         except Exception as e:
             logging.error(f"Error creating query duration distribution plot: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-    
+
     def generate_dashboard_html(self,
                               title: str = "RAG Query Performance Dashboard",
                               include_optimization: bool = True,
@@ -2655,7 +2655,7 @@ class RAGQueryVisualizer:
                               audit_metrics = None) -> str:
         """
         Generate an HTML dashboard with query metrics and visualizations.
-        
+
         Args:
             title: Dashboard title
             include_optimization: Whether to include optimization suggestions
@@ -2663,28 +2663,28 @@ class RAGQueryVisualizer:
             include_security_correlation: Whether to include security correlation visualization
             anomalies: Optional list of query anomalies to display
             audit_metrics: Optional AuditMetricsAggregator for integrated audit data
-            
+
         Returns:
             str: HTML dashboard content
         """
         if not TEMPLATE_ENGINE_AVAILABLE:
             logging.warning("Template engine not available. Cannot generate HTML dashboard.")
             return "<html><body><h1>Template engine not available</h1></body></html>"
-        
+
         # Get metrics data
         performance = self.metrics.get_performance_metrics()
         patterns = None
         optimization = None
-        
+
         if include_patterns:
             patterns = self.metrics.get_query_patterns()
-        
+
         if include_optimization:
             optimization = self.metrics.get_optimization_opportunities()
-        
+
         # Generate chart images
         chart_paths = {}
-        
+
         # Create temporary directory for charts
         import tempfile
         import shutil
@@ -2694,12 +2694,12 @@ class RAGQueryVisualizer:
             performance_chart = os.path.join(temp_dir, "performance.png")
             self.plot_query_performance(output_file=performance_chart)
             chart_paths['performance'] = performance_chart
-            
+
             # Generate duration distribution chart
             duration_chart = os.path.join(temp_dir, "durations.png")
             self.plot_query_duration_distribution(output_file=duration_chart)
             chart_paths['durations'] = duration_chart
-            
+
             # Generate audit visualization if requested and metrics are available
             if audit_metrics and hasattr(self, 'visualizer') and isinstance(self.visualizer, EnhancedQueryVisualizer):
                 # Create security correlation chart
@@ -2718,24 +2718,24 @@ class RAGQueryVisualizer:
                         chart_paths['security_correlation'] = security_chart
                 except Exception as e:
                     logging.warning(f"Error generating security correlation visualization: {str(e)}")
-            
+
             # Generate term frequency chart if patterns included
             if include_patterns:
                 terms_chart = os.path.join(temp_dir, "terms.png")
                 self.plot_query_term_frequency(output_file=terms_chart)
                 chart_paths['terms'] = terms_chart
-            
+
             # Generate query-audit timeline if audit metrics provided
             if audit_metrics:
                 timeline_chart = os.path.join(temp_dir, "timeline.png")
                 from ipfs_datasets_py.audit.audit_visualization import create_query_audit_timeline
                 create_query_audit_timeline(
-                    query_metrics_collector=self.metrics, 
-                    audit_metrics=audit_metrics, 
+                    query_metrics_collector=self.metrics,
+                    audit_metrics=audit_metrics,
                     output_file=timeline_chart
                 )
                 chart_paths['timeline'] = timeline_chart
-            
+
             # Create HTML template
             dashboard_template = """
             <!DOCTYPE html>
@@ -2892,7 +2892,7 @@ class RAGQueryVisualizer:
                 <div class="dashboard">
                     <h1>{{ title }}</h1>
                     <p>Generated at {{ current_time }}</p>
-                    
+
                     {% if anomalies %}
                     <div class="alert-section">
                         <h2>Query Anomalies</h2>
@@ -2915,7 +2915,7 @@ class RAGQueryVisualizer:
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
+
                     <h2>Performance Summary</h2>
                     <div class="metric-grid">
                         <div class="key-metric">
@@ -2935,7 +2935,7 @@ class RAGQueryVisualizer:
                             <p>{{ (performance.error_rate * 100)|round(1) }}%</p>
                         </div>
                     </div>
-                    
+
                     <div class="chart-container">
                         <h3>Query Performance Over Time</h3>
                         {% if chart_data.performance %}
@@ -2944,7 +2944,7 @@ class RAGQueryVisualizer:
                         <p>No performance data available</p>
                         {% endif %}
                     </div>
-                    
+
                     <div class="chart-container">
                         <h3>Query Duration Distribution</h3>
                         {% if chart_data.durations %}
@@ -2953,14 +2953,14 @@ class RAGQueryVisualizer:
                         <p>No duration data available</p>
                         {% endif %}
                     </div>
-                    
+
                     {% if chart_data.timeline %}
                     <div class="chart-container">
                         <h3>Query and Audit Event Timeline</h3>
                         <img src="data:image/png;base64,{{ chart_data.timeline }}" alt="Query and Audit Timeline">
                     </div>
                     {% endif %}
-                    
+
                     {% if chart_data.security_correlation %}
                     <div class="chart-container">
                         <h3>Query Performance & Security Event Correlation</h3>
@@ -2968,17 +2968,17 @@ class RAGQueryVisualizer:
                         <p class="chart-description">This visualization shows the correlation between query performance and security events, helping identify if security incidents impact query performance or if performance anomalies correlate with security events.</p>
                     </div>
                     {% endif %}
-                    
+
                     {% if include_patterns and patterns %}
                     <h2>Query Patterns</h2>
-                    
+
                     {% if chart_data.terms %}
                     <div class="chart-container">
                         <h3>Most Common Query Terms</h3>
                         <img src="data:image/png;base64,{{ chart_data.terms }}" alt="Term Frequency">
                     </div>
                     {% endif %}
-                    
+
                     <div class="metric-card">
                         <h3>Top Query Terms</h3>
                         <table>
@@ -2999,15 +2999,15 @@ class RAGQueryVisualizer:
                         </table>
                     </div>
                     {% endif %}
-                    
+
                     {% if include_optimization and optimization and optimization.opportunities %}
                     <h2>Optimization Opportunities</h2>
-                    
+
                     {% for opportunity in optimization.opportunities %}
                     <div class="optimization-card">
                         <div class="optimization-header">{{ opportunity.type }}</div>
                         <div class="optimization-details">{{ opportunity.description }}</div>
-                        
+
                         {% if opportunity.queries %}
                         <h4>Example Queries:</h4>
                         {% for query in opportunity.queries %}
@@ -3020,7 +3020,7 @@ class RAGQueryVisualizer:
                     </div>
                     {% endfor %}
                     {% endif %}
-                    
+
                     <div class="footer">
                         <p>Generated by RAGQueryVisualizer</p>
                     </div>
@@ -3028,7 +3028,7 @@ class RAGQueryVisualizer:
             </body>
             </html>
             """
-            
+
             # Convert chart images to base64 for embedding in HTML
             chart_data = {}
             for name, path in chart_paths.items():
@@ -3036,11 +3036,11 @@ class RAGQueryVisualizer:
                     with open(path, 'rb') as f:
                         import base64
                         chart_data[name] = base64.b64encode(f.read()).decode('utf-8')
-            
+
             # Ensure anomalies is a list
             if anomalies is None:
                 anomalies = []
-            
+
             # Render template
             template = Template(dashboard_template)
             html = template.render(
@@ -3054,45 +3054,45 @@ class RAGQueryVisualizer:
                 include_patterns=include_patterns,
                 include_optimization=include_optimization
             )
-            
+
             return html
-            
+
         finally:
             # Clean up temporary directory
             shutil.rmtree(temp_dir)
-    
+
     def export_metrics_report(self,
                             format: str = "html",
                             output_file: Optional[str] = None) -> Union[str, Dict[str, Any]]:
         """
         Export metrics report in the specified format.
-        
+
         Args:
             format: Report format ("html" or "json")
             output_file: Optional path to save the report
-            
+
         Returns:
             str or Dict: Report content
         """
         if format.lower() == "html":
             html = self.generate_dashboard_html()
-            
+
             if output_file:
                 with open(output_file, 'w') as f:
                     f.write(html)
-            
+
             return html
-            
+
         elif format.lower() == "json":
             # Get JSON representation of metrics
             json_data = self.metrics.to_json()
-            
+
             if output_file:
                 with open(output_file, 'w') as f:
                     json.dump(json_data, f, indent=2)
-            
+
             return json_data
-            
+
         else:
             raise ValueError(f"Unsupported format: {format}")
 
@@ -3100,15 +3100,15 @@ class RAGQueryVisualizer:
 class OptimizerLearningMetricsCollector:
     """
     Collects and analyzes metrics from the RAG query optimizer's statistical learning process.
-    
+
     This class provides visualization and analysis of the optimizer's learning performance,
     allowing monitoring of learning cycles, parameter adaptations, and optimization effectiveness.
     """
-    
+
     def __init__(self, max_history_size=1000):
         """
         Initialize the learning metrics collector.
-        
+
         Args:
             max_history_size (int): Maximum number of learning events to store
         """
@@ -3120,21 +3120,21 @@ class OptimizerLearningMetricsCollector:
         self.max_history_size = max_history_size
         self.audit_logger = None
         self._lock = threading.RLock()  # Thread safety
-        
+
     def set_audit_logger(self, audit_logger):
         """
         Set the audit logger for recording learning events.
-        
+
         Args:
             audit_logger: AuditLogger instance
         """
         self.audit_logger = audit_logger
-        
-    def record_learning_cycle(self, cycle_id, time_started, query_count, is_success=True, 
+
+    def record_learning_cycle(self, cycle_id, time_started, query_count, is_success=True,
                              duration=None, results=None, error=None):
         """
         Record metrics from a learning cycle.
-        
+
         Args:
             cycle_id: Unique identifier for the learning cycle
             time_started: When the cycle started (timestamp)
@@ -3155,7 +3155,7 @@ class OptimizerLearningMetricsCollector:
                 'duration': duration,
                 'error': error
             }
-            
+
             # Add results if available
             if results and isinstance(results, dict):
                 event.update({
@@ -3164,14 +3164,14 @@ class OptimizerLearningMetricsCollector:
                     'warning': results.get('error'),  # Non-critical error
                     'optimization_rules': results.get('optimization_rules', [])
                 })
-                
+
                 # Track results separately for analysis
                 self.learning_results.append({
                     'cycle_id': cycle_id,
                     'timestamp': time_started,
                     'results': results
                 })
-                
+
                 # Record to audit log if configured
                 if self.audit_logger:
                     try:
@@ -3190,19 +3190,19 @@ class OptimizerLearningMetricsCollector:
                     except Exception:
                         # Ignore errors in audit logging
                         pass
-                
+
             # Add to learning events
             self.learning_events.append(event)
-            
+
             # Limit history size
             if len(self.learning_events) > self.max_history_size:
                 self.learning_events = self.learning_events[-self.max_history_size:]
-                
-    def record_parameter_adaptation(self, parameter_name, old_value, new_value, 
+
+    def record_parameter_adaptation(self, parameter_name, old_value, new_value,
                                   confidence, cycle_id=None):
         """
         Record parameter adaptation from the learning process.
-        
+
         Args:
             parameter_name: Name of the parameter that was adapted
             old_value: Previous parameter value
@@ -3223,17 +3223,17 @@ class OptimizerLearningMetricsCollector:
                 'datetime': datetime.datetime.fromtimestamp(now),
                 'cycle_id': cycle_id
             }
-            
+
             # Track in parameter history
             if parameter_name not in self.parameter_adaptations:
                 self.parameter_adaptations[parameter_name] = []
-                
+
             self.parameter_adaptations[parameter_name].append(adaptation)
-            
+
             # Limit history size
             if len(self.parameter_adaptations[parameter_name]) > self.max_history_size:
                 self.parameter_adaptations[parameter_name] = self.parameter_adaptations[parameter_name][-self.max_history_size:]
-                
+
             # Record to audit log if configured
             if self.audit_logger:
                 try:
@@ -3253,11 +3253,11 @@ class OptimizerLearningMetricsCollector:
                 except Exception:
                     # Ignore errors in audit logging
                     pass
-                    
+
     def record_circuit_breaker_event(self, event_type, reason, backoff_minutes=None):
         """
         Record circuit breaker activation or reset.
-        
+
         Args:
             event_type: Type of event ('tripped' or 'reset')
             reason: Reason for the event
@@ -3272,35 +3272,35 @@ class OptimizerLearningMetricsCollector:
                 'timestamp': now,
                 'datetime': datetime.datetime.fromtimestamp(now)
             }
-            
+
             if event_type == 'tripped' and backoff_minutes is not None:
                 retry_time = now + (backoff_minutes * 60)
                 event['backoff_minutes'] = backoff_minutes
                 event['retry_time'] = retry_time
                 event['retry_datetime'] = datetime.datetime.fromtimestamp(retry_time)
-                
+
             # Add to circuit breaker events
             self.circuit_breaker_events.append(event)
-            
+
             # Limit history size
             if len(self.circuit_breaker_events) > self.max_history_size:
                 self.circuit_breaker_events = self.circuit_breaker_events[-self.max_history_size:]
-                
+
             # Record to audit log if configured
             if self.audit_logger:
                 try:
                     severity = "warning" if event_type == "tripped" else "info"
                     message = f"Circuit breaker {event_type}: {reason}"
-                    
+
                     metadata = {
                         'event_type': event_type,
                         'reason': reason
                     }
-                    
+
                     if event_type == 'tripped' and backoff_minutes is not None:
                         metadata['backoff_minutes'] = backoff_minutes
                         metadata['retry_time'] = datetime.datetime.fromtimestamp(retry_time).isoformat()
-                        
+
                     self.audit_logger.log(
                         f"circuit_breaker_{event_type}",
                         message,
@@ -3311,53 +3311,53 @@ class OptimizerLearningMetricsCollector:
                 except Exception:
                     # Ignore errors in audit logging
                     pass
-                    
+
     def get_learning_performance_metrics(self, window_seconds=86400):
         """
         Get performance metrics for learning cycles within a time window.
-        
+
         Args:
             window_seconds: Time window in seconds (default: 24 hours)
-            
+
         Returns:
             dict: Learning performance metrics
         """
         with self._lock:
             now = time.time()
             window_start = now - window_seconds
-            
+
             # Filter events in the time window
-            recent_events = [event for event in self.learning_events 
+            recent_events = [event for event in self.learning_events
                           if event['timestamp'] >= window_start]
-                          
+
             # Calculate basic metrics
             total_cycles = len(recent_events)
             successful_cycles = sum(1 for event in recent_events if event.get('is_success', False))
             failed_cycles = total_cycles - successful_cycles
             success_rate = successful_cycles / max(1, total_cycles)
-            
+
             # Calculate metrics from successful cycles
             analyzed_queries = sum(event.get('analyzed_queries', 0) for event in recent_events if event.get('is_success', False))
             rules_generated = sum(event.get('rules_generated', 0) for event in recent_events if event.get('is_success', False))
-            
+
             # Calculate average durations
-            durations = [event.get('duration', 0) for event in recent_events 
+            durations = [event.get('duration', 0) for event in recent_events
                       if event.get('duration') is not None]
             avg_duration = sum(durations) / max(1, len(durations)) if durations else 0
-            
+
             # Calculate circuit breaker statistics
-            recent_cb_events = [event for event in self.circuit_breaker_events 
+            recent_cb_events = [event for event in self.circuit_breaker_events
                              if event['timestamp'] >= window_start]
             trips = sum(1 for event in recent_cb_events if event['event_type'] == 'tripped')
             resets = sum(1 for event in recent_cb_events if event['event_type'] == 'reset')
-            
+
             # Parameter adaptation statistics
             param_adaptations = {}
             for param, adaptations in self.parameter_adaptations.items():
                 recent_adaptations = [a for a in adaptations if a['timestamp'] >= window_start]
                 if recent_adaptations:
                     param_adaptations[param] = len(recent_adaptations)
-            
+
             # Create performance metrics
             return {
                 'window_seconds': window_seconds,
@@ -3373,15 +3373,15 @@ class OptimizerLearningMetricsCollector:
                 'parameter_adaptations': param_adaptations,
                 'is_active': self._check_if_active(recent_events)
             }
-            
+
     def visualize_learning_performance(self, output_file=None, interactive=True):
         """
         Create visualization of learning performance metrics.
-        
+
         Args:
             output_file: Optional file path to save the visualization
             interactive: Whether to create an interactive visualization
-            
+
         Returns:
             matplotlib.Figure or plotly.Figure: The generated visualization
         """
@@ -3397,10 +3397,10 @@ class OptimizerLearningMetricsCollector:
                     showarrow=False,
                     font=dict(size=20)
                 )
-                
+
                 if output_file:
                     fig.write_html(output_file)
-                    
+
                 return fig
             else:
                 # Create empty matplotlib figure with message
@@ -3410,38 +3410,38 @@ class OptimizerLearningMetricsCollector:
                        verticalalignment='center',
                        transform=ax.transAxes,
                        fontsize=14)
-                
+
                 if output_file:
                     plt.savefig(output_file, dpi=100, bbox_inches='tight')
-                    
+
                 return fig
-                
+
         # Create interactive visualization if requested and available
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             return self._create_interactive_learning_visualization(output_file)
-        
+
         # Create static matplotlib visualization
         return self._create_static_learning_visualization(output_file)
-    
+
     def _create_interactive_learning_visualization(self, output_file=None):
         """Create interactive Plotly visualization of learning metrics."""
         if not INTERACTIVE_VISUALIZATION_AVAILABLE:
             return None
-            
+
         # Convert data for visualization
         cycle_times = []
         success_status = []
         analyzed_queries = []
         rules_generated = []
         durations = []
-        
+
         for event in sorted(self.learning_events, key=lambda x: x['timestamp']):
             cycle_times.append(event['datetime'])
             success_status.append('Success' if event.get('is_success', False) else 'Failure')
             analyzed_queries.append(event.get('analyzed_queries', 0))
             rules_generated.append(event.get('rules_generated', 0))
             durations.append(event.get('duration', 0))
-            
+
         # Create figure with subplots
         fig = make_subplots(
             rows=2, cols=2,
@@ -3456,7 +3456,7 @@ class OptimizerLearningMetricsCollector:
                 [{"type": "scatter"}, {"type": "bar"}]
             ]
         )
-        
+
         # Add learning cycle status
         fig.add_trace(
             go.Scatter(
@@ -3473,7 +3473,7 @@ class OptimizerLearningMetricsCollector:
             ),
             row=1, col=1
         )
-        
+
         # Add queries analyzed vs rules generated
         fig.add_trace(
             go.Scatter(
@@ -3485,7 +3485,7 @@ class OptimizerLearningMetricsCollector:
             ),
             row=1, col=2
         )
-        
+
         fig.add_trace(
             go.Scatter(
                 x=cycle_times,
@@ -3496,7 +3496,7 @@ class OptimizerLearningMetricsCollector:
             ),
             row=1, col=2
         )
-        
+
         # Add cycle duration
         fig.add_trace(
             go.Scatter(
@@ -3508,15 +3508,15 @@ class OptimizerLearningMetricsCollector:
             ),
             row=2, col=1
         )
-        
+
         # Add parameter adaptations
         params = []
         adapt_counts = []
-        
+
         for param, adaptations in self.parameter_adaptations.items():
             params.append(param)
             adapt_counts.append(len(adaptations))
-            
+
         fig.add_trace(
             go.Bar(
                 x=params,
@@ -3526,16 +3526,16 @@ class OptimizerLearningMetricsCollector:
             ),
             row=2, col=2
         )
-        
+
         # Add circuit breaker events if available
         if self.circuit_breaker_events:
             cb_times = []
             cb_status = []
-            
+
             for event in sorted(self.circuit_breaker_events, key=lambda x: x['timestamp']):
                 cb_times.append(event['datetime'])
                 cb_status.append(event['event_type'].capitalize())
-                
+
             fig.add_trace(
                 go.Scatter(
                     x=cb_times,
@@ -3552,41 +3552,41 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=1
             )
-            
+
         # Update layout
         fig.update_layout(
             title='RAG Query Optimizer Learning Performance',
             height=800,
             showlegend=True
         )
-        
+
         # Set y-axis ranges and titles
         fig.update_yaxes(title_text='Success (1) / Failure (0)', range=[-0.1, 1.1], row=1, col=1)
         fig.update_yaxes(title_text='Count', row=1, col=2)
         fig.update_yaxes(title_text='Duration (seconds)', row=2, col=1)
         fig.update_yaxes(title_text='Adaptation Count', row=2, col=2)
-        
+
         # Save if output file is specified
         if output_file:
             fig.write_html(output_file)
-            
+
         return fig
-        
+
     def _create_static_learning_visualization(self, output_file=None):
         """Create static matplotlib visualization of learning metrics."""
         # Sort events by timestamp
         sorted_events = sorted(self.learning_events, key=lambda x: x['timestamp'])
-        
+
         # Extract data for visualization
         cycle_times = [event['datetime'] for event in sorted_events]
         success_status = [event.get('is_success', False) for event in sorted_events]
         analyzed_queries = [event.get('analyzed_queries', 0) for event in sorted_events]
         rules_generated = [event.get('rules_generated', 0) for event in sorted_events]
         durations = [event.get('duration', 0) for event in sorted_events]
-        
+
         # Create figure with subplots
         fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-        
+
         # Plot 1: Learning cycle success status
         ax = axes[0, 0]
         ax.scatter(
@@ -3596,13 +3596,13 @@ class OptimizerLearningMetricsCollector:
             marker='o',
             s=50
         )
-        
+
         # Add circuit breaker events if available
         if self.circuit_breaker_events:
             cb_sorted = sorted(self.circuit_breaker_events, key=lambda x: x['timestamp'])
             cb_times = [event['datetime'] for event in cb_sorted]
             cb_types = [event['event_type'] for event in cb_sorted]
-            
+
             ax.scatter(
                 cb_times,
                 [1 if t == 'reset' else 0 for t in cb_types],
@@ -3611,7 +3611,7 @@ class OptimizerLearningMetricsCollector:
                 s=80,
                 label='Circuit Breaker'
             )
-            
+
         ax.set_ylim(-0.1, 1.1)
         ax.set_yticks([0, 1])
         ax.set_yticklabels(['Failure', 'Success'])
@@ -3619,7 +3619,7 @@ class OptimizerLearningMetricsCollector:
         ax.set_xlabel('Time')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-        
+
         # Plot 2: Queries analyzed vs rules generated
         ax = axes[0, 1]
         ax.plot(cycle_times, analyzed_queries, 'b-o', label='Queries Analyzed')
@@ -3630,7 +3630,7 @@ class OptimizerLearningMetricsCollector:
         ax.legend()
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-        
+
         # Plot 3: Cycle duration
         ax = axes[1, 0]
         ax.plot(cycle_times, durations, 'purple', marker='o', linestyle='-')
@@ -3639,41 +3639,41 @@ class OptimizerLearningMetricsCollector:
         ax.set_ylabel('Duration (seconds)')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-        
+
         # Plot 4: Parameter adaptations
         ax = axes[1, 1]
         params = []
         adapt_counts = []
-        
+
         for param, adaptations in self.parameter_adaptations.items():
             params.append(param)
             adapt_counts.append(len(adaptations))
-            
+
         ax.bar(params, adapt_counts, color='teal')
         ax.set_title('Parameter Adaptations')
         ax.set_xlabel('Parameter')
         ax.set_ylabel('Adaptation Count')
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-        
+
         # Adjust layout
         plt.suptitle('RAG Query Optimizer Learning Performance', fontsize=16)
         plt.tight_layout()
         plt.subplots_adjust(top=0.9)
-        
+
         # Save if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=100, bbox_inches='tight')
-            
+
         return fig
-        
+
     def _calculate_change(self, old_value, new_value):
         """
         Calculate relative change between values.
-        
+
         Args:
             old_value: Previous value
             new_value: New value
-            
+
         Returns:
             float: Relative change or None if not calculable
         """
@@ -3684,37 +3684,37 @@ class OptimizerLearningMetricsCollector:
                 if old_value == 0:
                     return None
                 return (new_value - old_value) / old_value
-            
+
             # For lists, calculate length change
             if isinstance(old_value, list) and isinstance(new_value, list):
                 old_len = len(old_value)
                 new_len = len(new_value)
-                
+
                 # Don't divide by zero
                 if old_len == 0:
                     return None
-                    
+
                 return (new_len - old_len) / old_len
-                
+
             # For other types, return None
             return None
         except Exception:
             return None
-            
+
     def _check_if_active(self, events):
         """
         Check if learning appears to be active based on recent events.
-        
+
         Args:
             events: List of recent learning events
-            
+
         Returns:
             bool: True if learning appears active, False otherwise
         """
         # If no events, learning is not active
         if not events:
             return False
-            
+
         # Check circuit breaker status
         if self.circuit_breaker_events:
             latest_cb = max(self.circuit_breaker_events, key=lambda x: x['timestamp'])
@@ -3722,21 +3722,21 @@ class OptimizerLearningMetricsCollector:
                 # Check if we're past the retry time
                 if 'retry_time' in latest_cb and time.time() < latest_cb['retry_time']:
                     return False
-                    
+
         # Learning is active if there are recent events with at least one success
         return any(event.get('is_success', False) for event in events)
 
 
-def integrate_with_audit_system(query_metrics: QueryMetricsCollector, 
+def integrate_with_audit_system(query_metrics: QueryMetricsCollector,
                             audit_alert_manager: Any,
                             audit_logger: Any) -> None:
     """
     Integrate query metrics with the audit system.
-    
+
     This function sets up bidirectional integration between the query metrics
     system and the audit logging/alerting system, allowing both systems to
     share information about anomalies.
-    
+
     Args:
         query_metrics: QueryMetricsCollector instance
         audit_alert_manager: AuditAlertManager instance from audit system
@@ -3755,7 +3755,7 @@ def integrate_with_audit_system(query_metrics: QueryMetricsCollector,
                     level = 'ERROR'
                 elif anomaly.get('severity') == 'critical':
                     level = 'CRITICAL'
-                
+
                 # Log with appropriate category
                 audit_logger.log(
                     level=level,
@@ -3770,7 +3770,7 @@ def integrate_with_audit_system(query_metrics: QueryMetricsCollector,
                         'timestamp': anomaly.get('timestamp')
                     }
                 )
-            
+
             # Create security alert if it's a serious anomaly
             if audit_alert_manager and anomaly.get('severity') in ['high', 'critical']:
                 # Convert query anomaly to audit anomaly format
@@ -3782,16 +3782,16 @@ def integrate_with_audit_system(query_metrics: QueryMetricsCollector,
                     'mean': anomaly.get('average') if 'average' in anomaly else None,
                     'timestamp': anomaly.get('timestamp'),
                 }
-                
+
                 # Send to audit alert manager
                 audit_alert_manager.handle_anomaly_alert(audit_anomaly)
-                
+
         except Exception as e:
             logging.error(f"Error forwarding query anomaly to audit system: {str(e)}")
-    
+
     # Register the handler with query metrics
     query_metrics.add_alert_handler(query_anomaly_to_audit)
-    
+
     # Log integration status
     logging.info("Successfully integrated query metrics with audit system")
 
@@ -3805,23 +3805,23 @@ def create_dashboard(
 ) -> str:
     """
     Generate a comprehensive dashboard for RAG query analysis.
-    
+
     This function creates a dashboard HTML file with visualizations of query metrics,
     anomaly information, and integrated audit data if available.
-    
+
     Args:
         output_file: Path to save the dashboard HTML file
         query_metrics: QueryMetricsCollector with query metrics
         audit_metrics: Optional AuditMetricsAggregator for integrated audit data
         title: Dashboard title
         include_anomalies: Whether to include anomaly information
-        
+
     Returns:
         str: Path to the generated dashboard file
     """
     # Create visualizer
     visualizer = RAGQueryVisualizer(query_metrics)
-    
+
     # Get anomalies if requested
     anomalies = []
     if include_anomalies:
@@ -3834,7 +3834,7 @@ def create_dashboard(
                     'timestamp': datetime.datetime.fromtimestamp(metrics.get('end_time', time.time())).isoformat(),
                     'query_id': metrics.get('query_id', 'unknown')
                 }
-                
+
                 # Add specific information based on anomaly type
                 if metrics.get('anomaly_type') == 'performance_anomaly':
                     anomaly['value'] = metrics.get('duration', 0)
@@ -3844,9 +3844,9 @@ def create_dashboard(
                     anomaly['query_text'] = metrics.get('query_params', {}).get('query_text', 'Unknown query')
                 elif metrics.get('anomaly_type') == 'relevance_anomaly':
                     anomaly['value'] = metrics.get('avg_score', 0)
-                
+
                 anomalies.append(anomaly)
-    
+
     # Generate dashboard HTML
     html = visualizer.generate_dashboard_html(
         title=title,
@@ -3855,59 +3855,59 @@ def create_dashboard(
         anomalies=anomalies,
         audit_metrics=audit_metrics
     )
-    
+
     # Create output directory if it doesn't exist
     os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-    
+
     # Write dashboard to file
     with open(output_file, 'w') as f:
         f.write(html)
-    
+
     return output_file
 
 
 class EnhancedQueryVisualizer(RAGQueryVisualizer):
     """
     Enhanced visualization tools for RAG query metrics with better audit integration.
-    
+
     This class extends the base RAGQueryVisualizer with additional methods for creating
     more sophisticated visualizations and providing better integration with the audit
     visualization system. It provides comprehensive visualization of query performance,
     anomalies, and correlation with security events.
     """
-    
-    def visualize_query_performance_timeline(self, 
-                                          hours_back: int = 24, 
+
+    def visualize_query_performance_timeline(self,
+                                          hours_back: int = 24,
                                           interval_minutes: int = 30,
                                           include_error_events: bool = True,
                                           output_file: Optional[str] = None,
                                           show_plot: bool = False) -> Any:
         """
         Create a timeline visualization of query performance.
-        
+
         Args:
             hours_back: Number of hours to look back
             interval_minutes: Time interval in minutes for aggregation
             include_error_events: Whether to highlight error events
             output_file: Optional path to save the visualization
             show_plot: Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         try:
             # Get metrics data
             performance = self.metrics.get_performance_metrics()
             hourly_trends = performance.get('hourly_trends', {})
-            
+
             if not hourly_trends:
                 logging.warning("No performance data available for timeline")
                 return None
-                
+
             # Convert to pandas DataFrame for easier manipulation
             data = []
             for hour, stats in hourly_trends.items():
@@ -3918,77 +3918,77 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     'avg_duration': stats['avg_duration'],
                     'error_rate': stats['error_rate']
                 })
-                
+
             if not data:
                 logging.warning("No timeline data available")
                 return None
-                
+
             df = pd.DataFrame(data)
             df = df.sort_values('timestamp')
-            
+
             # Create figure with two subplots
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True, 
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True,
                                           gridspec_kw={'height_ratios': [3, 1]})
-            
+
             # Plot query count and duration on top subplot
             color1 = '#3572C6'  # Blue for query count
             color2 = '#6AADA3'  # Teal for duration
-            
+
             # Plot query count
-            ax1.plot(df['timestamp'], df['query_count'], 'o-', color=color1, 
+            ax1.plot(df['timestamp'], df['query_count'], 'o-', color=color1,
                     linewidth=2, markersize=6, label='Query Count')
             ax1.set_ylabel('Query Count', color=color1, fontsize=12)
             ax1.tick_params(axis='y', labelcolor=color1)
-            
+
             # Plot duration on secondary y-axis
             ax3 = ax1.twinx()
-            ax3.plot(df['timestamp'], df['avg_duration'], 'o-', color=color2, 
+            ax3.plot(df['timestamp'], df['avg_duration'], 'o-', color=color2,
                    linewidth=2, markersize=6, label='Avg Duration (s)')
             ax3.set_ylabel('Avg Duration (s)', color=color2, fontsize=12)
             ax3.tick_params(axis='y', labelcolor=color2)
-            
+
             # Add error rate on bottom subplot
-            ax2.bar(df['timestamp'], df['error_rate'] * 100, color='#E57373', 
+            ax2.bar(df['timestamp'], df['error_rate'] * 100, color='#E57373',
                    alpha=0.7, width=0.02, label='Error Rate (%)')
             ax2.set_ylabel('Error Rate (%)', fontsize=12)
             ax2.set_ylim(0, max(max(df['error_rate'] * 100) * 1.2, 1))
-            
+
             # Format x-axis
             ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
             plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha='right')
-            
+
             # Add grid
             ax1.grid(True, linestyle='--', alpha=0.6)
             ax2.grid(True, linestyle='--', alpha=0.6)
-            
+
             # Add legend
             lines1, labels1 = ax1.get_legend_handles_labels()
             lines2, labels2 = ax3.get_legend_handles_labels()
             ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
             ax2.legend(loc='upper left')
-            
+
             # Add title
             fig.suptitle('RAG Query Performance Timeline', fontsize=16)
             plt.tight_layout()
-            
+
             # Save to file if output_file is specified
             if output_file:
                 plt.savefig(output_file, dpi=100, bbox_inches='tight')
-            
+
             # Show plot if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close()
-                
+
             return fig
-            
+
         except Exception as e:
             logging.error(f"Error creating query performance timeline: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-    
+
     def visualize_query_performance_with_security_events(self,
                                                audit_metrics_aggregator,
                                                hours_back: int = 24,
@@ -4000,11 +4000,11 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                                show_plot: bool = False) -> Optional[Any]:
         """
         Create a specialized visualization showing query performance correlation with security events.
-        
+
         This visualization highlights the relationship between RAG query performance and security
         events, helping identify if security incidents impact query performance or if performance
         anomalies correlate with security events.
-        
+
         Args:
             audit_metrics_aggregator: AuditMetricsAggregator containing audit metrics
             hours_back: Number of hours to look back
@@ -4014,14 +4014,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
             output_file: Optional path to save the visualization
             interactive: Whether to create an interactive plot
             show_plot: Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure or plotly.graph_objects.Figure: The generated figure
         """
         if not audit_metrics_aggregator:
             logging.warning("Audit metrics aggregator is required for security event correlation")
             return None
-            
+
         # Use interactive visualization if available and requested
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             return self._create_interactive_security_correlation(
@@ -4033,20 +4033,20 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 output_file=output_file,
                 show_plot=show_plot
             )
-            
+
         if not VISUALIZATION_LIBS_AVAILABLE:
             logging.warning("Visualization libraries not available")
             return None
-            
+
         try:
             # Define time boundaries
             end_time = datetime.datetime.now()
             start_time = end_time - datetime.timedelta(hours=hours_back)
-            
+
             # Create figure with two subplots
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True, 
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True,
                                         gridspec_kw={'height_ratios': [3, 1]})
-            
+
             # Plot #1: Query Performance Timeline
             # Extract query data
             query_data = []
@@ -4061,21 +4061,21 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             'results_count': metrics.get('results_count', 0),
                             'query_id': query_id
                         })
-            
+
             # Sort by timestamp
             query_data = sorted(query_data, key=lambda x: x['timestamp'])
-            
+
             if query_data:
                 # Extract data for plotting
                 timestamps = [q['timestamp'] for q in query_data]
                 durations = [q['duration'] * 1000 for q in query_data]  # Convert to ms
                 statuses = [q['status'] for q in query_data]
-                
+
                 # Plot durations with color-coded points based on status
                 normal_mask = [status == 'completed' for status in statuses]
                 error_mask = [status == 'error' for status in statuses]
                 anomaly_mask = [status == 'anomaly' for status in statuses]
-                
+
                 # Plot normal queries
                 if any(normal_mask):
                     ax1.scatter(
@@ -4083,7 +4083,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         [d for d, m in zip(durations, normal_mask) if m],
                         color='#3572C6', s=50, alpha=0.7, label='Normal'
                     )
-                    
+
                 # Plot error queries
                 if any(error_mask):
                     ax1.scatter(
@@ -4091,7 +4091,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         [d for d, m in zip(durations, error_mask) if m],
                         color='#E57373', s=80, marker='x', label='Error'
                     )
-                    
+
                 # Plot anomaly queries
                 if any(anomaly_mask):
                     ax1.scatter(
@@ -4099,32 +4099,32 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         [d for d, m in zip(durations, anomaly_mask) if m],
                         color='#FFD54F', s=80, marker='o', edgecolors='#FF8F00', linewidth=2, label='Anomaly'
                     )
-                
+
                 # Add trend line
                 if len(durations) > 1:
                     try:
                         z = np.polyfit(range(len(durations)), durations, 1)
                         p = np.poly1d(z)
-                        ax1.plot(timestamps, p(range(len(durations))), 
+                        ax1.plot(timestamps, p(range(len(durations))),
                                'r--', linewidth=2, alpha=0.7, label='Trend')
                     except Exception as e:
                         logging.warning(f"Error creating trend line: {str(e)}")
             else:
-                ax1.text(0.5, 0.5, 'No query data in selected time period', 
+                ax1.text(0.5, 0.5, 'No query data in selected time period',
                       horizontalalignment='center', verticalalignment='center',
                       transform=ax1.transAxes, fontsize=12)
-            
+
             # Configure query plot
             ax1.set_title('RAG Query Performance Timeline', fontsize=14)
             ax1.set_ylabel('Duration (ms)', fontsize=12)
             ax1.grid(True, linestyle='--', alpha=0.6)
             if query_data:
                 ax1.legend(loc='upper right', fontsize=10)
-            
+
             # Plot #2: Security Events
             # Get security events from audit metrics
             security_events = []
-            
+
             # Process event data from audit metrics aggregator
             # This requires access to the event data in the metrics aggregator
             try:
@@ -4135,7 +4135,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     categories=event_categories,
                     min_level=min_severity
                 )
-                
+
                 # Process events
                 for event in raw_events:
                     event_time = datetime.datetime.fromtimestamp(event.get('timestamp', 0))
@@ -4148,10 +4148,10 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     })
             except Exception as e:
                 logging.warning(f"Error retrieving security events: {str(e)}")
-            
+
             # Sort events by timestamp
             security_events = sorted(security_events, key=lambda x: x['timestamp'])
-            
+
             if security_events:
                 # Create a scatter plot with color-coded points by level
                 level_colors = {
@@ -4162,14 +4162,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     'CRITICAL': '#B10DC9',
                     'EMERGENCY': '#85144b'
                 }
-                
+
                 for level in ['CRITICAL', 'ERROR', 'WARNING', 'INFO']:
                     level_events = [e for e in security_events if e['level'] == level]
                     if level_events:
                         event_times = [e['timestamp'] for e in level_events]
                         # Use y=0 for all events since we're just marking their occurrence
                         event_y = [0] * len(event_times)
-                        
+
                         ax2.scatter(
                             event_times, event_y,
                             s=100 if level in ['CRITICAL', 'ERROR'] else 60,
@@ -4179,91 +4179,91 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             edgecolors='white' if level in ['CRITICAL', 'ERROR'] else None,
                             linewidth=1 if level in ['CRITICAL', 'ERROR'] else 0
                         )
-                
+
                 # Add event counts by interval
                 # Create time buckets
                 bucket_size = datetime.timedelta(minutes=interval_minutes)
                 buckets = {}
                 current_bucket = start_time
-                
+
                 while current_bucket <= end_time:
                     buckets[current_bucket] = 0
                     current_bucket += bucket_size
-                
+
                 # Count events in each bucket
                 for event in security_events:
                     for bucket_time in buckets:
                         if bucket_time <= event['timestamp'] < bucket_time + bucket_size:
                             buckets[bucket_time] += 1
                             break
-                
+
                 # Plot event counts as a step chart behind the points
                 bucket_times = list(buckets.keys())
                 bucket_counts = list(buckets.values())
-                
+
                 if any(bucket_counts):  # Only plot if there are events
                     # Normalize to the plot height (0 to 1)
                     max_count = max(bucket_counts) if bucket_counts else 1
                     norm_counts = [count / max_count for count in bucket_counts]
-                    
+
                     ax2.step(
                         bucket_times, norm_counts,
                         where='post', color='#AAAAAA', alpha=0.3,
                         linewidth=1, zorder=0
                     )
-                    
+
                     # Add a secondary y-axis for the counts
                     ax2_right = ax2.twinx()
                     ax2_right.set_ylim(0, max_count * 1.1)
                     ax2_right.set_ylabel('Event Count', fontsize=10)
                     ax2_right.tick_params(axis='y', labelsize=8)
-                
+
                 # Set axes properties
                 ax2.set_ylim(-0.1, 1.1)
                 ax2.set_yticks([])  # Hide the y-ticks since they're meaningless
                 ax2.legend(loc='upper right', fontsize=9)
             else:
-                ax2.text(0.5, 0.5, 'No security events in selected time period', 
+                ax2.text(0.5, 0.5, 'No security events in selected time period',
                        horizontalalignment='center', verticalalignment='center',
                        transform=ax2.transAxes, fontsize=12)
-            
+
             # Configure security event plot
             ax2.set_title('Security Events', fontsize=14)
             ax2.set_xlabel('Time', fontsize=12)
             ax2.grid(True, linestyle='--', alpha=0.6)
-            
+
             # Format time axis
             ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
             plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha='right')
-            
+
             # Add overall title
             fig.suptitle('Query Performance & Security Event Correlation', fontsize=16)
-            
+
             # Adjust layout
             plt.tight_layout()
             plt.subplots_adjust(top=0.9)
-            
+
             # Save if output file is specified
             if output_file:
                 plt.savefig(output_file, dpi=100, bbox_inches='tight')
-            
+
             # Show if requested
             if show_plot:
                 plt.show()
             else:
                 plt.close()
-                
+
             return fig
-            
+
         except Exception as e:
             logging.error(f"Error creating security correlation visualization: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-            
-    def visualize_query_audit_timeline(self, 
+
+    def visualize_query_audit_timeline(self,
                                     audit_metrics_aggregator,
-                                    hours_back: int = 24, 
+                                    hours_back: int = 24,
                                     interval_minutes: int = 30,
                                     theme: str = 'light',
                                     title: str = "Query Performance & Audit Events Timeline",
@@ -4273,7 +4273,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                     show_plot: bool = False) -> Optional[Any]:
         """
         Create an integrated timeline showing both RAG queries and audit events.
-        
+
         Args:
             audit_metrics_aggregator: AuditMetricsAggregator containing audit metrics
             hours_back: Number of hours to look back
@@ -4284,7 +4284,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
             output_file: Optional path to save the visualization
             interactive: Whether to create an interactive plot (requires plotly)
             show_plot: Whether to display the plot
-            
+
         Returns:
             matplotlib.figure.Figure or plotly.graph_objects.Figure: The generated figure
         """
@@ -4298,11 +4298,11 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 output_file=output_file,
                 show_plot=show_plot
             )
-        
+
         try:
             # Import the create_query_audit_timeline function from audit_visualization
             from ipfs_datasets_py.audit.audit_visualization import create_query_audit_timeline
-            
+
             # Create the timeline visualization
             fig = create_query_audit_timeline(
                 query_metrics_collector=self.metrics,
@@ -4314,9 +4314,9 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 output_file=output_file,
                 show_plot=show_plot
             )
-            
+
             return fig
-            
+
         except ImportError:
             logging.error("Audit visualization module not available")
             return None
@@ -4325,7 +4325,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
             import traceback
             logging.error(traceback.format_exc())
             return None
-            
+
     def _create_interactive_security_correlation(self,
                                            audit_metrics_aggregator,
                                            hours_back: int = 24,
@@ -4336,13 +4336,13 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                            show_plot: bool = False) -> Optional[Any]:
         """
         Create an interactive visualization of security events and query performance correlation.
-        
+
         This advanced visualization combines query performance metrics with security events
         to help identify potential correlations between security incidents and query performance
         issues. The interactive plot allows drilling down into specific time periods and events
         to investigate anomalies and understand the relationship between security posture and
         system performance.
-        
+
         Args:
             audit_metrics_aggregator: AuditMetricsAggregator containing audit metrics
             hours_back: Number of hours to look back
@@ -4351,19 +4351,19 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
             min_severity: Minimum severity level to include
             output_file: Optional path to save the visualization
             show_plot: Whether to display the plot
-            
+
         Returns:
             plotly.graph_objects.Figure: The interactive figure
         """
         if not INTERACTIVE_VISUALIZATION_AVAILABLE:
             logging.error("Interactive visualization libraries not available")
             return None
-            
+
         try:
             # Define time boundaries
             end_time = datetime.datetime.now()
             start_time = end_time - datetime.timedelta(hours=hours_back)
-            
+
             # Extract query data
             query_data = []
             for query_id, metrics in self.metrics.query_metrics.items():
@@ -4378,13 +4378,13 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             'query_id': query_id,
                             'query_text': metrics.get('query_params', {}).get('query_text', 'Unknown query')
                         })
-            
+
             # Sort by timestamp
             query_data = sorted(query_data, key=lambda x: x['timestamp'])
-            
+
             # Get security events from audit metrics
             security_events = []
-            
+
             try:
                 # Get events from audit metrics
                 raw_events = audit_metrics_aggregator.get_events_in_timeframe(
@@ -4393,7 +4393,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     categories=event_categories,
                     min_level=min_severity
                 )
-                
+
                 # Process events
                 for event in raw_events:
                     event_time = datetime.datetime.fromtimestamp(event.get('timestamp', 0))
@@ -4407,10 +4407,10 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     })
             except Exception as e:
                 logging.warning(f"Error retrieving security events: {str(e)}")
-            
+
             # Sort events by timestamp
             security_events = sorted(security_events, key=lambda x: x['timestamp'])
-            
+
             # Create figure with subplots
             fig = make_subplots(
                 rows=2, cols=1,
@@ -4422,14 +4422,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 ),
                 row_heights=[0.7, 0.3]
             )
-            
+
             # Add query performance data
             if query_data:
                 # Group by status
                 normal_queries = [q for q in query_data if q['status'] == 'completed']
                 error_queries = [q for q in query_data if q['status'] == 'error']
                 anomaly_queries = [q for q in query_data if q['status'] == 'anomaly']
-                
+
                 # Add normal queries
                 if normal_queries:
                     fig.add_trace(
@@ -4444,7 +4444,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         ),
                         row=1, col=1
                     )
-                
+
                 # Add error queries
                 if error_queries:
                     fig.add_trace(
@@ -4454,8 +4454,8 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             mode='markers',
                             name='Error Queries',
                             marker=dict(
-                                color='#E57373', 
-                                size=10, 
+                                color='#E57373',
+                                size=10,
                                 symbol='x',
                                 line=dict(width=2, color='#C62828')
                             ),
@@ -4464,7 +4464,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         ),
                         row=1, col=1
                     )
-                
+
                 # Add anomaly queries
                 if anomaly_queries:
                     fig.add_trace(
@@ -4474,8 +4474,8 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             mode='markers',
                             name='Anomaly Queries',
                             marker=dict(
-                                color='#FFD54F', 
-                                size=10, 
+                                color='#FFD54F',
+                                size=10,
                                 symbol='circle',
                                 line=dict(width=2, color='#FF8F00')
                             ),
@@ -4484,17 +4484,17 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         ),
                         row=1, col=1
                     )
-                
+
                 # Add trend line if we have multiple points
                 if len(query_data) > 1:
                     # Calculate trend
                     x_values = list(range(len(query_data)))
                     y_values = [q['duration'] for q in query_data]
-                    
+
                     try:
                         z = np.polyfit(x_values, y_values, 1)
                         p = np.poly1d(z)
-                        
+
                         fig.add_trace(
                             go.Scatter(
                                 x=[q['timestamp'] for q in query_data],
@@ -4508,14 +4508,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         )
                     except Exception as e:
                         logging.warning(f"Error creating trend line: {str(e)}")
-            
+
             # Add security events
             if security_events:
                 # Group by level
                 level_groups = {}
                 for level in ['CRITICAL', 'ERROR', 'WARNING', 'INFO']:
                     level_groups[level] = [e for e in security_events if e['level'] == level]
-                
+
                 # Level colors
                 level_colors = {
                     'DEBUG': '#7FDBFF',
@@ -4525,7 +4525,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     'CRITICAL': '#B10DC9',
                     'EMERGENCY': '#85144b'
                 }
-                
+
                 # Add each level as a separate trace
                 for level, events in level_groups.items():
                     if events:
@@ -4536,15 +4536,15 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             text += f"Category: {event['category']}<br>"
                             text += f"Action: {event['action']}<br>"
                             text += f"Status: {event['status']}"
-                            
+
                             # Add additional details if available
                             if event.get('details'):
                                 text += "<br>Details:<br>"
                                 for k, v in event['details'].items()[:3]:  # Limit to 3 details
                                     text += f"- {k}: {str(v)[:50]}<br>"
-                                
+
                             hover_texts.append(text)
-                        
+
                         # Add scatter plot with all points at y=0
                         fig.add_trace(
                             go.Scatter(
@@ -4563,17 +4563,17 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             ),
                             row=2, col=1
                         )
-                
+
                 # Add event density
                 # Create time buckets for histogram
                 bucket_size = datetime.timedelta(minutes=interval_minutes)
                 bucket_starts = []
                 current_bucket = start_time
-                
+
                 while current_bucket <= end_time:
                     bucket_starts.append(current_bucket)
                     current_bucket += bucket_size
-                
+
                 # Count events in each bucket
                 bucket_counts = [0] * len(bucket_starts)
                 for event in security_events:
@@ -4582,11 +4582,11 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             next_bucket = bucket_starts[i + 1]
                         else:
                             next_bucket = bucket_time + bucket_size
-                            
+
                         if bucket_time <= event['timestamp'] < next_bucket:
                             bucket_counts[i] += 1
                             break
-                
+
                 if any(bucket_counts):  # Only add if we have events
                     fig.add_trace(
                         go.Bar(
@@ -4599,7 +4599,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         ),
                         row=2, col=1
                     )
-            
+
             # Update layout and axes
             fig.update_layout(
                 title='Query Performance & Security Event Correlation',
@@ -4610,64 +4610,64 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 height=800,
                 margin=dict(t=100, b=50, l=80, r=80)
             )
-            
+
             # Update y-axes
             fig.update_yaxes(title_text='Duration (ms)', row=1, col=1)
-            
+
             # For security events, hide the y-axis ticks/labels as they're not meaningful
             fig.update_yaxes(
-                showticklabels=False, 
-                range=[-0.1, 1], 
-                title_text='', 
+                showticklabels=False,
+                range=[-0.1, 1],
+                title_text='',
                 zeroline=True,
                 row=2, col=1
             )
-            
+
             # Update x-axes
             fig.update_xaxes(
                 title_text='Time',
                 rangebreaks=[dict(bounds=["sat", "mon"])],  # hide weekends
                 row=2, col=1
             )
-            
+
             # Add shapes to highlight security events periods
             # Find clusters of security events
             if security_events and len(security_events) > 1:
                 event_clusters = []
                 current_cluster = []
                 cluster_window = datetime.timedelta(minutes=interval_minutes)
-                
+
                 for event in security_events:
                     if not current_cluster:
                         current_cluster = [event]
                     else:
                         last_event = current_cluster[-1]
                         time_diff = event['timestamp'] - last_event['timestamp']
-                        
+
                         if time_diff <= cluster_window:
                             current_cluster.append(event)
                         else:
                             if len(current_cluster) >= 3:  # Only highlight clusters with 3+ events
                                 event_clusters.append(current_cluster)
                             current_cluster = [event]
-                
+
                 # Don't forget to add the last cluster
                 if current_cluster and len(current_cluster) >= 3:
                     event_clusters.append(current_cluster)
-                
+
                 # Add shapes for each cluster
                 for i, cluster in enumerate(event_clusters):
                     cluster_start = min(e['timestamp'] for e in cluster)
                     cluster_end = max(e['timestamp'] for e in cluster)
-                    
+
                     # Extend by half the cluster window on each side
                     cluster_start -= cluster_window / 2
                     cluster_end += cluster_window / 2
-                    
+
                     # Check security event severity
                     has_critical = any(e['level'] == 'CRITICAL' for e in cluster)
                     has_error = any(e['level'] == 'ERROR' for e in cluster)
-                    
+
                     # Choose color based on severity
                     if has_critical:
                         color = 'rgba(177, 13, 201, 0.2)'  # Purple for critical
@@ -4675,7 +4675,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         color = 'rgba(255, 65, 54, 0.2)'   # Red for error
                     else:
                         color = 'rgba(255, 220, 0, 0.2)'   # Yellow for warning/info
-                    
+
                     # Add rectangle spanning both subplots
                     fig.add_shape(
                         type="rect",
@@ -4690,7 +4690,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         layer="below",
                         opacity=0.5
                     )
-                    
+
                     # Add annotation for event cluster
                     fig.add_annotation(
                         x=cluster_start + (cluster_end - cluster_start) / 2,
@@ -4706,23 +4706,23 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         bgcolor=color.replace('0.2', '0.6'),
                         font=dict(size=10, color="white")
                     )
-            
+
             # Save to file if specified
             if output_file:
                 fig.write_html(output_file)
-                
+
             # Show if requested
             if show_plot:
                 fig.show()
-                
+
             return fig
-            
+
         except Exception as e:
             logging.error(f"Error creating interactive security correlation visualization: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-            
+
     def _create_interactive_query_audit_timeline(self,
                                               audit_metrics_aggregator,
                                               hours_back: int = 24,
@@ -4733,28 +4733,28 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                               show_plot: bool = False) -> Optional[Any]:
         """
         Create an interactive timeline visualization with plotly.
-        
+
         Args:
             audit_metrics_aggregator: AuditMetricsAggregator with audit metrics
             hours_back: Number of hours to look back
-            interval_minutes: Time interval in minutes for aggregation 
+            interval_minutes: Time interval in minutes for aggregation
             theme: 'light' or 'dark' color theme
             title: Title for the visualization
             output_file: Optional path to save the interactive HTML
             show_plot: Whether to display the plot
-            
+
         Returns:
             plotly.graph_objects.Figure: The interactive figure object
         """
         if not INTERACTIVE_VISUALIZATION_AVAILABLE:
             logging.error("Interactive visualization libraries not available")
             return None
-            
+
         try:
             # Define time boundaries
             end_time = datetime.datetime.now()
             start_time = end_time - datetime.timedelta(hours=hours_back)
-            
+
             # Setup theme colors
             if theme == 'dark':
                 bg_color = '#1a1a1a'
@@ -4774,10 +4774,10 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 warning_color = '#FFD54F'
                 info_color = '#81C784'
                 plot_template = 'plotly_white'
-            
+
             # Get metrics data
             performance = self.metrics.get_performance_metrics()
-            
+
             # Create figure with subplots
             fig = make_subplots(
                 rows=3, cols=1,
@@ -4790,7 +4790,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 ),
                 row_heights=[0.4, 0.3, 0.3]
             )
-            
+
             # Plot #1: Query Performance
             # Extract query data from the collector
             query_data = []
@@ -4806,15 +4806,15 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             'query_text': metrics.get('query_params', {}).get('query_text', 'Unknown query'),
                             'query_id': query_id
                         })
-            
+
             # Sort by timestamp
             query_data = sorted(query_data, key=lambda x: x['timestamp'])
-            
+
             # Extract timestamps and durations
             if query_data:
                 timestamps = [q['timestamp'] for q in query_data]
                 durations = [q['duration'] for q in query_data]
-                
+
                 # Add query duration bars with hover information
                 hover_texts = [
                     f"Query ID: {q['query_id']}<br>"
@@ -4824,7 +4824,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     f"Query: {q['query_text'][:50] + '...' if len(q['query_text']) > 50 else q['query_text']}"
                     for q in query_data
                 ]
-                
+
                 fig.add_trace(
                     go.Bar(
                         x=timestamps,
@@ -4837,7 +4837,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     ),
                     row=1, col=1
                 )
-                
+
                 # Add markers for error queries
                 error_queries = [q for q in query_data if q['status'] == 'error']
                 if error_queries:
@@ -4850,7 +4850,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         f"Query: {q['query_text'][:50] + '...' if len(q['query_text']) > 50 else q['query_text']}"
                         for q in error_queries
                     ]
-                    
+
                     fig.add_trace(
                         go.Scatter(
                             x=error_timestamps,
@@ -4867,13 +4867,13 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         ),
                         row=1, col=1
                     )
-                
+
                 # Create running average if we have enough data
                 if len(durations) >= 3:
                     window_size = min(5, len(durations))
                     running_avg = np.convolve(durations, np.ones(window_size)/window_size, mode='valid')
                     avg_timestamps = timestamps[window_size-1:]
-                    
+
                     fig.add_trace(
                         go.Scatter(
                             x=avg_timestamps,
@@ -4881,19 +4881,19 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             mode='lines',
                             name=f'{window_size}-point Avg',
                             line=dict(
-                                color='white' if theme == 'dark' else 'black', 
-                                width=2, 
+                                color='white' if theme == 'dark' else 'black',
+                                width=2,
                                 dash='dash'
                             )
                         ),
                         row=1, col=1
                     )
-                
+
                 # Add performance metrics as annotations
                 if 'avg_duration' in performance:
                     avg_duration = performance['avg_duration'] * 1000  # Convert to ms
                     success_rate = performance['success_rate'] * 100  # Convert to percentage
-                    
+
                     fig.add_annotation(
                         x=0.02,
                         y=0.95,
@@ -4914,20 +4914,20 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                         row=1,
                         col=1
                     )
-            
+
             # Plot #2 & #3: Audit Events
             # Get audit data if available
             if audit_metrics_aggregator:
                 audit_time_series = audit_metrics_aggregator.get_time_series_data()
-                
+
                 # Process category-based time series data
                 categories_data = {}
                 for category_action, time_series in audit_time_series.get('by_category_action', {}).items():
                     category = category_action.split('_')[0] if '_' in category_action else category_action
-                    
+
                     if category not in categories_data:
                         categories_data[category] = []
-                    
+
                     # Extract timestamps and counts
                     for item in time_series:
                         event_time = datetime.datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
@@ -4936,7 +4936,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                 'timestamp': event_time,
                                 'count': item['count']
                             })
-                
+
                 # Plot each category as a separate trace
                 category_colors = {
                     'AUTHENTICATION': '#8C9EFF',
@@ -4950,14 +4950,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     'RESOURCE': '#FF8A80',
                     'RAG_QUERY': '#FFCC80'  # Add color for RAG query category
                 }
-                
+
                 for category, data_points in categories_data.items():
                     if data_points:
                         # Sort by timestamp
                         data_points = sorted(data_points, key=lambda x: x['timestamp'])
                         cat_timestamps = [d['timestamp'] for d in data_points]
                         cat_counts = [d['count'] for d in data_points]
-                        
+
                         fig.add_trace(
                             go.Scatter(
                                 x=cat_timestamps,
@@ -4977,13 +4977,13 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             ),
                             row=2, col=1
                         )
-                
+
                 # Process level-based time series data
                 levels_data = {}
                 for level, time_series in audit_time_series.get('by_level', {}).items():
                     if level not in levels_data:
                         levels_data[level] = []
-                    
+
                     # Extract timestamps and counts
                     for item in time_series:
                         event_time = datetime.datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
@@ -4992,7 +4992,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                                 'timestamp': event_time,
                                 'count': item['count']
                             })
-                
+
                 # Plot each level as a separate trace
                 level_colors = {
                     'DEBUG': '#7FDBFF',
@@ -5002,14 +5002,14 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     'CRITICAL': '#B10DC9',
                     'EMERGENCY': '#85144b'
                 }
-                
+
                 for level, data_points in levels_data.items():
                     if data_points:
                         # Sort by timestamp
                         data_points = sorted(data_points, key=lambda x: x['timestamp'])
                         level_timestamps = [d['timestamp'] for d in data_points]
                         level_counts = [d['count'] for d in data_points]
-                        
+
                         fig.add_trace(
                             go.Scatter(
                                 x=level_timestamps,
@@ -5027,7 +5027,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                             ),
                             row=3, col=1
                         )
-            
+
             # Update layout
             fig.update_layout(
                 title=title,
@@ -5044,7 +5044,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 margin=dict(t=100, l=50, r=50, b=50),
                 hovermode='closest'
             )
-            
+
             # Update axes
             fig.update_xaxes(
                 title_text='Time',
@@ -5062,7 +5062,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                     ])
                 )
             )
-            
+
             fig.update_yaxes(
                 title_text='Duration (ms)',
                 row=1, col=1,
@@ -5071,7 +5071,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 gridwidth=1,
                 zeroline=False
             )
-            
+
             fig.update_yaxes(
                 title_text='Event Count',
                 row=2, col=1,
@@ -5080,7 +5080,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 gridwidth=1,
                 zeroline=False
             )
-            
+
             fig.update_yaxes(
                 title_text='Event Count',
                 row=3, col=1,
@@ -5089,17 +5089,17 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
                 gridwidth=1,
                 zeroline=False
             )
-            
+
             # Save if output_file provided
             if output_file:
                 fig.write_html(output_file)
-            
+
             # Show plot if requested
             if show_plot:
                 fig.show()
-            
+
             return fig
-            
+
         except Exception as e:
             logging.error(f"Error creating interactive query audit timeline: {str(e)}")
             import traceback
@@ -5110,62 +5110,62 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
 class PerformanceMetricsVisualizer:
     """
     Specialized visualizer for query performance metrics analysis.
-    
+
     This class focuses on visualizing the detailed performance metrics of RAG queries,
     including processing time breakdowns, component contributions to latency,
     throughput analysis, and resource utilization patterns.
     """
-    
+
     def __init__(self, metrics_collector: QueryMetricsCollector):
         """
         Initialize the performance metrics visualizer.
-        
+
         Args:
             metrics_collector: QueryMetricsCollector instance with query metrics
         """
         self.metrics_collector = metrics_collector
         self.default_figsize = (10, 6)
-        
-    def visualize_processing_time_breakdown(self, output_file: Optional[str] = None, 
+
+    def visualize_processing_time_breakdown(self, output_file: Optional[str] = None,
                                           top_n: int = 10, theme: str = "light") -> Union[plt.Figure, None]:
         """
         Create a visualization of processing time breakdown by component.
-        
+
         Shows the relative contribution of different processing phases (vector search,
         graph traversal, result ranking, etc.) to total query execution time.
-        
+
         Args:
             output_file: Optional path to save the visualization
             top_n: Number of most recent queries to include
             theme: 'light' or 'dark' theme for visualization
-            
+
         Returns:
             Matplotlib figure or None if visualization libraries not available
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Set style based on theme
         plt.style.use('default')
         if theme == "dark":
             plt.style.use('dark_background')
-            
+
         # Prepare data
         phase_times = {}
         phase_counts = {}
-        
+
         # Get recent queries, sorted by timestamp (most recent first)
         recent_queries = sorted(
             self.metrics_collector.query_metrics.items(),
             key=lambda x: x[1].get('end_time', 0) if x[1].get('status') == 'completed' else 0,
             reverse=True
         )[:top_n]
-        
+
         # Extract phase timing information
         for query_id, query_data in recent_queries:
             if query_data.get('status') != 'completed':
                 continue
-                
+
             # Extract all phase timings
             for key, value in query_data.items():
                 if key.endswith('_time') and key != 'start_time' and key != 'end_time' and key != 'duration':
@@ -5175,258 +5175,258 @@ class PerformanceMetricsVisualizer:
                         phase_counts[phase] = 0
                     phase_times[phase].append(value)
                     phase_counts[phase] += 1
-        
+
         # If no phase data, return
         if not phase_times:
             if output_file:
                 # Create a simple figure explaining no data available
                 fig, ax = plt.subplots(figsize=self.default_figsize)
-                ax.text(0.5, 0.5, "No phase timing data available", 
+                ax.text(0.5, 0.5, "No phase timing data available",
                       ha='center', va='center', fontsize=14)
                 ax.set_axis_off()
                 fig.savefig(output_file, bbox_inches='tight')
                 return fig
             return None
-            
+
         # Calculate average times for each phase
         avg_phase_times = {phase: sum(times)/len(times) for phase, times in phase_times.items()}
-        
+
         # Create the figure
         fig, ax = plt.subplots(figsize=self.default_figsize)
-        
+
         # Plot the breakdown
         phases = sorted(avg_phase_times.keys(), key=lambda x: avg_phase_times[x], reverse=True)
         values = [avg_phase_times[p] for p in phases]
-        
+
         # Normalize to show percentage of total time
         total_time = sum(values)
         normalized_values = [v/total_time*100 for v in values] if total_time > 0 else values
-        
+
         # Create bar chart
         bars = ax.bar(phases, normalized_values)
-        
+
         # Add labels
         ax.set_title('Query Processing Time Breakdown by Component', fontsize=14)
         ax.set_xlabel('Processing Component', fontsize=12)
         ax.set_ylabel('% of Processing Time', fontsize=12)
-        
+
         # Add value labels on top of each bar
         for bar, value, norm_value in zip(bars, values, normalized_values):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height + 1,
                   f'{value:.3f}s\n({norm_value:.1f}%)',
                   ha='center', va='bottom', fontsize=9)
-        
+
         # Adjust layout and styling
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
-        
+
         # Save if output file specified
         if output_file:
             plt.savefig(output_file, bbox_inches='tight')
-        
+
         return fig
-        
+
     def visualize_latency_distribution(self, output_file: Optional[str] = None,
                                      bins: int = 20, theme: str = "light") -> Union[plt.Figure, None]:
         """
         Create a visualization of query latency distribution.
-        
+
         Shows the distribution of query execution times with outlier detection.
-        
+
         Args:
             output_file: Optional path to save the visualization
             bins: Number of bins for histogram
             theme: 'light' or 'dark' theme for visualization
-            
+
         Returns:
             Matplotlib figure or None if visualization libraries not available
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Set style based on theme
         plt.style.use('default')
         if theme == "dark":
             plt.style.use('dark_background')
-            
+
         # Collect query durations
         durations = []
         for query_id, query_data in self.metrics_collector.query_metrics.items():
             if query_data.get('status') == 'completed' and 'duration' in query_data:
                 durations.append(query_data['duration'])
-        
+
         # If no duration data, return
         if not durations:
             if output_file:
                 # Create a simple figure explaining no data available
                 fig, ax = plt.subplots(figsize=self.default_figsize)
-                ax.text(0.5, 0.5, "No query duration data available", 
+                ax.text(0.5, 0.5, "No query duration data available",
                       ha='center', va='center', fontsize=14)
                 ax.set_axis_off()
                 fig.savefig(output_file, bbox_inches='tight')
                 return fig
             return None
-        
+
         # Create the figure
         fig, ax = plt.subplots(figsize=self.default_figsize)
-        
+
         # Plot histogram with KDE
         sns.histplot(durations, bins=bins, kde=True, ax=ax)
-        
+
         # Calculate statistics
         mean_duration = np.mean(durations)
         median_duration = np.median(durations)
         p95_duration = np.percentile(durations, 95)
-        
+
         # Add vertical lines for statistics
-        ax.axvline(mean_duration, color='r', linestyle='--', 
+        ax.axvline(mean_duration, color='r', linestyle='--',
                   label=f'Mean: {mean_duration:.3f}s')
-        ax.axvline(median_duration, color='g', linestyle='--', 
+        ax.axvline(median_duration, color='g', linestyle='--',
                   label=f'Median: {median_duration:.3f}s')
-        ax.axvline(p95_duration, color='purple', linestyle='--', 
+        ax.axvline(p95_duration, color='purple', linestyle='--',
                   label=f'95th Percentile: {p95_duration:.3f}s')
-        
+
         # Add labels and title
         ax.set_title('Query Latency Distribution', fontsize=14)
         ax.set_xlabel('Execution Time (seconds)', fontsize=12)
         ax.set_ylabel('Frequency', fontsize=12)
         ax.legend()
-        
+
         # Save if output file specified
         if output_file:
             plt.savefig(output_file, bbox_inches='tight')
-        
+
         return fig
-    
+
     def visualize_throughput_over_time(self, output_file: Optional[str] = None,
                                      interval_minutes: int = 10, hours: int = 24,
                                      theme: str = "light") -> Union[plt.Figure, None]:
         """
         Create a visualization of query throughput over time.
-        
+
         Shows query throughput (queries per minute) over a time window.
-        
+
         Args:
             output_file: Optional path to save the visualization
             interval_minutes: Size of time buckets in minutes
             hours: Number of hours to look back
             theme: 'light' or 'dark' theme for visualization
-            
+
         Returns:
             Matplotlib figure or None if visualization libraries not available
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Set style based on theme
         plt.style.use('default')
         if theme == "dark":
             plt.style.use('dark_background')
-            
+
         # Calculate time bounds
         end_time = time.time()
         start_time = end_time - (hours * 3600)
-        
+
         # Collect query timestamps
         query_times = []
         for query_id, query_data in self.metrics_collector.query_metrics.items():
             query_start = query_data.get('start_time')
             if query_start and query_start >= start_time:
                 query_times.append(query_start)
-        
+
         # If no query data in the timeframe, return
         if not query_times:
             if output_file:
                 # Create a simple figure explaining no data available
                 fig, ax = plt.subplots(figsize=self.default_figsize)
-                ax.text(0.5, 0.5, f"No query data available in the last {hours} hours", 
+                ax.text(0.5, 0.5, f"No query data available in the last {hours} hours",
                       ha='center', va='center', fontsize=14)
                 ax.set_axis_off()
                 fig.savefig(output_file, bbox_inches='tight')
                 return fig
             return None
-        
+
         # Create time buckets
         bucket_size = interval_minutes * 60  # seconds
         buckets = {}
-        
+
         current_bucket = start_time
         while current_bucket <= end_time:
             buckets[current_bucket] = 0
             current_bucket += bucket_size
-        
+
         # Count queries in each bucket
         for query_time in query_times:
             bucket = start_time + (int((query_time - start_time) / bucket_size) * bucket_size)
             if bucket in buckets:
                 buckets[bucket] += 1
-        
+
         # Create the figure
         fig, ax = plt.subplots(figsize=self.default_figsize)
-        
+
         # Create x-axis with datetime objects
         bucket_times = [datetime.datetime.fromtimestamp(timestamp) for timestamp in sorted(buckets.keys())]
         query_counts = [buckets[timestamp] for timestamp in sorted(buckets.keys())]
-        
+
         # Calculate queries per minute
         queries_per_minute = [count / interval_minutes for count in query_counts]
-        
+
         # Plot the throughput
         ax.plot(bucket_times, queries_per_minute, marker='o', linestyle='-')
-        
+
         # Add labels and title
         ax.set_title(f'Query Throughput (Last {hours} Hours)', fontsize=14)
         ax.set_xlabel('Time', fontsize=12)
         ax.set_ylabel('Queries per Minute', fontsize=12)
-        
+
         # Format x-axis as time
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
         fig.autofmt_xdate()
-        
+
         # Save if output file specified
         if output_file:
             plt.savefig(output_file, bbox_inches='tight')
-        
+
         return fig
-    
+
     def visualize_performance_by_query_complexity(self, output_file: Optional[str] = None,
                                                theme: str = "light") -> Union[plt.Figure, None]:
         """
         Create a scatter plot of query performance vs complexity.
-        
+
         Shows how execution time correlates with query complexity measures.
-        
+
         Args:
             output_file: Optional path to save the visualization
             theme: 'light' or 'dark' theme for visualization
-            
+
         Returns:
             Matplotlib figure or None if visualization libraries not available
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Set style based on theme
         plt.style.use('default')
         if theme == "dark":
             plt.style.use('dark_background')
-            
+
         # Collect complexity metrics and durations
         complexity_data = []
-        
+
         for query_id, query_data in self.metrics_collector.query_metrics.items():
             if query_data.get('status') != 'completed' or 'duration' not in query_data:
                 continue
-            
+
             # Extract complexity measures
             params = query_data.get('query_params', {})
             traversal = params.get('traversal', {})
-            
+
             max_depth = traversal.get('max_depth', 0)
             graph_nodes = query_data.get('graph_traversal_nodes', 0)
             vector_results = params.get('max_vector_results', 0)
-            
+
             # Use max_depth as primary complexity measure
             # If not available, use other metrics
             if max_depth > 0:
@@ -5440,38 +5440,38 @@ class PerformanceMetricsVisualizer:
                 complexity_type = 'vector_results'
             else:
                 continue  # Skip if no complexity measures available
-            
+
             complexity_data.append({
                 'duration': query_data['duration'],
                 'complexity': complexity,
                 'complexity_type': complexity_type,
                 'query_id': query_id
             })
-        
+
         # If no complexity data, return
         if not complexity_data:
             if output_file:
                 # Create a simple figure explaining no data available
                 fig, ax = plt.subplots(figsize=self.default_figsize)
-                ax.text(0.5, 0.5, "No query complexity data available", 
+                ax.text(0.5, 0.5, "No query complexity data available",
                       ha='center', va='center', fontsize=14)
                 ax.set_axis_off()
                 fig.savefig(output_file, bbox_inches='tight')
                 return fig
             return None
-        
+
         # Convert to DataFrame for easier plotting
         df = pd.DataFrame(complexity_data)
-        
+
         # Create the figure
         fig, ax = plt.subplots(figsize=self.default_figsize)
-        
+
         # Plot with different colors by complexity type
         for ctype in df['complexity_type'].unique():
             subset = df[df['complexity_type'] == ctype]
-            ax.scatter(subset['complexity'], subset['duration'], 
+            ax.scatter(subset['complexity'], subset['duration'],
                      label=ctype, alpha=0.7)
-        
+
         # Add regression line if enough data points
         if len(df) >= 5:
             for ctype in df['complexity_type'].unique():
@@ -5481,34 +5481,34 @@ class PerformanceMetricsVisualizer:
                     y = subset['duration']
                     z = np.polyfit(x, y, 1)
                     p = np.poly1d(z)
-                    ax.plot(x, p(x), linestyle='--', 
+                    ax.plot(x, p(x), linestyle='--',
                           label=f"{ctype} trend (y={z[0]:.2f}x+{z[1]:.2f})")
-        
+
         # Add labels and title
         ax.set_title('Query Performance vs Complexity', fontsize=14)
         ax.set_xlabel('Complexity Measure', fontsize=12)
         ax.set_ylabel('Execution Time (seconds)', fontsize=12)
         ax.legend()
-        
+
         # Save if output file specified
         if output_file:
             plt.savefig(output_file, bbox_inches='tight')
-        
+
         return fig
-    
+
     def create_interactive_performance_dashboard(self, output_file: Optional[str] = None) -> Optional[str]:
         """
         Create an interactive HTML dashboard with plotly visualizations.
-        
+
         Args:
             output_file: Path to save the HTML dashboard
-            
+
         Returns:
             Path to the saved dashboard or None if required libraries not available
         """
         if not INTERACTIVE_VISUALIZATION_AVAILABLE or not TEMPLATE_ENGINE_AVAILABLE:
             return None
-            
+
         # Prepare data for visualizations
         data = {
             'processing_breakdown': self._get_processing_breakdown_data(),
@@ -5516,12 +5516,12 @@ class PerformanceMetricsVisualizer:
             'throughput': self._get_throughput_data(),
             'complexity': self._get_complexity_data()
         }
-        
+
         # Create subplots
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=(
-                'Processing Time Breakdown', 
+                'Processing Time Breakdown',
                 'Query Latency Distribution',
                 'Throughput Over Time',
                 'Performance vs Complexity'
@@ -5529,17 +5529,17 @@ class PerformanceMetricsVisualizer:
             specs=[[{'type': 'bar'}, {'type': 'histogram'}],
                   [{'type': 'scatter'}, {'type': 'scatter'}]]
         )
-        
+
         # Add processing breakdown plot
         if data['processing_breakdown']:
             phases = list(data['processing_breakdown'].keys())
             values = list(data['processing_breakdown'].values())
-            
+
             fig.add_trace(
                 go.Bar(x=phases, y=values, name='Processing Time'),
                 row=1, col=1
             )
-        
+
         # Add latency distribution plot
         if data['latency_distribution']:
             fig.add_trace(
@@ -5550,31 +5550,31 @@ class PerformanceMetricsVisualizer:
                 ),
                 row=1, col=2
             )
-            
+
             # Add mean and median lines
             if len(data['latency_distribution']) > 0:
                 mean_val = np.mean(data['latency_distribution'])
                 median_val = np.median(data['latency_distribution'])
-                
+
                 fig.add_vline(
                     x=mean_val, line_dash="dash", line_color="red",
                     annotation_text=f"Mean: {mean_val:.3f}s",
                     annotation_position="top right",
                     row=1, col=2
                 )
-                
+
                 fig.add_vline(
                     x=median_val, line_dash="dash", line_color="green",
                     annotation_text=f"Median: {median_val:.3f}s",
                     annotation_position="top left",
                     row=1, col=2
                 )
-        
+
         # Add throughput plot
         if data['throughput']:
             times = [entry['time'] for entry in data['throughput']]
             counts = [entry['count'] for entry in data['throughput']]
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=times,
@@ -5584,7 +5584,7 @@ class PerformanceMetricsVisualizer:
                 ),
                 row=2, col=1
             )
-        
+
         # Add complexity plot
         if data['complexity']:
             fig.add_trace(
@@ -5604,38 +5604,38 @@ class PerformanceMetricsVisualizer:
                 ),
                 row=2, col=2
             )
-        
+
         # Update layout
         fig.update_layout(
             title_text="RAG Query Performance Dashboard",
             height=800,
             showlegend=False
         )
-        
+
         # Create HTML from template
         html_content = self._create_dashboard_html(
             plotly_figure=fig.to_html(full_html=False, include_plotlyjs='cdn'),
             title="RAG Query Performance Dashboard"
         )
-        
+
         # Save dashboard if output_file provided
         if output_file:
             os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
-            
+
         return output_file
-    
+
     def _get_processing_breakdown_data(self) -> Dict[str, float]:
         """Get data for processing time breakdown visualization."""
         phase_times = {}
-        
+
         # Get completed queries
         completed_queries = [
             query_data for query_id, query_data in self.metrics_collector.query_metrics.items()
             if query_data.get('status') == 'completed'
         ]
-        
+
         # Extract phase timing information
         for query_data in completed_queries:
             # Extract all phase timings
@@ -5645,10 +5645,10 @@ class PerformanceMetricsVisualizer:
                     if phase not in phase_times:
                         phase_times[phase] = []
                     phase_times[phase].append(value)
-        
+
         # Calculate average times for each phase
         return {phase: sum(times)/len(times) for phase, times in phase_times.items()}
-    
+
     def _get_latency_distribution_data(self) -> List[float]:
         """Get data for latency distribution visualization."""
         durations = []
@@ -5656,35 +5656,35 @@ class PerformanceMetricsVisualizer:
             if query_data.get('status') == 'completed' and 'duration' in query_data:
                 durations.append(query_data['duration'])
         return durations
-    
+
     def _get_throughput_data(self, hours: int = 24, interval_minutes: int = 10) -> List[Dict[str, Any]]:
         """Get data for throughput visualization."""
         # Calculate time bounds
         end_time = time.time()
         start_time = end_time - (hours * 3600)
-        
+
         # Collect query timestamps
         query_times = []
         for query_id, query_data in self.metrics_collector.query_metrics.items():
             query_start = query_data.get('start_time')
             if query_start and query_start >= start_time:
                 query_times.append(query_start)
-        
+
         # Create time buckets
         bucket_size = interval_minutes * 60  # seconds
         buckets = {}
-        
+
         current_bucket = start_time
         while current_bucket <= end_time:
             buckets[current_bucket] = 0
             current_bucket += bucket_size
-        
+
         # Count queries in each bucket
         for query_time in query_times:
             bucket = start_time + (int((query_time - start_time) / bucket_size) * bucket_size)
             if bucket in buckets:
                 buckets[bucket] += 1
-        
+
         # Convert to list of dicts with datetime objects
         return [
             {
@@ -5693,23 +5693,23 @@ class PerformanceMetricsVisualizer:
             }
             for timestamp, count in sorted(buckets.items())
         ]
-    
+
     def _get_complexity_data(self) -> List[Dict[str, Any]]:
         """Get data for complexity visualization."""
         complexity_data = []
-        
+
         for query_id, query_data in self.metrics_collector.query_metrics.items():
             if query_data.get('status') != 'completed' or 'duration' not in query_data:
                 continue
-            
+
             # Extract complexity measures
             params = query_data.get('query_params', {})
             traversal = params.get('traversal', {})
-            
+
             max_depth = traversal.get('max_depth', 0)
             graph_nodes = query_data.get('graph_traversal_nodes', 0)
             vector_results = params.get('max_vector_results', 0)
-            
+
             # Use max_depth as primary complexity measure
             # If not available, use other metrics
             if max_depth > 0:
@@ -5723,16 +5723,16 @@ class PerformanceMetricsVisualizer:
                 complexity_type = 'vector_results'
             else:
                 continue  # Skip if no complexity measures available
-            
+
             complexity_data.append({
                 'duration': query_data['duration'],
                 'complexity': complexity,
                 'complexity_type': complexity_type,
                 'query_id': query_id
             })
-            
+
         return complexity_data
-    
+
     def _create_dashboard_html(self, plotly_figure: str, title: str) -> str:
         """Create HTML dashboard from template."""
         html_template = """
@@ -5777,7 +5777,7 @@ class PerformanceMetricsVisualizer:
         </body>
         </html>
         """
-        
+
         template = Template(html_template)
         return template.render(
             title=title,
@@ -5789,17 +5789,17 @@ class PerformanceMetricsVisualizer:
 class OptimizerLearningMetricsCollector:
     """
     Collects and aggregates metrics for statistical learning in the RAG query optimizer.
-    
+
     This class tracks metrics related to the optimizer's learning process, including:
     - Learning cycles completion
     - Parameter adaptations over time
-    - Strategy effectiveness 
+    - Strategy effectiveness
     - Query pattern recognition
-    
-    It provides visualization capabilities for these metrics to help understand 
+
+    It provides visualization capabilities for these metrics to help understand
     the optimizer's learning behavior and performance improvements over time.
     """
-    
+
     def __init__(self):
         """Initialize the metrics collector."""
         self.learning_cycles = []
@@ -5811,8 +5811,8 @@ class OptimizerLearningMetricsCollector:
         self.total_optimized_queries = 0
         self.optimization_improvements = []
         self.lock = threading.RLock()
-    
-    def record_learning_cycle(self, 
+
+    def record_learning_cycle(self,
                              cycle_id: str,
                              start_time: float,
                              end_time: float,
@@ -5823,7 +5823,7 @@ class OptimizerLearningMetricsCollector:
                              error: Optional[str] = None) -> None:
         """
         Record metrics for a completed learning cycle.
-        
+
         Args:
             cycle_id: Unique identifier for the learning cycle
             start_time: Start timestamp of the cycle
@@ -5847,9 +5847,9 @@ class OptimizerLearningMetricsCollector:
                 'error': error,
                 'timestamp': datetime.datetime.now().isoformat()
             })
-            
+
             self.total_analyzed_queries += analyzed_queries
-    
+
     def record_parameter_adaptation(self,
                                   parameter_name: str,
                                   old_value: float,
@@ -5860,7 +5860,7 @@ class OptimizerLearningMetricsCollector:
                                   timestamp: Optional[float] = None) -> None:
         """
         Record a parameter adaptation event.
-        
+
         Args:
             parameter_name: Name of the parameter that was adapted
             old_value: Parameter value before adaptation
@@ -5883,7 +5883,7 @@ class OptimizerLearningMetricsCollector:
                 'timestamp': timestamp if timestamp is not None else time.time(),
                 'datetime': datetime.datetime.now().isoformat()
             })
-    
+
     def record_strategy_effectiveness(self,
                                     strategy_name: str,
                                     query_count: int,
@@ -5892,7 +5892,7 @@ class OptimizerLearningMetricsCollector:
                                     improvement_over_baseline: float) -> None:
         """
         Record effectiveness metrics for an optimization strategy.
-        
+
         Args:
             strategy_name: Name of the optimization strategy
             query_count: Number of queries using this strategy
@@ -5909,11 +5909,11 @@ class OptimizerLearningMetricsCollector:
                 'avg_performance_score': avg_performance_score,
                 'improvement_over_baseline': improvement_over_baseline
             })
-    
+
     def record_query_pattern(self, pattern_type: str, pattern_details: Dict[str, Any]) -> None:
         """
         Record an identified query pattern.
-        
+
         Args:
             pattern_type: Type of the identified pattern
             pattern_details: Details about the pattern
@@ -5922,14 +5922,14 @@ class OptimizerLearningMetricsCollector:
             # Create a pattern signature for counting
             pattern_signature = f"{pattern_type}:{json.dumps(pattern_details, sort_keys=True)}"
             self.query_patterns[pattern_signature] += 1
-    
-    def record_optimization_improvement(self, 
+
+    def record_optimization_improvement(self,
                                       query_id: str,
                                       before_metrics: Dict[str, Any],
                                       after_metrics: Dict[str, Any]) -> None:
         """
         Record improvement metrics for an optimized query.
-        
+
         Args:
             query_id: Unique identifier for the query
             before_metrics: Performance metrics before optimization
@@ -5943,19 +5943,19 @@ class OptimizerLearningMetricsCollector:
                 'before': before_metrics,
                 'after': after_metrics,
                 'duration_improvement': before_metrics.get('duration', 0) - after_metrics.get('duration', 0),
-                'duration_improvement_percent': 
-                    ((before_metrics.get('duration', 0) - after_metrics.get('duration', 0)) / 
+                'duration_improvement_percent':
+                    ((before_metrics.get('duration', 0) - after_metrics.get('duration', 0)) /
                      before_metrics.get('duration', 1)) * 100 if before_metrics.get('duration', 0) > 0 else 0,
                 'quality_improvement': after_metrics.get('quality', 0) - before_metrics.get('quality', 0),
                 'strategy': after_metrics.get('strategy', 'unknown')
             })
-            
+
             self.total_optimized_queries += 1
-    
+
     def get_learning_metrics(self) -> Dict[str, Any]:
         """
         Get summary metrics about the learning process.
-        
+
         Returns:
             Dict containing learning metrics and statistics
         """
@@ -5963,18 +5963,18 @@ class OptimizerLearningMetricsCollector:
             # Calculate basic stats
             total_learning_cycles = len(self.learning_cycles)
             successful_cycles = sum(1 for cycle in self.learning_cycles if cycle['success'])
-            
+
             # Calculate parameter adaptation stats
             parameter_changes = defaultdict(list)
             for adaptation in self.parameter_adaptations:
                 parameter_changes[adaptation['parameter']].append(adaptation['change'])
-            
+
             avg_parameter_changes = {
-                param: sum(changes) / len(changes) 
+                param: sum(changes) / len(changes)
                 for param, changes in parameter_changes.items()
                 if changes
             }
-            
+
             # Calculate strategy effectiveness
             strategy_success_rates = {}
             for strategy, metrics in self.strategy_effectiveness.items():
@@ -5982,11 +5982,11 @@ class OptimizerLearningMetricsCollector:
                     # Get the most recent effectiveness data
                     latest = max(metrics, key=lambda x: x['timestamp'])
                     strategy_success_rates[strategy] = latest['success_rate']
-            
+
             # Calculate learning rate (cycles per hour)
             learning_duration = time.time() - self.learning_start_time
             learning_rate = (total_learning_cycles / learning_duration) * 3600 if learning_duration > 0 else 0
-            
+
             # Calculate optimization improvement metrics
             avg_duration_improvement = 0
             avg_quality_improvement = 0
@@ -5994,21 +5994,21 @@ class OptimizerLearningMetricsCollector:
                 avg_duration_improvement = sum(
                     imp.get('duration_improvement', 0) for imp in self.optimization_improvements
                 ) / len(self.optimization_improvements)
-                
+
                 avg_quality_improvement = sum(
                     imp.get('quality_improvement', 0) for imp in self.optimization_improvements
                 ) / len(self.optimization_improvements)
-            
+
             # Identify top patterns
             top_patterns = Counter(self.query_patterns).most_common(5)
-            
+
             return {
                 'total_learning_cycles': total_learning_cycles,
                 'successful_cycles': successful_cycles,
                 'success_rate': (successful_cycles / total_learning_cycles) if total_learning_cycles > 0 else 0,
                 'total_analyzed_queries': self.total_analyzed_queries,
                 'total_optimized_queries': self.total_optimized_queries,
-                'optimization_rate': (self.total_optimized_queries / self.total_analyzed_queries) 
+                'optimization_rate': (self.total_optimized_queries / self.total_analyzed_queries)
                                     if self.total_analyzed_queries > 0 else 0,
                 'avg_parameter_changes': avg_parameter_changes,
                 'strategy_success_rates': strategy_success_rates,
@@ -6018,35 +6018,35 @@ class OptimizerLearningMetricsCollector:
                 'top_patterns': top_patterns,
                 'learning_duration': learning_duration
             }
-    
-    def visualize_learning_cycles(self, 
-                                output_file: Optional[str] = None, 
+
+    def visualize_learning_cycles(self,
+                                output_file: Optional[str] = None,
                                 interactive: bool = False,
                                 theme: str = 'light') -> Any:
         """
         Visualize learning cycles over time.
-        
+
         Args:
             output_file: Optional path to save the visualization
             interactive: Whether to generate an interactive visualization
             theme: Visualization theme ('light' or 'dark')
-            
+
         Returns:
             The visualization figure object
         """
         if not self.learning_cycles:
             logging.warning("No learning cycles data available for visualization")
             return None
-        
+
         # Prepare data
         timestamps = [cycle['start_time'] for cycle in self.learning_cycles]
         durations = [cycle['duration'] for cycle in self.learning_cycles]
         analyzed_queries = [cycle['analyzed_queries'] for cycle in self.learning_cycles]
         success = [cycle['success'] for cycle in self.learning_cycles]
-        
+
         # Convert timestamps to datetime objects
         dates = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        
+
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             # Create interactive plot with plotly
             fig = make_subplots(
@@ -6054,7 +6054,7 @@ class OptimizerLearningMetricsCollector:
                 subplot_titles=("Learning Cycle Duration", "Queries Analyzed per Cycle"),
                 vertical_spacing=0.3
             )
-            
+
             # Add duration trace
             fig.add_trace(
                 go.Scatter(
@@ -6069,7 +6069,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=1
             )
-            
+
             # Add analyzed queries trace
             fig.add_trace(
                 go.Scatter(
@@ -6084,7 +6084,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=2, col=1
             )
-            
+
             # Update layout
             fig.update_layout(
                 title='Learning Cycles Over Time',
@@ -6092,114 +6092,114 @@ class OptimizerLearningMetricsCollector:
                 height=800,
                 showlegend=True
             )
-            
+
             # Update yaxis titles
             fig.update_yaxes(title_text="Duration (seconds)", row=1, col=1)
             fig.update_yaxes(title_text="Query Count", row=2, col=1)
-            
+
             # Save if output file provided
             if output_file:
                 fig.write_html(output_file)
-                
+
             return fig
-            
+
         elif VISUALIZATION_LIBS_AVAILABLE:
             # Create static plot with matplotlib
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-            
+
             # Set background colors based on theme
             if theme == 'dark':
                 plt.style.use('dark_background')
-            
+
             # Plot durations
             success_dates = [dates[i] for i in range(len(dates)) if success[i]]
             success_durations = [durations[i] for i in range(len(durations)) if success[i]]
-            
+
             fail_dates = [dates[i] for i in range(len(dates)) if not success[i]]
             fail_durations = [durations[i] for i in range(len(durations)) if not success[i]]
-            
+
             ax1.plot(dates, durations, 'b-', alpha=0.5)
             ax1.scatter(success_dates, success_durations, color='green', label='Success')
             ax1.scatter(fail_dates, fail_durations, color='red', label='Failed')
-            
+
             ax1.set_title('Learning Cycle Duration')
             ax1.set_ylabel('Duration (seconds)')
             ax1.grid(True, alpha=0.3)
             ax1.legend()
-            
+
             # Plot analyzed queries
             ax2.plot(dates, analyzed_queries, 'b-', marker='o')
             ax2.set_title('Queries Analyzed per Learning Cycle')
             ax2.set_xlabel('Time')
             ax2.set_ylabel('Query Count')
             ax2.grid(True, alpha=0.3)
-            
+
             # Format x-axis
             fig.autofmt_xdate()
-            
+
             plt.tight_layout()
-            
+
             # Save if output file provided
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
                 plt.close(fig)
-            
+
             return fig
-            
+
         else:
             logging.warning("Visualization libraries not available")
             return None
-    
-    def visualize_parameter_adaptations(self, 
-                                      output_file: Optional[str] = None, 
+
+    def visualize_parameter_adaptations(self,
+                                      output_file: Optional[str] = None,
                                       interactive: bool = False,
                                       parameters: Optional[List[str]] = None,
                                       theme: str = 'light') -> Any:
         """
         Visualize parameter adaptations over time.
-        
+
         Args:
             output_file: Optional path to save the visualization
             interactive: Whether to generate an interactive visualization
             parameters: Optional list of parameters to include (None for all)
             theme: Visualization theme ('light' or 'dark')
-            
+
         Returns:
             The visualization figure object
         """
         if not self.parameter_adaptations:
             logging.warning("No parameter adaptation data available for visualization")
             return None
-        
+
         # Group adaptations by parameter
         param_data = defaultdict(list)
         for adaptation in sorted(self.parameter_adaptations, key=lambda x: x['timestamp']):
             param_data[adaptation['parameter']].append(adaptation)
-        
+
         # Filter parameters if specified
         if parameters:
             param_data = {k: v for k, v in param_data.items() if k in parameters}
-        
+
         # Limit to top 5 parameters if more than 5 and no specific parameters requested
         if len(param_data) > 5 and not parameters:
             # Determine top 5 by number of adaptations
             top_params = sorted(param_data.keys(), key=lambda x: len(param_data[x]), reverse=True)[:5]
             param_data = {k: param_data[k] for k in top_params}
-        
+
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             # Create interactive plot with plotly
             fig = go.Figure()
-            
+
             # Add traces for each parameter
             for param, adaptations in param_data.items():
                 times = [adpt['timestamp'] for adpt in adaptations]
                 dates = [datetime.datetime.fromtimestamp(t) for t in times]
                 values = [adpt['new_value'] for adpt in adaptations]
                 confidences = [adpt['confidence'] for adpt in adaptations]
-                
+
                 # Size marker based on confidence
                 sizes = [max(5, min(20, c * 20)) for c in confidences]
-                
+
                 fig.add_trace(go.Scatter(
                     x=dates,
                     y=values,
@@ -6209,11 +6209,11 @@ class OptimizerLearningMetricsCollector:
                     hovertemplate=(
                         "<b>%{x}</b><br>" +
                         "Value: %{y:.4f}<br>" +
-                        "Confidence: %{text:.2f}" 
+                        "Confidence: %{text:.2f}"
                     ),
                     text=confidences
                 ))
-            
+
             # Update layout
             fig.update_layout(
                 title='Parameter Adaptations Over Time',
@@ -6229,93 +6229,93 @@ class OptimizerLearningMetricsCollector:
                     x=1
                 )
             )
-            
+
             # Save if output file provided
             if output_file:
                 fig.write_html(output_file)
-                
+
             return fig
-            
+
         elif VISUALIZATION_LIBS_AVAILABLE:
             # Create static plot with matplotlib
             fig, ax = plt.subplots(figsize=(12, 8))
-            
+
             # Set background colors based on theme
             if theme == 'dark':
                 plt.style.use('dark_background')
-            
+
             # Plot each parameter
             for param, adaptations in param_data.items():
                 times = [adpt['timestamp'] for adpt in adaptations]
                 dates = [datetime.datetime.fromtimestamp(t) for t in times]
                 values = [adpt['new_value'] for adpt in adaptations]
-                
+
                 ax.plot(dates, values, marker='o', label=param)
-            
+
             ax.set_title('Parameter Adaptations Over Time')
             ax.set_xlabel('Time')
             ax.set_ylabel('Parameter Value')
             ax.grid(True, alpha=0.3)
             ax.legend()
-            
+
             # Format x-axis
             fig.autofmt_xdate()
-            
+
             plt.tight_layout()
-            
+
             # Save if output file provided
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
                 plt.close(fig)
-            
+
             return fig
-            
+
         else:
             logging.warning("Visualization libraries not available")
             return None
-    
-    def visualize_strategy_effectiveness(self, 
-                                       output_file: Optional[str] = None, 
+
+    def visualize_strategy_effectiveness(self,
+                                       output_file: Optional[str] = None,
                                        interactive: bool = False,
                                        theme: str = 'light') -> Any:
         """
         Visualize the effectiveness of different optimization strategies.
-        
+
         Args:
             output_file: Optional path to save the visualization
             interactive: Whether to generate an interactive visualization
             theme: Visualization theme ('light' or 'dark')
-            
+
         Returns:
             The visualization figure object
         """
         if not self.strategy_effectiveness:
             logging.warning("No strategy effectiveness data available for visualization")
             return None
-        
+
         # Prepare data for visualization
         strategies = []
         success_rates = []
         improvements = []
         query_counts = []
-        
+
         # Get the latest metrics for each strategy
         for strategy, metrics in self.strategy_effectiveness.items():
             if not metrics:
                 continue
-                
+
             # Sort by timestamp and get the latest
             latest = max(metrics, key=lambda x: x['timestamp'])
-            
+
             strategies.append(strategy)
             success_rates.append(latest['success_rate'])
             improvements.append(latest['improvement_over_baseline'])
             query_counts.append(latest['query_count'])
-        
+
         if not strategies:
             logging.warning("No strategy metrics available for visualization")
             return None
-        
+
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             # Create interactive plot with plotly
             fig = make_subplots(
@@ -6323,12 +6323,12 @@ class OptimizerLearningMetricsCollector:
                 subplot_titles=("Strategy Success Rates", "Improvement Over Baseline"),
                 specs=[[{"type": "bar"}, {"type": "bar"}]]
             )
-            
+
             # Sort by success rate for the first chart
             sorted_indices = sorted(range(len(success_rates)), key=lambda i: success_rates[i], reverse=True)
             sorted_strategies = [strategies[i] for i in sorted_indices]
             sorted_rates = [success_rates[i] for i in sorted_indices]
-            
+
             # Add success rate bars
             fig.add_trace(
                 go.Bar(
@@ -6340,12 +6340,12 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=1
             )
-            
+
             # Sort by improvement for the second chart
             sorted_indices = sorted(range(len(improvements)), key=lambda i: improvements[i], reverse=True)
             sorted_strategies = [strategies[i] for i in sorted_indices]
             sorted_improvements = [improvements[i] for i in sorted_indices]
-            
+
             # Add improvement bars
             fig.add_trace(
                 go.Bar(
@@ -6357,7 +6357,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=2
             )
-            
+
             # Update layout
             fig.update_layout(
                 title='Optimization Strategy Effectiveness',
@@ -6366,26 +6366,26 @@ class OptimizerLearningMetricsCollector:
                 showlegend=False,
                 yaxis=dict(tickformat='.0%')
             )
-            
+
             # Save if output file provided
             if output_file:
                 fig.write_html(output_file)
-                
+
             return fig
-            
+
         elif VISUALIZATION_LIBS_AVAILABLE:
             # Create static plot with matplotlib
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-            
+
             # Set background colors based on theme
             if theme == 'dark':
                 plt.style.use('dark_background')
-            
+
             # Sort by success rate for first chart
             sorted_indices = sorted(range(len(success_rates)), key=lambda i: success_rates[i], reverse=True)
             sorted_strategies = [strategies[i] for i in sorted_indices]
             sorted_rates = [success_rates[i] for i in sorted_indices]
-            
+
             # Plot success rates
             bars1 = ax1.bar(sorted_strategies, sorted_rates, color='green', alpha=0.7)
             ax1.set_title('Strategy Success Rates')
@@ -6393,66 +6393,66 @@ class OptimizerLearningMetricsCollector:
             ax1.set_ylabel('Success Rate')
             ax1.set_ylim(0, 1.0)
             ax1.grid(axis='y', alpha=0.3)
-            
+
             # Add data labels
             for bar in bars1:
                 height = bar.get_height()
                 ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
                         f'{height:.0%}', ha='center', va='bottom')
-            
+
             # Sort by improvement for second chart
             sorted_indices = sorted(range(len(improvements)), key=lambda i: improvements[i], reverse=True)
             sorted_strategies = [strategies[i] for i in sorted_indices]
             sorted_improvements = [improvements[i] for i in sorted_indices]
-            
+
             # Plot improvements
             bars2 = ax2.bar(sorted_strategies, sorted_improvements, color='blue', alpha=0.7)
             ax2.set_title('Improvement Over Baseline')
             ax2.set_xlabel('Strategy')
             ax2.set_ylabel('Improvement Factor')
             ax2.grid(axis='y', alpha=0.3)
-            
+
             # Add data labels
             for bar in bars2:
                 height = bar.get_height()
                 ax2.text(bar.get_x() + bar.get_width()/2., height + 0.01,
                         f'{height:.2f}x', ha='center', va='bottom')
-            
+
             plt.tight_layout()
-            
+
             # Save if output file provided
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
                 plt.close(fig)
-            
+
             return fig
-            
+
         else:
             logging.warning("Visualization libraries not available")
             return None
-    
-    def visualize_query_patterns(self, 
-                               output_file: Optional[str] = None, 
+
+    def visualize_query_patterns(self,
+                               output_file: Optional[str] = None,
                                interactive: bool = False,
                                theme: str = 'light') -> Any:
         """
         Visualize discovered query patterns.
-        
+
         Args:
             output_file: Optional path to save the visualization
             interactive: Whether to generate an interactive visualization
             theme: Visualization theme ('light' or 'dark')
-            
+
         Returns:
             The visualization figure object
         """
         if not self.query_patterns:
             logging.warning("No query pattern data available for visualization")
             return None
-        
+
         # Get top patterns
         top_patterns = Counter(self.query_patterns).most_common(10)
-        
+
         # Format pattern names
         pattern_names = []
         for pattern, _ in top_patterns:
@@ -6475,15 +6475,15 @@ class OptimizerLearningMetricsCollector:
                     name = pattern
             except:
                 name = pattern
-                
+
             # Truncate if too long
             if len(name) > 30:
                 name = name[:27] + '...'
-                
+
             pattern_names.append(name)
-        
+
         pattern_counts = [count for _, count in top_patterns]
-        
+
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             # Create interactive plot with plotly
             fig = go.Figure(
@@ -6493,7 +6493,7 @@ class OptimizerLearningMetricsCollector:
                     orientation='h'
                 )
             )
-            
+
             # Update layout
             fig.update_layout(
                 title='Top Query Patterns Detected',
@@ -6503,84 +6503,84 @@ class OptimizerLearningMetricsCollector:
                 height=500,
                 margin=dict(l=200)  # Add more left margin for pattern names
             )
-            
+
             # Save if output file provided
             if output_file:
                 fig.write_html(output_file)
-                
+
             return fig
-            
+
         elif VISUALIZATION_LIBS_AVAILABLE:
             # Create static plot with matplotlib
             fig, ax = plt.subplots(figsize=(12, 8))
-            
+
             # Set background colors based on theme
             if theme == 'dark':
                 plt.style.use('dark_background')
-            
+
             # Create horizontal bar chart (reversed to show highest on top)
             bars = ax.barh(pattern_names[::-1], pattern_counts[::-1], color='purple', alpha=0.7)
-            
+
             ax.set_title('Top Query Patterns Detected')
             ax.set_xlabel('Count')
             ax.set_ylabel('Pattern')
             ax.grid(axis='x', alpha=0.3)
-            
+
             # Add data labels
             for bar in bars:
                 width = bar.get_width()
                 ax.text(width + 0.5, bar.get_y() + bar.get_height()/2.,
                        f'{width}', ha='left', va='center')
-            
+
             plt.tight_layout()
-            
+
             # Save if output file provided
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
                 plt.close(fig)
-            
+
             return fig
-            
+
         else:
             logging.warning("Visualization libraries not available")
             return None
-    
-    def visualize_learning_performance(self, 
-                                     output_file: Optional[str] = None, 
+
+    def visualize_learning_performance(self,
+                                     output_file: Optional[str] = None,
                                      interactive: bool = False,
                                      theme: str = 'light') -> Any:
         """
         Visualize overall learning performance improvements.
-        
+
         Args:
             output_file: Optional path to save the visualization
             interactive: Whether to generate an interactive visualization
             theme: Visualization theme ('light' or 'dark')
-            
+
         Returns:
             The visualization figure object
         """
         if not self.optimization_improvements:
             logging.warning("No optimization improvement data available for visualization")
             return None
-        
+
         # Prepare data
         improvements = sorted(self.optimization_improvements, key=lambda x: x['timestamp'])
         timestamps = [imp['timestamp'] for imp in improvements]
         dates = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
         duration_improvements = [imp['duration_improvement'] for imp in improvements]
         quality_improvements = [imp['quality_improvement'] for imp in improvements]
-        
+
         # Calculate cumulative average improvements
         cumulative_duration_improvements = []
         cumulative_quality_improvements = []
-        
+
         for i in range(len(improvements)):
             avg_duration = sum(duration_improvements[:i+1]) / (i+1)
             avg_quality = sum(quality_improvements[:i+1]) / (i+1)
             cumulative_duration_improvements.append(avg_duration)
             cumulative_quality_improvements.append(avg_quality)
-        
+
         if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
             # Create interactive plot with plotly
             fig = make_subplots(
@@ -6588,7 +6588,7 @@ class OptimizerLearningMetricsCollector:
                 subplot_titles=("Cumulative Duration Improvement", "Cumulative Quality Improvement"),
                 vertical_spacing=0.3
             )
-            
+
             # Add duration improvement trace
             fig.add_trace(
                 go.Scatter(
@@ -6600,7 +6600,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=1
             )
-            
+
             # Add quality improvement trace
             fig.add_trace(
                 go.Scatter(
@@ -6612,7 +6612,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=2, col=1
             )
-            
+
             # Update layout
             fig.update_layout(
                 title='Cumulative Optimization Performance',
@@ -6620,31 +6620,31 @@ class OptimizerLearningMetricsCollector:
                 height=800,
                 showlegend=True
             )
-            
+
             # Update yaxis titles
             fig.update_yaxes(title_text="Average Duration Reduction (ms)", row=1, col=1)
             fig.update_yaxes(title_text="Average Quality Improvement", row=2, col=1)
-            
+
             # Save if output file provided
             if output_file:
                 fig.write_html(output_file)
-                
+
             return fig
-            
+
         elif VISUALIZATION_LIBS_AVAILABLE:
             # Create static plot with matplotlib
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-            
+
             # Set background colors based on theme
             if theme == 'dark':
                 plt.style.use('dark_background')
-            
+
             # Plot duration improvements
             ax1.plot(dates, cumulative_duration_improvements, 'g-', linewidth=2)
             ax1.set_title('Cumulative Duration Improvement')
             ax1.set_ylabel('Average Duration Reduction (ms)')
             ax1.grid(True, alpha=0.3)
-            
+
             # Add linear trend line
             if len(dates) > 1 and PANDAS_AVAILABLE:
                 try:
@@ -6652,29 +6652,29 @@ class OptimizerLearningMetricsCollector:
                     import pandas as pd
                     import numpy as np
                     from scipy import stats
-                    
+
                     # Convert timestamps to numeric values for linear regression
                     timestamps_numeric = mdates.date2num(dates)
                     slope, intercept, r_value, p_value, std_err = stats.linregress(
                         timestamps_numeric, cumulative_duration_improvements
                     )
-                    
+
                     # Create trend line
                     trend_line = slope * timestamps_numeric + intercept
-                    ax1.plot(dates, trend_line, 'r--', linewidth=1, 
+                    ax1.plot(dates, trend_line, 'r--', linewidth=1,
                             label=f'Trend (r²={r_value**2:.2f})')
                     ax1.legend()
                 except:
                     # Skip trend line if calculation fails
                     pass
-            
+
             # Plot quality improvements
             ax2.plot(dates, cumulative_quality_improvements, 'b-', linewidth=2)
             ax2.set_title('Cumulative Quality Improvement')
             ax2.set_xlabel('Time')
             ax2.set_ylabel('Average Quality Improvement')
             ax2.grid(True, alpha=0.3)
-            
+
             # Add linear trend line
             if len(dates) > 1 and PANDAS_AVAILABLE:
                 try:
@@ -6682,57 +6682,57 @@ class OptimizerLearningMetricsCollector:
                     import pandas as pd
                     import numpy as np
                     from scipy import stats
-                    
+
                     # Convert timestamps to numeric values for linear regression
                     timestamps_numeric = mdates.date2num(dates)
                     slope, intercept, r_value, p_value, std_err = stats.linregress(
                         timestamps_numeric, cumulative_quality_improvements
                     )
-                    
+
                     # Create trend line
                     trend_line = slope * timestamps_numeric + intercept
-                    ax2.plot(dates, trend_line, 'r--', linewidth=1, 
+                    ax2.plot(dates, trend_line, 'r--', linewidth=1,
                             label=f'Trend (r²={r_value**2:.2f})')
                     ax2.legend()
                 except:
                     # Skip trend line if calculation fails
                     pass
-            
+
             # Format x-axis
             fig.autofmt_xdate()
-            
+
             plt.tight_layout()
-            
+
             # Save if output file provided
             if output_file:
                 plt.savefig(output_file, dpi=300, bbox_inches='tight')
                 plt.close(fig)
-            
+
             return fig
-            
+
         else:
             logging.warning("Visualization libraries not available")
             return None
-    
+
     def create_interactive_learning_dashboard(self, output_file: str, theme: str = 'light') -> Optional[str]:
         """
         Create an interactive HTML dashboard for all learning metrics.
-        
+
         Args:
             output_file: Path to save the HTML dashboard
             theme: Visualization theme ('light' or 'dark')
-            
+
         Returns:
             Path to the saved dashboard file or None if creation failed
         """
         if not INTERACTIVE_VISUALIZATION_AVAILABLE or not TEMPLATE_ENGINE_AVAILABLE:
             logging.warning("Interactive dashboard requires plotly and jinja2")
             return None
-        
+
         # Create temp directory for visualization components
         import tempfile
         temp_dir = tempfile.mkdtemp(prefix="learning_dashboard_")
-        
+
         try:
             # Generate individual visualizations
             cycles_file = os.path.join(temp_dir, "learning_cycles.html")
@@ -6740,17 +6740,17 @@ class OptimizerLearningMetricsCollector:
             strategy_file = os.path.join(temp_dir, "strategy_effectiveness.html")
             patterns_file = os.path.join(temp_dir, "query_patterns.html")
             performance_file = os.path.join(temp_dir, "learning_performance.html")
-            
+
             # Generate visualizations with plotly
             self.visualize_learning_cycles(output_file=cycles_file, interactive=True, theme=theme)
             self.visualize_parameter_adaptations(output_file=params_file, interactive=True, theme=theme)
             self.visualize_strategy_effectiveness(output_file=strategy_file, interactive=True, theme=theme)
             self.visualize_query_patterns(output_file=patterns_file, interactive=True, theme=theme)
             self.visualize_learning_performance(output_file=performance_file, interactive=True, theme=theme)
-            
+
             # Get summary metrics
             metrics = self.get_learning_metrics()
-            
+
             # Create dashboard HTML
             dashboard_html = self._create_dashboard_html(
                 metrics=metrics,
@@ -6763,33 +6763,33 @@ class OptimizerLearningMetricsCollector:
                 ],
                 theme=theme
             )
-            
+
             # Write dashboard HTML to output file
             with open(output_file, 'w') as f:
                 f.write(dashboard_html)
-            
+
             return output_file
-            
+
         except Exception as e:
             logging.error(f"Error creating learning dashboard: {str(e)}")
             return None
-            
+
         finally:
             # Clean up temp files
             import shutil
             shutil.rmtree(temp_dir)
-    
-    def _create_dashboard_html(self, metrics: Dict[str, Any], 
-                             visualizations: List[Dict[str, str]], 
+
+    def _create_dashboard_html(self, metrics: Dict[str, Any],
+                             visualizations: List[Dict[str, str]],
                              theme: str = 'light') -> str:
         """
         Create HTML for the learning dashboard.
-        
+
         Args:
             metrics: Dictionary of learning metrics
             visualizations: List of visualization details
             theme: Dashboard theme ('light' or 'dark')
-            
+
         Returns:
             HTML content for the dashboard
         """
@@ -6890,7 +6890,7 @@ class OptimizerLearningMetricsCollector:
                     <h1>RAG Optimizer Learning Dashboard</h1>
                     <p>Statistical learning metrics and performance visualization</p>
                 </header>
-                
+
                 <section class="metrics-overview">
                     <h2>Learning Metrics Summary</h2>
                     <div class="metrics-grid">
@@ -6936,14 +6936,14 @@ class OptimizerLearningMetricsCollector:
                         </div>
                     </div>
                 </section>
-                
+
                 {% for viz in visualizations %}
                 <section class="visualization-section">
                     <h2 class="visualization-title">{{ viz.title }}</h2>
                     <iframe src="{{ viz.file }}" frameborder="0"></iframe>
                 </section>
                 {% endfor %}
-                
+
                 <div class="footer">
                     <p>Generated on {{ timestamp }}</p>
                 </div>
@@ -6951,11 +6951,11 @@ class OptimizerLearningMetricsCollector:
         </body>
         </html>
         """
-        
+
         # Create template and render HTML
         from jinja2 import Template
         template = Template(template_str)
-        
+
         return template.render(
             metrics=metrics,
             visualizations=visualizations,
@@ -6967,17 +6967,17 @@ class OptimizerLearningMetricsCollector:
 class RAGQueryDashboard:
     """
     Comprehensive dashboard for RAG queries with integrated audit and learning metrics.
-    
+
     This class provides a unified dashboard that combines RAG query metrics
-    with audit metrics and statistical learning metrics to provide a complete picture 
+    with audit metrics and statistical learning metrics to provide a complete picture
     of system performance, optimization effectiveness, and security behavior.
     """
-    
-    def __init__(self, metrics_collector: QueryMetricsCollector, audit_metrics=None, 
+
+    def __init__(self, metrics_collector: QueryMetricsCollector, audit_metrics=None,
                  learning_metrics=None, dashboard_dir=None, refresh_interval=60):
         """
         Initialize the dashboard with enhanced monitoring capabilities.
-        
+
         Args:
             metrics_collector: QueryMetricsCollector with query metrics
             audit_metrics: Optional AuditMetricsAggregator instance
@@ -6991,14 +6991,14 @@ class RAGQueryDashboard:
         self.learning_metrics = learning_metrics
         self.dashboard_dir = dashboard_dir
         self.refresh_interval = refresh_interval
-        
+
         # Create dashboard directory if specified and doesn't exist
         if dashboard_dir:
             os.makedirs(dashboard_dir, exist_ok=True)
-        
+
         # Initialize performance metrics visualizer for detailed performance analysis
         self.performance_visualizer = PerformanceMetricsVisualizer(metrics_collector)
-        
+
         # Try to use enhanced visualizer if available
         try:
             from ipfs_datasets_py.enhanced_rag_visualization import EnhancedQueryAuditVisualizer
@@ -7007,55 +7007,55 @@ class RAGQueryDashboard:
         except ImportError:
             self.visualizer = EnhancedQueryVisualizer(metrics_collector)
             self.enhanced_vis_available = False
-    
-    def generate_dashboard(self, 
+
+    def generate_dashboard(self,
                          output_file: str,
                          title: str = "RAG Query Analytics Dashboard",
                          include_audit_metrics: bool = True,
                          include_performance_metrics: bool = True) -> str:
         """
         Generate a combined dashboard with query and audit metrics.
-        
+
         Args:
             output_file: Path to save the dashboard HTML
             title: Dashboard title
             include_audit_metrics: Whether to include audit metrics
             include_performance_metrics: Whether to include detailed performance metrics
-            
+
         Returns:
             str: Path to the generated dashboard
         """
         # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-        
+
         # Generate charts
         chart_paths = {}
-        
+
         # Create temporary directory for charts
         import tempfile
         temp_dir = tempfile.mkdtemp()
-        
+
         try:
             # Generate query performance chart
             performance_chart = os.path.join(temp_dir, "performance.png")
             self.visualizer.plot_query_performance(output_file=performance_chart)
             chart_paths['performance'] = performance_chart
-            
+
             # Generate performance timeline
             timeline_chart = os.path.join(temp_dir, "timeline.png")
             self.visualizer.visualize_query_performance_timeline(output_file=timeline_chart)
             chart_paths['timeline'] = timeline_chart
-            
+
             # Generate query term frequency chart
             terms_chart = os.path.join(temp_dir, "terms.png")
             self.visualizer.plot_query_term_frequency(output_file=terms_chart)
             chart_paths['terms'] = terms_chart
-            
+
             # Generate duration distribution chart
             duration_chart = os.path.join(temp_dir, "durations.png")
             self.visualizer.plot_query_duration_distribution(output_file=duration_chart)
             chart_paths['durations'] = duration_chart
-            
+
             # Get anomalies if any
             anomalies = []
             for metrics in self.query_metrics.query_metrics.values():
@@ -7066,7 +7066,7 @@ class RAGQueryDashboard:
                         'timestamp': datetime.datetime.fromtimestamp(metrics.get('end_time', time.time())).isoformat(),
                         'query_id': metrics.get('query_id', 'unknown')
                     }
-                    
+
                     # Add specific information based on anomaly type
                     if metrics.get('anomaly_type') == 'performance_anomaly':
                         anomaly['value'] = metrics.get('duration', 0)
@@ -7076,9 +7076,9 @@ class RAGQueryDashboard:
                         anomaly['query_text'] = metrics.get('query_params', {}).get('query_text', 'Unknown query')
                     elif metrics.get('anomaly_type') == 'relevance_anomaly':
                         anomaly['value'] = metrics.get('avg_score', 0)
-                    
+
                     anomalies.append(anomaly)
-                    
+
             # Generate dashboard HTML using the visualizer
             html = self.visualizer.generate_dashboard_html(
                 title=title,
@@ -7088,18 +7088,18 @@ class RAGQueryDashboard:
                 audit_metrics=self.audit_metrics if include_audit_metrics else None,
                 learning_metrics=self.learning_metrics if hasattr(self, 'learning_metrics') else None
             )
-            
+
             # Write dashboard to file
             with open(output_file, 'w') as f:
                 f.write(html)
-                
+
             return output_file
-            
+
         finally:
             # Clean up temporary directory
             import shutil
             shutil.rmtree(temp_dir)
-    
+
     def generate_integrated_dashboard(self,
                                    output_file: str,
                                    audit_metrics_aggregator=None,
@@ -7114,11 +7114,11 @@ class RAGQueryDashboard:
                                    theme: str = 'light') -> str:
         """
         Generate a comprehensive dashboard integrating RAG query metrics with audit security and learning metrics.
-        
+
         This dashboard provides a unified view of performance, security, and learning aspects,
         enabling correlation analysis between performance issues, security events, and
         optimization learning statistics.
-        
+
         Args:
             output_file: Path to save the dashboard HTML
             audit_metrics_aggregator: Optional metrics aggregator (uses self.audit_metrics if None)
@@ -7131,20 +7131,20 @@ class RAGQueryDashboard:
             include_learning_metrics: Whether to include optimizer learning metrics
             interactive: Whether to generate interactive visualizations
             theme: 'light' or 'dark' color theme
-            
+
         Returns:
             str: Path to the generated dashboard
         """
         # Use provided metrics or fall back to instance metrics
         audit_metrics = audit_metrics_aggregator or self.audit_metrics
         learning_metrics = learning_metrics_collector or getattr(self, 'learning_metrics', None)
-        
+
         # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-        
+
         # Create a temporary directory for static charts
         temp_dir = tempfile.mkdtemp()
-        
+
         try:
             # Create HTML template
             if not TEMPLATE_ENGINE_AVAILABLE:
@@ -7152,7 +7152,7 @@ class RAGQueryDashboard:
                 with open(output_file, 'w') as f:
                     f.write(f"<html><body><h1>{title}</h1><p>Template engine not available.</p></body></html>")
                 return output_file
-            
+
             # Create dashboard template
             dashboard_template = """
             <!DOCTYPE html>
@@ -7185,7 +7185,7 @@ class RAGQueryDashboard:
                         --success-color: #198754;
                         {% endif %}
                     }
-                    
+
                     body {
                         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                         margin: 0;
@@ -7193,32 +7193,32 @@ class RAGQueryDashboard:
                         background-color: var(--bg-color);
                         color: var(--text-color);
                     }
-                    
+
                     .dashboard-container {
                         max-width: 1200px;
                         margin: 0 auto;
                         padding: 2rem;
                     }
-                    
+
                     .dashboard-header {
                         margin-bottom: 2rem;
                         border-bottom: 1px solid var(--border-color);
                         padding-bottom: 1rem;
                     }
-                    
+
                     .dashboard-header h1 {
                         margin: 0;
                         font-size: 2rem;
                         color: var(--text-color);
                     }
-                    
+
                     .dashboard-header p {
                         margin: 0.5rem 0 0;
                         font-size: 1rem;
                         color: var(--text-color);
                         opacity: 0.8;
                     }
-                    
+
                     .dashboard-section {
                         margin-bottom: 2rem;
                         padding: 1.5rem;
@@ -7226,21 +7226,21 @@ class RAGQueryDashboard:
                         border-radius: 0.5rem;
                         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                     }
-                    
+
                     .dashboard-section h2 {
                         margin-top: 0;
                         margin-bottom: 1rem;
                         font-size: 1.5rem;
                         color: var(--text-color);
                     }
-                    
+
                     .metrics-grid {
                         display: grid;
                         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
                         gap: 1rem;
                         margin-bottom: 1.5rem;
                     }
-                    
+
                     .metric-card {
                         background-color: var(--card-bg);
                         padding: 1.25rem;
@@ -7248,19 +7248,19 @@ class RAGQueryDashboard:
                         border-left: 4px solid var(--highlight-color);
                         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
                     }
-                    
+
                     .metric-card.error {
                         border-left-color: var(--error-color);
                     }
-                    
+
                     .metric-card.warning {
                         border-left-color: var(--warning-color);
                     }
-                    
+
                     .metric-card.success {
                         border-left-color: var(--success-color);
                     }
-                    
+
                     .metric-title {
                         font-size: 0.875rem;
                         font-weight: 600;
@@ -7268,29 +7268,29 @@ class RAGQueryDashboard:
                         color: var(--text-color);
                         opacity: 0.8;
                     }
-                    
+
                     .metric-value {
                         font-size: 1.5rem;
                         font-weight: 700;
                         margin: 0;
                         color: var(--text-color);
                     }
-                    
+
                     .metric-trend {
                         display: flex;
                         align-items: center;
                         font-size: 0.75rem;
                         margin-top: 0.5rem;
                     }
-                    
+
                     .trend-up {
                         color: var(--success-color);
                     }
-                    
+
                     .trend-down {
                         color: var(--error-color);
                     }
-                    
+
                     .visualization-container {
                         margin-top: 1.5rem;
                         width: 100%;
@@ -7298,45 +7298,45 @@ class RAGQueryDashboard:
                         border-radius: 0.375rem;
                         overflow: hidden;
                     }
-                    
+
                     .visualization-container iframe {
                         width: 100%;
                         height: 600px;
                         border: none;
                     }
-                    
+
                     .visualization-container img {
                         width: 100%;
                         height: auto;
                         display: block;
                     }
-                    
+
                     .visualization-section {
                         margin-top: 2rem;
                         border-top: 1px solid var(--border-color);
                         padding-top: 1.5rem;
                     }
-                    
+
                     .visualization-section h3 {
                         margin-top: 0;
                         margin-bottom: 1rem;
                         font-size: 1.3rem;
                         color: var(--text-color);
                     }
-                    
+
                     /* Tabs for learning metrics */
                     .visualization-tabs {
                         width: 100%;
                         margin-top: 20px;
                     }
-                    
+
                     .tab-buttons {
                         display: flex;
                         overflow-x: auto;
                         border-bottom: 1px solid var(--border-color);
                         margin-bottom: 15px;
                     }
-                    
+
                     .tab-button {
                         background-color: transparent;
                         border: none;
@@ -7347,33 +7347,33 @@ class RAGQueryDashboard:
                         border-bottom: 2px solid transparent;
                         color: var(--text-color);
                     }
-                    
+
                     .tab-button:hover {
                         background-color: rgba(0,0,0,0.05);
                     }
-                    
+
                     .tab-button.active {
                         border-bottom: 2px solid var(--primary-color);
                         color: var(--primary-color);
                         font-weight: bold;
                     }
-                    
+
                     .tab-content {
                         display: none;
                         padding: 15px 0;
                     }
-                    
+
                     .tab-content.active {
                         display: block;
                     }
-                    
+
                     .visualization-grid {
                         display: grid;
                         grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
                         gap: 20px;
                         margin-top: 20px;
                     }
-                    
+
                     .visualization-description {
                         margin-top: 1rem;
                         padding: 0.8rem;
@@ -7382,37 +7382,37 @@ class RAGQueryDashboard:
                         font-size: 0.9rem;
                         color: var(--text-color);
                     }
-                    
+
                     .tabs {
                         display: flex;
                         border-bottom: 1px solid var(--border-color);
                         margin-bottom: 1.5rem;
                     }
-                    
+
                     .tab {
                         padding: 0.75rem 1rem;
                         cursor: pointer;
                         border-bottom: 2px solid transparent;
                         font-weight: 500;
                     }
-                    
+
                     .tab.active {
                         border-bottom-color: var(--highlight-color);
                         color: var(--highlight-color);
                     }
-                    
+
                     .tab-content {
                         display: none;
                     }
-                    
+
                     .tab-content.active {
                         display: block;
                     }
-                    
+
                     .anomaly-list {
                         margin-top: 1.5rem;
                     }
-                    
+
                     .anomaly-item {
                         padding: 1rem;
                         margin-bottom: 0.75rem;
@@ -7420,26 +7420,26 @@ class RAGQueryDashboard:
                         border-left: 4px solid var(--error-color);
                         background-color: {{  'rgba(191, 97, 106, 0.1)' if theme == 'dark' else 'rgba(220, 53, 69, 0.1)' }};
                     }
-                    
+
                     .anomaly-item-header {
                         display: flex;
                         justify-content: space-between;
                         margin-bottom: 0.5rem;
                     }
-                    
+
                     .anomaly-type {
                         font-weight: 600;
                     }
-                    
+
                     .anomaly-timestamp {
                         font-size: 0.75rem;
                         opacity: 0.8;
                     }
-                    
+
                     .anomaly-details {
                         font-size: 0.875rem;
                     }
-                    
+
                     .footer {
                         margin-top: 2rem;
                         padding-top: 1rem;
@@ -7454,13 +7454,13 @@ class RAGQueryDashboard:
                         // Tab functionality
                         const tabs = document.querySelectorAll('.tab');
                         const tabContents = document.querySelectorAll('.tab-content');
-                        
+
                         tabs.forEach(tab => {
                             tab.addEventListener('click', () => {
                                 // Remove active class from all tabs and contents
                                 tabs.forEach(t => t.classList.remove('active'));
                                 tabContents.forEach(c => c.classList.remove('active'));
-                                
+
                                 // Add active class to clicked tab and corresponding content
                                 tab.classList.add('active');
                                 const contentId = tab.getAttribute('data-tab');
@@ -7476,7 +7476,7 @@ class RAGQueryDashboard:
                         <h1>{{ title }}</h1>
                         <p>Generated at {{ current_time }}</p>
                     </div>
-                    
+
                     {% if include_performance %}
                     <div class="dashboard-section">
                         <h2>Performance Metrics</h2>
@@ -7485,29 +7485,29 @@ class RAGQueryDashboard:
                                 <div class="metric-title">Success Rate</div>
                                 <div class="metric-value">{{ (performance.success_rate * 100)|round(1) }}%</div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Average Duration</div>
                                 <div class="metric-value">{{ performance.avg_duration|round(3) }}s</div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Total Queries</div>
                                 <div class="metric-value">{{ performance.total_queries }}</div>
                             </div>
-                            
+
                             <div class="metric-card {{ 'error' if performance.error_rate > 0.1 else 'warning' if performance.error_rate > 0.05 else 'success' }}">
                                 <div class="metric-title">Error Rate</div>
                                 <div class="metric-value">{{ (performance.error_rate * 100)|round(1) }}%</div>
                             </div>
                         </div>
-                        
+
                         <div class="tabs">
                             <div class="tab active" data-tab="tab-performance-timeline">Timeline</div>
                             <div class="tab" data-tab="tab-performance-distribution">Duration Distribution</div>
                             <div class="tab" data-tab="tab-query-patterns">Query Patterns</div>
                         </div>
-                        
+
                         <div id="tab-performance-timeline" class="tab-content active">
                             <div class="visualization-container">
                                 {% if visualizations.timeline_html %}
@@ -7519,7 +7519,7 @@ class RAGQueryDashboard:
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div id="tab-performance-distribution" class="tab-content">
                             <div class="visualization-container">
                                 {% if visualizations.duration_html %}
@@ -7531,7 +7531,7 @@ class RAGQueryDashboard:
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div id="tab-query-patterns" class="tab-content">
                             <div class="visualization-container">
                                 {% if visualizations.terms_html %}
@@ -7545,7 +7545,7 @@ class RAGQueryDashboard:
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     {% if include_query_audit_timeline and visualizations.query_audit_html %}
                     <div class="dashboard-section">
                         <h2>Query-Audit Correlation Timeline</h2>
@@ -7554,11 +7554,11 @@ class RAGQueryDashboard:
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     {% if include_security and audit_metrics %}
                     <div class="dashboard-section">
                         <h2>Security Metrics</h2>
-                        
+
                         <div class="metrics-grid">
                             {% for level, count in audit_metrics.totals.by_level.items() %}
                             <div class="metric-card {{ 'error' if level in ['CRITICAL', 'ERROR'] else 'warning' if level == 'WARNING' else 'success' }}">
@@ -7567,7 +7567,7 @@ class RAGQueryDashboard:
                             </div>
                             {% endfor %}
                         </div>
-                        
+
                         {% if include_security_correlation %}
                         <div class="visualization-section">
                             <h3>Security Event Correlation with Query Performance</h3>
@@ -7585,12 +7585,12 @@ class RAGQueryDashboard:
                             </div>
                         </div>
                         {% endif %}
-                        
+
                         <div class="tabs">
                             <div class="tab active" data-tab="tab-security-trends">Security Trends</div>
                             <div class="tab" data-tab="tab-anomalies">Anomalies</div>
                         </div>
-                        
+
                         <div id="tab-security-trends" class="tab-content active">
                             <div class="visualization-container">
                                 {% if visualizations.security_trends_html %}
@@ -7600,7 +7600,7 @@ class RAGQueryDashboard:
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div id="tab-anomalies" class="tab-content">
                             <div class="anomaly-list">
                                 {% if anomalies %}
@@ -7630,45 +7630,45 @@ class RAGQueryDashboard:
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     {% if include_learning_metrics and learning_metrics %}
                     <div class="dashboard-section">
                         <h2>Optimizer Learning Metrics</h2>
-                        
+
                         <div class="metrics-grid">
                             <div class="metric-card">
                                 <div class="metric-title">Learning Cycles</div>
                                 <div class="metric-value">{{ learning_metrics.get_learning_metrics().total_learning_cycles }}</div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Success Rate</div>
                                 <div class="metric-value {{ 'success-value' if learning_metrics.get_learning_metrics().success_rate >= 0.9 else 'warning-value' if learning_metrics.get_learning_metrics().success_rate >= 0.7 else 'error-value' }}">
                                     {{ "%.1f"|format(learning_metrics.get_learning_metrics().success_rate * 100) }}%
                                 </div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Analyzed Queries</div>
                                 <div class="metric-value">{{ learning_metrics.get_learning_metrics().total_analyzed_queries }}</div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Optimized Queries</div>
                                 <div class="metric-value">{{ learning_metrics.get_learning_metrics().total_optimized_queries }}</div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Avg Duration Improvement</div>
                                 <div class="metric-value">{{ "%.0f"|format(learning_metrics.get_learning_metrics().avg_duration_improvement) }} ms</div>
                             </div>
-                            
+
                             <div class="metric-card">
                                 <div class="metric-title">Tracked Parameters</div>
                                 <div class="metric-value">{{ learning_metrics.get_learning_metrics().tracked_parameters }}</div>
                             </div>
                         </div>
-                        
+
                         <div class="visualization-container">
                             {% if interactive %}
                                 <div class="visualization-tabs">
@@ -7678,32 +7678,32 @@ class RAGQueryDashboard:
                                         <button class="tab-button" onclick="openTab(event, 'strategies-tab')">Strategy Effectiveness</button>
                                         <button class="tab-button" onclick="openTab(event, 'performance-tab')">Learning Performance</button>
                                     </div>
-                                    
+
                                     <div id="cycles-tab" class="tab-content active">
                                         {% if visualizations.learning_cycles_html %}
                                         <iframe srcdoc="{{ visualizations.learning_cycles_html }}" title="Learning Cycles" style="width:100%; height:500px; border:none;"></iframe>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <div id="params-tab" class="tab-content">
                                         {% if visualizations.learning_params_html %}
                                         <iframe srcdoc="{{ visualizations.learning_params_html }}" title="Parameter Adaptations" style="width:100%; height:500px; border:none;"></iframe>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <div id="strategies-tab" class="tab-content">
                                         {% if visualizations.learning_strategies_html %}
                                         <iframe srcdoc="{{ visualizations.learning_strategies_html }}" title="Strategy Effectiveness" style="width:100%; height:500px; border:none;"></iframe>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <div id="performance-tab" class="tab-content">
                                         {% if visualizations.learning_performance_html %}
                                         <iframe srcdoc="{{ visualizations.learning_performance_html }}" title="Learning Performance" style="width:100%; height:500px; border:none;"></iframe>
                                         {% endif %}
                                     </div>
                                 </div>
-                                
+
                                 <script>
                                 function openTab(evt, tabName) {
                                     var i, tabcontent, tabbuttons;
@@ -7719,7 +7719,7 @@ class RAGQueryDashboard:
                                     evt.currentTarget.classList.add("active");
                                 }
                                 </script>
-                                
+
                             {% else %}
                                 <div class="visualization-grid">
                                     {% if visualizations.learning_cycles_img %}
@@ -7728,37 +7728,37 @@ class RAGQueryDashboard:
                                         <img src="data:image/png;base64,{{ visualizations.learning_cycles_img }}" alt="Learning Cycles" style="max-width:100%;">
                                     </div>
                                     {% endif %}
-                                    
+
                                     {% if visualizations.learning_params_img %}
                                 <div class="visualization-section">
                                     <h3>Parameter Adaptations</h3>
                                     <img src="data:image/png;base64,{{ visualizations.learning_params_img }}" alt="Parameter Adaptations" style="max-width:100%;">
                                 </div>
                                 {% endif %}
-                                
+
                                 {% if visualizations.learning_strategies_img %}
                                 <div class="visualization-section">
                                     <h3>Strategy Effectiveness</h3>
                                     <img src="data:image/png;base64,{{ visualizations.learning_strategies_img }}" alt="Strategy Effectiveness" style="max-width:100%;">
                                 </div>
                                 {% endif %}
-                                
+
                                 {% if visualizations.learning_performance_img %}
                                 <div class="visualization-section">
                                     <h3>Learning Performance</h3>
                                     <img src="data:image/png;base64,{{ visualizations.learning_performance_img }}" alt="Learning Performance" style="max-width:100%;">
                                 </div>
                                 {% endif %}
-                                
+
                             {% endif %}
                         </div>
-                        
+
                         <div class="visualization-description">
                             <p>This section shows metrics related to the statistical learning process of the RAG query optimizer, including learning cycles, parameter adaptations over time, and strategy effectiveness.</p>
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <div class="footer">
                         <p>Generated by RAGQueryDashboard | IPFS Datasets Python</p>
                     </div>
@@ -7766,10 +7766,10 @@ class RAGQueryDashboard:
             </body>
             </html>
             """
-            
+
             # Collect performance metrics
             performance = self.metrics.get_performance_metrics()
-            
+
             # Get anomalies
             anomalies = []
             for query_id, metrics in self.metrics.query_metrics.items():
@@ -7780,7 +7780,7 @@ class RAGQueryDashboard:
                         'timestamp': datetime.datetime.fromtimestamp(metrics.get('end_time', time.time())).isoformat(),
                         'query_id': query_id
                     }
-                    
+
                     # Add specific information based on anomaly type
                     if metrics.get('anomaly_type') == 'performance_anomaly':
                         anomaly['value'] = metrics.get('duration', 0)
@@ -7790,12 +7790,12 @@ class RAGQueryDashboard:
                         anomaly['query_text'] = metrics.get('query_params', {}).get('query_text', 'Unknown query')
                     elif metrics.get('anomaly_type') == 'relevance_anomaly':
                         anomaly['value'] = metrics.get('avg_score', 0)
-                    
+
                     anomalies.append(anomaly)
-            
+
             # Generate visualizations
             visualizations = {}
-            
+
             # Create static visualizations
             if include_performance and not interactive:
                 # Generate performance timeline image
@@ -7805,7 +7805,7 @@ class RAGQueryDashboard:
                     with open(timeline_path, 'rb') as f:
                         import base64
                         visualizations['timeline_img'] = base64.b64encode(f.read()).decode('utf-8')
-                
+
                 # Generate duration distribution image
                 duration_path = os.path.join(temp_dir, "durations.png")
                 self.visualizer.plot_query_duration_distribution(output_file=duration_path)
@@ -7813,7 +7813,7 @@ class RAGQueryDashboard:
                     with open(duration_path, 'rb') as f:
                         import base64
                         visualizations['duration_img'] = base64.b64encode(f.read()).decode('utf-8')
-                        
+
             # Generate security correlation visualization if requested and audit metrics available
             if include_security_correlation and audit_metrics:
                 if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
@@ -7828,7 +7828,7 @@ class RAGQueryDashboard:
                         output_file=security_correlation_path,
                         show_plot=False
                     )
-                    
+
                     if os.path.exists(security_correlation_path):
                         with open(security_correlation_path, 'r') as f:
                             visualizations['security_correlation_html'] = f.read()
@@ -7844,7 +7844,7 @@ class RAGQueryDashboard:
                         output_file=security_correlation_path,
                         show_plot=False
                     )
-            
+
             # Generate learning metrics visualizations if requested and learning metrics available
             if include_learning_metrics and learning_metrics:
                 if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
@@ -7854,52 +7854,52 @@ class RAGQueryDashboard:
                         learning_params_path = os.path.join(temp_dir, "parameter_adaptations.html")
                         learning_strategies_path = os.path.join(temp_dir, "strategy_effectiveness.html")
                         learning_performance_path = os.path.join(temp_dir, "learning_performance.html")
-                        
+
                         # Generate each visualization
                         cycles_fig = learning_metrics.visualize_learning_cycles(
                             output_file=learning_cycles_path,
                             interactive=True,
                             theme=theme
                         )
-                        
+
                         params_fig = learning_metrics.visualize_parameter_adaptations(
                             output_file=learning_params_path,
                             interactive=True,
                             theme=theme
                         )
-                        
+
                         strategies_fig = learning_metrics.visualize_strategy_effectiveness(
                             output_file=learning_strategies_path,
                             interactive=True,
                             theme=theme
                         )
-                        
+
                         performance_fig = learning_metrics.visualize_learning_performance(
                             output_file=learning_performance_path,
                             interactive=True,
                             theme=theme
                         )
-                        
+
                         # Add to visualizations
                         if os.path.exists(learning_cycles_path):
                             with open(learning_cycles_path, 'r') as f:
                                 visualizations['learning_cycles_html'] = f.read()
-                        
+
                         if os.path.exists(learning_params_path):
                             with open(learning_params_path, 'r') as f:
                                 visualizations['learning_params_html'] = f.read()
-                                
+
                         if os.path.exists(learning_strategies_path):
                             with open(learning_strategies_path, 'r') as f:
                                 visualizations['learning_strategies_html'] = f.read()
-                                
+
                         if os.path.exists(learning_performance_path):
                             with open(learning_performance_path, 'r') as f:
                                 visualizations['learning_performance_html'] = f.read()
-                        
+
                     except Exception as e:
                         logging.error(f"Error generating learning visualizations: {e}")
-                
+
                 else:
                     # Create static learning metrics visualizations
                     try:
@@ -7907,69 +7907,69 @@ class RAGQueryDashboard:
                         learning_params_path = os.path.join(temp_dir, "parameter_adaptations.png")
                         learning_strategies_path = os.path.join(temp_dir, "strategy_effectiveness.png")
                         learning_performance_path = os.path.join(temp_dir, "learning_performance.png")
-                        
+
                         # Generate each visualization
                         learning_metrics.visualize_learning_cycles(
                             output_file=learning_cycles_path,
                             interactive=False,
                             theme=theme
                         )
-                        
+
                         learning_metrics.visualize_parameter_adaptations(
                             output_file=learning_params_path,
                             interactive=False,
                             theme=theme
                         )
-                        
+
                         learning_metrics.visualize_strategy_effectiveness(
                             output_file=learning_strategies_path,
                             interactive=False,
                             theme=theme
                         )
-                        
+
                         learning_metrics.visualize_learning_performance(
                             output_file=learning_performance_path,
                             interactive=False,
                             theme=theme
                         )
-                        
+
                         # Encode images to base64 for embedding
                         visualizations['learning_cycles_img'] = self._encode_image(learning_cycles_path)
                         visualizations['learning_params_img'] = self._encode_image(learning_params_path)
                         visualizations['learning_strategies_img'] = self._encode_image(learning_strategies_path)
                         visualizations['learning_performance_img'] = self._encode_image(learning_performance_path)
-                        
+
                     except Exception as e:
                         logging.error(f"Error generating learning visualizations: {e}")
-                    
+
                     strategy_effectiveness_path = os.path.join(temp_dir, "strategy_effectiveness.png")
                     learning_metrics.visualize_strategy_effectiveness(
                         output_file=strategy_effectiveness_path,
                         show_plot=False
                     )
-                    
+
                     # Add learning metrics visualizations to the visualization dictionary
                     if os.path.exists(learning_cycles_path):
                         with open(learning_cycles_path, 'rb') as f:
                             import base64
                             visualizations['learning_cycles_img'] = base64.b64encode(f.read()).decode('utf-8')
-                    
+
                     if os.path.exists(param_adaptations_path):
                         with open(param_adaptations_path, 'rb') as f:
                             import base64
                             visualizations['parameter_adaptations_img'] = base64.b64encode(f.read()).decode('utf-8')
-                    
+
                     if os.path.exists(strategy_effectiveness_path):
                         with open(strategy_effectiveness_path, 'rb') as f:
                             import base64
                             visualizations['strategy_effectiveness_img'] = base64.b64encode(f.read()).decode('utf-8')
-                            
+
                     # Also add security correlation if it exists
                     if os.path.exists(security_correlation_path):
                         with open(security_correlation_path, 'rb') as f:
                             import base64
                             visualizations['security_correlation_img'] = base64.b64encode(f.read()).decode('utf-8')
-                
+
                 # Generate terms chart
                 terms_path = os.path.join(temp_dir, "terms.png")
                 self.visualizer.plot_query_term_frequency(output_file=terms_path)
@@ -7977,7 +7977,7 @@ class RAGQueryDashboard:
                     with open(terms_path, 'rb') as f:
                         import base64
                         visualizations['terms_img'] = base64.b64encode(f.read()).decode('utf-8')
-            
+
             # Create interactive visualizations if requested
             if INTERACTIVE_VISUALIZATION_AVAILABLE and interactive:
                 # Check if we're using the enhanced visualizer
@@ -7996,7 +7996,7 @@ class RAGQueryDashboard:
                             )
                     except Exception as e:
                         logging.error(f"Error creating interactive performance timeline: {str(e)}")
-                    
+
                     # Generate interactive query-audit timeline if requested
                     if include_query_audit_timeline and audit_metrics:
                         try:
@@ -8013,7 +8013,7 @@ class RAGQueryDashboard:
                                 )
                         except Exception as e:
                             logging.error(f"Error creating interactive query-audit timeline: {str(e)}")
-                    
+
                     # Generate security trends visualization if requested
                     if include_security and audit_metrics:
                         try:
@@ -8030,7 +8030,7 @@ class RAGQueryDashboard:
                                 )
                         except Exception as e:
                             logging.error(f"Error creating interactive security trends: {str(e)}")
-            
+
             # Render template
             template = Template(dashboard_template)
             html = template.render(
@@ -8047,18 +8047,18 @@ class RAGQueryDashboard:
                 audit_metrics=audit_metrics.metrics if audit_metrics else None,
                 learning_metrics=learning_metrics
             )
-            
+
             # Write the HTML to file
             with open(output_file, 'w') as f:
                 f.write(html)
-            
+
             return output_file
-            
+
         except Exception as e:
             logging.error(f"Error generating integrated dashboard: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
-            
+
             # Create a simple error page
             with open(output_file, 'w') as f:
                 f.write(f"""
@@ -8074,24 +8074,24 @@ class RAGQueryDashboard:
                 </body>
                 </html>
                 """)
-            
+
             return output_file
-            
+
         finally:
             # Clean up temporary directory
             shutil.rmtree(temp_dir)
-    
+
     def generate_performance_dashboard(self, output_file: str) -> Optional[str]:
         """
         Generate a comprehensive performance metrics dashboard.
-        
+
         This dashboard focuses on detailed performance analysis of RAG queries,
         including processing time breakdowns, latency distributions, throughput
         analysis, and complexity correlations.
-        
+
         Args:
             output_file: Path to save the dashboard HTML
-            
+
         Returns:
             str: Path to the generated dashboard or None if failure
         """
@@ -8104,20 +8104,20 @@ class RAGQueryDashboard:
                 # Create a directory for static images if interactive dashboard not available
                 dashboard_dir = os.path.dirname(os.path.abspath(output_file))
                 os.makedirs(dashboard_dir, exist_ok=True)
-                
+
                 # Generate individual visualizations
                 processing_chart = os.path.join(dashboard_dir, "processing_breakdown.png")
                 self.performance_visualizer.visualize_processing_time_breakdown(output_file=processing_chart)
-                
+
                 latency_chart = os.path.join(dashboard_dir, "latency_distribution.png")
                 self.performance_visualizer.visualize_latency_distribution(output_file=latency_chart)
-                
+
                 throughput_chart = os.path.join(dashboard_dir, "throughput.png")
                 self.performance_visualizer.visualize_throughput_over_time(output_file=throughput_chart)
-                
+
                 complexity_chart = os.path.join(dashboard_dir, "complexity.png")
                 self.performance_visualizer.visualize_performance_by_query_complexity(output_file=complexity_chart)
-                
+
                 # Create a simple HTML dashboard with the static images
                 html_content = self._create_static_performance_dashboard(
                     title="RAG Query Performance Analysis",
@@ -8126,49 +8126,49 @@ class RAGQueryDashboard:
                     throughput_chart=throughput_chart,
                     complexity_chart=complexity_chart
                 )
-                
+
                 # Save the HTML
                 with open(output_file, 'w', encoding='utf-8') as f:
                     f.write(html_content)
-                
+
                 return output_file
-                
+
         except Exception as e:
             logging.error(f"Error generating performance dashboard: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
             return None
-            
-    def _create_static_performance_dashboard(self, title: str, processing_chart: str, 
+
+    def _create_static_performance_dashboard(self, title: str, processing_chart: str,
                                          latency_chart: str, throughput_chart: str,
                                          complexity_chart: str) -> str:
         """
         Create a static HTML dashboard from image files.
-        
+
         Args:
             title: Dashboard title
             processing_chart: Path to processing breakdown chart
             latency_chart: Path to latency distribution chart
             throughput_chart: Path to throughput chart
             complexity_chart: Path to complexity chart
-            
+
         Returns:
             str: HTML content for the dashboard
         """
         # Method body will be restored by the next edit
-        
+
     def visualize_learning_metrics(self, output_file=None, interactive=True, **kwargs):
         """
         Visualize statistical learning metrics from the optimizer.
-        
+
         Creates a comprehensive visualization of the learning process metrics,
         including cycle performance, parameter adaptations, and circuit breaker status.
-        
+
         Args:
             output_file: File to save visualization to
             interactive: Whether to create interactive visualization
             **kwargs: Additional arguments for the visualization
-            
+
         Returns:
             Figure or path to saved file
         """
@@ -8185,10 +8185,10 @@ class RAGQueryDashboard:
                     showarrow=False,
                     font=dict(size=20)
                 )
-                
+
                 if output_file:
                     fig.write_html(output_file)
-                    
+
                 return fig
             else:
                 # Create placeholder matplotlib figure
@@ -8198,12 +8198,12 @@ class RAGQueryDashboard:
                        verticalalignment='center',
                        transform=ax.transAxes,
                        fontsize=14)
-                
+
                 if output_file:
                     plt.savefig(output_file, dpi=100, bbox_inches='tight')
-                    
+
                 return fig
-            
+
         # Call the visualization method on learning metrics collector
         try:
             return self.learning_metrics.visualize_learning_performance(
@@ -8223,10 +8223,10 @@ class RAGQueryDashboard:
                     showarrow=False,
                     font=dict(size=16)
                 )
-                
+
                 if output_file:
                     fig.write_html(output_file)
-                    
+
                 return fig
             else:
                 # Create error matplotlib figure
@@ -8237,33 +8237,33 @@ class RAGQueryDashboard:
                        transform=ax.transAxes,
                        fontsize=12,
                        wrap=True)
-                
+
                 if output_file:
                     plt.savefig(output_file, dpi=100, bbox_inches='tight')
-                    
+
                 return fig
         """
         Create a static HTML dashboard from image files.
-        
+
         Args:
             title: Dashboard title
             processing_chart: Path to processing breakdown chart
             latency_chart: Path to latency distribution chart
             throughput_chart: Path to throughput chart
             complexity_chart: Path to complexity chart
-            
+
         Returns:
             str: HTML content for the dashboard
         """
         # Convert image paths to relative paths for the HTML
         def get_relative_path(path):
             return os.path.basename(path)
-        
+
         processing_rel = get_relative_path(processing_chart)
         latency_rel = get_relative_path(latency_chart)
         throughput_rel = get_relative_path(throughput_chart)
         complexity_rel = get_relative_path(complexity_chart)
-        
+
         # Create HTML template
         html_template = """
         <!DOCTYPE html>
@@ -8333,37 +8333,37 @@ class RAGQueryDashboard:
         <body>
             <div class="dashboard-container">
                 <h1>{{ title }}</h1>
-                
+
                 <div class="chart-row">
                     <div class="chart-container">
                         <div class="chart-title">Processing Time Breakdown</div>
                         <img src="{{ processing_chart }}" alt="Processing Time Breakdown">
                     </div>
-                    
+
                     <div class="chart-container">
                         <div class="chart-title">Query Latency Distribution</div>
                         <img src="{{ latency_chart }}" alt="Query Latency Distribution">
                     </div>
                 </div>
-                
+
                 <div class="chart-row">
                     <div class="chart-container">
                         <div class="chart-title">Query Throughput Over Time</div>
                         <img src="{{ throughput_chart }}" alt="Query Throughput">
                     </div>
-                    
+
                     <div class="chart-container">
                         <div class="chart-title">Performance vs Complexity</div>
                         <img src="{{ complexity_chart }}" alt="Performance vs Complexity">
                     </div>
                 </div>
-                
+
                 <div class="timestamp">Generated on: {{ timestamp }}</div>
             </div>
         </body>
         </html>
         """
-        
+
         # Render the template
         if TEMPLATE_ENGINE_AVAILABLE:
             template = Template(html_template)
@@ -8383,17 +8383,17 @@ class RAGQueryDashboard:
                 .replace("{{ throughput_chart }}", throughput_rel) \
                 .replace("{{ complexity_chart }}", complexity_rel) \
                 .replace("{{ timestamp }}", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    
-    def visualize_query_audit_metrics(self, 
+
+    def visualize_query_audit_metrics(self,
                                     output_file: str,
                                     hours_back: int = 24) -> str:
         """
         Generate a visualization combining query metrics with audit metrics.
-        
+
         Args:
             output_file: Path to save the visualization
             hours_back: Number of hours to look back
-            
+
         Returns:
             str: Path to the generated visualization
         """
@@ -8403,7 +8403,7 @@ class RAGQueryDashboard:
                 hours_back=hours_back,
                 output_file=output_file
             )
-            
+
         # Generate integrated timeline with both query and audit metrics
         if hasattr(self.visualizer, 'visualize_query_audit_timeline'):
             # Use enhanced method if available
@@ -8421,9 +8421,9 @@ class RAGQueryDashboard:
                 hours_back=hours_back,
                 output_file=output_file
             )
-            
+
         return output_file
-    
+
     def generate_interactive_audit_trends(self,
                                        output_file: str,
                                        audit_metrics_aggregator=None,
@@ -8435,7 +8435,7 @@ class RAGQueryDashboard:
                                        show_plot: bool = False) -> Optional[Any]:
         """
         Generate interactive visualization of audit trends.
-        
+
         Args:
             output_file: Path to save the visualization
             audit_metrics_aggregator: Optional metrics aggregator (uses self.audit_metrics if None)
@@ -8445,21 +8445,21 @@ class RAGQueryDashboard:
             theme: 'light' or 'dark' color theme
             title: Title for the visualization
             show_plot: Whether to display the plot
-            
+
         Returns:
             Optional[Any]: Plotly figure object if successful
         """
         # Use provided metrics or fall back to instance metrics
         audit_metrics = audit_metrics_aggregator or self.audit_metrics
-        
+
         if not audit_metrics:
             logging.warning("No audit metrics available for interactive visualization")
             return None
-            
+
         try:
             # Import the necessary function
             from ipfs_datasets_py.audit.audit_visualization import create_interactive_audit_trends
-            
+
             # Generate the interactive visualization
             fig = create_interactive_audit_trends(
                 metrics_aggregator=audit_metrics,
@@ -8471,9 +8471,9 @@ class RAGQueryDashboard:
                 output_file=output_file,
                 show_plot=show_plot
             )
-            
+
             return fig
-            
+
         except ImportError:
             logging.error("Interactive visualization components not available")
             return None
@@ -8487,10 +8487,10 @@ class RAGQueryDashboard:
 def create_integrated_monitoring_system(dashboard_dir: str = None):
     """
     Create an integrated monitoring system with audit logging and query metrics.
-    
+
     Args:
         dashboard_dir: Optional directory for dashboard output
-        
+
     Returns:
         tuple: (audit_logger, audit_metrics, query_metrics, dashboard)
     """
@@ -8498,29 +8498,29 @@ def create_integrated_monitoring_system(dashboard_dir: str = None):
     try:
         from ipfs_datasets_py.audit.audit_logger import AuditLogger
         from ipfs_datasets_py.audit.audit_visualization import (
-            AuditMetricsAggregator, 
+            AuditMetricsAggregator,
             setup_audit_visualization
         )
-        
+
         # Create audit logger and metrics
         audit_logger = AuditLogger()
         audit_metrics, audit_visualizer, audit_alert_manager = setup_audit_visualization(audit_logger)
-        
+
     except ImportError:
         logging.warning("Audit components not available, creating query metrics only")
         audit_logger = None
         audit_metrics = None
         audit_visualizer = None
-    
+
     # Create query metrics collector
     query_metrics = QueryMetricsCollector()
-    
+
     # Create dashboard
     dashboard = RAGQueryDashboard(
         metrics_collector=query_metrics,
         audit_metrics=audit_metrics
     )
-    
+
     # Integrate metrics with audit system if available
     if audit_logger and audit_metrics:
         integrate_with_audit_system(
@@ -8528,32 +8528,32 @@ def create_integrated_monitoring_system(dashboard_dir: str = None):
             audit_alert_manager=audit_alert_manager,  # Use the alert manager we got from setup_audit_visualization
             audit_logger=audit_logger
         )
-    
+
     # Create dashboard directory if specified
     if dashboard_dir:
         os.makedirs(dashboard_dir, exist_ok=True)
-    
+
     return audit_logger, audit_metrics, query_metrics, dashboard
 
 
 class OptimizerLearningMetricsCollector:
     """
     Collects and aggregates metrics for statistical learning in the RAG query optimizer.
-    
+
     This class tracks metrics related to the optimizer's learning process, including:
     - Learning cycles completion
     - Parameter adaptations over time
-    - Strategy effectiveness 
+    - Strategy effectiveness
     - Query pattern recognition
-    
-    It provides visualization capabilities for these metrics to help understand 
+
+    It provides visualization capabilities for these metrics to help understand
     the optimizer's learning behavior and performance improvements over time.
     """
-    
+
     def __init__(self, metrics_dir=None, max_history_size=1000):
         """
         Initialize the learning metrics collector.
-        
+
         Args:
             metrics_dir (str, optional): Directory to store metrics data
             max_history_size (int): Maximum number of learning events to keep in memory
@@ -8561,26 +8561,26 @@ class OptimizerLearningMetricsCollector:
         self.metrics_dir = metrics_dir
         if metrics_dir and not os.path.exists(metrics_dir):
             os.makedirs(metrics_dir, exist_ok=True)
-            
+
         self.max_history_size = max_history_size
         self._lock = threading.RLock()  # Thread safety for metrics updates
-        
+
         # Learning metrics
         self.learning_cycles = []  # Learning cycle completion events
         self.parameter_adaptations = {}  # Parameter changes over time {param_name: [(timestamp, value), ...]}
         self.strategy_effectiveness = {}  # Strategy effectiveness metrics {strategy: {success_rate, avg_time, count}}
         self.pattern_recognition = {}  # Query pattern recognition metrics {pattern: count}
-        
+
         # Aggregated statistics
         self.total_learning_cycles = 0
         self.total_parameter_adaptations = 0
         self.total_queries_analyzed = 0
         self.last_learning_cycle_time = None
-        
+
     def record_learning_cycle(self, cycle_data):
         """
         Record a completed learning cycle.
-        
+
         Args:
             cycle_data (dict): Data about the learning cycle including:
                 - timestamp: When the cycle completed
@@ -8590,7 +8590,7 @@ class OptimizerLearningMetricsCollector:
         """
         with self._lock:
             timestamp = cycle_data.get('timestamp', datetime.datetime.now())
-            
+
             # Create cycle record
             cycle_record = {
                 'timestamp': timestamp,
@@ -8598,25 +8598,25 @@ class OptimizerLearningMetricsCollector:
                 'rule_count': len(cycle_data.get('optimization_rules', {})),
                 'error': cycle_data.get('error')
             }
-            
+
             # Add to history, maintaining size limit
             self.learning_cycles.append(cycle_record)
             if len(self.learning_cycles) > self.max_history_size:
                 self.learning_cycles = self.learning_cycles[-self.max_history_size:]
-                
+
             # Update aggregated statistics
             self.total_learning_cycles += 1
             self.total_queries_analyzed += cycle_record['analyzed_queries']
             self.last_learning_cycle_time = timestamp
-            
+
             # Save to disk if configured
             if self.metrics_dir:
                 self._save_metrics_to_disk('learning_cycles.json', self.learning_cycles)
-    
+
     def record_parameter_adaptation(self, param_name, old_value, new_value, timestamp=None):
         """
         Record a parameter adaptation from learning.
-        
+
         Args:
             param_name (str): Name of the parameter that was adapted
             old_value: Previous parameter value
@@ -8625,11 +8625,11 @@ class OptimizerLearningMetricsCollector:
         """
         with self._lock:
             timestamp = timestamp or datetime.datetime.now()
-            
+
             # Initialize parameter history if needed
             if param_name not in self.parameter_adaptations:
                 self.parameter_adaptations[param_name] = []
-                
+
             # Add adaptation to history
             adaptation = {
                 'timestamp': timestamp,
@@ -8637,24 +8637,24 @@ class OptimizerLearningMetricsCollector:
                 'new_value': self._convert_to_serializable(new_value),
                 'delta': self._calculate_delta(old_value, new_value)
             }
-            
+
             self.parameter_adaptations[param_name].append(adaptation)
-            
+
             # Limit history size
             if len(self.parameter_adaptations[param_name]) > self.max_history_size:
                 self.parameter_adaptations[param_name] = self.parameter_adaptations[param_name][-self.max_history_size:]
-                
+
             # Update aggregated statistics
             self.total_parameter_adaptations += 1
-            
+
             # Save to disk if configured
             if self.metrics_dir:
                 self._save_metrics_to_disk('parameter_adaptations.json', self.parameter_adaptations)
-    
+
     def record_strategy_effectiveness(self, strategy_name, success, execution_time):
         """
         Record effectiveness of an optimization strategy.
-        
+
         Args:
             strategy_name (str): Name of the optimization strategy
             success (bool): Whether the strategy was successful
@@ -8670,7 +8670,7 @@ class OptimizerLearningMetricsCollector:
                     'avg_time': 0,
                     'history': []
                 }
-                
+
             # Update metrics
             metrics = self.strategy_effectiveness[strategy_name]
             metrics['total_count'] += 1
@@ -8678,33 +8678,33 @@ class OptimizerLearningMetricsCollector:
                 metrics['success_count'] += 1
             metrics['total_time'] += execution_time
             metrics['avg_time'] = metrics['total_time'] / metrics['total_count']
-            
+
             # Add to history
             metrics['history'].append({
                 'timestamp': datetime.datetime.now(),
                 'success': success,
                 'execution_time': execution_time
             })
-            
+
             # Limit history size
             if len(metrics['history']) > self.max_history_size:
                 metrics['history'] = metrics['history'][-self.max_history_size:]
-                
+
             # Save to disk if configured
             if self.metrics_dir:
                 self._save_metrics_to_disk('strategy_effectiveness.json', self.strategy_effectiveness)
-    
+
     def record_query_pattern(self, pattern):
         """
         Record a recognized query pattern.
-        
+
         Args:
             pattern (dict): Query pattern information
         """
         with self._lock:
             # Create a stable pattern key from the pattern dict
             pattern_key = self._create_pattern_key(pattern)
-            
+
             # Update pattern count
             if pattern_key not in self.pattern_recognition:
                 self.pattern_recognition[pattern_key] = {
@@ -8713,18 +8713,18 @@ class OptimizerLearningMetricsCollector:
                     'last_seen': datetime.datetime.now(),
                     'pattern': pattern
                 }
-            
+
             self.pattern_recognition[pattern_key]['count'] += 1
             self.pattern_recognition[pattern_key]['last_seen'] = datetime.datetime.now()
-            
+
             # Save to disk if configured
             if self.metrics_dir:
                 self._save_metrics_to_disk('query_patterns.json', self.pattern_recognition)
-    
+
     def get_learning_metrics(self):
         """
         Get aggregated learning metrics.
-        
+
         Returns:
             dict: Aggregated metrics about the learning process
         """
@@ -8738,15 +8738,15 @@ class OptimizerLearningMetricsCollector:
                 'tracked_strategies': len(self.strategy_effectiveness),
                 'tracked_parameters': len(self.parameter_adaptations)
             }
-    
+
     def get_parameter_history(self, param_name=None, limit=None):
         """
         Get parameter adaptation history.
-        
+
         Args:
             param_name (str, optional): Specific parameter to get history for
             limit (int, optional): Maximum number of entries to return
-            
+
         Returns:
             dict: Parameter adaptation history
         """
@@ -8760,19 +8760,19 @@ class OptimizerLearningMetricsCollector:
                 # Return all parameters but limit each one's history
                 if limit:
                     return {
-                        param: history[-limit:] 
+                        param: history[-limit:]
                         for param, history in self.parameter_adaptations.items()
                     }
                 return self.parameter_adaptations
             return {}
-    
+
     def get_strategy_metrics(self, strategy_name=None):
         """
         Get metrics for optimization strategies.
-        
+
         Args:
             strategy_name (str, optional): Specific strategy to get metrics for
-            
+
         Returns:
             dict: Strategy effectiveness metrics
         """
@@ -8780,14 +8780,14 @@ class OptimizerLearningMetricsCollector:
             if strategy_name and strategy_name in self.strategy_effectiveness:
                 return {strategy_name: self.strategy_effectiveness[strategy_name]}
             return self.strategy_effectiveness
-    
+
     def get_top_query_patterns(self, top_n=10):
         """
         Get the most common query patterns.
-        
+
         Args:
             top_n (int): Number of top patterns to return
-            
+
         Returns:
             list: Top query patterns with their metrics
         """
@@ -8798,7 +8798,7 @@ class OptimizerLearningMetricsCollector:
                 key=lambda x: x[1]['count'],
                 reverse=True
             )
-            
+
             # Return top N patterns
             return [
                 {
@@ -8810,100 +8810,100 @@ class OptimizerLearningMetricsCollector:
                 }
                 for key, data in sorted_patterns[:top_n]
             ]
-    
+
     def visualize_learning_cycles(self, output_file=None, show_plot=True, figsize=None):
         """
         Visualize learning cycles over time.
-        
+
         Args:
             output_file (str, optional): Path to save the visualization
             show_plot (bool): Whether to display the plot
             figsize (tuple, optional): Figure size (width, height) in inches
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Extract data from learning cycles
         if not self.learning_cycles:
             return None
-            
+
         timestamps = [cycle['timestamp'] for cycle in self.learning_cycles]
         analyzed_queries = [cycle['analyzed_queries'] for cycle in self.learning_cycles]
         rule_counts = [cycle['rule_count'] for cycle in self.learning_cycles]
         errors = [cycle['error'] is not None for cycle in self.learning_cycles]
-        
+
         # Create figure
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize or (10, 8), sharex=True)
-        
+
         # Plot analyzed queries
         ax1.plot(timestamps, analyzed_queries, 'o-', color='#2196F3', label='Analyzed Queries')
         ax1.set_ylabel('Queries Analyzed')
         ax1.set_title('RAG Query Optimizer Learning Cycles')
         ax1.grid(True, alpha=0.3)
-        
+
         # Plot rule counts
         ax2.plot(timestamps, rule_counts, 'o-', color='#4CAF50', label='Optimization Rules')
         ax2.set_xlabel('Time')
         ax2.set_ylabel('Rules Generated')
         ax2.grid(True, alpha=0.3)
-        
+
         # Mark error cycles
         for i, (timestamp, error) in enumerate(zip(timestamps, errors)):
             if error:
                 ax1.plot(timestamp, analyzed_queries[i], 'rx', markersize=10)
                 ax2.plot(timestamp, rule_counts[i], 'rx', markersize=10)
-        
+
         # Add legend for errors
         from matplotlib.lines import Line2D
-        error_legend = Line2D([0], [0], marker='x', color='r', 
+        error_legend = Line2D([0], [0], marker='x', color='r',
                              label='Learning Error', markersize=10, linestyle='')
         ax1.legend(handles=[error_legend])
-        
+
         # Format x-axis as dates
         fig.autofmt_xdate()
-        
+
         # Adjust layout
         plt.tight_layout()
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
-    
-    def visualize_parameter_adaptations(self, param_names=None, output_file=None, 
+
+    def visualize_parameter_adaptations(self, param_names=None, output_file=None,
                                       show_plot=True, figsize=None):
         """
         Visualize parameter adaptations over time.
-        
+
         Args:
             param_names (list, optional): List of parameter names to include
             output_file (str, optional): Path to save the visualization
             show_plot (bool): Whether to display the plot
             figsize (tuple, optional): Figure size (width, height) in inches
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Check if we have parameter adaptations
         if not self.parameter_adaptations:
             return None
-            
+
         # Determine which parameters to plot
         if param_names:
-            parameters = {p: self.parameter_adaptations[p] for p in param_names 
+            parameters = {p: self.parameter_adaptations[p] for p in param_names
                          if p in self.parameter_adaptations}
         else:
             # If not specified, plot up to 4 most frequently adapted parameters
@@ -8913,173 +8913,173 @@ class OptimizerLearningMetricsCollector:
                 reverse=True
             )
             parameters = dict(sorted_params[:4])
-            
+
         if not parameters:
             return None
-            
+
         # Create figure with subplots for each parameter
         n_params = len(parameters)
         fig, axes = plt.subplots(n_params, 1, figsize=figsize or (10, 3*n_params))
-        
+
         # Handle case with only one parameter
         if n_params == 1:
             axes = [axes]
-            
+
         # Plot each parameter
         for i, (param_name, adaptations) in enumerate(parameters.items()):
             ax = axes[i]
-            
+
             timestamps = [a['timestamp'] for a in adaptations]
             values = [a['new_value'] for a in adaptations]
-            
+
             ax.plot(timestamps, values, 'o-', label=param_name)
             ax.set_ylabel(f'{param_name} Value')
             ax.set_title(f'{param_name} Adaptations Over Time')
             ax.grid(True, alpha=0.3)
-            
+
             # Add percent change annotations
             for j in range(1, len(adaptations)):
                 prev = adaptations[j-1]['new_value']
                 curr = adaptations[j]['new_value']
                 if prev != 0:  # Avoid division by zero
                     pct_change = ((curr - prev) / abs(prev)) * 100
-                    ax.annotate(f"{pct_change:.1f}%", 
+                    ax.annotate(f"{pct_change:.1f}%",
                                (timestamps[j], values[j]),
                                textcoords="offset points",
                                xytext=(0, 10),
                                ha='center')
-        
+
         # Format x-axis as dates
         fig.autofmt_xdate()
-        
+
         # Adjust layout
         plt.tight_layout()
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
-    
+
     def visualize_strategy_effectiveness(self, output_file=None, show_plot=True, figsize=None):
         """
         Visualize the effectiveness of different optimization strategies.
-        
+
         Args:
             output_file (str, optional): Path to save the visualization
             show_plot (bool): Whether to display the plot
             figsize (tuple, optional): Figure size (width, height) in inches
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Check if we have strategy metrics
         if not self.strategy_effectiveness:
             return None
-            
+
         # Extract data
         strategies = list(self.strategy_effectiveness.keys())
         success_rates = [
-            (metrics['success_count'] / metrics['total_count']) * 100 
+            (metrics['success_count'] / metrics['total_count']) * 100
             if metrics['total_count'] > 0 else 0
             for metrics in self.strategy_effectiveness.values()
         ]
         avg_times = [metrics['avg_time'] for metrics in self.strategy_effectiveness.values()]
         counts = [metrics['total_count'] for metrics in self.strategy_effectiveness.values()]
-        
+
         # Create figure
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize or (12, 6))
-        
+
         # Plot success rates
         bars1 = ax1.bar(strategies, success_rates, color='#2196F3')
         ax1.set_ylabel('Success Rate (%)')
         ax1.set_title('Strategy Success Rates')
         ax1.set_ylim(0, 100)
-        
+
         # Add count labels
         for bar, count in zip(bars1, counts):
             ax1.text(bar.get_x() + bar.get_width()/2, 5,
                    f'n={count}', ha='center', va='bottom',
                    color='white', fontweight='bold')
-        
+
         # Plot average execution times
         bars2 = ax2.bar(strategies, avg_times, color='#FF9800')
         ax2.set_ylabel('Avg. Execution Time (s)')
         ax2.set_title('Strategy Execution Times')
-        
+
         # Add time labels
         for bar, time_val in zip(bars2, avg_times):
             ax2.text(bar.get_x() + bar.get_width()/2, time_val + 0.05,
                    f'{time_val:.3f}s', ha='center', va='bottom',
                    fontsize=9)
-        
+
         # Rotate x-axis labels for readability
         for ax in (ax1, ax2):
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-        
+
         # Adjust layout
         plt.tight_layout()
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
-    
+
     def visualize_query_patterns(self, output_file=None, top_n=5, show_plot=True, figsize=None):
         """
         Visualize the distribution of query patterns recognized by the optimizer.
-        
+
         Args:
             output_file (str, optional): Path to save the visualization
             top_n (int): Number of top patterns to include
             show_plot (bool): Whether to display the plot
             figsize (tuple, optional): Figure size (width, height) in inches
-            
+
         Returns:
             matplotlib.figure.Figure: The generated figure
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
             return None
-            
+
         # Get top patterns
         top_patterns = self.get_top_query_patterns(top_n)
         if not top_patterns:
             return None
-            
+
         # Extract data
         pattern_names = [f"Pattern {i+1}" for i in range(len(top_patterns))]
         pattern_counts = [p['count'] for p in top_patterns]
-        
+
         # Create figure
         fig, ax = plt.subplots(figsize=figsize or (10, 6))
-        
+
         # Plot pattern distribution
         bars = ax.bar(pattern_names, pattern_counts, color='#673AB7')
         ax.set_ylabel('Query Count')
         ax.set_title('Top Query Patterns Recognized by Optimizer')
-        
+
         # Add pattern details in annotations
         for i, (bar, pattern) in enumerate(zip(bars, top_patterns)):
             pattern_text = str(pattern['pattern']).replace("{", "").replace("}", "")
             if len(pattern_text) > 30:
                 pattern_text = pattern_text[:27] + "..."
-                
+
             ax.annotate(
                 pattern_text,
                 xy=(bar.get_x() + bar.get_width()/2, 5),
@@ -9089,38 +9089,38 @@ class OptimizerLearningMetricsCollector:
                 fontsize=8,
                 rotation=45
             )
-            
+
             # Add count on top of bar
             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
                    f'{bar.get_height()}', ha='center', va='bottom')
-        
+
         # Add extra space at bottom for annotations
         plt.subplots_adjust(bottom=0.25)
-        
+
         # Save plot if output file is specified
         if output_file:
             plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        
+
         # Show or close the plot
         if show_plot:
             plt.show()
         else:
             plt.close(fig)
-            
+
         return fig
-    
+
     def visualize_learning_performance(self, output_file=None, interactive=True, **kwargs):
         """
         Create a comprehensive visualization of learning performance metrics.
-        
-        This is a high-level method that combines multiple visualizations 
+
+        This is a high-level method that combines multiple visualizations
         into a single output for easy analysis of the learning process.
-        
+
         Args:
             output_file (str, optional): Path to save the visualization
             interactive (bool): Whether to create interactive visualization
             **kwargs: Additional arguments for specific visualizations
-            
+
         Returns:
             Object: Figure object or path to saved file
         """
@@ -9137,39 +9137,39 @@ class OptimizerLearningMetricsCollector:
                 import tempfile
                 temp_dir = tempfile.mkdtemp()
                 output_file = os.path.join(temp_dir, "learning_performance.png")
-                
+
             # Create a visualization of learning cycles
             fig = self.visualize_learning_cycles(
                 output_file=output_file,
                 show_plot=kwargs.get('show_plot', False)
             )
-            
+
             return fig
-    
+
     def create_interactive_learning_dashboard(self, output_file, show_plot=False):
         """
         Create an interactive dashboard for learning metrics visualization using Plotly.
-        
+
         Args:
             output_file (str): Path to save the HTML dashboard
             show_plot (bool): Whether to display the plot
-            
+
         Returns:
             str: Path to the generated dashboard
         """
         if not INTERACTIVE_VISUALIZATION_AVAILABLE or not TEMPLATE_ENGINE_AVAILABLE:
             return None
-            
+
         # Create directory for output file if it doesn't exist
         os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-        
+
         # Create subplot figure
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=(
-                'Learning Cycles', 
+                'Learning Cycles',
                 'Parameter Adaptations',
-                'Strategy Effectiveness', 
+                'Strategy Effectiveness',
                 'Query Pattern Distribution'
             ),
             specs=[
@@ -9177,13 +9177,13 @@ class OptimizerLearningMetricsCollector:
                 [{"type": "bar"}, {"type": "bar"}]
             ]
         )
-        
+
         # Add learning cycles plot
         if self.learning_cycles:
             timestamps = [cycle['timestamp'] for cycle in self.learning_cycles]
             analyzed_queries = [cycle['analyzed_queries'] for cycle in self.learning_cycles]
             rule_counts = [cycle['rule_count'] for cycle in self.learning_cycles]
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=timestamps,
@@ -9194,7 +9194,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=1
             )
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=timestamps,
@@ -9205,7 +9205,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=1, col=1
             )
-        
+
         # Add parameter adaptations plot
         if self.parameter_adaptations:
             # Take top 3 most adapted parameters
@@ -9214,11 +9214,11 @@ class OptimizerLearningMetricsCollector:
                 key=lambda x: len(x[1]),
                 reverse=True
             )[:3]
-            
+
             for param_name, adaptations in sorted_params:
                 timestamps = [a['timestamp'] for a in adaptations]
                 values = [a['new_value'] for a in adaptations]
-                
+
                 fig.add_trace(
                     go.Scatter(
                         x=timestamps,
@@ -9228,16 +9228,16 @@ class OptimizerLearningMetricsCollector:
                     ),
                     row=1, col=2
                 )
-        
+
         # Add strategy effectiveness plot
         if self.strategy_effectiveness:
             strategies = list(self.strategy_effectiveness.keys())
             success_rates = [
-                (metrics['success_count'] / metrics['total_count']) * 100 
+                (metrics['success_count'] / metrics['total_count']) * 100
                 if metrics['total_count'] > 0 else 0
                 for metrics in self.strategy_effectiveness.values()
             ]
-            
+
             fig.add_trace(
                 go.Bar(
                     x=strategies,
@@ -9247,13 +9247,13 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=2, col=1
             )
-        
+
         # Add query pattern distribution plot
         top_patterns = self.get_top_query_patterns(5)
         if top_patterns:
             pattern_names = [f"Pattern {i+1}" for i in range(len(top_patterns))]
             pattern_counts = [p['count'] for p in top_patterns]
-            
+
             fig.add_trace(
                 go.Bar(
                     x=pattern_names,
@@ -9265,7 +9265,7 @@ class OptimizerLearningMetricsCollector:
                 ),
                 row=2, col=2
             )
-        
+
         # Update layout
         fig.update_layout(
             title_text="RAG Query Optimizer Learning Metrics",
@@ -9279,16 +9279,16 @@ class OptimizerLearningMetricsCollector:
                 x=1
             )
         )
-        
+
         # Save to HTML
         fig.write_html(output_file)
-        
+
         # Show plot if requested
         if show_plot:
             fig.show()
-            
+
         return output_file
-        
+
     def _save_metrics_to_disk(self, filename, data):
         """Save metrics data to disk in JSON format."""
         try:
@@ -9297,7 +9297,7 @@ class OptimizerLearningMetricsCollector:
                 json.dump(self._convert_to_serializable(data), f)
         except Exception as e:
             logging.error(f"Error saving metrics to {filename}: {str(e)}")
-    
+
     def _convert_to_serializable(self, obj):
         """Convert objects to JSON serializable format."""
         if isinstance(obj, dict):
@@ -9314,7 +9314,7 @@ class OptimizerLearningMetricsCollector:
             return obj.isoformat()
         else:
             return obj
-    
+
     def _calculate_delta(self, old_value, new_value):
         """Calculate delta between old and new values, handling different types."""
         try:
@@ -9330,7 +9330,7 @@ class OptimizerLearningMetricsCollector:
             return None
         except:
             return None
-    
+
     def _create_pattern_key(self, pattern):
         """Create a stable string key from a pattern dictionary."""
         try:
@@ -9353,14 +9353,14 @@ ENHANCED_VIS_AVAILABLE = True
 def create_learning_metrics_visualizations(output_dir=None, theme="light"):
     """
     Create example visualizations for RAG query optimizer learning metrics.
-    
+
     This function demonstrates the visualization capabilities for learning metrics
     by creating sample visualizations using simulated data.
-    
+
     Args:
         output_dir: Directory to save visualizations
         theme: Color theme ('light' or 'dark')
-        
+
     Returns:
         Dict of visualization file paths
     """
@@ -9369,33 +9369,33 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
     except ImportError:
         logging.error("OptimizerLearningMetricsVisualizer not available")
         return None
-        
+
     import tempfile
     import datetime
     import random
     import os
-    
+
     # Create output directory if not provided
     if not output_dir:
         output_dir = os.path.join(tempfile.gettempdir(), "rag_learning_metrics")
         os.makedirs(output_dir, exist_ok=True)
-    
+
     # Create a mock metrics collector
     class MockLearningMetricsCollector:
         def __init__(self):
             self.learning_cycles = []
             self.parameter_adaptations = []
             self.strategy_effectiveness = []
-            
+
             # Generate sample data
             self._generate_learning_cycles()
             self._generate_parameter_adaptations()
             self._generate_strategy_effectiveness()
-            
+
         def _generate_learning_cycles(self):
             """Generate sample learning cycle data."""
             now = datetime.datetime.now()
-            
+
             for i in range(10):
                 self.learning_cycles.append({
                     'cycle_id': f"cycle_{i}",
@@ -9405,16 +9405,16 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
                     'parameters_adjusted': i % 3 + 1,
                     'execution_time': 2.5 + i * 0.5 + random.random()
                 })
-                
+
         def _generate_parameter_adaptations(self):
             """Generate sample parameter adaptation data."""
             now = datetime.datetime.now()
             param_names = ['max_depth', 'min_similarity', 'vector_weight', 'graph_weight', 'cache_ttl']
-            
+
             for i in range(20):
                 param_idx = i % len(param_names)
                 param_name = param_names[param_idx]
-                
+
                 # Create different adaptation patterns for different parameters
                 if param_name == 'max_depth':
                     old_value = 2 + (i // 4)
@@ -9431,25 +9431,25 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
                 else:  # cache_ttl
                     old_value = 300
                     new_value = 600 if i > 10 else 300
-                
+
                 self.parameter_adaptations.append({
                     'parameter_name': param_name,
                     'old_value': old_value,
                     'new_value': new_value,
                     'timestamp': now - datetime.timedelta(days=10-i//2)
                 })
-                
+
         def _generate_strategy_effectiveness(self):
             """Generate sample strategy effectiveness data."""
             now = datetime.datetime.now()
             strategies = ['vector_first', 'graph_first', 'balanced']
             query_types = ['factual', 'complex', 'exploratory']
-            
+
             for i in range(30):
                 strategy = strategies[i % len(strategies)]
                 query_type = query_types[(i // 3) % len(query_types)]
                 timestamp = now - datetime.timedelta(days=15-i//2)
-                
+
                 # Create different patterns for different strategies
                 if strategy == 'vector_first':
                     success_rate = 0.7 + min(0.25, (i / 40))
@@ -9460,7 +9460,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
                 else:  # balanced
                     success_rate = 0.75 + min(0.2, (i / 50))
                     mean_latency = 1.8 - min(0.7, (i / 35))
-                    
+
                 # Adjust by query type
                 if query_type == 'factual':
                     success_rate = min(0.95, success_rate + 0.1)
@@ -9468,7 +9468,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
                 elif query_type == 'complex':
                     success_rate = max(0.6, success_rate - 0.1)
                     mean_latency = mean_latency + 0.8
-                    
+
                 self.strategy_effectiveness.append({
                     'strategy': strategy,
                     'query_type': query_type,
@@ -9477,14 +9477,14 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
                     'sample_size': 10 + i,
                     'timestamp': timestamp
                 })
-    
+
     # Create the mock collector and visualizer
     collector = MockLearningMetricsCollector()
     visualizer = OptimizerLearningMetricsVisualizer(collector, output_dir)
-    
+
     # Generate visualizations
     results = {}
-    
+
     # Create static visualizations
     if VISUALIZATION_LIBS_AVAILABLE:
         cycles_png = os.path.join(output_dir, "learning_cycles.png")
@@ -9494,7 +9494,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             interactive=False
         )
         results['learning_cycles_static'] = cycles_png if cycles_fig else None
-        
+
         params_png = os.path.join(output_dir, "parameter_adaptations.png")
         params_fig = visualizer.visualize_parameter_adaptations(
             output_file=params_png,
@@ -9502,7 +9502,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             interactive=False
         )
         results['parameter_adaptations_static'] = params_png if params_fig else None
-        
+
         strategy_png = os.path.join(output_dir, "strategy_effectiveness.png")
         strategy_fig = visualizer.visualize_strategy_effectiveness(
             output_file=strategy_png,
@@ -9510,7 +9510,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             interactive=False
         )
         results['strategy_effectiveness_static'] = strategy_png if strategy_fig else None
-    
+
     # Create interactive visualizations
     if INTERACTIVE_VISUALIZATION_AVAILABLE:
         cycles_html = os.path.join(output_dir, "learning_cycles.html")
@@ -9520,7 +9520,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             interactive=True
         )
         results['learning_cycles_interactive'] = cycles_html if cycles_fig else None
-        
+
         params_html = os.path.join(output_dir, "parameter_adaptations.html")
         params_fig = visualizer.visualize_parameter_adaptations(
             output_file=params_html,
@@ -9528,7 +9528,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             interactive=True
         )
         results['parameter_adaptations_interactive'] = params_html if params_fig else None
-        
+
         strategy_html = os.path.join(output_dir, "strategy_effectiveness.html")
         strategy_fig = visualizer.visualize_strategy_effectiveness(
             output_file=strategy_html,
@@ -9536,7 +9536,7 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             interactive=True
         )
         results['strategy_effectiveness_interactive'] = strategy_html if strategy_fig else None
-    
+
     # Create dashboard
     if TEMPLATE_ENGINE_AVAILABLE and INTERACTIVE_VISUALIZATION_AVAILABLE:
         dashboard_html = os.path.join(output_dir, "learning_metrics_dashboard.html")
@@ -9545,5 +9545,5 @@ def create_learning_metrics_visualizations(output_dir=None, theme="light"):
             theme=theme
         )
         results['dashboard'] = dashboard_path
-    
+
     return results

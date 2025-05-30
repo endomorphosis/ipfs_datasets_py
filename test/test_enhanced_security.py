@@ -15,20 +15,20 @@ from unittest.mock import MagicMock, patch
 
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, SecurityPolicy, AccessControlEntry, DataClassification, 
+    EnhancedSecurityManager, SecurityPolicy, AccessControlEntry, DataClassification,
     DataEncryptionConfig, AccessDecision, SecuritySession, security_operation
 )
 
 
 class TestEnhancedSecurity(unittest.TestCase):
     """Test cases for the enhanced security module."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Create mock audit logger
         self.mock_audit_logger = MagicMock(spec=AuditLogger)
         self.mock_audit_logger.security = MagicMock(return_value="mock_event_id")
-        
+
         # Create security manager with mock audit logger
         with patch.object(AuditLogger, 'get_instance', return_value=self.mock_audit_logger):
             self.security_manager = EnhancedSecurityManager()
@@ -37,7 +37,7 @@ class TestEnhancedSecurity(unittest.TestCase):
             self.security_manager.access_control_entries = {}
             self.security_manager.security_policies = {}
             self.security_manager.encryption_configs = {}
-    
+
     def test_data_classification(self):
         """Test data classification functionality."""
         # Set a classification
@@ -47,11 +47,11 @@ class TestEnhancedSecurity(unittest.TestCase):
             user_id="test_user"
         )
         self.assertTrue(result)
-        
+
         # Verify classification was set
         classification = self.security_manager.get_data_classification("test_resource")
         self.assertEqual(classification, DataClassification.CONFIDENTIAL)
-        
+
         # Verify audit logger was called
         self.mock_audit_logger.security.assert_called_with(
             action="set_data_classification",
@@ -62,7 +62,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "previous_classification": None
             }
         )
-        
+
         # Update the classification
         result = self.security_manager.set_data_classification(
             resource_id="test_resource",
@@ -70,11 +70,11 @@ class TestEnhancedSecurity(unittest.TestCase):
             user_id="test_user"
         )
         self.assertTrue(result)
-        
+
         # Verify classification was updated
         classification = self.security_manager.get_data_classification("test_resource")
         self.assertEqual(classification, DataClassification.RESTRICTED)
-        
+
         # Verify audit logger was called for update
         self.mock_audit_logger.security.assert_called_with(
             action="set_data_classification",
@@ -85,7 +85,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "previous_classification": "CONFIDENTIAL"
             }
         )
-    
+
     def test_access_control(self):
         """Test access control functionality."""
         # Create an access control entry
@@ -98,16 +98,16 @@ class TestEnhancedSecurity(unittest.TestCase):
             conditions={"ip_range": "192.168.1.0/24"},
             expiration=None
         )
-        
+
         # Add the ACE
         result = self.security_manager.add_access_control_entry(ace, user_id="admin")
         self.assertTrue(result)
-        
+
         # Verify ACE was added
         entries = self.security_manager.get_access_control_entries("protected_resource")
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0].principal_id, "alice")
-        
+
         # Verify audit logger was called
         self.mock_audit_logger.security.assert_called_with(
             action="add_access_control_entry",
@@ -121,7 +121,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "expiration": None
             }
         )
-        
+
         # Check access control decision - allow
         with patch.object(self.security_manager, '_evaluate_conditions', return_value=True):
             decision = self.security_manager.check_access(
@@ -130,7 +130,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 operation="read"
             )
             self.assertEqual(decision, AccessDecision.ALLOW)
-        
+
         # Check access control decision - deny (wrong user)
         decision = self.security_manager.check_access(
             user_id="bob",
@@ -138,7 +138,7 @@ class TestEnhancedSecurity(unittest.TestCase):
             operation="read"
         )
         self.assertEqual(decision, AccessDecision.DENY)
-        
+
         # Check access control decision - deny (wrong operation)
         decision = self.security_manager.check_access(
             user_id="alice",
@@ -146,7 +146,7 @@ class TestEnhancedSecurity(unittest.TestCase):
             operation="delete"
         )
         self.assertEqual(decision, AccessDecision.DENY)
-        
+
         # Remove the ACE
         result = self.security_manager.remove_access_control_entry(
             resource_id="protected_resource",
@@ -155,11 +155,11 @@ class TestEnhancedSecurity(unittest.TestCase):
             user_id="admin"
         )
         self.assertTrue(result)
-        
+
         # Verify ACE was removed
         entries = self.security_manager.get_access_control_entries("protected_resource")
         self.assertEqual(len(entries), 0)
-        
+
         # Verify audit logger was called for removal
         self.mock_audit_logger.security.assert_called_with(
             action="remove_access_control_entry",
@@ -170,7 +170,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "principal_type": "user"
             }
         )
-    
+
     def test_security_policy(self):
         """Test security policy functionality."""
         # Create a security policy
@@ -193,15 +193,15 @@ class TestEnhancedSecurity(unittest.TestCase):
                 }
             ]
         )
-        
+
         # Add the policy
         result = self.security_manager.add_security_policy(policy, user_id="admin")
         self.assertTrue(result)
-        
+
         # Verify policy was added
         stored_policy = self.security_manager.get_security_policy("test_policy")
         self.assertEqual(stored_policy.name, "Test Security Policy")
-        
+
         # Verify audit logger was called
         self.mock_audit_logger.security.assert_called_with(
             action="add_security_policy",
@@ -213,19 +213,19 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "rule_count": 2
             }
         )
-        
+
         # List policies
         policies = self.security_manager.list_security_policies()
         self.assertEqual(len(policies), 1)
-        
+
         # Remove the policy
         result = self.security_manager.remove_security_policy("test_policy", user_id="admin")
         self.assertTrue(result)
-        
+
         # Verify policy was removed
         stored_policy = self.security_manager.get_security_policy("test_policy")
         self.assertIsNone(stored_policy)
-        
+
         # Verify audit logger was called for removal
         self.mock_audit_logger.security.assert_called_with(
             action="remove_security_policy",
@@ -234,7 +234,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "policy_id": "test_policy"
             }
         )
-    
+
     def test_encryption_config(self):
         """Test encryption configuration functionality."""
         # Create an encryption configuration
@@ -244,7 +244,7 @@ class TestEnhancedSecurity(unittest.TestCase):
             algorithm="AES-256-GCM",
             key_rotation_days=90
         )
-        
+
         # Add the configuration
         result = self.security_manager.add_encryption_config(
             resource_id="sensitive_data",
@@ -252,11 +252,11 @@ class TestEnhancedSecurity(unittest.TestCase):
             user_id="admin"
         )
         self.assertTrue(result)
-        
+
         # Verify configuration was added
         stored_config = self.security_manager.get_encryption_config("sensitive_data")
         self.assertEqual(stored_config.key_id, "test_key")
-        
+
         # Verify audit logger was called
         self.mock_audit_logger.security.assert_called_with(
             action="add_encryption_config",
@@ -268,7 +268,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 "key_rotation_days": 90
             }
         )
-    
+
     def test_policy_violations(self):
         """Test policy violation detection."""
         # Create a security policy
@@ -286,10 +286,10 @@ class TestEnhancedSecurity(unittest.TestCase):
                 }
             ]
         )
-        
+
         # Add the policy
         self.security_manager.add_security_policy(policy)
-        
+
         # Create a mock audit event that would trigger the policy
         event = AuditEvent(
             event_id="test_event",
@@ -302,11 +302,11 @@ class TestEnhancedSecurity(unittest.TestCase):
             resource_type="file",
             details={"data_size_bytes": 2 * 1024 * 1024}  # 2MB
         )
-        
+
         # Process the event
         with patch.object(self.security_manager, 'audit_logger') as mock_logger:
             self.security_manager._process_audit_event(event)
-            
+
             # Verify violation was logged
             mock_logger.security.assert_called_with(
                 action="policy_violation",
@@ -322,7 +322,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                     "source_event_id": "test_event"
                 }
             )
-    
+
     def test_security_session(self):
         """Test security session context manager."""
         # Use the security session context manager
@@ -335,10 +335,10 @@ class TestEnhancedSecurity(unittest.TestCase):
             ) as session:
                 # Set some context
                 session.set_context("client_ip", "192.168.1.100")
-                
+
                 # Do some operation
                 pass
-            
+
             # Verify session start was logged
             mock_logger.security.assert_any_call(
                 action="test_operation_start",
@@ -346,7 +346,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                 resource_id="test_resource",
                 details={"session_context": {}}
             )
-            
+
             # Verify session completion was logged
             mock_logger.security.assert_any_call(
                 action="test_operation_complete",
@@ -358,14 +358,14 @@ class TestEnhancedSecurity(unittest.TestCase):
                     "session_context": {"client_ip": "192.168.1.100"}
                 }
             )
-    
+
     def test_security_operation_decorator(self):
         """Test security operation decorator."""
         # Create a decorated function
         @security_operation(user_id_arg="user", resource_id_arg="resource")
         def test_function(user, resource, data):
             return f"Processed {data} for {user} on {resource}"
-        
+
         # Set up access control
         ace = AccessControlEntry(
             resource_id="test_resource",
@@ -375,7 +375,7 @@ class TestEnhancedSecurity(unittest.TestCase):
             permissions=["read"]
         )
         self.security_manager.add_access_control_entry(ace)
-        
+
         # Mock check_access to allow access
         with patch.object(self.security_manager, 'check_access', return_value=AccessDecision.ALLOW):
             with patch.object(SecuritySession, '__enter__', return_value=MagicMock()):
@@ -383,7 +383,7 @@ class TestEnhancedSecurity(unittest.TestCase):
                     # Call the function
                     result = test_function(user="alice", resource="test_resource", data="test_data")
                     self.assertEqual(result, "Processed test_data for alice on test_resource")
-        
+
         # Mock check_access to deny access
         with patch.object(self.security_manager, 'check_access', return_value=AccessDecision.DENY):
             with patch.object(self.security_manager.audit_logger, 'authz'):

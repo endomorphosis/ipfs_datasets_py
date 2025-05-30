@@ -30,7 +30,7 @@ class TestMCPPinToIPFS(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs import pin_to_ipfs
 
         file_path = "test_file.txt"
-        
+
         # Mock the add method to return a CID
         self.mock_ipfs_client.add = MagicMock(return_value=[{"Hash": "QmTestHash", "Name": "test_file.txt", "Size": "100"}])
         self.mock_ipfs_client.pin = MagicMock(return_value={"Pins": ["QmTestHash"]})

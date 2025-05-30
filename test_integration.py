@@ -26,21 +26,21 @@ def test_traversal_stats_sharing():
     try:
         # Create a unified optimizer with integrated rewriter
         optimizer = UnifiedGraphRAGQueryOptimizer()
-        
+
         # Check if traversal stats are shared
         is_same_object = optimizer.rewriter.traversal_stats is optimizer._traversal_stats
         logger.info(f"Rewriter's traversal_stats is same as optimizer's: {is_same_object}")
-        
+
         # Modify stats in optimizer and check if rewriter sees the changes
         optimizer._traversal_stats["relation_usefulness"]["test_relation"] = 0.75
         rewriter_sees_value = optimizer.rewriter.traversal_stats["relation_usefulness"]["test_relation"] == 0.75
         logger.info(f"Rewriter sees changes from optimizer: {rewriter_sees_value}")
-        
+
         # Modify stats via rewriter and check if optimizer sees the changes
         optimizer.rewriter.traversal_stats["path_scores"]["test_path"] = 0.85
         optimizer_sees_value = optimizer._traversal_stats["path_scores"]["test_path"] == 0.85
         logger.info(f"Optimizer sees changes from rewriter: {optimizer_sees_value}")
-        
+
         # Return overall success
         return is_same_object and rewriter_sees_value and optimizer_sees_value
     except Exception as e:

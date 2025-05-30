@@ -42,28 +42,28 @@ async def search_vector_index(
     """
     try:
         logger.info(f"Searching vector index {index_id} for top {top_k} results")
-        
+
         # Get the global manager instance
         manager = get_global_manager()
-        
+
         # Search the index using the manager
         results = manager.search_index(index_id, query_vector, k=top_k)
-        
+
         # Format results
         formatted_results = []
         for i, result in enumerate(results):
             formatted_result = {
                 "id": result.get("id", i)
             }
-            
+
             if include_distances:
                 formatted_result["distance"] = result.get("score", 1.0)
-                
+
             if include_metadata and result.get("metadata"):
                 formatted_result["metadata"] = result["metadata"]
-                
+
             formatted_results.append(formatted_result)
-        
+
         # Return search results
         return {
             "status": "success",

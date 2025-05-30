@@ -73,13 +73,13 @@ def parse_arguments():
         default='optimizer_learning_dashboard.html',
         help='Filename for the HTML dashboard (default: optimizer_learning_dashboard.html)'
     )
-    
+
     return parser.parse_args()
 
 def main():
     """Run the main demo."""
     args = parse_arguments()
-    
+
     # Create output directory
     if args.output_dir:
         output_dir = args.output_dir
@@ -87,9 +87,9 @@ def main():
     else:
         # Create a temporary directory
         output_dir = tempfile.mkdtemp(prefix="rag_optimizer_vis_")
-    
+
     logger.info(f"Using output directory: {output_dir}")
-    
+
     # Create visualization system
     visualization = LiveOptimizerVisualization(
         metrics_dir=os.path.join(output_dir, "metrics"),
@@ -97,7 +97,7 @@ def main():
         visualization_interval=args.interval,
         dashboard_filename=args.dashboard_name
     )
-    
+
     # Inject sample data
     logger.info("Injecting initial sample data...")
     visualization.inject_sample_data(
@@ -105,31 +105,31 @@ def main():
         num_adaptations=args.adaptations,
         num_strategies=args.strategies
     )
-    
+
     # Update visualizations
     logger.info("Generating initial visualizations...")
     result_files = visualization.update_visualizations()
-    
+
     # Print visualization file paths
     logger.info("Generated visualization files:")
     for name, path in result_files.items():
         logger.info(f"  - {name}: {path}")
-    
+
     # Start auto-update
     logger.info(f"Starting auto-update with interval {args.interval} seconds...")
     visualization.start_auto_update()
-    
+
     # Simulate periodic updates
     logger.info(f"Running demo for {args.run_time} seconds with visualization updates...")
-    
+
     start_time = time.time()
     num_updates = 0
-    
+
     try:
         while time.time() - start_time < args.run_time:
             # Sleep for 1/4 of the update interval
             time.sleep(args.interval / 4)
-            
+
             # Every other cycle, add some more sample data
             if num_updates % 2 == 0:
                 visualization.inject_sample_data(
@@ -138,29 +138,29 @@ def main():
                     num_strategies=max(3, args.strategies // 5)
                 )
                 logger.info(f"Injected additional sample data (update {num_updates+1})")
-            
+
             num_updates += 1
-            
+
             # Give an update on remaining time
             elapsed = time.time() - start_time
             remaining = args.run_time - elapsed
             logger.info(f"Demo running... {int(remaining)}s remaining")
-            
+
     except KeyboardInterrupt:
         logger.info("Demo interrupted by user")
     finally:
         # Stop the auto-update thread
         visualization.stop_auto_update()
-        
+
         # Generate final visualizations
         logger.info("Generating final visualizations...")
         final_results = visualization.update_visualizations()
-        
+
         # Print final dashboard path
         if 'dashboard' in final_results:
             dashboard_path = final_results['dashboard']
             logger.info(f"Final dashboard available at: {dashboard_path}")
-            
+
             # Try to open the dashboard in a browser
             try:
                 import webbrowser
@@ -168,7 +168,7 @@ def main():
                 logger.info("Opened dashboard in web browser")
             except:
                 logger.warning("Could not open dashboard in web browser automatically")
-        
+
         logger.info(f"Demo complete! All visualization files are in {output_dir}")
         logger.info(f"To view the dashboard directly, open: {os.path.join(output_dir, 'visualizations', args.dashboard_name)}")
 

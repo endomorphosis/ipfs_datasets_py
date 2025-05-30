@@ -9,7 +9,7 @@ from pathlib import Path
 def main():
     print("🔍 Quick MCP Configuration Check")
     print("=" * 40)
-    
+
     # Check user settings
     user_settings = Path.home() / ".config" / "Code - Insiders" / "User" / "settings.json"
     if user_settings.exists():
@@ -20,7 +20,7 @@ def main():
             print("❌ User settings missing Copilot MCP config")
     else:
         print("❌ User settings file not found")
-    
+
     # Check workspace settings
     workspace_settings = Path("/home/barberb/ipfs_datasets_py/.vscode/settings.json")
     if workspace_settings.exists():
@@ -31,7 +31,7 @@ def main():
             print("❌ Workspace settings missing Copilot MCP config")
     else:
         print("❌ Workspace settings file not found")
-    
+
     # Check MCP server is running
     import subprocess
     try:
@@ -42,7 +42,7 @@ def main():
             print("❌ MCP server is not running")
     except:
         print("❌ Could not check MCP server status")
-    
+
     # Check Copilot MCP extension
     try:
         result = subprocess.run(['code-insiders', '--list-extensions'], capture_output=True, text=True)
@@ -52,7 +52,7 @@ def main():
             print("❌ Copilot MCP extension is not installed")
     except:
         print("❌ Could not check extensions")
-    
+
     print("\n🎉 Configuration complete!")
     print("💡 Next steps:")
     print("1. Restart VS Code to ensure all configurations are loaded")

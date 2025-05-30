@@ -15,7 +15,7 @@ class MockWebArchiveProcessor:
     def create_warc(self, url, output_path=None, options=None):
         if "fail" in url:
             raise Exception("Simulated WARC creation failure")
-        
+
         # Simulate WARC creation
         if output_path:
             with open(output_path, 'w') as f:
@@ -38,7 +38,7 @@ class TestMCPCreateWARC(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = os.path.join(tmpdir, "test.warc")
             url = "http://example.com"
-            
+
             result = create_warc(url=url, output_path=output_path)
 
             self.assertEqual(result["status"], "success")
@@ -52,7 +52,7 @@ class TestMCPCreateWARC(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = os.path.join(tmpdir, "test_fail.warc")
             url = "http://fail.com" # Trigger failure in mock
-            
+
             result = create_warc(url=url, output_path=output_path)
 
             self.assertEqual(result["status"], "error")

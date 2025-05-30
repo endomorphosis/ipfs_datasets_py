@@ -41,23 +41,23 @@ except (ImportError, AttributeError):
     class TestGraphNode(unittest.TestCase):
         def test_skip(self):
             self.skipTest("GraphNode module not available")
-    
+
     class TestGraphDataset(unittest.TestCase):
         def test_skip(self):
             self.skipTest("GraphDataset module not available")
-    
+
     class TestVectorAugmentedGraphDataset(unittest.TestCase):
         def test_skip(self):
             self.skipTest("VectorAugmentedGraphDataset module not available")
-    
+
     class TestGraphRAGQueryOptimizer(unittest.TestCase):
         def test_skip(self):
             self.skipTest("GraphRAGQueryOptimizer module not available")
-    
+
     class TestVectorIndexPartitioner(unittest.TestCase):
         def test_skip(self):
             self.skipTest("VectorIndexPartitioner module not available")
-            
+
     class TestAdvancedGraphRAGMethods(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Advanced GraphRAG methods not available")
@@ -74,19 +74,19 @@ except (ImportError, AttributeError):
     class TestEntity(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Entity module not available")
-    
+
     class TestRelationship(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Relationship module not available")
-    
+
     class TestKnowledgeGraph(unittest.TestCase):
         def test_skip(self):
             self.skipTest("KnowledgeGraph module not available")
-    
+
     class TestKnowledgeGraphExtractor(unittest.TestCase):
         def test_skip(self):
             self.skipTest("KnowledgeGraphExtractor module not available")
-            
+
     class TestWikipediaIntegration(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Wikipedia Integration module not available")
@@ -110,11 +110,11 @@ except (ImportError, AttributeError):
     class TestAdaptivePrompting(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Adaptive Prompting module not available")
-    
+
     class TestDomainSpecificProcessor(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Domain-Specific Processor module not available")
-    
+
     class TestPerformanceMonitor(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Performance Monitor module not available")
@@ -128,7 +128,7 @@ except (ImportError, AttributeError):
     class TestGraphRAGLLMProcessor(unittest.TestCase):
         def test_skip(self):
             self.skipTest("GraphRAG LLM Processor module not available")
-    
+
     class TestReasoningEnhancer(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Reasoning Enhancer module not available")
@@ -144,15 +144,15 @@ except (ImportError, AttributeError):
     class TestSchemaRegistry(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Schema Registry module not available")
-    
+
     class TestSchemaValidator(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Schema Validator module not available")
-            
+
     class TestSemanticAugmenter(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Semantic Augmenter module not available")
-            
+
     class TestSemanticValidator(unittest.TestCase):
         def test_skip(self):
             self.skipTest("Semantic Validator module not available")
@@ -178,7 +178,7 @@ except (ImportError, AttributeError):
 def create_test_suite():
     """Create a test suite that includes all Phase 1 tests"""
     test_suite = unittest.TestSuite()
-    
+
     # Add core classes
     test_suite.addTest(unittest.makeSuite(TestIPLDStorage))
     test_suite.addTest(unittest.makeSuite(TestDatasetSerialization))
@@ -186,7 +186,7 @@ def create_test_suite():
     test_suite.addTest(unittest.makeSuite(TestWebArchiveIntegration))
     test_suite.addTest(unittest.makeSuite(TestUnixFSIntegration))
     test_suite.addTest(unittest.makeSuite(TestIPFSKnnIndex))
-    
+
     # Add GraphRAG test classes
     test_suite.addTest(unittest.makeSuite(TestGraphNode))
     test_suite.addTest(unittest.makeSuite(TestGraphDataset))
@@ -194,38 +194,38 @@ def create_test_suite():
     test_suite.addTest(unittest.makeSuite(TestGraphRAGQueryOptimizer))
     test_suite.addTest(unittest.makeSuite(TestVectorIndexPartitioner))
     test_suite.addTest(unittest.makeSuite(TestAdvancedGraphRAGMethods))
-    
+
     # Add Knowledge Graph test classes
     test_suite.addTest(unittest.makeSuite(TestEntity))
     test_suite.addTest(unittest.makeSuite(TestRelationship))
     test_suite.addTest(unittest.makeSuite(TestKnowledgeGraph))
     test_suite.addTest(unittest.makeSuite(TestKnowledgeGraphExtractor))
     test_suite.addTest(unittest.makeSuite(TestWikipediaIntegration))
-    
+
     # Add GraphRAG Integration test class
     test_suite.addTest(unittest.makeSuite(TestGraphRAGIntegration))
-    
+
     # Add LLM Integration test classes
     test_suite.addTest(unittest.makeSuite(TestAdaptivePrompting))
     test_suite.addTest(unittest.makeSuite(TestDomainSpecificProcessor))
     test_suite.addTest(unittest.makeSuite(TestPerformanceMonitor))
-    
+
     # Add LLM GraphRAG Processor test classes
     test_suite.addTest(unittest.makeSuite(TestGraphRAGLLMProcessor))
     test_suite.addTest(unittest.makeSuite(TestReasoningEnhancer))
-    
+
     # Add LLM Semantic Validation test classes
     test_suite.addTest(unittest.makeSuite(TestSchemaRegistry))
     test_suite.addTest(unittest.makeSuite(TestSchemaValidator))
     test_suite.addTest(unittest.makeSuite(TestSemanticAugmenter))
     test_suite.addTest(unittest.makeSuite(TestSemanticValidator))
-    
+
     # Add Cross-Document Reasoning test class
     test_suite.addTest(unittest.makeSuite(TestCrossDocumentReasoning))
-    
+
     # Add Audit Logging test class
     test_suite.addTest(unittest.makeSuite(TestAuditLogging))
-    
+
     return test_suite
 
 
@@ -233,11 +233,11 @@ def run_phase1_tests():
     """Run all Phase 1 tests and report results"""
     # Create test suite
     test_suite = create_test_suite()
-    
+
     # Run tests
     test_runner = unittest.TextTestRunner(verbosity=2)
     result = test_runner.run(test_suite)
-    
+
     # Return success/failure
     return result.wasSuccessful()
 
@@ -245,15 +245,15 @@ def run_phase1_tests():
 # Add a test for the new vector index functionality
 class TestIPFSKnnIndex(unittest.TestCase):
     """Test the IPFSKnnIndex class."""
-    
+
     def setUp(self):
         """Set up test fixtures before each test"""
         self.temp_dir = tempfile.mkdtemp()
-        
+
     def tearDown(self):
         """Clean up test fixtures after each test"""
         shutil.rmtree(self.temp_dir)
-        
+
     def test_index_add_search(self):
         """Test adding vectors and searching"""
         try:
@@ -261,10 +261,10 @@ class TestIPFSKnnIndex(unittest.TestCase):
             import numpy as np
         except ImportError:
             self.skipTest("IPFSKnnIndex not implemented yet")
-            
+
         # Create index
         index = IPFSKnnIndex(dimension=2)
-        
+
         # Add vectors
         vectors = np.array([
             [1.0, 0.0],
@@ -277,10 +277,10 @@ class TestIPFSKnnIndex(unittest.TestCase):
             {"id": "3", "label": "c"}
         ]
         index.add_vectors(vectors, metadata)
-        
+
         # Search
         result = index.search(np.array([0.9, 0.1]), k=2)
-        
+
         # Verify results
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0][2]["id"], "1")  # First result should be vector 1

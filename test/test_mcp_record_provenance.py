@@ -30,7 +30,7 @@ class TestMCPRecordProvenance(unittest.IsolatedAsyncioTestCase):
         activity_type = "creation"
         agent_id = "user_abc"
         metadata = {"source": "web_scrape", "version": "1.0"}
-        
+
         result = await record_provenance(
             entity_id=entity_id,
             entity_type=entity_type,

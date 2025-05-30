@@ -30,13 +30,13 @@ class TestIPFSKitMigration(unittest.TestCase):
         try:
             # Import the KNN class
             from ipfs_datasets_py.ipfs_faiss_py.ipfs_knn_lib.knn import KNN
-            
+
             # Initialize KNN
             knn = KNN(self.resources, self.meta)
-            
+
             # Check that both IPFS implementations are available
             self.assertIsNotNone(knn.ipfs_kit, "Old IPFS kit should be initialized")
-            
+
             # Check if new implementation is available
             # Note: This might fail if the new implementation is not installed
             try:
@@ -53,20 +53,20 @@ class TestIPFSKitMigration(unittest.TestCase):
         try:
             # Import the KNN class
             from ipfs_datasets_py.ipfs_faiss_py.ipfs_knn_lib.knn import KNN
-            
+
             # Initialize KNN
             knn = KNN(self.resources, self.meta)
-            
+
             # Test old implementation if available
             if hasattr(knn, 'ipfs_kit'):
                 try:
                     # Mock the ipfs_upload_object method
                     original_method = knn.ipfs_kit.ipfs_upload_object
                     knn.ipfs_kit.ipfs_upload_object = lambda *args, **kwargs: "old_mock_cid"
-                    
+
                     # Force old implementation
                     knn.use_new_ipfs = False
-                    
+
                     # Call save_database with web3 destination
                     result = knn.save_database("web3", "test", "test", {
                         "vector_store": {"vector_store/data": {}},
@@ -74,25 +74,25 @@ class TestIPFSKitMigration(unittest.TestCase):
                         "doc_store": {"doc_store/data": {}},
                         "doc_index": {"doc_index/data": {}}
                     })
-                    
+
                     # Restore original method
                     knn.ipfs_kit.ipfs_upload_object = original_method
-                    
-                    # Verify result 
+
+                    # Verify result
                     self.assertEqual(result, "old_mock_cid", "Old implementation not working correctly")
                 except Exception as e:
                     print(f"Test with old implementation failed: {e}")
-            
+
             # Test new implementation if available
             if hasattr(knn, 'ipfs_api') and knn.use_new_ipfs:
                 try:
                     # Mock the add method
                     original_method = knn.ipfs_api.add
                     knn.ipfs_api.add = lambda *args, **kwargs: "new_mock_cid"
-                    
+
                     # Force new implementation
                     knn.use_new_ipfs = True
-                    
+
                     # Call save_database with web3 destination
                     result = knn.save_database("web3", "test", "test", {
                         "vector_store": {"vector_store/data": {}},
@@ -100,15 +100,15 @@ class TestIPFSKitMigration(unittest.TestCase):
                         "doc_store": {"doc_store/data": {}},
                         "doc_index": {"doc_index/data": {}}
                     })
-                    
+
                     # Restore original method
                     knn.ipfs_api.add = original_method
-                    
+
                     # Verify result
                     self.assertEqual(result, "new_mock_cid", "New implementation not working correctly")
                 except Exception as e:
                     print(f"Test with new implementation failed: {e}")
-        
+
         except ImportError as e:
             self.fail(f"Failed to import KNN: {e}")
 

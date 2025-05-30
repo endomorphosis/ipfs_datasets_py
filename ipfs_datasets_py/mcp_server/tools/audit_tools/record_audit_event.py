@@ -38,37 +38,37 @@ def record_audit_event( # Changed to def
     """
     try:
         logger.info(f"Recording audit event: {action}")
-        
+
         # Get the audit logger instance
         audit_logger = AuditLogger.get_instance()
-        
+
         # Prepare the event
         event = {
             "action": action,
             "severity": severity
         }
-        
+
         if resource_id:
             event["resource_id"] = resource_id
-        
+
         if resource_type:
             event["resource_type"] = resource_type
-            
+
         if user_id:
             event["user_id"] = user_id
-            
+
         if details:
             event["details"] = details
-            
+
         if source_ip:
             event["source_ip"] = source_ip
-            
+
         if tags:
             event["tags"] = tags
-        
+
         # Record the audit event - convert severity string to AuditLevel
         from ipfs_datasets_py.audit import AuditLevel, AuditCategory
-        
+
         # Map severity string to AuditLevel
         severity_map = {
             "info": AuditLevel.INFO,
@@ -77,9 +77,9 @@ def record_audit_event( # Changed to def
             "critical": AuditLevel.CRITICAL,
             "debug": AuditLevel.DEBUG
         }
-        
+
         audit_level = severity_map.get(severity.lower(), AuditLevel.INFO)
-        
+
         # Use the correct method signature
         event_id = audit_logger.log(
             level=audit_level,
@@ -91,7 +91,7 @@ def record_audit_event( # Changed to def
             details=details,
             client_ip=source_ip
         )
-        
+
         # Return information about the recorded event
         return {
             "status": "success",

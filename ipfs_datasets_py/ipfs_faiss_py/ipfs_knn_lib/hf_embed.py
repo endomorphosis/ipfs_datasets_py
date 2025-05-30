@@ -40,8 +40,8 @@ class hf_embed:
 				)
 		elif "bge" in resources['checkpoint']:
 			self.model = None
-		
-			
+
+
 	def __call__(self, method, **kwargs):
 		if method == 'hf_embed':
 			return self.embed(**kwargs)
@@ -49,7 +49,7 @@ class hf_embed:
 			return self.embed(**kwargs)
 		else:
 			raise Exception('unknown method: %s' % method)
-	
+
 	def embed(self, instruction, text , **kwargs):
 		self.input = text
 		self.method = 'embed'
@@ -73,10 +73,10 @@ class hf_embed:
 			embeddings = json.dumps(embeddings.tolist())
 
 		return {
-			'text': embeddings, 
+			'text': embeddings,
 			'done': True
 		}
-		
+
 	def average_pool(last_hidden_states: Tensor, attention_mask: Tensor) -> Tensor:
 		last_hidden = last_hidden_states.masked_fill(~attention_mask[..., None].bool(), 0.0)
 		return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
@@ -91,7 +91,7 @@ def test():
 	checkpoint = 'bge-base-en-v1.5'
 	resources = {}
 	resources['checkpoint'] = models + "/" + checkpoint + "@hf"
-	
+
 	print(resources["checkpoint"])
 	meta = {"modelName":"bge-base-en-v1.5"}
 	text = "sample text to embed"

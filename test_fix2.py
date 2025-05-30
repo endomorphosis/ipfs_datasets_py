@@ -14,18 +14,18 @@ from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, 
 
 class NoneReturningOptimizer(GraphRAGQueryOptimizer):
     """A test optimizer that returns None from optimize_query."""
-    
+
     def optimize_query(self, *args, **kwargs):
         print('NoneReturningOptimizer.optimize_query called - returning None')
         return None  # This will trigger our safety check
 
 class MockMetricsCollector:
     """Mock metrics collector for testing."""
-    
+
     def start_query_tracking(self, *args, **kwargs):
         print("start_query_tracking called")
         return 'test-id-123'
-    
+
     def time_phase(self, *args, **kwargs):
         class TimerContext:
             def __enter__(self):
@@ -33,16 +33,16 @@ class MockMetricsCollector:
             def __exit__(self, *args):
                 pass
         return TimerContext()
-    
+
     def record_additional_metric(self, *args, **kwargs):
         pass
-    
+
     def end_query_tracking(self, *args, **kwargs):
         pass
 
 class MockBudgetManager:
     """Mock budget manager for testing."""
-    
+
     def allocate_budget(self, *args, **kwargs):
         return {
             'vector_search_ms': 500,
@@ -53,20 +53,20 @@ class MockBudgetManager:
 
 class MockRewriter:
     """Mock query rewriter for testing."""
-    
+
     def rewrite_query(self, query, *args, **kwargs):
         return query
 
 # Create a completely fixed version of the UnifiedGraphRAGQueryOptimizer
 class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
     """A complete rewrite of UnifiedGraphRAGQueryOptimizer with proper None handling."""
-    
+
     def __init__(self):
         # Initialize without calling parent init to avoid dependencies
         self.metrics_collector = MockMetricsCollector()
         self._traversal_stats = {
-            'paths_explored': [], 
-            'path_scores': {}, 
+            'paths_explored': [],
+            'path_scores': {},
             'entity_frequency': defaultdict(int),
             'entity_connectivity': {},
             'relation_usefulness': defaultdict(float)
@@ -78,29 +78,29 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
         self._specific_optimizers = {'general': NoneReturningOptimizer()}
         self.graph_info = {}
         self.visualizer = None
-    
+
     def _create_fallback_plan(self, query: Dict[str, Any], priority: str = "normal", error: Optional[str] = None) -> Dict[str, Any]:
         """Create a fallback query plan when optimization fails."""
         print(f"Creating fallback plan for error: {error}")
-        
+
         # Create a safe copy of the query with defaults
         fallback_query = query.copy()
-        
+
         # Ensure traversal section exists
         if "traversal" not in fallback_query:
             fallback_query["traversal"] = {}
-            
+
         # Set conservative defaults for traversal
         if "max_depth" not in fallback_query["traversal"]:
             fallback_query["traversal"]["max_depth"] = 2
-            
+
         # Set conservative defaults for vector search
         if "max_vector_results" not in fallback_query:
             fallback_query["max_vector_results"] = 5
-            
+
         if "min_similarity" not in fallback_query:
             fallback_query["min_similarity"] = 0.6
-        
+
         # Allocate a conservative budget
         budget = {
             "vector_search_ms": 500,
@@ -108,7 +108,7 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
             "ranking_ms": 100,
             "max_nodes": 100
         }
-        
+
         # Try to use the budget manager if available
         if hasattr(self, 'budget_manager') and self.budget_manager is not None:
             try:
@@ -116,7 +116,7 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
             except Exception as e:
                 # Use default budget if budget_manager fails
                 pass
-        
+
         # Return the fallback plan
         return {
             "query": fallback_query,
@@ -132,43 +132,43 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
             "fallback": True,
             "error": error
         }
-    
+
     def detect_graph_type(self, query: Dict[str, Any]) -> str:
         """Detect the graph type from query parameters."""
         return "general"
-        
+
     def _detect_entity_types(self, query_text: str, predefined_types=None) -> List[str]:
         """Detect entity types from query text."""
         return ["concept", "topic"]
-    
+
     def optimize_traversal_path(self, query: Dict[str, Any], graph_processor) -> Dict[str, Any]:
         """Optimize the traversal path using the graph processor."""
         return query
-        
+
     def _estimate_query_complexity(self, query: Dict[str, Any]) -> str:
         """Estimate the complexity of a query."""
         return "medium"
-    
+
     def optimize_query(self, query: Dict[str, Any], priority: str = "normal", graph_processor=None) -> Dict[str, Any]:
         """A complete rewrite of optimize_query that never returns None."""
-        
+
         try:
             # Start tracking query metrics
             query_id = self.metrics_collector.start_query_tracking(query_params=query)
-            
+
             # Detect graph type
             graph_type = self.detect_graph_type(query)
-            
+
             # Get the appropriate optimizer
             optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
-            
+
             # Apply query rewriting
             rewritten_query = self.rewriter.rewrite_query(query, self.graph_info, {})
-            
+
             # Ensure traversal section exists
             if "traversal" not in rewritten_query:
                 rewritten_query["traversal"] = {}
-            
+
             # Get optimized parameters
             if "query_vector" in rewritten_query:
                 # For vector-based queries
@@ -181,7 +181,7 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                     min_similarity=rewritten_query.get("min_similarity", 0.5)
                 )
                 print(f"optimizer.optimize_query returned: {optimized_params}")
-                
+
                 # Safety check for None result
                 if optimized_params is None:
                     print("optimizer.optimize_query returned None, returning fallback plan")
@@ -190,25 +190,25 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                         priority=priority,
                         error="Base optimizer returned None"
                     )
-                    
+
                     # End tracking
                     self.metrics_collector.end_query_tracking(
                         results_count=1,
                         quality_score=0.5  # Indicate lower quality
                     )
-                    
+
                     return fallback_plan
-                
+
                 # Preserve traversal section
                 if "traversal" not in optimized_params["params"]:
                     optimized_params["params"]["traversal"] = rewritten_query["traversal"]
             else:
                 # For non-vector queries
                 optimized_params = {"params": rewritten_query, "weights": {}}
-            
+
             # Allocate budget
             budget = self.budget_manager.allocate_budget(rewritten_query, priority)
-            
+
             # Create the final plan
             plan = {
                 "query": optimized_params["params"],
@@ -223,13 +223,13 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                 "traversal_strategy": rewritten_query.get("traversal", {}).get("strategy", "default"),
                 "query_id": query_id
             }
-            
+
             # End tracking
             self.metrics_collector.end_query_tracking(
                 results_count=1,
                 quality_score=1.0
             )
-            
+
             # Final safety check
             if plan is None:
                 print("Final plan is None, returning fallback plan")
@@ -238,14 +238,14 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
                     priority=priority,
                     error="Final plan was None"
                 )
-            
+
             return plan
-            
+
         except Exception as e:
             # Log the error
             error_msg = f"Error in optimize_query: {str(e)}"
             print(error_msg)
-            
+
             # Return fallback plan
             return self._create_fallback_plan(
                 query=query,
@@ -255,22 +255,22 @@ class CompletelyFixedOptimizer(UnifiedGraphRAGQueryOptimizer):
 
 def test_completely_fixed_optimizer():
     """Test the completely fixed optimizer implementation."""
-    
+
     # Create the fixed optimizer instance
     optimizer = CompletelyFixedOptimizer()
-    
+
     # Create a test query
     test_query = {
         'query_text': 'test query',
         'query_vector': np.array([0.1, 0.2, 0.3]),
         'traversal': {'max_depth': 2}
     }
-    
+
     # Call optimize_query - should return fallback plan, not None
     print("\nCalling fixed optimizer.optimize_query...")
     result = optimizer.optimize_query(test_query)
     print("optimize_query returned type:", type(result))
-    
+
     # Verify the result
     success = result is not None
     if success:
@@ -280,7 +280,7 @@ def test_completely_fixed_optimizer():
             print(f"Is fallback plan: {result.get('fallback', False)}")
     else:
         print("FAILURE: optimize_query returned None")
-    
+
     return success
 
 if __name__ == "__main__":

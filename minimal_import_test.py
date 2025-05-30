@@ -16,13 +16,13 @@ print("Testing direct web_archive import...")
 try:
     import ipfs_datasets_py.web_archive
     print("✓ web_archive module imported")
-    
+
     from ipfs_datasets_py.web_archive import WebArchiveProcessor
     print("✓ WebArchiveProcessor class imported")
-    
+
     processor = WebArchiveProcessor()
     print("✓ WebArchiveProcessor instantiated")
-    
+
 except Exception as e:
     print(f"✗ Error: {e}")
     import traceback
@@ -30,15 +30,15 @@ except Exception as e:
 
 print("\nTesting direct graphrag_processor import...")
 try:
-    import ipfs_datasets_py.graphrag_processor  
+    import ipfs_datasets_py.graphrag_processor
     print("✓ graphrag_processor module imported")
-    
+
     from ipfs_datasets_py.graphrag_processor import MockGraphRAGProcessor
     print("✓ MockGraphRAGProcessor class imported")
-    
+
     mock_proc = MockGraphRAGProcessor()
     print("✓ MockGraphRAGProcessor instantiated")
-    
+
 except Exception as e:
     print(f"✗ Error: {e}")
     import traceback

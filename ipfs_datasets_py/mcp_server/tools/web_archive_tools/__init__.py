@@ -12,7 +12,7 @@ from .index_warc import index_warc
 
 __all__ = [
     "create_warc",
-    "extract_dataset_from_cdxj", 
+    "extract_dataset_from_cdxj",
     "extract_links_from_warc",
     "extract_metadata_from_warc",
     "extract_text_from_warc",

@@ -47,31 +47,31 @@ def update_init_file():
     """Update the __init__.py file in the test directory to import all test modules."""
     test_dir = Path(os.path.dirname(os.path.abspath(__file__))) / "test"
     init_file = test_dir / "__init__.py"
-    
+
     # Get all test files
     test_files = [f.stem for f in test_dir.glob("test_*.py")]
-    
+
     # Create imports for __init__.py
     imports = ["# -*- coding: utf-8 -*-", ""]
     imports.append('"""')
     imports.append("Auto-generated test suite for MCP server tools.")
     imports.append('"""')
     imports.append("")
-    
+
     for test_file in sorted(test_files):
         imports.append(f"from . import {test_file}")
-    
+
     # Write the __init__.py file
     with open(init_file, "w") as f:
         f.write("\n".join(imports))
-    
+
     print(f"Updated {init_file} with {len(test_files)} test modules")
     return True
 
 def create_pytest_config():
     """Create a pytest.ini file with appropriate configuration."""
     pytest_ini = Path(os.path.dirname(os.path.abspath(__file__))) / "pytest.ini"
-    
+
     config = [
         "[pytest]",
         "testpaths = test",
@@ -83,17 +83,17 @@ def create_pytest_config():
         "    ignore::DeprecationWarning",
         "    ignore::UserWarning"
     ]
-    
+
     with open(pytest_ini, "w") as f:
         f.write("\n".join(config))
-    
+
     print(f"Created {pytest_ini}")
     return True
 
 def create_comprehensive_test_runner():
     """Create a script to run all tests comprehensively."""
     test_runner = Path(os.path.dirname(os.path.abspath(__file__))) / "run_all_tests.py"
-    
+
     content = [
         "#!/usr/bin/env python",
         "# -*- coding: utf-8 -*-",
@@ -156,20 +156,20 @@ def create_comprehensive_test_runner():
         "if __name__ == \"__main__\":",
         "    sys.exit(main())"
     ]
-    
+
     with open(test_runner, "w") as f:
         f.write("\n".join(content))
-    
+
     # Make the file executable
     os.chmod(test_runner, 0o755)
-    
+
     print(f"Created {test_runner}")
     return True
 
 def create_test_report_analyzer():
     """Create a script to analyze test results and generate a report."""
     report_analyzer = Path(os.path.dirname(os.path.abspath(__file__))) / "analyze_test_results.py"
-    
+
     content = [
         "#!/usr/bin/env python",
         "# -*- coding: utf-8 -*-",
@@ -292,44 +292,44 @@ def create_test_report_analyzer():
         "if __name__ == \"__main__\":",
         "    sys.exit(main())"
     ]
-    
+
     with open(report_analyzer, "w") as f:
         f.write("\n".join(content))
-    
+
     # Make the file executable
     os.chmod(report_analyzer, 0o755)
-    
+
     print(f"Created {report_analyzer}")
     return True
 
 def main():
     """Run all test generators and create supporting files."""
     print("=== MCP TOOLS TEST GENERATOR ===")
-    
+
     # Create test directory if it doesn't exist
     test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test")
     os.makedirs(test_dir, exist_ok=True)
-    
+
     # Run all test generators
     successes = 0
     for generator in TEST_GENERATORS:
         if run_test_generator(generator):
             successes += 1
-    
+
     print(f"\nCompleted {successes}/{len(TEST_GENERATORS)} test generators")
-    
+
     # Update the __init__.py file
     update_init_file()
-    
+
     # Create pytest.ini
     create_pytest_config()
-    
+
     # Create comprehensive test runner
     create_comprehensive_test_runner()
-    
+
     # Create test report analyzer
     create_test_report_analyzer()
-    
+
     print("\nTest suite generation complete!")
     print("To run all tests, use: python run_all_tests.py")
     print("To analyze test results, use: python analyze_test_results.py")

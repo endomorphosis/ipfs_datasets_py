@@ -35,31 +35,31 @@ def llm_reasoning_example():
     """Demonstrate the LLM reasoning tracer functionality."""
     print("IPFS Datasets Python - LLM Reasoning Tracer Example")
     print("=================================================")
-    
+
     # Create a temporary directory for the example
     import tempfile
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
-    
+
     # Initialize the reasoning tracer
     tracer = LLMReasoningTracer(storage_dir=temp_dir)
-    
+
     # Step 1: Create a trace for a research query
     print("\nStep 1: Creating a reasoning trace")
     print("--------------------------------")
-    
+
     trace = tracer.create_trace(
         query="What is the relationship between climate change and biodiversity loss?",
         metadata={"domain": "environmental science", "priority": "high"}
     )
-    
+
     print(f"Created trace with ID: {trace.trace_id}")
     print(f"Query: {trace.query}")
-    
+
     # Step 2: Record document access
     print("\nStep 2: Recording document access")
     print("------------------------------")
-    
+
     # Simulate document retrieval and add to trace
     documents = [
         {
@@ -78,7 +78,7 @@ def llm_reasoning_example():
             "relevance": 0.95
         }
     ]
-    
+
     doc_nodes = []
     for doc in documents:
         doc_node_id = tracer.trace_document_access(
@@ -89,11 +89,11 @@ def llm_reasoning_example():
         )
         doc_nodes.append(doc_node_id)
         print(f"Added document {doc['id']} to trace (node ID: {doc_node_id})")
-    
+
     # Step 3: Record entity access
     print("\nStep 3: Recording entity access")
     print("----------------------------")
-    
+
     # Simulate entity extraction and add to trace
     entities = [
         {"name": "Climate Change", "id": "entity1", "type": "Phenomenon", "relevance": 0.98},
@@ -101,7 +101,7 @@ def llm_reasoning_example():
         {"name": "Habitat Fragmentation", "id": "entity3", "type": "Process", "relevance": 0.85},
         {"name": "Carbon Sequestration", "id": "entity4", "type": "Process", "relevance": 0.82}
     ]
-    
+
     entity_nodes = []
     for entity in entities:
         entity_node_id = tracer.trace_entity_access(
@@ -113,18 +113,18 @@ def llm_reasoning_example():
         )
         entity_nodes.append(entity_node_id)
         print(f"Added entity {entity['name']} to trace (node ID: {entity_node_id})")
-    
+
     # Step 4: Record relationships between entities
     print("\nStep 4: Recording relationships")
     print("----------------------------")
-    
+
     # Add relationships between entities
     relationships = [
         {"source": 0, "target": 1, "type": "causes", "confidence": 0.9},
         {"source": 0, "target": 2, "type": "causes", "confidence": 0.87},
         {"source": 3, "target": 0, "type": "mitigates", "confidence": 0.85}
     ]
-    
+
     for rel in relationships:
         source_id = entity_nodes[rel["source"]]
         target_id = entity_nodes[rel["target"]]
@@ -136,11 +136,11 @@ def llm_reasoning_example():
             confidence=rel["confidence"]
         )
         print(f"Added relationship: {entities[rel['source']]['name']} {rel['type']} {entities[rel['target']]['name']}")
-    
+
     # Step 5: Record evidence
     print("\nStep 5: Recording evidence")
     print("-----------------------")
-    
+
     # Extract evidence from documents
     evidence_statements = [
         {
@@ -159,7 +159,7 @@ def llm_reasoning_example():
             "confidence": 0.94
         }
     ]
-    
+
     evidence_nodes = []
     for evidence in evidence_statements:
         evidence_node_id = tracer.trace_evidence(
@@ -170,11 +170,11 @@ def llm_reasoning_example():
         )
         evidence_nodes.append(evidence_node_id)
         print(f"Added evidence: {evidence['text']}")
-    
+
     # Step 6: Record inferences
     print("\nStep 6: Recording inferences")
     print("-------------------------")
-    
+
     # Make inferences based on evidence
     inferences = [
         {
@@ -188,7 +188,7 @@ def llm_reasoning_example():
             "confidence": 0.85
         }
     ]
-    
+
     inference_nodes = []
     for inference in inferences:
         source_nodes = [evidence_nodes[i] for i in inference["sources"]]
@@ -200,11 +200,11 @@ def llm_reasoning_example():
         )
         inference_nodes.append(inference_node_id)
         print(f"Added inference: {inference['text']}")
-    
+
     # Step 7: Record conclusion
     print("\nStep 7: Recording conclusion")
     print("-------------------------")
-    
+
     # Draw a conclusion based on inferences
     conclusion_node_id = tracer.trace_conclusion(
         trace=trace,
@@ -212,33 +212,33 @@ def llm_reasoning_example():
         supporting_node_ids=inference_nodes,
         confidence=0.9
     )
-    
+
     print(f"Added conclusion (node ID: {conclusion_node_id})")
-    
+
     # Step 8: Analyze the reasoning trace
     print("\nStep 8: Analyzing the reasoning trace")
     print("---------------------------------")
-    
+
     analysis = tracer.analyze_trace(trace)
-    
+
     print(f"Node count: {analysis['node_count']}")
     print(f"Edge count: {analysis['edge_count']}")
     print(f"Node types: {json.dumps(analysis['node_types'], indent=2)}")
     print(f"Average confidence: {analysis['avg_confidence']:.2f}")
     print(f"Reasoning complexity: {analysis['reasoning_complexity']:.2f}")
-    
+
     # Step 9: Generate an explanation
     print("\nStep 9: Generating an explanation")
     print("------------------------------")
-    
+
     explanation = tracer.generate_explanation(trace, detail_level="high")
     print("\nExplanation:")
     print(explanation)
-    
+
     # Step 10: Visualize the reasoning trace
     print("\nStep 10: Visualizing the reasoning trace")
     print("------------------------------------")
-    
+
     # Export a visualization in D3.js format
     visualization_path = os.path.join(temp_dir, "reasoning_visualization.json")
     tracer.export_visualization(
@@ -246,13 +246,13 @@ def llm_reasoning_example():
         output_format="d3",
         output_file=visualization_path
     )
-    
+
     print(f"Visualization exported to: {visualization_path}")
-    
+
     # Save the trace
     trace_path = tracer.save_trace(trace)
     print(f"Trace saved to: {trace_path}")
-    
+
     print("\nNOTE: This is a mock implementation of the LLM Reasoning Tracer.")
     print("In a full implementation, the reasoning would be performed by an actual LLM")
     print("using the ipfs_accelerate_py package.")

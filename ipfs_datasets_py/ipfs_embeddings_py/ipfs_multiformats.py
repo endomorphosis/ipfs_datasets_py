@@ -2,10 +2,10 @@ import hashlib
 from multiformats import CID, multihash
 
 class ipfs_multiformats_py:
-    def __init__(self, resources, metadata): 
+    def __init__(self, resources, metadata):
         self.multihash = multihash
         return None
-    
+
     # Step 1: Hash the file content with SHA-256
     def get_file_sha256(self, file_path):
         hasher = hashlib.sha256()
@@ -25,7 +25,7 @@ class ipfs_multiformats_py:
         mh = self.get_multihash_sha256(file_content_hash)
         cid = CID('base32', 'raw', mh)
         return str(cid)
-    
+
 
 if __name__ == '__main__':
     ipfs_multiformats = ipfs_multiformats_py()
