@@ -1,11 +1,0 @@
---2025-05-29 22:48:36--  https://dist.ipfs.tech/kubo/v0.33.1/kubo_v0.33.1_linux-amd64.tar.gz
-Resolving dist.ipfs.tech (dist.ipfs.tech)... 209.94.78.1, 2602:fea2:3::1
-Connecting to dist.ipfs.tech (dist.ipfs.tech)|209.94.78.1|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 48123078 (46M) [application/gzip]
-Saving to: ‘/tmp/tmpr05jw24c.tar.gz’
-
-      /tmp/t   0%       0  --.-KB/s                    /tmp/tm   5%   2.48M  12.3MB/s                   /tmp/tmp  22%  10.21M  24.6MB/s                  /tmp/tmpr  24%  11.19M  18.1MB/s                 /tmp/tmpr0  26%  12.31M  15.0MB/s                /tmp/tmpr05  29%  13.58M  13.3MB/s               /tmp/tmpr05j  32%  14.93M  12.2MB/s               tmp/tmpr05jw  35%  16.40M  11.5MB/s               mp/tmpr05jw2  38%  17.89M  11.0MB/s               p/tmpr05jw24  42%  19.68M  10.7MB/s               /tmpr05jw24c  47%  21.62M  10.6MB/s               tmpr05jw24c.  50%  23.40M  10.5MB/s               mpr05jw24c.t  55%  25.54M  10.4MB/s               pr05jw24c.ta  60%  27.81M  10.5MB/s               r05jw24c.tar  65%  30.09M  10.5MB/s               05jw24c.tar.  70%  32.51M  10.6MB/s    eta 1s     5jw24c.tar.g  76%  35.08M  10.9MB/s    eta 1s     jw24c.tar.gz  82%  37.74M  9.56MB/s    eta 1s     w24c.tar.gz   87%  40.13M  9.45MB/s    eta 1s     24c.tar.gz    92%  42.33M  9.75MB/s    eta 1s     4c.tar.gz     96%  44.47M  9.98MB/s    eta 0s     /tmp/tmpr05j 100%  45.89M  10.2MB/s    in 4.2s    
-
-2025-05-29 22:48:40 (10.9 MB/s) - ‘/tmp/tmpr05jw24c.tar.gz’ saved [48123078/48123078]
-
