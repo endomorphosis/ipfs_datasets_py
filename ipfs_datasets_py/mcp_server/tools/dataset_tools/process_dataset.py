@@ -18,15 +18,38 @@ async def process_dataset(
     """
     Process a dataset with a series of operations.
 
+    This tool applies transformations, filters, and other operations to datasets.
+    It supports various dataset input types and operation chains.
+
     Args:
-        dataset_source: The dataset to process - can be dataset ID (str), data dict, or Dataset object
-        operations: List of operations to apply to the dataset.
-        output_id: Optional ID for the resulting dataset (for naming in return).
+        dataset_source: The dataset to process. Can be:
+                       - Dataset ID string (references a loaded dataset)
+                       - Dictionary containing dataset data
+                       - Dataset object (HuggingFace Dataset)
+                       NOTE: Must contain valid data, not executable code.
+        operations: List of operation dictionaries. Each operation should have:
+                   - "type": Operation type ("filter", "map", "select", "sort", etc.)
+                   - Additional parameters specific to the operation type
+                   Examples:
+                   [{"type": "filter", "column": "text", "condition": "length > 100"},
+                    {"type": "select", "columns": ["id", "text"]},
+                    {"type": "map", "function": "lambda x: x.upper()", "column": "text"}]
+        output_id: Optional ID for the resulting dataset (used for naming/reference)
 
     Returns:
-        Dict containing information about the processed dataset.
+        Dict containing:
+        - status: "success" or "error"
+        - dataset_id: ID of the processed dataset
+        - operations_applied: Number of operations successfully applied
+        - summary: Information about record counts and changes
+        - message: Error message if status is "error"
+
+    Raises:
+        ValueError: If dataset_source is invalid or operations are malformed
+        TypeError: If operation parameters are of wrong type
     """
     try:
+<<<<<<< HEAD
         # Input validation - check for dangerous operations
         if not isinstance(operations, list):
             raise ValueError("Operations must be a list")
@@ -47,6 +70,27 @@ async def process_dataset(
                 code_value = operation.get("code", operation.get("function", ""))
                 if any(danger in str(code_value).lower() for danger in dangerous_ops):
                     raise ValueError("Dangerous code detected in operation parameters")
+=======
+        # Input validation
+        if dataset_source is None:
+            raise ValueError("Dataset source cannot be None")
+            
+        if not operations or not isinstance(operations, list):
+            raise ValueError("Operations must be a non-empty list")
+        
+        # Validate operations structure
+        for i, operation in enumerate(operations):
+            if not isinstance(operation, dict):
+                raise ValueError(f"Operation {i} must be a dictionary")
+            if "type" not in operation:
+                raise ValueError(f"Operation {i} must have a 'type' field")
+            
+            # Check for dangerous operation types
+            op_type = operation.get("type", "").lower()
+            dangerous_ops = ["exec", "eval", "import", "compile", "__import__"]
+            if op_type in dangerous_ops:
+                raise ValueError(f"Operation type '{op_type}' is not allowed for security reasons")
+>>>>>>> da7c0dbd8fb61934738d1739d764840626108075
 
         # Handle different input types
         if isinstance(dataset_source, str):

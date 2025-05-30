@@ -18,22 +18,47 @@ async def load_dataset(
     """
     Load a dataset from a source.
 
+    This tool loads datasets from Hugging Face Hub, local directories, or files.
+    It supports various dataset formats like JSON, CSV, Parquet, and others.
+
     Args:
-        source: Source path or identifier of the dataset
-        format: Format of the dataset (auto-detected if not provided)
-        options: Additional options for loading the dataset
+        source: Source identifier of the dataset. Can be:
+                - Hugging Face dataset name (e.g., "squad", "glue/mnli")
+                - Local directory path containing dataset files
+                - Local file path (JSON, CSV, Parquet, etc.)
+                - URL to a dataset file
+                NOTE: Python (.py) files are not valid dataset sources.
+        format: Format of the dataset. Supported formats: json, csv, parquet, text, etc.
+                If not provided, format will be auto-detected.
+        options: Additional options for loading the dataset (split, streaming, etc.)
 
     Returns:
-        Dict containing dataset metadata and content summary
+        Dict containing:
+        - status: "success" or "error"
+        - dataset_id: Identifier for the loaded dataset
+        - metadata: Dataset metadata including description and features
+        - summary: Dataset summary with record count, schema, source, and format
+        - message: Error message if status is "error"
+
+    Raises:
+        ValueError: If source is a Python file or invalid format
     """
     try:
         logger.info(f"Loading dataset from {source} with format {format if format else 'auto'}")
 
+<<<<<<< HEAD
         # Input validation - reject Python files and dangerous sources
         if not source or not isinstance(source, str) or len(source.strip()) == 0:
             raise ValueError("Source must be a non-empty string")
             
         # Reject Python files for security
+=======
+        # Input validation
+        if not source or not isinstance(source, str):
+            raise ValueError("Source must be a non-empty string")
+        
+        # Check if source is a Python file (not allowed)
+>>>>>>> da7c0dbd8fb61934738d1739d764840626108075
         if source.lower().endswith('.py'):
             raise ValueError(
                 "Python files (.py) are not valid dataset sources. "
@@ -41,10 +66,20 @@ async def load_dataset(
                 "a directory path, or a data file (JSON, CSV, Parquet, etc.)"
             )
         
+<<<<<<< HEAD
         # Reject other executable files
         executable_extensions = ['.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.sh', '.bat']
         if any(source.lower().endswith(ext) for ext in executable_extensions):
             raise ValueError(f"Executable files are not valid dataset sources: {source}")
+=======
+        # Check for other invalid file extensions
+        invalid_extensions = ['.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib']
+        if any(source.lower().endswith(ext) for ext in invalid_extensions):
+            raise ValueError(
+                f"File type not supported for datasets. "
+                f"Please provide a dataset identifier or data file (JSON, CSV, Parquet, etc.)"
+            )
+>>>>>>> da7c0dbd8fb61934738d1739d764840626108075
 
         # Default options
         if options is None:
