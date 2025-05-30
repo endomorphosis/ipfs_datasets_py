@@ -19,17 +19,60 @@ async def save_dataset(
     """
     Save a dataset to a destination.
 
+    This tool saves datasets to local files, IPFS, or other storage systems.
+    It supports various output formats and validation of destination paths.
+
     Args:
-        dataset_data: The dataset to save (ID string or data dict)
-        destination: Destination path or location to save the dataset
-        format: Format to save the dataset in
-        options: Additional options for saving the dataset
+        dataset_data: The dataset to save. Can be:
+                     - Dataset ID string (references a loaded dataset)
+                     - Dictionary containing dataset content
+                     NOTE: Must be valid dataset content, not executable code.
+        destination: Destination path where to save the dataset. Can be:
+                    - Local file path (e.g., "/path/to/dataset.json")
+                    - Directory path (files will be created inside)
+                    - IPFS CID or path (when using IPFS storage)
+                    NOTE: Should not be an executable file path.
+        format: Output format for the dataset. Supported formats:
+               - "json": JSON format (default)
+               - "csv": Comma-separated values
+               - "parquet": Apache Parquet format
+               - "arrow": Apache Arrow format
+               - "car": IPLD CAR format for IPFS
+        options: Additional options for saving (compression, metadata, etc.)
 
     Returns:
-        Dict containing information about the saved dataset
+        Dict containing:
+        - status: "success" or "error"
+        - dataset_id: Identifier of the saved dataset
+        - destination: Where the dataset was saved
+        - format: Format used for saving
+        - size: Size information about the saved dataset
+        - message: Error message if status is "error"
+
+    Raises:
+        ValueError: If destination is invalid or dataset_data is malformed
     """
     try:
         logger.info(f"Saving dataset {dataset_data} to {destination} with format {format if format else 'default'}")
+
+        # Input validation
+        if not destination or not isinstance(destination, str):
+            raise ValueError("Destination must be a non-empty string")
+        
+        # Check if destination is trying to save as executable
+        executable_extensions = ['.py', '.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.sh', '.bat']
+        if any(destination.lower().endswith(ext) for ext in executable_extensions):
+            raise ValueError(
+                f"Cannot save dataset as executable file. "
+                f"Please use data formats like .json, .csv, .parquet, or directories."
+            )
+        
+        # Validate dataset_data
+        if dataset_data is None:
+            raise ValueError("Dataset data cannot be None")
+        
+        if isinstance(dataset_data, str) and not dataset_data.strip():
+            raise ValueError("Dataset ID cannot be empty")
 
         # Default options
         if options is None:
