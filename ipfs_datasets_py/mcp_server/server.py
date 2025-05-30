@@ -274,9 +274,10 @@ class IPFSDatasetsMCPServer:
         else:
             self.register_ipfs_kit_tools()
 
-        # Start the server in HTTP mode
-        await self.mcp.run(host=host, port=port)
-        logger.info(f"MCP server started at {host}:{port}")
+        # Start the server - FastMCP doesn't support host/port parameters, use stdio mode
+        logger.warning("HTTP mode not supported by current FastMCP version, falling back to stdio mode")
+        await self.mcp.run_stdio_async()
+        logger.info(f"MCP server started in stdio mode")
 
 
 def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
