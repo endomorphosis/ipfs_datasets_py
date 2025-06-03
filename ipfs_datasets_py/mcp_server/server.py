@@ -18,11 +18,44 @@ import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from mcp.server import FastMCP
-from mcp.types import Tool, TextContent
+from mcp.types import CallToolResult, TextContent, Tool
 from mcp import CallToolRequest
 
 from .configs import Configs, configs
 from .logger import logger, mcp_logger
+
+
+
+from mcp.types import CallToolResult, TextContent, Tool
+
+
+def return_text_content(input: Any, result_str: str) -> TextContent:
+    """
+    Return a TextContent object with formatted string.
+
+    Args:
+        string (str): The input string to be included in the content.
+        result_str (str): A string identifier or label to prefix the input string.
+
+    Returns:
+        TextContent: A TextContent object with 'text' type and formatted text.
+    """
+    return TextContent(type="text", text=f"{result_str}: {repr(input)}") # NOTE we use repr to ensure special characters are handled correctly
+
+
+def return_tool_call_results(content: TextContent, error: bool = False) -> CallToolResult:
+    """
+    Returns a CallToolResult object for tool call response.
+
+    Args:
+        content: The content of the tool call result.
+        error: Whether the tool call resulted in an error. Defaults to False.
+
+    Returns:
+        CallToolResult: The formatted result object containing the content and error status.
+    """
+    return CallToolResult(isError=error, content=[content])
+
 
 # Utility for importing tools
 def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
@@ -42,7 +75,14 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
         return tools
 
     for item in directory_path.iterdir():
-        if item.is_file() and item.suffix == '.py' and item.name != '__init__.py':
+        this_is_valid_file = (
+            item.is_file() and
+            item.suffix == '.py' and # Only Python files
+            not item.name.startswith('.') and # Avoid hidden and dunder files (e.g. __init__.py, __main__.py)
+            not item.name.startswith('_')
+        )
+
+        if this_is_valid_file:
             module_name = item.stem
             try:
                 module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
@@ -51,14 +91,15 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
                     # Only include functions defined in the module (not imported ones)
                     # and exclude built-in types and typing constructs
                     # For development tools, also include wrapped functions
-                    is_valid_function = (
+                    this_is_valid_function = (
                         callable(attr) and
                         not attr_name.startswith('_') and
                         hasattr(attr, '__module__') and
+                        hasattr(attr, '__doc__') and # Ensure it has a docstring, since Claude will need it to properly use a tool.
                         not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple']
                     )
 
-                    if is_valid_function:
+                    if this_is_valid_function:
                         # For development tools, be more flexible with module checking
                         is_from_module = (
                             attr.__module__ == module.__name__ or

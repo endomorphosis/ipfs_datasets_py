@@ -71,7 +71,7 @@ class IPFSDatasetsMCPClient:
         """
         return await self.mcp_client.get_tool_list()
 
-    async def call_tool(self, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def call_tool(self, tool_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Call a tool on the server.
 
@@ -81,8 +81,13 @@ class IPFSDatasetsMCPClient:
 
         Returns:
             Tool result
-        """
-        return await self.mcp_client.call_tool(tool_name, params)
+        """ 
+        if isinstance(params, dict):
+            return await self.mcp_client.call_tool(tool_name, params)
+        elif params is None:
+            return await self.mcp_client.call_tool()
+        else:
+            raise ValueError("Parameters must be a dictionary or None")
 
     # Dataset tools
 

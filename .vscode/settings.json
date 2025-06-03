@@ -23,5 +23,14 @@
                 "IPFS_DATASETS_CONFIG": "/home/barberb/ipfs_datasets_py/config/mcp_config.yaml"
             }
         }
-    }
+    },
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }

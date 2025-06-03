@@ -8,6 +8,8 @@ import os
 import shutil
 from pathlib import Path
 
+
+
 def create_cleanup_directories():
     """Create directories for organizing files."""
     directories = [
