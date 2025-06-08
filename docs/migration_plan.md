@@ -1,180 +1,89 @@
-# Migration Plan: Moving from old ipfs_kit to ipfs_kit_py
+# Migration Plan: Incorporating ipfs_embeddings_py Features and MCP Tools
 
-## Overview
-This document outlines the plan for migrating from the current `ipfs_kit` implementation to the new `ipfs_kit_py` package. The new package provides more robust functionality, improved architecture, role-based operation, and enhanced features like tiered caching, cluster management, and AI/ML integration.
+This document outlines the plan to integrate features and MCP tools from the `endomorphosis/ipfs_embeddings_py` GitHub project into the current project.
 
-## Current Usage Analysis
-Based on analysis of the codebase, the `ipfs_kit` is currently used in:
-1. `/home/barberb/ipfs_datasets_py/ipfs_datasets_py/ipfs_faiss_py/ipfs_knn_lib/knn.py`
+## 1. Project Analysis
 
-Current usage patterns:
-- Import: `from ipfs_kit import ipfs_kit`
-- Initialization: `self.ipfs_kit = ipfs_kit(resources, meta)`
-- Primary methods used:
-  - `ipfs_upload_object()` - Used to upload JSON objects to IPFS
+- Clone or obtain the `endomorphosis/ipfs_embeddings_py` repository.
+- Conduct a detailed code review of the `ipfs_embeddings_py` project to understand its architecture, core components, and dependencies.
+- Specifically identify:
+    - Core embedding generation functionalities.
+    - Any data processing or utility functions.
+    - The implementation of MCP tools and their interfaces.
+    - Configuration requirements for `ipfs_embeddings_py`.
+- Analyze the project's `setup.py` or `pyproject.toml` for dependencies that might conflict or need to be added to this project's `requirements.txt`.
+- Review any available documentation, examples, or tests within the `ipfs_embeddings_py` repository for insights into usage and integration.
 
-## Key Differences Between Old and New Implementations
+## 2. Feature Identification and Prioritization
 
-### Architecture
-- **Old ipfs_kit**: Simpler implementation with basic IPFS operations
-- **New ipfs_kit_py**: Comprehensive architecture with role-based operation (master/worker/leecher), tiered caching, and advanced features
+Based on the analysis of `ipfs_embeddings_py`, the following core features and corresponding MCP tools are identified as highly relevant for integration:
 
-### API Changes
-- **Old ipfs_kit**: Direct method calls with result dictionaries
-- **New ipfs_kit_py**: Multiple API options:
-  - Core API (similar to old ipfs_kit but more consistent)
-  - High-Level API (`IPFSSimpleAPI` with simplified interface)
-  - Command-line interface
-  - HTTP API server
+-   **Embedding Generation:**
+    -   Features: Generating vector embeddings from text and potentially multimodal data.
+    -   MCP Tools: `generate_embedding`, `generate_batch_embeddings`, `generate_multimodal_embedding`.
+-   **Semantic Search:**
+    -   Features: Performing similarity search using embedding vectors.
+    -   MCP Tools: `semantic_search`, `similarity_search`, `faceted_search`.
+-   **Vector Store Management:**
+    -   Features: Creating, managing, and querying vector databases for storing and retrieving embeddings.
+    -   MCP Tools: `manage_vector_index`, `retrieve_vectors`, `manage_vector_metadata`, `create_vector_store`, `add_embeddings_to_store`, `search_vector_store`, `get_vector_store_stats`, `delete_from_vector_store`, `optimize_vector_store`.
 
-### Method Names and Parameters
-- **Old ipfs_kit**:
-  - `ipfs_upload_object(object_data, **kwargs)`
-- **New ipfs_kit_py**:
-  - Core API: `ipfs_add(filepath_or_data)`
-  - High-Level API: `add(filepath_or_data)`
+Other potential features and tools for future integration include:
 
-### Result Format
-- **Old ipfs_kit**: Custom result dictionaries
-- **New ipfs_kit_py**: Standardized result format with consistent fields
+-   Sharding and sparse embeddings.
+-   IPFS cluster integration.
+-   Workflow orchestration tools.
+-   Authentication, monitoring, caching, rate limiting, background task, and session management tools (may be integrated if needed for the core features).
 
-## Migration Steps
+Prioritization will focus on integrating the core embedding, search, and vector store management capabilities first.
 
-### 1. Install the New Package
-```bash
-pip install ipfs_kit_py
-```
+## 3. Integration Strategy
 
-### 2. Update Import Statements
-```python
-# Old
-from ipfs_kit import ipfs_kit
+- **Code Integration:**
+    - Determine the best location within the current project structure to place the `ipfs_embeddings_py` code. This might involve creating new modules or integrating into existing ones.
+    - Carefully merge or adapt the relevant code from `ipfs_embeddings_py`, resolving any naming conflicts or architectural differences.
+    - Ensure that dependencies required by `ipfs_embeddings_py` are met by the current project's environment (already addressed in `requirements.txt`).
+- **Feature Integration:**
+    - For each identified feature (e.g., specific embedding models, data handling), plan how it will be exposed and used within the current project's workflows.
+    - Design interfaces or wrappers if necessary to ensure seamless integration with existing code.
+- **MCP Tool Integration:**
+    - The MCP tools from `ipfs_embeddings_py` are implemented as classes inheriting from `ClaudeMCPTool` and registered with a `ToolRegistry`.
+    - To integrate these tools, the current project's MCP server (if one exists, or create one if not) needs to instantiate the relevant tool classes from `ipfs_embeddings_py` and register them with its own `ToolRegistry`.
+    - This will likely involve:
+        - Copying or referencing the tool files from `docs/ipfs_embeddings_py/src/mcp_server/tools/` into the current project's structure.
+        - Adapting the `initialize_laion_tools` function or creating a similar function in the current project to instantiate and register the desired tools.
+        - Ensuring that any dependencies required by the tools (e.g., the `embedding_service` or `vector_service` instances they depend on) are correctly provided by the current project's environment. This might involve adapting the current project's core logic to provide these services or integrating the corresponding service implementations from `ipfs_embeddings_py`.
+    - The current project's MCP configuration file (`config/mcp_config.yaml`) will need to be updated to reflect the availability of these new tools, including their names, descriptions, and input schemas. This allows the MCP client (like Claude) to discover and use these tools.
+    - Plan for handling tool inputs and outputs within the current project's logic where these tools will be called.
+- **Conflict Resolution:**
+    - Identify potential conflicts with existing libraries or code patterns in the current project.
+    - Plan strategies for resolving these conflicts, which might involve refactoring, using namespaces, or choosing alternative implementations.
+- **Testing Strategy:**
+    - Outline how the integrated features and tools will be tested, including unit tests, integration tests, and end-to-end tests.
 
-# New - Core API (closest to old API)
-from ipfs_kit_py.ipfs_kit import ipfs_kit
+## 4. Implementation
 
-# New - High-Level API (recommended)
-from ipfs_kit_py.high_level_api import IPFSSimpleAPI
-```
+- Implement the integration plan, focusing on one feature/tool at a time.
+- Write necessary code to adapt and integrate the `ipfs_embeddings_py` components.
+- Update existing code to utilize the new features and tools.
 
-### 3. Update Initialization
-```python
-# Old
-old_ipfs = ipfs_kit(resources, meta)
+## 5. Testing
 
-# New - Core API (similar initialization)
-new_ipfs = ipfs_kit(role="leecher", metadata=meta)
+- Develop test cases for the integrated features and tools.
+- Perform thorough testing to ensure correct functionality and compatibility.
+- Address any issues or bugs identified during testing.
 
-# New - High-Level API (recommended)
-api = IPFSSimpleAPI(role="leecher")
-```
+## 6. Documentation
 
-### 4. Method Migration Example for knn.py
+- Update project documentation to reflect the newly integrated features and tools.
+- Provide examples and guides on how to use the incorporated components.
 
-```python
-# Old
-vector_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_store), **kwargs)
+## 7. Deployment
 
-# New - Core API approach
-vector_store_cid = self.ipfs_kit.ipfs_add(json.dumps(vector_store))
-if vector_store_cid.get("success"):
-    cid = vector_store_cid.get("Hash")
+- Prepare the project for deployment with the integrated features and tools.
+- Follow standard deployment procedures for the project.
 
-# New - High-Level API approach (recommended)
-cid = self.api.add(json.dumps(vector_store))
-```
+## 8. Post-Migration Review
 
-### 5. Specific Changes for knn.py
-
-```python
-# Initialize the module
-from ipfs_kit_py.high_level_api import IPFSSimpleAPI
-
-class KNN:
-    # ...existing code...
-    
-    def __init__(self, resources, meta):
-        # ...existing code...
-        
-        # Old
-        # self.ipfs_kit = ipfs_kit(resources, meta)
-        
-        # New
-        self.api = IPFSSimpleAPI(metadata=meta)
-        
-        # ...existing code...
-    
-    # ...
-    
-    def save_database(self, dest, bucket, dir, documentdb, **kwargs):
-        # ...existing code...
-        
-        # Old
-        # vector_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_store), **kwargs)
-        # vector_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(vector_index), **kwargs)
-        # doc_index_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_index), **kwargs)
-        # doc_store_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(doc_store), **kwargs)
-        # metadata_cid = self.ipfs_kit.ipfs_upload_object(json.dumps(metadata_json), **kwargs)
-        
-        # New
-        vector_store_cid = self.api.add(json.dumps(vector_store))
-        vector_index_cid = self.api.add(json.dumps(vector_index))
-        doc_index_cid = self.api.add(json.dumps(doc_index))
-        doc_store_cid = self.api.add(json.dumps(doc_store))
-        metadata_cid = self.api.add(json.dumps(metadata_json))
-        
-        # ...existing code...
-```
-
-## Benefits of Migration
-
-1. **Enhanced Functionality**: Access to tiered caching, cluster management, metadata indexing
-2. **Improved Performance**: Optimized operations with memory-mapped structures 
-3. **Robustness**: Better error handling and recovery mechanisms
-4. **Scalability**: Role-based architecture for distributed operations
-5. **Future-proofing**: Ongoing development and maintenance of the new package
-
-## Testing Recommendations
-
-1. **Parallel Implementation**: Initially, maintain both old and new implementations in parallel:
-   ```python
-   try:
-       # Try new implementation
-       from ipfs_kit_py.high_level_api import IPFSSimpleAPI
-       api = IPFSSimpleAPI(metadata=meta)
-       cid = api.add(json.dumps(data))
-   except Exception as e:
-       # Fall back to old implementation
-       from ipfs_kit import ipfs_kit
-       old_ipfs = ipfs_kit(resources, meta)
-       cid = old_ipfs.ipfs_upload_object(json.dumps(data))
-   ```
-
-2. **Validate Results**: For each operation, compare the results from old and new implementations
-3. **Incremental Migration**: Migrate one component at a time, thoroughly testing each
-
-## Timeline
-
-1. **Preparation (1 day)**
-   - Install new package
-   - Update import statements
-   - Create test harness for validation
-
-2. **Implementation (1 day)**
-   - Update initialization code
-   - Migrate method calls
-   - Add error handling
-
-3. **Testing (1-2 days)**
-   - Validate results against old implementation
-   - Check for edge cases
-   - Stress test with large files
-
-4. **Cleanup (1 day)**
-   - Remove old code and fallbacks
-   - Update documentation
-   - Commit final changes
-
-## Conclusion
-
-The migration from the old `ipfs_kit` to the new `ipfs_kit_py` package will enhance the functionality and robustness of the IPFS integration in our application. The new package provides a more comprehensive architecture with advanced features like tiered caching, role-based operation, and improved error handling, which will benefit the overall system performance and reliability.
+- Review the migration process and outcomes.
+- Identify lessons learned and areas for improvement.

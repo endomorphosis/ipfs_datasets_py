@@ -1,17 +1,233 @@
 # Advanced Examples
 
-This document provides advanced examples and usage patterns for IPFS Datasets Python. These examples demonstrate how to combine multiple features to solve complex data processing, storage, and retrieval challenges.
+This document provides advanced examples and usage patterns for IPFS Datasets Python, including the newly integrated IPFS embeddings functionality. These examples demonstrate how to combine multiple features to solve complex data processing, storage, and retrieval challenges.
+
+## 🚀 New Integration Features
+
+The integration with ipfs_embeddings_py brings powerful new capabilities:
+- **Advanced Vector Embeddings**: Text, document, and multimodal embeddings
+- **Semantic Search**: Similarity search across large document collections  
+- **Vector Stores**: Qdrant, Elasticsearch, and FAISS integration
+- **MCP Tools**: 100+ tools for AI model integration
+- **FastAPI Service**: REST API for all functionality
+- **Quality Assessment**: Embedding validation and metrics
 
 ## Table of Contents
 
-1. [Complete Data Processing Pipeline](#complete-data-processing-pipeline)
-2. [Building a Knowledge Dataset from Web Archives](#building-a-knowledge-dataset-from-web-archives)
-3. [GraphRAG with Multi-Model Embeddings](#graphrag-with-multi-model-embeddings)
-4. [Distributed Vector Search with Sharding](#distributed-vector-search-with-sharding)
-5. [Cross-Document Reasoning with LLM Integration](#cross-document-reasoning-with-llm-integration)
-6. [DuckDB, Arrow, and IPLD Integration](#duckdb-arrow-and-ipld-integration)
-7. [Resilient Distributed Operations](#resilient-distributed-operations)
-8. [Comprehensive Audit and Provenance Tracking](#comprehensive-audit-and-provenance-tracking)
+1. [Semantic Search Pipeline](#semantic-search-pipeline)
+2. [Vector Store Integration](#vector-store-integration)
+3. [MCP Tool Orchestration](#mcp-tool-orchestration)
+4. [Complete Data Processing Pipeline](#complete-data-processing-pipeline)
+5. [Building a Knowledge Dataset from Web Archives](#building-a-knowledge-dataset-from-web-archives)
+6. [GraphRAG with Multi-Model Embeddings](#graphrag-with-multi-model-embeddings)
+7. [Distributed Vector Search with Sharding](#distributed-vector-search-with-sharding)
+8. [Cross-Document Reasoning with LLM Integration](#cross-document-reasoning-with-llm-integration)
+9. [DuckDB, Arrow, and IPLD Integration](#duckdb-arrow-and-ipld-integration)
+10. [Resilient Distributed Operations](#resilient-distributed-operations)
+11. [Comprehensive Audit and Provenance Tracking](#comprehensive-audit-and-provenance-tracking)
+
+## Semantic Search Pipeline
+
+This example demonstrates building a complete semantic search system using the integrated embedding capabilities.
+
+```python
+from ipfs_datasets_py.embeddings import EmbeddingGenerator
+from ipfs_datasets_py.vector_stores import QdrantStore
+from ipfs_datasets_py.mcp_server.tools.embedding_tools import embedding_generation
+import asyncio
+
+async def build_semantic_search_system():
+    # Initialize components
+    embedder = EmbeddingGenerator(model="sentence-transformers/all-MiniLM-L6-v2")
+    vector_store = QdrantStore(collection_name="documents")
+    
+    # Sample documents
+    documents = [
+        "Machine learning is transforming how we process data",
+        "IPFS provides decentralized storage solutions",
+        "Vector embeddings capture semantic meaning in text",
+        "Knowledge graphs represent structured information"
+    ]
+    
+    # Generate embeddings
+    print("Generating embeddings...")
+    embeddings = await embedder.generate_embeddings(documents)
+    
+    # Store in vector database
+    print("Storing in vector database...")
+    await vector_store.add_documents(
+        documents=documents,
+        embeddings=embeddings,
+        metadata=[{"id": i, "source": "example"} for i in range(len(documents))]
+    )
+    
+    # Perform semantic search
+    query = "distributed storage systems"
+    query_embedding = await embedder.generate_embeddings([query])
+    
+    results = await vector_store.search(
+        query_embedding[0], 
+        top_k=3,
+        include_metadata=True
+    )
+    
+    print(f"Search results for '{query}':")
+    for i, result in enumerate(results):
+        print(f"{i+1}. {result['document']} (score: {result['score']:.3f})")
+    
+    return results
+
+# Run the example
+asyncio.run(build_semantic_search_system())
+```
+
+## Vector Store Integration
+
+This example shows how to work with different vector store backends.
+
+```python
+from ipfs_datasets_py.vector_stores import QdrantStore, ElasticsearchStore, FAISSStore
+from ipfs_datasets_py.embeddings import EmbeddingGenerator
+import asyncio
+
+async def compare_vector_stores():
+    # Initialize embedding generator
+    embedder = EmbeddingGenerator()
+    
+    # Sample data
+    texts = ["AI and machine learning", "Distributed systems", "Data processing"]
+    embeddings = await embedder.generate_embeddings(texts)
+    
+    # Initialize different vector stores
+    stores = {
+        "qdrant": QdrantStore(collection_name="test_qdrant"),
+        "elasticsearch": ElasticsearchStore(index_name="test_es"),
+        "faiss": FAISSStore(dimension=384)  # MiniLM dimension
+    }
+    
+    # Test each store
+    for store_name, store in stores.items():
+        print(f"\nTesting {store_name}...")
+        
+        # Add documents
+        await store.add_documents(
+            documents=texts,
+            embeddings=embeddings,
+            metadata=[{"store": store_name, "id": i} for i in range(len(texts))]
+        )
+        
+        # Search
+        query_embedding = await embedder.generate_embeddings(["machine learning"])
+        results = await store.search(query_embedding[0], top_k=2)
+        
+        print(f"Top results from {store_name}:")
+        for result in results:
+            print(f"  - {result['document']} (score: {result['score']:.3f})")
+
+asyncio.run(compare_vector_stores())
+```
+
+## MCP Tool Orchestration
+
+This example demonstrates orchestrating multiple MCP tools for complex workflows.
+
+```python
+from ipfs_datasets_py.mcp_server.tools.dataset_tools import load_dataset, process_dataset
+from ipfs_datasets_py.mcp_server.tools.embedding_tools import embedding_generation
+from ipfs_datasets_py.mcp_server.tools.vector_tools import create_vector_index
+from ipfs_datasets_py.mcp_server.tools.ipfs_tools import pin_to_ipfs
+import asyncio
+
+async def mcp_workflow_example():
+    # Step 1: Load dataset
+    print("1. Loading dataset...")
+    dataset_result = await load_dataset({
+        "source": "squad",
+        "options": {"split": "train[:100]"}  # Small sample
+    })
+    
+    if dataset_result["status"] != "success":
+        print(f"Failed to load dataset: {dataset_result['message']}")
+        return
+    
+    dataset_id = dataset_result["dataset_id"]
+    print(f"Loaded dataset: {dataset_id}")
+    
+    # Step 2: Process dataset - extract text field
+    print("2. Processing dataset...")
+    process_result = await process_dataset({
+        "dataset_source": dataset_id,
+        "operations": [
+            {"type": "select", "columns": ["question", "context"]},
+            {"type": "map", "function": "lambda x: x['question'] + ' ' + x['context']", "column": "combined_text"}
+        ]
+    })
+    
+    if process_result["status"] != "success":
+        print(f"Failed to process dataset: {process_result['message']}")
+        return
+    
+    processed_id = process_result["dataset_id"]
+    print(f"Processed dataset: {processed_id}")
+    
+    # Step 3: Generate embeddings
+    print("3. Generating embeddings...")
+    # Extract text from processed dataset (simplified)
+    texts = ["Sample question and context combined"]  # In real usage, extract from dataset
+    
+    embedding_result = await embedding_generation({
+        "texts": texts,
+        "model": "sentence-transformers/all-MiniLM-L6-v2"
+    })
+    
+    if embedding_result["status"] != "success":
+        print(f"Failed to generate embeddings: {embedding_result['message']}")
+        return
+    
+    embeddings = embedding_result["embeddings"]
+    print(f"Generated {len(embeddings)} embeddings")
+    
+    # Step 4: Create vector index
+    print("4. Creating vector index...")
+    index_result = await create_vector_index({
+        "vectors": embeddings,
+        "metadata": [{"text": text, "source": "squad"} for text in texts]
+    })
+    
+    if index_result["status"] != "success":
+        print(f"Failed to create index: {index_result['message']}")
+        return
+    
+    index_id = index_result["index_id"]
+    print(f"Created vector index: {index_id}")
+    
+    # Step 5: Pin to IPFS for decentralized storage
+    print("5. Pinning to IPFS...")
+    pin_result = await pin_to_ipfs({
+        "content_source": {
+            "dataset_id": processed_id,
+            "index_id": index_id,
+            "embeddings": embeddings
+        }
+    })
+    
+    if pin_result["status"] != "success":
+        print(f"Failed to pin to IPFS: {pin_result['message']}")
+        return
+    
+    cid = pin_result["cid"]
+    print(f"Pinned to IPFS: {cid}")
+    
+    print("\nWorkflow completed successfully!")
+    return {
+        "dataset_id": processed_id,
+        "index_id": index_id,
+        "ipfs_cid": cid
+    }
+
+# Run the workflow
+asyncio.run(mcp_workflow_example())
+```
 
 ## Complete Data Processing Pipeline
 
