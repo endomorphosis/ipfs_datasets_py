@@ -170,6 +170,9 @@ class SimpleIPFSDatasetsMCPServer:
         # Register provenance tools
         self._register_tools_from_subdir(tools_path / "provenance_tools")
 
+        # Register embedding tools
+        self._register_tools_from_subdir(tools_path / "embedding_tools")
+
         logger.info(f"Registered {len(self.tools)} tools with the MCP server")
 
     def _register_tools_from_subdir(self, subdir_path: Path):
