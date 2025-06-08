@@ -1015,13 +1015,15 @@ For more detailed information, see our comprehensive documentation:
 - [Performance Optimization](docs/performance_optimization.md)
 
 # Search provenance records semantically (now works correctly with all record types)
+```python
 results = provenance.semantic_search(
     "schema validation", 
     limit=5,
     include_record_types=["verification", "annotation", "transformation"]
 )
-
+```
 # Calculate enhanced data metrics (improved to include source records)
+```python
 metrics = provenance.calculate_data_metrics(
     data_id="cleaned_data",
     include_source_records=True,       # Properly include source records
@@ -1034,8 +1036,9 @@ complexity = metrics["complexity"]["complexity_score"]
 print(f"Data impact score: {impact_score:.2f}")
 print(f"Processing depth: {complexity['max_depth']}")
 print(f"Source count: {complexity['source_count']}")
-
+```
 # Advanced temporal query with precise date filtering
+```python
 import datetime
 quarterly_records = provenance.temporal_query(
     start_time=datetime.datetime(2023, 1, 1),
@@ -1057,6 +1060,7 @@ export_stats = provenance.export_to_car(
 print(f"Exported {export_stats['record_count']} records with root CID: {export_stats['root_cid']}")
 
 # Import from CAR file with integrity verification
+
 new_provenance = EnhancedProvenanceManager(enable_ipld_storage=True)
 import_stats = new_provenance.import_from_car(
     car_path="provenance.car",
@@ -1066,12 +1070,11 @@ import_stats = new_provenance.import_from_car(
 
 print(f"Imported {import_stats['record_count']} records and {import_stats['edge_count']} edges")
 ```
-
 ## Query Optimization Metrics and Visualization
 
 The rag_query_optimizer module provides comprehensive metrics collection and visualization capabilities to analyze and improve GraphRAG query performance.
-
 ```python
+
 from ipfs_datasets_py.rag_query_optimizer import (
     UnifiedGraphRAGQueryOptimizer, 
     QueryMetricsCollector, 
