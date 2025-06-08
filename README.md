@@ -2,35 +2,25 @@
 
 A unified interface for data processing and distribution across decentralized networks, with seamless conversion between formats and storage systems.
 
-## 🎉 INTEGRATION COMPLETE: Production-Ready Platform
-
-**Status**: ✅ **INTEGRATION SUCCESSFUL** - All phases completed June 7, 2025  
-**Features**: 100+ MCP Tools, FastAPI Service, Vector Stores, Advanced Embeddings  
-**Readiness**: Production-ready with comprehensive testing and documentation  
-**Structure**: ✨ **Clean & Organized** - Root directory cleanup completed for enhanced maintainability
-
----
-
 ## Overview
 
-IPFS Datasets Python serves as a facade to multiple data processing and storage libraries:
-- DuckDB, Arrow, and HuggingFace Datasets for data manipulation
-- IPLD for data structuring
-- IPFS (via ipfs_datasets_py.ipfs_kit) for decentralized storage
-- libp2p (via ipfs_datasets_py.libp2p_kit) for peer-to-peer data transfer
-- InterPlanetary Wayback (IPWB) for web archive integration
-- GraphRAG for knowledge graph-enhanced retrieval and reasoning
-- Security and governance features for sensitive data
-- Comprehensive audit logging for security, compliance, and operations
-- Integrated security-provenance tracking for secure data lineage
+IPFS Datasets Python serves as a unified interface to multiple data processing and storage libraries:
+- **DuckDB, Arrow, and HuggingFace Datasets** for data manipulation
+- **IPLD** for data structuring
+- **IPFS** (via ipfs_datasets_py.ipfs_kit) for decentralized storage
+- **libp2p** (via ipfs_datasets_py.libp2p_kit) for peer-to-peer data transfer
+- **InterPlanetary Wayback (IPWB)** for web archive integration
+- **GraphRAG** for knowledge graph-enhanced retrieval and reasoning
+- **Security and governance features** for sensitive data
+- **Comprehensive audit logging** for security, compliance, and operations
+- **Security-provenance tracking** for secure data lineage
 - **Model Context Protocol (MCP) Server** with development tools for AI-assisted workflows
 
-## 🎉 New Features
+## Key Features
 
-### Advanced Embedding Capabilities (Phase 2 Integration) 🚀
-**Status**: Phase 1 Complete - Dependencies integrated, Phase 2 in development
+### Advanced Embedding Capabilities
 
-IPFS Datasets Python now includes comprehensive embedding generation and vector search capabilities from the integration with `endomorphosis/ipfs_embeddings_py`:
+Comprehensive embedding generation and vector search capabilities:
 
 #### Embedding Generation & Management
 - **Multi-Modal Embeddings**: Support for text, image, and hybrid embeddings
@@ -57,7 +47,8 @@ IPFS Datasets Python now includes comprehensive embedding generation and vector 
 - **Real-time Monitoring**: Performance dashboards and analytics
 
 ### MCP Server with Development Tools
-As of May 2025, IPFS Datasets Python includes a complete MCP server implementation with integrated development tools successfully migrated from Claude's toolbox:
+
+Complete Model Context Protocol (MCP) server implementation with integrated development tools:
 
 - **Test Generator** (`TestGeneratorTool`): Generate unittest test files from JSON specifications
 - **Documentation Generator** (`DocumentationGeneratorTool`): Generate markdown documentation from Python code
@@ -65,9 +56,7 @@ As of May 2025, IPFS Datasets Python includes a complete MCP server implementati
 - **Linting Tools** (`LintingTools`): Comprehensive Python code linting and auto-fixing
 - **Test Runner** (`TestRunner`): Execute and analyze test suites with detailed reporting
 
-**Migration Status**: ✅ **COMPLETE** - All 5 development tools have been successfully migrated and are ready for VS Code Copilot Chat integration and production development workflows.
-
-**Note**: For optimal performance, use direct imports when accessing development tools due to complex package-level dependency chains.
+*Note: For optimal performance, use direct imports when accessing development tools due to complex package-level dependency chains.*
 
 ## Installation
 
@@ -78,7 +67,7 @@ pip install ipfs-datasets-py
 
 ### Development Installation
 ```bash
-git clone https://github.com/your-organization/ipfs_datasets_py.git
+git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 pip install -e .
 ```
@@ -107,15 +96,19 @@ pip install ipfs-datasets-py[all]
 ## Basic Usage
 
 ```python
-from ipfs_datasets_py import ipfs_datasets
+# Using MCP tools for dataset operations
+from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset
+from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import process_dataset
+from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset
 
 # Load a dataset (supports local and remote datasets)
-dataset = ipfs_datasets.load_dataset("wikipedia", subset="20220301.en")
-print(f"Loaded dataset with {len(dataset)} records")
+result = await load_dataset("wikipedia", options={"split": "train"})
+dataset_id = result["dataset_id"]
+print(f"Loaded dataset: {result['summary']}")
 
 # Process the dataset
-processed_dataset = ipfs_datasets.process_dataset(
-    dataset,
+processed_result = await process_dataset(
+    dataset_source=dataset_id,
     operations=[
         {"type": "filter", "column": "length", "condition": ">", "value": 1000},
         {"type": "select", "columns": ["id", "title", "text"]}
@@ -123,8 +116,7 @@ processed_dataset = ipfs_datasets.process_dataset(
 )
 
 # Save to different formats
-ipfs_datasets.save_dataset(dataset, "output/dataset.parquet", format="parquet")
-cid = ipfs_datasets.save_dataset(dataset, "output/dataset.car", format="car")
+await save_dataset(processed_result["dataset_id"], "output/dataset.parquet", format="parquet")
 ```
 
 ## MCP Server Usage
@@ -133,22 +125,18 @@ cid = ipfs_datasets.save_dataset(dataset, "output/dataset.car", format="car")
 
 ```python
 # Start the MCP server with development tools
-from ipfs_datasets_py.mcp_server import MCPServer
+from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
 
-server = MCPServer()
-server.run(host="localhost", port=8080)
+server = IPFSDatasetsMCPServer()
+await server.start(host="localhost", port=8080)
 ```
 
 ### Using Development Tools Directly
 
 ```python
 # Direct import method (recommended for performance)
-import sys
-sys.path.insert(0, './ipfs_datasets_py/mcp_server/tools/development_tools/')
-
-# Import and use development tools
-from test_generator import TestGeneratorTool
-from documentation_generator import DocumentationGeneratorTool
+from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import TestGeneratorTool
+from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import DocumentationGeneratorTool
 
 # Generate tests from specification
 test_gen = TestGeneratorTool()
@@ -157,57 +145,56 @@ test_spec = {
     "class_name": "TestExample", 
     "functions": ["test_basic_functionality"]
 }
-result = test_gen.execute("generate_test", test_spec)
+result = await test_gen.execute("generate_test", test_spec)
 
 # Generate documentation
 doc_gen = DocumentationGeneratorTool()
-doc_result = doc_gen.execute("generate_docs", {
+doc_result = await doc_gen.execute("generate_docs", {
     "source_file": "my_module.py",
     "output_format": "markdown"
 })
 ```
 
-See [MCP_SERVER.md](MCP_SERVER.md) for complete MCP server documentation.
+See the [MCP Server Documentation](docs/MCP_TOOLS_COMPREHENSIVE_DOCUMENTATION.md) for complete MCP server documentation.
 
 ## Vector Search
 
 ```python
 import numpy as np
-from typing import List
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 
 # Create sample vectors
-vectors: List[np.ndarray] = [np.random.rand(768) for _ in range(100)]
+vectors = [np.random.rand(768) for _ in range(100)]
 metadata = [{"id": i, "source": "wikipedia", "title": f"Article {i}"} for i in range(100)]
 
 # Create vector index
 index = IPFSKnnIndex(dimension=768, metric="cosine")
-vector_ids = index.add_vectors(vectors, metadata=metadata)
+vector_ids = index.add_vectors(np.array(vectors), metadata=metadata)
 
 # Search for similar vectors
 query_vector = np.random.rand(768)
-results = index.search(query_vector, top_k=5)
-for i, result in enumerate(results):
-    print(f"Result {i+1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}")
+results = index.search(query_vector, k=5)
+for i, (vector_id, score, meta) in enumerate(results):
+    print(f"Result {i+1}: ID={vector_id}, Score={score:.4f}, Title={meta['title']}")
 ```
 
 ## MCP Server and Development Tools
 
-IPFS Datasets Python includes a complete Model Context Protocol (MCP) server with integrated development tools for AI-assisted workflows.
+IPFS Datasets Python includes a comprehensive Model Context Protocol (MCP) server with integrated development tools for AI-assisted workflows.
 
 ### Starting the MCP Server
 
 ```python
-from ipfs_datasets_py.mcp_server import MCPServer
+from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
 
 # Start the MCP server
-server = MCPServer()
-server.run(host="localhost", port=8080)
+server = IPFSDatasetsMCPServer()
+await server.start(host="localhost", port=8080)
 ```
 
 ### Development Tools
 
-The MCP server includes five powerful development tools migrated from Claude's toolbox:
+The MCP server includes five powerful development tools:
 
 #### 1. Test Generator
 Generate unittest test files from JSON specifications:
@@ -227,7 +214,7 @@ test_spec = {
     ]
 }
 
-test_generator.generate_test_file(json.dumps(test_spec), "./tests/")
+result = await test_generator.execute("generate_test_file", test_spec)
 ```
 
 #### 2. Documentation Generator
@@ -237,8 +224,11 @@ Generate markdown documentation from Python code:
 from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import DocumentationGeneratorTool
 
 doc_generator = DocumentationGeneratorTool()
-documentation = doc_generator.generate_documentation("path/to/python_file.py")
-print(documentation)
+result = await doc_generator.execute("generate_documentation", {
+    "source_file": "path/to/python_file.py",
+    "output_format": "markdown"
+})
+print(result["documentation"])
 ```
 
 #### 3. Codebase Search
@@ -248,9 +238,13 @@ Advanced pattern matching and code search:
 from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import CodebaseSearchEngine
 
 search_engine = CodebaseSearchEngine()
-results = search_engine.search_codebase("def test_", ".", ["*.py"])
-for match in results:
-    print(f"Found in {match.file}: {match.line}")
+result = await search_engine.execute("search_codebase", {
+    "pattern": "def test_",
+    "directory": ".",
+    "file_patterns": ["*.py"]
+})
+for match in result["matches"]:
+    print(f"Found in {match['file']}: {match['line']}")
 ```
 
 #### 4. Linting Tools
@@ -260,8 +254,10 @@ Comprehensive Python code linting and auto-fixing:
 from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import LintingTools
 
 linter = LintingTools()
-result = linter.lint_and_fix_file("path/to/python_file.py")
-print(f"Fixed {len(result.fixes)} issues")
+result = await linter.execute("lint_and_fix_file", {
+    "file_path": "path/to/python_file.py"
+})
+print(f"Fixed {len(result['fixes'])} issues")
 ```
 
 #### 5. Test Runner
@@ -271,8 +267,10 @@ Execute and analyze test suites:
 from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import TestRunner
 
 test_runner = TestRunner()
-results = test_runner.run_tests_in_file("tests/test_my_module.py")
-print(f"Tests passed: {results.passed}, Failed: {results.failed}")
+result = await test_runner.execute("run_tests_in_file", {
+    "test_file": "tests/test_my_module.py"
+})
+print(f"Tests passed: {result['passed']}, Failed: {result['failed']}")
 ```
 
 ### VS Code Integration
@@ -1221,20 +1219,18 @@ python3 -c "from test.test import download_test; download_test()"  # Test downlo
 python3 -c "from test.phase1.run_llm_tests import run_all"  # Run LLM integration tests
 
 # Test MCP server and development tools
-python3 migration_success_demo.py                           # Verify development tools migration
-python3 test_mcp_integration.py                            # Test MCP server integration
+python3 examples/migration_success_demo.py                  # Verify development tools
+python3 tests/migration_tests/test_mcp_integration.py       # Test MCP server integration
 ```
 
 ### Development Tools Testing
 
-The migrated development tools can be tested individually:
+The development tools can be tested individually:
 
 ```python
 # Direct import and test (recommended method)
-import sys
-sys.path.insert(0, './ipfs_datasets_py/mcp_server/tools/development_tools/')
+from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import TestGeneratorTool
 
-from test_generator import TestGeneratorTool
 test_gen = TestGeneratorTool()
 print("Test Generator ready:", test_gen is not None)
 ```
@@ -1256,32 +1252,6 @@ This project has completed all planned implementation phases including developme
 - ✅ **Development Tools Migration**: Successfully migrated all 5 development tools from Claude's toolbox
 - ✅ **VS Code Integration Ready**: MCP server ready for Copilot Chat integration
 - ✅ **Production Ready**: All features tested and documented for production use
-
-## 🎉 Project Status: INTEGRATION COMPLETE
-
-**✅ DEPLOYMENT READY** - All phases complete as of June 7, 2025
-
-The IPFS Embeddings Integration Project is now **100% COMPLETE** with full migration of ipfs_embeddings_py features into ipfs_datasets_py. The system is production-ready with:
-
-- ✅ **22 MCP Tools** migrated across 19+ categories
-- ✅ **FastAPI Service** with 25+ endpoints 
-- ✅ **Production Features** (auth, security, monitoring)
-- ✅ **Complete Documentation** and deployment guides
-
-**🚀 Ready for immediate production deployment!**
-
-### Quick Start
-```bash
-# Deploy with Docker
-./deploy.py --method docker --validate
-
-# Or start development server  
-./deploy.py --method dev --port 8000
-```
-
-**📖 See [PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md) for full details**
-
----
 
 ## Related Projects
 
