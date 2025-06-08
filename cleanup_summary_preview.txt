@@ -1,0 +1,76 @@
+Root Directory Cleanup Summary
+========================================
+
+Directories created: 6
+  + archive/migration/logs
+  + archive/migration/scripts
+  + archive/migration/tests
+  + archive/test_results
+  + archive/audit_visuals
+  + docs/migration
+
+Files moved: 59
+  start_fastapi.py -> scripts/start_fastapi.py
+  deploy.py -> scripts/deploy.py
+  cleanup_root_directory.py -> scripts/cleanup_root_directory.py
+  simple_fastapi.py -> examples/simple_fastapi.py
+  COMPREHENSIVE_MIGRATION_PLAN.md -> archive/migration/docs/COMPREHENSIVE_MIGRATION_PLAN.md
+  FINAL_COMPLETION_REPORT.md -> archive/migration/docs/FINAL_COMPLETION_REPORT.md
+  FINAL_INTEGRATION_COMPLETION_REPORT.md -> archive/migration/docs/FINAL_INTEGRATION_COMPLETION_REPORT.md
+  FINAL_INTEGRATION_STATUS.md -> archive/migration/docs/FINAL_INTEGRATION_STATUS.md
+  INTEGRATION_COMPLETE.md -> archive/migration/docs/INTEGRATION_COMPLETE.md
+  INTEGRATION_STATUS_SUMMARY.md -> archive/migration/docs/INTEGRATION_STATUS_SUMMARY.md
+  IPFS_EMBEDDINGS_TOOL_MAPPING.md -> archive/migration/docs/IPFS_EMBEDDINGS_TOOL_MAPPING.md
+  MIGRATION_COMPLETION_REPORT.md -> archive/migration/docs/MIGRATION_COMPLETION_REPORT.md
+  MIGRATION_COMPLETION_SUMMARY.md -> archive/migration/docs/MIGRATION_COMPLETION_SUMMARY.md
+  MIGRATION_ORGANIZATION.md -> archive/migration/docs/MIGRATION_ORGANIZATION.md
+  PHASE5_COMPLETION_REPORT.md -> archive/migration/docs/PHASE5_COMPLETION_REPORT.md
+  PHASE5_VALIDATION_REPORT.md -> archive/migration/docs/PHASE5_VALIDATION_REPORT.md
+  PHASE_3_COMPLETION_REPORT.md -> archive/migration/docs/PHASE_3_COMPLETION_REPORT.md
+  PHASE_4_COMPLETION_REPORT.md -> archive/migration/docs/PHASE_4_COMPLETION_REPORT.md
+  POST_RELOAD_STATUS.md -> archive/migration/docs/POST_RELOAD_STATUS.md
+  PROJECT_COMPLETION_SUMMARY.md -> archive/migration/docs/PROJECT_COMPLETION_SUMMARY.md
+  comprehensive_integration_validation.py -> archive/validation/comprehensive_integration_validation.py
+  comprehensive_mcp_test.py -> archive/validation/comprehensive_mcp_test.py
+  comprehensive_validation.py -> archive/validation/comprehensive_validation.py
+  core_integration_test.py -> archive/validation/core_integration_test.py
+  final_integration_test.py -> archive/validation/final_integration_test.py
+  final_integration_validation.py -> archive/validation/final_integration_validation.py
+  final_migration_test.py -> archive/validation/final_migration_test.py
+  final_validation.py -> archive/validation/final_validation.py
+  final_validation_check.py -> archive/validation/final_validation_check.py
+  integration_status_check.py -> archive/validation/integration_status_check.py
+  integration_test_quick.py -> archive/validation/integration_test_quick.py
+  migration_verification.py -> archive/validation/migration_verification.py
+  phase5_validation.py -> archive/validation/phase5_validation.py
+  production_readiness_check.py -> archive/validation/production_readiness_check.py
+  quick_check.py -> archive/validation/quick_check.py
+  quick_integration_test.py -> archive/validation/quick_integration_test.py
+  quick_validation.py -> archive/validation/quick_validation.py
+  robust_integration_test.py -> archive/validation/robust_integration_test.py
+  simple_integration_test.py -> archive/validation/simple_integration_test.py
+  simple_test.py -> archive/validation/simple_test.py
+  sync_validation.py -> archive/validation/sync_validation.py
+  systematic_validation.py -> archive/validation/systematic_validation.py
+  test_fastapi_service.py -> archive/validation/test_fastapi_service.py
+  test_ipfs_embeddings_integration.py -> archive/validation/test_ipfs_embeddings_integration.py
+  test_migration_integration.py -> archive/validation/test_migration_integration.py
+  test_migration_simple.py -> archive/validation/test_migration_simple.py
+  test_minimal_integration.py -> archive/validation/test_minimal_integration.py
+  validate_fastapi.py -> archive/validation/validate_fastapi.py
+  validate_integration.py -> archive/validation/validate_integration.py
+  verify_final_status.py -> archive/validation/verify_final_status.py
+  verify_integration.py -> archive/validation/verify_integration.py
+  migration_docs -> archive/migration/docs_old
+  migration_logs -> archive/migration/logs
+  migration_scripts -> archive/migration/scripts
+  migration_tests -> archive/migration/tests
+  test_results -> archive/test_results
+  test_visualizations -> archive/test_visualizations
+  tool_test_results -> archive/tool_test_results
+  audit_visuals -> archive/audit_visuals
+
+Files removed: 3
+  - __init__.py
+  - migration_temp
+  - __pycache__
