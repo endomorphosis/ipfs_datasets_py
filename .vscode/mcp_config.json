@@ -2,7 +2,10 @@
   "mcpServers": {
     "ipfs-datasets": {
       "command": "python",
-      "args": ["-m", "ipfs_datasets_py.mcp_server"],
+      "args": [
+        "-m",
+        "ipfs_datasets_py.mcp_server"
+      ],
       "cwd": "/home/barberb/ipfs_datasets_py",
       "env": {
         "PYTHONPATH": "/home/barberb/ipfs_datasets_py",

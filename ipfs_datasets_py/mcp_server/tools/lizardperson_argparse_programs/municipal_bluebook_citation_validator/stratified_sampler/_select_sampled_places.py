@@ -1,7 +1,7 @@
 import itertools
 import logging
-from pathlib import Path
 import random
+from pathlib import Path
 
 
 logger = logging.getLogger(__name__)

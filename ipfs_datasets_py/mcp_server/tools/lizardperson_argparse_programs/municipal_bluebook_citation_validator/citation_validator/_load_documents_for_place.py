@@ -15,6 +15,5 @@ def load_documents_for_place(gnis: str, document_dir: Path) -> list[dict[str, An
     Returns:
         DatabaseConnection: Database of citations for the specified place.
     """
-
     path = document_dir / f"{gnis}_html.parquet"
     return dependencies.duckdb.from_parquet(path).fetchdf().to_dict('records')

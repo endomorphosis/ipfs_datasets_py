@@ -15,10 +15,6 @@ from ._return_tool_call_results import return_tool_call_results, CallToolResultT
 
 class _RunTool:
 
-
-
-    
-
     def __init__(self, configs: Configs = None, resources: dict[str, Callable] = None) -> None:
         self.configs = configs
         self.resources = resources

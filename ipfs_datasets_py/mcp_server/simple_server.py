@@ -79,6 +79,7 @@ def import_argparse_program(directory_path: Path) -> Dict[str, Any]:
     Returns:
         Callable function representing the program
     """
+    program_name = None
     try:
         module = importlib.import_module(program_name)
         return getattr(module, 'main', None)

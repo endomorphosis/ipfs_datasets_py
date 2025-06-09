@@ -19,6 +19,7 @@ class SetupDatabaseAndFiles:
         self.random_seed: int = configs['random_seed']
         self.mysql_configs: dict[str, str] = configs['mysql_configs']
         self.error_db_path: Path = configs['error_db_path']
+        self.error_report_db_path: Path = configs['error_report_db_path']
         
         self.citation_dir: Path = configs['citation_dir']
         self.document_dir: Path = configs['document_dir']
@@ -26,8 +27,25 @@ class SetupDatabaseAndFiles:
         # Initialize resources
         self._setup_reference_db: Callable = resources['setup_reference_db']
         self._setup_error_db: Callable = resources['setup_error_db']
+        self._setup_error_report_db: Callable = resources['setup_error_report_db']
 
         self.error_db_sql_str: str = configs['error_db_sql_str']
+
+    def setup_error_report_database(self, read_only: bool = False):  # -> DatabaseConnection  
+        """Connect to DuckDB database for storing error reports."""
+        # Ensure the error database directory path exists
+        if not self.error_report_db_path.exists():
+            self.error_report_db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Ensure the database connection is established
+        try:
+            conn = self._setup_error_report_db(
+                self.error_db_path, 
+                read_only=read_only, 
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to set up error database: {e}") from e
+        return conn
 
     def setup_error_database(self, read_only: bool = False):  # -> DatabaseConnection  
         """Connect to DuckDB database for storing validation errors."""
@@ -74,6 +92,7 @@ class SetupDatabaseAndFiles:
         """
         error_db = self.setup_error_database(read_only=False)
         reference_db = self.setup_reference_database(read_only=True)
+        error_report_db = self._setup_error_report_db(self.error_db_path, read_only=False)
 
         return error_db, reference_db
 

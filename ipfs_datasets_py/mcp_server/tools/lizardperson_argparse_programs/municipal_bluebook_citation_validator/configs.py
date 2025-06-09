@@ -17,6 +17,7 @@ try:
 except ImportError:
     raise ImportError("pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
+
 from utils.parse_arguments import parse_arguments
 from utils.load_mysql_config import load_mysql_config
 
@@ -45,6 +46,7 @@ class _Configs(BaseModel):
     output_dir: DirectoryPath = Field(default_factory=lambda: Path("./reports"))
     random_seed: PositiveInt = Field(default=_RANDOM_SEED)
     insert_batch_size: PositiveInt = Field(default=5000)
+    sample_size: PositiveInt = Field(default=385)
 
     _mysql_configs: _MySqlConfig = Field(default_factory=None)
 
@@ -76,6 +78,12 @@ class _Configs(BaseModel):
         """Convert the configuration to a dictionary."""
         return self.model_dump(mode="python", exclude_none=True)
 
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(f"Configuration key '{key}' not found.")
+
 # Parse command line arguments
 args: argparse.Namespace = parse_arguments()
 
@@ -85,7 +93,8 @@ configs = _Configs(
     citation_dir=args.citation_dir,
     document_dir=args.document_dir,
     output_dir=args.output_dir,
-    random_seed=_RANDOM_SEED
+    random_seed=_RANDOM_SEED,
+    sample_size=args.sample_size,
 )
 
 mysql_configs=load_mysql_config(args.mysql_config)

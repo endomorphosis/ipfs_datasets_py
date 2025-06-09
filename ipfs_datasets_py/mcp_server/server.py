@@ -17,12 +17,13 @@ import sys
 import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import pydantic
 from mcp.server import FastMCP
 from mcp.types import CallToolResult, TextContent, Tool
 from mcp import CallToolRequest
 
 from .configs import Configs, configs
-from .logger import logger, mcp_logger
+from .logger import logger
 
 
 
@@ -143,20 +144,13 @@ class IPFSDatasetsMCPServer:
         # Register tools from the tools directory
         tools_path = Path(__file__).parent / "tools"
 
-        # Register dataset tools
-        self._register_tools_from_subdir(tools_path / "dataset_tools")
-
-        # Register IPFS tools
-        self._register_tools_from_subdir(tools_path / "ipfs_tools")
-
-        # Register vector tools
-        self._register_tools_from_subdir(tools_path / "vector_tools")
-
-        # Register graph tools
-        self._register_tools_from_subdir(tools_path / "graph_tools")
-
-        # Register audit tools
-        self._register_tools_from_subdir(tools_path / "audit_tools")
+        # Register tools from subdirectories
+        tool_subdirs = [
+            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools"
+        ]
+        
+        for subdir in tool_subdirs:
+            self._register_tools_from_subdir(tools_path / subdir)
 
         # Register development tools (migrated from claudes_toolbox-1)
         try:
@@ -203,7 +197,9 @@ class IPFSDatasetsMCPServer:
         tools = import_tools_from_directory(subdir_path)
 
         for tool_name, tool_func in tools.items():
-            self.mcp.add_tool(tool_func, name=tool_name)
+            self.mcp.add_tool(
+                tool_func, name=tool_name, description=tool_func.__doc__
+            )
             self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
 
@@ -232,7 +228,7 @@ class IPFSDatasetsMCPServer:
             ipfs_kit_mcp_url: URL of the ipfs_kit_py MCP server
         """
         try:
-            from mcp.client import MCPClient
+            from mcp.client import MCPClient # TODO FIXME This library is hallucinated! It does not exist!
 
             # Create MCP client
             client = MCPClient(ipfs_kit_mcp_url)
@@ -376,6 +372,32 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
         logger.error(f"Error starting server: {e}")
         traceback.print_exc()
 
+class Args(pydantic.BaseModel):
+    """
+    Expected command-line arguments for the MCP server
+
+    Attributes:
+        host (str): The host address for the MCP server to bind to.
+        port (int): The port number for the MCP server to listen on.
+        ipfs_kit_mcp_url (Optional[pydantic.AnyUrl]): Optional URL for the IPFS Kit MCP service.
+        configs (Optional[pydantic.FilePath]): Optional path to configuration file.
+
+    Args:
+        namespace (argparse.Namespace): The parsed command-line arguments namespace
+            containing the configuration values to be validated and stored.
+    """
+    host: str
+    port: int
+    ipfs_kit_mcp_url: Optional[pydantic.AnyUrl] = None
+    config: Optional[pydantic.FilePath] = None
+
+    def __init__(self, namespace: argparse.Namespace):
+        super().__init__(
+            host=namespace.host,
+            port=namespace.port,
+            ipfs_kit_mcp_url=namespace.ipfs_kit_mcp_url,
+            configs=namespace.config
+        )
 
 def main():
     """Command-line entry point."""
@@ -385,7 +407,7 @@ def main():
     parser.add_argument("--ipfs-kit-mcp-url", help="URL of an ipfs_kit_py MCP server")
     parser.add_argument("--config", help="Path to a configuration YAML file")
 
-    args = parser.parse_args()
+    args = Args(parser.parse_args())
 
     # Load custom configuration if provided
     if args.config:

@@ -1,12 +1,20 @@
+"""
+Module to centralize access built-in types, custom type aliases, and custom type variables.
+"""
+
 import logging
-from typing import TypeVar, TypeAlias
+from typing import Any, Callable, TypeVar, TypeAlias, TYPE_CHECKING
 
-from configs import _Configs
+if TYPE_CHECKING:
+    from configs import _Configs
 
-DatabaseConnection = TypeVar('DatabaseConnection')
+    DatabaseConnection = TypeVar('DatabaseConnection')
+    DatabaseCursor = TypeVar('DatabaseCursor')
 
-Dependency = TypeVar('Dependency')
+    ProgressBar = TypeVar('ProgressBar', bound=Callable[..., Any])
 
-Configs: TypeAlias = _Configs
+    Dependency = TypeVar('Dependency')
 
-Logger: TypeAlias = logging.Logger
+    Configs: TypeAlias = _Configs
+
+    Logger: TypeAlias = logging.Logger
