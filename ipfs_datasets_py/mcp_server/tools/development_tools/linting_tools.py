@@ -15,6 +15,7 @@ from dataclasses import dataclass
 import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 from .base_tool import BaseDevelopmentTool, development_tool_mcp_wrapper
 from .config import get_config
@@ -618,9 +619,13 @@ class LintingTools(BaseDevelopmentTool):
         }
 
 
-# Create MCP tool wrapper
-@development_tool_mcp_wrapper
-def lint_python_codebase(**kwargs) -> 'BaseDevelopmentTool':
+def lint_python_codebase(path: str = ".",
+                        patterns: Optional[List[str]] = None,
+                        exclude_patterns: Optional[List[str]] = None,
+                        fix_issues: bool = True,
+                        include_dataset_rules: bool = True,
+                        dry_run: bool = False,
+                        verbose: bool = False) -> Dict[str, Any]:
     """
     Lint Python codebase with comprehensive quality checks and automatic fixes.
 
@@ -636,5 +641,56 @@ def lint_python_codebase(**kwargs) -> 'BaseDevelopmentTool':
     Returns:
         Dictionary containing linting results, statistics, and issue details
     """
-    # Return a properly instantiated LintingTools instance
-    return LintingTools()
+    tool = LintingTools()
+    
+    # Execute the tool and return results
+    try:
+        # Check if there's already an event loop running
+        try:
+            loop = asyncio.get_running_loop()
+            # If we get here, there's a running loop, so we need to use a different approach
+            import concurrent.futures
+            import threading
+
+            def run_in_thread():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    return new_loop.run_until_complete(tool.execute(
+                        path=path,
+                        patterns=patterns,
+                        exclude_patterns=exclude_patterns,
+                        fix_issues=fix_issues,
+                        include_dataset_rules=include_dataset_rules,
+                        dry_run=dry_run,
+                        verbose=verbose
+                    ))
+                finally:
+                    new_loop.close()
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                return future.result()
+
+        except RuntimeError:
+            # No running loop, we can use asyncio.run
+            return asyncio.run(tool.execute(
+                path=path,
+                patterns=patterns,
+                exclude_patterns=exclude_patterns,
+                fix_issues=fix_issues,
+                include_dataset_rules=include_dataset_rules,
+                dry_run=dry_run,
+                verbose=verbose
+            ))
+    except Exception as e:
+        # Fallback to error result if execution fails
+        return {
+            "success": False,
+            "error": "execution_error",
+            "message": f"Failed to execute linting tool: {e}",
+            "metadata": {
+                "tool": "lint_python_codebase",
+                "timestamp": datetime.now().isoformat()
+            }
+        }

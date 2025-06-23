@@ -100,15 +100,28 @@ async def load_dataset(
             }
 
         # Return summary info
+        info = getattr(dataset_obj, "info", None)
+        metadata = {}
+        if info:
+            # Extract common metadata fields safely
+            metadata = {
+                "description": getattr(info, "description", ""),
+                "citation": getattr(info, "citation", ""),
+                "homepage": getattr(info, "homepage", ""),
+                "license": getattr(info, "license", ""),
+                "version": str(getattr(info, "version", "")),
+                "features": str(getattr(info, "features", ""))
+            }
+        
         return {
             "status": "success",
-            "dataset_id": getattr(dataset_obj, "id", "N/A"), # Hugging Face Dataset objects don't have an 'id' attribute
-            "metadata": getattr(dataset_obj, "info", {}).to_dict(), # Use .info for metadata
+            "dataset_id": f"dataset_{source}_{id(dataset_obj)}", # Generate unique ID
+            "metadata": metadata,
             "summary": {
                 "num_records": len(dataset_obj),
-                "schema": str(dataset_obj.features) if hasattr(dataset_obj, "features") else None, # Use .features for schema
+                "schema": str(dataset_obj.features) if hasattr(dataset_obj, "features") else None,
                 "source": source,
-                "format": format if format else "auto-detected" # Use provided format or indicate auto-detected
+                "format": format if format else "auto-detected"
             }
         }
     except Exception as e:

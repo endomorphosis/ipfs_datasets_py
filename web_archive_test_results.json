@@ -1,0 +1,7 @@
+{
+  "extract_links_from_warc": "success",
+  "extract_metadata_from_warc": "success",
+  "extract_text_from_warc": "success",
+  "index_warc": "success",
+  "extract_dataset_from_cdxj": "success"
+}

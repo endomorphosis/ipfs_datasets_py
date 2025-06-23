@@ -1,0 +1,994 @@
+{
+  "discovered_tools": {
+    "dataset_tools": [
+      {
+        "name": "save_dataset",
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset",
+        "is_async": true,
+        "signature": "(dataset_data: Union[str, Dict[str, Any]], destination: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "convert_dataset_format",
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format",
+        "is_async": true,
+        "signature": "(dataset_id: str, target_format: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "hf_load_dataset",
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset",
+        "is_async": false,
+        "signature": "(path: str, name: Optional[str] = None, data_dir: Optional[str] = None, data_files: Union[str, collections.abc.Sequence[str], collections.abc.Mapping[str, Union[str, collections.abc.Sequence[str]]], NoneType] = None, split: Union[str, datasets.splits.Split, NoneType] = None, cache_dir: Optional[str] = None, features: Optional[datasets.features.features.Features] = None, download_config: Optional[datasets.download.download_config.DownloadConfig] = None, download_mode: Union[datasets.download.download_manager.DownloadMode, str, NoneType] = None, verification_mode: Union[datasets.utils.info_utils.VerificationMode, str, NoneType] = None, keep_in_memory: Optional[bool] = None, save_infos: bool = False, revision: Union[str, datasets.utils.version.Version, NoneType] = None, token: Union[bool, str, NoneType] = None, streaming: bool = False, num_proc: Optional[int] = None, storage_options: Optional[dict] = None, trust_remote_code: Optional[bool] = None, **config_kwargs) -> Union[datasets.dataset_dict.DatasetDict, datasets.arrow_dataset.Dataset, datasets.dataset_dict.IterableDatasetDict, datasets.iterable_dataset.IterableDataset]"
+      },
+      {
+        "name": "load_dataset",
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset",
+        "is_async": true,
+        "signature": "(source: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "process_dataset",
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset",
+        "is_async": true,
+        "signature": "(dataset_source: Union[str, dict, Any], operations: List[Dict[str, Any]], output_id: Optional[str] = None) -> Dict[str, Any]"
+      }
+    ],
+    "ipfs_tools": [
+      {
+        "name": "get_from_ipfs",
+        "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs",
+        "is_async": true,
+        "signature": "(cid: str, output_path: Optional[str] = None, timeout_seconds: int = 60) -> Dict[str, Any]"
+      },
+      {
+        "name": "pin_to_ipfs",
+        "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs",
+        "is_async": true,
+        "signature": "(content_source: Union[str, Dict[str, Any]], recursive: bool = True, wrap_with_directory: bool = False, hash_algo: str = 'sha2-256') -> Dict[str, Any]"
+      }
+    ],
+    "audit_tools": [
+      {
+        "name": "record_audit_event",
+        "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event",
+        "is_async": false,
+        "signature": "(action: str, resource_id: Optional[str] = None, resource_type: Optional[str] = None, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, source_ip: Optional[str] = None, severity: str = 'info', tags: Optional[List[str]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "generate_audit_report",
+        "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report",
+        "is_async": true,
+        "signature": "(report_type: str = 'comprehensive', start_time: Optional[str] = None, end_time: Optional[str] = None, filters: Optional[Dict[str, Any]] = None, output_format: str = 'json', output_path: Optional[str] = None, include_details: bool = True) -> Dict[str, Any]"
+      }
+    ],
+    "vector_tools": [
+      {
+        "name": "search_vector_index",
+        "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index",
+        "is_async": true,
+        "signature": "(index_id: str, query_vector: List[float], top_k: int = 5, include_metadata: bool = True, include_distances: bool = True, filter_metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "create_vector_index",
+        "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index",
+        "is_async": true,
+        "signature": "(vectors: List[List[float]], dimension: Optional[int] = None, metric: str = 'cosine', metadata: Optional[List[Dict[str, Any]]] = None, index_id: Optional[str] = None, index_name: Optional[str] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "create_vector_store",
+        "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index",
+        "is_async": false,
+        "signature": "(dimension: int = 768) -> ipfs_datasets_py.vector_tools.VectorStore"
+      }
+    ],
+    "provenance_tools": [
+      {
+        "name": "record_provenance",
+        "module": "ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance",
+        "is_async": true,
+        "signature": "(dataset_id: str, operation: str, inputs: Optional[List[str]] = None, parameters: Optional[Dict[str, Any]] = None, description: Optional[str] = None, agent_id: Optional[str] = None, timestamp: Optional[str] = None, tags: Optional[List[str]] = None) -> Dict[str, Any]"
+      }
+    ],
+    "security_tools": [
+      {
+        "name": "check_access_permission",
+        "module": "ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission",
+        "is_async": true,
+        "signature": "(resource_id: str, user_id: str, permission_type: str = 'read', resource_type: Optional[str] = None) -> Dict[str, Any]"
+      }
+    ],
+    "graph_tools": [
+      {
+        "name": "query_knowledge_graph",
+        "module": "ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph",
+        "is_async": true,
+        "signature": "(graph_id: str, query: str, query_type: str = 'sparql', max_results: int = 100, include_metadata: bool = True) -> Dict[str, Any]"
+      }
+    ],
+    "web_archive_tools": [
+      {
+        "name": "extract_dataset_from_cdxj",
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj",
+        "is_async": false,
+        "signature": "(cdxj_path: str, output_format: Literal['arrow', 'huggingface', 'dict'] = 'arrow') -> Dict[str, Any]"
+      },
+      {
+        "name": "create_warc",
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc",
+        "is_async": false,
+        "signature": "(url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "extract_links_from_warc",
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc",
+        "is_async": false,
+        "signature": "(warc_path: str) -> Dict[str, Any]"
+      },
+      {
+        "name": "index_warc",
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc",
+        "is_async": false,
+        "signature": "(warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> Dict[str, str]"
+      },
+      {
+        "name": "extract_metadata_from_warc",
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc",
+        "is_async": false,
+        "signature": "(warc_path: str) -> Dict[str, Any]"
+      },
+      {
+        "name": "extract_text_from_warc",
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc",
+        "is_async": false,
+        "signature": "(warc_path: str) -> Dict[str, Any]"
+      }
+    ],
+    "development_tools": [
+      {
+        "name": "asdict",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(obj, *, dict_factory=<class 'dict'>)"
+      },
+      {
+        "name": "create_test_runner",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(path: str = '.', run_unit_tests: bool = True, run_type_check: bool = True, run_linting: bool = True, run_dataset_tests: bool = True, test_framework: str = 'pytest', coverage: bool = True, verbose: bool = False, save_results: bool = True, output_formats: Optional[List[str]] = None) -> ipfs_datasets_py.mcp_server.tools.development_tools.base_tool.BaseDevelopmentTool"
+      },
+      {
+        "name": "dataclass",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(cls=None, /, *, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False, match_args=True, kw_only=False, slots=False, weakref_slot=False)"
+      },
+      {
+        "name": "development_tool_mcp_wrapper",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(tool_class)"
+      },
+      {
+        "name": "run_comprehensive_tests",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(**kwargs)"
+      },
+      {
+        "name": "abstractmethod",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.base_tool",
+        "is_async": false,
+        "signature": "(funcobj)"
+      },
+      {
+        "name": "audit_log",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.base_tool",
+        "is_async": false,
+        "signature": "(action: str, resource_id: Optional[str] = None, resource_type: Optional[str] = None, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, source_ip: Optional[str] = None, severity: str = 'info', tags: Optional[List[str]] = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "development_tool_mcp_wrapper",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.base_tool",
+        "is_async": false,
+        "signature": "(tool_class)"
+      },
+      {
+        "name": "documentation_generator",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator_simple",
+        "is_async": false,
+        "signature": "(input_path: str, output_path: str = 'docs', docstring_style: str = 'google', ignore_patterns: Optional[List[str]] = None, include_inheritance: bool = True, include_examples: bool = True, include_source_links: bool = True, format_type: str = 'markdown') -> Dict[str, Any]"
+      },
+      {
+        "name": "as_completed",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(fs, timeout=None)"
+      },
+      {
+        "name": "asdict",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(obj, *, dict_factory=<class 'dict'>)"
+      },
+      {
+        "name": "codebase_search",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(pattern: str, path: str = '.', case_insensitive: bool = False, whole_word: bool = False, regex: bool = False, extensions: Optional[str] = None, exclude: Optional[str] = None, max_depth: Optional[int] = None, context: int = 0, format: str = 'text', output: Optional[str] = None, compact: bool = False, group_by_file: bool = False, summary: bool = False) -> Union[str, Dict[str, Any]]"
+      },
+      {
+        "name": "dataclass",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(cls=None, /, *, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False, match_args=True, kw_only=False, slots=False, weakref_slot=False)"
+      },
+      {
+        "name": "documentation_generator",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator",
+        "is_async": false,
+        "signature": "(input_path: str, output_path: str = 'docs', docstring_style: str = 'google', ignore_patterns: Optional[List[str]] = None, include_inheritance: bool = True, include_examples: bool = True, include_source_links: bool = True, format_type: str = 'markdown') -> Dict[str, Any]"
+      },
+      {
+        "name": "dataclass",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.config",
+        "is_async": false,
+        "signature": "(cls=None, /, *, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False, match_args=True, kw_only=False, slots=False, weakref_slot=False)"
+      },
+      {
+        "name": "field",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.config",
+        "is_async": false,
+        "signature": "(*, default=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>, default_factory=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>, init=True, repr=True, hash=None, compare=True, metadata=None, kw_only=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>)"
+      },
+      {
+        "name": "set_config",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.config",
+        "is_async": false,
+        "signature": "(config: ipfs_datasets_py.mcp_server.tools.development_tools.config.DevelopmentToolsConfig) -> None"
+      },
+      {
+        "name": "test_generator",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator",
+        "is_async": false,
+        "signature": "(name: str, description: str = '', test_specification: Union[str, Dict[str, Any]] = None, output_dir: str = None, harness: str = None) -> Dict[str, Any]"
+      },
+      {
+        "name": "dataclass",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        "is_async": false,
+        "signature": "(cls=None, /, *, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False, match_args=True, kw_only=False, slots=False, weakref_slot=False)"
+      },
+      {
+        "name": "development_tool_mcp_wrapper",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        "is_async": false,
+        "signature": "(tool_class)"
+      },
+      {
+        "name": "lint_python_codebase",
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        "is_async": false,
+        "signature": "(**kwargs)"
+      }
+    ],
+    "cli": [
+      {
+        "name": "execute_command",
+        "module": "ipfs_datasets_py.mcp_server.tools.cli.execute_command",
+        "is_async": true,
+        "signature": "(command: str, args: Optional[List[str]] = None, timeout_seconds: int = 60) -> Dict[str, Any]"
+      }
+    ],
+    "functions": [
+      {
+        "name": "execute_python_snippet",
+        "module": "ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet",
+        "is_async": false,
+        "signature": "(code: str, timeout_seconds: int = 30, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      }
+    ],
+    "lizardpersons_function_tools": [
+      {
+        "name": "use_function_as_tool",
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.use_function_as_tool",
+        "is_async": false,
+        "signature": "(function_name: str, functions_docstring: str, args_dict: dict[str, typing.Any] = None, kwargs_dict: dict[str, typing.Any] = None) -> dict[str, typing.Any]"
+      },
+      {
+        "name": "list_tools_in_functions_dir",
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.list_tools_in_functions_dir",
+        "is_async": false,
+        "signature": "(get_docstring: bool = True) -> list[dict[str, str]]"
+      },
+      {
+        "name": "list_tools_in_cli_dir",
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.list_tools_in_cli_dir",
+        "is_async": false,
+        "signature": "(get_help_menu: bool = True) -> list[dict[str, str]]"
+      },
+      {
+        "name": "use_cli_program_as_tool",
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.use_cli_program_as_tool",
+        "is_async": false,
+        "signature": "(program_name: str, cli_arguments: list[str] = []) -> dict[str, str]"
+      },
+      {
+        "name": "get_current_time",
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.llm_context_tools.get_current_time",
+        "is_async": false,
+        "signature": "(format_type: str = 'iso', time_between: Optional[tuple[str | int | float, ...]] = None, deadline_date: Union[str, int, float, NoneType] = None, check_if_within_working_hours: bool = False) -> str"
+      }
+    ]
+  },
+  "test_results": {
+    "dataset_tools": {
+      "save_dataset": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "dataset_id": "test_value_for_dataset_data",
+          "destination": "/tmp/test_output.json",
+          "format": "json",
+          "location": "/tmp/test_output.json",
+          "size": 61
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset",
+        "is_async": true,
+        "signature": "(dataset_data: Union[str, Dict[str, Any]], destination: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      "convert_dataset_format": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "original_dataset_id": "test_dataset_123",
+          "dataset_id": "converted_test_dataset_123_test_target_format",
+          "original_format": "json",
+          "target_format": "test_target_format",
+          "num_records": 100,
+          "conversion_method": "mock",
+          "message": "Mock conversion from json to test_target_format format"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format",
+        "is_async": true,
+        "signature": "(dataset_id: str, target_format: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      "hf_load_dataset": {
+        "passed": false,
+        "message": "Exception: Dataset 'test_path' doesn't exist on the Hub or cannot be accessed.",
+        "result": {
+          "error": "Dataset 'test_path' doesn't exist on the Hub or cannot be accessed.",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/datasets/load.py\", line 2062, in load_dataset\n    builder_instance = load_dataset_builder(\n                       ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/datasets/load.py\", line 1782, in load_dataset_builder\n    dataset_module = dataset_module_factory(\n                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/datasets/load.py\", line 1652, in dataset_module_factory\n    raise e1 from None\n  File \"/home/barberb/ipfs_datasets_py/.venv/lib/python3.12/site-packages/datasets/load.py\", line 1578, in dataset_module_factory\n    raise DatasetNotFoundError(f\"Dataset '{path}' doesn't exist on the Hub or cannot be accessed.\") from e\ndatasets.exceptions.DatasetNotFoundError: Dataset 'test_path' doesn't exist on the Hub or cannot be accessed.\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset",
+        "is_async": false,
+        "signature": "(path: str, name: Optional[str] = None, data_dir: Optional[str] = None, data_files: Union[str, collections.abc.Sequence[str], collections.abc.Mapping[str, Union[str, collections.abc.Sequence[str]]], NoneType] = None, split: Union[str, datasets.splits.Split, NoneType] = None, cache_dir: Optional[str] = None, features: Optional[datasets.features.features.Features] = None, download_config: Optional[datasets.download.download_config.DownloadConfig] = None, download_mode: Union[datasets.download.download_manager.DownloadMode, str, NoneType] = None, verification_mode: Union[datasets.utils.info_utils.VerificationMode, str, NoneType] = None, keep_in_memory: Optional[bool] = None, save_infos: bool = False, revision: Union[str, datasets.utils.version.Version, NoneType] = None, token: Union[bool, str, NoneType] = None, streaming: bool = False, num_proc: Optional[int] = None, storage_options: Optional[dict] = None, trust_remote_code: Optional[bool] = None, **config_kwargs) -> Union[datasets.dataset_dict.DatasetDict, datasets.arrow_dataset.Dataset, datasets.dataset_dict.IterableDatasetDict, datasets.iterable_dataset.IterableDataset]"
+      },
+      "load_dataset": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "dataset_id": "mock_test_dataset",
+          "metadata": {
+            "description": "Mock dataset for test_dataset",
+            "features": [
+              "text",
+              "label"
+            ],
+            "citation": "Mock citation"
+          },
+          "summary": {
+            "num_records": 100,
+            "schema": "{'text': 'string', 'label': 'int'}",
+            "source": "test_dataset",
+            "format": "mock"
+          }
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset",
+        "is_async": true,
+        "signature": "(source: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      "process_dataset": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "original_dataset_id": "test_value_for_dataset_source",
+          "dataset_id": "processed_-4048310269705994678",
+          "num_operations": 1,
+          "num_records": 99,
+          "operations_summary": [
+            "filter"
+          ],
+          "transformation_ratio": 0.99
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset",
+        "is_async": true,
+        "signature": "(dataset_source: Union[str, dict, Any], operations: List[Dict[str, Any]], output_id: Optional[str] = None) -> Dict[str, Any]"
+      }
+    },
+    "ipfs_tools": {
+      "get_from_ipfs": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "cid": "QmTest123",
+          "content_type": "text",
+          "content": "Mock content for CID QmTest123",
+          "binary_size": 20
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs",
+        "is_async": true,
+        "signature": "(cid: str, output_path: Optional[str] = None, timeout_seconds: int = 60) -> Dict[str, Any]"
+      },
+      "pin_to_ipfs": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "cid": "Qm310035495",
+          "content_type": "file",
+          "size": 28,
+          "hash_algo": "test_hash_algo",
+          "recursive": true,
+          "wrap_with_directory": true
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs",
+        "is_async": true,
+        "signature": "(content_source: Union[str, Dict[str, Any]], recursive: bool = True, wrap_with_directory: bool = False, hash_algo: str = 'sha2-256') -> Dict[str, Any]"
+      }
+    },
+    "audit_tools": {
+      "record_audit_event": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "event_id": "36de0aff-0a8c-4b27-af37-027339eaa356",
+          "action": "test.action",
+          "severity": "test_severity",
+          "resource_id": null,
+          "resource_type": null
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event",
+        "is_async": false,
+        "signature": "(action: str, resource_id: Optional[str] = None, resource_type: Optional[str] = None, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, source_ip: Optional[str] = None, severity: str = 'info', tags: Optional[List[str]] = None) -> Dict[str, Any]"
+      },
+      "generate_audit_report": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "report_type": "security",
+          "output_format": "test_output_format",
+          "report": {
+            "report_type": "security",
+            "timestamp": "2025-06-23T23:56:13.363134",
+            "report_id": "597eece8-7ff9-4f7e-9d96-5576993e6373",
+            "summary": {
+              "total_events": 0,
+              "security_events": 0,
+              "authentication_events": 0,
+              "authentication_failures": 0,
+              "critical_events": 0,
+              "overall_risk_score": 0.0,
+              "risk_scores": {
+                "authentication": 0.0,
+                "access_control": 0.0,
+                "system_integrity": 0.0,
+                "compliance": 0.0,
+                "overall": 0.0
+              },
+              "anomalies_detected": 0
+            },
+            "risk_assessment": {
+              "scores": {
+                "authentication": 0.0,
+                "access_control": 0.0,
+                "system_integrity": 0.0,
+                "compliance": 0.0,
+                "overall": 0.0
+              },
+              "factors": [],
+              "trends": {
+                "trend_available": false,
+                "message": "Risk trends require historical data across multiple reports"
+              }
+            },
+            "anomalies": [],
+            "top_security_events": [],
+            "recommendations": [
+              "Maintain current security controls and monitoring"
+            ]
+          }
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report",
+        "is_async": true,
+        "signature": "(report_type: str = 'comprehensive', start_time: Optional[str] = None, end_time: Optional[str] = None, filters: Optional[Dict[str, Any]] = None, output_format: str = 'json', output_path: Optional[str] = None, include_details: bool = True) -> Dict[str, Any]"
+      }
+    },
+    "vector_tools": {
+      "search_vector_index": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "index_id": "test_index_id",
+          "top_k": 3,
+          "num_results": 3,
+          "results": [
+            {
+              "id": 0,
+              "distance": 0.95,
+              "metadata": {
+                "text": "result_0"
+              }
+            },
+            {
+              "id": 1,
+              "distance": 0.85,
+              "metadata": {
+                "text": "result_1"
+              }
+            },
+            {
+              "id": 2,
+              "distance": 0.75,
+              "metadata": {
+                "text": "result_2"
+              }
+            }
+          ]
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index",
+        "is_async": true,
+        "signature": "(index_id: str, query_vector: List[float], top_k: int = 5, include_metadata: bool = True, include_distances: bool = True, filter_metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      "create_vector_index": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "index_id": "index_3cd1bb7b",
+          "num_vectors": 2,
+          "dimension": 5,
+          "metric": "test_metric",
+          "vector_ids": null
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index",
+        "is_async": true,
+        "signature": "(vectors: List[List[float]], dimension: Optional[int] = None, metric: str = 'cosine', metadata: Optional[List[Dict[str, Any]]] = None, index_id: Optional[str] = None, index_name: Optional[str] = None) -> Dict[str, Any]"
+      },
+      "create_vector_store": {
+        "passed": true,
+        "message": "Returned <class 'ipfs_datasets_py.vector_tools.VectorStore'>",
+        "result": {
+          "result": "<ipfs_datasets_py.vector_tools.VectorStore object at 0x79cb8d0d7680>"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index",
+        "is_async": false,
+        "signature": "(dimension: int = 768) -> ipfs_datasets_py.vector_tools.VectorStore"
+      }
+    },
+    "provenance_tools": {
+      "record_provenance": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "provenance_id": "e26bf015-0753-4832-a942-bd1bbcdc5168",
+          "dataset_id": "test_dataset_123",
+          "operation": "test_operation",
+          "timestamp": 1750715773.4240503,
+          "record": {
+            "id": "e26bf015-0753-4832-a942-bd1bbcdc5168",
+            "record_type": "transformation",
+            "timestamp": 1750715773.4240503,
+            "agent_id": "fcf98a4a-10ab-45a6-acf5-7ae681845382",
+            "description": "Operation: test_operation",
+            "metadata": {
+              "tags": [
+                "test_item"
+              ],
+              "timestamp": null
+            },
+            "input_ids": [
+              "input_1",
+              "input_2"
+            ],
+            "output_ids": [],
+            "parameters": {
+              "test": "value"
+            },
+            "cid": null,
+            "transformation_type": "test_operation",
+            "tool": "mcp-tool",
+            "version": "",
+            "execution_time": null,
+            "success": true,
+            "error_message": null
+          }
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance",
+        "is_async": true,
+        "signature": "(dataset_id: str, operation: str, inputs: Optional[List[str]] = None, parameters: Optional[Dict[str, Any]] = None, description: Optional[str] = None, agent_id: Optional[str] = None, timestamp: Optional[str] = None, tags: Optional[List[str]] = None) -> Dict[str, Any]"
+      }
+    },
+    "security_tools": {
+      "check_access_permission": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "allowed": false,
+          "user_id": "test_user_id",
+          "resource_id": "test_resource_id",
+          "permission_type": "test_permission_type",
+          "resource_type": null
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission",
+        "is_async": true,
+        "signature": "(resource_id: str, user_id: str, permission_type: str = 'read', resource_type: Optional[str] = None) -> Dict[str, Any]"
+      }
+    },
+    "graph_tools": {
+      "query_knowledge_graph": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "results": [
+            {
+              "id": "node_1",
+              "type": "entity",
+              "label": "Sample Entity",
+              "properties": {
+                "name": "Test",
+                "value": 42
+              }
+            },
+            {
+              "id": "node_2",
+              "type": "relationship",
+              "label": "Sample Relation",
+              "source": "node_1",
+              "target": "node_3"
+            }
+          ],
+          "graph_id": "test_graph_id",
+          "query_type": "test_query_type",
+          "num_results": 2
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph",
+        "is_async": true,
+        "signature": "(graph_id: str, query: str, query_type: str = 'sparql', max_results: int = 100, include_metadata: bool = True) -> Dict[str, Any]"
+      }
+    },
+    "web_archive_tools": {
+      "extract_dataset_from_cdxj": {
+        "passed": false,
+        "message": "Tool returned status: error",
+        "result": {
+          "status": "error",
+          "error": "[Errno 2] No such file or directory: ''"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj",
+        "is_async": false,
+        "signature": "(cdxj_path: str, output_format: Literal['arrow', 'huggingface', 'dict'] = 'arrow') -> Dict[str, Any]"
+      },
+      "create_warc": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "warc_path": "/tmp/archive_test_url.warc",
+          "details": {
+            "output_file": "/tmp/archive_test_url.warc",
+            "url_count": 1,
+            "urls": [
+              "test_url"
+            ],
+            "creation_date": "2025-06-23T23:56:13.425602",
+            "metadata": {
+              "test": "value"
+            },
+            "file_size": 1024
+          }
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc",
+        "is_async": false,
+        "signature": "(url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      },
+      "extract_links_from_warc": {
+        "passed": false,
+        "message": "Tool returned status: error",
+        "result": {
+          "status": "error",
+          "error": "[Errno 2] No such file or directory: ''"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc",
+        "is_async": false,
+        "signature": "(warc_path: str) -> Dict[str, Any]"
+      },
+      "index_warc": {
+        "passed": false,
+        "message": "Tool returned status: error",
+        "result": {
+          "status": "error",
+          "error": "[Errno 2] No such file or directory: ''"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc",
+        "is_async": false,
+        "signature": "(warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> Dict[str, str]"
+      },
+      "extract_metadata_from_warc": {
+        "passed": false,
+        "message": "Tool returned status: error",
+        "result": {
+          "status": "error",
+          "error": "[Errno 2] No such file or directory: ''"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc",
+        "is_async": false,
+        "signature": "(warc_path: str) -> Dict[str, Any]"
+      },
+      "extract_text_from_warc": {
+        "passed": false,
+        "message": "Tool returned status: error",
+        "result": {
+          "status": "error",
+          "error": "[Errno 2] No such file or directory: ''"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc",
+        "is_async": false,
+        "signature": "(warc_path: str) -> Dict[str, Any]"
+      }
+    },
+    "development_tools": {
+      "asdict": {
+        "passed": false,
+        "message": "Exception: asdict() should be called on dataclass instances",
+        "result": {
+          "error": "asdict() should be called on dataclass instances",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/dataclasses.py\", line 1321, in asdict\n    raise TypeError(\"asdict() should be called on dataclass instances\")\nTypeError: asdict() should be called on dataclass instances\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(obj, *, dict_factory=<class 'dict'>)"
+      },
+      "create_test_runner": {
+        "passed": true,
+        "message": "Returned <class 'ipfs_datasets_py.mcp_server.tools.development_tools.test_runner.TestRunner'>",
+        "result": {
+          "result": "<ipfs_datasets_py.mcp_server.tools.development_tools.test_runner.TestRunner object at 0x79cb8d0d7680>"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(path: str = '.', run_unit_tests: bool = True, run_type_check: bool = True, run_linting: bool = True, run_dataset_tests: bool = True, test_framework: str = 'pytest', coverage: bool = True, verbose: bool = False, save_results: bool = True, output_formats: Optional[List[str]] = None) -> ipfs_datasets_py.mcp_server.tools.development_tools.base_tool.BaseDevelopmentTool"
+      },
+      "dataclass": {
+        "passed": false,
+        "message": "Exception: dataclass() got some positional-only arguments passed as keyword arguments: 'cls'",
+        "result": {
+          "error": "dataclass() got some positional-only arguments passed as keyword arguments: 'cls'",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: dataclass() got some positional-only arguments passed as keyword arguments: 'cls'\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        "is_async": false,
+        "signature": "(cls=None, /, *, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False, match_args=True, kw_only=False, slots=False, weakref_slot=False)"
+      },
+      "development_tool_mcp_wrapper": {
+        "passed": false,
+        "message": "Exception: 'str' object has no attribute '__name__'",
+        "result": {
+          "error": "'str' object has no attribute '__name__'",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py\", line 277, in development_tool_mcp_wrapper\n    mcp_function.__name__ = tool_class.__name__\n                            ^^^^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute '__name__'. Did you mean: '__ne__'?\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        "is_async": false,
+        "signature": "(tool_class)"
+      },
+      "run_comprehensive_tests": {
+        "passed": false,
+        "message": "Exception: asyncio.run() cannot be called from a running event loop",
+        "result": {
+          "error": "asyncio.run() cannot be called from a running event loop",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py\", line 267, in mcp_function\n    return loop.run_until_complete(tool.execute(**kwargs))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 663, in run_until_complete\n    self._check_running()\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 622, in _check_running\n    raise RuntimeError('This event loop is already running')\nRuntimeError: This event loop is already running\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py\", line 270, in mcp_function\n    return asyncio.run(tool.execute(**kwargs))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 190, in run\n    raise RuntimeError(\nRuntimeError: asyncio.run() cannot be called from a running event loop\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        "is_async": false,
+        "signature": "(**kwargs)"
+      },
+      "abstractmethod": {
+        "passed": false,
+        "message": "Exception: 'str' object has no attribute '__isabstractmethod__'",
+        "result": {
+          "error": "'str' object has no attribute '__isabstractmethod__'",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen abc>\", line 24, in abstractmethod\nAttributeError: 'str' object has no attribute '__isabstractmethod__'\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.base_tool",
+        "is_async": false,
+        "signature": "(funcobj)"
+      },
+      "audit_log": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "event_id": "f2289dbb-0f30-43ad-96bb-36edf8bba284",
+          "action": "test.action",
+          "severity": "test_severity",
+          "resource_id": null,
+          "resource_type": null
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.base_tool",
+        "is_async": false,
+        "signature": "(action: str, resource_id: Optional[str] = None, resource_type: Optional[str] = None, user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None, source_ip: Optional[str] = None, severity: str = 'info', tags: Optional[List[str]] = None) -> Dict[str, Any]"
+      },
+      "documentation_generator": {
+        "passed": true,
+        "message": "Returned <class 'dict'>",
+        "result": {
+          "result": "{'success': True, 'result': {'message': 'Documentation generation completed successfully', 'input_path': 'test_input_path', 'output_path': 'test_output_path', 'format_type': 'test_format_type', 'files"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator",
+        "is_async": false,
+        "signature": "(input_path: str, output_path: str = 'docs', docstring_style: str = 'google', ignore_patterns: Optional[List[str]] = None, include_inheritance: bool = True, include_examples: bool = True, include_source_links: bool = True, format_type: str = 'markdown') -> Dict[str, Any]"
+      },
+      "as_completed": {
+        "passed": true,
+        "message": "Returned <class 'generator'>",
+        "result": {
+          "result": "<generator object as_completed at 0x79cb8cf0d930>"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(fs, timeout=None)"
+      },
+      "codebase_search": {
+        "passed": true,
+        "message": "Returned <class 'dict'>",
+        "result": {
+          "result": "{'success': False, 'error': 'search_error', 'message': 'Search path does not exist: test_path', 'metadata': {'tool': 'codebase_search'}}"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        "is_async": false,
+        "signature": "(pattern: str, path: str = '.', case_insensitive: bool = False, whole_word: bool = False, regex: bool = False, extensions: Optional[str] = None, exclude: Optional[str] = None, max_depth: Optional[int] = None, context: int = 0, format: str = 'text', output: Optional[str] = None, compact: bool = False, group_by_file: bool = False, summary: bool = False) -> Union[str, Dict[str, Any]]"
+      },
+      "field": {
+        "passed": true,
+        "message": "Returned <class 'dataclasses.Field'>",
+        "result": {
+          "result": "Field(name=None,type=None,default=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>,default_factory=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>,init=True,repr=True,hash=None,compare=True,m"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.config",
+        "is_async": false,
+        "signature": "(*, default=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>, default_factory=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>, init=True, repr=True, hash=None, compare=True, metadata=None, kw_only=<dataclasses._MISSING_TYPE object at 0x79cb9fc01e20>)"
+      },
+      "set_config": {
+        "passed": true,
+        "message": "Returned <class 'NoneType'>",
+        "result": {
+          "result": "None"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.config",
+        "is_async": false,
+        "signature": "(config: ipfs_datasets_py.mcp_server.tools.development_tools.config.DevelopmentToolsConfig) -> None"
+      },
+      "test_generator": {
+        "passed": false,
+        "message": "Exception: 'str' object has no attribute 'test_generator'",
+        "result": {
+          "error": "'str' object has no attribute 'test_generator'",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/test_generator.py\", line 466, in test_generator\n    tool = TestGeneratorTool()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/test_generator.py\", line 47, in __init__\n    self.config = get_config().test_generator\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'test_generator'\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator",
+        "is_async": false,
+        "signature": "(name: str, description: str = '', test_specification: Union[str, Dict[str, Any]] = None, output_dir: str = None, harness: str = None) -> Dict[str, Any]"
+      },
+      "lint_python_codebase": {
+        "passed": false,
+        "message": "Exception: 'str' object has no attribute 'linting_tools'",
+        "result": {
+          "error": "'str' object has no attribute 'linting_tools'",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/base_tool.py\", line 257, in mcp_function\n    tool = tool_class()\n           ^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/linting_tools.py\", line 640, in lint_python_codebase\n    return LintingTools()\n           ^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/linting_tools.py\", line 422, in __init__\n    self.config = get_config().linting_tools\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'linting_tools'\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        "is_async": false,
+        "signature": "(**kwargs)"
+      }
+    },
+    "cli": {
+      "execute_command": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "command": "test_command",
+          "args": [],
+          "message": "Command 'test_command' received but not executed for security reasons"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.cli.execute_command",
+        "is_async": true,
+        "signature": "(command: str, args: Optional[List[str]] = None, timeout_seconds: int = 60) -> Dict[str, Any]"
+      }
+    },
+    "functions": {
+      "execute_python_snippet": {
+        "passed": true,
+        "message": "success",
+        "result": {
+          "status": "success",
+          "message": "Code snippet received (length: 9 chars) but not executed for security reasons. Use a specialized function for specific operations.",
+          "execution_time_ms": 0
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet",
+        "is_async": false,
+        "signature": "(code: str, timeout_seconds: int = 30, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]"
+      }
+    },
+    "lizardpersons_function_tools": {
+      "use_function_as_tool": {
+        "passed": false,
+        "message": "Exception: Function 'test_function_name' not found in tools directory.",
+        "result": {
+          "error": "Function 'test_function_name' not found in tools directory.",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/meta_tools/use_function_as_tool.py\", line 78, in use_function_as_tool\n    _verify_tool_call(function_name, functions_docstring)\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/meta_tools/use_function_as_tool.py\", line 46, in _verify_tool_call\n    raise FileNotFoundError(f\"Function '{function_name}' not found in tools directory.\")\nFileNotFoundError: Function 'test_function_name' not found in tools directory.\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.use_function_as_tool",
+        "is_async": false,
+        "signature": "(function_name: str, functions_docstring: str, args_dict: dict[str, typing.Any] = None, kwargs_dict: dict[str, typing.Any] = None) -> dict[str, typing.Any]"
+      },
+      "list_tools_in_functions_dir": {
+        "passed": true,
+        "message": "Returned <class 'list'>",
+        "result": {
+          "result": "[{'name': 'list_tools_in_cli_dir', 'docstring': \"Lists all working argparse-based CLI tool files in the tools/cli directory.\\n\\n    Args:\\n        get_help_menu (bool): If True, gets the tool's docstr"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.list_tools_in_functions_dir",
+        "is_async": false,
+        "signature": "(get_docstring: bool = True) -> list[dict[str, str]]"
+      },
+      "list_tools_in_cli_dir": {
+        "passed": true,
+        "message": "Returned <class 'list'>",
+        "result": {
+          "result": "[]"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.list_tools_in_cli_dir",
+        "is_async": false,
+        "signature": "(get_help_menu: bool = True) -> list[dict[str, str]]"
+      },
+      "use_cli_program_as_tool": {
+        "passed": false,
+        "message": "Exception: Program 'test_program_name' not found in cli tools directory '/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/cli'",
+        "result": {
+          "error": "Program 'test_program_name' not found in cli tools directory '/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/cli'",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/complete_mcp_discovery_test.py\", line 118, in test_tool_function\n    result = tool_func(**test_params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/meta_tools/use_cli_program_as_tool.py\", line 306, in use_cli_program_as_tool\n    raise FileNotFoundError(f\"Program '{program_name}' not found in cli tools directory '{cli_tools_dir.resolve()}'\")\nFileNotFoundError: Program 'test_program_name' not found in cli tools directory '/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/cli'\n"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.meta_tools.use_cli_program_as_tool",
+        "is_async": false,
+        "signature": "(program_name: str, cli_arguments: list[str] = []) -> dict[str, str]"
+      },
+      "get_current_time": {
+        "passed": true,
+        "message": "Returned <class 'str'>",
+        "result": {
+          "result": "False"
+        },
+        "module": "ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.llm_context_tools.get_current_time",
+        "is_async": false,
+        "signature": "(format_type: str = 'iso', time_between: Optional[tuple[str | int | float, ...]] = None, deadline_date: Union[str, int, float, NoneType] = None, check_if_within_working_hours: bool = False) -> str"
+      }
+    }
+  },
+  "summary": {
+    "total_tools": 49,
+    "total_tests": 49,
+    "passed": 28,
+    "failed": 16,
+    "success_rate": 57.14285714285714
+  }
+}
