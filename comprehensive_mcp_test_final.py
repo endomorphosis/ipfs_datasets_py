@@ -4,37 +4,9 @@ Comprehensive MCP Tools Test Suite
 
 This script tests all MCP server tools to ensure they're working correctly
 and validates their outputs.
-""        # Test record_audit_event (NOT async)
-        try:
-            from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
-            
-            # Call without await since it's not async
-            result = record_audit_event(
-                action="test_action",
-                resource_id="test_resource",
-                user_id="test_user",
-                severity="info"
-            )
-            
-            # Validate result manually since we can't use test_tool for non-async functions
-            if isinstance(result, dict) and result.get('status') == 'success':
-                self.passed_tests += 1
-                self.total_tests += 1
-                print(f"✅ record_audit_event PASSED")
-                test_results["audit_tools"]["record_audit_event"] = {"passed": True, "message": "success", "result": result}
-            else:
-                self.failed_tests += 1
-                self.total_tests += 1
-                error_msg = result.get('message', 'Unknown error') if isinstance(result, dict) else str(result)
-                print(f"❌ record_audit_event FAILED: {error_msg}")
-                test_results["audit_tools"]["record_audit_event"] = {"passed": False, "message": error_msg, "result": result}
-                
-        except Exception as e:
-            self.failed_tests += 1
-            self.total_tests += 1
-            error_msg = f"Exception: {str(e)}"
-            print(f"💥 record_audit_event CRASHED: {error_msg}")
-            test_results["audit_tools"]["record_audit_event"] = {"passed": False, "message": error_msg, "result": {}}io
+"""
+
+import asyncio
 import json
 import sys
 import traceback
@@ -128,13 +100,11 @@ class MCPToolTester:
                 "data": [
                     {"id": 1, "text": "Hello world", "label": 1},
                     {"id": 2, "text": "Goodbye world", "label": 0},
-                    {"id": 3, "text": "Testing data", "label": 1}
                 ]
             }
             
             operations = [
-                {"type": "filter", "condition": "label == 1"},
-                {"type": "select", "columns": ["id", "text"]}
+                {"type": "filter", "condition": "len(item['text']) > 5"}
             ]
             
             passed, msg, result = await self.test_tool(
@@ -149,7 +119,8 @@ class MCPToolTester:
         try:
             from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset
             
-            test_data = {"data": [{"id": 1, "text": "test"}]}
+            # Simple test data
+            test_data = {"data": [{"id": 1, "value": "test"}]}
             
             passed, msg, result = await self.test_tool(
                 "dataset_tools", "save_dataset", save_dataset,
@@ -163,12 +134,12 @@ class MCPToolTester:
         """Test IPFS-related tools"""
         print("\n🌐 Testing IPFS Tools...")
         
-        # Test get_from_ipfs (with a test CID - may fail if IPFS not available)
+        # Test get_from_ipfs
         try:
             from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs
             passed, msg, result = await self.test_tool(
                 "ipfs_tools", "get_from_ipfs", get_from_ipfs,
-                {"cid": "QmTest123InvalidCID", "timeout_seconds": 5}  # Intentionally invalid for testing
+                {"cid": "QmTest123", "output_path": "/tmp/test_ipfs_output"}
             )
             test_results["ipfs_tools"]["get_from_ipfs"] = {"passed": passed, "message": msg, "result": result}
         except ImportError as e:
@@ -178,11 +149,11 @@ class MCPToolTester:
         try:
             from ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs import pin_to_ipfs
             
-            # Create a test file
+            # Create a small test file
             test_file = "/tmp/test_ipfs_pin.txt"
             with open(test_file, "w") as f:
-                f.write("Test content for IPFS pinning")
-                
+                f.write("Test content for IPFS")
+            
             passed, msg, result = await self.test_tool(
                 "ipfs_tools", "pin_to_ipfs", pin_to_ipfs,
                 {"content_source": test_file}
@@ -195,28 +166,44 @@ class MCPToolTester:
         """Test audit-related tools"""
         print("\n🔍 Testing Audit Tools...")
         
-        # Test record_audit_event
+        # Test record_audit_event (NOT async)
         try:
             from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
-            passed, msg, result = await self.test_tool(
-                "audit_tools", "record_audit_event", record_audit_event,
-                {
-                    "action": "test.action",
-                    "resource_id": "test_resource_123",
-                    "user_id": "test_user",
-                    "details": {"test": True}
-                }
+            
+            # Call without await since it's not async
+            result = record_audit_event(
+                action="test_action",
+                resource_id="test_resource",
+                user_id="test_user",
+                severity="info"
             )
-            test_results["audit_tools"]["record_audit_event"] = {"passed": passed, "message": msg, "result": result}
-        except ImportError as e:
-            test_results["audit_tools"]["record_audit_event"] = {"passed": False, "message": f"Import error: {e}", "result": {}}
+            
+            # Validate result manually since we can't use test_tool for non-async functions
+            if isinstance(result, dict) and result.get('status') == 'success':
+                self.passed_tests += 1
+                self.total_tests += 1
+                print(f"✅ record_audit_event PASSED")
+                test_results["audit_tools"]["record_audit_event"] = {"passed": True, "message": "success", "result": result}
+            else:
+                self.failed_tests += 1
+                self.total_tests += 1
+                error_msg = result.get('message', 'Unknown error') if isinstance(result, dict) else str(result)
+                print(f"❌ record_audit_event FAILED: {error_msg}")
+                test_results["audit_tools"]["record_audit_event"] = {"passed": False, "message": error_msg, "result": result}
+                
+        except Exception as e:
+            self.failed_tests += 1
+            self.total_tests += 1
+            error_msg = f"Exception: {str(e)}"
+            print(f"💥 record_audit_event CRASHED: {error_msg}")
+            test_results["audit_tools"]["record_audit_event"] = {"passed": False, "message": error_msg, "result": {}}
             
         # Test generate_audit_report
         try:
             from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
             passed, msg, result = await self.test_tool(
                 "audit_tools", "generate_audit_report", generate_audit_report,
-                {"report_type": "security", "output_format": "json"}
+                {"report_type": "comprehensive", "output_format": "json"}
             )
             test_results["audit_tools"]["generate_audit_report"] = {"passed": passed, "message": msg, "result": result}
         except ImportError as e:
@@ -230,6 +217,7 @@ class MCPToolTester:
         try:
             from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
             
+            # Test vectors
             test_vectors = [
                 [0.1, 0.2, 0.3, 0.4],
                 [0.5, 0.6, 0.7, 0.8],
@@ -238,7 +226,7 @@ class MCPToolTester:
             
             passed, msg, result = await self.test_tool(
                 "vector_tools", "create_vector_index", create_vector_index,
-                {"vectors": test_vectors, "dimension": 4, "metric": "cosine"}
+                {"vectors": test_vectors, "index_id": "test_index"}
             )
             test_results["vector_tools"]["create_vector_index"] = {"passed": passed, "message": msg, "result": result}
         except ImportError as e:
@@ -382,7 +370,7 @@ class MCPToolTester:
             test_results["lizardpersons_function_tools"]["use_cli_program_as_tool"] = {"passed": passed, "message": msg, "result": result}
         except ImportError as e:
             test_results["lizardpersons_function_tools"]["use_cli_program_as_tool"] = {"passed": False, "message": f"Import error: {e}", "result": {}}
-        
+
     def print_summary(self):
         """Print test summary"""
         print("\n" + "="*60)

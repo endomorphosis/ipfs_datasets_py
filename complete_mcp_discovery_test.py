@@ -221,6 +221,58 @@ class CompleteMCPToolTester:
                 with open(test_file, "w") as f:
                     f.write("Test content for MCP testing")
                 params[param_name] = test_file
+            elif (tool_name.startswith("extract_") or tool_name == "index_warc") and param_name in ["warc_path", "cdxj_path"]:
+                # Create test WARC or CDXJ files for web archive tools
+                if param_name == "warc_path":
+                    test_warc_content = """WARC/1.0
+WARC-Type: warcinfo
+WARC-Date: 2023-01-01T00:00:00Z
+WARC-Record-ID: <urn:uuid:test-record-1>
+Content-Length: 0
+
+WARC/1.0
+WARC-Type: response
+WARC-Target-URI: http://example.com/
+WARC-Date: 2023-01-01T00:00:01Z
+WARC-Record-ID: <urn:uuid:test-record-2>
+Content-Type: application/http; msgtype=response
+Content-Length: 100
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<html><head><title>Test</title></head><body>Hello World</body></html>
+"""
+                    test_file = "/tmp/mcp_test_archive.warc"
+                    with open(test_file, "w") as f:
+                        f.write(test_warc_content)
+                    params[param_name] = test_file
+                elif param_name == "cdxj_path":
+                    test_cdxj_content = """com,example)/ 20230101000001 {"url": "http://example.com/", "mime": "text/html", "status": "200", "digest": "sha1:ABC123", "length": "100", "offset": "123", "filename": "test.warc.gz"}
+"""
+                    test_file = "/tmp/mcp_test_index.cdxj"
+                    with open(test_file, "w") as f:
+                        f.write(test_cdxj_content)
+                    params[param_name] = test_file
+            elif tool_name == "test_generator" and param_name == "test_specification":
+                params[param_name] = {
+                    "imports": ["import unittest"],
+                    "tests": [
+                        {
+                            "name": "test_example", 
+                            "description": "Test example functionality",
+                            "assertions": ["self.assertTrue(True)"],
+                            "parametrized": False
+                        }
+                    ]
+                }
+            elif tool_name == "lint_python_codebase" and param_name in ["patterns", "exclude_patterns"]:
+                if param_name == "patterns":
+                    params[param_name] = ["*.py"]
+                else:
+                    params[param_name] = [".venv", "__pycache__"]
+            elif tool_name == "development_tool_mcp_wrapper" and param_name == "tool_class":
+                params[param_name] = "TestToolClass"
             elif param_name in ["source", "destination", "cid", "dataset_id", "action", "query"] and param.annotation == str:
                 # Provide realistic test values
                 if param_name == "source":

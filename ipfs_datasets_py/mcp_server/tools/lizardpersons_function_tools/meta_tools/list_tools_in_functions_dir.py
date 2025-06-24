@@ -19,15 +19,17 @@ def list_tools_in_functions_dir(get_docstring: bool = True) -> list[dict[str, st
         raise ValueError(f"get_docstring must be a boolean value, not {type(get_docstring)}.")
 
     this_dir = Path(__file__).parent
+    functions_dir = this_dir.parent / "functions"  # Look in ../functions directory
     python_files = []
 
-    for file in this_dir.rglob('*.py'):
-        if (not file.name.startswith('_') and
-            file.name != 'list_tools_in_functions_dir.py'):
-            
-            file_dict = {
-                'name': file.stem,  # Get the name without the .py extension
-            }
+    # Look specifically in the functions directory
+    if functions_dir.exists():
+        for file in functions_dir.glob('*.py'):
+            if not file.name.startswith('_'):
+                
+                file_dict = {
+                    'name': file.stem,  # Get the name without the .py extension
+                }
             if get_docstring:
                 try:
                     with open(file, 'r', encoding='utf-8') as f:

@@ -1,104 +1,184 @@
 {
-  "dataset_tools": {
-    "load_dataset": {
-      "passed": true,
-      "message": "success",
+  "timestamp": "2025-06-24T10:29:40.772025",
+  "summary": {
+    "total": 30,
+    "passed": 11,
+    "failed": 19,
+    "pass_rate": 36.666666666666664
+  },
+  "tools": [
+    {
+      "tool": "load_dataset",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "dataset_id": "dataset_imdb_137818427698416",
+        "dataset_id": "mock_test_dataset",
         "metadata": {
-          "description": "",
-          "citation": "",
-          "homepage": "",
-          "license": "",
-          "version": "0.0.0",
-          "features": "{'text': Value(dtype='string', id=None), 'label': ClassLabel(names=['neg', 'pos'], id=None)}"
+          "description": "Mock dataset for test_dataset",
+          "features": [
+            "text",
+            "label"
+          ],
+          "citation": "Mock citation"
         },
         "summary": {
-          "num_records": 10,
-          "schema": "{'text': Value(dtype='string', id=None), 'label': ClassLabel(names=['neg', 'pos'], id=None)}",
-          "source": "imdb",
-          "format": "auto-detected"
+          "num_records": 100,
+          "schema": "{'text': 'string', 'label': 'int'}",
+          "source": "test_dataset",
+          "format": "mock"
         }
       }
     },
-    "process_dataset": {
-      "passed": true,
-      "message": "success",
+    {
+      "tool": "save_dataset",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "original_dataset_id": "{'data': [{'id': 1, 'text': 'Hello world', 'label'",
-        "dataset_id": "processed_2920079846989290026",
+        "dataset_id": "mock_dataset_-5970189054381340297",
+        "destination": "/tmp/test.json",
+        "format": "json",
+        "location": "/tmp/test.json",
+        "size": 16,
+        "record_count": 0
+      }
+    },
+    {
+      "tool": "process_dataset",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "original_dataset_id": "{'test': 'data'}",
+        "dataset_id": "processed_-5970189054381340297",
         "num_operations": 1,
         "num_records": 1,
         "operations_summary": [
-          "filter"
+          "test"
         ],
-        "transformation_ratio": 0.5
+        "transformation_ratio": 1.0
       }
     },
-    "save_dataset": {
-      "passed": true,
-      "message": "success",
+    {
+      "tool": "convert_dataset_format",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "dataset_id": "mock_dataset_-8590150590938349895",
-        "destination": "/tmp/test_dataset.json",
-        "format": "json",
-        "location": "/tmp/test_dataset.json",
-        "size": 38,
-        "record_count": 1
-      }
-    }
-  },
-  "ipfs_tools": {
-    "get_from_ipfs": {
-      "passed": false,
-      "message": "Tool error: module 'ipfs_kit_py' has no attribute 'get_async'",
-      "result": {
-        "status": "error",
-        "message": "module 'ipfs_kit_py' has no attribute 'get_async'",
-        "cid": "QmTest123"
+        "original_dataset_id": "test",
+        "dataset_id": "converted_test_json",
+        "original_format": "json",
+        "target_format": "json",
+        "num_records": 100,
+        "conversion_method": "mock",
+        "message": "Mock conversion from json to json format"
       }
     },
-    "pin_to_ipfs": {
-      "passed": true,
-      "message": "success",
+    {
+      "tool": "get_from_ipfs",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "cid": "Qm445458705",
-        "content_type": "file",
-        "size": 21,
+        "cid": "QmTest123",
+        "content_type": "text",
+        "content": "Mock content for CID QmTest123",
+        "binary_size": 20
+      }
+    },
+    {
+      "tool": "pin_to_ipfs",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "cid": "Qm618659703",
+        "content_type": "data",
+        "size": 16,
         "hash_algo": "sha2-256",
         "recursive": true,
         "wrap_with_directory": false
       }
-    }
-  },
-  "audit_tools": {
-    "record_audit_event": {
-      "passed": true,
-      "message": "success",
+    },
+    {
+      "tool": "create_vector_index",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "event_id": "f4da62bb-9205-4ef4-8465-4fb0f755034b",
+        "index_id": "index_518278bd",
+        "num_vectors": 2,
+        "dimension": 3,
+        "metric": "cosine",
+        "vector_ids": null
+      }
+    },
+    {
+      "tool": "search_vector_index",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "index_id": "test_index",
+        "top_k": 5,
+        "num_results": 3,
+        "results": [
+          {
+            "id": 0,
+            "distance": 0.95,
+            "metadata": {
+              "text": "result_0"
+            }
+          },
+          {
+            "id": 1,
+            "distance": 0.85,
+            "metadata": {
+              "text": "result_1"
+            }
+          },
+          {
+            "id": 2,
+            "distance": 0.75,
+            "metadata": {
+              "text": "result_2"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "query_knowledge_graph",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.knowledge_graph_tools'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.knowledge_graph_tools'\n"
+    },
+    {
+      "tool": "record_audit_event",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "event_id": "91eae4ae-c63f-4be1-bbb7-686a701571f9",
         "action": "test_action",
         "severity": "info",
-        "resource_id": "test_resource",
+        "resource_id": null,
         "resource_type": null
       }
     },
-    "generate_audit_report": {
-      "passed": true,
-      "message": "success",
+    {
+      "tool": "generate_audit_report",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
         "report_type": "comprehensive",
         "output_format": "json",
         "report": {
           "report_type": "comprehensive",
-          "timestamp": "2025-06-24T09:40:48.087004",
-          "report_id": "88a7b9af-4af0-4b26-8418-f63550cd3ba8",
+          "timestamp": "2025-06-24T10:29:40.698339",
+          "report_id": "fa08c1a5-395a-4a3a-86bd-f69f7e23cad4",
           "executive_summary": {
             "total_events": 0,
             "overall_risk_score": 0.0,
@@ -143,8 +223,8 @@
           },
           "security": {
             "report_type": "security",
-            "timestamp": "2025-06-24T09:40:48.086568",
-            "report_id": "161c9e8d-338d-4783-b320-947678ef68a2",
+            "timestamp": "2025-06-24T10:29:40.697806",
+            "report_id": "0b16eef5-13a1-4731-99eb-a52e9e1894ff",
             "summary": {
               "total_events": 0,
               "security_events": 0,
@@ -183,8 +263,8 @@
           },
           "compliance": {
             "report_type": "compliance",
-            "timestamp": "2025-06-24T09:40:48.086862",
-            "report_id": "4a143351-7ace-4e4c-b134-103fd7574fa0",
+            "timestamp": "2025-06-24T10:29:40.698166",
+            "report_id": "ff521106-7200-4ea2-a111-bc3a3298955a",
             "summary": {
               "overall_compliance_percentage": 0.0,
               "frameworks_analyzed": 3,
@@ -466,8 +546,8 @@
           },
           "operations": {
             "report_type": "operational",
-            "timestamp": "2025-06-24T09:40:48.086958",
-            "report_id": "b4cea635-1cfd-4323-9852-d9752a2635fb",
+            "timestamp": "2025-06-24T10:29:40.698281",
+            "report_id": "9e7a8000-7b62-47d2-b64d-d9c13361bcfb",
             "summary": {
               "total_events": 0,
               "event_distribution": {
@@ -512,84 +592,38 @@
           ]
         }
       }
-    }
-  },
-  "vector_tools": {
-    "create_vector_index": {
-      "passed": true,
-      "message": "success",
-      "result": {
-        "status": "success",
-        "index_id": "test_index",
-        "num_vectors": 3,
-        "dimension": 4,
-        "metric": "cosine",
-        "vector_ids": null
-      }
     },
-    "search_vector_index": {
-      "passed": true,
-      "message": "success",
+    {
+      "tool": "check_access_permission",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.permission_tools'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.permission_tools'\n"
+    },
+    {
+      "tool": "record_provenance",
+      "status": "PASS",
+      "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "index_id": "test_index",
-        "top_k": 5,
-        "num_results": 3,
-        "results": [
-          {
-            "id": 0,
-            "distance": 0.95,
-            "metadata": {
-              "text": "result_0"
-            }
-          },
-          {
-            "id": 1,
-            "distance": 0.85,
-            "metadata": {
-              "text": "result_1"
-            }
-          },
-          {
-            "id": 2,
-            "distance": 0.75,
-            "metadata": {
-              "text": "result_2"
-            }
-          }
-        ]
-      }
-    }
-  },
-  "provenance_tools": {
-    "record_provenance": {
-      "passed": true,
-      "message": "success",
-      "result": {
-        "status": "success",
-        "provenance_id": "ad24677e-8a79-4b6b-8180-52dde7381a4d",
-        "dataset_id": "test_dataset_123",
-        "operation": "test_transformation",
-        "timestamp": 1750750848.131739,
+        "provenance_id": "12a1abb7-ef1c-46c2-8c24-9fa76edb91ba",
+        "dataset_id": "test_dataset",
+        "operation": "test_operation",
+        "timestamp": 1750753780.7283149,
         "record": {
-          "id": "ad24677e-8a79-4b6b-8180-52dde7381a4d",
+          "id": "12a1abb7-ef1c-46c2-8c24-9fa76edb91ba",
           "record_type": "transformation",
-          "timestamp": 1750750848.131739,
-          "agent_id": "b6d447ab-ca6a-403d-9d36-218da0c23722",
-          "description": "Operation: test_transformation",
+          "timestamp": 1750753780.7283149,
+          "agent_id": "9f95d20a-36d0-4f87-a5bc-d9df461f6ef5",
+          "description": "Operation: test_operation",
           "metadata": {
             "tags": [],
             "timestamp": null
           },
-          "input_ids": [
-            "input_dataset_1"
-          ],
+          "input_ids": [],
           "output_ids": [],
-          "parameters": {
-            "test_param": "test_value"
-          },
+          "parameters": {},
           "cid": null,
-          "transformation_type": "test_transformation",
+          "transformation_type": "test_operation",
           "tool": "mcp-tool",
           "version": "",
           "execution_time": null,
@@ -597,57 +631,118 @@
           "error_message": null
         }
       }
-    }
-  },
-  "security_tools": {
-    "check_access_permission": {
-      "passed": true,
-      "message": "success",
+    },
+    {
+      "tool": "archive_webpage",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.archive_webpage'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.archive_webpage'\n"
+    },
+    {
+      "tool": "fetch_archived_page",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.fetch_archived_page'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.fetch_archived_page'\n"
+    },
+    {
+      "tool": "search_archive",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.search_archive'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.search_archive'\n"
+    },
+    {
+      "tool": "get_archive_metadata",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.get_archive_metadata'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.get_archive_metadata'\n"
+    },
+    {
+      "tool": "export_archive_snapshot",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.export_archive_snapshot'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.export_archive_snapshot'\n"
+    },
+    {
+      "tool": "test_generator",
+      "status": "FAIL",
+      "message": "validation_error",
       "result": {
-        "status": "success",
-        "allowed": false,
-        "user_id": "test_user",
-        "resource_id": "test_resource_123",
-        "permission_type": "read",
-        "resource_type": null
+        "success": false,
+        "error": "validation_error",
+        "message": "Test specification is required",
+        "details": {},
+        "metadata": {
+          "tool": "test_generator",
+          "category": "testing",
+          "timestamp": "2025-06-24T08:29:40.767590Z"
+        }
       }
-    }
-  },
-  "graph_tools": {},
-  "web_archive_tools": {
-    "extract_text_from_warc": {
-      "passed": false,
-      "message": "Exception: extract_text_from_warc() got an unexpected keyword argument 'warc_file_path'",
-      "result": {}
     },
-    "index_warc": {
-      "passed": false,
-      "message": "Exception: index_warc() got an unexpected keyword argument 'warc_file_path'",
-      "result": {}
-    }
-  },
-  "development_tools": {
-    "generate_test_cases": {
-      "passed": false,
-      "message": "Import error: cannot import name 'generate_test_cases' from 'ipfs_datasets_py.mcp_server.tools.development_tools.test_generator' (/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/development_tools/test_generator.py)",
-      "result": {}
+    {
+      "tool": "code_analyzer",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.code_analyzer'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.code_analyzer'\n"
     },
-    "lint_python_codebase": {
-      "passed": false,
-      "message": "Exception: lint_python_codebase() got an unexpected keyword argument 'include_patterns'",
-      "result": {}
-    }
-  },
-  "lizardpersons_function_tools": {
-    "use_function_as_tool": {
-      "passed": false,
-      "message": "Exception: use_function_as_tool() got an unexpected keyword argument 'args'",
-      "result": {}
+    {
+      "tool": "lint_python_codebase",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.lint_python_codebase'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.lint_python_codebase'\n"
     },
-    "use_cli_program_as_tool": {
-      "passed": false,
-      "message": "Exception: use_cli_program_as_tool() got an unexpected keyword argument 'args'",
-      "result": {}
+    {
+      "tool": "dependency_scanner",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.dependency_scanner'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.dependency_scanner'\n"
+    },
+    {
+      "tool": "performance_profiler",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.performance_profiler'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.performance_profiler'\n"
+    },
+    {
+      "tool": "security_scanner",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.security_scanner'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.security_scanner'\n"
+    },
+    {
+      "tool": "documentation_generator",
+      "status": "FAIL",
+      "message": "documentation_generator() got an unexpected keyword argument 'name'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 205, in test_tool\n    result = func(**args)\n             ^^^^^^^^^^^^\nTypeError: documentation_generator() got an unexpected keyword argument 'name'\n"
+    },
+    {
+      "tool": "build_system_manager",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.build_system_manager'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.build_system_manager'\n"
+    },
+    {
+      "tool": "version_controller",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.version_controller'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.version_controller'\n"
+    },
+    {
+      "tool": "deployment_manager",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.deployment_manager'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.deployment_manager'\n"
+    },
+    {
+      "tool": "use_function_as_tool",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_function_as_tool'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_function_as_tool'\n"
+    },
+    {
+      "tool": "use_cli_program_as_tool",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_cli_program_as_tool'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_cli_program_as_tool'\n"
     }
-  }
+  ]
 }
