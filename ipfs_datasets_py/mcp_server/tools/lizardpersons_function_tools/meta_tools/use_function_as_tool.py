@@ -78,12 +78,12 @@ def use_function_as_tool(
     _verify_tool_call(function_name, functions_docstring)
 
     try:
-        module = importlib.import_module(f'tools.functions.{function_name}')
+        module = importlib.import_module(f'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.functions.{function_name}')
         function = getattr(module, function_name)
     except (ModuleNotFoundError, ImportError) as e:
         raise ImportError(f"Could not import module for function '{function_name}': {e}")
     except AttributeError:
-        raise AttributeError(f"Function '{function_name}' not found in module 'tools.functions.{function_name}'.")
+        raise AttributeError(f"Function '{function_name}' not found in module 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.functions.{function_name}'.")
 
     assert callable(function), f"Function '{function_name}' is not callable."
     try:

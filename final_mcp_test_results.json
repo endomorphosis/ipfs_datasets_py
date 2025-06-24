@@ -5,7 +5,7 @@
       "message": "success",
       "result": {
         "status": "success",
-        "dataset_id": "dataset_imdb_128063038894688",
+        "dataset_id": "dataset_imdb_136879118018048",
         "metadata": {
           "description": "",
           "citation": "",
@@ -29,7 +29,7 @@
       "message": "success",
       "result": {
         "status": "success",
-        "cid": "Qm387934046",
+        "cid": "Qm087293674",
         "content_type": "file",
         "size": 21,
         "hash_algo": "sha2-256",
@@ -44,7 +44,7 @@
       "message": "success",
       "result": {
         "status": "success",
-        "event_id": "4fb5936b-a37d-424d-bb81-0b13d8c29fec",
+        "event_id": "4be8d6da-ab31-4b1d-b406-76b15bb86cde",
         "action": "test_action",
         "severity": "info",
         "resource_id": "test_resource",
@@ -74,7 +74,7 @@
         "metadata": {
           "tool": "test_generator",
           "category": "testing",
-          "timestamp": "2025-06-24T08:09:27.418229Z",
+          "timestamp": "2025-06-24T08:49:03.528528Z",
           "specification_keys": [
             "harness",
             "tests",
@@ -117,21 +117,31 @@
         "metadata": {
           "tool": "linting_tools",
           "category": "development",
-          "timestamp": "2025-06-24T08:09:27.633947Z"
+          "timestamp": "2025-06-24T08:49:03.872289Z"
         }
       }
     }
   },
   "lizardpersons_function_tools": {
     "use_function_as_tool": {
-      "passed": false,
-      "message": "Exception: Function 'test_function_name' does not match the provided docstring. Please check it and try again.",
-      "result": {}
+      "passed": true,
+      "message": "success",
+      "result": {
+        "name": "test_function_name",
+        "result": {
+          "status": "success",
+          "result": "Processed: test",
+          "function": "test_function_name"
+        }
+      }
     },
     "use_cli_program_as_tool": {
-      "passed": false,
-      "message": "Exception: Program 'test_program_name' not found in cli tools directory '/home/barberb/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/cli'",
-      "result": {}
+      "passed": true,
+      "message": "success",
+      "result": {
+        "name": "test_program_name",
+        "results": "{\"status\": \"success\", \"program\": \"test_program_name\", \"input\": \"default\", \"format\": \"json\", \"result\": \"Processed input: default\"}"
+      }
     }
   }
 }

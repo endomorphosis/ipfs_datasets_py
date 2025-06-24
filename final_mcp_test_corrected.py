@@ -261,10 +261,11 @@ class MCPToolTester:
                 with open(test_func_file, 'r') as f:
                     content = f.read()
                 
-                # Extract docstring (simple approach)
+                # Extract the function docstring (second docstring in the file)
                 import re
-                docstring_match = re.search(r'"""([^"]+)"""', content)
-                docstring = docstring_match.group(1).strip() if docstring_match else "Test function docstring"
+                docstring_matches = re.findall(r'"""([^"]+)"""', content)
+                # Use the function docstring (second one) if available, otherwise use the first
+                docstring = docstring_matches[1].strip() if len(docstring_matches) > 1 else (docstring_matches[0].strip() if docstring_matches else "Test function docstring")
                 
                 # Call the tool in a thread since it's a sync function
                 def run_function_tool():
