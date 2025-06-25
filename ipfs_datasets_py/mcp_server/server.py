@@ -187,7 +187,7 @@ class IPFSDatasetsMCPServer:
 
         logger.info(f"Registered {len(self.tools)} tools with the MCP server")
 
-    def _register_tools_from_subdir(self, subdir_path: Path):
+    def _register_tools_from_subdir(self, subdir_path: Path) -> None:
         """
         Register all tools from a subdirectory.
 

@@ -7,7 +7,7 @@ class ipfs_multiformats_py:
         return None
 
     # Step 1: Hash the file content with SHA-256
-    def get_file_sha256(self, file_path):
+    def get_file_sha256(self, file_path: str) -> bytes:
         hasher = hashlib.sha256()
         with open(file_path, 'rb') as f:
             while chunk := f.read(8192):
@@ -15,12 +15,12 @@ class ipfs_multiformats_py:
         return hasher.digest()
 
     # Step 2: Wrap the hash in Multihash format
-    def get_multihash_sha256(self, file_content_hash):
+    def get_multihash_sha256(self, file_content_hash: str) -> bytes:
         mh = self.multihash.wrap(file_content_hash, 'sha2-256')
         return mh
 
     # Step 3: Generate CID from Multihash (CIDv1)
-    def get_cid(self, file_path):
+    def get_cid(self, file_path: str) -> str:
         file_content_hash = self.get_file_sha256(file_path)
         mh = self.get_multihash_sha256(file_content_hash)
         cid = CID('base32', 'raw', mh)

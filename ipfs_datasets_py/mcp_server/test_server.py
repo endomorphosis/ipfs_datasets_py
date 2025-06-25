@@ -7,8 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ipfs_datasets_py.mcp_server import start_server, IPFSDatasetsMCPServer
-from modelcontextprotocol.client import MCPClient
-
+from .client import MCPClient
 
 async def test_mcp_server():
     """Test the MCP server implementation."""

@@ -873,7 +873,7 @@ function fetchUpdatedData() {
         }
 
         # Download core libraries (Bootstrap, jQuery, Chart.js)
-        # In a real implementation, we might include these files directly
+        # In a real implementation, we might include these files directly # TODO Real implementation-itis strikes again!
         # or use CDN links. For this example, we'll create placeholder files.
         library_files = {
             "css/bootstrap.min.css": "/* Bootstrap CSS would be here */",

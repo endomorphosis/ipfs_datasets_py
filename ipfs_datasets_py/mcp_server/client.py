@@ -1,96 +1,59 @@
 """
-Client implementation for the IPFS Datasets MCP server.
+Simplified client implementation for the IPFS Datasets MCP server.
 
-This module provides a convenient Python client for interacting with
+This module provides a streamlined Python client for interacting with
 the IPFS Datasets MCP server from your Python code.
 """
 from __future__ import annotations
+import inspect
+from typing import Dict, List, Any, Optional, Self, Callable
+from functools import wraps
 
-import asyncio
-import json
-from typing import Dict, List, Any, Optional, Union
-
-# Import the MCP client
+# Import the actual MCP client (fix circular import)
 try:
-    from modelcontextprotocol.client import MCPClient
+    from mcp import Client as MCPClient
 except ImportError:
-    raise ImportError(
-        "The modelcontextprotocol package is required for the IPFS Datasets MCP client. "
-        "Install it with 'pip install modelcontextprotocol'"
-    )
-
-
-class IPFSDatasetsMCPClient:
-    """
-    Client for the IPFS Datasets MCP server.
-
-    This class provides a convenient interface for interacting with the
-    IPFS Datasets MCP server from Python code.
-
-    Example:
-        ```python
-        # Create a client
-        client = IPFSDatasetsMCPClient("http://localhost:8000")
-
-        # Load a dataset
-        dataset_info = await client.load_dataset("/path/to/dataset.json")
-
-        # Process the dataset
-        processed_info = await client.process_dataset(
-            dataset_info["dataset_id"],
-            [
-                {"type": "filter", "column": "value", "condition": ">", "value": 50},
-                {"type": "select", "columns": ["id", "name"]}
-            ]
+    try:
+        # Fallback if different package structure
+        from modelcontextprotocol import Client as MCPClient
+    except ImportError:
+        raise ImportError(
+            "The modelcontextprotocol package is required for the IPFS Datasets MCP client. "
+            "Install it with 'pip install modelcontextprotocol'"
         )
 
-        # Save the processed dataset
-        save_info = await client.save_dataset(
-            processed_info["dataset_id"],
-            "/path/to/output.csv",
-            "csv"
-        )
-        ```
+
+def tool_call(tool_name: str) -> Callable:
     """
+    Decorator for tool calling methods that automatically handles parameter mapping.
+    
+    Args:
+        tool_name: Name of the MCP tool to call
+        
+    Returns:
+        Decorated method that calls the specified tool
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(self, *args, **kwargs) -> Dict[str, Any]:
+            # Get method signature and bind arguments
+            sig = inspect.signature(func)
+            bound = sig.bind(self, *args, **kwargs)
+            bound.apply_defaults()
+            
+            # Remove 'self' and filter out None values
+            params = {k: v for k, v in bound.arguments.items() 
+                     if k != 'self' and v is not None}
+            
+            return await self.call_tool(tool_name, **params)
+        return wrapper
+    return decorator
 
-    def __init__(self, server_url: str):
-        """
-        Initialize the client with the server URL.
 
-        Args:
-            server_url: URL of the IPFS Datasets MCP server
-        """
-        self.mcp_client = MCPClient(server_url)
-
-    async def get_available_tools(self) -> List[Dict[str, Any]]:
-        """
-        Get a list of available tools on the server.
-
-        Returns:
-            List of tool information dictionaries
-        """
-        return await self.mcp_client.get_tool_list()
-
-    async def call_tool(self, tool_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Call a tool on the server.
-
-        Args:
-            tool_name: Name of the tool to call
-            params: Parameters for the tool
-
-        Returns:
-            Tool result
-        """ 
-        if isinstance(params, dict):
-            return await self.mcp_client.call_tool(tool_name, params)
-        elif params is None:
-            return await self.mcp_client.call_tool()
-        else:
-            raise ValueError("Parameters must be a dictionary or None")
-
-    # Dataset tools
-
+class DatasetMixin:
+    """Mixin for dataset-related operations."""
+    
+    @tool_call("load_dataset")
     async def load_dataset(
         self,
         source: str,
@@ -108,14 +71,9 @@ class IPFSDatasetsMCPClient:
         Returns:
             Dataset information
         """
-        params = {"source": source}
-        if format:
-            params["format"] = format
-        if options:
-            params["options"] = options
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("load_dataset", params)
-
+    @tool_call("save_dataset")
     async def save_dataset(
         self,
         dataset_id: str,
@@ -135,17 +93,9 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the saved dataset
         """
-        params = {
-            "dataset_id": dataset_id,
-            "destination": destination
-        }
-        if format:
-            params["format"] = format
-        if options:
-            params["options"] = options
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("save_dataset", params)
-
+    @tool_call("process_dataset")
     async def process_dataset(
         self,
         dataset_id: str,
@@ -163,15 +113,9 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the processed dataset
         """
-        params = {
-            "dataset_id": dataset_id,
-            "operations": operations
-        }
-        if output_id:
-            params["output_id"] = output_id
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("process_dataset", params)
-
+    @tool_call("convert_dataset_format")
     async def convert_dataset_format(
         self,
         dataset_id: str,
@@ -189,17 +133,13 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the converted dataset
         """
-        params = {
-            "dataset_id": dataset_id,
-            "target_format": target_format
-        }
-        if output_path:
-            params["output_path"] = output_path
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("convert_dataset_format", params)
 
-    # IPFS tools
-
+class IPFSMixin:
+    """Mixin for IPFS-related operations."""
+    
+    @tool_call("pin_to_ipfs")
     async def pin_to_ipfs(
         self,
         content_path: str,
@@ -215,13 +155,9 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the pinned content
         """
-        params = {
-            "content_path": content_path,
-            "recursive": recursive
-        }
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("pin_to_ipfs", params)
-
+    @tool_call("get_from_ipfs")
     async def get_from_ipfs(
         self,
         cid: str,
@@ -237,14 +173,13 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the retrieved content
         """
-        params = {"cid": cid}
-        if output_path:
-            params["output_path"] = output_path
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("get_from_ipfs", params)
 
-    # Vector tools
-
+class VectorMixin:
+    """Mixin for vector-related operations."""
+    
+    @tool_call("create_vector_index")
     async def create_vector_index(
         self,
         vectors: List[List[float]],
@@ -264,16 +199,9 @@ class IPFSDatasetsMCPClient:
         Returns:
             Information about the created index
         """
-        params = {
-            "vectors": vectors,
-            "dimension": dimension,
-            "metric": metric
-        }
-        if metadata:
-            params["metadata"] = metadata
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("create_vector_index", params)
-
+    @tool_call("search_vector_index")
     async def search_vector_index(
         self,
         index_id: str,
@@ -291,12 +219,145 @@ class IPFSDatasetsMCPClient:
         Returns:
             Search results
         """
-        params = {
-            "index_id": index_id,
-            "query_vector": query_vector,
-            "top_k": top_k
-        }
+        pass  # Implementation handled by decorator
 
-        return await self.call_tool("search_vector_index", params)
 
-    # Additional methods can be added for other tool categories
+class IPFSDatasetsMCPClient(DatasetMixin, IPFSMixin, VectorMixin):
+    """
+    Simplified client for the IPFS Datasets MCP server.
+
+    This class provides a streamlined interface for interacting with the
+    IPFS Datasets MCP server from Python code using mixins and decorators
+    to reduce boilerplate.
+
+    Example:
+        ```python
+        # Use as context manager for automatic connection management
+        async with IPFSDatasetsMCPClient("http://localhost:8000") as client:
+            # Load a dataset
+            dataset_info = await client.load_dataset("/path/to/dataset.json")
+
+            # Process the dataset
+            processed_info = await client.process_dataset(
+                dataset_info["dataset_id"],
+                [
+                    {"type": "filter", "column": "value", "condition": ">", "value": 50},
+                    {"type": "select", "columns": ["id", "name"]}
+                ]
+            )
+
+            # Save the processed dataset
+            save_info = await client.save_dataset(
+                processed_info["dataset_id"],
+                "/path/to/output.csv",
+                "csv"
+            )
+        ```
+
+        Or use manually:
+        ```python
+        client = IPFSDatasetsMCPClient("http://localhost:8000")
+        await client.connect()
+        try:
+            # Your operations here
+            tools = await client.get_available_tools()
+        finally:
+            await client.disconnect()
+        ```
+    """
+
+    def __init__(self, server_url: str) -> None:
+        """
+        Initialize the client with the server URL.
+
+        Args:
+            server_url: URL of the IPFS Datasets MCP server
+        """
+        self.server_url = server_url
+        self.mcp_client = MCPClient(server_url)
+        self._connected = False
+
+    async def connect(self) -> None:
+        """Connect to the MCP server."""
+        if not self._connected:
+            await self.mcp_client.connect()
+            self._connected = True
+
+    async def disconnect(self) -> None:
+        """Disconnect from the MCP server."""
+        if self._connected:
+            await self.mcp_client.disconnect()
+            self._connected = False
+
+    async def __aenter__(self) -> Self:
+        """Async context manager entry."""
+        await self.connect()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Async context manager exit."""
+        await self.disconnect()
+
+    def _build_params(self, **kwargs) -> Dict[str, Any]:
+        """
+        Build parameters dictionary, filtering out None values.
+        
+        Args:
+            **kwargs: Keyword arguments to include in parameters
+            
+        Returns:
+            Dictionary with non-None values
+        """
+        return {k: v for k, v in kwargs.items() if v is not None}
+
+    async def call_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
+        """
+        Call a tool on the server with simplified parameter handling.
+
+        Args:
+            tool_name: Name of the tool to call
+            **kwargs: Parameters for the tool
+
+        Returns:
+            Tool result
+            
+        Raises:
+            ConnectionError: If not connected to server
+            ValueError: If tool call fails
+        """
+        if not self._connected:
+            raise ConnectionError("Not connected to MCP server. Call connect() first or use as context manager.")
+        
+        try:
+            params = self._build_params(**kwargs) if kwargs else {}
+            return await self.mcp_client.call_tool(tool_name, params)
+        except Exception as e:
+            raise ValueError(f"Tool call '{tool_name}' failed: {e}") from e
+
+    async def get_available_tools(self) -> List[Dict[str, Any]]:
+        """
+        Get a list of available tools on the server.
+
+        Returns:
+            List of tool information dictionaries
+            
+        Raises:
+            ConnectionError: If not connected to server
+        """
+        if not self._connected:
+            raise ConnectionError("Not connected to MCP server. Call connect() first or use as context manager.")
+        
+        return await self.mcp_client.get_tool_list()
+
+    async def health_check(self) -> bool:
+        """
+        Perform a health check on the server connection.
+        
+        Returns:
+            True if server is responding, False otherwise
+        """
+        try:
+            await self.get_available_tools()
+            return True
+        except Exception:
+            return False

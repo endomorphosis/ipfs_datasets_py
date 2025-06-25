@@ -4,8 +4,7 @@ Provides core GraphRAG processing functionality combining vector search and grap
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Union
-import numpy as np
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

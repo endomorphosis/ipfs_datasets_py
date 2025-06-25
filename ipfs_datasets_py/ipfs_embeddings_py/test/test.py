@@ -22,7 +22,6 @@ class test_ipfs_embeddings:
     def callback(self, data):
         return None
 
-
     def test(self):
         load_these_datasets = ["laion/Wikipedia-X", "laion/Wikipedia-X-Full", "laion/Wikipedia-X-Concat", "laion/Wikipedia-X-M3"]
         self.dataset = load_dataset(load_these_datasets[0])

@@ -10,7 +10,7 @@ import json
 import numpy as np
 import tempfile
 import uuid
-from typing import Dict, List, Optional, Tuple, Any, Union, Generator
+from typing import Dict, List, Optional, Tuple, Any
 
 from ipfs_datasets_py.ipld.storage import IPLDStorage
 from ipfs_datasets_py.dataset_serialization import DatasetSerializer
@@ -56,17 +56,18 @@ class IPFSKnnIndex:
             self._faiss_available = True
 
             # Create a FAISS index
-            if metric == 'cosine':
-                self._index = faiss.IndexFlatIP(dimension)  # Inner product for normalized vectors
-                self._normalizer = lambda v: v / np.linalg.norm(v, axis=1, keepdims=True)
-            elif metric == 'euclidean':
-                self._index = faiss.IndexFlatL2(dimension)  # L2 distance
-                self._normalizer = lambda v: v  # No normalization
-            elif metric == 'dot':
-                self._index = faiss.IndexFlatIP(dimension)  # Inner product
-                self._normalizer = lambda v: v  # No normalization
-            else:
-                raise ValueError(f"Unsupported metric: {metric}")
+            match metric:
+                case 'cosine':
+                    self._index = faiss.IndexFlatIP(dimension)  # Inner product for normalized vectors
+                    self._normalizer = lambda v: v / np.linalg.norm(v, axis=1, keepdims=True)
+                case 'euclidean':
+                    self._index = faiss.IndexFlatL2(dimension)  # L2 distance
+                    self._normalizer = lambda v: v  # No normalization
+                case 'dot':
+                    self._index = faiss.IndexFlatIP(dimension)  # Inner product
+                    self._normalizer = lambda v: v  # No normalization
+                case _:
+                    raise ValueError(f"Unsupported metric: {metric}")
 
             # Set flag for new index
             self._is_index_new = True

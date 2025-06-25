@@ -87,7 +87,90 @@ def import_argparse_program(directory_path: Path) -> Dict[str, Any]:
         logger.error(f"Failed to import program {program_name}: {e}")
         return None
 
+from typing import Any, Annotated as Ann
+from pydantic import BaseModel, BeforeValidator as BV, Field, FileUrl, DirectoryPath, UrlConstraints
 
+def make_cid(path) -> str: # TODO Import this function.
+    return "mock"
+
+from utils import make_cid
+
+
+class Root(BaseModel):
+    """Represents a root directory or file that the server can operate on."""
+    uri: UrlConstraints
+    name: str | None = None
+
+def _turn_path_into_uri(path: str | Path, uri_type: str, configs: Configs) -> str:
+    """
+    Convert a path to a URI.
+
+    Args:
+        Path: The path to convert.
+        uri_type: The type of URI to create (e.g., "file", "http", "ipfs").
+
+    Returns:
+        str: The URI representation of the path.
+    """
+    match path:
+        case str():
+            path = Path(path).resolve()
+        case Path():
+            path = path.resolve()
+        case _:
+            raise ValueError("Path must be a string or Path object")
+
+    if not path.exists():
+        raise ValueError(f"Path does not exist: {path}")
+
+    match uri_type:
+        case "file":
+            return path.as_uri()
+        case "http":
+            local_host = configs.local_host
+            port = configs.port
+            return f"http://{local_host}/{port}/path"
+        case "ipfs":
+            path_cid = make_cid(path) # TODO This is inefficient. Should be cached.
+            return f"ipfs://{path_cid}/{path}"
+        case _:
+            raise ValueError(f"Unsupported URI type: {uri_type}")
+
+class JsonRpcResult(BaseModel):
+    """Base class for JSON-RPC results."""
+    id: str
+    jsonrpc: str = "2.0"
+    result: Any | None = None
+    error: str | None = None 
+    meta: dict[str, Any] | None = Field(alias="_meta", default=None)
+
+
+class ListRoots(JsonRpcResult):
+    """
+    The client's response to a roots/list request from the server.
+    This result contains an array of Root objects, each representing a root directory
+    or file that the server can operate on.
+    """
+    roots: list[Root]
+
+
+class ServerRequest:
+    pass
+
+class ServerResult:
+    pass
+
+def check_method(method: str) -> str:
+    if method not in ["roots/list", "tools/list", "tools/call"]:
+        raise ValueError(f"Invalid method: {method}")
+
+
+class Request(BaseModel):
+    """Base class for server requests."""
+    method: Ann[str, check_method]
+    params: dict[str, Any] = Field(default_factory=dict)
+
+import mcp_types
 
 
 class SimpleIPFSDatasetsMCPServer:
