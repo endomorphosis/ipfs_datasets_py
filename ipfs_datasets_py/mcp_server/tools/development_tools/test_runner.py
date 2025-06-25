@@ -918,3 +918,83 @@ def run_comprehensive_tests(path: str = ".",
                 "timestamp": datetime.now().isoformat()
             }
         }
+
+
+# Main MCP function
+async def test_runner(**kwargs):
+    """
+    Comprehensive test runner for Python projects.
+
+    Executes unit tests, type checking, linting, and dataset integrity tests
+    with detailed reporting and results export.
+    """
+    try:
+        path = kwargs.get('path', '.')
+        verbose = kwargs.get('verbose', False)
+        coverage = kwargs.get('coverage', True)
+        
+        runner = TestRunner(
+            name="TestRunner",
+            description="Comprehensive test runner for Python projects"
+        )
+        
+        result = await runner.execute(
+            path=path,
+            verbose=verbose,
+            coverage=coverage,
+            run_unit_tests=True,
+            run_type_check=True,
+            run_linting=True,
+            run_dataset_tests=True
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Test runner failed: {str(e)}",
+            "tool_type": "development_tool"
+        }
+
+
+async def create_test_runner(
+    path: str = ".",
+    verbose: bool = False,
+    coverage: bool = True,
+    run_unit_tests: bool = True,
+    run_type_check: bool = True,
+    run_linting: bool = True,
+    run_dataset_tests: bool = True,
+    test_framework: str = "pytest",
+    save_results: bool = True,
+    output_formats: Optional[List[str]] = None
+):
+    """
+    Create a properly configured TestRunner instance.
+    """
+    try:
+        runner = TestRunner(
+            name="TestRunner",
+            description="Comprehensive test runner for Python projects"
+        )
+        
+        result = await runner.execute(
+            path=path,
+            verbose=verbose,
+            coverage=coverage,
+            run_unit_tests=run_unit_tests,
+            run_type_check=run_type_check,
+            run_linting=run_linting,
+            run_dataset_tests=run_dataset_tests,
+            test_framework=test_framework,
+            save_results=save_results,
+            output_formats=output_formats or ["json"]
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to create test runner: {str(e)}",
+            "tool_type": "development_tool"
+        }

@@ -8,7 +8,7 @@ from typing import Dict, List, Any
 
 from ....web_archive import WebArchiveProcessor
 
-def extract_links_from_warc(
+async def extract_links_from_warc(
     warc_path: str
 ) -> Dict[str, Any]:
     """Extract links from a WARC file.

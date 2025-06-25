@@ -8,7 +8,7 @@ from typing import Dict, Any, Literal, Optional, Union
 
 from ....web_archive import WebArchiveProcessor
 
-def extract_dataset_from_cdxj(
+async def extract_dataset_from_cdxj(
     cdxj_path: str,
     output_format: Literal["arrow", "huggingface", "dict"] = "arrow"
 ) -> Dict[str, Any]:

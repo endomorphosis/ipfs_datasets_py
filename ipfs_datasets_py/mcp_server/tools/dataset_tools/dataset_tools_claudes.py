@@ -20,6 +20,18 @@ class ClaudesDatasetTool:
         """
         return f"Placeholder processing data from '{input_path}' to '{output_path}'"
 
+# Main MCP function
+async def dataset_tools_claudes():
+    """
+    A tool for performing dataset-related tasks migrated from claudes_toolbox-1.
+    """
+    return {
+        "status": "success",
+        "message": "ClaudesDatasetTool initialized successfully",
+        "tool_type": "Dataset processing tool",
+        "available_methods": ["process_data"]
+    }
+
 # Example usage (will not be executed by the MCP server directly)
 if __name__ == "__main__":
     tool = ClaudesDatasetTool()

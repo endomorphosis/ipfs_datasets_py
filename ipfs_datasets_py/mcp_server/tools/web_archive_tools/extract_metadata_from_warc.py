@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 from ....web_archive import WebArchiveProcessor
 
-def extract_metadata_from_warc(
+async def extract_metadata_from_warc(
     warc_path: str
 ) -> Dict[str, Any]:
     """Extract metadata from a WARC file.

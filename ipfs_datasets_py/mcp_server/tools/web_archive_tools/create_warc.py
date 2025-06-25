@@ -8,7 +8,7 @@ from typing import Dict, Optional, Any
 
 from ....web_archive import WebArchiveProcessor
 
-def create_warc(
+async def create_warc(
     url: str,
     output_path: Optional[str] = None,
     options: Optional[Dict[str, Any]] = None

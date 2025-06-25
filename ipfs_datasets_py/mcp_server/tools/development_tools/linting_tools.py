@@ -694,3 +694,35 @@ def lint_python_codebase(path: str = ".",
                 "timestamp": datetime.now().isoformat()
             }
         }
+
+
+# Main MCP function
+async def linting_tools(
+    path: str = ".",
+    file_patterns: Optional[List[str]] = None,
+    auto_fix: bool = False,
+    exclude_dirs: Optional[List[str]] = None
+):
+    """
+    Comprehensive Python code linting and auto-fixing.
+    """
+    try:
+        linter = LintingTools(
+            name="LintingTools",
+            description="Comprehensive Python code linting and auto-fixing"
+        )
+        
+        result = await linter.execute(
+            path=path,
+            file_patterns=file_patterns or ["**/*.py"],
+            auto_fix=auto_fix,
+            exclude_dirs=exclude_dirs or [".venv", ".git", "__pycache__"]
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Linting tools failed: {str(e)}",
+            "tool_type": "development_tool"
+        }

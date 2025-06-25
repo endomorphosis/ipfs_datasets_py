@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, Union, List
 from ipfs_datasets_py.mcp_server.logger import logger
 from ipfs_datasets_py.audit import AuditLogger # Added import
 
-def record_audit_event( # Changed to def
+async def record_audit_event( # Changed to async def
     action: str,
     resource_id: Optional[str] = None,
     resource_type: Optional[str] = None,

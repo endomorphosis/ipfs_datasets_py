@@ -8,7 +8,7 @@ from typing import Dict, Optional
 
 from ....web_archive import WebArchiveProcessor
 
-def index_warc(
+async def index_warc(
     warc_path: str,
     output_path: Optional[str] = None,
     encryption_key: Optional[str] = None
