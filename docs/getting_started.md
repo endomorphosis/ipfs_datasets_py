@@ -10,10 +10,11 @@ This guide will help you get started with the IPFS Datasets Python package, cove
 4. [Working with Datasets](#working-with-datasets)
 5. [Converting Between Formats](#converting-between-formats)
 6. [Vector Search](#vector-search)
-7. [Knowledge Graph Extraction](#knowledge-graph-extraction)
-8. [GraphRAG Integration](#graphrag-integration)
-9. [Web Archive Integration](#web-archive-integration)
-10. [Next Steps](#next-steps)
+7. [PDF Processing and LLM Optimization](#pdf-processing-and-llm-optimization)
+8. [Knowledge Graph Extraction](#knowledge-graph-extraction)
+9. [GraphRAG Integration](#graphrag-integration)
+10. [Web Archive Integration](#web-archive-integration)
+11. [Next Steps](#next-steps)
 
 ## Installation
 
@@ -224,6 +225,101 @@ loaded_index = IPFSKnnIndex.load("vector_index.pkl")
 
 # Load index from IPFS
 loaded_index = IPFSKnnIndex.from_ipfs(cid)
+```
+
+## PDF Processing and LLM Optimization
+
+IPFS Datasets Python provides comprehensive PDF processing capabilities designed for optimal LLM consumption and GraphRAG integration.
+
+### Basic PDF Processing
+
+```python
+from ipfs_datasets_py.pdf_processing import PDFGraphRAGIntegrator
+
+# Initialize PDF processor
+pdf_integrator = PDFGraphRAGIntegrator()
+
+# Process a PDF with the complete pipeline:
+# PDF Input → Decomposition → IPLD Structuring → OCR Processing → 
+# LLM Optimization → Entity Extraction → Vector Embedding → 
+# IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
+result = pdf_integrator.ingest_pdf_into_graphrag(
+    pdf_path="research_paper.pdf",
+    metadata={
+        "title": "AI Research Paper",
+        "author": "Dr. Smith",
+        "domain": "artificial_intelligence"
+    }
+)
+
+print(f"Document ID: {result['document_id']}")
+print(f"Entities added: {result['entities_added']}")
+print(f"Relationships added: {result['relationships_added']}")
+print(f"IPLD CID: {result['ipld_cid']}")
+```
+
+### LLM-Optimized Content Processing
+
+```python
+from ipfs_datasets_py.pdf_processing import LLMOptimizedProcessor
+
+# Initialize processor for specific LLM
+processor = LLMOptimizedProcessor()
+
+# Optimize content for target LLM
+optimized_content = processor.optimize_for_target_llm(
+    pdf_path="document.pdf",
+    target_llm="gpt-4"  # Supports: gpt-4, claude-3, gemini-pro, llama-2
+)
+
+# Access optimized chunks
+for chunk in optimized_content['chunks']:
+    print(f"Chunk: {chunk['text'][:100]}...")
+    print(f"Entities: {chunk['entities']}")
+    print(f"Context: {chunk['context']}")
+```
+
+### Multi-Engine OCR Processing
+
+```python
+from ipfs_datasets_py.pdf_processing import MultiEngineOCR
+
+# Initialize OCR with intelligent fallback
+ocr = MultiEngineOCR()
+
+# Extract text with quality-first strategy
+result = ocr.extract_with_fallback(
+    image_data=image_bytes,
+    strategy='quality_first'  # Uses Surya → PaddleOCR → Tesseract → EasyOCR
+)
+
+print(f"Extracted text: {result['text']}")
+print(f"Confidence: {result['confidence']:.2f}")
+print(f"Engine used: {result['engine']}")
+```
+
+### Querying PDF Corpus
+
+```python
+from ipfs_datasets_py.pdf_processing import PDFGraphRAGQueryEngine
+
+# Initialize query engine
+query_engine = PDFGraphRAGQueryEngine(pdf_integrator)
+
+# Query across PDF documents with cross-document reasoning
+results = query_engine.query_pdf_corpus(
+    query="What are the security benefits of content addressing in IPFS?",
+    query_type="cross_document",
+    max_documents=10
+)
+
+print(f"Answer: {results['answer']}")
+print(f"Confidence: {results['confidence']:.2f}")
+print(f"Source documents: {[doc['title'] for doc in results['source_documents']]}")
+
+# View cross-document relationships
+for connection in results.get('entity_connections', []):
+    print(f"Connection: {connection['entity']} → {connection['relation']}")
 ```
 
 ## Knowledge Graph Extraction
