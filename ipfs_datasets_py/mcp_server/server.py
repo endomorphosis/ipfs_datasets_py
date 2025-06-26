@@ -97,7 +97,8 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
                         not attr_name.startswith('_') and
                         hasattr(attr, '__module__') and
                         hasattr(attr, '__doc__') and # Ensure it has a docstring, since Claude will need it to properly use a tool.
-                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple']
+                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple'] and
+                        not isinstance(attr, type)  # Exclude classes/types
                     )
 
                     if this_is_valid_function:
@@ -146,7 +147,7 @@ class IPFSDatasetsMCPServer:
 
         # Register tools from subdirectories
         tool_subdirs = [
-            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools"
+            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools", "media_tools"
         ]
         
         for subdir in tool_subdirs:

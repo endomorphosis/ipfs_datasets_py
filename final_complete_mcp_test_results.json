@@ -1,10 +1,10 @@
 {
-  "timestamp": "2025-06-24T10:29:40.772025",
+  "timestamp": "2025-06-26T03:59:02.150598",
   "summary": {
     "total": 30,
-    "passed": 11,
-    "failed": 19,
-    "pass_rate": 36.666666666666664
+    "passed": 8,
+    "failed": 22,
+    "pass_rate": 26.666666666666668
   },
   "tools": [
     {
@@ -36,7 +36,7 @@
       "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "dataset_id": "mock_dataset_-5970189054381340297",
+        "dataset_id": "mock_dataset_-6557012370455402825",
         "destination": "/tmp/test.json",
         "format": "json",
         "location": "/tmp/test.json",
@@ -51,7 +51,7 @@
       "result": {
         "status": "success",
         "original_dataset_id": "{'test': 'data'}",
-        "dataset_id": "processed_-5970189054381340297",
+        "dataset_id": "processed_-6557012370455402825",
         "num_operations": 1,
         "num_records": 1,
         "operations_summary": [
@@ -77,14 +77,12 @@
     },
     {
       "tool": "get_from_ipfs",
-      "status": "PASS",
-      "message": "Tool executed successfully",
+      "status": "FAIL",
+      "message": "unexpected indent (install_ipfs.py, line 460)",
       "result": {
-        "status": "success",
-        "cid": "QmTest123",
-        "content_type": "text",
-        "content": "Mock content for CID QmTest123",
-        "binary_size": 20
+        "status": "error",
+        "message": "unexpected indent (install_ipfs.py, line 460)",
+        "cid": "QmTest123"
       }
     },
     {
@@ -93,7 +91,7 @@
       "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "cid": "Qm618659703",
+        "cid": "Qm544597175",
         "content_type": "data",
         "size": 16,
         "hash_algo": "sha2-256",
@@ -103,49 +101,21 @@
     },
     {
       "tool": "create_vector_index",
-      "status": "PASS",
-      "message": "Tool executed successfully",
+      "status": "FAIL",
+      "message": "'coroutine' object has no attribute 'create_index'",
       "result": {
-        "status": "success",
-        "index_id": "index_518278bd",
-        "num_vectors": 2,
-        "dimension": 3,
-        "metric": "cosine",
-        "vector_ids": null
+        "status": "error",
+        "message": "'coroutine' object has no attribute 'create_index'"
       }
     },
     {
       "tool": "search_vector_index",
-      "status": "PASS",
-      "message": "Tool executed successfully",
+      "status": "FAIL",
+      "message": "'coroutine' object has no attribute 'create_index'",
       "result": {
-        "status": "success",
-        "index_id": "test_index",
-        "top_k": 5,
-        "num_results": 3,
-        "results": [
-          {
-            "id": 0,
-            "distance": 0.95,
-            "metadata": {
-              "text": "result_0"
-            }
-          },
-          {
-            "id": 1,
-            "distance": 0.85,
-            "metadata": {
-              "text": "result_1"
-            }
-          },
-          {
-            "id": 2,
-            "distance": 0.75,
-            "metadata": {
-              "text": "result_2"
-            }
-          }
-        ]
+        "status": "error",
+        "message": "'coroutine' object has no attribute 'create_index'",
+        "index_id": "test_index"
       }
     },
     {
@@ -160,7 +130,7 @@
       "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "event_id": "91eae4ae-c63f-4be1-bbb7-686a701571f9",
+        "event_id": "05aead10-4554-4218-8f61-993afbabae69",
         "action": "test_action",
         "severity": "info",
         "resource_id": null,
@@ -177,8 +147,8 @@
         "output_format": "json",
         "report": {
           "report_type": "comprehensive",
-          "timestamp": "2025-06-24T10:29:40.698339",
-          "report_id": "fa08c1a5-395a-4a3a-86bd-f69f7e23cad4",
+          "timestamp": "2025-06-26T03:59:02.055788",
+          "report_id": "5d78e478-a044-4133-9740-d413dd93e3ae",
           "executive_summary": {
             "total_events": 0,
             "overall_risk_score": 0.0,
@@ -223,8 +193,8 @@
           },
           "security": {
             "report_type": "security",
-            "timestamp": "2025-06-24T10:29:40.697806",
-            "report_id": "0b16eef5-13a1-4731-99eb-a52e9e1894ff",
+            "timestamp": "2025-06-26T03:59:02.054582",
+            "report_id": "3f26ef71-96a3-4672-997c-d18eb5b8647e",
             "summary": {
               "total_events": 0,
               "security_events": 0,
@@ -263,8 +233,8 @@
           },
           "compliance": {
             "report_type": "compliance",
-            "timestamp": "2025-06-24T10:29:40.698166",
-            "report_id": "ff521106-7200-4ea2-a111-bc3a3298955a",
+            "timestamp": "2025-06-26T03:59:02.054951",
+            "report_id": "cdf79043-132c-4c4d-881c-b51da669ca40",
             "summary": {
               "overall_compliance_percentage": 0.0,
               "frameworks_analyzed": 3,
@@ -546,8 +516,8 @@
           },
           "operations": {
             "report_type": "operational",
-            "timestamp": "2025-06-24T10:29:40.698281",
-            "report_id": "9e7a8000-7b62-47d2-b64d-d9c13361bcfb",
+            "timestamp": "2025-06-26T03:59:02.055069",
+            "report_id": "dc3035ad-5c72-43e6-b7e1-28ed9ea530b0",
             "summary": {
               "total_events": 0,
               "event_distribution": {
@@ -605,15 +575,15 @@
       "message": "Tool executed successfully",
       "result": {
         "status": "success",
-        "provenance_id": "12a1abb7-ef1c-46c2-8c24-9fa76edb91ba",
+        "provenance_id": "3468b2fd-a745-4251-9578-0cc7ed9a8008",
         "dataset_id": "test_dataset",
         "operation": "test_operation",
-        "timestamp": 1750753780.7283149,
+        "timestamp": 1750935542.0890102,
         "record": {
-          "id": "12a1abb7-ef1c-46c2-8c24-9fa76edb91ba",
+          "id": "3468b2fd-a745-4251-9578-0cc7ed9a8008",
           "record_type": "transformation",
-          "timestamp": 1750753780.7283149,
-          "agent_id": "9f95d20a-36d0-4f87-a5bc-d9df461f6ef5",
+          "timestamp": 1750935542.0890102,
+          "agent_id": "8c6e34fd-f976-4595-af6a-2dfcfc57bb5d",
           "description": "Operation: test_operation",
           "metadata": {
             "tags": [],
@@ -674,7 +644,7 @@
         "metadata": {
           "tool": "test_generator",
           "category": "testing",
-          "timestamp": "2025-06-24T08:29:40.767590Z"
+          "timestamp": "2025-06-26T10:59:02.142901Z"
         }
       }
     },
