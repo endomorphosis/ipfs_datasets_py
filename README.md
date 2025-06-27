@@ -1116,29 +1116,236 @@ Tests include:
 - Batch processing simulation ✅
 - Performance metrics collection ✅
 
-## 🧪 Testing Status
+## 🎬 Multimedia Processing with YT-DLP Integration
 
-**All tests passing! ✅ 100% success rate (32/32 tests)**
+IPFS Datasets Python now includes comprehensive multimedia processing capabilities with integrated YT-DLP support for downloading and processing video/audio content from 1000+ platforms.
 
-The PDF processing pipeline and MCP tools are fully validated with comprehensive test coverage:
+### Key Features
 
-### Test Suite Overview
-- **PDF Processing Tests**: 13 unit tests covering core pipeline components
-- **MCP Tools Tests**: 11 integration tests for tool interfaces  
-- **Basic Functionality**: 6 validation tests for key features
-- **Integration Tests**: 2 end-to-end pipeline tests
+- **Universal Downloads**: Support for YouTube, Vimeo, SoundCloud, and 1000+ other platforms
+- **Audio/Video Processing**: Download videos, extract audio, handle playlists
+- **Batch Operations**: Concurrent downloads with progress tracking
+- **MCP Server Integration**: Complete set of multimedia tools for the MCP server
+- **Format Flexibility**: Multiple output formats and quality settings
+- **Advanced Features**: Search, metadata extraction, subtitle downloads
 
-### Running Tests
-```bash
-# Run all corrected and working tests
-python run_comprehensive_tests.py
+### Quick Start
 
-# Run individual test suites
-python -m pytest test_pdf_processing_corrected.py -v
-python -m pytest test_mcp_tools_corrected.py -v
-python test_basic_functionality.py
-python test_simple_integration.py
+```python
+from ipfs_datasets_py.multimedia import YtDlpWrapper, MediaUtils
+
+# Initialize the YT-DLP wrapper
+downloader = YtDlpWrapper(
+    default_output_dir="./downloads",
+    default_quality="best"
+)
+
+# Download a single video
+result = await downloader.download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    quality="720p",
+    extract_audio=False
+)
+print(f"Downloaded: {result['video_info']['title']}")
+
+# Download audio only
+audio_result = await downloader.download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    audio_only=True,
+    audio_format="mp3"
+)
+
+# Download entire playlist
+playlist_result = await downloader.download_playlist(
+    playlist_url="https://www.youtube.com/playlist?list=...",
+    max_downloads=10,
+    quality="best"
+)
+
+# Search for videos
+search_results = await downloader.search_videos(
+    query="machine learning tutorial",
+    max_results=5
+)
+
+# Extract video information without downloading
+info = await downloader.extract_info(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    download=False
+)
+print(f"Video duration: {info['info']['duration']} seconds")
 ```
 
-### CI/CD Integration
-Automated testing runs on every push and pull request via GitHub Actions. See `.github/workflows/pdf_processing_simple_ci.yml` for the complete CI pipeline.
+### Batch Processing
+
+```python
+# Download multiple videos concurrently
+urls = [
+    "https://www.youtube.com/watch?v=video1",
+    "https://www.youtube.com/watch?v=video2",
+    "https://www.youtube.com/watch?v=video3"
+]
+
+batch_result = await downloader.batch_download(
+    urls=urls,
+    max_concurrent=3,
+    quality="720p",
+    ignore_errors=True
+)
+
+print(f"Downloaded {batch_result['successful']} of {batch_result['total']} videos")
+```
+
+### MCP Server Integration
+
+The multimedia functionality is fully integrated with the MCP server, providing five powerful tools:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.media_tools import (
+    ytdlp_download_video,
+    ytdlp_download_playlist, 
+    ytdlp_extract_info,
+    ytdlp_search_videos,
+    ytdlp_batch_download
+)
+
+# Download video through MCP interface
+result = await ytdlp_download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    output_dir="./downloads",
+    quality="best",
+    audio_only=False,
+    download_thumbnails=True,
+    subtitle_langs=["en", "es"]
+)
+
+# Search and download workflow
+search_result = await ytdlp_search_videos(
+    query="Python tutorial",
+    max_results=5
+)
+
+# Download the first search result
+if search_result["status"] == "success":
+    first_video_url = search_result["results"][0]["url"]
+    download_result = await ytdlp_download_video(
+        url=first_video_url,
+        quality="720p"
+    )
+```
+
+### Advanced Configuration
+
+```python
+# Advanced download with custom options
+advanced_result = await downloader.download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    format_selector="best[height<=720]",
+    subtitle_langs=["en", "es", "fr"],
+    download_thumbnails=True,
+    download_info_json=True,
+    custom_opts={
+        "writesubtitles": True,
+        "writeautomaticsub": True,
+        "subtitleslangs": ["en"],
+        "ignoreerrors": False
+    }
+)
+
+# Monitor download progress
+downloads = downloader.list_active_downloads()
+print(f"Active downloads: {downloads['total_active']}")
+print(f"Completed: {downloads['total_completed']}")
+
+# Get specific download status
+download_status = downloader.get_download_status(download_id)
+if download_status["status"] == "downloading":
+    print(f"Progress: {download_status['progress']}%")
+```
+
+### Utility Functions
+
+```python
+from ipfs_datasets_py.multimedia import MediaUtils
+
+# Validate URLs
+is_valid = MediaUtils.validate_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+# Get supported formats
+formats = MediaUtils.get_supported_formats()
+print(f"Supported video formats: {formats['video']}")
+print(f"Supported audio formats: {formats['audio']}")
+
+# Sanitize filenames for safe storage
+clean_filename = MediaUtils.sanitize_filename("My Video <Title>.mp4")
+
+# Format file sizes and durations
+size_str = MediaUtils.format_file_size(1024 * 1024 * 500)  # "500.0 MB"
+duration_str = MediaUtils.format_duration(3661)  # "01:01:01"
+```
+
+### Error Handling and Resilience
+
+```python
+# Robust download with error handling
+try:
+    result = await downloader.download_video(
+        url="https://example.com/invalid-video",
+        quality="best"
+    )
+    
+    if result["status"] == "success":
+        print(f"Downloaded: {result['output_path']}")
+    else:
+        print(f"Download failed: {result['error']}")
+        
+except Exception as e:
+    print(f"Unexpected error: {e}")
+
+# Batch download with error resilience
+batch_result = await downloader.batch_download(
+    urls=["https://valid-url.com", "https://invalid-url.com"],
+    ignore_errors=True  # Continue processing even if some downloads fail
+)
+
+print(f"Successful: {len(batch_result['successful_results'])}")
+print(f"Failed: {len(batch_result['failed_results'])}")
+```
+
+### Installation and Dependencies
+
+```bash
+# Install with multimedia support
+pip install ipfs-datasets-py[multimedia]
+
+# Or install dependencies manually
+pip install yt-dlp ffmpeg-python
+
+# For development
+pip install -e .[multimedia]
+```
+
+### Testing
+
+```bash
+# Run multimedia validation
+python validate_multimedia_simple.py
+
+# Run comprehensive multimedia tests  
+python test_multimedia_comprehensive.py
+
+# Run specific test suites
+python -m pytest tests/unit/test_ytdlp_wrapper.py -v
+python -m pytest tests/unit/test_ytdlp_mcp_tools.py -v
+```
+
+### Supported Platforms
+
+YT-DLP supports content download from 1000+ platforms including:
+- **Video**: YouTube, Vimeo, Dailymotion, Twitch, TikTok, Instagram
+- **Audio**: SoundCloud, Bandcamp, Spotify (metadata), Apple Music (metadata)
+- **Live Streams**: YouTube Live, Twitch streams, Facebook Live
+- **Educational**: Khan Academy, Coursera, edX
+- **And many more...**
+
+For a complete list, see the [YT-DLP supported sites documentation](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
