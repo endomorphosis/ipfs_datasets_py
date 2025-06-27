@@ -4,12 +4,19 @@ IPFS Datasets Python
 A unified interface for data processing and distribution across decentralized networks.
 """
 
-# Original imports - commented out to avoid hanging imports
-# from .ipfs_datasets import load_dataset
-# from .s3_kit import s3_kit  
-# from .test_fio import test_fio
-# Delay config import to avoid circular dependencies
-# from .config import config
+# Main entry points
+try:
+    from .ipfs_datasets import ipfs_datasets_py
+    HAVE_IPFS_DATASETS = True
+except ImportError:
+    HAVE_IPFS_DATASETS = False
+
+# Re-export key functions
+try:
+    from datasets import load_dataset
+    HAVE_LOAD_DATASET = True
+except ImportError:
+    HAVE_LOAD_DATASET = False
 
 # Use conditional imports to handle missing modules gracefully
 try:
@@ -173,6 +180,15 @@ try:
 except ImportError:
     HAVE_IPWB = False
 
+try:
+    from .pdf_processing import (
+        PDFProcessor, MultiEngineOCR, LLMOptimizer, 
+        GraphRAGIntegrator, QueryEngine, BatchProcessor
+    )
+    HAVE_PDF_PROCESSING = True
+except ImportError:
+    HAVE_PDF_PROCESSING = False
+
 # Define base exports that should always be available
 __all__ = [
     # Original exports
@@ -302,4 +318,14 @@ if HAVE_AUDIT:
         'AdaptiveSecurityManager',
         'ResponseRule',
         'ResponseAction'
+    ])
+
+if HAVE_PDF_PROCESSING:
+    __all__.extend([
+        'PDFProcessor', 
+        'MultiEngineOCR', 
+        'LLMOptimizer', 
+        'GraphRAGIntegrator', 
+        'QueryEngine', 
+        'BatchProcessor'
     ])
