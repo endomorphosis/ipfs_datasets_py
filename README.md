@@ -2,6 +2,8 @@
 
 A unified interface for data processing and distribution across decentralized networks, with seamless conversion between formats and storage systems.
 
+> **📁 Project Reorganization Complete:** This project was comprehensively reorganized on June 27-28, 2025 for improved maintainability and professional structure. All development history and files are preserved in the `archive/` directory. See [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md) for the complete organization and [`docs/FINAL_CLEANUP_SUMMARY.md`](docs/FINAL_CLEANUP_SUMMARY.md) for final cleanup details.
+
 ## Overview
 
 IPFS Datasets Python serves as a facade to multiple data processing and storage libraries:
@@ -1349,3 +1351,158 @@ YT-DLP supports content download from 1000+ platforms including:
 - **And many more...**
 
 For a complete list, see the [YT-DLP supported sites documentation](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
+
+## 🧠 First-Order Logic and Deontic Logic Tools
+
+IPFS Datasets Python includes sophisticated logic conversion tools for formal reasoning and legal text analysis.
+
+### First-Order Logic (FOL) Conversion
+
+Convert natural language statements into formal First-Order Logic for automated reasoning and theorem proving:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.dataset_tools import text_to_fol
+
+# Convert natural language to FOL
+result = await text_to_fol(
+    text_input="All cats are animals and some dogs are friendly",
+    output_format="json",
+    confidence_threshold=0.7
+)
+
+print(f"FOL Formula: {result['fol_formulas'][0]['fol_formula']}")
+# Output: ∀x (Cat(x) → Animal(x)) ∧ ∃y (Dog(y) ∧ Friendly(y))
+
+# Multiple output formats supported
+prolog_result = await text_to_fol(
+    text_input="Every student studies hard",
+    output_format="prolog"
+)
+
+tptp_result = await text_to_fol(
+    text_input="If all birds fly then some animals fly", 
+    output_format="tptp"
+)
+```
+
+### Deontic Logic for Legal Text
+
+Convert legal text (statutes, regulations, contracts) into deontic logic for compliance checking and legal reasoning:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.dataset_tools import legal_text_to_deontic
+
+# Convert legal obligations
+result = await legal_text_to_deontic(
+    text_input="Citizens must pay taxes by April 15th",
+    jurisdiction="us",
+    document_type="statute",
+    extract_obligations=True
+)
+
+print(f"Deontic Formula: {result['deontic_formulas'][0]['deontic_formula']}")
+# Output: O(PayTaxes(citizens) ∧ Before(april_15))
+
+# Analyze permissions and prohibitions
+permission_result = await legal_text_to_deontic(
+    text_input="Residents may park on designated streets",
+    document_type="regulation"
+)
+
+prohibition_result = await legal_text_to_deontic(
+    text_input="Smoking is prohibited in public buildings",
+    document_type="policy"
+)
+
+# Extract normative structure
+normative_analysis = result['normative_structure']
+print(f"Legal entities: {result['legal_entities']}")
+print(f"Actions: {result['actions']}")
+print(f"Temporal constraints: {result['temporal_constraints']}")
+```
+
+### Advanced Logic Processing
+
+```python
+# Batch processing of legal documents
+legal_texts = [
+    "Drivers must have a valid license",
+    "Speed limit is 65 mph on highways", 
+    "Parking is prohibited during street cleaning"
+]
+
+results = []
+for text in legal_texts:
+    result = await legal_text_to_deontic(
+        text_input=text,
+        jurisdiction="us",
+        include_exceptions=True
+    )
+    results.append(result)
+
+# FOL with domain-specific predicates
+domain_predicates = ["Student", "Course", "Enrolled", "Completed"]
+academic_result = await text_to_fol(
+    text_input="All students enrolled in a course must complete assignments",
+    domain_predicates=domain_predicates,
+    output_format="symbolic"
+)
+```
+
+### Logic Utilities
+
+The logic tools include comprehensive utility functions for predicate extraction, parsing, and formatting:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.dataset_tools.logic_utils import (
+    extract_predicates, parse_quantifiers, build_fol_formula,
+    extract_normative_elements, identify_obligations
+)
+
+# Extract predicates from text
+predicates = extract_predicates("All cats are animals and some dogs bark")
+print(f"Nouns: {predicates['nouns']}")
+print(f"Verbs: {predicates['verbs']}")
+
+# Parse quantifiers
+quantifiers = parse_quantifiers("Every student studies and some teachers help")
+print(f"Universal: {[q for q in quantifiers if q['type'] == 'universal']}")
+print(f"Existential: {[q for q in quantifiers if q['type'] == 'existential']}")
+
+# Identify legal obligations
+obligations = identify_obligations("Citizens must vote and may petition the government")
+print(f"Obligations: {[o for o in obligations if o['type'] == 'obligation']}")
+print(f"Permissions: {[o for o in obligations if o['type'] == 'permission']}")
+```
+
+### MCP Server Integration
+
+Both logic tools are fully integrated with the MCP server and can be accessed by AI assistants:
+
+```python
+# The tools are automatically available when the MCP server starts
+from ipfs_datasets_py.mcp_server import start_server
+
+# Start server with logic tools enabled
+start_server(host="localhost", port=8080)
+
+# Tools are discoverable as:
+# - mcp_ipfs-datasets_text_to_fol
+# - mcp_ipfs-datasets_legal_text_to_deontic
+```
+
+### Testing
+
+Comprehensive test suite verifies all functionality:
+
+```bash
+# Run all logic-related tests
+pytest ipfs_datasets_py/mcp_server/tools/dataset_tools/tests/test_*logic* \
+       tests/unit/test_logic_* \
+       tests/integration/test_logic_* -v
+
+# Quick verification
+python tests/unit/test_logic_tools_discoverability.py
+```
+
+**Status**: ✅ **Production Ready** - 26 tests passing, comprehensive coverage of FOL conversion, deontic logic analysis, and MCP tool interfaces.
