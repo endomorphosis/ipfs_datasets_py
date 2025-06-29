@@ -53,3 +53,8 @@ jinja2
 pyyaml
 aiofile
 flake8
+
+# SymbolicAI integration dependencies
+symbolicai>=0.13.1
+beartype>=0.15.0
+pydantic>=2.0.0
