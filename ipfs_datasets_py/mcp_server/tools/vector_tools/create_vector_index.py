@@ -62,6 +62,21 @@ async def create_vector_index(
 
         # Convert vectors to numpy arrays and add to index
         np_vectors = np.array(vectors)
+        
+        # Handle metadata: if provided but doesn't match vector count, adjust it
+        if metadata is not None:
+            if isinstance(metadata, dict):
+                # If single dict provided, replicate for all vectors
+                metadata = [metadata.copy() for _ in range(len(vectors))]
+            elif isinstance(metadata, list) and len(metadata) != len(vectors):
+                if len(metadata) == 1:
+                    # If single item in list, replicate for all vectors
+                    metadata = metadata * len(vectors)
+                else:
+                    # If mismatch, create default metadata for all vectors
+                    logger.warning(f"Metadata count ({len(metadata)}) doesn't match vector count ({len(vectors)}). Using default metadata.")
+                    metadata = [{"vector_index": i} for i in range(len(vectors))]
+        
         vector_ids = index.add_vectors(np_vectors, metadata=metadata)
 
         # Return information about the index

@@ -277,3 +277,28 @@ def reset_config() -> None:
     """Reset the global configuration to None (forces reload)."""
     global _global_config
     _global_config = None
+
+
+# Main MCP function
+async def config():
+    """Development tools configuration manager."""
+    try:
+        config_obj = get_config()
+        return {
+            "status": "success",
+            "message": "Development tools configuration loaded",
+            "tool_type": "Configuration manager",
+            "config_sections": [
+                "test_generator",
+                "documentation_generator", 
+                "linting_tools",
+                "codebase_search",
+                "test_runner"
+            ]
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to load configuration: {str(e)}",
+            "tool_type": "Configuration manager"
+        }

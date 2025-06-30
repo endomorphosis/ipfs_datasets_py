@@ -4,12 +4,20 @@ IPFS Datasets Python
 A unified interface for data processing and distribution across decentralized networks.
 """
 
-# Original imports - commented out to avoid hanging imports
-# from .ipfs_datasets import load_dataset # Corrected import below
-# from .s3_kit import s3_kit  
-# from .test_fio import test_fio
-# Delay config import to avoid circular dependencies
-# from .config import config
+# Main entry points
+try:
+    from .ipfs_datasets import ipfs_datasets_py
+    HAVE_IPFS_DATASETS = True
+except ImportError:
+    HAVE_IPFS_DATASETS = False
+
+# Re-export key functions
+try:
+    from datasets import load_dataset
+    HAVE_LOAD_DATASET = True
+except ImportError:
+    HAVE_LOAD_DATASET = False
+
 
 # Use conditional imports to handle missing modules gracefully
 try:
@@ -208,6 +216,15 @@ try:
 except ImportError:
     HAVE_IPWB = False
 
+try:
+    from .pdf_processing import (
+        PDFProcessor, MultiEngineOCR, LLMOptimizer, 
+        GraphRAGIntegrator, QueryEngine, BatchProcessor
+    )
+    HAVE_PDF_PROCESSING = True
+except ImportError:
+    HAVE_PDF_PROCESSING = False
+
 # Define base exports that should always be available
 __all__ = [
     # Original exports
@@ -360,54 +377,12 @@ if HAVE_AUDIT:
         'ResponseAction'
     ])
 
-# Try to import and export load_dataset function
-try:
-    from .ipfs_datasets import load_dataset
-    __all__.append('load_dataset')
-except ImportError:
-    pass
-
-# Feature enabling functions for embeddings integration
-def enable_embeddings():
-    """
-    Enable embedding and vector store functionality.
-    
-    Returns:
-        bool: True if embeddings are available, False otherwise
-    """
-    return HAVE_EMBEDDINGS
-
-def enable_vector_stores():
-    """
-    Enable vector store functionality.
-    
-    Returns:
-        bool: True if vector stores are available, False otherwise
-    """
-    return HAVE_VECTOR_STORES
-
-def enable_mcp_tools():
-    """
-    Enable MCP (Model Context Protocol) tools.
-    
-    Returns:
-        bool: True if MCP tools are available, False otherwise
-    """
-    return HAVE_MCP_TOOLS
-
-def enable_fastapi():
-    """
-    Enable FastAPI service functionality.
-    
-    Returns:
-        bool: True if FastAPI service is available, False otherwise
-    """
-    return HAVE_FASTAPI
-
-# Export feature enabling functions
-__all__.extend([
-    'enable_embeddings',
-    'enable_vector_stores', 
-    'enable_mcp_tools',
-    'enable_fastapi'
-])
+if HAVE_PDF_PROCESSING:
+    __all__.extend([
+        'PDFProcessor', 
+        'MultiEngineOCR', 
+        'LLMOptimizer', 
+        'GraphRAGIntegrator', 
+        'QueryEngine', 
+        'BatchProcessor'
+    ])

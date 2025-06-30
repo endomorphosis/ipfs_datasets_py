@@ -17,12 +17,46 @@ import sys
 import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import pydantic
 from mcp.server import FastMCP
-from mcp.types import Tool, TextContent
+from mcp.types import CallToolResult, TextContent, Tool
 from mcp import CallToolRequest
 
 from .configs import Configs, configs
-from .logger import logger, mcp_logger
+from .logger import logger
+
+
+
+from mcp.types import CallToolResult, TextContent, Tool
+
+
+def return_text_content(input: Any, result_str: str) -> TextContent:
+    """
+    Return a TextContent object with formatted string.
+
+    Args:
+        string (str): The input string to be included in the content.
+        result_str (str): A string identifier or label to prefix the input string.
+
+    Returns:
+        TextContent: A TextContent object with 'text' type and formatted text.
+    """
+    return TextContent(type="text", text=f"{result_str}: {repr(input)}") # NOTE we use repr to ensure special characters are handled correctly
+
+
+def return_tool_call_results(content: TextContent, error: bool = False) -> CallToolResult:
+    """
+    Returns a CallToolResult object for tool call response.
+
+    Args:
+        content: The content of the tool call result.
+        error: Whether the tool call resulted in an error. Defaults to False.
+
+    Returns:
+        CallToolResult: The formatted result object containing the content and error status.
+    """
+    return CallToolResult(isError=error, content=[content])
+
 
 # Utility for importing tools
 def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
@@ -42,7 +76,14 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
         return tools
 
     for item in directory_path.iterdir():
-        if item.is_file() and item.suffix == '.py' and item.name != '__init__.py':
+        this_is_valid_file = (
+            item.is_file() and
+            item.suffix == '.py' and # Only Python files
+            not item.name.startswith('.') and # Avoid hidden and dunder files (e.g. __init__.py, __main__.py)
+            not item.name.startswith('_')
+        )
+
+        if this_is_valid_file:
             module_name = item.stem
             try:
                 module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
@@ -51,14 +92,16 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
                     # Only include functions defined in the module (not imported ones)
                     # and exclude built-in types and typing constructs
                     # For development tools, also include wrapped functions
-                    is_valid_function = (
+                    this_is_valid_function = (
                         callable(attr) and
                         not attr_name.startswith('_') and
                         hasattr(attr, '__module__') and
-                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple']
+                        hasattr(attr, '__doc__') and # Ensure it has a docstring, since Claude will need it to properly use a tool.
+                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple'] and
+                        not isinstance(attr, type)  # Exclude classes/types
                     )
 
-                    if is_valid_function:
+                    if this_is_valid_function:
                         # For development tools, be more flexible with module checking
                         is_from_module = (
                             attr.__module__ == module.__name__ or
@@ -102,20 +145,13 @@ class IPFSDatasetsMCPServer:
         # Register tools from the tools directory
         tools_path = Path(__file__).parent / "tools"
 
-        # Register dataset tools
-        self._register_tools_from_subdir(tools_path / "dataset_tools")
-
-        # Register IPFS tools
-        self._register_tools_from_subdir(tools_path / "ipfs_tools")
-
-        # Register vector tools
-        self._register_tools_from_subdir(tools_path / "vector_tools")
-
-        # Register graph tools
-        self._register_tools_from_subdir(tools_path / "graph_tools")
-
-        # Register audit tools
-        self._register_tools_from_subdir(tools_path / "audit_tools")
+        # Register tools from subdirectories
+        tool_subdirs = [
+            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools", "media_tools"
+        ]
+        
+        for subdir in tool_subdirs:
+            self._register_tools_from_subdir(tools_path / subdir)
 
         # Register development tools (migrated from claudes_toolbox-1)
         try:
@@ -185,7 +221,9 @@ class IPFSDatasetsMCPServer:
         tools = import_tools_from_directory(subdir_path)
 
         for tool_name, tool_func in tools.items():
-            self.mcp.add_tool(tool_func, name=tool_name)
+            self.mcp.add_tool(
+                tool_func, name=tool_name, description=tool_func.__doc__
+            )
             self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
 
@@ -214,7 +252,7 @@ class IPFSDatasetsMCPServer:
             ipfs_kit_mcp_url: URL of the ipfs_kit_py MCP server
         """
         try:
-            from mcp.client import MCPClient
+            from mcp.client import MCPClient # TODO FIXME This library is hallucinated! It does not exist!
 
             # Create MCP client
             client = MCPClient(ipfs_kit_mcp_url)
@@ -358,6 +396,32 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
         logger.error(f"Error starting server: {e}")
         traceback.print_exc()
 
+class Args(pydantic.BaseModel):
+    """
+    Expected command-line arguments for the MCP server
+
+    Attributes:
+        host (str): The host address for the MCP server to bind to.
+        port (int): The port number for the MCP server to listen on.
+        ipfs_kit_mcp_url (Optional[pydantic.AnyUrl]): Optional URL for the IPFS Kit MCP service.
+        configs (Optional[pydantic.FilePath]): Optional path to configuration file.
+
+    Args:
+        namespace (argparse.Namespace): The parsed command-line arguments namespace
+            containing the configuration values to be validated and stored.
+    """
+    host: str
+    port: int
+    ipfs_kit_mcp_url: Optional[pydantic.AnyUrl] = None
+    config: Optional[pydantic.FilePath] = None
+
+    def __init__(self, namespace: argparse.Namespace):
+        super().__init__(
+            host=namespace.host,
+            port=namespace.port,
+            ipfs_kit_mcp_url=namespace.ipfs_kit_mcp_url,
+            configs=namespace.config
+        )
 
 def main():
     """Command-line entry point."""
@@ -367,7 +431,7 @@ def main():
     parser.add_argument("--ipfs-kit-mcp-url", help="URL of an ipfs_kit_py MCP server")
     parser.add_argument("--config", help="Path to a configuration YAML file")
 
-    args = parser.parse_args()
+    args = Args(parser.parse_args())
 
     # Load custom configuration if provided
     if args.config:

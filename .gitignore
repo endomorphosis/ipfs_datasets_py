@@ -17,3 +17,9 @@ dist/
 *.env
 *.env.*
 *.DS_Store
+venv/
+deprecated/
+configs.yaml
+sql_configs.yaml
+*.log
+*.db

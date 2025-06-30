@@ -851,7 +851,7 @@ def run_comprehensive_tests(path: str = ".",
                            coverage: bool = True,
                            verbose: bool = False,
                            save_results: bool = True,
-                           output_formats: Optional[List[str]] = None) -> BaseDevelopmentTool:
+                           output_formats: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Run comprehensive test suite including unit tests, type checking, linting, and dataset tests.
 
@@ -868,9 +868,9 @@ def run_comprehensive_tests(path: str = ".",
         output_formats: Output formats - ['json', 'markdown'] (default: ['json'])
 
     Returns:
-        TestRunner instance (BaseDevelopmentTool)
+        Dict containing test results
     """
-    return create_test_runner(
+    test_runner = create_test_runner(
         path=path,
         run_unit_tests=run_unit_tests,
         run_type_check=run_type_check,
@@ -882,3 +882,119 @@ def run_comprehensive_tests(path: str = ".",
         save_results=save_results,
         output_formats=output_formats
     )
+    
+    # Execute the test runner and return results
+    try:
+        # Check if there's already an event loop running
+        try:
+            loop = asyncio.get_running_loop()
+            # If we get here, there's a running loop, so we need to use a different approach
+            import concurrent.futures
+            import threading
+
+            def run_in_thread():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    return new_loop.run_until_complete(test_runner.execute())
+                finally:
+                    new_loop.close()
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                return future.result()
+
+        except RuntimeError:
+            # No running loop, we can use asyncio.run
+            return asyncio.run(test_runner.execute())
+    except Exception as e:
+        # Fallback to error result if execution fails
+        return {
+            "success": False,
+            "error": "execution_error",
+            "message": f"Failed to execute test runner: {e}",
+            "metadata": {
+                "tool": "run_comprehensive_tests",
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+
+
+# Main MCP function
+async def test_runner(**kwargs):
+    """
+    Comprehensive test runner for Python projects.
+
+    Executes unit tests, type checking, linting, and dataset integrity tests
+    with detailed reporting and results export.
+    """
+    try:
+        path = kwargs.get('path', '.')
+        verbose = kwargs.get('verbose', False)
+        coverage = kwargs.get('coverage', True)
+        
+        runner = TestRunner(
+            name="TestRunner",
+            description="Comprehensive test runner for Python projects"
+        )
+        
+        result = await runner.execute(
+            path=path,
+            verbose=verbose,
+            coverage=coverage,
+            run_unit_tests=True,
+            run_type_check=True,
+            run_linting=True,
+            run_dataset_tests=True
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Test runner failed: {str(e)}",
+            "tool_type": "development_tool"
+        }
+
+
+async def create_test_runner(
+    path: str = ".",
+    verbose: bool = False,
+    coverage: bool = True,
+    run_unit_tests: bool = True,
+    run_type_check: bool = True,
+    run_linting: bool = True,
+    run_dataset_tests: bool = True,
+    test_framework: str = "pytest",
+    save_results: bool = True,
+    output_formats: Optional[List[str]] = None
+):
+    """
+    Create a properly configured TestRunner instance.
+    """
+    try:
+        runner = TestRunner(
+            name="TestRunner",
+            description="Comprehensive test runner for Python projects"
+        )
+        
+        result = await runner.execute(
+            path=path,
+            verbose=verbose,
+            coverage=coverage,
+            run_unit_tests=run_unit_tests,
+            run_type_check=run_type_check,
+            run_linting=run_linting,
+            run_dataset_tests=run_dataset_tests,
+            test_framework=test_framework,
+            save_results=save_results,
+            output_formats=output_formats or ["json"]
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to create test runner: {str(e)}",
+            "tool_type": "development_tool"
+        }

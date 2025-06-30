@@ -54,7 +54,7 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
         return tools
 
     for item in directory_path.iterdir():
-        if item.is_file() and item.suffix == '.py' and item.name != '__init__.py':
+        if item.is_file() and item.suffix == '.py' and item.name != '__init__.py' and not item.name.startswith('.') and not item.name.startswith('_'):
             module_name = item.stem
             try:
                 module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
@@ -66,6 +66,28 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
                 logger.error(f"Failed to import {module_name}: {e}")
 
     return tools
+
+
+
+def import_argparse_program(directory_path: Path) -> Dict[str, Any]:
+    """
+    Import argparse programs from a directory.
+
+    Args:
+        program_name: Name of the program to import
+
+    Returns:
+        Callable function representing the program
+    """
+    program_name = None
+    try:
+        module = importlib.import_module(program_name)
+        return getattr(module, 'main', None)
+    except ImportError as e:
+        logger.error(f"Failed to import program {program_name}: {e}")
+        return None
+
+
 
 
 class SimpleIPFSDatasetsMCPServer:

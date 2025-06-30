@@ -1,51 +1,50 @@
-import os
-import tempfile
-from tempfile import mkdtemp
-from os import path
-from os import listdir
-from os.path import isfile, join
-from os import walk
-import toml
+from pathlib import Path
+
+try:
+    import toml
+except ImportError:
+    raise ImportError("Please install the 'toml' package to use this module. You can do this by running 'pip install toml'.")
 
 class config():
+
     def __init__(self, collection=None, meta=None):
-        this_dir = os.path.dirname(os.path.realpath(__file__))
+        this_dir = Path(__file__).parent
         if meta is not None:
             if "config" in meta:
-                self.toml_file = meta["config"]
+                self.toml_file = Path(meta["config"])
                 self.baseConfig = self.requireConfig(self.toml_file)
         else:
-            self.toml_file = "./config/config.toml"
-            if os.path.exists(self.toml_file):
-                self.toml_file = os.path.realpath(self.toml_file)
-            elif os.path.exists(os.path.join(this_dir, self.toml_file)):
-                self.toml_file = os.path.realpath(os.path.join(this_dir, self.toml_file))
+            self.toml_file = Path("./config/config.toml")
+            if self.toml_file.exists():
+                self.toml_file = self.toml_file.resolve()
+            elif (this_dir / self.toml_file).exists():
+                self.toml_file = (this_dir / self.toml_file).resolve()
             self.baseConfig = self.requireConfig(self.toml_file)
 
-    def overrideToml(self, base, overrides):
-        if not isinstance(overrides, dict):
-            if isinstance(overrides, str):
-                if os.path.exists(overrides):
+    def overrideToml(self, base, overrides: dict | str | Path = None) -> dict:
+        match overrides:
+            case dict():
+                for item in overrides.items():
+                    key = item[0]
+                    value = item[1]
+                    match value:
+                        case dict():
+                            base[key] = self.overrideToml(base[key], value)
+                        case _:
+                            base[key] = value
+            case Path() | str():
+                if Path(overrides).exists():
                     with open(overrides) as f:
                         for key, value in toml.load(f).items():
                             base[key] = value
                         return base
-                else:
-                    raise Exception('file not found: ' + overrides)
-            else:
+            case str():
+                raise Exception('file not found: ' + overrides)
+            case _:
                 raise Exception('invalid override type: ' + str(type(overrides)))
-        elif isinstance(overrides, dict):
-            for item in overrides.items():
-                key = item[0]
-                value = item[1]
-                if isinstance(value, dict):
-                    base[key] = self.overrideToml(base[key], value)
-                else:
-                    base[key] = value
-        else:
-            return base
+        return base
 
-    def findConfig(self):
+    def findConfig(self) -> Path | None:
         paths = [
             './config.toml',
             '../config.toml',
@@ -55,34 +54,31 @@ class config():
         foundPath = None
 
         for path in paths:
-            thisdir = path.dirname(os.path.realpath(__file__))
-            this_path = os.path.realpath(os.path.join(thisdir, path))
-            if os.path.exists(this_path):
+            this_path = (Path(__file__).parent / Path(path)).resolve()
+            if this_path.exists():
                 foundPath = this_path
 
         print("foundPath: ", foundPath)
         return foundPath if foundPath != None else None
 
-    def loadConfig(self, configPath, overrides = None):
+    def loadConfig(self, configPath: Path, overrides = None) -> dict:
         if configPath is None and "findConfig" in dir(self):
             configPath = self.findConfig()
-        with open(configPath) as f:
+        with open(configPath.resolve()) as f:
             config = toml.load(f)
-            if overrides is None:
-                return config
-            else:
-                return self.overrideToml(config, overrides)
+            return config if overrides is None else self.overrideToml(config, overrides)
 
-    def requireConfig(self, opts = None):
+    def requireConfig(self, opts: dict | str = None) -> dict:
         configPath = None
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        this_config = os.path.join(this_dir, 'config.toml')
-        if type(opts) == str and os.path.exists(opts) and opts is not None:
-            configPath = opts
-        elif  type(opts) == dict and 'config' in opts and os.path.exists(opts['config']) and opts['config'] is not None:
-            configPath = opts['config']
+        this_dir = Path(__file__).parent
+        this_config = this_dir / 'config.toml'
+    
+        if isinstance(opts, (str, Path)) and Path(opts).exists() and opts is not None:
+            configPath = Path(opts)
+        elif isinstance(opts, dict) and 'config' in opts and Path(opts['config']).exists() and opts['config'] is not None:
+            configPath = Path(opts['config'])
         elif opts is None and "findConfig" in dir(self):
-            configPath = self.findConfig(this_config)
+            configPath = self.findConfig()
 
         if not configPath:
             print('this_dir: ')

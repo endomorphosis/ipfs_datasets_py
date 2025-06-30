@@ -1,0 +1,159 @@
+{
+  "timestamp": "2025-06-26T05:43:43.192255",
+  "test_suites": [
+    {
+      "suite_name": "Text to FOL Conversion",
+      "tests": [
+        {
+          "name": "Basic Universal Statement",
+          "passed": true,
+          "error": null,
+          "duration": 0.0104
+        },
+        {
+          "name": "Existential Statement",
+          "passed": true,
+          "error": null,
+          "duration": 0.00136
+        },
+        {
+          "name": "Complex Conditional",
+          "passed": true,
+          "error": null,
+          "duration": 0.002027
+        },
+        {
+          "name": "Multiple Statements",
+          "passed": true,
+          "error": null,
+          "duration": 0.001247
+        },
+        {
+          "name": "Prolog Output Format",
+          "passed": true,
+          "error": null,
+          "duration": 0.001172
+        },
+        {
+          "name": "Empty Input Error Handling",
+          "passed": true,
+          "error": null,
+          "duration": 0.000223
+        },
+        {
+          "name": "Confidence Scoring",
+          "passed": true,
+          "error": null,
+          "duration": 0.001408
+        }
+      ],
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "suite_name": "Legal Text to Deontic Logic",
+      "tests": [
+        {
+          "name": "Basic Obligation",
+          "passed": true,
+          "error": null,
+          "duration": 0.012999
+        },
+        {
+          "name": "Permission Statement",
+          "passed": true,
+          "error": null,
+          "duration": 0.000933
+        },
+        {
+          "name": "Prohibition Statement",
+          "passed": true,
+          "error": null,
+          "duration": 0.000565
+        },
+        {
+          "name": "Temporal Constraints",
+          "passed": true,
+          "error": null,
+          "duration": 0.000807
+        },
+        {
+          "name": "Jurisdiction Handling",
+          "passed": true,
+          "error": null,
+          "duration": 0.000723
+        },
+        {
+          "name": "Complex Legal Text",
+          "passed": true,
+          "error": null,
+          "duration": 0.001153
+        },
+        {
+          "name": "Dataset Input",
+          "passed": true,
+          "error": null,
+          "duration": 0.001134
+        },
+        {
+          "name": "Empty Input Error Handling",
+          "passed": true,
+          "error": null,
+          "duration": 0.00029
+        }
+      ],
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "suite_name": "Logic Utilities",
+      "tests": [
+        {
+          "name": "Predicate Extraction",
+          "passed": true,
+          "error": null,
+          "duration": 0.000145
+        },
+        {
+          "name": "FOL Parsing",
+          "passed": true,
+          "error": null,
+          "duration": 0.000115
+        },
+        {
+          "name": "Deontic Parsing",
+          "passed": true,
+          "error": null,
+          "duration": 0.00057
+        }
+      ],
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "suite_name": "Tool Integration",
+      "tests": [
+        {
+          "name": "MCP Tool Import",
+          "passed": true,
+          "error": null,
+          "duration": 2.2e-05
+        },
+        {
+          "name": "Async Main Functions",
+          "passed": true,
+          "error": null,
+          "duration": 2.1e-05
+        }
+      ],
+      "passed": 2,
+      "failed": 0
+    }
+  ],
+  "summary": {
+    "total_tests": 20,
+    "passed": 20,
+    "failed": 0,
+    "errors": []
+  }
+}

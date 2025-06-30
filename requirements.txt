@@ -96,8 +96,13 @@ pytest-cov>=4.1.0
 pytest-asyncio>=0.21.0  # For testing async functions
 
 # MCP Server dependencies
-mcp>=1.9.1  # Replace with actual MCP server package name
+mcp>=1.9.1  # Replace with actual MCP server package name NOTE This will also install pydantic
 jinja2
 pyyaml
 aiofile
 flake8
+# SymbolicAI integration dependencies
+symbolicai>=0.13.1
+beartype>=0.15.0
+pydantic>=2.0.0
+

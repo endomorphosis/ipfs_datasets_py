@@ -14,220 +14,16 @@ The integration with ipfs_embeddings_py brings powerful new capabilities:
 
 ## Table of Contents
 
-1. [Semantic Search Pipeline](#semantic-search-pipeline)
-2. [Vector Store Integration](#vector-store-integration)
-3. [MCP Tool Orchestration](#mcp-tool-orchestration)
-4. [Complete Data Processing Pipeline](#complete-data-processing-pipeline)
-5. [Building a Knowledge Dataset from Web Archives](#building-a-knowledge-dataset-from-web-archives)
-6. [GraphRAG with Multi-Model Embeddings](#graphrag-with-multi-model-embeddings)
-7. [Distributed Vector Search with Sharding](#distributed-vector-search-with-sharding)
-8. [Cross-Document Reasoning with LLM Integration](#cross-document-reasoning-with-llm-integration)
-9. [DuckDB, Arrow, and IPLD Integration](#duckdb-arrow-and-ipld-integration)
-10. [Resilient Distributed Operations](#resilient-distributed-operations)
-11. [Comprehensive Audit and Provenance Tracking](#comprehensive-audit-and-provenance-tracking)
+1. [Complete Data Processing Pipeline](#complete-data-processing-pipeline)
+2. [Advanced PDF Processing and GraphRAG Integration](#advanced-pdf-processing-and-graphrag-integration)
+3. [Building a Knowledge Dataset from Web Archives](#building-a-knowledge-dataset-from-web-archives)
+4. [GraphRAG with Multi-Model Embeddings](#graphrag-with-multi-model-embeddings)
+5. [Distributed Vector Search with Sharding](#distributed-vector-search-with-sharding)
+6. [Cross-Document Reasoning with LLM Integration](#cross-document-reasoning-with-llm-integration)
+7. [DuckDB, Arrow, and IPLD Integration](#duckdb-arrow-and-ipld-integration)
+8. [Resilient Distributed Operations](#resilient-distributed-operations)
+9. [Comprehensive Audit and Provenance Tracking](#comprehensive-audit-and-provenance-tracking)
 
-## Semantic Search Pipeline
-
-This example demonstrates building a complete semantic search system using the integrated embedding capabilities.
-
-```python
-from ipfs_datasets_py.embeddings import EmbeddingGenerator
-from ipfs_datasets_py.vector_stores import QdrantStore
-from ipfs_datasets_py.mcp_server.tools.embedding_tools import embedding_generation
-import asyncio
-
-async def build_semantic_search_system():
-    # Initialize components
-    embedder = EmbeddingGenerator(model="sentence-transformers/all-MiniLM-L6-v2")
-    vector_store = QdrantStore(collection_name="documents")
-    
-    # Sample documents
-    documents = [
-        "Machine learning is transforming how we process data",
-        "IPFS provides decentralized storage solutions",
-        "Vector embeddings capture semantic meaning in text",
-        "Knowledge graphs represent structured information"
-    ]
-    
-    # Generate embeddings
-    print("Generating embeddings...")
-    embeddings = await embedder.generate_embeddings(documents)
-    
-    # Store in vector database
-    print("Storing in vector database...")
-    await vector_store.add_documents(
-        documents=documents,
-        embeddings=embeddings,
-        metadata=[{"id": i, "source": "example"} for i in range(len(documents))]
-    )
-    
-    # Perform semantic search
-    query = "distributed storage systems"
-    query_embedding = await embedder.generate_embeddings([query])
-    
-    results = await vector_store.search(
-        query_embedding[0], 
-        top_k=3,
-        include_metadata=True
-    )
-    
-    print(f"Search results for '{query}':")
-    for i, result in enumerate(results):
-        print(f"{i+1}. {result['document']} (score: {result['score']:.3f})")
-    
-    return results
-
-# Run the example
-asyncio.run(build_semantic_search_system())
-```
-
-## Vector Store Integration
-
-This example shows how to work with different vector store backends.
-
-```python
-from ipfs_datasets_py.vector_stores import QdrantStore, ElasticsearchStore, FAISSStore
-from ipfs_datasets_py.embeddings import EmbeddingGenerator
-import asyncio
-
-async def compare_vector_stores():
-    # Initialize embedding generator
-    embedder = EmbeddingGenerator()
-    
-    # Sample data
-    texts = ["AI and machine learning", "Distributed systems", "Data processing"]
-    embeddings = await embedder.generate_embeddings(texts)
-    
-    # Initialize different vector stores
-    stores = {
-        "qdrant": QdrantStore(collection_name="test_qdrant"),
-        "elasticsearch": ElasticsearchStore(index_name="test_es"),
-        "faiss": FAISSStore(dimension=384)  # MiniLM dimension
-    }
-    
-    # Test each store
-    for store_name, store in stores.items():
-        print(f"\nTesting {store_name}...")
-        
-        # Add documents
-        await store.add_documents(
-            documents=texts,
-            embeddings=embeddings,
-            metadata=[{"store": store_name, "id": i} for i in range(len(texts))]
-        )
-        
-        # Search
-        query_embedding = await embedder.generate_embeddings(["machine learning"])
-        results = await store.search(query_embedding[0], top_k=2)
-        
-        print(f"Top results from {store_name}:")
-        for result in results:
-            print(f"  - {result['document']} (score: {result['score']:.3f})")
-
-asyncio.run(compare_vector_stores())
-```
-
-## MCP Tool Orchestration
-
-This example demonstrates orchestrating multiple MCP tools for complex workflows.
-
-```python
-from ipfs_datasets_py.mcp_server.tools.dataset_tools import load_dataset, process_dataset
-from ipfs_datasets_py.mcp_server.tools.embedding_tools import embedding_generation
-from ipfs_datasets_py.mcp_server.tools.vector_tools import create_vector_index
-from ipfs_datasets_py.mcp_server.tools.ipfs_tools import pin_to_ipfs
-import asyncio
-
-async def mcp_workflow_example():
-    # Step 1: Load dataset
-    print("1. Loading dataset...")
-    dataset_result = await load_dataset({
-        "source": "squad",
-        "options": {"split": "train[:100]"}  # Small sample
-    })
-    
-    if dataset_result["status"] != "success":
-        print(f"Failed to load dataset: {dataset_result['message']}")
-        return
-    
-    dataset_id = dataset_result["dataset_id"]
-    print(f"Loaded dataset: {dataset_id}")
-    
-    # Step 2: Process dataset - extract text field
-    print("2. Processing dataset...")
-    process_result = await process_dataset({
-        "dataset_source": dataset_id,
-        "operations": [
-            {"type": "select", "columns": ["question", "context"]},
-            {"type": "map", "function": "lambda x: x['question'] + ' ' + x['context']", "column": "combined_text"}
-        ]
-    })
-    
-    if process_result["status"] != "success":
-        print(f"Failed to process dataset: {process_result['message']}")
-        return
-    
-    processed_id = process_result["dataset_id"]
-    print(f"Processed dataset: {processed_id}")
-    
-    # Step 3: Generate embeddings
-    print("3. Generating embeddings...")
-    # Extract text from processed dataset (simplified)
-    texts = ["Sample question and context combined"]  # In real usage, extract from dataset
-    
-    embedding_result = await embedding_generation({
-        "texts": texts,
-        "model": "sentence-transformers/all-MiniLM-L6-v2"
-    })
-    
-    if embedding_result["status"] != "success":
-        print(f"Failed to generate embeddings: {embedding_result['message']}")
-        return
-    
-    embeddings = embedding_result["embeddings"]
-    print(f"Generated {len(embeddings)} embeddings")
-    
-    # Step 4: Create vector index
-    print("4. Creating vector index...")
-    index_result = await create_vector_index({
-        "vectors": embeddings,
-        "metadata": [{"text": text, "source": "squad"} for text in texts]
-    })
-    
-    if index_result["status"] != "success":
-        print(f"Failed to create index: {index_result['message']}")
-        return
-    
-    index_id = index_result["index_id"]
-    print(f"Created vector index: {index_id}")
-    
-    # Step 5: Pin to IPFS for decentralized storage
-    print("5. Pinning to IPFS...")
-    pin_result = await pin_to_ipfs({
-        "content_source": {
-            "dataset_id": processed_id,
-            "index_id": index_id,
-            "embeddings": embeddings
-        }
-    })
-    
-    if pin_result["status"] != "success":
-        print(f"Failed to pin to IPFS: {pin_result['message']}")
-        return
-    
-    cid = pin_result["cid"]
-    print(f"Pinned to IPFS: {cid}")
-    
-    print("\nWorkflow completed successfully!")
-    return {
-        "dataset_id": processed_id,
-        "index_id": index_id,
-        "ipfs_cid": cid
-    }
-
-# Run the workflow
-asyncio.run(mcp_workflow_example())
-```
 
 ## Complete Data Processing Pipeline
 
@@ -286,6 +82,185 @@ print("Data processing and export complete!")
 print(f"Processed {len(processed_data)} records")
 print(f"Outputs: wikipedia_python.parquet, wikipedia_python.car, and dataset on HF Hub")
 ```
+
+## Advanced PDF Processing and GraphRAG Integration
+
+This example demonstrates comprehensive PDF processing that integrates the complete pipeline for optimal LLM consumption and GraphRAG integration.
+
+```python
+from ipfs_datasets_py.pdf_processing import (
+    PDFGraphRAGIntegrator, 
+    LLMOptimizedProcessor, 
+    MultiEngineOCR,
+    PDFGraphRAGQueryEngine,
+    PDFBatchProcessor
+)
+from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.monitoring import MonitoringSystem
+import asyncio
+from pathlib import Path
+
+# Initialize monitoring for comprehensive processing
+monitoring = MonitoringSystem(
+    metrics_path="pdf_processing_metrics",
+    enable_prometheus=True,
+    enable_alerts=True
+)
+
+# 1. Initialize PDF processing components
+pdf_integrator = PDFGraphRAGIntegrator()
+llm_processor = LLMOptimizedProcessor()
+batch_processor = PDFBatchProcessor(
+    batch_size=5,
+    parallel_workers=4,
+    enable_caching=True
+)
+
+# 2. Process a collection of research papers
+pdf_directory = Path("research_papers/")
+pdf_files = list(pdf_directory.glob("*.pdf"))
+
+print(f"Processing {len(pdf_files)} PDF documents...")
+
+# Batch process PDFs with complete pipeline
+with monitoring.track_operation("pdf_batch_processing"):
+    results = batch_processor.process_pdf_batch(
+        pdf_paths=[str(f) for f in pdf_files],
+        target_llm="gpt-4",  # Optimize for GPT-4
+        enable_cross_document_analysis=True
+    )
+
+# 3. Advanced multi-engine OCR demonstration
+print("\nDemonstrating multi-engine OCR...")
+ocr = MultiEngineOCR()
+
+# Configure OCR engines with different strategies
+ocr_strategies = ['quality_first', 'speed_first', 'accuracy_first']
+for strategy in ocr_strategies:
+    with open("sample_scanned_page.png", "rb") as f:
+        image_data = f.read()
+    
+    result = ocr.extract_with_fallback(image_data, strategy=strategy)
+    print(f"Strategy '{strategy}': {result['confidence']:.2f} confidence, "
+          f"engine: {result['engine']}")
+
+# 4. LLM-specific optimization for different architectures
+llm_targets = ['gpt-4', 'claude-3', 'gemini-pro', 'llama-2']
+optimized_contents = {}
+
+for target_llm in llm_targets:
+    print(f"\nOptimizing content for {target_llm}...")
+    
+    optimized_content = llm_processor.optimize_for_target_llm(
+        pdf_path=str(pdf_files[0]),  # Use first PDF as example
+        target_llm=target_llm
+    )
+    
+    optimized_contents[target_llm] = optimized_content
+    
+    # Print optimization statistics
+    chunks = optimized_content['chunks']
+    avg_chunk_size = sum(len(chunk['text']) for chunk in chunks) / len(chunks)
+    print(f"  - {len(chunks)} chunks created")
+    print(f"  - Average chunk size: {avg_chunk_size:.0f} characters")
+    print(f"  - Total entities extracted: {sum(len(chunk.get('entities', [])) for chunk in chunks)}")
+
+# 5. Advanced querying with cross-document reasoning
+query_engine = PDFGraphRAGQueryEngine(pdf_integrator)
+
+# Complex queries that benefit from GraphRAG
+complex_queries = [
+    "What are the common methodologies used across these research papers for evaluating AI safety?",
+    "How do the findings in paper A relate to the conclusions in paper B regarding model interpretability?",
+    "What trends can be identified in the evolution of transformer architectures across these documents?",
+    "Which papers discuss similar ethical considerations, and what are their different perspectives?"
+]
+
+print("\nExecuting complex cross-document queries...")
+query_results = {}
+
+for query in complex_queries:
+    print(f"\nQuery: {query[:80]}...")
+    
+    results = query_engine.query_pdf_corpus(
+        query=query,
+        query_type="cross_document",
+        max_documents=len(pdf_files),
+        include_reasoning_trace=True
+    )
+    
+    query_results[query] = results
+    
+    print(f"Answer: {results['answer'][:200]}...")
+    print(f"Confidence: {results['confidence']:.2f}")
+    print(f"Sources: {len(results['source_documents'])} documents")
+    
+    # Show entity connections
+    if 'entity_connections' in results:
+        print("Key entity connections:")
+        for conn in results['entity_connections'][:3]:
+            print(f"  - {conn['entity']} ({conn['type']}): {conn['relation']}")
+
+# 6. Document relationship analysis
+print("\nAnalyzing document relationships...")
+for result in results:
+    doc_analysis = query_engine.analyze_document_relationships(
+        result['document_id']
+    )
+    
+    print(f"Document {result['document_id']}:")
+    print(f"  - Internal relationships: {doc_analysis['internal_relationships']}")
+    print(f"  - External relationships: {doc_analysis['external_relationships']}")
+    print(f"  - Cross-document links: {len(doc_analysis['cross_document_links'])}")
+
+# 7. Export processed knowledge graph to IPLD
+print("\nExporting knowledge graph to IPLD...")
+ipld_storage = IPLDStorage()
+
+export_result = pdf_integrator.export_knowledge_graph_to_ipld(
+    include_embeddings=True,
+    include_relationships=True,
+    include_document_content=True,
+    compression_level=6
+)
+
+print(f"Knowledge graph exported with root CID: {export_result['root_cid']}")
+print(f"Total nodes: {export_result['node_count']}")
+print(f"Total relationships: {export_result['relationship_count']}")
+print(f"Compressed size: {export_result['compressed_size_mb']:.2f} MB")
+
+# 8. Performance metrics and quality assessment
+processing_metrics = monitoring.get_operation_metrics("pdf_batch_processing")
+print(f"\nProcessing Performance:")
+print(f"  - Total processing time: {processing_metrics['duration']:.2f} seconds")
+print(f"  - Average time per document: {processing_metrics['duration']/len(pdf_files):.2f} seconds")
+print(f"  - Memory usage peak: {processing_metrics['peak_memory_mb']:.1f} MB")
+
+# Quality assessment
+quality_metrics = batch_processor.get_quality_metrics()
+print(f"\nQuality Metrics:")
+print(f"  - Average OCR confidence: {quality_metrics['avg_ocr_confidence']:.2f}")
+print(f"  - Content coherence score: {quality_metrics['avg_coherence_score']:.2f}")
+print(f"  - Entity extraction confidence: {quality_metrics['avg_entity_confidence']:.2f}")
+print(f"  - Cross-document relationship accuracy: {quality_metrics['relationship_accuracy']:.2f}")
+
+print("\nAdvanced PDF processing complete!")
+print(f"Processed {len(pdf_files)} documents with full GraphRAG integration")
+```
+
+This example demonstrates:
+
+1. **Complete Pipeline Integration**: PDF Input → Decomposition → IPLD Structuring → OCR Processing → LLM Optimization → Entity Extraction → Vector Embedding → IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
+
+2. **Multi-Engine OCR**: Intelligent fallback between Surya, Tesseract, EasyOCR, and other engines
+
+3. **LLM-Specific Optimization**: Content optimized for different LLM architectures (GPT-4, Claude-3, Gemini Pro, Llama-2)
+
+4. **Cross-Document Reasoning**: Complex queries that span multiple documents and discover relationships
+
+5. **Performance Monitoring**: Comprehensive metrics collection and quality assessment
+
+6. **IPLD Integration**: Native content-addressed storage with compression and efficient retrieval
 
 ## Building a Knowledge Dataset from Web Archives
 

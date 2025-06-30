@@ -21,6 +21,7 @@ This documentation is organized into several sections:
 ## Core Features
 
 - **Data Processing** - Working with datasets from various sources
+- **PDF Processing** - Advanced PDF decomposition and LLM-optimized content extraction
 - **IPLD Integration** - Content-addressed data structures with IPLD
 - **Vector Storage** - Efficient storage and retrieval of vector embeddings
 - **GraphRAG** - Graph-enhanced retrieval augmented generation
@@ -35,6 +36,7 @@ This documentation is organized into several sections:
 - [Query Optimization](query_optimization.md) - Optimizing graph and vector queries
 - [Data Provenance](data_provenance.md) - Detailed lineage tracking
 - [Audit Logging](audit_logging.md) - Comprehensive audit logging capabilities
+- [PDF Processing](pdf_processing.md) - Advanced PDF decomposition and LLM optimization
 
 ## Tutorials & Examples
 

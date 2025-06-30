@@ -37,7 +37,7 @@ if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
 from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer, configs
-from modelcontextprotocol.client import MCPClient
+from mcp_server.client import MCPClient
 
 # Test data
 TEST_DATA = {

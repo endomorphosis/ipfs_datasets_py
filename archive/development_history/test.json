@@ -1,0 +1,42 @@
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "C:\\Users\\Kyle\\Desktop",
+                "C:\\Users\\Kyle\\Downloads",
+                "C:\\Users\\Kyle\\Dropbox\\obsidian_vault",
+                "C:\\Users\\Kyle\\Dropbox\\Work\\Red_Ribbon\\programs",
+                "C:\\Users\\Kyle\\Dropbox\\Work\\Red_Ribbon\\invoices"
+            ],
+            "env": {
+                "APPDATA": "C:\\Users\\Kyle\\AppData\\Roaming"
+            }
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        },
+        "claudes-toolbox": {
+            "command": "wsl.exe",
+            "args": [
+                "bash",
+                "-c",
+                "source ~/.bashrc && ~/claudes_toolbox/claudes_toolbox/start_server.sh"
+            ]
+        },
+        "ipfs-datasets": {
+            "command": "wsl.exe",
+            "args": [
+                "bash",
+                "-c",
+                "source ~/.bashrc && cd /home/kylerose1946/ipfs_datasets_py && source .venv/bin/activate && python -m ipfs_datasets_py.mcp_server"
+            ]
+        }
+    }
+}

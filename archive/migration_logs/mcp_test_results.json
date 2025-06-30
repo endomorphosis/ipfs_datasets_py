@@ -1,0 +1,135 @@
+{
+  "tool_tests": {
+    "test_generator_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "test_generator_execution": {
+      "status": "WARNING",
+      "details": "Expected execution error: test_generator() got an unexpected keyword argument 'target_file'"
+    },
+    "codebase_search_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "codebase_search_execution": {
+      "status": "WARNING",
+      "details": "Expected execution error: codebase_search() got an unexpected keyword argument 'query'"
+    },
+    "documentation_generator_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "documentation_generator_execution": {
+      "status": "WARNING",
+      "details": "Expected execution error: documentation_generator() got an unexpected keyword argument 'target_path'"
+    },
+    "lint_python_codebase_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "lint_python_codebase_execution": {
+      "status": "WARNING",
+      "details": "Expected execution error: asyncio.run() cannot be called from a running event loop"
+    },
+    "run_comprehensive_tests_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "run_comprehensive_tests_execution": {
+      "status": "WARNING",
+      "details": "Expected execution error: asyncio.run() cannot be called from a running event loop"
+    },
+    "load_dataset_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "save_dataset_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "process_dataset_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "convert_dataset_format_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "ipfs_tools_available": {
+      "status": "PASS",
+      "details": "3 tools found"
+    },
+    "vector_tools_available": {
+      "status": "PASS",
+      "details": "3 tools found"
+    },
+    "graph_tools_available": {
+      "status": "PASS",
+      "details": "1 tools found"
+    },
+    "audit_tools_available": {
+      "status": "PASS",
+      "details": "3 tools found"
+    },
+    "security_tools_available": {
+      "status": "PASS",
+      "details": "1 tools found"
+    }
+  },
+  "validation_tests": {
+    "load_dataset_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "python_file_rejection": {
+      "status": "FAIL",
+      "details": "Python file was accepted: {'status': 'error', 'message': 'Python files (.py) are not valid dataset sources. Please provide a dataset identifier from Hugging Face Hub, a directory path, or a data file (JSON, CSV, Parquet, etc.)', 'source': 'test.py'}"
+    },
+    "invalid_extension_pyc": {
+      "status": "FAIL",
+      "details": "Invalid file was accepted: {'status': 'error', 'message': 'File type not supported for datasets. Please provide a dataset identifier or data file (JSON, CSV, Parquet, etc.)', 'source': 'test.pyc'}"
+    },
+    "invalid_extension_exe": {
+      "status": "FAIL",
+      "details": "Invalid file was accepted: {'status': 'error', 'message': 'File type not supported for datasets. Please provide a dataset identifier or data file (JSON, CSV, Parquet, etc.)', 'source': 'test.exe'}"
+    },
+    "invalid_extension_dll": {
+      "status": "FAIL",
+      "details": "Invalid file was accepted: {'status': 'error', 'message': 'File type not supported for datasets. Please provide a dataset identifier or data file (JSON, CSV, Parquet, etc.)', 'source': 'test.dll'}"
+    },
+    "empty_source": {
+      "status": "FAIL",
+      "details": "Empty source was accepted"
+    },
+    "valid_dataset_name": {
+      "status": "WARNING",
+      "details": "Dataset processed but status: error"
+    },
+    "save_dataset_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "save_python_file_rejection": {
+      "status": "FAIL",
+      "details": "Python file destination was accepted: {'status': 'error', 'message': 'Cannot save dataset as executable file. Please use data formats like .json, .csv, .parquet, or directories.', 'dataset_id': \"{'data': [{'text': 'test'}]}\", 'destination': 'output.py'}"
+    },
+    "save_valid_destination": {
+      "status": "PASS",
+      "details": "Valid destination accepted"
+    },
+    "process_dataset_import": {
+      "status": "PASS",
+      "details": "Successfully imported"
+    },
+    "dangerous_operation_rejection": {
+      "status": "FAIL",
+      "details": "Dangerous operation was accepted: {'status': 'error', 'message': \"Operation type 'exec' is not allowed for security reasons\", 'original_dataset_id': \"{'data': [{'text': 'test'}]}\"}"
+    },
+    "valid_operations": {
+      "status": "PASS",
+      "details": "Valid operations accepted"
+    }
+  },
+  "errors": []
+}
