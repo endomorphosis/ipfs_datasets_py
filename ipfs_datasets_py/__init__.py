@@ -18,6 +18,7 @@ try:
 except ImportError:
     HAVE_LOAD_DATASET = False
 
+
 # Use conditional imports to handle missing modules gracefully
 try:
     # Core components for Phase 1
@@ -69,6 +70,40 @@ except ImportError:
     HAVE_VECTOR_TOOLS = False
 
 try:
+    # Import new embeddings and vector store capabilities
+    from .embeddings.core import IpfsEmbeddings, PerformanceMetrics
+    from .embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
+    from .embeddings.chunker import TextChunker, ChunkingStrategy
+    HAVE_EMBEDDINGS = True
+except ImportError:
+    HAVE_EMBEDDINGS = False
+
+try:
+    # Import vector store implementations
+    from .vector_stores.base import BaseVectorStore
+    from .vector_stores.qdrant_store import QdrantVectorStore
+    from .vector_stores.elasticsearch_store import ElasticsearchVectorStore
+    from .vector_stores.faiss_store import FaissVectorStore
+    HAVE_VECTOR_STORES = True
+except ImportError:
+    HAVE_VECTOR_STORES = False
+
+# MCP Tools availability
+try:
+    # from .mcp_server.tools.embedding_tools import embedding_generation
+    from .mcp_server.tools.vector_tools import create_vector_index
+    HAVE_MCP_TOOLS = True
+except ImportError:
+    HAVE_MCP_TOOLS = False
+
+# FastAPI service availability  
+try:
+    from .fastapi_service import app as fastapi_app
+    HAVE_FASTAPI = True
+except ImportError:
+    HAVE_FASTAPI = False
+
+try:
     from .graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
     HAVE_GRAPHRAG_PROCESSOR = True
 except ImportError:
@@ -92,6 +127,7 @@ try:
         QueryRewriter,
         QueryBudgetManager,
         UnifiedGraphRAGQueryOptimizer
+        # Removed VectorIndexPartitioner as it's not defined here
     )
     HAVE_RAG_OPTIMIZER_ADVANCED = True
 except ImportError:
@@ -192,7 +228,7 @@ except ImportError:
 # Define base exports that should always be available
 __all__ = [
     # Original exports
-    'load_dataset',
+    # 'load_dataset', # Removed from here as it's handled by conditional import
     's3_kit',
     'test_fio',
     'config',
@@ -211,6 +247,8 @@ __all__ = [
     'HAVE_UNIXFS',
     'HAVE_WEB_ARCHIVE',
     'HAVE_VECTOR_TOOLS',
+    'HAVE_EMBEDDINGS',
+    'HAVE_VECTOR_STORES',
     'HAVE_GRAPHRAG_PROCESSOR',
     'HAVE_KNN',
     'HAVE_RAG_OPTIMIZER_MINIMAL',
@@ -260,6 +298,25 @@ if HAVE_WEB_ARCHIVE:
 
 if HAVE_VECTOR_TOOLS:
     __all__.extend(['VectorSimilarityCalculator'])
+
+if HAVE_EMBEDDINGS:
+    __all__.extend([
+        'IpfsEmbeddings',
+        'PerformanceMetrics',
+        'EmbeddingModel', 
+        'EmbeddingRequest',
+        'EmbeddingResponse',
+        'TextChunker',
+        'ChunkingStrategy'
+    ])
+
+if HAVE_VECTOR_STORES:
+    __all__.extend([
+        'BaseVectorStore',
+        'QdrantVectorStore',
+        'ElasticsearchVectorStore',
+        'FaissVectorStore'
+    ])
 
 if HAVE_GRAPHRAG_PROCESSOR:
     __all__.extend(['GraphRAGProcessor', 'MockGraphRAGProcessor'])

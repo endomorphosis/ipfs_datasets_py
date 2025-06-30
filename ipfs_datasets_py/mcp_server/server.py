@@ -186,6 +186,29 @@ class IPFSDatasetsMCPServer:
         # Register provenance tools
         self._register_tools_from_subdir(tools_path / "provenance_tools")
 
+        # Register all new embedding and advanced tools
+        self._register_tools_from_subdir(tools_path / "embedding_tools")
+        self._register_tools_from_subdir(tools_path / "analysis_tools")
+        self._register_tools_from_subdir(tools_path / "workflow_tools")
+        self._register_tools_from_subdir(tools_path / "admin_tools")
+        self._register_tools_from_subdir(tools_path / "cache_tools")
+        self._register_tools_from_subdir(tools_path / "monitoring_tools")
+        self._register_tools_from_subdir(tools_path / "sparse_embedding_tools")
+        self._register_tools_from_subdir(tools_path / "background_task_tools")
+        self._register_tools_from_subdir(tools_path / "auth_tools")
+        self._register_tools_from_subdir(tools_path / "session_tools")
+        self._register_tools_from_subdir(tools_path / "rate_limiting_tools")
+        self._register_tools_from_subdir(tools_path / "data_processing_tools")
+        self._register_tools_from_subdir(tools_path / "index_management_tools")
+        self._register_tools_from_subdir(tools_path / "vector_store_tools")
+        self._register_tools_from_subdir(tools_path / "storage_tools")
+        self._register_tools_from_subdir(tools_path / "web_archive_tools")
+        self._register_tools_from_subdir(tools_path / "ipfs_cluster_tools")
+
+        # Register ipfs_embeddings_py tools (legacy integration)
+        from .tools.ipfs_embeddings_integration import register_ipfs_embeddings_tools
+        asyncio.run(register_ipfs_embeddings_tools(self.mcp, self.tools))
+
         logger.info(f"Registered {len(self.tools)} tools with the MCP server")
 
     def _register_tools_from_subdir(self, subdir_path: Path):

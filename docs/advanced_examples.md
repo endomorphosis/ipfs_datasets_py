@@ -1,6 +1,16 @@
 # Advanced Examples
 
-This document provides advanced examples and usage patterns for IPFS Datasets Python. These examples demonstrate how to combine multiple features to solve complex data processing, storage, and retrieval challenges.
+This document provides advanced examples and usage patterns for IPFS Datasets Python, including the newly integrated IPFS embeddings functionality. These examples demonstrate how to combine multiple features to solve complex data processing, storage, and retrieval challenges.
+
+## 🚀 New Integration Features
+
+The integration with ipfs_embeddings_py brings powerful new capabilities:
+- **Advanced Vector Embeddings**: Text, document, and multimodal embeddings
+- **Semantic Search**: Similarity search across large document collections  
+- **Vector Stores**: Qdrant, Elasticsearch, and FAISS integration
+- **MCP Tools**: 100+ tools for AI model integration
+- **FastAPI Service**: REST API for all functionality
+- **Quality Assessment**: Embedding validation and metrics
 
 ## Table of Contents
 
@@ -13,6 +23,7 @@ This document provides advanced examples and usage patterns for IPFS Datasets Py
 7. [DuckDB, Arrow, and IPLD Integration](#duckdb-arrow-and-ipld-integration)
 8. [Resilient Distributed Operations](#resilient-distributed-operations)
 9. [Comprehensive Audit and Provenance Tracking](#comprehensive-audit-and-provenance-tracking)
+
 
 ## Complete Data Processing Pipeline
 

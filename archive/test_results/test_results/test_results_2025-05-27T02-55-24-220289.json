@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-05-27T02:55:24.220289",
+  "project_path": "/home/barberb/ipfs_datasets_py",
+  "total_suites": 4,
+  "suites_passed": 0,
+  "suites_failed": 4,
+  "total_duration": 1.3394114971160889,
+  "overall_status": "failed",
+  "suites": [
+    {
+      "suite_name": "pytest",
+      "tool": "pytest",
+      "status": "error",
+      "total_tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 0.0003418922424316406,
+      "coverage_percentage": null,
+      "tests": [],
+      "output": "Error running pytest: 'TestRunnerConfig' object has no attribute 'timeout_seconds'"
+    },
+    {
+      "suite_name": "mypy",
+      "tool": "mypy",
+      "status": "error",
+      "total_tests": 1,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 1.1205673217773438e-05,
+      "coverage_percentage": null,
+      "tests": [],
+      "output": "Error running mypy: 'TestRunnerConfig' object has no attribute 'timeout_seconds'"
+    },
+    {
+      "suite_name": "flake8",
+      "tool": "flake8",
+      "status": "error",
+      "total_tests": 1,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 1.6927719116210938e-05,
+      "coverage_percentage": null,
+      "tests": [],
+      "output": "Error running flake8: 'TestRunnerConfig' object has no attribute 'timeout_seconds'"
+    },
+    {
+      "suite_name": "dataset_integrity",
+      "tool": "dataset_tests",
+      "status": "error",
+      "total_tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 1,
+      "duration": 1.3368473052978516,
+      "coverage_percentage": null,
+      "tests": [],
+      "output": "Error running dataset tests: 'TestRunnerConfig' object has no attribute 'timeout_seconds'"
+    }
+  ],
+  "coverage_report": null
+}
