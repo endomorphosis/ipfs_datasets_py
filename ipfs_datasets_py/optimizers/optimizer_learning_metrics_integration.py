@@ -541,7 +541,7 @@ def create_optimizer_with_learning_metrics(**kwargs):
     """
     # Import the real optimizer class
     try:
-        from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryOptimizer
+        from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
     except ImportError:
         logger.error("Failed to import GraphRAGQueryOptimizer. Make sure it's available.")
         return None
@@ -550,7 +550,7 @@ def create_optimizer_with_learning_metrics(**kwargs):
     metrics_dir = kwargs.pop('metrics_dir', None)
 
     # Create the optimizer
-    optimizer = GraphRAGQueryOptimizer(**kwargs)
+    optimizer = UnifiedGraphRAGQueryOptimizer(**kwargs)
 
     # Enhance it with learning metrics collection
     return enhance_optimizer_with_learning_metrics(optimizer, metrics_dir)

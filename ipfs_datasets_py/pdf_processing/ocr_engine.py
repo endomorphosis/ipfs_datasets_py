@@ -422,6 +422,7 @@ class MultiEngineOCR:
         Returns:
             Document type ('printed', 'handwritten', 'scientific', 'mixed')
         """
+        # TODO classify_document_type needs a real implementation
         # Placeholder implementation
         # In a full implementation, this would analyze the image
         # to determine the best OCR strategy

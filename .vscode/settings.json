@@ -45,10 +45,12 @@
         "Chunker",
         "IPLD",
         "cids",
+        "dataclass",
         "huggingface",
         "linalg",
         "lizardperson",
         "lizardpersons",
+        "numpy",
         "pbar"
     ]
 }
