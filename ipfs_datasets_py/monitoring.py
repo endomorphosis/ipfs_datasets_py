@@ -13,8 +13,7 @@ and monitoring capabilities for the IPFS Datasets Python library, enabling:
 The monitoring system is designed to be lightweight yet powerful, with minimal
 performance impact when enabled, and zero overhead when disabled.
 """
-
-import os
+import asyncio
 import sys
 import json
 import time
@@ -24,13 +23,11 @@ import inspect
 import threading
 import contextlib
 from enum import Enum
-from typing import Dict, List, Any, Optional, Union, Set, Callable, Tuple, Type, TypeVar
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, field
 import functools
 import traceback
 import socket
-import platform
 
 # Optional dependencies will be imported as needed
 try:
@@ -1239,8 +1236,7 @@ def monitor_context(**kwargs):
 # Initialize with default configuration only if explicitly requested
 # MonitoringSystem.initialize()  # Commented out to prevent auto-initialization
 
-
-if __name__ == "__main__":
+def demonstration_main():
     # Simple demonstration
     configure_monitoring(MonitoringConfig(
         enabled=True,
@@ -1269,3 +1265,7 @@ if __name__ == "__main__":
 
     print("Metrics:", registry.metrics)
     print("Operations:", registry.operations)
+
+
+if __name__ == "__main__":
+    demonstration_main()

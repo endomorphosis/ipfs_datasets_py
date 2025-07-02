@@ -35,7 +35,7 @@ class OCREngine:
         return self.available
 
 
-class SuryaEngine(OCREngine):
+class SuryaOCR(OCREngine):
     """Surya OCR engine - Modern transformer-based OCR."""
     
     def __init__(self):
@@ -111,7 +111,7 @@ class SuryaEngine(OCREngine):
             raise
 
 
-class TesseractEngine(OCREngine):
+class TesseractOCR(OCREngine):
     """Tesseract OCR engine - Traditional OCR with proven reliability."""
     
     def __init__(self):
@@ -198,7 +198,7 @@ class TesseractEngine(OCREngine):
         return result_image
 
 
-class EasyOCREngine(OCREngine):
+class EasyOCR(OCREngine):
     """EasyOCR engine - Neural OCR for complex layouts."""
     
     def __init__(self):
@@ -326,9 +326,9 @@ class MultiEngineOCR:
         
         # Initialize engines
         engine_classes = [
-            SuryaEngine,
-            TesseractEngine, 
-            EasyOCREngine,
+            SuryaOCR,
+            TesseractOCR, 
+            EasyOCR,
             TrOCREngine
         ]
         

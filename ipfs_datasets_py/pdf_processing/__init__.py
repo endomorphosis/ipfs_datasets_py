@@ -17,42 +17,42 @@ This module provides:
 
 # Main components with safe imports
 try:
-    from .pdf_processor import PDFProcessor
+    from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
     HAVE_PDF_PROCESSOR = True
 except ImportError as e:
     print(f"Warning: PDFProcessor not available: {e}")
     HAVE_PDF_PROCESSOR = False
 
 try:
-    from .ocr_engine import MultiEngineOCR, SuryaEngine, TesseractEngine, EasyOCREngine
+    from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR, SuryaOCR, TesseractOCR, EasyOCR
     HAVE_OCR_ENGINE = True
 except ImportError as e:
     print(f"Warning: OCR engines not available: {e}")
     HAVE_OCR_ENGINE = False
 
 try:
-    from .llm_optimizer import LLMOptimizer, LLMDocument, LLMChunk
+    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMDocument, LLMChunk
     HAVE_LLM_OPTIMIZER = True
 except ImportError as e:
     print(f"Warning: LLM optimizer not available: {e}")
     HAVE_LLM_OPTIMIZER = False
 
 try:
-    from .graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
+    from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
     HAVE_GRAPHRAG_INTEGRATOR = True
 except ImportError as e:
     print(f"Warning: GraphRAG integrator not available: {e}")
     HAVE_GRAPHRAG_INTEGRATOR = False
 
 try:
-    from .query_engine import QueryEngine, QueryResult, QueryResponse
+    from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResult, QueryResponse
     HAVE_QUERY_ENGINE = True
 except ImportError as e:
     print(f"Warning: Query engine not available: {e}")
     HAVE_QUERY_ENGINE = False
 
 try:
-    from .batch_processor import BatchProcessor, ProcessingJob, BatchStatus
+    from ipfs_datasets_py.pdf_processing.batch_processor import BatchProcessor, ProcessingJob, BatchStatus
     HAVE_BATCH_PROCESSOR = True
 except ImportError as e:
     print(f"Warning: Batch processor not available: {e}")

@@ -34,6 +34,21 @@
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
     "cSpell.words": [
-        "ipfs"
+        "faiss",
+        "ipfs",
+        "Jaccard",
+        "kylerose",
+        "LAION",
+        "sparql"
+    ],
+    "cSpell.ignoreWords": [
+        "Chunker",
+        "IPLD",
+        "cids",
+        "huggingface",
+        "linalg",
+        "lizardperson",
+        "lizardpersons",
+        "pbar"
     ]
 }

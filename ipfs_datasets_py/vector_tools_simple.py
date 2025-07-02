@@ -4,11 +4,12 @@ Provides vector operations, embeddings, and similarity search functionality.
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 import numpy as np
-from datetime import datetime
+
 
 logger = logging.getLogger(__name__)
+
 
 class VectorSimilarityCalculator:
     """Calculator for vector similarity operations."""

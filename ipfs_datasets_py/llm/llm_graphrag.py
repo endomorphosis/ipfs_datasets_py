@@ -21,20 +21,23 @@ import time
 import logging
 import traceback
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union, Tuple, Set, Callable, TYPE_CHECKING
+from typing import Dict, List, Optional, Any, Tuple, Callable, TYPE_CHECKING
 
 import numpy as np
 
-from ipfs_datasets_py.llm_interface import (
-    LLMInterface, LLMInterfaceFactory, GraphRAGPromptTemplates,
-    PromptLibrary, AdaptivePrompting, PromptTemplate
+from ipfs_datasets_py.llm.llm_interface import (
+    LLMInterface, 
+    LLMInterfaceFactory, 
+    GraphRAGPromptTemplates,
+    PromptLibrary, 
+    AdaptivePrompting, 
 )
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex # Added import
 from ipfs_datasets_py.ipld.knowledge_graph import IPLDKnowledgeGraph # Added import
 
 # Import UnifiedGraphRAGQueryOptimizer conditionally to avoid circular imports
 if TYPE_CHECKING:
-    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 
 class GraphRAGPerformanceMonitor:

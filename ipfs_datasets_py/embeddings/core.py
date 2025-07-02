@@ -27,19 +27,19 @@ logger = logging.getLogger(__name__)
 
 # Import vector store modules
 try:
-    from ..vector_stores.qdrant import QdrantVectorStore
+    from ipfs_datasets_py.vector_stores.qdrant_store import QdrantVectorStore
 except ImportError:
     QdrantVectorStore = None
 
 try:
-    from ..vector_stores.elasticsearch import ElasticsearchVectorStore
+    from ipfs_datasets_py.vector_stores.elasticsearch_store import ElasticsearchVectorStore
 except ImportError:
     ElasticsearchVectorStore = None
 
 try:
-    from ..vector_stores.faiss import FaissVectorStore
+    from ipfs_datasets_py.vector_stores.faiss_store import FAISSVectorStore
 except ImportError:
-    FaissVectorStore = None
+    FAISSVectorStore = None
 
 
 @dataclass
@@ -203,9 +203,9 @@ class IPFSEmbeddings:
             except Exception as e:
                 self.logger.warning(f"Failed to initialize Elasticsearch: {e}")
         
-        if FaissVectorStore:
+        if FAISSVectorStore:
             try:
-                self.vector_stores['faiss'] = FaissVectorStore(self.resources, self.metadata)
+                self.vector_stores['faiss'] = FAISSVectorStore(self.resources, self.metadata)
                 self.logger.info("FAISS vector store initialized")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize FAISS: {e}")

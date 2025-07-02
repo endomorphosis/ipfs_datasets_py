@@ -19,7 +19,7 @@ import json
 # Add parent directory to path to allow importing from project
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from ipfs_datasets_py.optimizer_alert_system import LearningAlertSystem, LearningAnomaly, console_alert_handler
+from ipfs_datasets_py.optimizers.optimizer_alert_system import LearningAlertSystem, LearningAnomaly, console_alert_handler
 from ipfs_datasets_py.optimizer_visualization_integration import LiveOptimizerVisualization
 
 

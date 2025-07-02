@@ -12,22 +12,19 @@ and managing IPFS Datasets Python operations, including:
 
 The dashboard uses Flask for the backend web server and Chart.js for visualization.
 """
-
-import os
-import sys
-import json
-import time
 import logging
+import os
+import platform
+import socket
 import threading
+import time
 import webbrowser
-from typing import Dict, List, Any, Optional, Union, Callable
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 from functools import wraps
-import traceback
-import socket
-import platform
 from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Callable
+
 
 # Web server
 try:
@@ -1226,7 +1223,8 @@ def get_dashboard_status() -> Dict[str, Any]:
     return dashboard.get_status()
 
 
-if __name__ == "__main__":
+
+def example_main():
     # Example usage
     from ipfs_datasets_py.monitoring import MonitoringConfig, LoggerConfig, MetricsConfig, LogLevel
 
@@ -1269,3 +1267,7 @@ if __name__ == "__main__":
         print("Stopping dashboard...")
         stop_dashboard()
         print("Dashboard stopped")
+
+
+if __name__ == "__main__":
+    example_main()

@@ -8,9 +8,9 @@ with the GraphRAGQueryOptimizer to track, visualize, and analyze learning metric
 import time
 import logging
 import contextlib
-from typing import Dict, List, Any, Optional, Tuple, Union, Set, Callable, Generator, ContextManager
+from typing import Dict, List, Any, Optional, Generator
 
-from ipfs_datasets_py.optimizer_learning_metrics import OptimizerLearningMetricsCollector
+from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
 
 # Setup logging
 logger = logging.getLogger(__name__)

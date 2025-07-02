@@ -24,7 +24,7 @@ import time
 import logging
 import asyncio
 import numpy as np
-from typing import Dict, List, Any, Optional, Union, Set, Callable, Tuple, TypeVar
+from typing import Dict, List, Any, Optional, Tuple, TypeVar
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 import random
@@ -40,8 +40,8 @@ except ImportError:
 
 try:
     from multiaddr import Multiaddr
-    import py_libp2p
-    from py_libp2p.network.stream.net_stream_interface import INetStream
+    import py_libp2p # TODO Debug import of py_libp2p
+    from py_libp2p.network.stream.net_stream_interface import INetStream # TODO INetStream is not defined in the original code. Also does this library even exist?
     LIBP2P_AVAILABLE = True
 except ImportError:
     LIBP2P_AVAILABLE = False
@@ -51,10 +51,9 @@ except ImportError:
 
 # Import our own modules
 from ipfs_datasets_py.libp2p_kit import (
-    NetworkProtocol,
+    NetworkProtocol, # TODO NetworkProtocol is not defined in the original code
     LibP2PNotAvailableError,
-    ShardMetadata,
-    DatasetMetadata
+    ShardMetadata, # TODO ShardMetadata is not defined in the original code
 )
 
 T = TypeVar('T')

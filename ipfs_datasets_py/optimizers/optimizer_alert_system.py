@@ -5,52 +5,49 @@ This module provides an alert system for monitoring the RAG query optimizer's
 learning process and detecting anomalies, such as parameter oscillations,
 declining performance, and other issues that might indicate problems.
 """
-
-import os
-import time
+from dataclasses import dataclass, field
 import datetime
-import logging
-import threading
 import json
-from typing import Dict, List, Any, Optional, Union, Set, Callable
+import logging
+import os
+import threading
+import time
+from typing import Dict, List, Any, Optional, Callable
 
-from ipfs_datasets_py.optimizer_learning_metrics import OptimizerLearningMetricsCollector
+
+from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
+
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
+
+@dataclass
 class LearningAnomaly:
-    """Represents a detected anomaly in the learning process."""
+    """
+    Represents a detected anomaly in the learning process.
 
-    def __init__(
-        self,
-        anomaly_type: str,
-        severity: str,
-        description: str,
-        affected_parameters: Optional[List[str]] = None,
-        timestamp: Optional[datetime.datetime] = None,
-        metric_values: Optional[Dict[str, Any]] = None,
-        id: Optional[str] = None
-    ):
-        """
-        Initialize an anomaly record.
+    Attributes:
+        anomaly_type: Type of anomaly (oscillation, decline, etc.)
+        severity: Severity level (info, warning, critical)
+        description: Human-readable description of the anomaly
+        affected_parameters: Parameters affected by the anomaly
+        timestamp: When the anomaly was detected
+        metric_values: Relevant metric values related to the anomaly
+        id: Unique identifier for the anomaly
+    """
+    anomaly_type: str
+    severity: str
+    description: str
+    affected_parameters: List[str] = field(default_factory=list)
+    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
+    metric_values: Dict[str, Any] = field(default_factory=dict)
+    id: str = field(default="")
 
-        Args:
-            anomaly_type: Type of anomaly (oscillation, decline, etc.)
-            severity: Severity level (info, warning, critical)
-            description: Human-readable description of the anomaly
-            affected_parameters: Parameters affected by the anomaly
-            timestamp: When the anomaly was detected
-            metric_values: Relevant metric values related to the anomaly
-            id: Unique identifier for the anomaly
-        """
-        self.anomaly_type = anomaly_type
-        self.severity = severity
-        self.description = description
-        self.affected_parameters = affected_parameters or []
-        self.timestamp = timestamp or datetime.datetime.now()
-        self.metric_values = metric_values or {}
-        self.id = id or f"{int(time.time())}_{anomaly_type}"
+    def __post_init__(self):
+        """Set default ID if not provided."""
+        if not self.id:
+            self.id = f"{int(time.time())}_{self.anomaly_type}"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the anomaly to a dictionary."""
@@ -79,7 +76,7 @@ class LearningAnomaly:
             affected_parameters=data.get('affected_parameters', []),
             timestamp=timestamp,
             metric_values=data.get('metric_values', {}),
-            id=data.get('id')
+            id=data.get('id', '')
         )
 
 

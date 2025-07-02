@@ -26,15 +26,15 @@ import numpy as np
 # Defer imports for optional dependencies
 try:
     from multiaddr import Multiaddr
-# import py_libp2p # Commented out due to import issues
-# import py_libp2p.crypto.rsa as rsa # Commented out due to import issues
-# from py_libp2p.peer.peerinfo import PeerInfo # Commented out due to import issues
-# from py_libp2p.peer.id import ID as PeerID # Commented out due to import issues
-# from py_libp2p.crypto.keys import KeyPair # Commented out due to import issues
-# from py_libp2p.crypto.serialization import load_private_key, load_public_key # Commented out due to import issues
-# from py_libp2p.network.stream.net_stream_interface import INetStream # Commented out due to import issues
-# from py_libp2p.host.basic_host import BasicHost # Commented out due to import issues
-# from py_libp2p.host.defaults import get_default_network # Commented out due to import issues
+    # import py_libp2p # Commented out due to import issues
+    # import py_libp2p.crypto.rsa as rsa # Commented out due to import issues
+    # from py_libp2p.peer.peerinfo import PeerInfo # Commented out due to import issues
+    # from py_libp2p.peer.id import ID as PeerID # Commented out due to import issues
+    # from py_libp2p.crypto.keys import KeyPair # Commented out due to import issues
+    # from py_libp2p.crypto.serialization import load_private_key, load_public_key # Commented out due to import issues
+    # from py_libp2p.network.stream.net_stream_interface import INetStream # Commented out due to import issues
+    # from py_libp2p.host.basic_host import BasicHost # Commented out due to import issues
+    # from py_libp2p.host.defaults import get_default_network # Commented out due to import issues
     LIBP2P_AVAILABLE = False
 except ImportError:
     LIBP2P_AVAILABLE = False

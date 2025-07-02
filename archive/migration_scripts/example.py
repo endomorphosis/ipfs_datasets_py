@@ -716,259 +716,258 @@ def llm_graphrag_example():
     temp_dir = tempfile.mkdtemp()
     print(f"Using temporary directory: {temp_dir}")
 
-    try:
-        # Initialize storage
-        storage = IPLDStorage(base_dir=os.path.join(temp_dir, "ipld_blocks"))
+    # Initialize storage
+    storage = IPLDStorage(base_dir=os.path.join(temp_dir, "ipld_blocks"))
 
-        # Initialize LLM components
-        llm = MockLLMInterface(LLMConfig(
-            model_name="mock-graphrag-llm",
-            temperature=0.7,
-            max_tokens=1024,
-            embedding_dimensions=3  # Match our example's dimension
-        ))
+    # Initialize LLM components
+    llm = MockLLMInterface(LLMConfig(
+        model_name="mock-graphrag-llm",
+        temperature=0.7,
+        max_tokens=1024,
+        embedding_dimensions=3  # Match our example's dimension
+    ))
 
-        processor = GraphRAGLLMProcessor(llm)
+    processor = GraphRAGLLMProcessor(llm)
 
-        print("\nStep 1: LLM components initialized")
-        print("--------------------------------")
-        print(f"Using LLM model: {llm.config.model_name}")
-        print(f"LLM temperature: {llm.config.temperature}")
-        print(f"LLM max tokens: {llm.config.max_tokens}")
-        print(f"Embedding dimensions: {llm.config.embedding_dimensions}")
+    print("\nStep 1: LLM components initialized")
+    print("--------------------------------")
+    print(f"Using LLM model: {llm.config.model_name}")
+    print(f"LLM temperature: {llm.config.temperature}")
+    print(f"LLM max tokens: {llm.config.max_tokens}")
+    print(f"Embedding dimensions: {llm.config.embedding_dimensions}")
 
-        # Step 2: Create a simple example knowledge graph
-        print("\nStep 2: Creating example knowledge graph")
-        print("-------------------------------------")
+    # Step 2: Create a simple example knowledge graph
+    print("\nStep 2: Creating example knowledge graph")
+    print("-------------------------------------")
 
-        # Create a vector-augmented graph dataset
-        graph = VectorAugmentedGraphDataset(
-            name="example_graph",
-            vector_dimension=3,
-            vector_metric="cosine",
-            storage=storage
-        )
+    # Create a vector-augmented graph dataset
+    graph = VectorAugmentedGraphDataset(
+        name="example_graph",
+        vector_dimension=3,
+        vector_metric="cosine",
+        storage=storage
+    )
 
-        # Create document nodes
-        doc1 = GraphNode(
-            id="doc1",
-            type="document",
-            data={
-                "title": "Climate Change Effects on Marine Ecosystems",
-                "content": "This document discusses how rising ocean temperatures are affecting coral reefs."
-            }
-        )
-
-        doc2 = GraphNode(
-            id="doc2",
-            type="document",
-            data={
-                "title": "Conservation Efforts for Ocean Life",
-                "content": "This document outlines conservation strategies to protect marine biodiversity."
-            }
-        )
-
-        doc3 = GraphNode(
-            id="doc3",
-            type="document",
-            data={
-                "title": "Economic Impact of Climate Change",
-                "content": "This document analyzes the cost of climate change on global economies."
-            }
-        )
-
-        # Create concept nodes
-        concept1 = GraphNode(
-            id="concept1",
-            type="concept",
-            data={
-                "name": "Climate Change",
-                "definition": "Long-term changes in temperature and weather patterns."
-            }
-        )
-
-        concept2 = GraphNode(
-            id="concept2",
-            type="concept",
-            data={
-                "name": "Marine Conservation",
-                "definition": "The protection and preservation of marine ecosystems."
-            }
-        )
-
-        concept3 = GraphNode(
-            id="concept3",
-            type="concept",
-            data={
-                "name": "Economics",
-                "definition": "The study of production, consumption, and wealth transfer."
-            }
-        )
-
-        # Add nodes with embeddings (simplified for example)
-        # Use 3D embeddings:
-        # - First dimension: climate relevance
-        # - Second dimension: conservation relevance
-        # - Third dimension: economic relevance
-
-        graph.add_node_with_embedding(doc1, np.array([0.9, 0.6, 0.2]))
-        graph.add_node_with_embedding(doc2, np.array([0.5, 0.9, 0.3]))
-        graph.add_node_with_embedding(doc3, np.array([0.7, 0.2, 0.9]))
-
-        graph.add_node_with_embedding(concept1, np.array([0.9, 0.4, 0.3]))
-        graph.add_node_with_embedding(concept2, np.array([0.4, 0.9, 0.2]))
-        graph.add_node_with_embedding(concept3, np.array([0.3, 0.2, 0.9]))
-
-        # Add relationships
-        graph.add_edge("doc1", "about", "concept1", {"relevance": 0.9})
-        graph.add_edge("doc1", "mentions", "concept2", {"relevance": 0.6})
-
-        graph.add_edge("doc2", "about", "concept2", {"relevance": 0.9})
-        graph.add_edge("doc2", "mentions", "concept1", {"relevance": 0.5})
-
-        graph.add_edge("doc3", "about", "concept3", {"relevance": 0.9})
-        graph.add_edge("doc3", "mentions", "concept1", {"relevance": 0.7})
-
-        graph.add_edge("concept1", "related_to", "concept2", {"strength": 0.6})
-        graph.add_edge("concept1", "related_to", "concept3", {"strength": 0.7})
-
-        print(f"Created graph with {len(graph.nodes)} nodes and {len(graph.edge_types)} edge types")
-        print(f"Node types: {', '.join(graph.node_types)}")
-        print(f"Edge types: {', '.join(graph.edge_types)}")
-
-        # Step 3: Enhance the graph with LLM capabilities
-        print("\nStep 3: Enhancing graph with LLM capabilities")
-        print("------------------------------------------")
-
-        # Enhance the graph with LLM capabilities
-        enhanced_graph = enhance_dataset_with_llm(graph)
-
-        print("Graph enhanced with LLM capabilities")
-        print("Original cross_document_reasoning method has been patched with LLM integration")
-
-        # Step 4: Perform cross-document reasoning with LLM enhancement
-        print("\nStep 4: Performing cross-document reasoning with LLM")
-        print("------------------------------------------------")
-
-        # Query using the enhanced reasoning
-        basic_query = "How does climate change affect marine conservation efforts?"
-
-        # Run basic reasoning
-        basic_result = enhanced_graph.cross_document_reasoning(
-            query=basic_query,
-            document_node_types=["document"],
-            max_hops=2,
-            reasoning_depth="basic"
-        )
-
-        print(f"Basic reasoning query: '{basic_query}'")
-        print(f"Result confidence: {basic_result['confidence']:.2f}")
-        print(f"Documents used: {len(basic_result['documents'])}")
-        print("Answer:")
-        print(basic_result["answer"])
-
-        # Step 5: Deep reasoning with LLM enhancement
-        print("\nStep 5: Performing deep reasoning with LLM")
-        print("---------------------------------------")
-
-        # Query using the enhanced reasoning with deep reasoning
-        complex_query = "What are the economic implications of marine conservation in the context of climate change?"
-
-        # Run deep reasoning
-        deep_result = enhanced_graph.cross_document_reasoning(
-            query=complex_query,
-            document_node_types=["document"],
-            max_hops=2,
-            reasoning_depth="deep"
-        )
-
-        print(f"Deep reasoning query: '{complex_query}'")
-        print(f"Result confidence: {deep_result['confidence']:.2f}")
-        print(f"Documents used: {len(deep_result['documents'])}")
-        print("Answer:")
-        print(deep_result["answer"])
-
-        # Step 6: Compare reasoning quality with and without LLM enhancement
-        print("\nStep 6: Comparing reasoning with and without LLM enhancement")
-        print("-------------------------------------------------------")
-
-        # Create a copy of the graph without LLM enhancement
-        graph_without_llm = VectorAugmentedGraphDataset(
-            name="example_graph_without_llm",
-            vector_dimension=3,
-            vector_metric="cosine",
-            storage=storage
-        )
-
-        # Copy all nodes and edges from the original graph
-        for node_id, node in graph.nodes.items():
-            # Copy the node
-            node_copy = GraphNode(
-                id=node.id,
-                type=node.type,
-                data=node.data.copy()
-            )
-
-            # Get the node's embedding
-            node_idx = graph._node_to_vector_idx.get(node.id)
-            if node_idx is not None:
-                if graph.vector_index._faiss_available:
-                    vector = graph.vector_index._index.reconstruct(node_idx)
-                else:
-                    vector = np.vstack(graph.vector_index._vectors)[node_idx]
-
-                # Add the node with its embedding
-                graph_without_llm.add_node_with_embedding(node_copy, vector)
-            else:
-                # Add the node without an embedding
-                graph_without_llm.add_node(node_copy)
-
-        # Copy edges
-        for source_id, edges_by_type in graph._edges_by_type.items():
-            for edge_type, edges in edges_by_type.items():
-                for edge in edges:
-                    target_id = edge["target"].id
-                    properties = edge.get("properties", {})
-                    graph_without_llm.add_edge(source_id, edge_type, target_id, properties)
-
-        print("Created a copy of the graph without LLM enhancement")
-
-        # Run the same query on both graphs
-        comparison_query = "What is the relationship between climate change, marine conservation, and economics?"
-
-        # Run with LLM enhancement
-        llm_result = enhanced_graph.cross_document_reasoning(
-            query=comparison_query,
-            document_node_types=["document"],
-            max_hops=2,
-            reasoning_depth="moderate"
-        )
-
-        print(f"Query: '{comparison_query}'")
-        print("\nWith LLM enhancement:")
-        print(f"Confidence: {llm_result['confidence']:.2f}")
-        print(f"Answer: {llm_result['answer']}")
-
-        # For demonstration purposes, run a simplified version to represent non-LLM behavior
-        # Note: In a real scenario, this would use the original implementation
-        mock_result = {
-            "answer": "There appears to be a relationship between climate change, marine conservation, and economics based on document connections.",
-            "confidence": 0.65,
-            "documents": basic_result["documents"][:2],
-            "reasoning_trace": [
-                {"step": "Retrieved documents", "description": "Found documents related to the query"},
-                {"step": "Found connections", "description": "Identified connections between documents"},
-                {"step": "Generated answer", "description": "Simple synthesis of information"}
-            ]
+    # Create document nodes
+    doc1 = GraphNode(
+        id="doc1",
+        type="document",
+        data={
+            "title": "Climate Change Effects on Marine Ecosystems",
+            "content": "This document discusses how rising ocean temperatures are affecting coral reefs."
         }
+    )
 
-        print("\nWithout LLM enhancement (simulated):")
-        print(f"Confidence: {mock_result['confidence']:.2f}")
-        print(f"Answer: {mock_result['answer']}")
+    doc2 = GraphNode(
+        id="doc2",
+        type="document",
+        data={
+            "title": "Conservation Efforts for Ocean Life",
+            "content": "This document outlines conservation strategies to protect marine biodiversity."
+        }
+    )
 
-        print("\nComparison:")
-        print(f"Confidence improvement: {(llm_result['confidence'] - mock_result['confidence']) * 100:.1f}%")
-        print(f"Answer complexity: LLM enhanced provides more nuanced synthesis across documents")
+    doc3 = GraphNode(
+        id="doc3",
+        type="document",
+        data={
+            "title": "Economic Impact of Climate Change",
+            "content": "This document analyzes the cost of climate change on global economies."
+        }
+    )
+
+    # Create concept nodes
+    concept1 = GraphNode(
+        id="concept1",
+        type="concept",
+        data={
+            "name": "Climate Change",
+            "definition": "Long-term changes in temperature and weather patterns."
+        }
+    )
+
+    concept2 = GraphNode(
+        id="concept2",
+        type="concept",
+        data={
+            "name": "Marine Conservation",
+            "definition": "The protection and preservation of marine ecosystems."
+        }
+    )
+
+    concept3 = GraphNode(
+        id="concept3",
+        type="concept",
+        data={
+            "name": "Economics",
+            "definition": "The study of production, consumption, and wealth transfer."
+        }
+    )
+
+    # Add nodes with embeddings (simplified for example)
+    # Use 3D embeddings:
+    # - First dimension: climate relevance
+    # - Second dimension: conservation relevance
+    # - Third dimension: economic relevance
+
+    graph.add_node_with_embedding(doc1, np.array([0.9, 0.6, 0.2]))
+    graph.add_node_with_embedding(doc2, np.array([0.5, 0.9, 0.3]))
+    graph.add_node_with_embedding(doc3, np.array([0.7, 0.2, 0.9]))
+
+    graph.add_node_with_embedding(concept1, np.array([0.9, 0.4, 0.3]))
+    graph.add_node_with_embedding(concept2, np.array([0.4, 0.9, 0.2]))
+    graph.add_node_with_embedding(concept3, np.array([0.3, 0.2, 0.9]))
+
+    # Add relationships
+    graph.add_edge("doc1", "about", "concept1", {"relevance": 0.9})
+    graph.add_edge("doc1", "mentions", "concept2", {"relevance": 0.6})
+
+    graph.add_edge("doc2", "about", "concept2", {"relevance": 0.9})
+    graph.add_edge("doc2", "mentions", "concept1", {"relevance": 0.5})
+
+    graph.add_edge("doc3", "about", "concept3", {"relevance": 0.9})
+    graph.add_edge("doc3", "mentions", "concept1", {"relevance": 0.7})
+
+    graph.add_edge("concept1", "related_to", "concept2", {"strength": 0.6})
+    graph.add_edge("concept1", "related_to", "concept3", {"strength": 0.7})
+
+    print(f"Created graph with {len(graph.nodes)} nodes and {len(graph.edge_types)} edge types")
+    print(f"Node types: {', '.join(graph.node_types)}")
+    print(f"Edge types: {', '.join(graph.edge_types)}")
+
+    # Step 3: Enhance the graph with LLM capabilities
+    print("\nStep 3: Enhancing graph with LLM capabilities")
+    print("------------------------------------------")
+
+    # Enhance the graph with LLM capabilities
+    enhanced_graph = enhance_dataset_with_llm(graph)
+
+    print("Graph enhanced with LLM capabilities")
+    print("Original cross_document_reasoning method has been patched with LLM integration")
+
+    # Step 4: Perform cross-document reasoning with LLM enhancement
+    print("\nStep 4: Performing cross-document reasoning with LLM")
+    print("------------------------------------------------")
+
+    # Query using the enhanced reasoning
+    basic_query = "How does climate change affect marine conservation efforts?"
+
+    # Run basic reasoning
+    basic_result = enhanced_graph.cross_document_reasoning(
+        query=basic_query,
+        document_node_types=["document"],
+        max_hops=2,
+        reasoning_depth="basic"
+    )
+
+    print(f"Basic reasoning query: '{basic_query}'")
+    print(f"Result confidence: {basic_result['confidence']:.2f}")
+    print(f"Documents used: {len(basic_result['documents'])}")
+    print("Answer:")
+    print(basic_result["answer"])
+
+    # Step 5: Deep reasoning with LLM enhancement
+    print("\nStep 5: Performing deep reasoning with LLM")
+    print("---------------------------------------")
+
+    # Query using the enhanced reasoning with deep reasoning
+    complex_query = "What are the economic implications of marine conservation in the context of climate change?"
+
+    # Run deep reasoning
+    deep_result = enhanced_graph.cross_document_reasoning(
+        query=complex_query,
+        document_node_types=["document"],
+        max_hops=2,
+        reasoning_depth="deep"
+    )
+
+    print(f"Deep reasoning query: '{complex_query}'")
+    print(f"Result confidence: {deep_result['confidence']:.2f}")
+    print(f"Documents used: {len(deep_result['documents'])}")
+    print("Answer:")
+    print(deep_result["answer"])
+
+    # Step 6: Compare reasoning quality with and without LLM enhancement
+    print("\nStep 6: Comparing reasoning with and without LLM enhancement")
+    print("-------------------------------------------------------")
+
+    # Create a copy of the graph without LLM enhancement
+    graph_without_llm = VectorAugmentedGraphDataset(
+        name="example_graph_without_llm",
+        vector_dimension=3,
+        vector_metric="cosine",
+        storage=storage
+    )
+
+    # Copy all nodes and edges from the original graph
+    for node_id, node in graph.nodes.items():
+        # Copy the node
+        node_copy = GraphNode(
+            id=node.id,
+            type=node.type,
+            data=node.data.copy()
+        )
+
+        # Get the node's embedding
+        node_idx = graph._node_to_vector_idx.get(node.id)
+        if node_idx is not None:
+            if graph.vector_index._faiss_available:
+                vector = graph.vector_index._index.reconstruct(node_idx)
+            else:
+                vector = np.vstack(graph.vector_index._vectors)[node_idx]
+
+            # Add the node with its embedding
+            graph_without_llm.add_node_with_embedding(node_copy, vector)
+        else:
+            # Add the node without an embedding
+            graph_without_llm.add_node(node_copy)
+
+    # Copy edges
+    for source_id, edges_by_type in graph._edges_by_type.items():
+        for edge_type, edges in edges_by_type.items():
+            for edge in edges:
+                target_id = edge["target"].id
+                properties = edge.get("properties", {})
+                graph_without_llm.add_edge(source_id, edge_type, target_id, properties)
+
+    print("Created a copy of the graph without LLM enhancement")
+
+    # Run the same query on both graphs
+    comparison_query = "What is the relationship between climate change, marine conservation, and economics?"
+
+    # Run with LLM enhancement
+    llm_result = enhanced_graph.cross_document_reasoning(
+        query=comparison_query,
+        document_node_types=["document"],
+        max_hops=2,
+        reasoning_depth="moderate"
+    )
+
+    print(f"Query: '{comparison_query}'")
+    print("\nWith LLM enhancement:")
+    print(f"Confidence: {llm_result['confidence']:.2f}")
+    print(f"Answer: {llm_result['answer']}")
+
+    # For demonstration purposes, run a simplified version to represent non-LLM behavior
+    # Note: In a real scenario, this would use the original implementation
+    mock_result = {
+        "answer": "There appears to be a relationship between climate change, marine conservation, and economics based on document connections.",
+        "confidence": 0.65,
+        "documents": basic_result["documents"][:2],
+        "reasoning_trace": [
+            {"step": "Retrieved documents", "description": "Found documents related to the query"},
+            {"step": "Found connections", "description": "Identified connections between documents"},
+            {"step": "Generated answer", "description": "Simple synthesis of information"}
+        ]
+    }
+
+    print("\nWithout LLM enhancement (simulated):")
+    print(f"Confidence: {mock_result['confidence']:.2f}")
+    print(f"Answer: {mock_result['answer']}")
+
+    print("\nComparison:")
+    print(f"Confidence improvement: {(llm_result['confidence'] - mock_result['confidence']) * 100:.1f}%")
+    print(f"Answer complexity: LLM enhanced provides more nuanced synthesis across documents")
 
 def advanced_graphrag_example():
     """Example showcasing the advanced GraphRAG methods for knowledge graphs and semantic search."""
@@ -2402,7 +2401,7 @@ def resilient_operations_example():
     """Example showing resilient operations for distributed datasets."""
 
     # Import the resilient operations example module
-    from ipfs_datasets_py.resilient_operations_example import resilient_operations_example as run_example
+    from ipfs_datasets_py.examples.resilient_operations_example import resilient_operations_example as run_example
 
     # Run the example
     import asyncio
@@ -2413,7 +2412,7 @@ def llm_reasoning_example():
     """Example showing the LLM reasoning tracer for GraphRAG."""
 
     # Import the LLM reasoning example module
-    from ipfs_datasets_py.llm_reasoning_example import llm_reasoning_example as run_example
+    from ipfs_datasets_py.examples.llm_reasoning_example import llm_reasoning_example as run_example
 
     # Run the example
     run_example()
@@ -2433,7 +2432,7 @@ def admin_dashboard_example():
     """Example showing the admin dashboard for system monitoring and management."""
 
     # Import the admin dashboard example module
-    from ipfs_datasets_py.admin_dashboard_example import admin_dashboard_example as run_example
+    from ipfs_datasets_py.examples.admin_dashboard_example import admin_dashboard_example as run_example
 
     # Run the example
     run_example()

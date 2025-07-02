@@ -1,6 +1,6 @@
 ## Core dependencies
 orbitdb_kit_py
-ipfs_kit_py
+ipfs_kit_py>=0.3.0
 ipfs_model_manager_py
 ipfs_faiss_py
 ipfs_embeddings_py
@@ -101,8 +101,18 @@ jinja2
 pyyaml
 aiofile
 flake8
+
 # SymbolicAI integration dependencies
 symbolicai>=0.13.1
 beartype>=0.15.0
 pydantic>=2.0.0
 
+# Optional dependencies for specific features
+prometheus-client>=0.22.1
+rdflib>=7.1.4
+spacy>=3.8.7
+seaborn>=0.13.2
+plotly>=6.2.0
+haystack>=0.42
+weasyprint>=65.1
+python-ffmpeg>=2.0.12

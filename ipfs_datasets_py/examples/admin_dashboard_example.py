@@ -9,12 +9,11 @@ This example demonstrates how to:
 """
 
 import os
-import time
 import random
-import threading
 import tempfile
+import threading
+import time
 from datetime import datetime
-from typing import Dict, List, Any
 
 from ipfs_datasets_py.monitoring import (
     configure_monitoring,

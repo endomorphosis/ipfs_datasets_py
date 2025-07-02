@@ -19,7 +19,11 @@ Features:
 import json
 import os
 import tempfile
-from typing import List, Dict, Any, Optional, Union, Tuple, Iterator
+from typing import List, Dict, Any, Optional, Union, Tuple
+
+
+from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+
 
 class DatasetSerializer:
     """
@@ -986,6 +990,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 all_metadata.append(metadata)
 
         # Create a new index with updated vectors
+        # TODO Figure out whether IPFSKnnIndex exists or is hallucinated.
         new_index = IPFSKnnIndex(
             dimension=self.vector_index.dimension,
             metric=self.vector_index.metric,
@@ -3893,8 +3898,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                               node_filters: Optional[List[Tuple[str, str, Any]]] = None,
                               metrics: List[str] = ["node_count", "edge_count", "density", "centrality"],
                               reference_node_id: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Analyze the evolution of the knowledge graph over time.
+        """Analyze the evolution of the knowledge graph over time.
 
         This method creates snapshots of the graph at different time intervals and
         computes metrics to track how the graph structure evolves.
@@ -5198,8 +5202,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                edge_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
                                fix_violations: bool = False,
                                validation_mode: str = "strict") -> Dict[str, Any]:
-        """
-        Validate the graph against schemas and optionally fix violations.
+        """Validate the graph against schemas and optionally fix violations.
 
         This method enforces data quality by validating node and edge properties
         against defined schemas, and can automatically fix common issues.
@@ -6351,17 +6354,18 @@ class DatasetSerializer:
             ImportError: If PyArrow is not available for optimized processing
         """
         # Create a reader for the JSONL file
-        if compression == "gzip":
-            import gzip
-            file_obj = gzip.open(input_path, "rt")
-        elif compression == "bz2":
-            import bz2
-            file_obj = bz2.open(input_path, "rt")
-        elif compression == "xz":
-            import lzma
-            file_obj = lzma.open(input_path, "rt")
-        else:
-            file_obj = open(input_path, "r")
+        match compression:
+            case "gzip":
+                import gzip
+                file_obj = gzip.open(input_path, "rt")
+            case "bz2":
+                import bz2
+                file_obj = bz2.open(input_path, "rt")
+            case "xz":
+                import lzma
+                file_obj = lzma.open(input_path, "rt")
+            case _:
+                file_obj = open(input_path, "r")
 
         try:
             # Process records in batches for memory efficiency
@@ -6493,17 +6497,18 @@ class DatasetSerializer:
         # If output file specified, write records to file
         if output_path:
             # Open file with appropriate compression
-            if compression == "gzip":
-                import gzip
-                file_obj = gzip.open(output_path, "wt")
-            elif compression == "bz2":
-                import bz2
-                file_obj = bz2.open(output_path, "wt")
-            elif compression == "xz":
-                import lzma
-                file_obj = lzma.open(output_path, "wt")
-            else:
-                file_obj = open(output_path, "w")
+            match compression:
+                case "gzip":
+                    import gzip
+                    file_obj = gzip.open(output_path, "wt")
+                case "bz2":
+                    import bz2
+                    file_obj = bz2.open(output_path, "wt")
+                case "xz":
+                    import lzma
+                    file_obj = lzma.open(output_path, "wt")
+                case _:
+                    file_obj = open(output_path, "w")
 
             try:
                 # Write records to file

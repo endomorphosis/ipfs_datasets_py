@@ -8,14 +8,12 @@ Optimizes extracted content for LLM consumption by:
 - Creating context-aware embeddings
 - Handling multi-modal content
 """
-
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import re
-import json
-from pathlib import Path
+
 
 import tiktoken
 from transformers import AutoTokenizer, AutoModel
@@ -23,8 +21,8 @@ import torch
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from ..utils.text_processing import TextProcessor
-from ..utils.chunk_optimizer import ChunkOptimizer
+from ipfs_datasets_py.utils.text_processing import TextProcessor
+from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
 logger = logging.getLogger(__name__)
 

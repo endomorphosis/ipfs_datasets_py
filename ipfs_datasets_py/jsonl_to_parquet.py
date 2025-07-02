@@ -316,7 +316,54 @@ def infer_schema_from_jsonl(jsonl_path: str, sample_size: int = 1000) -> pa.Sche
     return table.schema
 
 def main():
-    """Command-line interface for JSONL to Parquet conversion."""
+    """Command-line interface for converting JSONL files to Parquet format.
+    
+    This function provides a comprehensive CLI for converting JSON Lines files to
+    Apache Parquet format with advanced type handling and batch processing capabilities.
+    
+    Features:
+        - Single file or batch directory processing
+        - Recursive directory traversal with file pattern matching
+        - Configurable compression codecs (snappy, gzip, brotli, etc.)
+        - Advanced type preservation and string column enforcement
+        - Customizable row group sizes for optimal performance
+        - Verbose logging and debug modes
+        
+    Command-line Arguments:
+        input: Path to input JSONL file or directory
+        output: Path to output Parquet file or directory
+        --batch, -b: Enable batch processing for multiple files
+        --pattern, -p: File pattern for batch mode (default: "*.jsonl")
+        --recursive, -r: Recursively process subdirectories
+        --compression, -c: Compression codec (default: "snappy")
+        --row-group-size, -g: Number of rows per group (default: 100000)
+        --verbose, -v: Enable verbose logging
+        --all-strings, -s: Force all columns to string type
+        --string-columns: Comma-separated list of columns to force as strings
+        --debug, -d: Enable debug mode with detailed error traces
+        --preserve-types: Prevent automatic string-to-boolean conversion
+        
+    Type Handling:
+        The function provides sophisticated type handling to address common issues
+        with automatic type inference, particularly for string values that might
+        be misinterpreted as booleans (e.g., "true", "false", "yes", "no", "auto").
+        
+    Returns:
+        int: Exit code (0 for success, 1 for error)
+        
+    Raises:
+        SystemExit: On argument parsing errors or when return code is non-zero
+        
+    Examples:
+        Convert single file:
+            python script.py input.jsonl output.parquet
+            
+        Batch convert with compression:
+            python script.py -b -c gzip input_dir/ output_dir/
+            
+        Preserve string types for specific columns:
+            python script.py --string-columns "id,name,status" input.jsonl output.parquet
+    """
     parser = argparse.ArgumentParser(description="Convert JSONL files to Parquet format")
 
     parser.add_argument('input', help="Input JSONL file or directory")

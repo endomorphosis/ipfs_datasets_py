@@ -65,6 +65,7 @@ class FFmpegWrapper:
                 }
             
             # Basic conversion implementation
+            # TODO This is a placeholder for actual FFmpeg command execution. Needs to be replaced with real FFmpeg calls.
             # This would integrate with the actual FFmpeg tools
             return {
                 "status": "success",

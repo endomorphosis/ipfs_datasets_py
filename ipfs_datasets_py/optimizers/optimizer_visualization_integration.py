@@ -14,8 +14,8 @@ from typing import Dict, List, Any, Optional, Union, Set, Callable
 
 # Import visualization components
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
-from ipfs_datasets_py.optimizer_learning_metrics import OptimizerLearningMetricsCollector
-from ipfs_datasets_py.optimizer_learning_metrics_integration import MetricsCollectorAdapter
+from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
+from ipfs_datasets_py.optimizers.optimizer_learning_metrics_integration import MetricsCollectorAdapter
 
 # Setup logging
 logger = logging.getLogger(__name__)

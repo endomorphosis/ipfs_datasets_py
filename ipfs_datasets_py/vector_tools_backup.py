@@ -3,10 +3,14 @@ Vector tools module for IPFS datasets.
 Provides vector operations, embeddings, and similarity search functionality.
 """
 
-import logging
-from typing import Dict, List, Optional, Any, Union
-import numpy as np
 from datetime import datetime
+import logging
+from typing import Dict, List, Optional, Any
+import numpy as np
+
+from ipfs_datasets_py._dependencies import dependencies
+
+np = dependencies.numpy
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +122,7 @@ class VectorTools:
     def vector_magnitude(vector: List[float]) -> float:
         """Calculate the magnitude of a vector."""
         return float(np.linalg.norm(np.array(vector)))
+
 
 class VectorSimilarityCalculator:
     """Calculator for vector similarity operations."""

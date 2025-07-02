@@ -17,8 +17,8 @@ from typing import Dict, List, Any, Optional, Union, Callable
 
 # Import visualization and monitoring components
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
-from ipfs_datasets_py.rag_query_visualization import create_learning_metrics_visualizations
-from ipfs_datasets_py.optimizer_alert_system import LearningAlertSystem, LearningAnomaly
+from ipfs_datasets_py.rag.rag_query_visualization import create_learning_metrics_visualizations
+from ipfs_datasets_py.optimizers.optimizer_alert_system import LearningAlertSystem, LearningAnomaly
 from ipfs_datasets_py.monitoring import MetricsCollector
 
 # Setup logging
@@ -26,8 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class UnifiedDashboard:
-    """
-    Unified dashboard that integrates multiple monitoring components.
+    """Unified dashboard that integrates multiple monitoring components.
 
     This class provides a comprehensive monitoring solution that combines:
     - Learning metrics visualizations
@@ -44,7 +43,7 @@ class UnifiedDashboard:
         auto_refresh: bool = True,
         max_alerts: int = 100,
         template_dir: Optional[str] = None
-    ):
+    ) -> None:
         """
         Initialize the unified dashboard.
 
@@ -55,6 +54,29 @@ class UnifiedDashboard:
             auto_refresh: Whether to enable automatic updates
             max_alerts: Maximum number of alerts to display
             template_dir: Directory containing custom templates (optional)
+
+        Attributes set during initialization:
+            dashboard_dir (str): Directory to store dashboard files
+            dashboard_title (str): Title for the dashboard
+            refresh_interval (int): Interval in seconds for automatic dashboard updates
+            auto_refresh (bool): Whether to enable automatic updates
+            max_alerts (int): Maximum number of alerts to display
+            template_dir (Optional[str]): Directory containing custom templates
+            visualizations_dir (str): Directory for visualization outputs
+            alerts_dir (str): Directory for alert files
+            metrics_dir (str): Directory for metrics files
+            assets_dir (str): Directory for dashboard assets
+            last_update_time (Optional): Timestamp of last dashboard update
+            dashboard_path (str): Path to the main dashboard HTML file
+            alerts_json_path (str): Path to the alerts JSON file
+            metrics_json_path (str): Path to the metrics JSON file
+            config_json_path (str): Path to the configuration JSON file
+            learning_visualizer: Reference to learning visualization component
+            alert_system: Reference to alert system component
+            metrics_collector: Reference to metrics collection component
+            recent_alerts (list): List of recent alerts
+            _stop_refresh (threading.Event): Event to control auto-refresh thread
+            _refresh_thread: Thread for automatic dashboard refresh
         """
         self.dashboard_dir = dashboard_dir
         self.dashboard_title = dashboard_title

@@ -17,17 +17,54 @@ import multiprocessing
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError
 from ..embeddings.schema import EmbeddingResult, SearchResult, VectorStoreConfig, VectorStoreType
 
+
+logger = logging.getLogger(__name__)
+
+class MockFaissIndex:
+    """Mock FAISS index for testing purposes."""
+
+    def __init__(self, dimension: int):
+        self.dimension = dimension
+        self.ntotal = 0
+        self.is_trained = True
+
+    def Index(self):
+        """Mock Index method."""
+        return self
+
+    def add(self, vectors):
+        """Mock add method."""
+        self.ntotal += len(vectors)
+
+    def search(self, query_vector, top_k):
+        """Mock search method."""
+        return [[1.0] * top_k], [[i for i in range(top_k)]]
+
+    def write_index(self, path):
+        """Mock write index method."""
+        pass
+    
+    def read_index(self, path):
+        """Mock read index method."""
+        return self
+
+
+from typing import TypeAlias
+
+# Check for FAISS and NumPy availability
 try:
     import faiss
     FAISS_AVAILABLE = True
 except ImportError:
-    faiss = None
+    logger.warning("FAISS not available. Using mock implementation.")
+    #faiss: TypeAlias = MockFaissIndex
     FAISS_AVAILABLE = False
 
 try:
     import numpy as np
     NUMPY_AVAILABLE = True
 except ImportError:
+    logger.warning("numpy not available. Using mock implementation.")
     np = None
     NUMPY_AVAILABLE = False
 
@@ -36,14 +73,13 @@ try:
     from datasets import Dataset, load_dataset, concatenate_datasets, load_from_disk
     DATASETS_AVAILABLE = True
 except ImportError:
+    logger.warning("datasets not available. Using mock implementation.")
     datasets = None
     Dataset = None
     load_dataset = None
     concatenate_datasets = None
     load_from_disk = None
     DATASETS_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
 
 
 class FAISSVectorStore(BaseVectorStore):
@@ -57,22 +93,23 @@ class FAISSVectorStore(BaseVectorStore):
         """
         if not FAISS_AVAILABLE:
             raise VectorStoreError("FAISS not available. Install with: pip install faiss-cpu or faiss-gpu")
-        
+
         if not NUMPY_AVAILABLE:
             raise VectorStoreError("NumPy not available. Install with: pip install numpy")
-        
+
         super().__init__(config)
         self.index_path = config.connection_params.get("index_path", "./faiss_index")
         self.metadata_path = config.connection_params.get("metadata_path", "./faiss_metadata")
         self.index_type = config.connection_params.get("index_type", "Flat")
-        
+
         # FAISS indices and metadata storage
         self.indices = {}
         self.metadata_store = {}
         self.id_mapping = {}  # Maps string IDs to FAISS internal indices
         self.reverse_id_mapping = {}  # Maps FAISS indices to string IDs
-        
+
         # Legacy compatibility
+        # TODO Find out if these are still needed
         self.search_chunks = self.search_chunks_legacy
         self.autofaiss_chunks = self.autofaiss_chunks_legacy
         self.search_centroids = self.search_centroids_legacy
@@ -80,11 +117,11 @@ class FAISSVectorStore(BaseVectorStore):
         self.autofaiss_shards = self.autofaiss_shards_legacy
         self.kmeans_cluster_split_dataset = self.kmeans_cluster_split_dataset_legacy
         self.chunk_cache = {}
-    
+
     def _create_client(self):
         """Create FAISS client (actually just return None since FAISS is local)."""
         return None
-    
+
     def _get_index_file_path(self, collection_name: str) -> str:
         """Get the file path for a FAISS index."""
         return os.path.join(self.index_path, f"{collection_name}.index")
@@ -95,26 +132,27 @@ class FAISSVectorStore(BaseVectorStore):
     
     def _create_index(self, dimension: int, index_type: str = "Flat") -> faiss.Index:
         """Create a FAISS index.
-        
+
         Args:
             dimension: Vector dimension
             index_type: Type of FAISS index
-            
+
         Returns:
             FAISS index object
         """
-        if index_type == "Flat":
-            return faiss.IndexFlatIP(dimension)  # Inner product (cosine similarity)
-        elif index_type == "IVF":
-            quantizer = faiss.IndexFlatIP(dimension)
-            nlist = min(100, max(1, int(math.sqrt(1000))))  # Heuristic for nlist
-            return faiss.IndexIVFFlat(quantizer, dimension, nlist)
-        elif index_type == "HNSW":
-            return faiss.IndexHNSWFlat(dimension, 32)
-        else:
-            logger.warning(f"Unknown index type {index_type}, using Flat")
-            return faiss.IndexFlatIP(dimension)
-    
+        match index_type:
+            case "Flat":
+                return faiss.IndexFlatIP(dimension)  # Inner product (cosine similarity)
+            case "IVF":
+                quantizer = faiss.IndexFlatIP(dimension)
+                nlist = min(100, max(1, int(math.sqrt(1000))))  # Heuristic for nlist
+                return faiss.IndexIVFFlat(quantizer, dimension, nlist)
+            case "HNSW":
+                return faiss.IndexHNSWFlat(dimension, 32)
+            case _:
+                logger.warning(f"Unknown index type {index_type}, using Flat")
+                return faiss.IndexFlatIP(dimension)
+
     def _load_index(self, collection_name: str) -> Optional[faiss.Index]:
         """Load a FAISS index from disk."""
         index_path = self._get_index_file_path(collection_name)
@@ -472,13 +510,13 @@ class FAISSVectorStore(BaseVectorStore):
             logger.error(f"Failed to delete embedding {embedding_id} from {collection_name}: {e}")
             return False
     
+    # Note: FAISS doesn't support efficient updates. This adds a new embedding
+    # and marks the old one as deleted.
+
     async def update_embedding(self, embedding_id: str, embedding: EmbeddingResult,
                              collection_name: Optional[str] = None) -> bool:
         """Update an existing embedding in FAISS.
-        
-        Note: FAISS doesn't support efficient updates. This adds a new embedding
-        and marks the old one as deleted.
-        
+
         Args:
             embedding_id: ID of the embedding to update
             embedding: New embedding data

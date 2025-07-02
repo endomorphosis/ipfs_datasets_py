@@ -153,14 +153,15 @@ def main():
     print(f"Generating {args.type} report in {args.format} format...")
 
     try:
-        if args.type == "security":
-            report = report_generator.generate_security_report()
-        elif args.type == "compliance":
-            report = report_generator.generate_compliance_report()
-        elif args.type == "operational":
-            report = report_generator.generate_operational_report()
-        else:  # comprehensive is default
-            report = report_generator.generate_comprehensive_report()
+        match args.type:
+            case "security":
+                report = report_generator.generate_security_report()
+            case "compliance":
+                report = report_generator.generate_compliance_report()
+            case "operational":
+                report = report_generator.generate_operational_report()
+            case _:  # comprehensive is default
+                report = report_generator.generate_comprehensive_report()
 
         # Export report
         output_path = report_generator.export_report(

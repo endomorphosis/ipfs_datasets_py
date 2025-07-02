@@ -31,13 +31,21 @@ dependencies = [
     "pytest>=7.3.1",
     "aiofile>=3.9.0",
     "tqdm>=4.67.1",
+    "prometheus-client>=0.22.1",
+    "plotly>=6.2.0",
+    "spacy>=3.8.7",
+    "seaborn>=0.13.2",
+    "rdflib>=7.1.4",
     # Optional LLM API access
     "anthropic>=0.50.0; extra == 'llm'",
     "openai>=1.76.0; extra == 'llm'",
     "orbitdb-kit-py>=0.0.9",
-    "ipfs-kit-py>=0.2.0",
+    "haystack>=0.42",
+    "faiss-cpu">=1.7.4,
+    "ipfs-kit-py>=0.3.0",
     "ipfs-model-manager-py>=0.0.23",
     "ipfs-faiss-py>=0.0.6",
+    "weasyprint>=65.1",
     "urllib3>=2.4.0",
     "boto3>=1.38.27",
     "ipfsspec>=0.6.0",
@@ -59,6 +67,7 @@ dependencies = [
     "libp2p>=0.2.7",
     "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.21.0",
+    "python-ffmpeg>=2.0.12"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

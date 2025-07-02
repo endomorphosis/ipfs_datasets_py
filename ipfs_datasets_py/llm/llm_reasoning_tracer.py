@@ -21,16 +21,16 @@ Future Implementation TODOs:
 - Add support for model-specific prompt formats
 - Implement advanced visualization capabilities for reasoning paths
 """
-
-import os
+import datetime
 import json
 import logging
+import os
 import time
-from typing import Dict, List, Any, Optional, Union, Set, Callable, Tuple
+import uuid
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-import uuid
-import datetime
+from typing import Dict, List, Any, Optional
+
 
 # Configure logging
 logger = logging.getLogger(__name__)

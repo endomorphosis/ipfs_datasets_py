@@ -536,9 +536,9 @@ def extract_text_with_surya(image_data, languages=['en']):
 class MultiEngineOCR:
     def __init__(self):
         self.engines = {
-            'surya': SuryaEngine(),
-            'tesseract': TesseractEngine(),
-            'easyocr': EasyOCREngine(),
+            'surya': SuryaOCR(),
+            'tesseract': TesseractOCR(),
+            'easyocr': EasyOCR(),
             'doctr': DocTREngine(),
             'paddleocr': PaddleOCREngine(),
             'got_ocr': GOTOCREngine()
@@ -770,9 +770,9 @@ class AdvancedLLMOptimizedProcessor:
     def __init__(self):
         # OCR engines with modern alternatives
         self.ocr_engines = {
-            'primary': SuryaEngine(),
-            'fallback': TesseractEngine(),
-            'complex': EasyOCREngine(),
+            'primary': SuryaOCR(),
+            'fallback': TesseractOCR(),
+            'complex': EasyOCR(),
             'handwriting': TrOCREngine(),
             'scientific': GOTOCREngine()
         }
