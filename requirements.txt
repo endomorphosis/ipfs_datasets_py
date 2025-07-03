@@ -116,3 +116,6 @@ plotly>=6.2.0
 haystack>=0.42
 weasyprint>=65.1
 python-ffmpeg>=2.0.12
+PyMuPDF>=1.26.3
+bz2file>=0.98
+pdfplumber>=0.11.7

@@ -1,5 +1,6 @@
 import pytest
 
+
 class TestLLMOptimizerInitialization:
     """Test LLMOptimizer initialization and configuration."""
 
@@ -87,10 +88,10 @@ class TestLLMOptimizerInitialization:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
-import pytest
+
+
+
 
 class TestLLMOptimizerInitializeModels:
     """Test LLMOptimizer._initialize_models method."""
@@ -173,10 +174,10 @@ class TestLLMOptimizerInitializeModels:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerOptimizeForLLM:
     """Test LLMOptimizer.optimize_for_llm method."""
@@ -274,11 +275,11 @@ class TestLLMOptimizerOptimizeForLLM:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerExtractStructuredText:
     """Test LLMOptimizer._extract_structured_text method."""
@@ -367,11 +368,11 @@ class TestLLMOptimizerExtractStructuredText:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerGenerateDocumentSummary:
     """Test LLMOptimizer._generate_document_summary method."""
@@ -459,11 +460,11 @@ class TestLLMOptimizerGenerateDocumentSummary:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerCreateOptimalChunks:
     """Test LLMOptimizer._create_optimal_chunks method."""
@@ -564,11 +565,11 @@ class TestLLMOptimizerCreateOptimalChunks:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerCreateChunk:
     """Test LLMOptimizer._create_chunk method."""
@@ -676,11 +677,11 @@ class TestLLMOptimizerCreateChunk:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerEstablishChunkRelationships:
     """Test LLMOptimizer._establish_chunk_relationships method."""
@@ -781,11 +782,11 @@ class TestLLMOptimizerEstablishChunkRelationships:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerGenerateEmbeddings:
     """Test LLMOptimizer._generate_embeddings method."""
@@ -888,11 +889,11 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerExtractKeyEntities:
     """Test LLMOptimizer._extract_key_entities method."""
@@ -1004,12 +1005,12 @@ class TestLLMOptimizerExtractKeyEntities:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerGenerateDocumentEmbedding:
     """Test LLMOptimizer._generate_document_embedding method."""
@@ -1115,12 +1116,12 @@ class TestLLMOptimizerGenerateDocumentEmbedding:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerCountTokens:
     """Test LLMOptimizer._count_tokens method."""
@@ -1224,12 +1225,12 @@ class TestLLMOptimizerCountTokens:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
 
-    import pytest
+
+
+
 
 class TestLLMOptimizerGetChunkOverlap:
     """Test LLMOptimizer._get_chunk_overlap method."""
@@ -1328,11 +1329,11 @@ class TestLLMOptimizerGetChunkOverlap:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestTextProcessorSplitSentences:
     """Test TextProcessor.split_sentences method."""
@@ -1437,11 +1438,11 @@ class TestTextProcessorSplitSentences:
         """
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
-    import pytest
+
+
+
 
 class TestTextProcessorExtractKeywords:
     """Test TextProcessor.extract_keywords method."""
@@ -1554,6 +1555,131 @@ class TestTextProcessorExtractKeywords:
             - No padding or errors for insufficient word count
             - Result size matches available content
         """
+
+
+
+
+
+
+
+
+
+
+class TestChunkOptimizerOptimizeBoundaries:
+    """Test ChunkOptimizer.optimize_chunk_boundaries method."""
+
+    def test_optimize_chunk_boundaries_prioritizes_paragraph_breaks(self):
+        """
+        GIVEN text with paragraph boundaries near chunk boundaries:
+            - Text: "First paragraph content.\n\nSecond paragraph content.\n\nThird paragraph."
+            - current_boundaries: [50] (near second paragraph break)
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Boundary moved to paragraph break position
+            - Paragraph boundary within 50 characters preferred
+            - Optimized boundary improves semantic coherence
+        """
+
+    def test_optimize_chunk_boundaries_falls_back_to_sentence_breaks(self):
+        """
+        GIVEN text with sentence boundaries but no paragraph breaks near boundary:
+            - Text: "First sentence. Second sentence. Third sentence continues."
+            - current_boundaries: [30] (near sentence boundary, no paragraph break within 50 chars)
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Boundary moved to nearest sentence ending within 25 characters
+            - Sentence boundary used as fallback when no paragraph break available
+            - Sentence endings include periods, exclamation points, question marks
+        """
+
+    def test_optimize_chunk_boundaries_maintains_original_when_no_natural_break(self):
+        """
+        GIVEN text without natural breaks near boundary:
+            - Text: "This is a very long sentence without any natural breaking points nearby"
+            - current_boundaries: [40] (no sentence or paragraph breaks within range)
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Original boundary position maintained
+            - No optimization when suitable natural division unavailable
+            - Boundary unchanged when no better option found
+        """
+
+    def test_optimize_chunk_boundaries_handles_multiple_boundaries(self):
+        """
+        GIVEN text with multiple chunk boundaries:
+            - current_boundaries: [100, 200, 300]
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Each boundary optimized independently
+            - All boundaries processed for natural break alignment
+            - Optimized boundaries returned in same order
+            - List length preserved
+        """
+
+    def test_optimize_chunk_boundaries_respects_search_ranges(self):
+        """
+        GIVEN text with natural breaks at various distances from boundary
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Paragraph breaks considered within 50 characters of boundary
+            - Sentence breaks considered within 25 characters of boundary
+            - Breaks outside search range ignored
+            - Search ranges prevent excessive boundary movement
+        """
+
+    def test_optimize_chunk_boundaries_handles_boundary_at_text_start(self):
+        """
+        GIVEN current_boundaries including position 0 or near text start
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Start-of-text boundary handled appropriately
+            - No attempt to move boundary before text beginning
+            - Edge case handled gracefully
+        """
+
+    def test_optimize_chunk_boundaries_handles_boundary_at_text_end(self):
+        """
+        GIVEN current_boundaries including position near or at text end
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - End-of-text boundary handled appropriately
+            - No attempt to move boundary beyond text length
+            - Text length constraints respected
+        """
+
+    def test_optimize_chunk_boundaries_recognizes_all_sentence_endings(self):
+        """
+        GIVEN text with various sentence ending punctuation:
+            - Periods: "First sentence."
+            - Question marks: "Second sentence?"
+            - Exclamation points: "Third sentence!"
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - All terminal punctuation recognized as sentence boundaries
+            - Period, question mark, and exclamation point all considered
+            - Comprehensive sentence boundary detection
+        """
+
+    def test_optimize_chunk_boundaries_handles_empty_boundary_list(self):
+        """
+        GIVEN empty current_boundaries list
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Empty list returned unchanged
+            - No errors raised for empty input
+            - Graceful handling of edge case
+        """
+
+    def test_optimize_chunk_boundaries_preserves_boundary_order(self):
+        """
+        GIVEN current_boundaries in ascending order: [50, 150, 250]
+        WHEN optimize_chunk_boundaries is called
+        THEN expect:
+            - Optimized boundaries maintain ascending order
+            - Relative boundary positions preserved
+            - Optimization doesn't disrupt boundary sequence
+        """
+
 
 
 if __name__ == "__main__":

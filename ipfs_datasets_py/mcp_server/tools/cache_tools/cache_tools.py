@@ -560,3 +560,66 @@ def _get_namespace_stats() -> Dict[str, Any]:
         stats["avg_access_count"] = round(stats["total_access_count"] / stats["key_count"], 2) if stats["key_count"] > 0 else 0
         
     return namespace_stats
+
+
+async def cache_stats(namespace: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get detailed cache statistics and performance metrics.
+    
+    Args:
+        namespace: Optional namespace to filter stats. If None, returns global stats.
+        
+    Returns:
+        Dict containing cache statistics and performance metrics
+    """
+    try:
+        global_stats = CACHE_STATS.copy()
+        
+        # Calculate hit rate
+        total_requests = global_stats["hits"] + global_stats["misses"]
+        hit_rate = (global_stats["hits"] / total_requests * 100) if total_requests > 0 else 0
+        
+        # Get memory usage stats
+        total_keys = len(CACHE_STORAGE)
+        total_size_bytes = sum(
+            CACHE_METADATA.get(key, {}).get("size_bytes", 0) 
+            for key in CACHE_STORAGE.keys()
+        )
+        
+        # Get namespace-specific stats
+        namespace_stats = _get_namespace_stats()
+        
+        result = {
+            "success": True,
+            "global_stats": {
+                **global_stats,
+                "hit_rate_percent": round(hit_rate, 2),
+                "total_keys": total_keys,
+                "total_size_bytes": total_size_bytes,
+                "total_size_mb": round(total_size_bytes / (1024 * 1024), 2),
+                "active_namespaces": len(namespace_stats)
+            },
+            "namespace_stats": namespace_stats,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Filter by namespace if specified
+        if namespace:
+            result["filtered_namespace"] = namespace
+            result["namespace_data"] = namespace_stats.get(namespace, {
+                "key_count": 0,
+                "total_size_bytes": 0,
+                "total_size_mb": 0,
+                "total_access_count": 0,
+                "avg_access_count": 0
+            })
+            
+        return result
+        
+    except Exception as e:
+        logger.error(f"Cache stats retrieval failed: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }

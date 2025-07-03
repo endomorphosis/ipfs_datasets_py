@@ -140,7 +140,7 @@ class IPFSDatasetsMCPServer:
         # Dictionary to store registered tools
         self.tools = {}
 
-    def register_tools(self):
+    async def register_tools(self):
         """Register all tools with the MCP server."""
         # Register tools from the tools directory
         tools_path = Path(__file__).parent / "tools"
@@ -207,7 +207,7 @@ class IPFSDatasetsMCPServer:
 
         # Register ipfs_embeddings_py tools (legacy integration)
         from .tools.ipfs_embeddings_integration import register_ipfs_embeddings_tools
-        asyncio.run(register_ipfs_embeddings_tools(self.mcp, self.tools))
+        await register_ipfs_embeddings_tools(self.mcp, self.tools)
 
         logger.info(f"Registered {len(self.tools)} tools with the MCP server")
 
@@ -306,7 +306,7 @@ class IPFSDatasetsMCPServer:
         Start the MCP server in stdio mode for VS Code integration.
         """
         # Register all tools
-        self.register_tools()
+        await self.register_tools()
 
         # Register ipfs_kit tools based on configuration
         if self.configs.ipfs_kit_mcp_url:
@@ -327,7 +327,7 @@ class IPFSDatasetsMCPServer:
             port: Port to bind the server to
         """
         # Register all tools
-        self.register_tools()
+        await self.register_tools()
 
         # Register ipfs_kit tools based on configuration
         if self.configs.ipfs_kit_mcp_url:

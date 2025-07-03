@@ -63,7 +63,21 @@ DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_DATA_DIR, "dashboard_config.json")
 
 @dataclass
 class DashboardConfig:
-    """Configuration for the admin dashboard."""
+    """Configuration for the admin dashboard.
+
+    Attributes:
+        enabled (bool): Whether the dashboard is enabled. Defaults to True.
+        host (str): The host address to bind the dashboard server to. Defaults to DEFAULT_HOST.
+        port (int): The port number to bind the dashboard server to. Defaults to DEFAULT_PORT.
+        refresh_interval (int): The interval in seconds for dashboard auto-refresh. Defaults to DEFAULT_REFRESH_INTERVAL.
+        open_browser (bool): Whether to automatically open the browser when starting the dashboard. Defaults to True.
+        data_dir (str): The directory path for storing dashboard data. Defaults to DEFAULT_DATA_DIR.
+        max_log_lines (int): Maximum number of log lines to display in the dashboard. Defaults to DEFAULT_LOG_LINES.
+        require_auth (bool): Whether authentication is required to access the dashboard. Defaults to False.
+        username (Optional[str]): Username for dashboard authentication. Defaults to None.
+        password (Optional[str]): Password for dashboard authentication. Defaults to None.
+        monitoring_config (Optional[MonitoringConfig]): Configuration for monitoring features. Defaults to None.
+    """
     enabled: bool = True
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
@@ -91,8 +105,7 @@ class AdminDashboard:
 
     @classmethod
     def initialize(cls, config: Optional[DashboardConfig] = None) -> 'AdminDashboard':
-        """
-        Initialize the admin dashboard.
+        """Initialize the admin dashboard.
 
         Args:
             config: Configuration for the dashboard
@@ -128,8 +141,7 @@ class AdminDashboard:
             os.makedirs(DEFAULT_DATA_DIR, exist_ok=True)
 
     def configure(self, config: DashboardConfig) -> None:
-        """
-        Configure the admin dashboard.
+        """Configure the admin dashboard.
 
         Args:
             config: Configuration for the dashboard
@@ -1091,8 +1103,7 @@ function fetchUpdatedData() {
 
     def _check_auth(self) -> bool:
         """Check if the user is authenticated."""
-        # In a real implementation, we would use sessions or JWT
-        # For this example, we'll just return True
+        # TODO In a real implementation, we would use sessions or JWT. DO SO FUCKING DO IT!!!
         return True
 
     def start(self) -> bool:
@@ -1159,6 +1170,7 @@ function fetchUpdatedData() {
         self.running = False
 
         # In a real implementation, we would gracefully shut down the Flask server
+        # TODO Write a REAL FUCKING IMPLEMENTATION FOR SHUTTING DOWN THE SERVER!!!!
         # For this example, we'll just join the thread
         if self.server_thread:
             self.server_thread.join(timeout=1.0)

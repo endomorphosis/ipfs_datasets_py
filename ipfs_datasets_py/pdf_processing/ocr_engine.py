@@ -4,7 +4,7 @@ Multi-Engine OCR Processor
 Implements intelligent OCR processing with multiple engines and fallback strategies.
 Supports Surya, Tesseract, EasyOCR, TrOCR, PaddleOCR, and GOT-OCR2.0.
 """
-
+from abc import ABC, abstractmethod
 import logging
 import io
 import numpy as np
@@ -14,7 +14,7 @@ import cv2
 
 logger = logging.getLogger(__name__)
 
-class OCREngine:
+class OCREngine(ABC):
     """Base class for OCR engines."""
     
     def __init__(self, name: str):
@@ -22,10 +22,12 @@ class OCREngine:
         self.available = False
         self._initialize()
     
+    @abstractmethod
     def _initialize(self):
         """Initialize the OCR engine."""
         pass
     
+    @abstractmethod
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """Extract text from image data."""
         raise NotImplementedError

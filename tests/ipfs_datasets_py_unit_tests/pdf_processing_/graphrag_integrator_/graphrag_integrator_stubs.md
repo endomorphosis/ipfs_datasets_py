@@ -95,6 +95,7 @@ Example:
 class GraphRAGIntegrator:
     """
     GraphRAG Integrator for PDF Content Processing
+
 The GraphRAGIntegrator class provides comprehensive functionality for integrating PDF content
 into GraphRAG (Graph Retrieval-Augmented Generation) knowledge structures. It processes
 LLM-optimized documents, extracts entities and relationships, creates knowledge graphs,
@@ -689,35 +690,41 @@ def _infer_relationship_type(self, entity1: Entity, entity2: Entity, context: st
     """
     Infer the relationship type between two entities based on contextual information.
 
-This method analyzes the context string to determine the most appropriate relationship
-type between two entities by examining keywords and entity types. It supports various
-relationship categories including professional, organizational, and personal connections.
+    This method analyzes the context string to determine the most appropriate relationship
+    type between two entities by examining keywords and entity types. It supports various
+    relationship categories including professional, organizational, and personal connections.
 
-Args:
-    entity1 (Entity): The first entity in the relationship
-    entity2 (Entity): The second entity in the relationship  
-    context (str): The textual context containing information about the relationship
-Returns:
-    Optional[str]: The inferred relationship type, or None if no relationship can be determined.
-                  Possible return values include:
-                  - Person-Organization: 'leads', 'works_for', 'founded', 'associated_with'
-                  - Organization-Organization: 'acquired', 'partners_with', 'competes_with', 'related_to'
-                  - Person-Person: 'collaborates_with', 'manages', 'knows'
-                  - Location-based: 'located_in'
-                  - Default: 'related_to'
-Examples:
-    >>> _infer_relationship_type(person_entity, org_entity, "John is the CEO of ACME Corp")
-    'leads'
-    >>> _infer_relationship_type(org1_entity, org2_entity, "Microsoft acquired GitHub")
-    'acquired'
-    >>> _infer_relationship_type(person1_entity, person2_entity, "They work as colleagues")
-    'collaborates_with'
+    Args:
+        entity1 (Entity): The first entity in the relationship
+        entity2 (Entity): The second entity in the relationship  
+        context (str): The textual context containing information about the relationship
+    Returns:
+        Optional[str]: The inferred relationship type, or None if no relationship can be determined.
+                      Possible return values include:
+                      - Person-Organization: 'leads', 'works_for', 'founded', 'associated_with'
+                      - Organization-Organization: 'acquired', 'partners_with', 'competes_with', 'related_to'
+                      - Person-Person: 'collaborates_with', 'manages', 'knows'
+                      - Location-based: 'located_in'
+                      - Default: 'related_to'
 
-Note:
-    The method performs case-insensitive keyword matching and prioritizes more specific
-    relationships over generic ones. The relationship direction is implied by the order
-    of entities (entity1 -> entity2).
-    """
+    Raises:
+        TypeError: If entity1 or entity2 is not an Entity instance
+        ValueError: If context is empty or contains only whitespace
+        AttributeError: If entities lack required type attribute
+
+    Examples:
+        >>> _infer_relationship_type(person_entity, org_entity, "John is the CEO of ACME Corp")
+        'leads'
+        >>> _infer_relationship_type(org1_entity, org2_entity, "Microsoft acquired GitHub")
+        'acquired'
+        >>> _infer_relationship_type(person1_entity, person2_entity, "They work as colleagues")
+        'collaborates_with'
+
+    Note:
+        The method performs case-insensitive keyword matching and prioritizes more specific
+        relationships over generic ones. The relationship direction is implied by the order
+        of entities (entity1 -> entity2).
+        """
 ```
 * **Async:** False
 * **Method:** True

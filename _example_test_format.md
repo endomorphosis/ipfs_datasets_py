@@ -1,4 +1,6 @@
+# Example Test Stub Format
 
+## Unittest
 ```python
 import unittest
 
@@ -27,6 +29,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
             - _error_types initialized as empty set
             - traceback and datetime attributes are set from resources
         """
+        raise NotImplementedError("test_init_with_valid_resources_and_configs test needs to be implemented")
+
 
     def test_init_missing_logger_in_resources(self):
         """
@@ -34,6 +38,8 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
+        raise NotImplementedError("test_init_missing_logger_in_resources test needs to be implemented")
+
 
     def test_init_missing_traceback_in_resources(self):
         """
@@ -41,17 +47,20 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
+        raise NotImplementedError("test_init_missing_traceback_in_resources test needs to be implemented")
+
 
 if __name__ == '__main__':
     unittest.main()
 ```
 
+
+## Pytest
 ```python
 import pytest
 
 class TestErrorMonitorInitialization:
     """Test ErrorMonitor initialization and configuration."""
-
 
     def test_init_with_valid_resources_and_configs(self):
         """
@@ -72,6 +81,7 @@ class TestErrorMonitorInitialization:
             - _error_types initialized as empty set
             - traceback and datetime attributes are set from resources
         """
+        raise NotImplementedError("test_init_with_valid_resources_and_configs test needs to be implemented")
 
     def test_init_missing_logger_in_resources(self):
         """
@@ -79,6 +89,7 @@ class TestErrorMonitorInitialization:
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
+        raise NotImplementedError("test_init_missing_logger_in_resources test needs to be implemented")
 
     def test_init_missing_traceback_in_resources(self):
         """
@@ -86,6 +97,7 @@ class TestErrorMonitorInitialization:
         WHEN ErrorMonitor is initialized
         THEN expect KeyError to be raised
         """
+        raise NotImplementedError("test_init_missing_traceback_in_resources test needs to be implemented")
 
 
 if __name__ == "__main__":

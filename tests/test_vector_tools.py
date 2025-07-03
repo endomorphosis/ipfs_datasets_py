@@ -87,7 +87,7 @@ class TestVectorStoreTools:
         """Test vector index management operations."""
         # Test index listing
         try:
-            from ipfs_datasets_py.mcp_server.tools.vector_store_tools.list_indices import list_indices
+            from ipfs_datasets_py.mcp_server.tools.bespoke_tools.list_indices import list_indices
             
             with patch('ipfs_datasets_py.mcp_server.tools.vector_store_tools.list_indices.get_global_manager') as mock_manager:
                 mock_vector_manager = Mock()
@@ -110,7 +110,7 @@ class TestVectorStoreTools:
         
         # Test index deletion
         try:
-            from ipfs_datasets_py.mcp_server.tools.vector_store_tools.delete_index import delete_index
+            from ipfs_datasets_py.mcp_server.tools.bespoke_tools.delete_index import delete_index
             
             with patch('ipfs_datasets_py.mcp_server.tools.vector_store_tools.delete_index.get_global_manager') as mock_manager:
                 mock_vector_manager = Mock()

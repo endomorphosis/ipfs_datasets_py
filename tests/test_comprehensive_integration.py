@@ -268,7 +268,7 @@ class TestAdminTools:
         """Test system health check tool."""
         # Import the tool module
         try:
-            from ipfs_datasets_py.mcp_server.tools.admin_tools.system_health import system_health
+            from ipfs_datasets_py.mcp_server.tools.bespoke_tools.system_health import system_health
             
             with patch('ipfs_datasets_py.mcp_server.tools.admin_tools.system_health.psutil') as mock_psutil:
                 mock_psutil.cpu_percent.return_value = 50.0
@@ -287,7 +287,7 @@ class TestAdminTools:
     async def test_cache_management(self):
         """Test cache management tools."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_stats import cache_stats
+            from ipfs_datasets_py.mcp_server.tools.bespoke_tools.cache_stats import cache_stats
             
             with patch('ipfs_datasets_py.mcp_server.tools.cache_tools.cache_stats.CacheManager') as mock_cache:
                 mock_instance = Mock()
@@ -415,7 +415,7 @@ class TestWorkflowTools:
     async def test_workflow_execution(self):
         """Test workflow execution tools."""
         try:
-            from ipfs_datasets_py.mcp_server.tools.workflow_tools.execute_workflow import execute_workflow
+            from ipfs_datasets_py.mcp_server.tools.bespoke_tools.execute_workflow import execute_workflow
             
             workflow_config = {
                 'steps': [

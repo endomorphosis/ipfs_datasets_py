@@ -505,7 +505,8 @@ class GraphRAGIntegrator:
                             existing_entity.properties[key] = value
                 else:
                     # Create new entity
-                    entity_id = f"entity_{hashlib.md5(f'{entity_data['name']}_{entity_data['type']}'.encode()).hexdigest()[:8]}"
+                    entity_key = f"{entity_data['name']}_{entity_data['type']}"
+                    entity_id = f"entity_{hashlib.md5(entity_key.encode()).hexdigest()[:8]}"
                     
                     entity = Entity(
                         id=entity_id,

@@ -9,10 +9,66 @@ logger = logging.getLogger(__name__)
 
 class VectorIndexTool(ClaudeMCPTool):
     """
-    Tool for managing vector indexes.
+    Tool for managing vector indexes in the MCP (Model Context Protocol) framework.
+    This tool provides functionality to create, update, delete, and retrieve information
+    about vector indexes used for efficient similarity search and retrieval operations.
+
+    Attributes:
+        name (str): The tool name identifier ("manage_vector_index").
+        description (str): Human-readable description of the tool's purpose.
+        input_schema (dict): JSON schema defining the tool's input parameters.
+        vector_service: The vector service instance used for index operations.
+
+    Methods:
+        __init__(vector_service): Initialize the tool with a vector service instance.
+        execute(action, index_name, config=None): Execute vector index management operations.
+
+    Parameters:
+        action (str): The operation to perform - one of "create", "update", "delete", or "info".
+        index_name (str): Name of the vector index to operate on (1-100 characters).
+        config (dict, optional): Configuration parameters for index creation/update including:
+            - dimension (int): Vector dimension size (minimum 1)
+            - metric (str): Distance metric ("cosine", "euclidean", or "dot")
+            - index_type (str): Index implementation ("faiss", "hnswlib", or "annoy")
+
+    Returns:
+        dict: Operation result containing action, index_name, result data, and success status.
+
+    Raises:
+        ValueError: If vector_service is None during initialization.
+        Exception: If vector index operation fails during execution.
+
+    Example:
+        >>> tool = VectorIndexTool(vector_service)
+        >>> result = await tool.execute("create", "my_index", {
+        ...     "dimension": 768,
+        ...     "metric": "cosine",
+        ...     "index_type": "faiss"
+        ... })
     """
-    
     def __init__(self, vector_service):
+        """Initialize the VectorIndexTool with a vector service.
+
+        This tool provides functionality to create, update, delete, and get information
+        about vector indexes for efficient similarity search operations.
+
+        Attributes initialized:
+            name (str): The name of the tool, set to "manage_vector_index".
+            description (str): Description of the tool's functionality.
+            input_schema (dict): JSON schema defining the tool's input parameters including:
+                - action: The operation to perform (create, update, delete, info)
+                - index_name: Name of the vector index (1-100 characters)
+                - config: Optional configuration object with dimension, metric, and index_type
+            vector_service: The vector service instance for managing vector indexes.
+
+        Args:
+            vector_service: The vector service instance used for managing vector indexes.
+                           Must not be None.
+
+        Raises:
+            ValueError: If vector_service is None.
+
+        """
         super().__init__()
         if vector_service is None:
             raise ValueError("Vector service cannot be None")
@@ -53,17 +109,18 @@ class VectorIndexTool(ClaudeMCPTool):
             # Validate inputs
             action = validator.validate_algorithm_choice(action, ["create", "update", "delete", "info"])
             index_name = validator.validate_text_input(index_name)
-            
+
             # Call the vector service
-            if action == "create":
-                result = await self.vector_service.create_index(index_name, config or {})
-            elif action == "update":
-                result = await self.vector_service.update_index(index_name, config or {})
-            elif action == "delete":
-                result = await self.vector_service.delete_index(index_name)
-            else:  # info
-                result = await self.vector_service.get_index_info(index_name)
-            
+            result = None
+            match action:
+                case "create":
+                    result = await self.vector_service.create_index(index_name, config or {})
+                case "update":
+                    result = await self.vector_service.update_index(index_name, config or {})
+                case "delete":
+                    result = await self.vector_service.delete_index(index_name)
+                case "info":
+                    result = await self.vector_service.get_index_info(index_name)
             return {
                 "action": action,
                 "index_name": index_name,
@@ -80,7 +137,6 @@ class VectorRetrievalTool(ClaudeMCPTool):
     """
     Tool for retrieving vectors from storage.
     """
-    
     def __init__(self, vector_service):
         super().__init__()
         if vector_service is None:
@@ -205,20 +261,22 @@ class VectorMetadataTool(ClaudeMCPTool):
                 vector_id = validator.validate_text_input(vector_id)
             
             # Call the vector service
-            if action == "get":
-                if not vector_id:
-                    raise ValueError("vector_id is required for get action")
-                result = await self.vector_service.get_vector_metadata(collection, vector_id)
-            elif action == "update":
-                if not vector_id or not metadata:
-                    raise ValueError("vector_id and metadata are required for update action")
-                result = await self.vector_service.update_vector_metadata(collection, vector_id, metadata)
-            elif action == "delete":
-                if not vector_id:
-                    raise ValueError("vector_id is required for delete action")
-                result = await self.vector_service.delete_vector_metadata(collection, vector_id)
-            else:  # list
-                result = await self.vector_service.list_vector_metadata(collection, filters or {})
+            result = None
+            match action:
+                case "get":
+                    if not vector_id:
+                        raise ValueError("vector_id is required for get action")
+                    result = await self.vector_service.get_vector_metadata(collection, vector_id)
+                case "update":
+                    if not vector_id or not metadata:
+                        raise ValueError("vector_id and metadata are required for update action")
+                    result = await self.vector_service.update_vector_metadata(collection, vector_id, metadata)
+                case "delete":
+                    if not vector_id:
+                        raise ValueError("vector_id is required for delete action")
+                    result = await self.vector_service.delete_vector_metadata(collection, vector_id)
+                case _: # list
+                    result = await self.vector_service.list_vector_metadata(collection, filters or {})
             
             return {
                 "action": action,

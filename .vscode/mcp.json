@@ -1,0 +1,20 @@
+{
+	"inputs": [],
+	"servers": {
+		"ipfs_datasets": {
+			"type": "stdio",
+			"command": "/home/kylerose1946/ipfs_datasets_py/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_server",
+				"--stdio"
+			],
+			"cwd": "/home/kylerose1946/ipfs_datasets_py",
+			"env": {
+				"PYTHONPATH": "/home/kylerose1946/ipfs_datasets_py",
+				"DEVELOPMENT_TOOLS_ENABLED": "true",
+				"LOG_LEVEL": "DEBUG"
+			}
+		}
+	}
+}
