@@ -38,7 +38,7 @@ except ImportError:
 
 # Import embeddings engine
 try:
-    from ...ipfs_embeddings_py.embeddings_engine import AdvancedIPFSEmbeddings
+    from ipfs_embeddings_py.embeddings_engine import AdvancedIPFSEmbeddings
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
