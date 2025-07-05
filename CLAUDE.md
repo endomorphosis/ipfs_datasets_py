@@ -3,51 +3,114 @@
 ## Project Rules
 - You will be assigned a designation number and the directory it is assigned to.
 - Only work in your designated directory. Every directory and file outside it is to be considered a black box that you cannot modify or access.
+- Boxes marked with X are jobs currently taken by other workers. Do not attempt to work on these jobs.
 
 ## Jobs Available
 
-### Priority Jobs - Workers 1 - 10
-- [ ] 1: Implement robustness tests for file system operations.
-- [ ] 2: Integrate claudes_toolbox dataset tools into library
-- [ ] 3: Make claudes_toolbox dataset tools work with decentralized file system
-- [ ] 4: Make claudes_toolbox dataset tools work in a docker container
-- [ ] 5: Implement robustness tests for file system operations in `ipfs_datasets_py/pdf_processing/graphrag_integrator.py`
+### Priority Jobs - Reconciliation/Worker Coordination
+- [ ] 1: (Last Updated 2025-07-04-17-45) **Reconcile documentation files in subdirectories with the main TODO, CHANGELOG, and README files.**
+- [ ] 2: (Ongoing) Ensure all directories have standardized, up-to-date documentation files (README.md, TODO.md, CHANGELOG.md, ARCHITECTURE.md).
+     - Last updated: 2025-06-01
+- [ ] 3: (Ongoing) Ensure all functions have corresponding tests.
+- [ ] 4: (Ongoing) Standardize all test files
+- [ ] 5: Integrate claudes_toolbox dataset tools into library
+- [ ] 6: Make claudes_toolbox dataset tools work with decentralized file system
+- [ ] 7: Make claudes_toolbox dataset tools work in a docker container
+- [ ] 8: Implement robustness tests for file system operations in `ipfs_datasets_py/pdf_processing/
+- [ ] 9: Implement robustness tests for file system operations.
+- [x] 10: Split master_todo_list.md into separate TODO.md files for each subdirectory in ipfs_datasets_py except mcp_server - **COMPLETED on 7-4-2025**
 
-### Docstring Improvement - Workers 20 - 40
-- [X] 1: Improve docstrings for python files in top-level directory for `ipfs_datasets_py`
-- [X] 2: Improve docstrings for python files in `ipfs_datasets_py/audit`
-- [X] 3: Improve docstrings for python files in `ipfs_datasets_py/pdf_processing`
-- [X] 4: Improve docstrings for python files in `ipfs_datasets/config`
-- [X] 5: Improve docstrings for python files in `ipfs_datasets/embeddings`
+### Directory-Specific Jobs - Workers 61-75 (REVISED ASSIGNMENTS 2025-07-04)
+**NOTE**: After comprehensive documentation reconciliation, assignments changed from TDD implementation to testing existing implementations
+- [ ] 61: **TEST** existing implementations in utils/ directory (TextProcessor, ChunkOptimizer classes)
+- [ ] 62: **TEST** existing implementations in ipld/ directory (IPLDVectorStore, BlockFormatter classes)
+- [ ] 63: **TEST** existing implementations in vector_stores/ directory (FAISS, Elasticsearch, Qdrant stores)
+- [ ] 64: **TEST** existing implementations in rag/ directory (GraphRAG, dashboard implementations)
+- [ ] 65: **TEST** existing implementations in optimizers/ directory (ChunkOptimizer, PerformanceOptimizer)
+- [ ] 66: **TEST** existing implementations in embeddings/ directory (BaseComponent, embedding classes)
+- [x] 67: Complete TDD tasks for search/ directory - **COMPLETED 2024-07-04**
+- [ ] 68: **TEST** existing implementations in llm/ directory (LLMReasoningTracer, related classes)
+- [ ] 69: **TEST** existing implementations in multimedia/ directory (FFmpegVideoProcessor, MediaToolManager)
+- [ ] 70: **TEST** existing implementations in audit/ directory (SecurityProvenanceIntegrator class)
+- [ ] 71: **TEST** existing implementations in mcp_tools/ directory (MCP server tools, endpoints)
+- [ ] 72: **TEST** existing implementations in ipfs_embeddings_py/ directory (core embedding classes)
+- [ ] 73: **IMPLEMENT** wikipedia_x/ directory (confirmed minimal current implementation)
+- [ ] 74: **TEST** existing implementations in config/ directory (configuration management classes)
+- [ ] 75: **TEST** existing implementations in logic_integration/ directory (LogicProcessor, ReasoningCoordinator)
 
-### Unit Test Writing - Workers 40 - 60
+### Test Standardization - Worker 130
+- [x] 130: Standardize all test files to GIVEN WHEN THEN format - **COMPLETED 2025-07-04**
 
-`class_diagram_to_python_files/`
-- [X] 2: `entity_relationship_diagram_to_sql_schema/`
-- [X] 3: `flowchart_to_directory_tree/`
-- [ ] 4: Tests for `class_diagram_to_python_files`
-- [ ] 5: Tests for `entity_relationship_diagram_to_sql_schema`
-- [ ] 6: Tests for `flowchart_to_directory_tree`
+### Test Implementation - Worker 131  
+- [ ] 131: Implement comprehensive test coverage for tests/ directory - **ASSIGNED 2025-07-04 - HIGH PRIORITY**
+  - Fix monitoring module async loop issue affecting test_vector_store_tools.py
+  - Implement actual test logic for all 10 main test files
+  - Create test fixtures and data generators
+  - Add integration tests for cross-module functionality
 
-### Identify Work That's Already Been Done - Workers 11 - 15
-- [X] 11: Identify files in top-level directory for `ipfs_datasets_py` for which tests exist.
+### Adhoc Tools Development - Workers 76-85
+- [ ] 76: Create project monitoring and analytics tools
+- [ ] 77: Develop automated testing and validation utilities
+- [ ] 78: Build dependency analysis and management tools
+- [ ] 79: Create performance benchmarking and profiling utilities
+- [ ] 80: Develop code quality and linting automation
+- [ ] 81: Build documentation generation and maintenance tools
+- [ ] 82: Create deployment and packaging utilities
+- [ ] 83: Develop security scanning and audit tools
+- [ ] 84: Build integration testing and CI/CD utilities
+- [ ] 85: Create project health monitoring and reporting tools
 
-### Omni-Converted Integration - Workers 16 - 19
+### Tool Enhancement and Quality Assurance - Workers 160-175
+- [ ] 160: Tool Enhancement - JSON configuration, monitoring tools, performance benchmarking
+- [ ] 175: Quality Assurance - Testing standards, validation workflows, security scanning
+- [ ] 175: Enforce testing standardization (TDD, GIVEN WHEN THEN, see `tests/_example_test_format.py` for format example)
+- [ ] 176: Validate test imports so that they compile without import errors.
+- [x] 177: Ensure all public classes, functions, and methods have comprehensive docstrings (see `_example_docstring_format.md` for format example) - **COMPLETED 2025-07-04**
 
-### IPFS Datasets Integration
-- [ ] 16: Integrate dataset tools with  in 
-
-
-`ipfs_datasets_py`
-
-
-
-
+### Rules for All Jobs
 - Document all actions taken in your directory's CHANGELOG.md
 - Document all actions that need to be do be done in your directory's TODO.md
 - Document your software architecture decisions in your directory's ARCHITECTURE.md
 - Read the CHANGELOG.md and TODO.md files in your directory before starting work. If you cannot find one, ask for it before looking for it.
 
-## Code Writing Guidelines
-- You will produce 1 function for export. The function has no arguments and constructs a single object.
-- The object must have a series of pre-specified characteristics and meet pre-specified evaluation metrics. These characteristics and metrics will be specified in that directory's README.md file.
+### Coordination Guidelines
+- **Cross-Directory Dependencies**: Coordinate with other workers through project-level TODO.md, CHANGELOG.md, and CLAUDE.md files.
+- **Tool Standards**: All adhoc tools must use argparse and follow template in `adhoc_tools/README.md`. Adhoc tools are defined as tools that are created by workers as they work on their assigned directories, but might be useful to other workers in the future. They are not part of the main codebase, but are used to help workers complete their tasks.
+- **Progress Monitoring**: Use `python adhoc_tools/find_documentation.py` to track documentation status
+- **Completed Workers**: 67 (search/), 130 (tests/) - Available for coordination and integration tasks
+
+
+## Worker Assignment Summary
+
+### Completed Workers ✅
+- **Worker 1**: Documentation reconciliation - **COMPLETED 2025-07-04** - Discovered and corrected massive documentation/code misalignment
+- **Worker 67**: search/ directory - Fixed syntax errors, implemented missing methods, created documentation
+- **Worker 130**: tests/ directory - Standardized test format, added import validation, created test structure
+
+### Critical Priority
+- **Worker 131**: tests/ directory - **HIGH PRIORITY** - Implement comprehensive test coverage, fix async loop issues, add fixtures
+
+### Revised Directory Workers (13 workers) - **FOCUS CHANGED TO TESTING EXISTING CODE**
+- **Workers 61-66**: utils/, ipld/, vector_stores/, rag/, optimizers/, embeddings/ - Test existing implementations
+- **Workers 68-72**: llm/, multimedia/, audit/, mcp_tools/, ipfs_embeddings_py/ - Test existing implementations  
+- **Worker 73**: wikipedia_x/ - **IMPLEMENT** (only directory needing actual development)
+- **Workers 74-75**: config/, logic_integration/ - Test existing implementations
+
+### Active Tool Workers
+- **Workers 76-85**: Adhoc tools development (10 workers)
+- **Worker 160**: Tool enhancement and monitoring
+- **Worker 175**: Quality assurance and validation
+
+### Total Active Assignments: 27 workers
+- **Completed**: 4 workers (1, 67, 130, 177)
+- **Critical Priority**: 1 worker (131)
+- **Directory Testing**: 12 workers (61-66, 68-72, 74-75)
+- **Directory Implementation**: 1 worker (73 - wikipedia_x)
+- **Adhoc Tools**: 10 workers (76-85)
+- **Tool Enhancement/QA**: 2 workers (160, 175, 176)
+
+# Advice for All Workers
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

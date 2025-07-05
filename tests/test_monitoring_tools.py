@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test suite for monitoring tools functionality.
+Test suite for monitoring_tools functionality with GIVEN WHEN THEN format.
 """
 
 import pytest
@@ -13,341 +13,202 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import (
+    health_check,
+    get_performance_metrics,
+    monitor_services,
+    generate_monitoring_report
+)
+
 
 class TestMonitoringTools:
-    """Test monitoring tools functionality."""
+    """Test MonitoringTools functionality."""
 
     @pytest.mark.asyncio
     async def test_system_health_monitoring(self):
-        """Test system health monitoring."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_system_health
-        
-        result = await monitor_system_health(
-            components=["cpu", "memory", "disk", "network"],
-            detailed=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "health_status" in result or "metrics" in result
-    
+        """GIVEN a system with health monitoring
+        WHEN checking system health status
+        THEN expect health information to be returned
+        AND health data should contain relevant metrics
+        """
+        raise NotImplementedError("test_system_health_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_performance_metrics_collection(self):
-        """Test performance metrics collection."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import collect_performance_metrics
-        
-        result = await collect_performance_metrics(
-            metric_types=["response_time", "throughput", "error_rate"],
-            time_range="1h",
-            aggregation="avg"
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "metrics" in result or "performance_data" in result
-    
+        """GIVEN a system component for performance metrics collection
+        WHEN testing performance metrics collection functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_performance_metrics_collection test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_service_status_monitoring(self):
-        """Test service status monitoring."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_service_status
-        
-        result = await monitor_service_status(
-            services=["embedding_service", "vector_store", "ipfs_node"],
-            include_dependencies=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "service_status" in result or "services" in result
-    
+        """GIVEN a system component for service status monitoring
+        WHEN testing service status monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_service_status_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_resource_usage_monitoring(self):
-        """Test resource usage monitoring."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_resource_usage
-        
-        result = await monitor_resource_usage(
-            resources=["cpu", "memory", "disk", "gpu"],
-            threshold_alerts=True,
-            historical_data=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "resource_usage" in result or "usage_data" in result
-    
+        """GIVEN a system component for resource usage monitoring
+        WHEN testing resource usage monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_resource_usage_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_error_rate_monitoring(self):
-        """Test error rate monitoring."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_error_rates
-        
-        result = await monitor_error_rates(
-            services=["mcp_server", "fastapi_service"],
-            time_window="30m",
-            error_threshold=0.05
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "error_rates" in result or "error_statistics" in result
-    
+        """GIVEN a system component for error rate monitoring
+        WHEN testing error rate monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_error_rate_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_alert_configuration(self):
-        """Test alert configuration and management."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import configure_alerts
-        
-        alert_config = {
-            "cpu_threshold": 80,
-            "memory_threshold": 90,
-            "disk_threshold": 85,
-            "error_rate_threshold": 0.1,
-            "notification_channels": ["email", "slack"]
-        }
-        
-        result = await configure_alerts(
-            alert_configuration=alert_config,
-            enable_auto_scaling=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-    
+        """GIVEN a configuration system
+        WHEN accessing or modifying configuration
+        THEN expect configuration operations to succeed
+        AND configuration values should be properly managed
+        """
+        raise NotImplementedError("test_alert_configuration test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_log_analysis(self):
-        """Test log analysis and aggregation."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import analyze_logs
-        
-        result = await analyze_logs(
-            log_sources=["application", "system", "security"],
-            time_range="24h",
-            analysis_type="error_pattern",
-            include_anomalies=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "log_analysis" in result or "analysis_results" in result
-
+        """GIVEN a system component for log analysis
+        WHEN testing log analysis functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_log_analysis test needs to be implemented")
 
 class TestMonitoringDashboard:
-    """Test monitoring dashboard functionality."""
+    """Test MonitoringDashboard functionality."""
 
     @pytest.mark.asyncio
     async def test_create_monitoring_dashboard(self):
-        """Test monitoring dashboard creation."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import create_dashboard
-        
-        dashboard_config = {
-            "name": "System Overview",
-            "widgets": [
-                {"type": "cpu_usage", "position": {"x": 0, "y": 0}},
-                {"type": "memory_usage", "position": {"x": 1, "y": 0}},
-                {"type": "error_rates", "position": {"x": 0, "y": 1}}
-            ],
-            "refresh_interval": 30
-        }
-        
-        result = await create_dashboard(
-            dashboard_configuration=dashboard_config,
-            dashboard_id="system-overview"
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "dashboard_id" in result or "dashboard_url" in result
-    
+        """GIVEN a system component for create monitoring dashboard
+        WHEN testing create monitoring dashboard functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_create_monitoring_dashboard test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_get_dashboard_data(self):
-        """Test retrieving dashboard data."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import get_dashboard_data
-        
-        result = await get_dashboard_data(
-            dashboard_id="system-overview",
-            time_range="1h",
-            include_historical=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "dashboard_data" in result or "widgets_data" in result
-
+        """GIVEN a system component for get dashboard data
+        WHEN testing get dashboard data functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_get_dashboard_data test needs to be implemented")
 
 class TestMonitoringIntegration:
-    """Test monitoring tools integration."""
+    """Test MonitoringIntegration functionality."""
 
     @pytest.mark.asyncio
     async def test_embedding_service_monitoring(self):
-        """Test monitoring of embedding services."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_embedding_service
-        
-        result = await monitor_embedding_service(
-            service_endpoint="http://localhost:8080",
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            health_check=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "service_health" in result or "embedding_service_status" in result
-    
+        """GIVEN a system component for embedding service monitoring
+        WHEN testing embedding service monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_embedding_service_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_vector_store_monitoring(self):
-        """Test monitoring of vector stores."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_vector_store
-        
-        result = await monitor_vector_store(
-            store_type="qdrant",
-            store_endpoint="http://localhost:6333",
-            check_indices=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "store_health" in result or "vector_store_status" in result
-    
+        """GIVEN a system component for vector store monitoring
+        WHEN testing vector store monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_vector_store_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_ipfs_node_monitoring(self):
-        """Test monitoring of IPFS nodes."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_ipfs_node
-        
-        result = await monitor_ipfs_node(
-            node_endpoint="http://localhost:5001",
-            check_connectivity=True,
-            check_storage=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "node_health" in result or "ipfs_status" in result
-
+        """GIVEN a system component for ipfs node monitoring
+        WHEN testing ipfs node monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_ipfs_node_monitoring test needs to be implemented")
 
 class TestMonitoringAlerts:
-    """Test monitoring alerting system."""
+    """Test MonitoringAlerts functionality."""
 
     @pytest.mark.asyncio
     async def test_threshold_based_alerts(self):
-        """Test threshold-based alerting."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import check_thresholds
-        
-        thresholds = {
-            "cpu_usage": 80,
-            "memory_usage": 90,
-            "error_rate": 0.05,
-            "response_time": 1000  # ms
-        }
-        
-        current_metrics = {
-            "cpu_usage": 85,  # Above threshold
-            "memory_usage": 75,  # Below threshold
-            "error_rate": 0.03,  # Below threshold
-            "response_time": 1200  # Above threshold
-        }
-        
-        result = await check_thresholds(
-            thresholds=thresholds,
-            current_metrics=current_metrics,
-            alert_on_breach=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "alerts" in result or "threshold_breaches" in result
-    
+        """GIVEN a system component for threshold based alerts
+        WHEN testing threshold based alerts functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_threshold_based_alerts test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_anomaly_detection_alerts(self):
-        """Test anomaly detection alerting."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import detect_anomalies
-        
-        # Simulate historical data
-        historical_data = [50, 52, 48, 51, 49, 53, 47]  # Normal range
-        current_value = 75  # Anomalous value
-        
-        result = await detect_anomalies(
-            metric_name="cpu_usage",
-            historical_data=historical_data,
-            current_value=current_value,
-            sensitivity=0.95
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "anomaly_detected" in result or "is_anomaly" in result
-
+        """GIVEN a system component for anomaly detection alerts
+        WHEN testing anomaly detection alerts functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_anomaly_detection_alerts test needs to be implemented")
 
 class TestMonitoringToolsIntegration:
-    """Test monitoring tools integration with other components."""
+    """Test MonitoringToolsIntegration functionality."""
 
     @pytest.mark.asyncio
     async def test_monitoring_tools_mcp_registration(self):
-        """Test that monitoring tools are properly registered with MCP."""
-        from ipfs_datasets_py.mcp_server.tools.tool_registration import get_registered_tools
-        
-        tools = get_registered_tools()
-        monitoring_tools = [tool for tool in tools if 'monitor' in tool.get('name', '').lower()]
-        
-        assert len(monitoring_tools) > 0, "Monitoring tools should be registered"
-    
+        """GIVEN a system component for monitoring tools mcp registration
+        WHEN testing monitoring tools mcp registration functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_monitoring_tools_mcp_registration test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_monitoring_tools_error_handling(self):
-        """Test error handling in monitoring tools."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import monitor_system_health
-        
-        # Test with invalid component
-        result = await monitor_system_health(
-            components=["invalid_component"],
-            detailed=True
-        )
-        
-        assert result is not None
-        assert "status" in result
-        # Should handle error gracefully
-        assert result["status"] in ["error", "success"]
-    
+        """GIVEN a system component for monitoring tools error handling
+        WHEN testing monitoring tools error handling functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_monitoring_tools_error_handling test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_monitoring_data_export(self):
-        """Test monitoring data export functionality."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import export_monitoring_data
-        
-        result = await export_monitoring_data(
-            data_types=["metrics", "logs", "alerts"],
-            time_range="24h",
-            export_format="json",
-            output_path="/tmp/monitoring_export.json"
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "export_path" in result or "exported_data" in result
-
+        """GIVEN a system component for monitoring data export
+        WHEN testing monitoring data export functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_monitoring_data_export test needs to be implemented")
 
 class TestRealTimeMonitoring:
-    """Test real-time monitoring capabilities."""
+    """Test RealTimeMonitoring functionality."""
 
     @pytest.mark.asyncio
     async def test_start_real_time_monitoring(self):
-        """Test starting real-time monitoring."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import start_real_time_monitoring
-        
-        result = await start_real_time_monitoring(
-            metrics=["cpu", "memory", "active_connections"],
-            update_interval=5,  # seconds
-            duration=60  # seconds
-        )
-        
-        assert result is not None
-        assert "status" in result
-        assert "monitoring_session_id" in result or "session_id" in result
-    
+        """GIVEN a system component for start real time monitoring
+        WHEN testing start real time monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_start_real_time_monitoring test needs to be implemented")
+
     @pytest.mark.asyncio
     async def test_stop_real_time_monitoring(self):
-        """Test stopping real-time monitoring."""
-        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import stop_real_time_monitoring
-        
-        result = await stop_real_time_monitoring(
-            session_id="test-session-123"
-        )
-        
-        assert result is not None
-        assert "status" in result
+        """GIVEN a system component for stop real time monitoring
+        WHEN testing stop real time monitoring functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_stop_real_time_monitoring test needs to be implemented")
 
 
 if __name__ == "__main__":

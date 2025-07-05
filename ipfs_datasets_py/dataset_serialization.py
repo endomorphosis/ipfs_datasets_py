@@ -27,22 +27,215 @@ from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 
 class DatasetSerializer:
     """
-    Class for serializing and deserializing datasets between various formats.
+    Comprehensive Dataset Serialization and Format Conversion Platform
 
-    Features:
-    - Convert between different dataset formats (Arrow, Parquet, HuggingFace, JSONL)
-    - Serialization to IPLD for storage on IPFS
-    - Content-based deduplication
-    - Support for large datasets through streaming
-    - Preservation of schema and metadata
+    The DatasetSerializer class provides enterprise-grade functionality for converting,
+    serializing, and managing datasets across multiple formats with IPFS integration.
+    This platform enables seamless data transformation between popular data science
+    formats while maintaining schema integrity, metadata preservation, and content
+    addressability through IPLD (InterPlanetary Linked Data) storage systems.
+
+    The serializer supports bidirectional conversion between major data formats
+    including Apache Arrow tables, HuggingFace datasets, Pandas DataFrames, JSON
+    Lines, Parquet files, and IPLD-compatible structures. Advanced features include
+    streaming processing for large datasets, content-based deduplication, graph
+    dataset support, and vector embedding optimization for machine learning workflows.
+
+    Key Features:
+    - Multi-format dataset conversion with schema preservation
+    - IPLD serialization for content-addressable storage on IPFS networks
+    - Streaming processing for memory-efficient large dataset handling
+    - Content-based deduplication to minimize storage requirements
+    - Graph dataset support with relationship preservation
+    - Vector embedding storage with optimized indexing and retrieval
+    - JSONL import/export with flexible schema inference
+    - Metadata preservation across all format conversions
+
+    Supported Formats:
+    - Apache Arrow: Columnar in-memory format optimized for analytics
+    - HuggingFace Datasets: ML-optimized format with built-in preprocessing
+    - Pandas DataFrames: Python data analysis format with rich functionality
+    - Parquet Files: Columnar storage format for efficient archival
+    - JSON Lines: Streaming JSON format for large-scale data processing
+    - IPLD Structures: Content-addressable linked data for IPFS storage
+    - Graph Formats: Node/edge structures for network and knowledge graphs
+    - Vector Collections: Embedding arrays with metadata and indexing
+
+    Conversion Capabilities:
+    - Lossless conversion between supported formats with type preservation
+    - Automatic schema inference and validation for unstructured data
+    - Custom serialization handlers for complex data types and structures
+    - Incremental processing for append-only dataset operations
+    - Format-specific optimization for performance and storage efficiency
+    - Metadata enrichment with provenance and transformation tracking
+
+    IPFS Integration:
+    - Direct serialization to IPLD for content-addressable storage
+    - Automatic chunking and linking for large dataset distribution
+    - Content deduplication through cryptographic hashing
+    - Distributed dataset reconstruction from IPFS content identifiers
+    - Version tracking and immutable dataset snapshots
+
+    Attributes:
+        storage (IPLDStorage): IPLD storage backend for content-addressable
+            dataset persistence and retrieval operations with IPFS integration.
+            Manages content chunking, linking, and distributed storage coordination.
+
+    Public Methods:
+        to_arrow(data: Any, **kwargs) -> pyarrow.Table:
+            Convert various data formats to Apache Arrow tables with schema preservation
+        to_huggingface(data: Any, **kwargs) -> datasets.Dataset:
+            Transform data to HuggingFace datasets format with ML optimizations
+        to_pandas(data: Any, **kwargs) -> pandas.DataFrame:
+            Convert data to Pandas DataFrame with type inference and validation
+        to_parquet(data: Any, file_path: str, **kwargs) -> str:
+            Serialize data to Parquet format with compression and optimization
+        to_jsonl(data: Any, file_path: str, **kwargs) -> str:
+            Export data to JSON Lines format with streaming support
+        to_ipld(data: Any, **kwargs) -> Dict[str, Any]:
+            Serialize data to IPLD format for content-addressable storage
+        from_ipld(cid: str, **kwargs) -> Any:
+            Deserialize data from IPLD using content identifier retrieval
+        deduplicate(dataset: Any, **kwargs) -> Any:
+            Remove duplicate content using content-based hashing
+        stream_convert(source: str, target: str, format_from: str, format_to: str) -> str:
+            Stream-based conversion for large datasets with memory optimization
+
+    Usage Examples:
+        # Initialize serializer with IPFS storage
+        serializer = DatasetSerializer()
+        
+        # Convert HuggingFace dataset to Arrow format
+        hf_dataset = load_dataset("imdb", split="train")
+        arrow_table = serializer.to_arrow(hf_dataset)
+        
+        # Serialize dataset to IPLD for IPFS storage
+        ipld_data = serializer.to_ipld(arrow_table)
+        
+        # Convert Pandas DataFrame to Parquet with optimization
+        df = pd.read_csv("large_dataset.csv")
+        parquet_path = serializer.to_parquet(
+            df, 
+            "optimized_dataset.parquet",
+            compression="snappy"
+        )
+        
+        # Stream conversion for memory-efficient processing
+        converted_path = serializer.stream_convert(
+            source="huge_dataset.jsonl",
+            target="huge_dataset.parquet",
+            format_from="jsonl",
+            format_to="parquet"
+        )
+        
+        # Deduplicate dataset content
+        unique_dataset = serializer.deduplicate(
+            dataset=raw_dataset,
+            method="content_hash"
+        )
+
+    Dependencies:
+        Required:
+        - pyarrow: Apache Arrow format support and columnar operations
+        - datasets: HuggingFace datasets library for ML-optimized data handling
+        - pandas: Data manipulation and analysis framework
+        
+        Optional:
+        - ipfs_datasets_py.ipld: IPLD storage backend for IPFS integration
+        - ipfs_datasets_py.ipfs_knn_index: Vector indexing for embedding storage
+        - Various format-specific libraries for specialized conversion operations
+
+    Notes:
+        - Large dataset conversions benefit from streaming processing to manage memory
+        - Schema preservation ensures data integrity across format transformations
+        - Content deduplication reduces storage requirements and improves efficiency
+        - IPLD serialization enables distributed dataset storage and versioning
+        - Vector embedding storage includes optimized indexing for similarity search
+        - Graph dataset support maintains relationship structures and connectivity
+        - Metadata preservation includes transformation history and provenance tracking
+        - Performance optimization varies by format and dataset characteristics
     """
 
     def __init__(self, storage=None):
         """
-        Initialize the dataset serializer.
+        Initialize Dataset Serialization Platform with IPLD Storage Integration
+
+        Establishes a new DatasetSerializer instance with comprehensive format
+        conversion capabilities and content-addressable storage through IPLD
+        (InterPlanetary Linked Data) systems. This initialization configures
+        all necessary components for multi-format dataset operations while
+        maintaining optimal performance and storage efficiency.
+
+        The initialization process sets up storage backends, format handlers,
+        schema validation systems, and optimization parameters required for
+        enterprise-grade dataset serialization workflows. IPLD integration
+        enables content-addressable storage and distributed dataset management
+        across IPFS networks.
 
         Args:
-            storage (IPLDStorage, optional): IPLD storage backend
+            storage (Optional[IPLDStorage], default=None): IPLD storage backend
+                for content-addressable dataset persistence and distributed
+                storage operations. If None, a new IPLDStorage instance will
+                be created automatically with default configuration parameters.
+                
+                The storage backend provides:
+                - Content-addressable chunking and linking for large datasets
+                - Cryptographic hashing for content deduplication and integrity
+                - Distributed storage coordination across IPFS network nodes
+                - Version tracking and immutable dataset snapshot capabilities
+                - Metadata preservation and provenance tracking systems
+                
+                Custom storage configurations support:
+                - Alternative IPFS node endpoints and gateway configurations
+                - Custom chunking strategies for different dataset characteristics
+                - Compression and optimization settings for storage efficiency
+                - Access control and encryption for sensitive dataset operations
+
+        Attributes Initialized:
+            storage (IPLDStorage): Configured IPLD storage backend ready for
+                immediate dataset serialization and retrieval operations with
+                comprehensive IPFS integration and distributed storage support.
+
+        Raises:
+            ImportError: If the required IPLD storage dependencies are not available
+                or cannot be imported. This includes ipfs_datasets_py.ipld.storage
+                and associated IPFS integration libraries.
+            ConfigurationError: If the provided storage backend configuration is
+                invalid or incompatible with current system capabilities.
+            ConnectionError: If IPFS node connectivity tests fail during storage
+                backend initialization or network access validation.
+
+        Examples:
+            # Basic initialization with default IPLD storage
+            serializer = DatasetSerializer()
+            
+            # Custom IPLD storage configuration
+            from ipfs_datasets_py.ipld.storage import IPLDStorage
+            
+            custom_storage = IPLDStorage(
+                ipfs_gateway="http://custom-ipfs:8080",
+                chunk_size=1024*1024,  # 1MB chunks
+                compression="gzip",
+                enable_deduplication=True
+            )
+            serializer = DatasetSerializer(storage=custom_storage)
+            
+            # Development configuration with local IPFS node
+            dev_storage = IPLDStorage(
+                ipfs_gateway="http://localhost:8080",
+                debug_mode=True,
+                cache_size=100  # Small cache for development
+            )
+            dev_serializer = DatasetSerializer(storage=dev_storage)
+
+        Notes:
+            - IPLD storage enables content-addressable dataset operations with IPFS
+            - Default storage configuration provides secure and efficient operation
+            - Custom storage backends support specialized deployment requirements
+            - Storage initialization validates IPFS connectivity and configuration
+            - Content deduplication is enabled automatically for storage efficiency
+            - Distributed storage coordination requires network connectivity
+            - Storage backends support both synchronous and asynchronous operations
         """
         # Use the provided storage or create a new one
         if storage is None:

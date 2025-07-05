@@ -1,0 +1,2574 @@
+# TODO List for config/
+
+## Worker Assignment
+**Worker 74**: Complete TDD tasks for config/ directory
+
+## Test-Driven Development Tasks
+
+This file contains TDD tasks extracted from the master todo list.
+Each task follows the Red-Green-Refactor cycle:
+
+1. Write function stub with type hints and comprehensive docstring
+2. Write test that calls the actual (not-yet-implemented) callable 
+3. Write additional test cases for edge cases and error conditions
+4. Run all tests to confirm they fail (red phase)
+5. Implement the method to make tests pass (green phase)
+6. Refactor implementation while keeping tests passing (refactor phase)
+
+## Tasks
+
+- [ ] config/config.py
+    - [ ] config
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] overrideToml
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] findConfig
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] loadConfig
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] requireConfig
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageLink
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageNode
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageDomain
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageBoundary
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageTransformationDetail
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageVersion
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageSubgraph
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] EnhancedLineageTracker
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_domain
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_domain_boundary
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_node
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_link
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_transformation_details
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_version
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _check_temporal_consistency
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _link_to_audit_trail
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] query_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] find_paths
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] merge_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] extract_subgraph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] detect_semantic_relationships
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_ipld
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] from_ipld
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_interactive
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_static
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_metadata_inheritance_rule
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] apply_metadata_inheritance
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] validate_temporal_consistency
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_entity_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] generate_provenance_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_max_path_length
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _count_node_types
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] LineageMetrics
+        - [ ] calculate_impact_score
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] calculate_dependency_score
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] calculate_centrality
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] identify_critical_paths
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] calculate_complexity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] CrossDocumentLineageTracker
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_node
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_relationship
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_from_provenance_manager
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _update_analysis
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_ancestors
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_descendants
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_entity_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] analyze_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_matplotlib
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_plotly
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] generate_sample_lineage_graph
+        - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+        - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+        - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+        - [ ] Run all tests to confirm they fail (red phase)
+        - [ ] Implement the function to make tests pass (green phase)
+        - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] example_usage
+        - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+        - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+        - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+        - [ ] Run all tests to confirm they fail (red phase)
+        - [ ] Implement the function to make tests pass (green phase)
+        - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] CrossDocumentLineageEnhancer
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] link_cross_document_provenance
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] build_enhanced_cross_document_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _enhance_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _enhance_document_boundaries
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _detect_semantic_relationships
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _perform_document_clustering
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_enhanced_metrics
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_enhanced_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_matplotlib
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_plotly
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] analyze_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _export_to_json
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _export_to_cytoscape
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _export_to_graphml
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _export_to_gexf
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] DetailedLineageIntegrator
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] integrate_provenance_with_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] enrich_lineage_semantics
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_unified_lineage_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] analyze_data_flow_patterns
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] track_document_lineage_evolution
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _safe_diameter
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _safe_avg_path_length
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] CrossDocumentImpactAnalyzer
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] analyze_impact
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_impact
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] InformationRelationType
+    - [ ] DocumentNode
+    - [ ] EntityMediatedConnection
+    - [ ] CrossDocReasoning
+    - [ ] CrossDocumentReasoner
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] reason_across_documents
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_relevant_documents
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_entity_connections
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _determine_relation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_traversal_paths
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _synthesize_answer
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_statistics
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] explain_reasoning
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] example_usage
+        - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+        - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+        - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+        - [ ] Run all tests to confirm they fail (red phase)
+        - [ ] Implement the function to make tests pass (green phase)
+        - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] ProvenanceRecordType
+    - [ ] ProvenanceRecord
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] from_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] SourceRecord
+    - [ ] TransformationRecord
+    - [ ] MergeRecord
+    - [ ] QueryRecord
+    - [ ] ResultRecord
+    - [ ] ProvenanceManager
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_source
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] begin_transformation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] end_transformation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_merge
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_query
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_query_result
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_checkpoint
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_provenance_to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_provenance_to_json
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_provenance_from_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_provenance_from_json
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_provenance_from_file
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_data_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_provenance
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] generate_audit_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_text_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_json_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_html_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_markdown_report
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] ProvenanceContext
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] __enter__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] __exit__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] set_output_ids
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] example_usage
+        - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+        - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+        - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+        - [ ] Run all tests to confirm they fail (red phase)
+        - [ ] Implement the function to make tests pass (green phase)
+        - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] EnhancedProvenanceRecordType
+    - [ ] ProvenanceCryptoVerifier
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] sign_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] verify_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] bulk_sign_records
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] verify_graph_integrity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] rotate_key
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] VerificationRecord
+    - [ ] AnnotationRecord
+    - [ ] ModelTrainingRecord
+    - [ ] ModelInferenceRecord
+    - [ ] ProvenanceMetrics
+        - [ ] calculate_data_impact
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] calculate_centrality
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] calculate_complexity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] ProvenanceIPLDSchema
+    - [ ] IPLDProvenanceStorage
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _register_schemas
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] store_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _create_dagnode_for_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_schema_name_for_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _record_to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] store_records_batch
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] load_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _dict_to_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] load_records_batch
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] store_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _store_single_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _store_partitioned_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _partition_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] incremental_load
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] traverse_graph_from_node
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] verify_integrity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] link_cross_document_provenance
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_cross_document_links
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] build_cross_document_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _add_lineage_graph_metrics
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] analyze_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_cross_document_clusters
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] EnhancedProvenanceManager
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_verification
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_annotation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_model_training
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] record_model_inference
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _audit_log_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _index_for_semantic_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _index_for_temporal_queries
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] sign_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] verify_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] verify_all_records
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_from_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _process_imported_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _process_imported_partition_index
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] sign_all_records
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _register_ipld_schemas
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _store_record_in_ipld
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _update_ipld_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_from_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _rebuild_indices
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_record
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] semantic_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] temporal_query
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] calculate_data_metrics
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] traverse_provenance
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] incremental_load_provenance
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _filter_graph_by_criteria
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_provenance_enhanced
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _create_visualization_subgraph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_matplotlib
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_plotly
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _visualize_with_dash
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] build_cross_document_lineage_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] create_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] visualize_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _create_static_lineage_visualization
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _create_interactive_lineage_visualization
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] analyze_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_max_depth
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_cross_document_lineage
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _assign_depth_to_nodes
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] _provenance_ipld_example
+        - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+        - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+        - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+        - [ ] Run all tests to confirm they fail (red phase)
+        - [ ] Implement the function to make tests pass (green phase)
+        - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] DAGNode
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] DAGLink
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] DatasetManager
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_dataset
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] save_dataset
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] ManagedDataset
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] save_async
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] save
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] DatasetSerializer
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_from_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] convert_jsonl_to_huggingface
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] convert_arrow_to_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] GraphNode
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_edge
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_edges
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_neighbors
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_edge_properties
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] GraphDataset
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_node
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_edge
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_node
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_nodes_by_type
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_nodes_by_property
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_edges_by_type
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] get_edges_by_property
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] query
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] traverse
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] find_paths
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] find_neighbors_with_properties
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] subgraph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] merge
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] VectorAugmentedGraphDataset
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_node_with_embedding
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] update_node_embedding
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] vector_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] graph_rag_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _execute_graph_rag_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] enable_query_optimization
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] enable_vector_partitioning
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_knowledge_graph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] advanced_graph_rag_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] search_with_weighted_paths
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] find_similar_connected_nodes
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] semantic_subgraph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] save_to_ipfs
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] load_from_ipfs
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] add_nodes_with_text_embedding
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] batch_add_nodes_and_edges
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_from_car
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] from_knowledge_triples
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] logical_query
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] incremental_graph_update
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _rebuild_vector_index
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] explain_path
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] hybrid_structured_semantic_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] rank_nodes_by_centrality
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] multi_hop_inference
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] find_entity_clusters
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _extract_community_themes
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] expand_query
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] resolve_entities
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_property_similarity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] generate_contextual_embeddings
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] compare_subgraphs
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_subgraph_contextual_embedding
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] temporal_graph_analysis
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_nodes_in_time_interval
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _is_in_time_interval
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _create_time_snapshot_subgraph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _compute_pagerank_for_subgraph
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _compute_clustering_coefficient
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _count_node_connections
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] knowledge_graph_completion
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _predict_edges_semantic
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _predict_edges_structural
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_transitive_candidates
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_symmetric_candidates
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_common_neighbor_candidates
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _merge_predictions
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] cross_modal_linking
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _establish_cross_modal_links_by_embedding
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _establish_cross_modal_links_by_metadata
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_metadata_similarity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_field_similarity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _text_similarity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _list_similarity
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _normalize_text
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _determine_cross_modal_edge_type
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] schema_based_validation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_default_node_schemas
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _get_default_edge_schemas
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _validate_against_schema
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _fix_schema_violations
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] hierarchical_path_search
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] cross_document_reasoning
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_guided_paths
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_edge_score
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _calculate_structural_score
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] DatasetSerializer
+        - [ ] __init__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_arrow_table
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_arrow_table
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] export_to_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _write_arrow_to_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] import_from_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] convert_jsonl_to_huggingface
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] convert_arrow_to_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _store_jsonl_batch
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_jsonl
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_huggingface_dataset
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_huggingface_dataset
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_dataset_streaming
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_dataset_streaming
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _schema_to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _dict_to_schema
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _type_to_dict
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _dict_to_type
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _serialize_column
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _deserialize_column
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _hash_column
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _serialize_features
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _deserialize_features
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_graph_dataset
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_graph_dataset
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] serialize_vectors
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] deserialize_vectors
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _create_query_vector_from_text
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_relevant_documents
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _extract_key_entities_from_documents
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _find_entity_mediated_connections
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _analyze_document_evidence_chains
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _extract_document_entity_info
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _analyze_entity_information_relation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_inference_for_info_relation
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_inference_for_entity_chain
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _identify_knowledge_gaps
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_deep_inferences
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _analyze_transitive_relationships
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _identify_transitive_relationship_patterns
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _synthesize_cross_document_information
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_basic_answer
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_moderate_answer
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _generate_deep_answer
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+        - [ ] _evaluate_answer_confidence
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
+    - [ ] MockChunk
+        - [ ] __len__
+            - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
+            - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
+            - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors
+            - [ ] Run all tests to confirm they fail (red phase)
+            - [ ] Implement the method to make tests pass (green phase)
+            - [ ] Refactor implementation while keeping tests passing (refactor phase)
