@@ -53,7 +53,7 @@ except ImportError:
 from ipfs_datasets_py.audit.audit_visualization import AuditVisualizer, AuditMetricsAggregator
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent
 from ipfs_datasets_py.provenance_dashboard import ProvenanceDashboard
-from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
+from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryVisualizer
 from ipfs_datasets_py.data_provenance import ProvenanceManager
 from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
 

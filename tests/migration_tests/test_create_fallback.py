@@ -10,7 +10,7 @@ from collections import defaultdict
 
 # Import the module
 sys.path.append(os.getcwd())
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryStats
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryStats
 
 class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
     """A minimal test optimizer for testing fallback."""

@@ -8,7 +8,7 @@ import tempfile
 import shutil
 
 # Modules to test
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     GraphRAGQueryStats,
     GraphRAGQueryOptimizer,
     QueryRewriter,
@@ -17,7 +17,7 @@ from ipfs_datasets_py.rag_query_optimizer import (
     QueryMetricsCollector,
     QueryVisualizer
 )
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor
 # Mock LLM Interface if needed for processor instantiation
 from ipfs_datasets_py.llm_interface import LLMInterface
 

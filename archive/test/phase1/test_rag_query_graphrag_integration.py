@@ -16,7 +16,7 @@ from ipfs_datasets_py import (
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer
 )
-from ipfs_datasets_py.llm_graphrag import (
+from ipfs_datasets_py.llm.llm_graphrag import (
     GraphRAGLLMProcessor,
     ReasoningEnhancer
 )

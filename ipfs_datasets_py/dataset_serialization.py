@@ -21,8 +21,8 @@ import os
 import tempfile
 from typing import List, Dict, Any, Optional, Union, Tuple
 
-
-from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+# Lazy import to avoid circular imports
+# from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 
 
 class DatasetSerializer:
@@ -1329,7 +1329,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             cache_enabled (bool): Whether to enable query caching
             cache_ttl (float): Time-to-live for cached results in seconds
         """
-        from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryOptimizer
+        from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryOptimizer
         self.query_optimizer = GraphRAGQueryOptimizer(
             vector_weight=vector_weight,
             graph_weight=graph_weight,
@@ -1344,7 +1344,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         Args:
             num_partitions (int): Number of partitions to create
         """
-        from ipfs_datasets_py.rag_query_optimizer import VectorIndexPartitioner
+        from ipfs_datasets_py.rag.rag_query_optimizer import VectorIndexPartitioner
         self.vector_partitioner = VectorIndexPartitioner(
             dimension=self.vector_index.dimension,
             num_partitions=num_partitions

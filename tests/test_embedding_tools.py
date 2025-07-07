@@ -39,7 +39,7 @@ from ipfs_datasets_py.mcp_server.tools.embedding_tools.advanced_search import (
 )
 
 # Vector stores
-from ipfs_datasets_py.mcp_server.tools.embedding_tools.vector_stores import (
+from ipfs_datasets_py.mcp_server.tools.vector_tools.vector_stores import (
     manage_vector_store,
     optimize_vector_store
 )

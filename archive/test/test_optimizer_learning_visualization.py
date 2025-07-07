@@ -19,7 +19,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 # Direct imports from local files
-import ipfs_datasets_py.rag_query_visualization as rag_vis
+import ipfs_datasets_py.rag.rag_query_visualization as rag_vis
 
 # Import components to test
 OptimizerLearningMetricsCollector = rag_vis.OptimizerLearningMetricsCollector

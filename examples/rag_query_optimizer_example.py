@@ -17,7 +17,7 @@ from typing import Dict, Any, List
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer,
     UnifiedGraphRAGQueryOptimizer

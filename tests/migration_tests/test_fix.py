@@ -10,7 +10,7 @@ from collections import defaultdict
 
 # Import the module
 sys.path.append(os.getcwd())
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
 
 class NoneReturningOptimizer(GraphRAGQueryOptimizer):
     """A test optimizer that returns None from optimize_query."""

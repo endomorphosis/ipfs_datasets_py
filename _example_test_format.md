@@ -3,12 +3,46 @@
 ## Unittest
 ```python
 import unittest
+from unittest.mock import Mock, MagicMock
+import os
+
+# Make sure the input file and documentation file exist.
+assert os.path.exists('resource_monitor.py'), "resource_monitor.py does not exist at the specified directory."
+assert os.path.exists('resource_monitor_stubs.md'), "Documentation for resource_monitor.py does not exist at the specified directory."
+
+# Make sure the input file and documentation file exist.
+from resource_monitor import (
+    ResourceMonitor,
+)
+
+from _test_utils import (
+    _raise_on_bad_callable_metadata,
+    _raise_on_fake_code,
+    _raise_on_mocked_code,
+)
+
+# Check if the ResourceMonitor class has the required attributes
+assert ResourceMonitor.logger, "ResourceMonitor class should have a logger attribute."
+assert ResourceMonitor.traceback, "ResourceMonitor class should have a traceback attribute."
+assert ResourceMonitor.datetime, "ResourceMonitor class should have a datetime attribute."
+assert ResourceMonitor._suppress_errors, "ResourceMonitor class should have a _suppress_errors attribute."
+assert ResourceMonitor._root_dir, "ResourceMonitor class should have a _root_dir attribute."
+
 
 class TestErrorMonitorInitialization(unittest.TestCase):
     """Test ErrorMonitor initialization and configuration."""
 
     def setUp(self):
         """Set up test fixtures."""
+
+    def test_ensure_docstring_quality(self):
+        """
+        Ensure that the docstring of the ErrorMonitor class meets the standards set forth in `_example_docstring_format.md`.
+        """
+        try:
+            _raise_on_bad_callable_metadata(ResourceMonitor)
+        except Exception as e:
+            self.fail(f"Callable metadata in ResourceMonitor does not meet standards: {e}")
 
     def test_init_with_valid_resources_and_configs(self):
         """
@@ -61,6 +95,15 @@ import pytest
 
 class TestErrorMonitorInitialization:
     """Test ErrorMonitor initialization and configuration."""
+
+    def test_ensure_docstring_quality(self):
+        """
+        Ensure that the docstring of the ErrorMonitor class meets the standards set forth in `_example_docstring_format.md`.
+        """
+        try:
+            _raise_on_bad_callable_metadata(ResourceMonitor)
+        except Exception as e:
+            self.fail(f"Callable metadata in ResourceMonitor does not meet standards: {e}")
 
     def test_init_with_valid_resources_and_configs(self):
         """

@@ -39,8 +39,8 @@ except ImportError:
     INTERACTIVE_LIBS_AVAILABLE = False
 
 # Import existing visualization components
-from ipfs_datasets_py.rag_query_visualization import EnhancedQueryVisualizer
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_visualization import EnhancedQueryVisualizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
 class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
     """

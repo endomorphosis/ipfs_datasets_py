@@ -18,7 +18,18 @@ from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
     cluster_analysis,
     quality_assessment,
     dimensionality_reduction,
-    analyze_data_distribution
+    analyze_data_distribution,
+)
+
+# Import class definitions for testing class methods
+from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
+    MockAnalysisEngine,
+    ClusterResult,
+    QualityAssessment,
+    DimensionalityResult,
+    ClusteringAlgorithm,
+    DimensionalityMethod,
+    QualityMetric,
 )
 
 
@@ -114,6 +125,33 @@ class TestAnalysisTools:
         """
         raise NotImplementedError("test_diversity_analysis test needs to be implemented")
 
+    @pytest.mark.asyncio
+    async def test_reduce_dimensionality(self):
+        """GIVEN a system component for reduce dimensionality
+        WHEN testing reduce dimensionality functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_reduce_dimensionality test needs to be implemented")
+
+    @pytest.mark.asyncio
+    async def test_assess_quality(self):
+        """GIVEN a system component for assess quality
+        WHEN testing assess quality functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_assess_quality test needs to be implemented")
+
+    @pytest.mark.asyncio
+    async def test_perform_clustering(self):
+        """GIVEN a system component for perform clustering
+        WHEN testing perform clustering functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_perform_clustering test needs to be implemented")
+
 class TestAnalysisDataStructures:
     """Test AnalysisDataStructures functionality."""
 
@@ -191,6 +229,34 @@ class TestAnalysisVisualization:
         AND results should meet the expected criteria
         """
         raise NotImplementedError("test_generate_quality_report test needs to be implemented")
+
+
+class TestMockAnalysisEngine:
+    """Test MockAnalysisEngine class methods functionality."""
+
+    def test_assess_quality(self):
+        """GIVEN a MockAnalysisEngine instance
+        WHEN testing assess_quality method functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_assess_quality test needs to be implemented")
+
+    def test_perform_clustering(self):
+        """GIVEN a MockAnalysisEngine instance
+        WHEN testing perform_clustering method functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_perform_clustering test needs to be implemented")
+
+    def test_reduce_dimensionality(self):
+        """GIVEN a MockAnalysisEngine instance
+        WHEN testing reduce_dimensionality method functionality
+        THEN expect the operation to complete successfully
+        AND results should meet the expected criteria
+        """
+        raise NotImplementedError("test_reduce_dimensionality test needs to be implemented")
 
 
 if __name__ == "__main__":

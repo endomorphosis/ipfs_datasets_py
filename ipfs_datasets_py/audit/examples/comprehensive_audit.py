@@ -13,6 +13,7 @@ import logging
 import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Callable
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,

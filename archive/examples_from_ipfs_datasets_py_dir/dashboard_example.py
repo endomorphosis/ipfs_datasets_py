@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import components
 from ipfs_datasets_py.rag_query_dashboard import UnifiedDashboard
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
 # Try to import audit components
 try:

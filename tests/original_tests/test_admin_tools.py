@@ -112,7 +112,7 @@ class TestEnhancedAdminTools:
             )
             assert True
         except ImportError as e:
-            pytest.skip(f"Enhanced admin tools not available: {e}")
+            raise ImportError(f"Enhanced admin tools not available: {e}")
     
     @pytest.mark.asyncio
     async def test_service_registry_management(self):
@@ -128,7 +128,7 @@ class TestEnhancedAdminTools:
             assert result is not None
             assert "status" in result
         except ImportError:
-            pytest.skip("Enhanced admin tools not available")
+            raise ImportError("Enhanced admin tools not available")
     
     @pytest.mark.asyncio
     async def test_workflow_orchestration(self):
@@ -144,7 +144,7 @@ class TestEnhancedAdminTools:
             assert result is not None
             assert "status" in result
         except ImportError:
-            pytest.skip("Enhanced admin tools not available")
+            raise ImportError("Enhanced admin tools not available")
 
 
 class TestAdminToolsIntegration:

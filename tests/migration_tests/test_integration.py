@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Direct imports from the specific modules we need
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     QueryRewriter,
     UnifiedGraphRAGQueryOptimizer
 )

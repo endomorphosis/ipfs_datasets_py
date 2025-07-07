@@ -14,7 +14,7 @@ from ipfs_datasets_py.llm_interface import (
     LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
     LLMInterfaceFactory, GraphRAGPromptTemplates
 )
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
 from ipfs_datasets_py.graphrag_integration import enhance_dataset_with_llm
 
 

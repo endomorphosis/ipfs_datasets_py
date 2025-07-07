@@ -2,7 +2,7 @@ import re
 from typing import Optional
 from bs4 import BeautifulSoup
 
-from dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
 
 def check_section(citation_section: str, html_body: str) -> Optional[str]:
     """

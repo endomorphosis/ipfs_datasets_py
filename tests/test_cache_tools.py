@@ -21,6 +21,13 @@ from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_tools import (
     cache_stats
 )
 
+# Import additional cache tools from enhanced cache tools
+from ipfs_datasets_py.mcp_server.tools.cache_tools.enhanced_cache_tools import (
+    clear_cache,
+    get_cache_stats,
+    monitor_cache,
+)
+
 
 class TestCacheTools:
     """Test CacheTools functionality."""

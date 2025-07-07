@@ -106,7 +106,7 @@ class TestVectorStoreTools:
                 assert len(result['indices']) == 2
                 assert result['indices'][0]['dimension'] == 384
         except ImportError:
-            pytest.skip("List indices tool not implemented")
+            raise ImportError("List indices tool not implemented")
         
         # Test index deletion
         try:
@@ -126,7 +126,7 @@ class TestVectorStoreTools:
                 assert result['status'] == 'deleted'
                 assert result['vectors_removed'] > 0
         except ImportError:
-            pytest.skip("Delete index tool not implemented")
+            raise ImportError("Delete index tool not implemented")
 
 class TestVectorStoreImplementations:
     """Test vector store backend implementations."""
@@ -203,7 +203,7 @@ class TestVectorStoreImplementations:
             assert hasattr(store, 'add_vectors')
             assert hasattr(store, 'search')
         except ImportError:
-            pytest.skip("Qdrant vector store not available")
+            raise ImportError("Qdrant vector store not available")
     
     def test_elasticsearch_vector_store(self):
         """Test Elasticsearch vector store implementation."""
@@ -221,7 +221,7 @@ class TestVectorStoreImplementations:
             assert hasattr(store, 'add_vectors')
             assert hasattr(store, 'search')
         except ImportError:
-            pytest.skip("Elasticsearch vector store not available")
+            raise ImportError("Elasticsearch vector store not available")
 
 class TestVectorStoreIntegration:
     """Test vector store integration scenarios."""
@@ -394,7 +394,7 @@ class TestVectorAnalytics:
                 assert 'similarity_matrix' in result
                 assert 'clusters' in result
         except ImportError:
-            pytest.skip("Vector similarity analysis tool not implemented")
+            raise ImportError("Vector similarity analysis tool not implemented")
     
     @pytest.mark.asyncio
     async def test_vector_quality_metrics(self):

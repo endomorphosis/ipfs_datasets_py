@@ -45,7 +45,7 @@ class Test{tool_name.title().replace('_', '')}(unittest.TestCase):
         \"\"\"Helper to run async tests.\"\"\"
         return self.loop.run_until_complete(coro)
 
-    @patch('ipfs_datasets_py.rag_query_optimizer.GraphRAGProcessor')
+    @patch('ipfs_datasets_py.rag.rag_query_optimizer.GraphRAGProcessor')
     def test_{tool_name}_basic(self, mock_graph_processor_class):
         \"\"\"Test basic functionality of {tool_name}.\"\"\"
         # Setup mock

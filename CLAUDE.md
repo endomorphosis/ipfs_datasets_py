@@ -41,12 +41,39 @@
 ### Test Standardization - Worker 130
 - [x] 130: Standardize all test files to GIVEN WHEN THEN format - **COMPLETED 2025-07-04**
 
-### Test Implementation - Worker 131  
+### Test Implementation - Workers 130 - 140  
 - [ ] 131: Implement comprehensive test coverage for tests/ directory - **ASSIGNED 2025-07-04 - HIGH PRIORITY**
   - Fix monitoring module async loop issue affecting test_vector_store_tools.py
   - Implement actual test logic for all 10 main test files
   - Create test fixtures and data generators
   - Add integration tests for cross-module functionality
+- [ ] 132: Implement test coverage for top-level modules in ipfs_datasets_py (e.g., dataset_manager.py, config.py)
+  - [ ] admin_dashboard (`ipfs_datasets_py/admin_dashboard.py`) (**Last Updated 2025-07-04**)
+  - [ ] audit.py
+  - [ ] car_conversion.py
+  - [ ] config.py
+  - [ ] dataset_manager.py
+
+
+- [ ] 345: Implement comprehensive test coverage for existing test files in tests/ directory:
+  - [ ] `tests/test_admin_tools.py`
+  - [ ] `tests/test_analysis_tools.py`
+  - [ ] `tests/test_auth_tools.py`
+  - [ ] `tests/test_background_task_tools.py`
+  - [ ] `tests/test_cache_tools.py`
+  - [ ] `tests/test_comprehensive_integration.py`
+  - [ ] `tests/test_embedding_search_storage_tools.py`
+  - [ ] `tests/test_embedding_tools.py`
+  - [ ] `tests/test_fastapi_integration.py`
+  - [ ] `tests/test_fio.py`
+  - [ ] `tests/test_monitoring_tools.py`
+  - [ ] `tests/test_test_e2e.py`
+  - [ ] `tests/test_vector_store_tools.py`
+  - [ ] `tests/test_vector_tools.py`
+  - [ ] `tests/test_workflow_tools.py`
+  - [ ] Test subdirectories: `tests/integration/`, `tests/unit/`, `tests/mcp/`, `tests/migration_tests/`
+
+- [ ] 554: Ensure that all functions and classes in ipfs are being imported by some sort of test file.
 
 ### Adhoc Tools Development - Workers 76-85
 - [ ] 76: Create project monitoring and analytics tools
@@ -65,7 +92,7 @@
 - [ ] 175: Quality Assurance - Testing standards, validation workflows, security scanning
 - [ ] 175: Enforce testing standardization (TDD, GIVEN WHEN THEN, see `tests/_example_test_format.py` for format example)
 - [ ] 176: Validate test imports so that they compile without import errors.
-- [x] 177: Ensure all public classes, functions, and methods have comprehensive docstrings (see `_example_docstring_format.md` for format example) - **COMPLETED 2025-07-04**
+- [ ] 177: Ensure all public classes, functions, and methods have comprehensive docstrings (see `_example_docstring_format.md` for format example) - **ONGOING 2025-07-04**
 
 ### Rules for All Jobs
 - Document all actions taken in your directory's CHANGELOG.md

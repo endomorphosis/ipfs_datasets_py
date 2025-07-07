@@ -29,7 +29,7 @@ from ipfs_datasets_py import (
 )
 
 # Import LLM components for integration testing
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor
 from ipfs_datasets_py.llm_interface import LLMInterface, LLMConfig
 from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 # ReasoningTracer is not available, using ReasoningEnhancer instead

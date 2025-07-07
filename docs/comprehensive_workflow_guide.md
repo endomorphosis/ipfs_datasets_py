@@ -40,7 +40,7 @@ This section provides a complete workflow for setting up the entire monitoring s
 
 ```python
 from ipfs_datasets_py.monitoring import MetricsCollector
-from ipfs_datasets_py.rag_query_optimizer import QueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 
 # Create the optimizer
 optimizer = QueryOptimizer()
@@ -166,7 +166,7 @@ For development environments, the focus is usually on quick feedback and deep in
 from ipfs_datasets_py.monitoring import MetricsCollector
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.unified_monitoring_dashboard import create_unified_dashboard
-from ipfs_datasets_py.rag_query_optimizer import QueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 
 # Create components
 optimizer = QueryOptimizer(enable_learning=True)
@@ -210,7 +210,7 @@ from ipfs_datasets_py.monitoring import MetricsCollector
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.optimizer_alert_system import setup_learning_alerts
 from ipfs_datasets_py.unified_monitoring_dashboard import create_unified_dashboard
-from ipfs_datasets_py.rag_query_optimizer import QueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 
 # Create components with production-appropriate settings
 optimizer = QueryOptimizer(enable_learning=True)

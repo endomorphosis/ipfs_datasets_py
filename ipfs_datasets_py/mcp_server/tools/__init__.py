@@ -11,6 +11,7 @@ from . import dataset_tools
 from . import development_tools
 from . import graph_tools
 from . import ipfs_tools
+from . import monitoring_tools  # Added missing monitoring tools
 from . import pdf_tools  # New PDF processing tools
 from . import provenance_tools
 from . import security_tools
@@ -32,6 +33,7 @@ __all__ = [
     "development_tools",
     "graph_tools",
     "ipfs_tools",
+    "monitoring_tools",  # Added missing monitoring tools
     "pdf_tools",  # New PDF processing tools
     "provenance_tools",
     "security_tools",

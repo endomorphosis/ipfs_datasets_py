@@ -14,7 +14,7 @@ def register_files_in_functions_dir():
     for file in Path(__file__).parent.iterdir():
         if file.is_file() and file.suffix == ".py" and file.name != "__init__.py":
             module_name = file.stem
-            module_path = f"ipfs_datasets_py.mcp_tools.tools.{module_name}"
+            module_path = f"ipfs_datasets_py.mcp_tools.{module_name}"
             # Register the module in the global namespace
             try:
                 globals()[module_name] = importlib.import_module(module_path)

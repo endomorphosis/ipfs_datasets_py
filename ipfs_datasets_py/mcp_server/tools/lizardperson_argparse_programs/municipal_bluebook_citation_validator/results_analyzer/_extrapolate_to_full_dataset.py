@@ -3,7 +3,7 @@ from functools import cached_property, cache
 import math
 
 
-from types_ import Any, Callable, Logger, Configs
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import Any, Callable, Logger, Configs
 
 
 class ExtrapolateToFullDataset:

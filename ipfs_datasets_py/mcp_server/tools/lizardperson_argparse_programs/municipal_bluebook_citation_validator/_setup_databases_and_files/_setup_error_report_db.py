@@ -1,8 +1,8 @@
 from pathlib import Path
 
 
-from dependencies import dependencies
-from utils import load_sql_file
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.utils import load_sql_file
 
 
 def setup_error_report_database(error_db_path: Path, read_only: bool = False):  # -> DatabaseConnection  

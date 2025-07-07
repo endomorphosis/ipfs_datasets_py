@@ -735,7 +735,7 @@ class CrossDocumentReasoner:
 def example_usage():
     """Example usage of the cross-document reasoner."""
     from ipfs_datasets_py.llm_reasoning_tracer import LLMReasoningTracer
-    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
     # Initialize components
     reasoning_tracer = LLMReasoningTracer()

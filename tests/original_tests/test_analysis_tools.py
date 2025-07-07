@@ -267,7 +267,7 @@ class TestAnalysisVisualization:
             assert result is not None
             assert "status" in result
         except ImportError:
-            pytest.skip("Visualization tools not available")
+            raise ImportError("Visualization tools not available")
     
     @pytest.mark.asyncio
     async def test_generate_quality_report(self):
@@ -290,7 +290,7 @@ class TestAnalysisVisualization:
             assert result is not None
             assert "status" in result
         except ImportError:
-            pytest.skip("Report generation tools not available")
+            raise ImportError("Report generation tools not available")
 
 
 if __name__ == "__main__":

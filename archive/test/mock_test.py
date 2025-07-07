@@ -111,8 +111,8 @@ class MockOptimizerLearningMetricsCollector:
 
 
 # Mock the module containing OptimizerLearningMetricsCollector
-sys.modules['ipfs_datasets_py.rag_query_visualization'] = MagicMock()
-sys.modules['ipfs_datasets_py.rag_query_visualization'].OptimizerLearningMetricsCollector = MockOptimizerLearningMetricsCollector
+sys.modules['ipfs_datasets_py.rag.rag_query_visualization'] = MagicMock()
+sys.modules['ipfs_datasets_py.rag.rag_query_visualization'].OptimizerLearningMetricsCollector = MockOptimizerLearningMetricsCollector
 
 # Now import our test module
 from test.test_optimizer_learning import TestOptimizerLearningMetricsCollector

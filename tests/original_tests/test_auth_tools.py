@@ -358,7 +358,7 @@ class TestSecurityFeatures:
             assert verification_result is True
             
         except ImportError:
-            pytest.skip("Password hashing functions not available")
+            raise ImportError("Password hashing functions not available")
     
     @pytest.mark.asyncio
     async def test_rate_limiting_integration(self):

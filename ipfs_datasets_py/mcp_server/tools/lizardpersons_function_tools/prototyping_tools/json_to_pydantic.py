@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Set
 import traceback
 
-from logger import mcp_logger
+from ipfs_datasets_py.mcp_server.logger import mcp_logger
 
 def _to_snake_case(name: str) -> str:
     """Convert camelCase or PascalCase to snake_case"""

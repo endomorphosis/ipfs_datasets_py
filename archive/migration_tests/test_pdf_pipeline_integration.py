@@ -85,7 +85,7 @@ class TestPDFProcessingPipeline:
         except ImportError as e:
             # Expected in current environment - components not fully implemented yet
             logger.info(f"Import test skipped (expected): {e}")
-            pytest.skip("Components not available for import")
+            raise ImportError("Components not available for import")
     
     async def test_text_processing_utilities(self):
         """Test text processing utility functions."""
@@ -120,7 +120,7 @@ class TestPDFProcessingPipeline:
             
         except ImportError as e:
             logger.info(f"Utility test skipped: {e}")
-            pytest.skip("Utilities not available")
+            raise ImportError("Utilities not available")
     
     async def test_mock_pipeline_execution(self, sample_pdf_file):
         """Test mock pipeline execution with sample data."""

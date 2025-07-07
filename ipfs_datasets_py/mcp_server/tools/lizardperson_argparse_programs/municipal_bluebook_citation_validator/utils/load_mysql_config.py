@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-from dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
 
 
 def load_mysql_config(config_path: Path) -> dict[str, str]:

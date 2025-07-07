@@ -81,7 +81,7 @@ class TestEmbeddingTools:
                 assert result.get('preprocessing_applied') is True
                 assert len(result['embeddings']) == len(test_data['texts'])
         except ImportError:
-            pytest.skip("Advanced embedding generation tool not implemented")
+            raise ImportError("Advanced embedding generation tool not implemented")
     
     @pytest.mark.asyncio
     async def test_embedding_search(self):
@@ -115,7 +115,7 @@ class TestEmbeddingTools:
                 assert all(r['score'] > 0.8 for r in result['results'])
                 assert result['query_time'] < 1.0
         except ImportError:
-            pytest.skip("Advanced search tool not implemented")
+            raise ImportError("Advanced search tool not implemented")
     
     @pytest.mark.asyncio
     async def test_shard_embeddings(self):
@@ -150,7 +150,7 @@ class TestEmbeddingTools:
                 assert result['shard_count'] == 4
                 assert len(result['shard_ids']) == 4
         except ImportError:
-            pytest.skip("Shard embeddings tool not implemented")
+            raise ImportError("Shard embeddings tool not implemented")
 
 class TestEmbeddingCore:
     """Test core embedding functionality."""

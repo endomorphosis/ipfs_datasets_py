@@ -1,6 +1,6 @@
 
 from datetime import datetime
-from types_ import Callable, DatabaseCursor, Logger
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import Callable, DatabaseCursor, Logger
 import threading
 
 def save_validation_errors(

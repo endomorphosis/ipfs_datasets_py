@@ -21,7 +21,7 @@ from ipfs_datasets_py.graphrag_integration import (
     GraphRAGFactory, HybridVectorGraphSearch, GraphRAGQueryEngine,
     CrossDocumentReasoner
 )
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 from ipfs_datasets_py.examples.graphrag_example import GraphRAGDemo
 
 class TestGraphRAGIntegration(unittest.TestCase):

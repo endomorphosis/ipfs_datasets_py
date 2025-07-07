@@ -108,7 +108,11 @@ async def pin_to_ipfs(
                 }
         else:
             # Use MCP client to call ipfs_kit_py MCP server
-            from modelcontextprotocol.client import MCPClient
+            try:
+                from modelcontextprotocol.client import MCPClient
+            except ImportError:
+                # Use our mock for testing when the real package isn't available
+                from ...mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
 
             # Create client
             client = MCPClient(configs.ipfs_kit_mcp_url)

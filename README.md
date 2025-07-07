@@ -296,7 +296,7 @@ The GraphRAG system combines vector similarity search with knowledge graph trave
 from ipfs_datasets_py.ipld import IPLDStorage, IPLDVectorStore, IPLDKnowledgeGraph
 from ipfs_datasets_py.graphrag_integration import GraphRAGQueryEngine
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 from ipfs_datasets_py.cross_document_reasoning import CrossDocumentReasoner
 import numpy as np
 
@@ -328,7 +328,7 @@ for relationship in relationships:
     )
 
 # Initialize query optimizer with metrics collection and visualization
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector, QueryVisualizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector, QueryVisualizer
 
 # Create metrics collector and visualizer
 metrics_collector = QueryMetricsCollector(

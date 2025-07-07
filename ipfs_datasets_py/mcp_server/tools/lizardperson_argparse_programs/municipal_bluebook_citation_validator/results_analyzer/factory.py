@@ -1,12 +1,14 @@
 from typing import Callable, Dict, Any
+import logging
 
 from ._analyze_error_patterns import analyze_error_patterns
 from ._calculate_accuracy_statistics import calculate_accuracy_statistics
 from ._extrapolate_to_full_dataset import ExtrapolateToFullDataset
 from ._results_analyzer import ResultsAnalyzer
 
-from configs import configs
-from logger import logger
+from ..configs import configs
+
+logger = logging.getLogger(__name__)
 
 def _make_extrapolate_to_full_dataset() -> Callable:
     resources = {"logger": logger}

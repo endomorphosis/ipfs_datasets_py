@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import the required modules
 try:
-    from ipfs_datasets_py.rag_query_visualization import (
+    from ipfs_datasets_py.rag.rag_query_visualization import (
         QueryMetricsCollector, OptimizerLearningMetricsCollector,
         RAGQueryDashboard, EnhancedQueryVisualizer
     )

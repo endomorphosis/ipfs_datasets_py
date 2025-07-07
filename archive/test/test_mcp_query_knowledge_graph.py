@@ -37,7 +37,7 @@ class MockGraphRAGProcessor:
             return [{"id": "node1", "label": "TypeA", "semantic_score": 0.9}]
         return []
 
-@patch('ipfs_datasets_py.rag_query_optimizer.GraphRAGProcessor', new=MockGraphRAGProcessor)
+@patch('ipfs_datasets_py.rag.rag_query_optimizer.GraphRAGProcessor', new=MockGraphRAGProcessor)
 class TestMCPQueryKnowledgeGraph(unittest.IsolatedAsyncioTestCase):
 
     async def test_query_knowledge_graph_sparql_success(self):
@@ -117,7 +117,7 @@ class TestMCPQueryKnowledgeGraph(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
 
         # Simulate an error during graph loading
-        with patch('ipfs_datasets_py.rag_query_optimizer.GraphRAGProcessor.load_graph', side_effect=Exception("Graph load error")):
+        with patch('ipfs_datasets_py.rag.rag_query_optimizer.GraphRAGProcessor.load_graph', side_effect=Exception("Graph load error")):
             result = await query_knowledge_graph(graph_id="error_graph", query="query", query_type="sparql")
             self.assertEqual(result["status"], "error")
             self.assertIn("Graph load error", result["message"])

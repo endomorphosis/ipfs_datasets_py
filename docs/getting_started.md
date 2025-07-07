@@ -368,7 +368,7 @@ Combine vector search with knowledge graph traversal for enhanced retrieval.
 ### Setting Up GraphRAG
 
 ```python
-from ipfs_datasets_py.llm_graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGQueryEngine
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
 

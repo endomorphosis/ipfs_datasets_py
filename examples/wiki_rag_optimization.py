@@ -15,7 +15,7 @@ import json
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 # TODO WikipediaKnowledgeGraphOptimizer is hallucinated. Needs to be implemented.
-from ipfs_datasets_py.rag_query_optimizer import WikipediaKnowledgeGraphOptimizer 
+from ipfs_datasets_py.rag.rag_query_optimizer import WikipediaKnowledgeGraphOptimizer 
 
 
 def get_embedding(text: str) -> np.ndarray:

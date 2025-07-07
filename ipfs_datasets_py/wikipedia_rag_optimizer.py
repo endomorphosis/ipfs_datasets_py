@@ -22,7 +22,7 @@ import re
 from typing import Dict, List, Any, Optional, Tuple, Callable, Union, Set
 from collections import defaultdict
 
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     GraphRAGQueryOptimizer,
     QueryRewriter,
     QueryBudgetManager,

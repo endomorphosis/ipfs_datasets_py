@@ -125,7 +125,9 @@ class TestAdminToolsIntegration:
         AND admin_tools list should have length greater than 0
         """
         # Skip this test due to import issues with tool_registration
-        pytest.skip("Tool registration import has async issues")
+        raise NotImplementedError(
+            "test_admin_tools_mcp_registration test needs to be implemented"
+        )
 
     @pytest.mark.asyncio
     async def test_admin_tools_error_handling(self):

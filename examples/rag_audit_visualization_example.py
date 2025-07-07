@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 # Import RAG query components
 try:
-    from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
-    from ipfs_datasets_py.rag_query_visualization import RAGQueryDashboard
+    from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
+    from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard
     RAG_COMPONENTS_AVAILABLE = True
 except ImportError:
     logger.warning("RAG query components not available. Some features will be disabled.")

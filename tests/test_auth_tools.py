@@ -20,7 +20,6 @@ from ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools import (
     get_user_info
 )
 
-
 class TestAuthenticationTools:
     """Test AuthenticationTools functionality."""
 

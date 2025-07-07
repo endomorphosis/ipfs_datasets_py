@@ -296,7 +296,7 @@ kg.merge(extracted_kg)
 ### GraphRAG Setup
 
 ```python
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor
 from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 
@@ -337,7 +337,7 @@ for doc in reasoning_result["documents"]:
 ### Query Optimization
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Create optimizer
 optimizer = UnifiedGraphRAGQueryOptimizer(auto_detect_graph_type=True)

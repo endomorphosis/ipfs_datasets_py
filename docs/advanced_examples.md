@@ -408,10 +408,10 @@ This example demonstrates how to set up a GraphRAG system with multiple embeddin
 ```python
 import torch
 from transformers import AutoTokenizer, AutoModel
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor
 from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 from ipfs_datasets_py.ipfs_knn_index import MultiModelSearch
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Initialize embedding models
 models = {
@@ -596,7 +596,7 @@ for i, result in enumerate(results):
 This example demonstrates cross-document reasoning with the GraphRAG system and LLM integration.
 
 ```python
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
 from ipfs_datasets_py.llm_reasoning_tracer import ReasoningTracer
 from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex

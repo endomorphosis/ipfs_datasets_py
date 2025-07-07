@@ -49,7 +49,7 @@ from pathlib import Path
 
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
-from ipfs_datasets_py.llm_graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGQueryEngine
 from ipfs_datasets_py import ipfs_datasets
 
 # Set up working directory
@@ -379,7 +379,7 @@ def expanded_query(query_text, top_k=5):
 # 3. IPLD-specific optimizations for content-addressed data
 def ipld_optimized_query(query_text, top_k=5, max_hops=2):
     """Execute a query with IPLD-specific optimizations for content-addressed data."""
-    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter
+    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter
     
     # Create specialized components for optimizing IPLD queries
     query_rewriter = QueryRewriter()
@@ -497,7 +497,7 @@ from typing import List, Dict, Any
 
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
-from ipfs_datasets_py.llm_graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGQueryEngine
 from ipfs_datasets_py import ipfs_datasets
 
 # Setup

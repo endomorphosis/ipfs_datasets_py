@@ -137,7 +137,7 @@ class TestEnhancedCacheTools:
             )
             assert True
         except ImportError as e:
-            pytest.skip(f"Enhanced cache tools not available: {e}")
+            raise ImportError(f"Enhanced cache tools not available: {e}")
     
     @pytest.mark.asyncio
     async def test_distributed_cache_management(self):
@@ -153,7 +153,7 @@ class TestEnhancedCacheTools:
             assert result is not None
             assert "status" in result
         except ImportError:
-            pytest.skip("Enhanced cache tools not available")
+            raise ImportError("Enhanced cache tools not available")
     
     @pytest.mark.asyncio
     async def test_cache_analytics(self):
@@ -169,7 +169,7 @@ class TestEnhancedCacheTools:
             assert result is not None
             assert "status" in result
         except ImportError:
-            pytest.skip("Enhanced cache tools not available")
+            raise ImportError("Enhanced cache tools not available")
 
 
 class TestCacheToolsIntegration:

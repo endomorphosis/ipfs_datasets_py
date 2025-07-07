@@ -23,7 +23,7 @@ class TestFastAPIService:
             from ipfs_datasets_py.fastapi_service import app, get_current_user
             assert app is not None
         except ImportError as e:
-            pytest.skip(f"FastAPI service not available: {e}")
+            raise ImportError(f"FastAPI service not available: {e}")
     
     def test_fastapi_config_import(self):
         """Test that FastAPI configuration can be imported."""
@@ -32,7 +32,7 @@ class TestFastAPIService:
             config = FastAPIConfig()
             assert config is not None
         except ImportError as e:
-            pytest.skip(f"FastAPI config not available: {e}")
+            raise ImportError(f"FastAPI config not available: {e}")
     
     @pytest.mark.asyncio
     async def test_health_endpoint(self):
@@ -49,7 +49,7 @@ class TestFastAPIService:
             assert "status" in data
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_authentication_endpoint(self):
@@ -70,7 +70,7 @@ class TestFastAPIService:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIEmbeddingEndpoints:
@@ -98,7 +98,7 @@ class TestFastAPIEmbeddingEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_search_embeddings_endpoint(self):
@@ -121,7 +121,7 @@ class TestFastAPIEmbeddingEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIDatasetEndpoints:
@@ -147,7 +147,7 @@ class TestFastAPIDatasetEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_process_dataset_endpoint(self):
@@ -171,7 +171,7 @@ class TestFastAPIDatasetEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIVectorEndpoints:
@@ -198,7 +198,7 @@ class TestFastAPIVectorEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_search_vector_index_endpoint(self):
@@ -221,7 +221,7 @@ class TestFastAPIVectorEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIIPFSEndpoints:
@@ -247,7 +247,7 @@ class TestFastAPIIPFSEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_get_from_ipfs_endpoint(self):
@@ -264,7 +264,7 @@ class TestFastAPIIPFSEndpoints:
             assert response.status_code in [200, 401, 404, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIWorkflowEndpoints:
@@ -293,7 +293,7 @@ class TestFastAPIWorkflowEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_execute_workflow_endpoint(self):
@@ -315,7 +315,7 @@ class TestFastAPIWorkflowEndpoints:
             assert response.status_code in [200, 401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIAdminEndpoints:
@@ -336,7 +336,7 @@ class TestFastAPIAdminEndpoints:
             assert response.status_code in [200, 401, 403]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_cache_management_endpoint(self):
@@ -358,7 +358,7 @@ class TestFastAPIAdminEndpoints:
             assert response.status_code in [200, 401, 403, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIErrorHandling:
@@ -377,7 +377,7 @@ class TestFastAPIErrorHandling:
             assert response.status_code == 404
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_invalid_request_data(self):
@@ -397,7 +397,7 @@ class TestFastAPIErrorHandling:
             assert response.status_code in [401, 422]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_missing_authentication(self):
@@ -415,7 +415,7 @@ class TestFastAPIErrorHandling:
             assert response.status_code in [401, 403]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIDocumentation:
@@ -437,7 +437,7 @@ class TestFastAPIDocumentation:
             assert "paths" in data
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_docs_endpoint(self):
@@ -453,7 +453,7 @@ class TestFastAPIDocumentation:
             assert "text/html" in response.headers["content-type"]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIMiddleware:
@@ -481,7 +481,7 @@ class TestFastAPIMiddleware:
             assert response.status_code in [200, 204]
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
     
     @pytest.mark.asyncio
     async def test_rate_limiting_middleware(self):
@@ -502,7 +502,7 @@ class TestFastAPIMiddleware:
             assert all(status in [200, 429] for status in responses)
             
         except ImportError:
-            pytest.skip("FastAPI test client not available")
+            raise ImportError("FastAPI test client not available")
 
 
 class TestFastAPIIntegration:
@@ -523,7 +523,7 @@ class TestFastAPIIntegration:
             assert "status" in result
             
         except ImportError:
-            pytest.skip("FastAPI or MCP tools not available")
+            raise ImportError("FastAPI or MCP tools not available")
     
     @pytest.mark.asyncio
     async def test_fastapi_embedding_integration(self):
@@ -537,7 +537,7 @@ class TestFastAPIIntegration:
             assert manager is not None
             
         except ImportError:
-            pytest.skip("FastAPI or embedding tools not available")
+            raise ImportError("FastAPI or embedding tools not available")
 
 
 if __name__ == "__main__":

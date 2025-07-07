@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Import the module
 try:
-    from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+    from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
     MODULE_AVAILABLE = True
 except ImportError:
     MODULE_AVAILABLE = False

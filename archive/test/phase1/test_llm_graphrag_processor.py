@@ -22,7 +22,7 @@ from ipfs_datasets_py.llm_interface import (
     LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
     PromptLibrary, AdaptivePrompting
 )
-from ipfs_datasets_py.llm_graphrag import (
+from ipfs_datasets_py.llm.llm_graphrag import (
     GraphRAGLLMProcessor, DomainSpecificProcessor, GraphRAGPerformanceMonitor
 )
 

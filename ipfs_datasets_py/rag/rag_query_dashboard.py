@@ -14,6 +14,7 @@ import threading
 import datetime
 from typing import Dict, List, Any, Optional, Tuple, Union, Set
 from collections import defaultdict
+import random
 
 # Import visualization components
 try:
@@ -57,12 +58,12 @@ except ImportError:
     REALTIME_LIBS_AVAILABLE = False
 
 # Import visualization components from other modules
-from ipfs_datasets_py.rag_query_visualization import (
+from ipfs_datasets_py.rag.rag_query_visualization import (
     RAGQueryDashboard,
     EnhancedQueryVisualizer
 )
 
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     QueryMetricsCollector,
     GraphRAGQueryStats
 )

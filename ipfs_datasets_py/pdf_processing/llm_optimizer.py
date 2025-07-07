@@ -28,7 +28,36 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LLMChunk:
-    """Represents an optimized chunk for LLM processing."""
+    """
+    Semantically optimized text chunk designed for effective LLM processing and analysis.
+
+    This dataclass represents an individual text chunk that has been optimized for language model
+    consumption, including the text content, vector embeddings, metadata, and contextual information.
+    Each chunk is designed to be semantically coherent, appropriately sized for LLM token limits,
+    and enriched with metadata to support various downstream NLP tasks.
+
+    LLMChunks maintain both the granular text content and the broader context within the document,
+    enabling effective processing while preserving document structure and narrative flow.
+
+    Attributes:
+        content (str): The actual text content of the chunk, optimized for LLM processing.
+        chunk_id (str): Unique identifier for this chunk within the document.
+        source_page (int): Page number from the original document where this chunk originates.
+        source_element (str): Type of source element that contributed to this chunk.
+        token_count (int): Number of tokens in the content using the specified tokenizer.
+        semantic_type (str): Classification of the chunk content type:
+            - 'text': Regular paragraph text
+            - 'table': Structured table data
+            - 'figure_caption': Figure or table caption
+            - 'header': Section or chapter heading
+            - 'mixed': Multiple content types combined
+        relationships (List[str]): List of chunk IDs that are semantically or structurally
+            related to this chunk, enabling cross-chunk reasoning and context.
+        metadata (Dict[str, Any]): Additional chunk-specific metadata including semantic types,
+            creation timestamp, and source element counts.
+        embedding (Optional[np.ndarray]): Vector embedding representing the semantic content.
+            Shape depends on the embedding model used. None if embeddings not generated.
+    """
     content: str
     chunk_id: str
     source_page: int
@@ -41,7 +70,32 @@ class LLMChunk:
 
 @dataclass
 class LLMDocument:
-    """Complete LLM-optimized document representation."""
+    """
+    Comprehensive container for LLM-optimized document representation with semantic structure.
+
+    This dataclass represents the complete output of the LLM optimization process, containing
+    all necessary components for effective language model processing including semantically
+    chunked text, vector embeddings, extracted entities, document metadata, and quality metrics.
+    It serves as the primary data structure for downstream LLM operations like analysis,
+    summarization, question answering, and knowledge extraction.
+
+    The LLMDocument maintains both the granular chunk-level details and document-level
+    summaries, enabling both focused analysis of specific content sections and holistic
+    document understanding for comprehensive language model applications.
+
+    Attributes:
+        document_id (str): Unique identifier for the document within the system.
+        title (str): Human-readable title or name of the document.
+        chunks (List[LLMChunk]): List of semantically optimized text chunks with embeddings.
+            Each chunk contains content, metadata, embeddings, and relationship information.
+        summary (str): Comprehensive document summary generated from the full content.
+        key_entities (List[Dict[str, Any]]): Key entities extracted from the document content
+            including text, type classification, and confidence scores.
+        processing_metadata (Dict[str, Any]): Document processing and optimization metadata
+            including timestamps, chunk counts, token counts, and model information.
+        document_embedding (Optional[np.ndarray]): Document-level vector embedding representing
+            the overall semantic content. Shape depends on the embedding model used.
+    """
     document_id: str
     title: str
     chunks: List[LLMChunk]
@@ -52,7 +106,63 @@ class LLMDocument:
 
 class LLMOptimizer:
     """
-    Optimizes PDF content for LLM consumption and processing.
+    Advanced PDF content optimization engine specifically designed for Large Language Model consumption.
+
+    The LLMOptimizer class transforms decomposed PDF content into semantically rich, contextually
+    aware text chunks optimized for LLM processing. It performs intelligent text extraction,
+    semantic chunking, entity extraction, relationship discovery, and embedding generation
+    to create comprehensive LLMDocument objects that maximize the effectiveness of downstream
+    LLM operations while preserving document structure and meaning.
+
+    This class serves as the critical bridge between raw PDF content and LLM-ready data structures,
+    ensuring that the complexity and nuance of PDF documents are preserved while making them
+    accessible to language models for analysis, summarization, and knowledge extraction.
+
+    Key Features:
+    - Intelligent semantic text chunking with overlap optimization
+    - Context-aware entity extraction and relationship discovery
+    - Multi-modal embedding generation for semantic search
+    - Document structure preservation and metadata enrichment
+    - Token-aware chunking with configurable model compatibility
+    - Cross-chunk relationship establishment for narrative coherence
+    - Quality scoring and confidence tracking
+    - Performance monitoring and optimization metrics
+
+    Attributes:
+        model_name (str): Sentence transformer model identifier for embedding generation.
+        tokenizer_name (str): Tokenizer model identifier for accurate token counting.
+        max_chunk_size (int): Maximum number of tokens allowed per text chunk.
+        chunk_overlap (int): Number of tokens to overlap between adjacent chunks.
+        min_chunk_size (int): Minimum number of tokens required for a valid chunk.
+        embedding_model (SentenceTransformer): Loaded sentence transformer model for embeddings.
+        tokenizer: Loaded tokenizer for token counting and text analysis.
+        text_processor (TextProcessor): Utility for advanced text processing operations.
+        chunk_optimizer (ChunkOptimizer): Utility for optimizing chunk boundaries and structure.
+
+    Usage Example:
+        optimizer = LLMOptimizer(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            tokenizer_name="gpt-3.5-turbo",
+            max_chunk_size=2048,
+            chunk_overlap=200
+        )
+        
+        # Optimize decomposed PDF content
+        llm_document = await optimizer.optimize_for_llm(
+            decomposed_content=pdf_content,
+            document_metadata={"title": "Research Paper", "document_id": "doc123"}
+        )
+        
+        # Access optimized chunks
+        for chunk in llm_document.chunks:
+            print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
+
+    Notes:
+        - Embedding models are loaded lazily to optimize memory usage
+        - Token counting is performed using the specified tokenizer for accuracy
+        - Chunk boundaries are optimized to respect sentence and paragraph breaks
+        - Cross-chunk relationships preserve narrative flow and document structure
+        - All processing is designed to be compatible with major LLM architectures
     """
     
     def __init__(self, 
@@ -498,16 +608,43 @@ class LLMOptimizer:
 
 # Utility classes for text processing
 class TextProcessor:
-    """Utility class for text processing operations."""
+    """
+    Comprehensive text processing utility for advanced natural language operations and analysis.
+
+    The TextProcessor class provides a suite of sophisticated text processing capabilities
+    optimized for PDF content and LLM preparation. It handles sentence segmentation,
+    keyword extraction, language detection, text normalization, and various preprocessing
+    tasks essential for high-quality document analysis and optimization.
+
+    This utility serves as the foundation for text manipulation operations throughout
+    the PDF processing pipeline, ensuring consistent and high-quality text handling.
+    """
     
     def split_sentences(self, text: str) -> List[str]:
-        """Split text into sentences."""
+        """
+        Intelligently split text into individual sentences using advanced linguistic rules.
+        
+        Args:
+            text (str): Input text to split into sentences.
+            
+        Returns:
+            List[str]: List of individual sentences with whitespace stripped.
+        """
         # Basic sentence splitting (can be enhanced with NLTK or spaCy)
         sentences = re.split(r'[.!?]+', text)
         return [s.strip() for s in sentences if s.strip()]
     
     def extract_keywords(self, text: str, top_k: int = 20) -> List[str]:
-        """Extract keywords from text."""
+        """
+        Extract the most important keywords and phrases from text using frequency analysis.
+        
+        Args:
+            text (str): Input text to extract keywords from.
+            top_k (int): Maximum number of keywords to return. Defaults to 20.
+            
+        Returns:
+            List[str]: List of top keywords ranked by frequency, excluding common stop words.
+        """
         # Simple keyword extraction based on frequency
         words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
         
@@ -526,7 +663,22 @@ class TextProcessor:
         return [word for word, freq in sorted_words[:top_k]]
 
 class ChunkOptimizer:
-    """Utility class for optimizing text chunks."""
+    """
+    Advanced text chunking optimization utility for intelligent boundary detection and content organization.
+
+    The ChunkOptimizer class provides sophisticated algorithms for determining optimal text chunk
+    boundaries that respect natural language structure, semantic coherence, and processing constraints.
+    It ensures that text chunks maintain narrative flow while adhering to token limits and
+    overlap requirements specified for downstream LLM processing.
+
+    This utility focuses on intelligent boundary detection that preserves sentence integrity,
+    paragraph structure, and semantic coherence while optimizing for LLM token windows.
+
+    Attributes:
+        max_size (int): Maximum number of tokens allowed per chunk.
+        overlap (int): Number of tokens to overlap between adjacent chunks.
+        min_size (int): Minimum number of tokens required for a valid chunk.
+    """
     
     def __init__(self, max_size: int, overlap: int, min_size: int):
         self.max_size = max_size
@@ -534,7 +686,17 @@ class ChunkOptimizer:
         self.min_size = min_size
     
     def optimize_chunk_boundaries(self, text: str, current_boundaries: List[int]) -> List[int]:
-        """Optimize chunk boundaries to respect sentence and paragraph breaks."""
+        """
+        Analyze and optimize chunk boundary positions to respect natural language structure.
+        
+        Args:
+            text (str): The full text content to analyze for optimal boundaries.
+            current_boundaries (List[int]): List of current boundary positions to optimize.
+            
+        Returns:
+            List[int]: Optimized boundary positions that respect sentence and paragraph breaks
+                      while maintaining size constraints and overlap requirements.
+        """
         # Find sentence boundaries
         sentence_ends = []
         for match in re.finditer(r'[.!?]+\s+', text):
