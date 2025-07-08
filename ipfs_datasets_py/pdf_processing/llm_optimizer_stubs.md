@@ -1,8 +1,8 @@
 # Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py'
 
-Files last updated: 1751935848.6012087
+Files last updated: 1751977150.400055
 
-Stub file last updated: 2025-07-07 21:47:52
+Stub file last updated: 2025-07-08 05:37:03
 
 ## ChunkOptimizer
 

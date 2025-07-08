@@ -658,10 +658,6 @@ class TestSuryaOCREngine:
                         assert 0 <= x1 < x2 <= 100
                         assert 0 <= y1 < y2 <= 50
 
-
-
-
-
 class TestTesseractOCREngine:
     """Test suite for TesseractOCR traditional OCR engine."""
 

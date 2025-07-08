@@ -1,8 +1,8 @@
 # Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/pdf_processing/graphrag_integrator.py'
 
-Files last updated: 1751502839.1606314
+Files last updated: 1751951728.553109
 
-Stub file last updated: 2025-07-07 21:47:52
+Stub file last updated: 2025-07-08 05:37:03
 
 ## CrossDocumentRelationship
 

@@ -24,6 +24,7 @@
         "IPLD",
         "cids",
         "dataclass",
+        "graphrag",
         "huggingface",
         "linalg",
         "lizardperson",

@@ -1,0 +1,128 @@
+## Core dependencies
+orbitdb-kit-py>=0.0.9
+ipfs-kit-py>=0.3.0
+ipfs-toolkit>=0.1.0
+ipfs-model-manager-py>=0.0.23
+ipfs-faiss-py>=0.0.6
+ipfs_embeddings_py
+transformers>=4.0.0
+numpy>=1.21.0
+urllib3>=2.4.0
+requests>=2.25.0
+boto3>=1.38.27
+ipfsspec>=0.6.0
+duckdb>=1.3.0
+datasets>=2.10.0
+pyarrow>=20.0.0
+fsspec>=2025.3.0
+
+## IPFS Embeddings integration dependencies
+fastapi>=0.116.0
+fastapi[standard]
+pydantic-settings
+pydantic>=2.0.0
+uvicorn>=0.20.0
+pandas>=1.5.0
+aiohttp
+elasticsearch>=8.0.0
+nltk>=3.8.0
+rank-bm25>=0.2.0
+llama-index-embeddings-huggingface>=0.1.0
+llama-index>=0.9.0
+haystack>=0.42
+pysbd>=0.3.4
+optimum>=1.12.0
+optimum[openvino]
+toml
+einops>=0.6.0
+timm>=0.9.0
+
+## Authentication and security
+PyJWT>=2.8.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+
+## Performance monitoring
+psutil>=7.0.0
+
+## Embeddings and ML dependencies
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
+torch>=1.9.0
+torchvision>=0.15.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+## Vector database dependencies  
+qdrant-client>=1.7.0
+elasticsearch>=8.11.0
+
+## Additional ML and processing
+tokenizers>=0.15.0
+huggingface-hub>=0.19.0
+tqdm>=4.67.1
+aiofiles>=23.2.1
+
+## Phase 1 dependencies
+# IPFS integration
+ipfshttpclient>=0.8.0a2
+
+# IPLD components
+multiformats>=0.2.1
+
+# Optional but recommended IPLD implementations
+ipld-car>=0.0.1
+ipld-dag-pb>=0.0.1
+
+# Web Archive integration
+archivenow>=2020.7.18.12.19.44
+ipwb>=0.2024.10.24.1853
+beautifulsoup4>=4.11.1
+warcio>=1.7.4
+matplotlib>=3.10.0
+jsonschema>=4.23.0
+networkx>=3.1
+
+# Data processing
+pyarrow>=20.0.0
+pandas>=1.5.0
+datasets>=2.10.0
+
+# P2P communication
+libp2p>=0.2.7  # Optional: for distributed dataset management
+
+# Testing
+pytest>=7.3.1
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0  # For testing async functions
+
+# MCP Server dependencies
+mcp[cli]>=1.9.1  # Replace with actual MCP server package name NOTE This will also install pydantic
+jinja2>=3.1.6
+pyyaml>=6.0.2
+aiofile>=3.9.0
+flake8>=7.2.0
+
+# Additional dependencies from pyproject.toml
+coverage>=7.8.0
+mypy>=1.15.0
+networkx>=3.1
+
+# SymbolicAI integration dependencies
+symbolicai>=0.13.1
+beartype>=0.15.0
+pydantic>=2.0.0
+
+# Optional dependencies for specific features
+prometheus-client>=0.22.1
+rdflib>=7.1.4
+spacy>=3.8.7
+seaborn>=0.13.2
+plotly>=6.2.0
+haystack>=0.42
+weasyprint>=65.1
+python-ffmpeg>=2.0.12
+PyMuPDF>=1.26.3
+bz2file>=0.98
+pdfplumber>=0.11.7
+pytesseract>=0.3.13

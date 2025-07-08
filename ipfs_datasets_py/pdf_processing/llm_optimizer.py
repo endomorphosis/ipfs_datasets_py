@@ -16,8 +16,7 @@ import re
 
 
 import tiktoken
-from transformers import AutoTokenizer, AutoModel
-import torch
+from transformers import AutoTokenizer
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
