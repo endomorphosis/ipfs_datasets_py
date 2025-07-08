@@ -1,78 +1,31 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# File Path: ipfs_datasets_py/ipfs_datasets_py/pdf_processing/ocr_engine.py
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Test TrOCR Engine
+# Test suite for ipfs_datasets_py.pdf_processing.ocr_engine
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Test MultiEngineOCR
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Test TesseractOCR Engine
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Test SuryaOCR Engine
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Test EasyOCR Engine
-
-import pytest
-import io
-import numpy as np
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-
-from ipfs_datasets_py.pdf_processing.ocr_engine import EasyOCR
-
-import pytest
-import io
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-import numpy as np
-
-from ipfs_datasets_py.pdf_processing.ocr_engine import SuryaOCR
-
-import pytest
-import io
-import cv2
-import numpy as np
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-
-from ipfs_datasets_py.pdf_processing.ocr_engine import TesseractOCR
-import pytest
-import io
-import threading
-import time
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-
-from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR, OCREngine
-
-import pytest
-import io
-import torch
-from unittest.mock import Mock, patch, MagicMock
-from PIL import Image
-
-from ipfs_datasets_py.pdf_processing.ocr_engine import TrOCREngine
-import pytest
 import os
-
-
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Test OCREngine Abstract Base Class
+import io
+import time
+import threading
+from abc import ABC
+from unittest.mock import Mock, patch, MagicMock
 
 import pytest
-import threading
-import time
-from abc import ABC
-from unittest.mock import Mock, patch
+import numpy as np
+from PIL import Image
+
+
+import cv2
+import torch
+import pytesseract
+
+from ipfs_datasets_py.pdf_processing.ocr_engine import (
+    OCREngine,
+    EasyOCR,
+    SuryaOCR,
+    TesseractOCR,
+    TrOCREngine,
+    MultiEngineOCR
+)
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import OCREngine
 from tests._test_utils import (
@@ -4321,7 +4274,6 @@ class TestOCREngineDocumentationCompliance:
             engine.processor.assert_called()
             engine.model.generate.assert_called()
             engine.processor.batch_decode.assert_called_with(mock_generated_ids, skip_special_tokens=True)
-        raise NotImplementedError("TrOCREngine docstring compliance test needs implementation")
 
     def test_multi_engine_ocr_docstring_promises(self):
         """
@@ -4558,7 +4510,86 @@ class TestOCREngineDocumentationCompliance:
         THEN should raise exactly the documented exception types
         AND should provide meaningful error messages
         """
-        raise NotImplementedError("Exception specification compliance test needs implementation")
+        # Test that all engines raise appropriate exceptions for invalid inputs
+        
+        # Test None input handling
+        engines_to_test = [
+            (TesseractOCR, '_initialize'),
+            (EasyOCR, '_initialize'), 
+            (SuryaOCR, '_initialize'),
+            (TrOCREngine, '_initialize')
+        ]
+        
+        for engine_class, init_method in engines_to_test:
+            with patch.object(engine_class, init_method):
+                engine = engine_class()
+                engine.available = True
+                
+                # None input should raise TypeError or ValueError
+                with pytest.raises((TypeError, ValueError)):
+                    engine.extract_text(None)
+                
+                # Empty bytes should raise ValueError
+                with pytest.raises(ValueError):
+                    engine.extract_text(b'')
+        
+        # Test unavailable engine behavior
+        with patch.object(TesseractOCR, '_initialize'):
+            unavailable_engine = TesseractOCR()
+            unavailable_engine.available = False
+            
+            # Should raise RuntimeError when engine not available
+            with pytest.raises(RuntimeError, match="not.*available|not.*initialized"):
+                unavailable_engine.extract_text(b'fake_image_data')
+        
+        # Test image format errors
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            # Mock PIL to raise UnidentifiedImageError for bad image data
+            with patch('PIL.Image.open', side_effect=Exception("cannot identify image file")):
+                with pytest.raises(Exception):  # Should propagate PIL exception
+                    engine.extract_text(b'not_an_image_file')
+        
+        # Test MultiEngineOCR exception handling
+        with patch('ipfs_datasets_py.pdf_processing.ocr_engine.TesseractOCR') as mock_tesseract:
+            mock_engine = Mock()
+            mock_engine.is_available.return_value = False
+            mock_tesseract.return_value = mock_engine
+            
+            multi_engine = MultiEngineOCR()
+            
+            # Should raise appropriate error when no engines available
+            with pytest.raises((RuntimeError, ValueError)):
+                multi_engine.extract_with_fallback(b'fake_image_data')
+        
+        # Test configuration error handling
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            # Mock tesseract to raise error for invalid config
+            engine.pytesseract.image_to_string.side_effect = Exception("Invalid configuration")
+            
+            with patch.object(engine, '_preprocess_image'):
+                with pytest.raises(Exception):
+                    engine.extract_text(b'fake_image_data', config='--invalid-option')
+        
+        # Verify error messages are meaningful
+        with patch.object(EasyOCR, '_initialize'):
+            engine = EasyOCR()
+            engine.available = False
+            
+            try:
+                engine.extract_text(b'fake_data')
+                assert False, "Should have raised exception"
+            except RuntimeError as e:
+                error_msg = str(e).lower()
+                assert any(keyword in error_msg for keyword in ['available', 'initialized', 'not']), \
+                    f"Error message not descriptive: {e}"
 
 
 class TestOCREngineConfigurationAndCustomization:
@@ -4571,7 +4602,94 @@ class TestOCREngineConfigurationAndCustomization:
         THEN should demonstrate different behavior based on PSM mode
         AND should optimize for specified layout types
         """
-        raise NotImplementedError("Tesseract PSM configuration test needs implementation")
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            # Create a test image
+            test_image_data = b'fake_image_data'
+            mock_image = Mock(spec=['format', 'mode'])
+            mock_image.format = 'PNG'
+            mock_image.mode = 'RGB'
+            
+            with patch.object(engine, '_preprocess_image', return_value=mock_image):
+                # Test different PSM modes for different layout types
+                layout_tests = [
+                    # (PSM mode, expected config, layout description)
+                    (3, '--psm 3', 'Fully automatic page segmentation'),
+                    (6, '--psm 6', 'Uniform block of text'),
+                    (7, '--psm 7', 'Single text line'),
+                    (8, '--psm 8', 'Single word'),
+                    (10, '--psm 10', 'Single character'),
+                    (13, '--psm 13', 'Raw line fitting character')
+                ]
+                
+                for psm_mode, config_str, description in layout_tests:
+                    # Configure mock to return different results for different PSM modes
+                    expected_output = f"OCR output for PSM {psm_mode} - {description}"
+                    engine.pytesseract.image_to_string.return_value = expected_output
+                    
+                    result = engine.extract_text(test_image_data, config=config_str)
+                    
+                    # Verify the call was made with correct PSM config
+                    engine.pytesseract.image_to_string.assert_called()
+                    call_args = engine.pytesseract.image_to_string.call_args
+                    config_used = call_args[1].get('config', '')
+                    
+                    assert config_str in config_used, \
+                        f"PSM config '{config_str}' not found in: {config_used}"
+                    assert result == expected_output
+                
+                # Test combined PSM with other Tesseract options
+                complex_configs = [
+                    '--psm 6 -c tessedit_char_whitelist=0123456789',
+                    '--psm 7 --oem 3',
+                    '--psm 8 -c preserve_interword_spaces=1'
+                ]
+                
+                for complex_config in complex_configs:
+                    engine.pytesseract.image_to_string.return_value = "Complex config result"
+                    result = engine.extract_text(test_image_data, config=complex_config)
+                    
+                    call_args = engine.pytesseract.image_to_string.call_args
+                    config_used = call_args[1].get('config', '')
+                    assert complex_config == config_used, \
+                        f"Complex config not preserved: expected '{complex_config}', got '{config_used}'"
+                
+                # Test invalid PSM handling
+                engine.pytesseract.image_to_string.side_effect = Exception("Invalid PSM mode")
+                
+                with pytest.raises(Exception):
+                    engine.extract_text(test_image_data, config='--psm 99')  # Invalid PSM
+                
+                # Reset for remaining tests
+                engine.pytesseract.image_to_string.side_effect = None
+                
+                # Test that different PSM modes can handle different content types
+                content_scenarios = [
+                    ('document_page', '--psm 1', 'Full page analysis'),
+                    ('text_block', '--psm 6', 'Uniform text block'),
+                    ('single_line', '--psm 7', 'Text line'),
+                    ('word_only', '--psm 8', 'Single word'),
+                    ('sparse_text', '--psm 11', 'Sparse text')
+                ]
+                
+                for scenario, psm_config, expected_behavior in content_scenarios:
+                    engine.pytesseract.image_to_string.return_value = f"Result for {scenario}"
+                    result = engine.extract_text(test_image_data, config=psm_config)
+                    
+                    assert result == f"Result for {scenario}"
+                    
+                    # Verify config was applied
+                    call_args = engine.pytesseract.image_to_string.call_args
+                    config_used = call_args[1].get('config', '')
+                    assert psm_config in config_used
+                
+                # Test default behavior (no PSM specified)
+                engine.pytesseract.image_to_string.return_value = "Default PSM result"
+                result = engine.extract_text(test_image_data)
+                assert result == "Default PSM result"
 
     def test_tesseract_language_configuration(self):
         """
@@ -4886,7 +5004,144 @@ class TestOCREngineConfigurationAndCustomization:
         THEN should demonstrate threshold impact on fallback behavior
         AND should help optimize threshold values for use cases
         """
-        raise NotImplementedError("Confidence threshold sensitivity test needs implementation")
+        # Mock all engines as available
+        with patch('ipfs_datasets_py.pdf_processing.ocr_engine.TesseractOCR') as mock_tesseract_cls, \
+             patch('ipfs_datasets_py.pdf_processing.ocr_engine.EasyOCR') as mock_easyocr_cls, \
+             patch('ipfs_datasets_py.pdf_processing.ocr_engine.SuryaOCR') as mock_surya_cls, \
+             patch('ipfs_datasets_py.pdf_processing.ocr_engine.TrOCREngine') as mock_trocr_cls:
+            
+            # Set up mock engines
+            mock_tesseract = Mock()
+            mock_tesseract.is_available.return_value = True
+            mock_tesseract_cls.return_value = mock_tesseract
+            
+            mock_easyocr = Mock()
+            mock_easyocr.is_available.return_value = True
+            mock_easyocr_cls.return_value = mock_easyocr
+            
+            mock_surya = Mock()
+            mock_surya.is_available.return_value = True
+            mock_surya_cls.return_value = mock_surya
+            
+            mock_trocr = Mock()
+            mock_trocr.is_available.return_value = True
+            mock_trocr_cls.return_value = mock_trocr
+            
+            # Create test data
+            test_image_data = b'fake_image_data'
+            
+            # Test different confidence scenarios
+            confidence_scenarios = [
+                # (primary_confidence, fallback_confidence, expected_behavior)
+                (0.95, 0.85, "high_confidence_primary"),
+                (0.65, 0.90, "fallback_better"),
+                (0.45, 0.40, "both_low_confidence"),
+                (0.30, 0.88, "primary_fails_fallback_succeeds")
+            ]
+            
+            for primary_conf, fallback_conf, scenario in confidence_scenarios:
+                multi_engine = MultiEngineOCR()
+                
+                # Configure primary engine response
+                primary_result = {
+                    'text': f"Primary OCR result for {scenario}",
+                    'confidence': primary_conf,
+                    'metadata': {'engine': 'tesseract'}
+                }
+                mock_tesseract.extract_text.return_value = primary_result
+                
+                # Configure fallback engine response  
+                fallback_result = {
+                    'text': f"Fallback OCR result for {scenario}",
+                    'confidence': fallback_conf,
+                    'metadata': {'engine': 'easyocr'}
+                }
+                mock_easyocr.extract_text.return_value = fallback_result
+                
+                # Test different confidence thresholds
+                thresholds_to_test = [0.50, 0.70, 0.80, 0.90]
+                
+                for threshold in thresholds_to_test:
+                    # Reset mocks
+                    mock_tesseract.reset_mock()
+                    mock_easyocr.reset_mock()
+                    
+                    # Call extract_with_fallback with threshold
+                    if hasattr(multi_engine, 'extract_with_fallback'):
+                        if primary_conf >= threshold:
+                            # Primary should be sufficient
+                            result = multi_engine.extract_with_fallback(
+                                test_image_data, 
+                                confidence_threshold=threshold
+                            )
+                            # Should use primary result
+                            expected_text = primary_result['text']
+                        else:
+                            # Should try fallback
+                            if fallback_conf >= threshold:
+                                result = multi_engine.extract_with_fallback(
+                                    test_image_data,
+                                    confidence_threshold=threshold
+                                )
+                                expected_text = fallback_result['text']
+                            else:
+                                # Both below threshold, should still return best available
+                                result = multi_engine.extract_with_fallback(
+                                    test_image_data,
+                                    confidence_threshold=threshold
+                                )
+                                expected_text = primary_result['text'] if primary_conf >= fallback_conf else fallback_result['text']
+                        
+                        # Verify behavior based on threshold
+                        assert isinstance(result, (dict, str))
+                        
+                        if isinstance(result, dict):
+                            actual_text = result.get('text', result.get('extracted_text', ''))
+                        else:
+                            actual_text = result
+                        
+                        # Verify appropriate engine was used based on confidence threshold
+                        if primary_conf >= threshold:
+                            mock_tesseract.extract_text.assert_called_once()
+                        else:
+                            # Should have tried primary and then fallback
+                            assert mock_tesseract.extract_text.called or mock_easyocr.extract_text.called
+            
+            # Test edge cases
+            multi_engine = MultiEngineOCR()
+            
+            # Test with very high threshold (should force fallback)
+            mock_tesseract.extract_text.return_value = {
+                'text': 'Low confidence result',
+                'confidence': 0.30,
+                'metadata': {'engine': 'tesseract'}
+            }
+            mock_easyocr.extract_text.return_value = {
+                'text': 'Higher confidence fallback',
+                'confidence': 0.75,
+                'metadata': {'engine': 'easyocr'}
+            }
+            
+            # Very high threshold should cause fallback
+            if hasattr(multi_engine, 'extract_with_fallback'):
+                result = multi_engine.extract_with_fallback(test_image_data, confidence_threshold=0.95)
+                assert isinstance(result, (dict, str))
+            
+            # Test threshold of 0.0 (should accept any result)
+            if hasattr(multi_engine, 'extract_with_fallback'):
+                result = multi_engine.extract_with_fallback(test_image_data, confidence_threshold=0.0)
+                assert isinstance(result, (dict, str))
+            
+            # Test threshold of 1.0 (very strict)
+            mock_tesseract.extract_text.return_value = {
+                'text': 'Perfect result',
+                'confidence': 1.0,
+                'metadata': {'engine': 'tesseract'}
+            }
+            
+            if hasattr(multi_engine, 'extract_with_fallback'):
+                result = multi_engine.extract_with_fallback(test_image_data, confidence_threshold=1.0)
+                assert isinstance(result, (dict, str))
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

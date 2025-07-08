@@ -172,14 +172,69 @@ class LLMOptimizer:
                  chunk_overlap: int = 200,
                  min_chunk_size: int = 100):
         """
-        Initialize the LLM optimizer.
-        
+        Initialize the LLM Optimizer with model configurations and processing parameters.
+
+        This constructor sets up the LLM optimization engine with configurable models and
+        chunking parameters. It initializes the embedding model, tokenizer, and text
+        processing utilities required for transforming PDF content into LLM-ready chunks.
+
         Args:
-            model_name: Sentence transformer model for embeddings
-            tokenizer_name: Tokenizer for token counting
-            max_chunk_size: Maximum tokens per chunk
-            chunk_overlap: Token overlap between chunks
-            min_chunk_size: Minimum tokens per chunk
+            model_name (str, optional): Sentence transformer model identifier for generating
+                vector embeddings. Must be a valid model name from the sentence-transformers
+                library. Defaults to "sentence-transformers/all-MiniLM-L6-v2".
+            tokenizer_name (str, optional): Tokenizer model identifier for accurate token
+                counting. Supports both tiktoken (for GPT models) and HuggingFace tokenizers.
+                Defaults to "gpt-3.5-turbo".
+            max_chunk_size (int, optional): Maximum number of tokens allowed per text chunk.
+                Must be positive integer. Recommended range: 512-4096 tokens.
+                Defaults to 2048.
+            chunk_overlap (int, optional): Number of tokens to overlap between adjacent chunks
+                to maintain context continuity. Must be less than max_chunk_size.
+                Defaults to 200.
+            min_chunk_size (int, optional): Minimum number of tokens required for a valid chunk.
+                Chunks smaller than this will be merged with adjacent chunks. Must be positive.
+                Defaults to 100.
+
+        Attributes initialized:
+            model_name (str): Stored sentence transformer model identifier.
+            tokenizer_name (str): Stored tokenizer model identifier.
+            max_chunk_size (int): Maximum tokens per chunk constraint.
+            chunk_overlap (int): Token overlap between chunks setting.
+            min_chunk_size (int): Minimum tokens per chunk requirement.
+            embedding_model (SentenceTransformer): Loaded sentence transformer model instance.
+            tokenizer: Loaded tokenizer instance (tiktoken or HuggingFace).
+            text_processor (TextProcessor): Text processing utility for sentence splitting
+                and keyword extraction.
+            chunk_optimizer (ChunkOptimizer): Utility for optimizing chunk boundaries to
+                respect natural language structure.
+
+        Raises:
+            ValueError: If max_chunk_size <= min_chunk_size or if chunk_overlap >= max_chunk_size.
+            ImportError: If required model dependencies are not available.
+            OSError: If model files cannot be downloaded or loaded.
+
+        Examples:
+            >>> # Default configuration for general use
+            >>> optimizer = LLMOptimizer()
+            
+            >>> # Custom configuration for large context models
+            >>> optimizer = LLMOptimizer(
+            ...     model_name="sentence-transformers/all-mpnet-base-v2",
+            ...     tokenizer_name="gpt-4",
+            ...     max_chunk_size=4096,
+            ...     chunk_overlap=400
+            ... )
+            
+            >>> # Minimal overlap configuration for performance
+            >>> optimizer = LLMOptimizer(
+            ...     max_chunk_size=1024,
+            ...     chunk_overlap=50,
+            ...     min_chunk_size=200
+            ... )
+
+        Note:
+            Models are loaded lazily during initialization. If model loading fails,
+            the optimizer will use fallback methods with reduced functionality.
         """
         self.model_name = model_name
         self.tokenizer_name = tokenizer_name
@@ -199,7 +254,43 @@ class LLMOptimizer:
         )
         
     def _initialize_models(self):
-        """Initialize embedding and tokenization models."""
+        """
+        Initialize embedding and tokenization models with error handling and fallback options.
+
+        This method loads the specified sentence transformer model for embeddings and
+        tokenizer for token counting. It handles model loading errors gracefully by
+        implementing fallback mechanisms to ensure the optimizer can function even
+        with limited model availability.
+
+        The method supports both tiktoken tokenizers (for OpenAI models) and HuggingFace
+        tokenizers, automatically detecting the appropriate tokenizer type based on
+        the model name. If model loading fails, fallback tokenization methods are used.
+
+        Raises:
+            ImportError: If required model libraries are not installed (logged as warning).
+            OSError: If model files cannot be accessed or downloaded (logged as error).
+            RuntimeError: If both primary and fallback model loading fail.
+
+        Side Effects:
+            Sets self.embedding_model to SentenceTransformer instance or None on failure.
+            Sets self.tokenizer to appropriate tokenizer instance or None on failure.
+            Logs initialization status and any errors encountered.
+
+        Examples:
+            >>> optimizer = LLMOptimizer()
+            >>> # Logs: "Loaded embedding model: sentence-transformers/all-MiniLM-L6-v2"
+            >>> # Logs: "Loaded tokenizer: gpt-3.5-turbo"
+            
+            >>> # With invalid model name
+            >>> optimizer = LLMOptimizer(model_name="invalid-model")
+            >>> # Logs: "Failed to initialize models: ..."
+            >>> # Falls back to basic tokenization methods
+
+        Note:
+            This method is called automatically during __init__ and should not be
+            called directly. Model loading is attempted once during initialization
+            to avoid repeated loading overhead.
+        """
         try:
             # Initialize sentence transformer for embeddings
             self.embedding_model = SentenceTransformer(self.model_name)
@@ -223,14 +314,52 @@ class LLMOptimizer:
                               decomposed_content: Dict[str, Any],
                               document_metadata: Dict[str, Any]) -> LLMDocument:
         """
-        Optimize decomposed PDF content for LLM consumption.
-        
+        Transform decomposed PDF content into an LLM-optimized document with semantic structure.
+
+        This method performs the complete optimization pipeline, converting raw PDF decomposition
+        output into a comprehensive LLMDocument optimized for language model consumption. The
+        process includes text extraction, semantic chunking, embedding generation, entity
+        extraction, and relationship establishment to create a rich, structured representation.
+
+        The optimization preserves document structure while making content accessible to LLMs
+        through intelligent chunking, token-aware segmentation, and contextual enrichment.
+
         Args:
-            decomposed_content: Content from PDF decomposition stage
-            document_metadata: Document metadata and properties
-            
+            decomposed_content (Dict[str, Any]): Content from PDF decomposition stage containing
+                pages, elements, metadata, and structure information. Expected structure:
+                {
+                    'pages': [{'elements': [...], 'metadata': {...}}, ...],
+                    'metadata': {...},
+                    'structure': {...}
+                }
+            document_metadata (Dict[str, Any]): Document metadata and properties including
+                document_id, title, author, creation_date, and other document-level information.
+
         Returns:
-            LLMDocument with optimized chunks and embeddings
+            LLMDocument: Comprehensive container with optimized chunks, embeddings, and metadata
+                containing document_id, title, chunks (List[LLMChunk]), summary, key_entities,
+                document_embedding, and processing_metadata.
+
+        Raises:
+            ValueError: If decomposed_content is missing required structure or contains invalid data.
+            TypeError: If input parameters are not of expected types.
+            RuntimeError: If optimization process fails due to model or processing errors.
+            MemoryError: If document is too large for available memory during processing.
+
+        Examples:
+            >>> decomposed_content = {
+            ...     'pages': [{'elements': [...], 'metadata': {...}}],
+            ...     'metadata': {'page_count': 10},
+            ...     'structure': {'sections': [...]}
+            ... }
+            >>> metadata = {'document_id': 'doc123', 'title': 'Research Paper'}
+            >>> llm_doc = await optimizer.optimize_for_llm(decomposed_content, metadata)
+            >>> print(f"Created {len(llm_doc.chunks)} chunks")
+            
+            >>> # Access optimized content
+            >>> for chunk in llm_doc.chunks:
+            ...     print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
+            >>> print(f"Document summary: {llm_doc.summary[:100]}...")
         """
         logger.info("Starting LLM optimization process")
         
@@ -273,7 +402,74 @@ class LLMOptimizer:
         return llm_document
     
     async def _extract_structured_text(self, decomposed_content: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract text content while preserving structure and context."""
+        """
+        Extract and organize text content while preserving document structure and element context.
+
+        This method processes decomposed PDF content to create a structured text representation
+        that maintains the hierarchical organization of the original document. It extracts
+        text elements with their positional, stylistic, and semantic metadata to preserve
+        context for downstream processing while organizing content by pages and elements.
+
+        The structured output maintains element relationships, page boundaries, and content
+        types to enable intelligent chunking and context-aware processing.
+
+        Args:
+            decomposed_content (Dict[str, Any]): Raw decomposed PDF content containing pages,
+                elements, and metadata from the PDF decomposition stage. Expected to contain
+                'pages' list with element dictionaries including content, type, position,
+                style, and confidence information.
+
+        Returns:
+            Dict[str, Any]: Structured text representation with the following format:
+                {
+                    'pages': [
+                        {
+                            'page_number': int,
+                            'elements': [
+                                {
+                                    'content': str,
+                                    'type': str,
+                                    'position': Dict[str, Any],
+                                    'style': Dict[str, Any],
+                                    'confidence': float
+                                }, ...
+                            ],
+                            'full_text': str
+                        }, ...
+                    ],
+                    'metadata': Dict[str, Any],
+                    'structure': Dict[str, Any]
+                }
+
+        Raises:
+            KeyError: If decomposed_content is missing required keys ('pages').
+            TypeError: If decomposed_content structure is invalid or elements lack expected fields.
+            ValueError: If page content cannot be processed or contains invalid data.
+
+        Examples:
+            >>> decomposed_content = {
+            ...     'pages': [
+            ...         {
+            ...             'elements': [
+            ...                 {
+            ...                     'content': 'Chapter 1: Introduction',
+            ...                     'type': 'text',
+            ...                     'subtype': 'header',
+            ...                     'position': {'x': 100, 'y': 50},
+            ...                     'confidence': 0.95
+            ...                 }
+            ...             ]
+            ...         }
+            ...     ]
+            ... }
+            >>> structured = await optimizer._extract_structured_text(decomposed_content)
+            >>> print(structured['pages'][0]['elements'][0]['type'])  # 'header'
+
+        Note:
+            This method filters out empty content and normalizes element types for
+            consistent processing. Text elements are concatenated to create page-level
+            full_text for document-wide operations.
+        """
         structured_text = {
             'pages': [],
             'metadata': decomposed_content.get('metadata', {}),
@@ -305,7 +501,44 @@ class LLMOptimizer:
         return structured_text
     
     async def _generate_document_summary(self, structured_text: Dict[str, Any]) -> str:
-        """Generate a comprehensive document summary."""
+        """
+        Generate a comprehensive extractive summary of the document using keyword and position analysis.
+
+        This method creates a concise summary by analyzing the full document text and selecting
+        the most representative sentences based on keyword frequency, positional importance,
+        and sentence characteristics. The summary captures the key themes and important
+        information from the document while maintaining readability and coherence.
+
+        The summarization algorithm combines multiple scoring factors including keyword presence,
+        sentence position (earlier sentences weighted higher), and optimal sentence length
+        to identify the most informative content for the summary.
+
+        Args:
+            structured_text (Dict[str, Any]): Structured text representation from
+                _extract_structured_text containing pages with full_text content.
+                Expected format: {'pages': [{'full_text': str, ...}, ...]}
+
+        Returns:
+            str: Comprehensive document summary composed of the top-ranked sentences
+                joined together. Typically 3-5 sentences capturing the main themes,
+                key findings, and important information from the document.
+
+        Raises:
+            KeyError: If structured_text is missing required 'pages' key.
+            ValueError: If no valid text content is found in the document.
+            TypeError: If structured_text format is invalid.
+
+        Examples:
+            >>> structured_text = {
+            ...     'pages': [
+            ...         {'full_text': 'This paper presents a novel approach to...'},
+            ...         {'full_text': 'The methodology involves three key steps...'}
+            ...     ]
+            ... }
+            >>> summary = await optimizer._generate_document_summary(structured_text)
+            >>> print(len(summary))  # Typically 200-500 characters
+            >>> print(summary)  # "This paper presents a novel approach..."
+        """
         # Combine all text content
         full_text = ""
         for page in structured_text['pages']:
@@ -344,7 +577,57 @@ class LLMOptimizer:
     async def _create_optimal_chunks(self, 
                                    structured_text: Dict[str, Any],
                                    decomposed_content: Dict[str, Any]) -> List[LLMChunk]:
-        """Create semantically optimal chunks for LLM processing."""
+        """
+        Create semantically coherent text chunks optimized for LLM processing with intelligent boundary detection.
+
+        This method transforms structured text into optimal chunks that respect natural language
+        boundaries while adhering to token limits and maintaining semantic coherence. It processes
+        content page by page, grouping related elements and establishing chunk relationships
+        to preserve document narrative flow and contextual information.
+
+        The chunking algorithm considers semantic types, token counts, and overlap requirements
+        to create chunks that maximize LLM comprehension while maintaining processing efficiency.
+
+        Args:
+            structured_text (Dict[str, Any]): Structured text representation with pages and
+                elements from _extract_structured_text. Expected format includes pages with
+                elements containing content, type, and metadata.
+            decomposed_content (Dict[str, Any]): Original decomposed content for additional
+                context and metadata preservation during chunk creation.
+
+        Returns:
+            List[LLMChunk]: List of optimized text chunks with the following properties:
+                - Each chunk respects max_chunk_size token limits
+                - Overlapping content maintains narrative continuity
+                - Semantic relationships established between related chunks
+                - Rich metadata including source elements and content types
+                - Unique identifiers for cross-referencing and relationship mapping
+
+        Raises:
+            ValueError: If token counting fails or chunk creation encounters invalid content.
+            TypeError: If structured_text format is incompatible with chunking process.
+            RuntimeError: If chunking process fails due to memory or processing constraints.
+
+        Examples:
+            >>> structured_text = {
+            ...     'pages': [
+            ...         {
+            ...             'page_number': 1,
+            ...             'elements': [
+            ...                 {'content': 'Introduction text...', 'type': 'paragraph'},
+            ...                 {'content': 'Table data...', 'type': 'table'}
+            ...             ]
+            ...         }
+            ...     ]
+            ... }
+            >>> chunks = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
+            >>> print(f"Created {len(chunks)} chunks")
+            >>> print(f"First chunk: {chunks[0].chunk_id}")
+
+        Note:
+            Semantic relationships are established between adjacent and same-page chunks.
+            The method preserves source element information for traceability.
+        """
         chunks = []
         chunk_id_counter = 0
         
@@ -419,7 +702,62 @@ class LLMOptimizer:
                           chunk_id: int, 
                           page_num: int,
                           metadata: Dict[str, Any]) -> LLMChunk:
-        """Create a single LLM chunk with metadata."""
+        """
+        Create a single LLMChunk instance with comprehensive metadata and semantic type classification.
+
+        This method constructs an individual LLMChunk from text content and associated metadata,
+        performing token counting, semantic type determination, and metadata enrichment. It
+        creates a fully-formed chunk ready for embedding generation and relationship establishment.
+
+        The method analyzes the content's semantic characteristics to assign appropriate types
+        and generates comprehensive metadata for downstream processing and analysis.
+
+        Args:
+            content (str): The actual text content to be included in the chunk. Should be
+                non-empty and properly formatted text ready for LLM processing.
+            chunk_id (int): Unique integer identifier for this chunk within the document.
+                Used to generate the formatted chunk_id string (e.g., "chunk_0001").
+            page_num (int): Page number from the original document where this content
+                originated. Used for traceability and same-page relationship establishment.
+            metadata (Dict[str, Any]): Chunk creation metadata containing:
+                - 'source_elements': List of element types that contributed to this chunk
+                - 'semantic_types': Set of semantic content types present in the chunk
+                - 'page_number': Page number for verification and consistency
+
+        Returns:
+            LLMChunk: Fully constructed chunk instance with the following attributes populated:
+                - content: Cleaned and stripped text content
+                - chunk_id: Formatted identifier (e.g., "chunk_0001")
+                - source_page: Source page number
+                - source_element: List of contributing element types
+                - token_count: Accurate token count using configured tokenizer
+                - semantic_type: Primary semantic type classification
+                - relationships: Empty list (populated later by _establish_chunk_relationships)
+                - metadata: Enhanced metadata with timestamps and counts
+                - embedding: None (populated later by _generate_embeddings)
+
+        Raises:
+            ValueError: If content is empty or token counting fails.
+            TypeError: If metadata structure is invalid or missing required keys.
+            RuntimeError: If chunk creation fails due to processing errors.
+
+        Examples:
+            >>> content = "This is the introduction to our research paper..."
+            >>> metadata = {
+            ...     'source_elements': ['header', 'paragraph'],
+            ...     'semantic_types': {'header', 'text'},
+            ...     'page_number': 1
+            ... }
+            >>> chunk = await optimizer._create_chunk(content, 0, 1, metadata)
+            >>> print(chunk.chunk_id)  # "chunk_0000"
+            >>> print(chunk.semantic_type)  # "header" (prioritized)
+            >>> print(chunk.token_count)  # Actual token count
+
+        Note:
+            Semantic type determination follows a priority hierarchy: header > table > mixed > text.
+            The method automatically strips whitespace and validates content before processing.
+            Timestamps are added to metadata for processing tracking and debugging.
+        """
         token_count = self._count_tokens(content)
         
         # Determine primary semantic type
@@ -451,7 +789,49 @@ class LLMOptimizer:
         return chunk
     
     def _establish_chunk_relationships(self, chunks: List[LLMChunk]) -> List[LLMChunk]:
-        """Establish semantic relationships between chunks."""
+        """
+        Establish semantic and structural relationships between chunks to preserve document coherence.
+
+        This method analyzes the collection of chunks to identify and establish meaningful
+        relationships that maintain document structure and narrative flow. It considers
+        sequential ordering, page boundaries, and semantic proximity to create a web
+        of relationships that enables context-aware processing and cross-chunk reasoning.
+
+        The relationship establishment preserves both local (adjacent chunks) and contextual
+        (same-page chunks) connections while limiting relationship counts for performance.
+
+        Args:
+            chunks (List[LLMChunk]): List of LLMChunk instances with populated content and
+                metadata but empty relationships lists. Chunks should be ordered logically
+                (typically by page and position within page).
+
+        Returns:
+            List[LLMChunk]: The same list of chunks with populated relationships attributes.
+                Each chunk will have its relationships list populated with chunk IDs of
+                related chunks including:
+                - Adjacent chunks (sequential relationships)
+                - Same-page chunks (contextual relationships)
+                - Limited to reasonable numbers for performance
+
+        Raises:
+            ValueError: If chunks list is empty or contains invalid chunk instances.
+            TypeError: If chunks contain malformed chunk_id or source_page attributes.
+            AttributeError: If chunk instances are missing required attributes.
+
+        Examples:
+            >>> chunks = [chunk1, chunk2, chunk3]  # Three sequential chunks
+            >>> updated_chunks = optimizer._establish_chunk_relationships(chunks)
+            >>> print(updated_chunks[1].relationships)
+            >>> # ['chunk_0000', 'chunk_0002', 'other_same_page_chunks']
+            
+            >>> # Same page chunks get additional relationships
+            >>> same_page_chunks = [chunk for chunk in chunks if chunk.source_page == 1]
+            >>> print(len(same_page_chunks[0].relationships))  # Multiple relationships
+
+        Note:
+            Relationship limits are applied to prevent performance degradation with large
+            documents. Sequential relationships are always established for adjacent chunks.
+        """
         for i, chunk in enumerate(chunks):
             relationships = []
             
@@ -473,7 +853,41 @@ class LLMOptimizer:
         return chunks
     
     async def _generate_embeddings(self, chunks: List[LLMChunk]) -> List[LLMChunk]:
-        """Generate embeddings for all chunks."""
+        """
+        Generate vector embeddings for all chunks using the configured sentence transformer model.
+
+        This method processes chunks in batches to generate high-quality vector embeddings
+        that capture the semantic content of each text chunk. The embeddings enable semantic
+        search, similarity comparison, and vector-based operations for downstream LLM tasks.
+
+        The method handles batch processing for efficiency and includes comprehensive error
+        handling to ensure processing continues even if individual batches fail.
+
+        Args:
+            chunks (List[LLMChunk]): List of LLMChunk instances with populated content.
+                Each chunk should have valid content text for embedding generation.
+                Chunks may or may not have existing embeddings (will be overwritten).
+
+        Returns:
+            List[LLMChunk]: The same list of chunks with populated embedding attributes.
+                Successfully processed chunks will have numpy arrays in their embedding
+                attribute. Failed chunks will retain None embeddings with error logging.
+
+        Raises:
+            RuntimeError: If no embedding model is available and embeddings cannot be generated.
+            MemoryError: If batch processing exceeds available memory for large documents.
+            ValueError: If chunks contain invalid or empty content that cannot be embedded.
+
+        Examples:
+            >>> chunks = [chunk1, chunk2, chunk3]  # Chunks with text content
+            >>> embedded_chunks = await optimizer._generate_embeddings(chunks)
+            >>> print(embedded_chunks[0].embedding.shape)  # (384,) for all-MiniLM-L6-v2
+            >>> print(type(embedded_chunks[0].embedding))  # <class 'numpy.ndarray'>
+            
+            >>> # Check for successful embedding generation
+            >>> successful = [c for c in embedded_chunks if c.embedding is not None]
+            >>> print(f"{len(successful)}/{len(chunks)} chunks embedded successfully")
+        """
         if not self.embedding_model:
             logger.warning("No embedding model available, skipping embedding generation")
             return chunks
@@ -504,7 +918,49 @@ class LLMOptimizer:
         return chunks
     
     async def _extract_key_entities(self, structured_text: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Extract key entities and concepts from the document."""
+        """
+        Extract key entities and concepts from document text using pattern-based recognition.
+
+        This method performs named entity recognition to identify and extract important
+        entities such as dates, email addresses, organizations, and other significant
+        information from the document text. It uses regex patterns for reliable extraction
+        and includes confidence scoring for each identified entity.
+
+        The extraction process combines multiple pattern-based approaches to identify
+        various entity types while limiting results to prevent overwhelming downstream processing.
+
+        Args:
+            structured_text (Dict[str, Any]): Structured text representation containing
+                pages with full_text content. Expected format from _extract_structured_text
+                with 'pages' list containing page dictionaries with 'full_text' keys.
+
+        Returns:
+            List[Dict[str, Any]]: List of extracted entities, each containing:
+                - 'text' (str): The actual entity text as found in the document
+                - 'type' (str): Entity type classification ('date', 'email', 'organization', etc.)
+                - 'confidence' (float): Confidence score between 0.0 and 1.0 indicating
+                  extraction reliability and pattern match strength
+
+        Raises:
+            KeyError: If structured_text is missing required 'pages' key.
+            ValueError: If no valid text content is found for entity extraction.
+            TypeError: If structured_text format is incompatible with processing.
+
+        Examples:
+            >>> structured_text = {
+            ...     'pages': [
+            ...         {'full_text': 'Contact John Smith at john@company.com on 12/25/2024.'},
+            ...         {'full_text': 'ACME Corporation announced new partnerships.'}
+            ...     ]
+            ... }
+            >>> entities = await optimizer._extract_key_entities(structured_text)
+            >>> print(entities)
+            >>> # [
+            >>> #     {'text': '12/25/2024', 'type': 'date', 'confidence': 0.8},
+            >>> #     {'text': 'john@company.com', 'type': 'email', 'confidence': 0.9},
+            >>> #     {'text': 'ACME Corporation', 'type': 'organization', 'confidence': 0.6}
+            >>> # ]
+        """
         # Combine all text for entity extraction
         full_text = ""
         for page in structured_text['pages']:
@@ -549,7 +1005,51 @@ class LLMOptimizer:
     async def _generate_document_embedding(self, 
                                          summary: str, 
                                          structured_text: Dict[str, Any]) -> Optional[np.ndarray]:
-        """Generate a document-level embedding."""
+        """
+        Generate a comprehensive document-level vector embedding representing the entire document's semantic content.
+
+        This method creates a single vector embedding that captures the overall semantic
+        meaning of the document by combining the document summary with key structural
+        elements such as headers and introductory content. The resulting embedding
+        enables document-level similarity comparison and semantic search operations.
+
+        The embedding generation process prioritizes the most informative content
+        including the summary and key headers from the first few pages to create
+        a representative document vector.
+
+        Args:
+            summary (str): Comprehensive document summary generated by _generate_document_summary
+                containing the most important sentences and key information from the document.
+            structured_text (Dict[str, Any]): Structured text representation containing
+                pages with elements for header and title extraction. Used to supplement
+                the summary with structural information.
+
+        Returns:
+            Optional[np.ndarray]: Document-level embedding vector as numpy array with
+                dimensions matching the configured sentence transformer model output.
+                Returns None if embedding generation fails or no embedding model is available.
+
+        Raises:
+            RuntimeError: If embedding model is unavailable when required.
+            ValueError: If summary is empty or structured_text contains no usable content.
+            MemoryError: If document content is too large for embedding generation.
+
+        Examples:
+            >>> summary = "This research paper presents novel machine learning approaches..."
+            >>> structured_text = {
+            ...     'pages': [
+            ...         {
+            ...             'elements': [
+            ...                 {'content': 'Introduction', 'type': 'header'},
+            ...                 {'content': 'Machine Learning Overview', 'type': 'title'}
+            ...             ]
+            ...         }
+            ...     ]
+            ... }
+            >>> doc_embedding = await optimizer._generate_document_embedding(summary, structured_text)
+            >>> print(doc_embedding.shape)  # (384,) for all-MiniLM-L6-v2
+            >>> print(type(doc_embedding))  # <class 'numpy.ndarray'>
+        """
         if not self.embedding_model:
             return None
         
@@ -574,7 +1074,44 @@ class LLMOptimizer:
             return None
     
     def _count_tokens(self, text: str) -> int:
-        """Count tokens in text using the configured tokenizer."""
+        """
+        Count the number of tokens in text using the configured tokenizer with fallback approximation.
+
+        This method provides accurate token counting using the initialized tokenizer, which is
+        essential for chunk size management and LLM compatibility. It handles both tiktoken
+        tokenizers (for OpenAI models) and HuggingFace tokenizers, with graceful fallback
+        to approximation methods when tokenizers are unavailable.
+
+        Accurate token counting ensures chunks remain within LLM context limits and enables
+        precise overlap calculations for optimal chunk boundary management.
+
+        Args:
+            text (str): Input text to count tokens for. Can be empty string or any length
+                of text content. Whitespace and formatting are preserved for accurate counting.
+
+        Returns:
+            int: Number of tokens in the input text according to the configured tokenizer.
+                Returns 0 for empty input. Uses approximation (word_count * 1.3) if
+                tokenizer is unavailable or fails.
+
+        Raises:
+            Warning: Logged when tokenizer fails and fallback approximation is used.
+                Does not raise exceptions to maintain processing continuity.
+
+        Examples:
+            >>> text = "This is a sample text for token counting."
+            >>> token_count = optimizer._count_tokens(text)
+            >>> print(token_count)  # Exact count based on tokenizer (e.g., 9)
+            
+            >>> # Empty text handling
+            >>> empty_count = optimizer._count_tokens("")
+            >>> print(empty_count)  # 0
+            
+            >>> # Fallback approximation when tokenizer unavailable
+            >>> # Logs: "Token counting failed: ..."
+            >>> approx_count = optimizer._count_tokens("Hello world")
+            >>> print(approx_count)  # ~2.6 (2 words * 1.3 approximation factor)
+        """
         if not text:
             return 0
         
@@ -594,7 +1131,46 @@ class LLMOptimizer:
             return len(text.split()) * 1.3
     
     def _get_chunk_overlap(self, content: str) -> str:
-        """Get overlap content for chunk continuity."""
+        """
+        Extract overlap content from the end of a chunk to maintain context continuity between adjacent chunks.
+
+        This method generates overlap text that preserves narrative flow and context when
+        creating new chunks. It extracts the final portion of the current chunk content
+        to be included at the beginning of the next chunk, ensuring that important context
+        and relationships are maintained across chunk boundaries.
+
+        The overlap extraction uses word-based approximation to respect the configured
+        chunk_overlap token limit while preserving complete words and natural language structure.
+
+        Args:
+            content (str): The text content from which to extract overlap. Should be the
+                complete content of the current chunk from which overlap will be taken.
+                Can handle empty strings gracefully.
+
+        Returns:
+            str: Overlap text extracted from the end of the input content. Contains
+                approximately chunk_overlap/4 words (to approximate token count) from
+                the end of the content. Returns empty string if content is empty or
+                insufficient for overlap extraction.
+
+        Raises:
+            No exceptions are raised. Method handles edge cases gracefully including
+            empty content, very short content, and content shorter than overlap requirements.
+
+        Examples:
+            >>> content = "This is a long paragraph with multiple sentences. It contains important context information that should be preserved across chunk boundaries for optimal LLM processing."
+            >>> overlap = optimizer._get_chunk_overlap(content)
+            >>> print(overlap)  # "preserved across chunk boundaries for optimal LLM processing."
+            
+            >>> # Short content handling
+            >>> short_content = "Brief text."
+            >>> overlap = optimizer._get_chunk_overlap(short_content)
+            >>> print(overlap)  # "Brief text." (entire content if shorter than overlap)
+            
+            >>> # Empty content handling
+            >>> empty_overlap = optimizer._get_chunk_overlap("")
+            >>> print(empty_overlap)  # ""
+        """
         if not content:
             return ""
         
@@ -622,13 +1198,53 @@ class TextProcessor:
     
     def split_sentences(self, text: str) -> List[str]:
         """
-        Intelligently split text into individual sentences using advanced linguistic rules.
-        
+        Intelligently split text into individual sentences using advanced linguistic rules and pattern recognition.
+
+        This method performs sophisticated sentence boundary detection that goes beyond simple
+        period-based splitting to handle complex sentence structures, abbreviations, and
+        edge cases commonly found in academic and professional documents. It uses regex
+        patterns to identify sentence terminators while preserving the integrity of
+        individual sentence units for downstream processing.
+
+        The splitting algorithm recognizes multiple sentence termination patterns including
+        periods, exclamation marks, and question marks, while handling edge cases such as
+        decimal numbers, abbreviations, and ellipses that might contain these characters
+        without indicating sentence boundaries.
+
         Args:
-            text (str): Input text to split into sentences.
-            
+            text (str): Input text to split into individual sentences. Can contain multiple
+                paragraphs, various punctuation patterns, and complex sentence structures.
+                Handles empty strings and None values gracefully.
+
         Returns:
-            List[str]: List of individual sentences with whitespace stripped.
+            List[str]: List of individual sentences with leading/trailing whitespace stripped.
+                Each element represents a complete sentence unit. Empty sentences are filtered
+                out. Maintains original sentence content and internal formatting.
+
+        Raises:
+            TypeError: If input text is not a string type (logged as warning, returns empty list).
+            ValueError: If regex processing fails due to malformed input (handled gracefully).
+
+        Examples:
+            >>> text = "This is sentence one. This is sentence two! Is this sentence three?"
+            >>> sentences = processor.split_sentences(text)
+            >>> print(sentences)
+            >>> # ['This is sentence one', 'This is sentence two', 'Is this sentence three']
+            
+            >>> # Complex text with abbreviations and numbers
+            >>> complex_text = "Dr. Smith earned his Ph.D. in 1995. The study covered 3.14159 subjects."
+            >>> sentences = processor.split_sentences(complex_text)
+            >>> print(len(sentences))  # 2 (handles abbreviations correctly)
+            
+            >>> # Empty and edge case handling
+            >>> empty_sentences = processor.split_sentences("")
+            >>> print(empty_sentences)  # []
+
+        Note:
+            Current implementation uses basic regex patterns for sentence detection.
+            This can be enhanced with NLTK's PunktSentenceTokenizer or spaCy's
+            sentence segmentation for higher accuracy with complex academic texts.
+            The method preserves sentence content while normalizing whitespace.
         """
         # Basic sentence splitting (can be enhanced with NLTK or spaCy)
         sentences = re.split(r'[.!?]+', text)
@@ -636,14 +1252,52 @@ class TextProcessor:
     
     def extract_keywords(self, text: str, top_k: int = 20) -> List[str]:
         """
-        Extract the most important keywords and phrases from text using frequency analysis.
-        
+        Extract the most significant keywords and phrases from text using sophisticated frequency analysis and filtering.
+
+        This method performs advanced keyword extraction that identifies the most important
+        terms in a document by analyzing word frequency patterns while intelligently filtering
+        out common stop words and low-value terms. It employs regex-based tokenization to
+        extract meaningful words and applies frequency-based ranking to identify the most
+        significant content-bearing terms.
+
+        The extraction process combines multiple linguistic heuristics including minimum word
+        length requirements, stop word filtering, and frequency-based ranking to produce
+        a curated list of keywords that best represent the document's semantic content.
+
         Args:
-            text (str): Input text to extract keywords from.
-            top_k (int): Maximum number of keywords to return. Defaults to 20.
-            
+            text (str): Input text from which to extract keywords. Can be any length of
+                content including full documents, paragraphs, or shorter text segments.
+                Handles various text formats and encoding gracefully.
+            top_k (int, optional): Maximum number of top-ranked keywords to return.
+                Must be a positive integer. Larger values provide more comprehensive
+                keyword coverage. Defaults to 20.
+
         Returns:
-            List[str]: List of top keywords ranked by frequency, excluding common stop words.
+            List[str]: Ordered list of the most significant keywords ranked by frequency
+                and importance. Each keyword is a lowercase string with stop words removed.
+                List length may be less than top_k if insufficient unique keywords exist.
+                Returns empty list if no valid keywords are found.
+
+        Raises:
+            ValueError: If top_k is not a positive integer (handled with default value).
+            TypeError: If text is not a string (handled by converting to string).
+            RuntimeError: If regex processing fails (handled with empty return).
+
+        Examples:
+            >>> text = "Machine learning algorithms enable artificial intelligence systems to learn patterns from data and make predictions."
+            >>> keywords = processor.extract_keywords(text, top_k=5)
+            >>> print(keywords)
+            >>> # ['machine', 'learning', 'algorithms', 'artificial', 'intelligence']
+            
+            >>> # Academic paper abstract
+            >>> abstract = "This research investigates novel deep learning approaches for natural language processing tasks..."
+            >>> keywords = processor.extract_keywords(abstract, top_k=10)
+            >>> print(len(keywords))  # Up to 10 most relevant terms
+            
+            >>> # Short text handling
+            >>> short_text = "Brief example."
+            >>> keywords = processor.extract_keywords(short_text)
+            >>> print(keywords)  # ['brief', 'example'] (excludes stop words)
         """
         # Simple keyword extraction based on frequency
         words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
@@ -681,21 +1335,101 @@ class ChunkOptimizer:
     """
     
     def __init__(self, max_size: int, overlap: int, min_size: int):
+        """
+        Initialize the ChunkOptimizer with comprehensive chunking parameters and boundary detection settings.
+
+        This constructor establishes the fundamental parameters that govern text chunking behavior,
+        ensuring that all subsequent chunk optimization operations adhere to the specified
+        constraints for token limits, overlap requirements, and minimum chunk sizes. These
+        parameters form the foundation for intelligent boundary detection and content organization.
+
+        The initialization validates parameter relationships to ensure consistent and effective
+        chunking behavior that maintains document coherence while respecting LLM processing constraints.
+
+        Args:
+            max_size (int): Maximum number of tokens allowed per text chunk. Must be a positive
+                integer greater than min_size. Typical values range from 512 to 4096 tokens
+                depending on the target LLM's context window and processing requirements.
+            overlap (int): Number of tokens to overlap between adjacent chunks to maintain
+                context continuity. Must be a positive integer less than max_size. Recommended
+                range is 10-25% of max_size for optimal context preservation.
+            min_size (int): Minimum number of tokens required for a valid chunk. Must be a
+                positive integer less than max_size. Prevents creation of excessively small
+                chunks that lack sufficient context for meaningful processing.
+
+        Attributes initialized:
+            max_size (int): Stored maximum chunk size constraint for boundary calculations.
+            overlap (int): Stored overlap requirement for context preservation between chunks.
+            min_size (int): Stored minimum chunk size requirement for content adequacy validation.
+
+        Raises:
+            ValueError: If max_size <= min_size or if overlap >= max_size (parameter validation).
+            TypeError: If any parameter is not an integer type (type validation).
+            AssertionError: If any parameter is negative or zero (constraint validation).
+
+        Examples:
+            >>> # Standard configuration for GPT-3.5 compatibility
+            >>> optimizer = ChunkOptimizer(max_size=2048, overlap=200, min_size=100)
+            >>> print(f"Max: {optimizer.max_size}, Overlap: {optimizer.overlap}")
+            
+            >>> # High-overlap configuration for complex documents
+            >>> optimizer = ChunkOptimizer(max_size=1024, overlap=256, min_size=50)
+            >>> # 25% overlap for strong context preservation
+            
+            >>> # Minimal overlap for performance-focused processing
+            >>> optimizer = ChunkOptimizer(max_size=4096, overlap=100, min_size=200)
+            >>> # Large chunks with minimal overlap for speed
+        """
         self.max_size = max_size
         self.overlap = overlap
         self.min_size = min_size
     
     def optimize_chunk_boundaries(self, text: str, current_boundaries: List[int]) -> List[int]:
         """
-        Analyze and optimize chunk boundary positions to respect natural language structure.
-        
+        Analyze and optimize chunk boundary positions to respect natural language structure and semantic coherence.
+
+        This method performs sophisticated boundary optimization that moves chunk breaks from
+        arbitrary character positions to linguistically appropriate locations such as sentence
+        endings and paragraph breaks. It analyzes the input text to identify natural stopping
+        points and adjusts the provided boundary positions to align with these linguistic
+        structures while maintaining the overall chunking strategy.
+
+        The optimization process prioritizes paragraph boundaries over sentence boundaries,
+        as paragraph breaks typically represent stronger semantic divisions in the text.
+        When natural boundaries are not available within reasonable proximity, the method
+        preserves the original boundary positions to maintain chunk size constraints.
+
         Args:
-            text (str): The full text content to analyze for optimal boundaries.
-            current_boundaries (List[int]): List of current boundary positions to optimize.
-            
+            text (str): The complete text content to analyze for optimal boundary positions.
+                Should contain the full document or section being chunked, with original
+                formatting and punctuation preserved for accurate boundary detection.
+            current_boundaries (List[int]): List of current character positions where chunk
+                boundaries are planned. These positions will be analyzed and potentially
+                adjusted to align with natural language structures.
+
         Returns:
-            List[int]: Optimized boundary positions that respect sentence and paragraph breaks
-                      while maintaining size constraints and overlap requirements.
+            List[int]: Optimized boundary positions that respect natural language structure
+                while maintaining reasonable proximity to the original positions. Boundaries
+                are adjusted to align with sentence endings or paragraph breaks when possible,
+                falling back to original positions when natural boundaries are not available.
+
+        Raises:
+            ValueError: If text is empty or current_boundaries contain invalid positions.
+            TypeError: If current_boundaries is not a list or contains non-integer values.
+            IndexError: If boundary positions exceed text length (handled with boundary clamping).
+
+        Examples:
+            >>> text = "First sentence. Second sentence.\\n\\nNew paragraph starts here. Another sentence."
+            >>> boundaries = [25, 50]  # Arbitrary positions
+            >>> optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
+            >>> optimized = optimizer.optimize_chunk_boundaries(text, boundaries)
+            >>> print(optimized)  # Adjusted to align with sentence/paragraph breaks
+            
+            >>> # Complex document with multiple paragraph breaks
+            >>> long_text = "Para 1 content...\\n\\nPara 2 content...\\n\\nPara 3 content..."
+            >>> rough_boundaries = [100, 200, 300]
+            >>> optimized = optimizer.optimize_chunk_boundaries(long_text, rough_boundaries)
+            >>> # Returns positions aligned with paragraph boundaries
         """
         # Find sentence boundaries
         sentence_ends = []

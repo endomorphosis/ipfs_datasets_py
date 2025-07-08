@@ -6,23 +6,32 @@ PDF Input → Decomposition → IPLD Structuring → OCR Processing →
 LLM Optimization → Entity Extraction → Vector Embedding → 
 IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 """
-
-import asyncio
 import logging
 import hashlib
 import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
+
+
 import fitz  # PyMuPDF
 import pdfplumber
 from PIL import Image
-import io
 
-from ..ipld import IPLDStorage
-from ..audit import AuditLogger
-from ..monitoring import MonitoringSystem
+
+from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.audit import AuditLogger
+from ipfs_datasets_py.monitoring import MonitoringSystem
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+from ipfs_datasets_py.monitoring import MonitoringConfig, MetricsConfig
+from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+
 
 logger = logging.getLogger(__name__)
+
 
 class PDFProcessor:
     """
@@ -45,7 +54,7 @@ class PDFProcessor:
         self.audit_logger = AuditLogger.get_instance() if enable_audit else None
         
         if enable_monitoring:
-            from ..monitoring import MonitoringConfig, MetricsConfig
+
             config = MonitoringConfig()
             config.metrics = MetricsConfig(
                 output_file="pdf_processing_metrics.json",
@@ -380,6 +389,8 @@ class PDFProcessor:
             })
         
         return page_content
+    
+    def _get_processing_time(self, pdf_path) -> Dict[str, Any]:
         """Stage 2: Decomposition - Extract all content layers."""
         logger.info(f"Stage 2: Decomposing PDF {pdf_path}")
         
@@ -521,7 +532,7 @@ class PDFProcessor:
         """Stage 4: OCR Processing - Process images with OCR."""
         logger.info("Stage 4: Processing OCR")
         
-        from .ocr_engine import MultiEngineOCR
+
         
         ocr_engine = MultiEngineOCR()
         ocr_results = {}
@@ -563,7 +574,7 @@ class PDFProcessor:
         """Stage 5: LLM Optimization - Optimize content for LLM consumption."""
         logger.info("Stage 5: Optimizing for LLM")
         
-        from .llm_optimizer import LLMOptimizer
+
         
         optimizer = LLMOptimizer()
         
@@ -661,7 +672,7 @@ class PDFProcessor:
         """Stage 8: IPLD GraphRAG Integration - Integrate with GraphRAG system."""
         logger.info("Stage 8: Integrating with GraphRAG")
         
-        from .graphrag_integrator import GraphRAGIntegrator
+
         
         integrator = GraphRAGIntegrator(storage=self.storage)
         
@@ -675,7 +686,7 @@ class PDFProcessor:
         # If we don't have the LLM document, we need to reconstruct it
         if not llm_document:
             # Create a minimal LLM document structure
-            from .llm_optimizer import LLMDocument, LLMChunk
+
             
             chunks = []
             for i, entity in enumerate(entities_and_relations.get('entities', [])):
@@ -739,8 +750,7 @@ class PDFProcessor:
         """Stage 10: Query Interface Setup - Setup query interface for the processed content."""
         logger.info("Stage 10: Setting up query interface")
         
-        from .query_engine import QueryEngine
-        from .graphrag_integrator import GraphRAGIntegrator
+
         
         # Create query engine with the GraphRAG integrator
         integrator = GraphRAGIntegrator(storage=self.storage)

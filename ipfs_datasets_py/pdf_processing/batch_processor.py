@@ -8,29 +8,33 @@ Handles large-scale PDF processing operations:
 - Distributed processing coordination
 - Performance monitoring and reporting
 """
-
 import asyncio
-import logging
-import json
-import time
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union, Callable
-from dataclasses import dataclass, asdict
-from datetime import datetime
-import uuid
 import concurrent.futures
+import json
+import logging
 import multiprocessing as mp
-from queue import Queue
 import threading
+import time
+import uuid
+from contextlib import nullcontext
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from queue import Queue
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..ipld import IPLDStorage
-from ..audit import AuditLogger
-from ..monitoring import MonitoringSystem
-from .pdf_processor import PDFProcessor
-from .llm_optimizer import LLMOptimizer, LLMDocument
-from .graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph
+import psutil
+
+from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.audit import AuditLogger
+from ipfs_datasets_py.monitoring import MonitoringSystem
+from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ProcessingJob:
@@ -1324,7 +1328,7 @@ class BatchProcessor:
             - Peak memory tracking persists across batch operations
             - Method is called frequently during processing for real-time monitoring
         """
-        import psutil
+
         
         process = psutil.Process()
         

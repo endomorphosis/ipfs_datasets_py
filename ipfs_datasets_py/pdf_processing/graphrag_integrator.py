@@ -18,11 +18,10 @@ import re
 
 import networkx as nx
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
-from ..ipld import IPLDStorage
-from ..audit import AuditLogger
-from .llm_optimizer import LLMDocument, LLMChunk
+from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+
 
 logger = logging.getLogger(__name__)
 

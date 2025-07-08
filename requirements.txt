@@ -1,53 +1,54 @@
 ## Core dependencies
-orbitdb_kit_py
-ipfs_kit_py>=0.3.0
-ipfs_model_manager_py
-ipfs_faiss_py
+orbitdb-kit-py>=0.0.9
+ipfs-kit-py>=0.3.0
+ipfs-toolkit>=0.1.0
+ipfs-model-manager-py>=0.0.23
+ipfs-faiss-py>=0.0.6
 ipfs_embeddings_py
-transformers
-numpy
-urllib3
-requests
-boto3
-ipfsspec
-duckdb
-datasets
-pyarrow
-fsspec
+transformers>=4.0.0
+numpy>=1.21.0
+urllib3>=2.4.0
+requests>=2.25.0
+boto3>=1.38.27
+ipfsspec>=0.6.0
+duckdb>=1.3.0
+datasets>=2.10.0
+pyarrow>=20.0.0
+fsspec>=2025.3.0
 
 ## IPFS Embeddings integration dependencies
-fastapi
+fastapi>=0.116.0
 fastapi[standard]
 pydantic-settings
 pydantic>=2.0.0
-uvicorn
-pandas
+uvicorn>=0.20.0
+pandas>=1.5.0
 aiohttp
-elasticsearch
-nltk
-rank_bm25
-llama-index-embeddings-huggingface
-llama-index
-haystack
-pysbd
-optimum
+elasticsearch>=8.0.0
+nltk>=3.8.0
+rank-bm25>=0.2.0
+llama-index-embeddings-huggingface>=0.1.0
+llama-index>=0.9.0
+haystack>=0.42
+pysbd>=0.3.4
+optimum>=1.12.0
 optimum[openvino]
 toml
-einops
-timm
+einops>=0.6.0
+timm>=0.9.0
 
 ## Authentication and security
-PyJWT
-passlib[bcrypt]
-python-multipart
+PyJWT>=2.8.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
 
 ## Performance monitoring
-psutil
+psutil>=7.0.0
 
 ## Embeddings and ML dependencies
 faiss-cpu>=1.7.4
 sentence-transformers>=2.2.2
-torch>=2.0.0
+torch>=1.9.0
 torchvision>=0.15.0
 scikit-learn>=1.3.0
 scipy>=1.11.0
@@ -59,7 +60,7 @@ elasticsearch>=8.11.0
 ## Additional ML and processing
 tokenizers>=0.15.0
 huggingface-hub>=0.19.0
-tqdm>=4.65.0
+tqdm>=4.67.1
 aiofiles>=23.2.1
 
 ## Phase 1 dependencies
@@ -83,7 +84,7 @@ jsonschema>=4.23.0
 networkx>=3.1
 
 # Data processing
-pyarrow>=10.0.0
+pyarrow>=20.0.0
 pandas>=1.5.0
 datasets>=2.10.0
 
@@ -96,11 +97,16 @@ pytest-cov>=4.1.0
 pytest-asyncio>=0.21.0  # For testing async functions
 
 # MCP Server dependencies
-mcp>=1.9.1  # Replace with actual MCP server package name NOTE This will also install pydantic
-jinja2
-pyyaml
-aiofile
-flake8
+mcp[cli]>=1.9.1  # Replace with actual MCP server package name NOTE This will also install pydantic
+jinja2>=3.1.6
+pyyaml>=6.0.2
+aiofile>=3.9.0
+flake8>=7.2.0
+
+# Additional dependencies from pyproject.toml
+coverage>=7.8.0
+mypy>=1.15.0
+networkx>=3.1
 
 # SymbolicAI integration dependencies
 symbolicai>=0.13.1
@@ -119,3 +125,4 @@ python-ffmpeg>=2.0.12
 PyMuPDF>=1.26.3
 bz2file>=0.98
 pdfplumber>=0.11.7
+pytesseract>=0.3.13

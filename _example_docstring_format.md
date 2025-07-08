@@ -109,13 +109,13 @@ class GraphRAGIntegrator:
             # Explore entity relationships
             neighborhood = await integrator.get_entity_neighborhood("entity_12345", depth=2)
 
-        Notes:
-            - Entity extraction uses regex patterns and can be enhanced with advanced NLP models
-            - Relationship inference is based on co-occurrence and keyword matching
-            - Cross-document relationships enable knowledge discovery across document collections
-            - IPLD storage provides content-addressable persistence for knowledge graphs
-            - NetworkX integration enables advanced graph analysis and algorithms
-        """
+    Notes:
+        - Entity extraction uses regex patterns and can be enhanced with advanced NLP models
+        - Relationship inference is based on co-occurrence and keyword matching
+        - Cross-document relationships enable knowledge discovery across document collections
+        - IPLD storage provides content-addressable persistence for knowledge graphs
+        - NetworkX integration enables advanced graph analysis and algorithms
+    """
 ```
 
 ## Example __init__ Method Stub
@@ -124,32 +124,32 @@ class GraphRAGIntegrator:
 def __init__(self, storage: Optional[IPLDStorage] = None, similarity_threshold: float = 0.8, entity_extraction_confidence: float = 0.6):
     """
     This class integrates Knowledge Graphs with Retrieval-Augmented Generation (RAG)
-for enhanced document processing and analysis capabilities.
+    for enhanced document processing and analysis capabilities.
 
-Args:
-    storage (Optional[IPLDStorage], optional): IPLD storage instance for data persistence.
-        Defaults to a new IPLDStorage instance if not provided.
-    similarity_threshold (float, optional): Threshold for entity similarity matching.
-        Values between 0.0 and 1.0, where higher values require more similarity.
-        Defaults to 0.8.
-    entity_extraction_confidence (float, optional): Minimum confidence score for 
-        entity extraction. Values between 0.0 and 1.0, where higher values require
-        more confidence. Defaults to 0.6.
+    Args:
+        storage (Optional[IPLDStorage], optional): IPLD storage instance for data persistence.
+            Defaults to a new IPLDStorage instance if not provided.
+        similarity_threshold (float, optional): Threshold for entity similarity matching.
+            Values between 0.0 and 1.0, where higher values require more similarity.
+            Defaults to 0.8.
+        entity_extraction_confidence (float, optional): Minimum confidence score for 
+            entity extraction. Values between 0.0 and 1.0, where higher values require
+            more confidence. Defaults to 0.6.
 
-Attributes initialized:
-    storage (IPLDStorage): IPLD storage instance for data persistence.
-    similarity_threshold (float): Threshold for entity similarity matching.
-    entity_extraction_confidence (float): Minimum confidence for entity extraction.
-    knowledge_graphs (Dict[str, KnowledgeGraph]): Storage for document-specific 
-        knowledge graphs, keyed by document identifier.
-    global_entities (Dict[str, Entity]): Global registry of entities across all
-        documents, keyed by entity identifier.
-    cross_document_relationships (List[CrossDocumentRelationship]): List of 
-        relationships that span across multiple documents.
-    document_graphs (Dict[str, nx.DiGraph]): NetworkX directed graphs for each
-        document, keyed by document identifier.
-    global_graph (nx.DiGraph): Global NetworkX directed graph containing all
-        entities and relationships across documents.
+    Attributes initialized:
+        storage (IPLDStorage): IPLD storage instance for data persistence.
+        similarity_threshold (float): Threshold for entity similarity matching.
+        entity_extraction_confidence (float): Minimum confidence for entity extraction.
+        knowledge_graphs (Dict[str, KnowledgeGraph]): Storage for document-specific 
+            knowledge graphs, keyed by document identifier.
+        global_entities (Dict[str, Entity]): Global registry of entities across all
+            documents, keyed by entity identifier.
+        cross_document_relationships (List[CrossDocumentRelationship]): List of 
+            relationships that span across multiple documents.
+        document_graphs (Dict[str, nx.DiGraph]): NetworkX directed graphs for each
+            document, keyed by document identifier.
+        global_graph (nx.DiGraph): Global NetworkX directed graph containing all
+            entities and relationships across documents.
     """
 ```
 
@@ -168,6 +168,7 @@ def _infer_relationship_type(self, entity1: Entity, entity2: Entity, context: st
         entity1 (Entity): The first entity in the relationship
         entity2 (Entity): The second entity in the relationship  
         context (str): The textual context containing information about the relationship
+
     Returns:
         Optional[str]: The inferred relationship type, or None if no relationship can be determined.
                       Possible return values include:

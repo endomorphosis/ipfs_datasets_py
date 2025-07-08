@@ -43,53 +43,29 @@ Example:
             ├── comprehensive_report.html
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
         ├── adaptive_security.py [x] [ ] [ ] [ ] [ ]
-        ├── audit_init_stubs.md
-        ├── audit_logger_stubs.md
         ├── audit_logger.py [x] [ ] [ ] [ ] [ ]
         ├── audit_provenance_integration.py [x] [ ] [ ] [ ] [ ]
         ├── audit_reporting.py [x] [ ] [ ] [ ] [ ]
-        ├── audit_security_provenance_stubs.md
-        ├── audit_visualization_stubs.md
         ├── audit_visualization.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
-        ├── compliance_stubs.md
         ├── compliance.py [x] [ ] [ ] [ ] [ ]
-        ├── enhanced_security_stubs.md
         ├── enhanced_security.py [x] [ ] [ ] [ ] [ ]
-        ├── examples_stubs.md
         ├── examples.py [x] [ ] [ ] [ ] [ ]
         ├── handlers.py [x] [ ] [ ] [ ] [ ]
-        ├── integration_stubs.json
-        ├── integration_stubs.md
         ├── integration.py [x] [ ] [ ] [ ] [ ]
         ├── intrusion.py [x] [ ] [ ] [ ] [ ]
         ├── provenance_consumer.py [x] [ ] [ ] [ ] [ ]
         ├── provenance_integration_examples.py [x] [ ] [ ] [ ] [ ]
-        ├── README.md
         ├── security_provenance_integration.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁config: Worker 104 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
-        ├── config template.toml
-        ├── config_stubs.md
         ├── config.js [x] [ ] [ ] [ ] [ ]
         ├── config.py [x] [ ] [ ] [ ] [ ]
-        ├── config.toml
-        ├── TODO.md
     └── 📁embeddings: Worker 105 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
-        ├── chunker_stubs.md
         ├── chunker.py [x] [ ] [ ] [ ] [ ]
-        ├── core_stubs.md
         ├── core.py [x] [ ] [ ] [ ] [ ]
-        ├── create_embeddings_stubs.md
         ├── create_embeddings.py [x] [ ] [ ] [ ] [ ]
-        ├── embeddings_schema_stubs.md
-        ├── schema_stubs.md
         ├── schema.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁ipfs_embeddings_py: Worker 107 [x] [ ] [ ] [ ] [ ]
         └── 📁test: Worker 108 [x] [ ] [ ] [ ] [ ]
             ├── test.py [x] [ ] [ ] [ ] [ ]
@@ -99,30 +75,19 @@ Example:
         ├── ipfs_multiformats.py [x] [ ] [ ] [ ] [ ]
         ├── ipfs_only_hash.py [x] [ ] [ ] [ ] [ ]
         ├── multi_model_embedding.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁ipld: Worker 110 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
         ├── dag_pb.py [x] [ ] [ ] [ ] [ ]
         ├── knowledge_graph.py [x] [ ] [ ] [ ] [ ]
-        ├── optimized_codec_stubs.md
         ├── optimized_codec.py [x] [ ] [ ] [ ] [ ]
-        ├── storage_stubs.md
         ├── storage.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
-        ├── vector_store_stubs.md
         ├── vector_store.py [x] [ ] [ ] [ ] [ ]
     └── 📁llm: Worker 111 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
-        ├── llm_graphrag_stubs.md
         ├── llm_graphrag.py [x] [ ] [ ] [ ] [ ]
-        ├── llm_interface_stubs.md
         ├── llm_interface.py [x] [ ] [ ] [ ] [ ]
-        ├── llm_reasoning_tracer_stubs.md
         ├── llm_reasoning_tracer.py [x] [ ] [ ] [ ] [ ]
         ├── llm_semantic_validation.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁logic_integration: Worker 112 [x] [ ] [ ] [ ] [ ]
         └── 📁tests: Worker 113 [x] [ ] [ ] [ ] [ ]
             ├── __init__.py [x] [ ] [ ] [ ] [ ]
@@ -133,46 +98,26 @@ Example:
             ├── test_symbolic_bridge.py [x] [ ] [ ] [ ] [ ]
             ├── test_symbolic_contracts.py [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
         ├── interactive_fol_constructor.py [x] [ ] [ ] [ ] [ ]
-        ├── logic_verification_stubs.md
         ├── logic_verification.py [x] [ ] [ ] [ ] [ ]
-        ├── modal_logic_extension_stubs.json
-        ├── modal_logic_extension_stubs.md
         ├── modal_logic_extension.py [x] [ ] [ ] [ ] [ ]
-        ├── symbolic_contracts_stubs.json
-        ├── symbolic_contracts_stubs.md
         ├── symbolic_contracts.py [x] [ ] [ ] [ ] [ ]
         ├── symbolic_fol_bridge.py [x] [ ] [ ] [ ] [ ]
-        ├── symbolic_logic_primitives_stubs.md
         ├── symbolic_logic_primitives.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁mcp_server: Worker 114 [x] [ ] [ ] [ ] [ ]
-        └── 📁config: Worker 115 [x] [ ] [ ] [ ] [ ]
-            ├── default_config.yaml
         └── 📁tool_detection: Worker 116 [x] [ ] [ ] [ ] [ ]
             ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        └── 📁tool_docstrings: Worker 117 [x] [ ] [ ] [ ] [ ]
-            ├── tool_registration_stubs.md
         └── 📁tools: Worker 118 [x] [ ] [ ] [ ] [ ]
             └── 📁admin_tools: Worker 119 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
                 ├── admin_tools.py [x] [ ] [ ] [ ] [ ]
-                ├── enhanced_admin_tools_stubs.json
-                ├── enhanced_admin_tools_stubs.md
                 ├── enhanced_admin_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁analysis_tools: Worker 120 [x] [ ] [ ] [ ] [ ]
-                ├── analysis_tools_stubs.json
-                ├── analysis_tools_stubs.md
                 ├── analysis_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁audit_tools: Worker 121 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
                 ├── audit_tools.py [x] [ ] [ ] [ ] [ ]
-                ├── generate_audit_report_stubs.json
-                ├── generate_audit_report_stubs.md
                 ├── generate_audit_report.py [x] [ ] [ ] [ ] [ ]
-                ├── record_audit_event_stubs.json
-                ├── record_audit_event_stubs.md
                 ├── record_audit_event.py [x] [ ] [ ] [ ] [ ]
             └── 📁auth_tools: Worker 122 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
@@ -193,8 +138,6 @@ Example:
                 ├── system_status.py [x] [ ] [ ] [ ] [ ]
             └── 📁cache_tools: Worker 125 [x] [ ] [ ] [ ] [ ]
                 ├── cache_tools.py [x] [ ] [ ] [ ] [ ]
-                ├── enhanced_cache_tools_stubs.json
-                ├── enhanced_cache_tools_stubs.md
                 ├── enhanced_cache_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁cli: Worker 126 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
@@ -204,14 +147,8 @@ Example:
             └── 📁dataset_tools: Worker 128 [x] [ ] [ ] [ ] [ ]
                 └── 📁logic_utils: Worker 129 [x] [ ] [ ] [ ] [ ]
                     ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                    ├── deontic_parser_stubs.json
-                    ├── deontic_parser_stubs.md
                     ├── deontic_parser.py [x] [ ] [ ] [ ] [ ]
-                    ├── fol_parser_stubs.json
-                    ├── fol_parser_stubs.md
                     ├── fol_parser.py [x] [ ] [ ] [ ] [ ]
-                    ├── logic_formatter_stubs.json
-                    ├── logic_formatter_stubs.md
                     ├── logic_formatter.py [x] [ ] [ ] [ ] [ ]
                     ├── predicate_extractor.py [x] [ ] [ ] [ ] [ ]
                 └── 📁tests: Worker 130 [x] [ ] [ ] [ ] [ ]
@@ -222,18 +159,10 @@ Example:
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
                 ├── convert_dataset_format.py [x] [ ] [ ] [ ] [ ]
                 ├── dataset_tools_claudes.py [x] [ ] [ ] [ ] [ ]
-                ├── legal_text_to_deontic_stubs.json
-                ├── legal_text_to_deontic_stubs.md
                 ├── legal_text_to_deontic.py [x] [ ] [ ] [ ] [ ]
-                ├── load_dataset_stubs.json
-                ├── load_dataset_stubs.md
                 ├── load_dataset.py [x] [ ] [ ] [ ] [ ]
-                ├── process_dataset_stubs.json
-                ├── process_dataset_stubs.md
                 ├── process_dataset.py [x] [ ] [ ] [ ] [ ]
                 ├── save_dataset.py [x] [ ] [ ] [ ] [ ]
-                ├── text_to_fol_stubs.json
-                ├── text_to_fol_stubs.md
                 ├── text_to_fol.py [x] [ ] [ ] [ ] [ ]
             └── 📁development_tools: Worker 131 [x] [ ] [ ] [ ] [ ]
                 └── 📁templates: Worker 132 [x] [ ] [ ] [ ] [ ]
@@ -242,8 +171,6 @@ Example:
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
                 ├── base_tool.py [x] [ ] [ ] [ ] [ ]
                 ├── codebase_search.py [x] [ ] [ ] [ ] [ ]
-                ├── config_stubs.json
-                ├── config_stubs.md
                 ├── config.py [x] [ ] [ ] [ ] [ ]
                 ├── documentation_generator_simple.py [x] [ ] [ ] [ ] [ ]
                 ├── documentation_generator.py [x] [ ] [ ] [ ] [ ]
@@ -274,25 +201,18 @@ Example:
                 ├── enhanced_ipfs_cluster_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁ipfs_tools: Worker 138 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                ├── get_from_ipfs_stubs.json
-                ├── get_from_ipfs_stubs.md
                 ├── get_from_ipfs.py [x] [ ] [ ] [ ] [ ]
                 ├── ipfs_tools_claudes.py [x] [ ] [ ] [ ] [ ]
-                ├── pin_to_ipfs_stubs.json
-                ├── pin_to_ipfs_stubs.md
                 ├── pin_to_ipfs.py [x] [ ] [ ] [ ] [ ]
             └── 📁lizardperson_argparse_programs: Worker 139 [x] [ ] [ ] [ ] [ ]
                 └── 📁municipal_bluebook_citation_validator: Worker 140 [x] [ ] [ ] [ ] [ ]
                     └── 📁_setup_databases_and_files: Worker 141 [ ] [ ] [ ] [ ] [ ]
                         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                        ├── _error_db_schema.sql
-                        ├── _error_reports_db_schema.sql
                         ├── _setup_database_and_files.py [x] [ ] [ ] [ ] [ ]
                         ├── _setup_error_db.py [x] [ ] [ ] [ ] [ ]
                         ├── _setup_error_report_db.py [x] [ ] [ ] [ ] [ ]
                         ├── _setup_reference_db.py [x] [ ] [ ] [ ] [ ]
                         ├── factory.py [ ] [ ] [ ] [ ] [ ]
-                        ├── TODO.md
                     └── 📁citation_validator: Worker 142 [x] [ ] [ ] [ ] [ ]
                         ├── __init__.py [x] [ ] [ ] [ ] [ ]
                         ├── _check_code.py [x] [ ] [ ] [ ] [ ]
@@ -304,26 +224,20 @@ Example:
                         ├── _load_citations_for_place.py [x] [ ] [ ] [ ] [ ]
                         ├── _load_documents_for_place.py [x] [ ] [ ] [ ] [ ]
                         ├── _save_validation_errors.py [x] [ ] [ ] [ ] [ ]
-                        ├── _save_validation_errors.sql
                         ├── _update_pbar.py [x] [ ] [ ] [ ] [ ]
                         ├── citation_validator.py [ ] [ ] [ ] [ ] [ ]
                         ├── factory.py [x] [ ] [ ] [ ] [ ]
-                        ├── TODO.md
                     └── 📁generate_reports: Worker 143 [x] [ ] [ ] [ ] [ ]
                         ├── __init__.py [x] [ ] [ ] [ ] [ ]
                         ├── _generate_validation_report.py [x] [ ] [ ] [ ] [ ]
                         ├── factory.py [x] [ ] [ ] [ ] [ ]
-                        ├── TODO.md
                     └── 📁results_analyzer: Worker 144 [ ] [ ] [ ] [ ] [ ]
                         ├── __init__.py [x] [ ] [ ] [ ] [ ]
                         ├── _analyze_error_patterns.py [x] [ ] [ ] [ ] [ ]
                         ├── _calculate_accuracy_statistics.py [x] [ ] [ ] [ ] [ ]
-                        ├── _extrapolate_to_full_dataset_stubs.json
-                        ├── _extrapolate_to_full_dataset_stubs.md
                         ├── _extrapolate_to_full_dataset.py [x] [ ] [ ] [ ] [ ]
                         ├── _results_analyzer.py [ ] [ ] [ ] [ ] [ ]
                         ├── factory.py [x] [ ] [ ] [ ] [ ]
-                        ├── TODO.md
                     └── 📁stratified_sampler: Worker 145 [x] [ ] [ ] [ ] [ ]
                         ├── __init__.py [x] [ ] [ ] [ ] [ ]
                         ├── _calculate_sample_sizes.py [x] [ ] [ ] [ ] [ ]
@@ -331,26 +245,18 @@ Example:
                         ├── _select_sampled_places.py [x] [ ] [ ] [ ] [ ]
                         ├── factory.py [x] [ ] [ ] [ ] [ ]
                         ├── stratified_sampler.py [x] [ ] [ ] [ ] [ ]
-                        ├── TODO.md
                     └── 📁utils: Worker 146 [x] [ ] [ ] [ ] [ ]
                         ├── __init__.py [x] [ ] [ ] [ ] [ ]
                         ├── load_mysql_config.py [x] [ ] [ ] [ ] [ ]
                         ├── load_sql_file.py [x] [ ] [ ] [ ] [ ]
                         ├── parse_arguments.py [x] [ ] [ ] [ ] [ ]
                         ├── run_in_thread_pool.py [x] [ ] [ ] [ ] [ ]
-                        ├── TODO.md
                     ├── __init__.py [x] [ ] [ ] [ ] [ ]
                     ├── __main__.py [x] [ ] [ ] [ ] [ ]
                     ├── __version__.py [x] [ ] [ ] [ ] [ ]
-                    ├── .gitignore
                     ├── configs.py [x] [ ] [ ] [ ] [ ]
                     ├── dependencies.py [x] [ ] [ ] [ ] [ ]
                     ├── main.py [x] [ ] [ ] [ ] [ ]
-                    ├── product_requirements_document.md
-                    ├── revised_success_criteria.md
-                    ├── SAD_mk1.md
-                    ├── success_criteria_part1_definitions.md
-                    ├── success_criteria_part2_metrics.md
                     ├── types_.py [x] [ ] [ ] [ ] [ ]
             └── 📁lizardpersons_function_tools: Worker 147 [ ] [ ] [ ] [ ] [ ]
                 └── 📁cli: Worker 148 [ ] [ ] [ ] [ ] [ ]
@@ -360,7 +266,6 @@ Example:
                     ├── test_function_name.py [ ] [ ] [ ] [ ] [ ]
                 └── 📁llm_context_tools: Worker 150 [x] [ ] [ ] [ ] [ ]
                     ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                    ├── get_current_time_stubs.md
                     ├── get_current_time.py [x] [ ] [ ] [ ] [ ]
                 └── 📁meta_tools: Worker 151 [x] [ ] [ ] [ ] [ ]
                     ├── list_tools_in_cli_dir.py [x] [ ] [ ] [ ] [ ]
@@ -369,7 +274,6 @@ Example:
                     ├── use_function_as_tool.py [x] [ ] [ ] [ ] [ ]
                 └── 📁prototyping_tools: Worker 152 [x] [ ] [ ] [ ] [ ]
                     ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                    ├── json_to_pydantic_stubs.md
                     ├── json_to_pydantic.py [x] [ ] [ ] [ ] [ ]
                     ├── json_to_python_file.py [x] [ ] [ ] [ ] [ ]
                     ├── python_file_to_json.py [x] [ ] [ ] [ ] [ ]
@@ -389,7 +293,6 @@ Example:
                 ├── ytdlp_download.py [x] [ ] [ ] [ ] [ ]
             └── 📁monitoring_tools: Worker 155 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                ├── enhanced_monitoring_tools_stubs.md
                 ├── enhanced_monitoring_tools.py [x] [ ] [ ] [ ] [ ]
                 ├── monitoring_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁pdf_tools: Worker 156 [x] [ ] [ ] [ ] [ ]
@@ -413,7 +316,6 @@ Example:
                 ├── check_access_permission.py [x] [ ] [ ] [ ] [ ]
             └── 📁session_tools: Worker 160 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                ├── enhanced_session_tools_stubs.md
                 ├── enhanced_session_tools.py [x] [ ] [ ] [ ] [ ]
                 ├── session_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁sparse_embedding_tools: Worker 161 [x] [ ] [ ] [ ] [ ]
@@ -426,12 +328,9 @@ Example:
                 ├── enhanced_vector_store_tools.py [x] [ ] [ ] [ ] [ ]
             └── 📁vector_tools: Worker 164 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                ├── CHANGELOG.md
                 ├── create_vector_index.py [x] [ ] [ ] [ ] [ ]
-                ├── search_vector_index_stubs.md
                 ├── search_vector_index.py [x] [ ] [ ] [ ] [ ]
                 ├── shared_state.py [x] [ ] [ ] [ ] [ ]
-                ├── vector_store_management_stubs.md
                 ├── vector_store_management.py [x] [ ] [ ] [ ] [ ]
             └── 📁web_archive_tools: Worker 165 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
@@ -443,12 +342,9 @@ Example:
                 ├── index_warc.py [x] [ ] [ ] [ ] [ ]
             └── 📁workflow_tools: Worker 166 [x] [ ] [ ] [ ] [ ]
                 ├── __init__.py [x] [ ] [ ] [ ] [ ]
-                ├── enhanced_workflow_tools_stubs.md
                 ├── enhanced_workflow_tools.py [x] [ ] [ ] [ ] [ ]
                 ├── workflow_tools.py [x] [ ] [ ] [ ] [ ]
             ├── __init__.py [x] [ ] [ ] [ ] [ ]
-            ├── fastapi_integration_stubs.json
-            ├── fastapi_integration_stubs.md
             ├── fastapi_integration.py [x] [ ] [ ] [ ] [ ]
             ├── ipfs_embeddings_integration.py [x] [ ] [ ] [ ] [ ]
             ├── tool_registration.py [x] [ ] [ ] [ ] [ ]
@@ -462,24 +358,12 @@ Example:
             ├── _run_tool.py [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
         ├── __main__.py [x] [ ] [ ] [ ] [ ]
-        ├── API_REFERENCE.md
-        ├── CHANGELOG.md
         ├── client.py [x] [ ] [ ] [ ] [ ]
         ├── configs.py [x] [ ] [ ] [ ] [ ]
-        ├── Dockerfile
         ├── logger.py [x] [ ] [ ] [ ] [ ]
-        ├── mcp_server_integration.md
-        ├── mcp_server.log
         ├── monitoring.py [x] [ ] [ ] [ ] [ ]
-        ├── README.md
-        ├── server_stubs.json
-        ├── server_stubs.md
         ├── server.py [x] [ ] [ ] [ ] [ ]
-        ├── setup.sh
         ├── simple_server.py [x] [ ] [ ] [ ] [ ]
-        ├── start_server_from_claudes_toolbox.sh
-        ├── start_server.sh
-        ├── start_simple_server.sh
         ├── test_mcp_server.py [x] [ ] [ ] [ ] [ ]
         ├── test_server.py [x] [ ] [ ] [ ] [ ]
         ├── validators.py [x] [ ] [ ] [ ] [ ]
@@ -507,162 +391,97 @@ Example:
             ├── vector_store_tools.py [x] [ ] [ ] [ ] [ ]
             ├── workflow_tools.py [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
         ├── tool_registry.py [x] [ ] [ ] [ ] [ ]
         ├── validators.py [x] [ ] [ ] [ ] [ ]
     └── 📁multimedia: Worker 170 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
         ├── ffmpeg_wrapper_stubs.md
         ├── ffmpeg_wrapper.py [x] [ ] [ ] [ ] [ ]
         ├── media_processor_stubs.md
         ├── media_processor.py [x] [ ] [ ] [ ] [ ]
         ├── media_utils.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
         ├── ytdlp_wrapper.py [x] [ ] [ ] [ ] [ ]
     └── 📁optimizers: Worker 171 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
         ├── optimizer_alert_system.py [x] [ ] [ ] [ ] [ ]
         ├── optimizer_learning_metrics_integration.py [x] [ ] [ ] [ ] [ ]
-        ├── optimizer_learning_metrics_stubs.md
         ├── optimizer_learning_metrics.py [x] [ ] [ ] [ ] [ ]
         ├── optimizer_visualization_integration.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁pdf_processing: Worker 172 [x] [ ] [ ] [ ] [ ]
-        ├── __init__.py [x] [x] [x] [x] [x]
-        ├── batch_processor.py [x] [x] [ ] [ ] [ ]
-        ├── graphrag_integrator.py [x] [x] [ ] [ ] [ ]
-        ├── llm_optimizer.py [x] [ ] [ ] [ ] [ ]
-        ├── ocr_engine.py [x] [x] [ ] [ ] [ ]
+        ├── batch_processor.py [x] [x] [x] [x] [ ]
+        ├── graphrag_integrator.py [x] [x] [x] [ ] [ ]
+        ├── llm_optimizer.py [x] [x] [ ] [ ] [ ]
+        ├── ocr_engine.py [x] [x] [x] [x] [ ]
         ├── pdf_processor.py [x] [ ] [ ] [ ] [ ]
         ├── query_engine.py [x] [ ] [ ] [ ] [ ]
     └── 📁rag: Worker 173 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
         ├── rag_dashboard_enhancement.py [x] [ ] [ ] [ ] [ ]
         ├── rag_query_dashboard.py [x] [ ] [ ] [ ] [ ]
         ├── rag_query_optimizer_minimal.py [x] [ ] [ ] [ ] [ ]
-        ├── rag_query_optimizer_stubs.md
         ├── rag_query_optimizer.py [x] [ ] [ ] [ ] [ ]
-        ├── rag_query_optimizer.py.bak [x] [ ] [ ] [ ] [ ]
-        ├── rag_query_visualization_stubs.md
         ├── rag_query_visualization.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁search: Worker 174 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── ARCHITECTURE.md
-        ├── CHANGELOG.md
-        ├── search_embeddings_stubs.json
-        ├── search_embeddings_stubs.md
         ├── search_embeddings.py [x] [ ] [ ] [ ] [ ]
-        ├── search_embeddings.py.backup [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁utils: Worker 175 [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
-        ├── chunk_optimizer_stubs.md
         ├── chunk_optimizer.py [x] [ ] [ ] [ ] [ ]
-        ├── text_processing_stubs.md
         ├── text_processing.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
     └── 📁vector_stores: Worker 176 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
-        ├── base_stubs.md
         ├── base.py [x] [ ] [ ] [ ] [ ]
-        ├── CHANGELOG.md
         ├── elasticsearch_store.py [x] [ ] [ ] [ ] [ ]
-        ├── faiss_store_stubs.md
         ├── faiss_store.py [x] [ ] [ ] [ ] [ ]
         ├── qdrant_store.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
-        ├── vector_stores_base_stubs.md
-        ├── vector_stores_faiss_stubs.md
-        ├── vector_stores_qdrant_stubs.md
     └── 📁wikipedia_x: Worker 177 [x] [ ] [ ] [ ] [ ]
         └── 📁install: Worker 178 [x] [ ] [ ] [ ] [ ]
             ├── install_datasets.py [x] [ ] [ ] [ ] [ ]
         └── 📁test: Worker 179 [x] [ ] [ ] [ ] [ ]
             ├── test.py [x] [ ] [ ] [ ] [ ]
         ├── index.py [x] [ ] [ ] [ ] [ ]
-        ├── TODO.md
-    ├── __init___stubs.md
     ├── __init__.py [x] [ ] [ ] [ ] [ ]
     ├── _dependencies.py [x] [ ] [ ] [ ] [ ]
-    ├── admin_dashboard_stubs.md
     ├── admin_dashboard.py [x] [ ] [ ] [ ] [ ]
-    ├── audit_stubs.md
     ├── audit.py [x] [ ] [ ] [ ] [ ]
-    ├── car_conversion_stubs.md
     ├── car_conversion.py [x] [ ] [ ] [ ] [ ]
-    ├── CHANGELOG.md
-    ├── code_overlap_analysis_for_audit_folder.md
-    ├── config_folder_audit_report.md
-    ├── config_stubs.md
     ├── config.py [x] [ ] [ ] [ ] [ ]
-    ├── cross_document_lineage_enhanced_stubs.md
     ├── cross_document_lineage_enhanced.py [x] [ ] [ ] [ ] [ ]
-    ├── cross_document_lineage_stubs.md
     ├── cross_document_lineage.py [x] [ ] [ ] [ ] [ ]
-    ├── cross_document_reasoning_stubs.md
     ├── cross_document_reasoning.py [x] [ ] [ ] [ ] [ ]
-    ├── data_provenance_enhanced_stubs.md
     ├── data_provenance_enhanced.py [x] [ ] [ ] [ ] [ ]
-    ├── data_provenance_stubs.md
     ├── data_provenance.py [x] [ ] [ ] [ ] [ ]
-    ├── dataset_manager_stubs.md
     ├── dataset_manager.py [x] [ ] [ ] [ ] [ ]
     ├── dataset_serialization.py [x] [ ] [ ] [ ] [ ]
-    ├── enhanced_rag_visualization_stubs.md
     ├── enhanced_rag_visualization.py [x] [ ] [ ] [ ] [ ]
     ├── fastapi_config.py [x] [ ] [ ] [ ] [ ]
-    ├── fastapi_service_stubs.md
     ├── fastapi_service.py [x] [ ] [ ] [ ] [ ]
-    ├── federated_search_stubs.md
-    ├── graphrag_integration_stubs.md
     ├── graphrag_integration.py [x] [ ] [ ] [ ] [ ]
     ├── graphrag_processor.py [x] [ ] [ ] [ ] [ ]
-    ├── ipfs_datasets_stubs.md
     ├── ipfs_datasets.py [x] [ ] [ ] [ ] [ ]
-    ├── ipfs_knn_index_stubs.md
     ├── ipfs_knn_index.py [x] [ ] [ ] [ ] [ ]
-    ├── ipfs_multiformats_stubs.md
     ├── ipfs_multiformats.py [x] [ ] [ ] [ ] [ ]
     ├── ipfs_parquet_to_car.py [x] [ ] [ ] [ ] [ ]
     ├── jsonl_to_parquet.py [x] [ ] [ ] [ ] [ ]
-    ├── knowledge_graph_extraction_stubs.md
     ├── knowledge_graph_extraction.py [x] [ ] [ ] [ ] [ ]
-    ├── libp2p_kit_full_stubs.md
     ├── libp2p_kit_full.py [x] [ ] [ ] [ ] [ ]
     ├── libp2p_kit_stub.py [x] [ ] [ ] [ ] [ ]
-    ├── libp2p_kit_stubs.md
     ├── libp2p_kit.py [x] [ ] [ ] [ ] [ ]
     ├── monitoring_example.py [x] [ ] [ ] [ ] [ ]
-    ├── monitoring_stubs.md
     ├── monitoring.py [x] [ ] [ ] [ ] [ ]
     ├── provenance_dashboard.py [x] [ ] [ ] [ ] [ ]
-    ├── provenance_reporting.md
-    ├── query_optimizer_stubs.md
     ├── query_optimizer.py [x] [ ] [ ] [ ] [ ]
-    ├── resilient_operations_stubs.md
     ├── resilient_operations.py [x] [ ] [ ] [ ] [ ]
     ├── s3_kit.py [x] [ ] [ ] [ ] [ ]
-    ├── security_stubs.md
     ├── security.py [x] [ ] [ ] [ ] [ ]
-    ├── sparql_query_templates_stubs.md
     ├── sparql_query_templates.py [x] [ ] [ ] [ ] [ ]
-    ├── streaming_data_loader_stubs.md
     ├── streaming_data_loader.py [x] [ ] [ ] [ ] [ ]
-    ├── ucan_stubs.md
     ├── ucan.py [x] [ ] [ ] [ ] [ ]
     ├── unified_monitoring_dashboard.py [x] [ ] [ ] [ ] [ ]
     ├── unixfs_integration.py [x] [ ] [ ] [ ] [ ]
-    ├── vector_tools_backup_stubs.md
     ├── vector_tools_backup.py [x] [ ] [ ] [ ] [ ]
-    ├── vector_tools_simple_stubs.md
     ├── vector_tools_simple.py [x] [ ] [ ] [ ] [ ]
     ├── vector_tools.py [x] [ ] [ ] [ ] [ ]
     ├── web_archive_utils.py [x] [ ] [ ] [ ] [ ]
     ├── web_archive.py [x] [ ] [ ] [ ] [ ]
-    ├── wikipedia_rag_optimizer_stubs.md
     └── wikipedia_rag_optimizer.py [x] [ ] [ ] [ ] [ ]
 ```
