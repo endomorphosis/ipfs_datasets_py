@@ -43,7 +43,8 @@ assert GraphRAGIntegrator._store_knowledge_graph_ipld
 assert GraphRAGIntegrator.query_graph
 assert GraphRAGIntegrator.get_entity_neighborhood
 
-# 4. Import dependencies that exist in module
+
+# 4. Check if the modules's imports are accessible:
 import logging
 import hashlib
 from typing import Dict, List, Any, Optional

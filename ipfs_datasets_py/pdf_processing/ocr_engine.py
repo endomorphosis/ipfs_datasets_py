@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 import logging
 import io
 import numpy as np
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any
 from PIL import Image
 import cv2
 
@@ -704,32 +704,6 @@ class EasyOCR(OCREngine):
         super().__init__("easyocr")
     
     def _initialize(self):
-        """
-        Initialize the EasyOCR engine by loading neural models and setting up the reader.
-
-        This method sets up the EasyOCR engine by importing the EasyOCR framework and
-        initializing a Reader instance with English language support. The initialization
-        process downloads pre-trained neural models on first use and caches them locally
-        for future runs. The models include both text detection and recognition networks.
-
-        The initialization creates:
-        - Text detection model: CRAFT (Character Region Awareness for Text detection)
-        - Text recognition model: CRNN (Convolutional Recurrent Neural Network)
-        - Language support: Initially configured for English, expandable to 80+ languages
-
-        Raises:
-            ImportError: If the EasyOCR library is not installed
-            RuntimeError: If model downloading or loading fails
-            MemoryError: If insufficient memory to load neural models
-            OSError: If insufficient disk space for model caching
-
-        Notes:
-            - First initialization requires internet connection to download models (~40-100MB)
-            - Models are cached in ~/.EasyOCR/ directory for offline use
-            - GPU acceleration is automatically used if CUDA is available
-            - Initialization may take 15-30 seconds on first run
-            - Reader supports on-demand language switching without reinitialization
-        """
         try:
             import easyocr
             
@@ -745,53 +719,7 @@ class EasyOCR(OCREngine):
             self.available = False
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
-        """
-        Extract text from image data using EasyOCR's neural network-based approach.
-
-        This method processes image data through EasyOCR's complete neural pipeline including
-        CRAFT-based text detection and CRNN-based text recognition. The engine excels at
-        handling complex layouts, rotated text, and challenging document structures that
-        traditional OCR engines struggle with.
-
-        Args:
-            image_data (bytes): Raw image data in any supported format (PNG, JPEG, TIFF, etc.).
-                The image should contain text content to be extracted. EasyOCR handles
-                various text orientations and layouts effectively.
-
-        Returns:
-            Dict[str, Any]: Comprehensive extraction results containing:
-                - 'text' (str): Complete extracted text with spaces between detected blocks
-                - 'confidence' (float): Average confidence score across all text blocks (0.0-1.0)
-                - 'text_blocks' (List[Dict]): Detailed information for each detected text block:
-                  - 'text': Individual text block content
-                  - 'bbox': Bounding box as list of 4 corner points [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
-                  - 'confidence': Per-block confidence score (0.0-1.0)
-                - 'engine' (str): Engine identifier ('easyocr')
-
-        Raises:
-            RuntimeError: If the EasyOCR engine is not properly initialized
-            ValueError: If image_data is empty or in an unsupported format
-            PIL.UnidentifiedImageError: If the image format cannot be determined
-            MemoryError: If the image is too large for available system memory
-            Exception: For any other processing errors during OCR extraction
-
-        Examples:
-            >>> easyocr_engine = EasyOCR()
-            >>> with open('complex_layout.png', 'rb') as f:
-            ...     image_data = f.read()
-            >>> result = easyocr_engine.extract_text(image_data)
-            >>> print(f"Extracted text: {result['text']}")
-            >>> for block in result['text_blocks']:
-            ...     print(f"Block: {block['text']}, Confidence: {block['confidence']:.2f}")
-            ...     print(f"Corners: {block['bbox']}")
-
-        Notes:
-            - Bounding boxes are returned as 4-point polygons for rotated text support
-            - Automatically detects and handles text orientation without configuration
-            - Processing time scales with image complexity and number of text regions
-            - Confidence scores are inherently provided by the neural recognition model
-            - Excellent performance on curved, rotated, or stylized text
-        """
+        """Extract text using EasyOCR."""
         if not self.available:
             raise RuntimeError("EasyOCR engine not available")
         
@@ -894,33 +822,6 @@ class TrOCREngine(OCREngine):
         super().__init__("trocr")
     
     def _initialize(self):
-        """
-        Initialize the TrOCR engine by loading transformer models and processor components.
-
-        This method sets up the TrOCR engine by loading Microsoft's transformer-based OCR
-        models from Hugging Face Hub. The initialization process downloads the pre-trained
-        Vision-Encoder-Decoder model and processor, which are specifically designed for
-        optical character recognition tasks using transformer architectures.
-
-        The method loads:
-        - TrOCR Processor: Handles image preprocessing and text postprocessing
-        - VisionEncoderDecoderModel: The core transformer model for text recognition
-        - Model variant: microsoft/trocr-base-printed (optimized for printed text)
-
-        Raises:
-            ImportError: If the transformers library is not installed
-            RuntimeError: If model downloading from Hugging Face Hub fails
-            MemoryError: If insufficient memory to load transformer models
-            OSError: If insufficient disk space for model caching or network issues
-            HTTPError: If model repository is inaccessible or authentication fails
-
-        Notes:
-            - First initialization requires internet connection to download models (~300MB)
-            - Models are cached in ~/.cache/huggingface/ for offline use
-            - GPU acceleration is automatically used if PyTorch detects CUDA
-            - Initialization may take 30-90 seconds on first run depending on connection
-            - Alternative models (trocr-base-handwritten, trocr-large-*) can be substituted
-        """
         try:
             from transformers import TrOCRProcessor, VisionEncoderDecoderModel
             
@@ -939,56 +840,7 @@ class TrOCREngine(OCREngine):
             self.available = False
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
-        """
-        Extract text from image data using TrOCR's transformer-based recognition approach.
-
-        This method processes image data through the complete TrOCR pipeline using a
-        Vision-Encoder-Decoder transformer architecture. The approach treats OCR as a
-        sequence-to-sequence task, generating text tokens from visual features without
-        requiring separate text detection stages.
-
-        Args:
-            image_data (bytes): Raw image data in any PIL-supported format (PNG, JPEG, TIFF, etc.).
-                The image should contain text content to be extracted. TrOCR works best with
-                single lines or small text blocks rather than full document pages.
-
-        Returns:
-            Dict[str, Any]: Extraction results containing:
-                - 'text' (str): Generated text content from the transformer model
-                - 'confidence' (float): Fixed confidence score (0.8) as TrOCR doesn't provide
-                  native confidence estimation
-                - 'engine' (str): Engine identifier ('trocr')
-
-        Raises:
-            RuntimeError: If the TrOCR engine is not properly initialized
-            ValueError: If image_data is empty or in an unsupported format
-            PIL.UnidentifiedImageError: If the image format cannot be determined
-            torch.cuda.OutOfMemoryError: If GPU memory is insufficient for processing
-            Exception: For any other processing errors during text generation
-
-        Processing Pipeline:
-            1. Convert image data to PIL Image and ensure RGB format
-            2. Preprocess image using TrOCR processor (resize, normalize, tensorize)
-            3. Encode visual features using the vision encoder
-            4. Generate text tokens using the decoder with attention mechanisms
-            5. Decode tokens to final text string
-
-        Examples:
-            >>> trocr_engine = TrOCREngine()
-            >>> with open('handwritten_note.png', 'rb') as f:
-            ...     image_data = f.read()
-            >>> result = trocr_engine.extract_text(image_data)
-            >>> print(f"Recognized text: {result['text']}")
-            >>> print(f"Confidence: {result['confidence']}")
-
-        Notes:
-            - Best suited for single-line text or small text regions
-            - Excellent performance on handwritten and stylized text
-            - Does not provide spatial information or bounding boxes
-            - Fixed confidence score due to transformer architecture limitations
-            - Processing time varies with image size and model complexity
-            - May require text detection preprocessing for multi-line documents
-        """
+        """Extract text using TrOCR."""
         if not self.available:
             raise RuntimeError("TrOCR engine not available")
         
@@ -1177,87 +1029,15 @@ class MultiEngineOCR:
         }
     
     def get_available_engines(self) -> List[str]:
-        """
-        Get a list of all successfully initialized and available OCR engines.
-
-        This method returns the names of all OCR engines that were successfully initialized
-        during the MultiEngineOCR constructor and are currently available for text extraction.
-        The list reflects the actual engines that can be used by extract_with_fallback()
-        and other processing methods.
-
-        Returns:
-            List[str]: List of available OCR engine names. Possible values include:
-                - 'surya': Surya transformer-based OCR
-                - 'tesseract': Traditional Tesseract OCR
-                - 'easyocr': EasyOCR neural network-based OCR
-                - 'trocr': TrOCR transformer-based OCR
-                Empty list if no engines are available.
-
-        Examples:
-            >>> multi_ocr = MultiEngineOCR()
-            >>> available = multi_ocr.get_available_engines()
-            >>> print(f"Available engines: {available}")
-            >>> if 'surya' in available:
-            ...     print("Surya OCR is ready for use")
-            >>> if not available:
-            ...     print("No OCR engines available - check dependencies")
-
-        Notes:
-            - The list reflects engines available at initialization time
-            - Engine availability is determined during object construction
-            - Engines are not re-checked for availability in this method
-            - Useful for conditional logic based on available OCR capabilities
-        """
+        """Get list of available OCR engines."""
         return list(self.engines.keys())
     
     def classify_document_type(self, image_data: bytes) -> str:
         """
-        Classify document type to select optimal OCR strategy and engine selection.
-
-        This method analyzes image characteristics to determine the document type, which
-        can be used to optimize OCR engine selection and processing strategies. The
-        classification helps choose the most appropriate OCR approach for different
-        types of text content and document layouts.
-
-        Args:
-            image_data (bytes): Raw image data to analyze for document type classification.
-                The image should contain the document content to be classified.
-
+        Classify document type to select optimal OCR strategy.
+        
         Returns:
-            str: Document type classification. Possible values:
-                - 'printed': Clean printed text with standard fonts
-                - 'handwritten': Handwritten or cursive text content
-                - 'scientific': Mathematical formulas, equations, or technical diagrams
-                - 'mixed': Combination of multiple text types or complex layouts
-
-        Classification Logic (Future Implementation):
-            - Analyze text density and distribution patterns
-            - Detect presence of mathematical symbols or formulas
-            - Identify handwriting characteristics vs printed text
-            - Assess document layout complexity and structure
-            - Use computer vision techniques for feature extraction
-
-        Examples:
-            >>> multi_ocr = MultiEngineOCR()
-            >>> with open('research_paper.png', 'rb') as f:
-            ...     image_data = f.read()
-            >>> doc_type = multi_ocr.classify_document_type(image_data)
-            >>> print(f"Document type: {doc_type}")
-            >>> 
-            >>> # Optimize strategy based on document type
-            >>> if doc_type == 'handwritten':
-            ...     strategy = 'accuracy_first'  # Prefer TrOCR for handwriting
-            >>> elif doc_type == 'scientific':
-            ...     strategy = 'quality_first'   # Use best available for formulas
-            >>> else:
-            ...     strategy = 'speed_first'     # Standard printed text
-
-        Notes:
-            - Current implementation returns 'printed' as placeholder
-            - Future versions will implement computer vision-based classification
-            - Classification results can guide OCR strategy selection
-            - Improves overall OCR accuracy by matching engines to content types
-            - Useful for automated document processing workflows
+            Document type ('printed', 'handwritten', 'scientific', 'mixed')
         """
         # TODO classify_document_type needs a real implementation
         # Placeholder implementation

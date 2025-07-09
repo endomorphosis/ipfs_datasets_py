@@ -24,6 +24,16 @@ pyarrow>=15.0.0,<21.0.0
 jsonschema>=4.0.0,<5.0.0
 pydantic>=2.0.0,<3.0.0
 
+# PDF processing
+networkx>=3.1
+pdfplumber>=0.11.7
+pytesseract>=0.3.13
+tiktoken>=0.6.0
+opencv-contrib-python-headless>=4.11.0.86 # NOTE THis library errors with "Clock skew detected"
+
+
+
+
 # Add these one by one after basic setup works:
 # datasets>=2.10.0,<3.0.0
 # transformers>=4.0.0,<5.0.0
