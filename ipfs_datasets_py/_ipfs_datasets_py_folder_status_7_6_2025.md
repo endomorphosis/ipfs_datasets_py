@@ -412,7 +412,7 @@ Example:
         ├── graphrag_integrator.py [x] [x] [x] [x] [ ]
         ├── llm_optimizer.py       [x] [x] [x] [x] [ ]
         ├── ocr_engine.py          [x] [x] [x] [x] [ ]
-        ├── pdf_processor.py       [x] [x] [x] [ ] [ ]
+        ├── pdf_processor.py       [x] [x] [x] [/] [ ]
         ├── query_engine.py        [x] [x] [x] [ ] [ ]
     └── 📁rag: Worker 173 [x] [ ] [ ] [ ] [ ]
         ├── __init__.py [x] [ ] [ ] [ ] [ ]
