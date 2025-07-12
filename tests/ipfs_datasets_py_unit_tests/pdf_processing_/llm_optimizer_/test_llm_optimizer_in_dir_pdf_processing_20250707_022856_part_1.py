@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # File Path: ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py
@@ -228,18 +227,18 @@ class TestChunkOptimizerInitialization:
         """
         GIVEN non-integer parameters (float, string, None)
         WHEN ChunkOptimizer is initialized
-        THEN expect ValueError to be raised
+        THEN expect TypeError to be raised
         """
         # Given - float max_size
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             ChunkOptimizer(max_size=100.5, overlap=50, min_size=25)
         
         # Given - string overlap
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             ChunkOptimizer(max_size=100, overlap="50", min_size=25)
         
         # Given - None min_size
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             ChunkOptimizer(max_size=100, overlap=50, min_size=None)
 
 
@@ -430,7 +429,7 @@ class TestChunkOptimizerOptimizeChunkBoundaries:
         """
         GIVEN boundary list containing non-integer values
         WHEN optimize_chunk_boundaries is called
-        THEN expect ValueError to be raised
+        THEN expect TypeError to be raised
         """
         # Given
         text = "Some valid text content here."
@@ -438,7 +437,7 @@ class TestChunkOptimizerOptimizeChunkBoundaries:
         optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
         
         # When/Then
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             optimizer.optimize_chunk_boundaries(text, current_boundaries)
 
     def test_optimize_boundaries_maintains_order(self):
@@ -828,7 +827,7 @@ class TestLLMChunkInstantiation:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         
         # When/Then - missing content
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             LLMChunk(
                 chunk_id="chunk_0001",
                 source_page=1,
@@ -840,7 +839,7 @@ class TestLLMChunkInstantiation:
             )
         
         # When/Then - missing multiple fields
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             LLMChunk(content="Test content")
 
     def test_instantiation_with_none_embedding(self):
@@ -1168,18 +1167,29 @@ class TestLLMChunkFieldValidation:
             )
             assert chunk.semantic_type == semantic_type
         
-        # Custom types should also work (no strict validation in base dataclass)
-        custom_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_element="text",
-            token_count=5,
-            semantic_type="custom_type",
-            relationships=[],
-            metadata={}
-        )
-        assert custom_chunk.semantic_type == "custom_type"
+        # Other types should be rejected
+        with pytest.raises(TypeError):
+            LLMChunk(
+                content="Test content",
+                chunk_id="chunk_0001",
+                source_page=1,
+                source_element="text",
+                token_count=5,
+                semantic_type=123,  # Invalid type
+                relationships=[],
+                metadata={}
+            )
+            custom_chunk = LLMChunk(
+                content="Test content",
+                chunk_id="chunk_0001",
+                source_page=1,
+                source_element="text",
+                token_count=5,
+                semantic_type="custom_type",
+                relationships=[],
+                metadata={}
+            )
+
 
     def test_relationships_field_validation(self):
         """
@@ -2069,7 +2079,7 @@ class TestLLMDocumentInstantiation:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # When/Then - missing document_id
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             LLMDocument(
                 title="Test Document",
                 chunks=[],
@@ -2079,11 +2089,11 @@ class TestLLMDocumentInstantiation:
             )
         
         # When/Then - missing multiple fields
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             LLMDocument(document_id="doc_001")
         
         # When/Then - missing chunks field
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             LLMDocument(
                 document_id="doc_001",
                 title="Test Document",

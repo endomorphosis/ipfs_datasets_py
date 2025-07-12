@@ -7,6 +7,8 @@ import pytest
 import os
 import asyncio
 import re
+import time
+import networkx as nx
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
@@ -926,8 +928,13 @@ class TestIntegrateDocument:
                 chunks=[LLMChunk(
                     chunk_id=f"chunk_{i}",
                     content=f"Content {i}",
-                    page_number=1,
-                    source_page=1
+                    source_page=1,
+                    source_element="paragraph",
+                    token_count=5,
+                    semantic_type="text",
+                    relationships=[],
+                    metadata={},
+                    embedding=None
                 )]
             ) for i in range(3)
         ]
@@ -959,8 +966,13 @@ class TestIntegrateDocument:
             LLMChunk(
                 chunk_id=f"chunk_{i}",
                 content=f"Content for chunk {i} with some entity data",
-                page_number=i // 10 + 1,
-                source_page=i // 10 + 1
+                source_page=i // 10 + 1,
+                source_element="paragraph",
+                token_count=12,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             ) for i in range(150)
         ]
         
@@ -999,8 +1011,13 @@ class TestIntegrateDocument:
             chunks=[LLMChunk(
                 chunk_id="empty_chunk",
                 content="This is just plain text with no named entities.",
-                page_number=1,
-                source_page=1
+                source_page=1,
+                source_element="paragraph",
+                token_count=10,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             )]
         )
         
@@ -1032,8 +1049,13 @@ class TestIntegrateDocument:
             chunks=[LLMChunk(
                 chunk_id="low_conf_chunk",
                 content="Maybe John Smith works somewhere.",
-                page_number=1,
-                source_page=1
+                source_page=1,
+                source_element="paragraph",
+                token_count=6,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             )]
         )
         
@@ -1081,22 +1103,37 @@ class TestExtractEntitiesFromChunks:
         """Create sample LLMChunk objects for testing."""
         return [
             LLMChunk(
-                chunk_id="chunk_1",
                 content="Apple Inc. was founded by Steve Jobs in Cupertino.",
-                page_number=1,
-                source_page=1
+                chunk_id="chunk_1",
+                source_page=1,
+                source_element="paragraph",
+                token_count=12,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             ),
             LLMChunk(
-                chunk_id="chunk_2",
                 content="Steve Jobs became CEO of Apple Inc. in 1997.",
-                page_number=1,
-                source_page=1
+                chunk_id="chunk_2",
+                source_page=1,
+                source_element="paragraph",
+                token_count=10,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             ),
             LLMChunk(
-                chunk_id="chunk_3",
                 content="Microsoft Corporation is based in Redmond, Washington.",
-                page_number=2,
-                source_page=2
+                chunk_id="chunk_3",
+                source_page=2,
+                source_element="paragraph",
+                token_count=10,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             )
         ]
 
@@ -1104,61 +1141,66 @@ class TestExtractEntitiesFromChunks:
     def sample_entity_dicts(self):
         """Create sample entity dictionaries as returned by _extract_entities_from_text."""
         return [
-            # From chunk_1
-            [
-                {
-                    'name': 'Apple Inc.',
-                    'type': 'organization',
-                    'description': 'Technology company',
-                    'confidence': 0.8,
-                    'properties': {'extraction_method': 'regex_pattern_matching', 'source_chunk': 'chunk_1'}
-                },
-                {
-                    'name': 'Steve Jobs',
-                    'type': 'person',
-                    'description': 'Person mentioned in document',
-                    'confidence': 0.9,
-                    'properties': {'extraction_method': 'regex_pattern_matching', 'source_chunk': 'chunk_1'}
-                }
-            ],
-            # From chunk_2
-            [
-                {
-                    'name': 'Steve Jobs',
-                    'type': 'person',
-                    'description': 'Person mentioned in document',
-                    'confidence': 0.85,
-                    'properties': {'extraction_method': 'regex_pattern_matching', 'source_chunk': 'chunk_2'}
-                },
-                {
-                    'name': 'Apple Inc.',
-                    'type': 'organization',
-                    'description': 'Technology company',
-                    'confidence': 0.75,
-                    'properties': {'extraction_method': 'regex_pattern_matching', 'source_chunk': 'chunk_2'}
-                }
-            ],
-            # From chunk_3
-            [
-                {
-                    'name': 'Microsoft Corporation',
-                    'type': 'organization',
-                    'description': 'Technology company',
-                    'confidence': 0.9,
-                    'properties': {'extraction_method': 'regex_pattern_matching', 'source_chunk': 'chunk_3'}
-                }
-            ]
+            {
+                'id': 'apple_inc_org',
+                'name': 'Apple Inc.',
+                'type': 'organization',
+                'description': 'Technology company',
+                'confidence': 0.9,
+                'properties': {'founded': '1976'}
+            },
+            {
+                'id': 'steve_jobs_person',
+                'name': 'Steve Jobs',
+                'type': 'person',
+                'description': 'Co-founder of Apple Inc.',
+                'confidence': 0.95,
+                'properties': {'role': 'CEO'}
+            },
+            {
+                'id': 'cupertino_location',
+                'name': 'Cupertino',
+                'type': 'location',
+                'description': 'City in California',
+                'confidence': 0.8,
+                'properties': {'state': 'California'}
+            }
         ]
 
     @pytest.mark.asyncio
     async def test_extract_entities_from_chunks_valid_input(self, mock_integrator, sample_chunks, sample_entity_dicts):
         """
-        GIVEN a list of LLMChunk objects containing entity-rich text
+        GIVEN valid LLMChunk objects with extractable entities
         WHEN _extract_entities_from_chunks is called
-        THEN a list of Entity objects should be returned
-        AND entities should be deduplicated across chunks
-        AND only entities above confidence threshold should be included
+        THEN entities should be extracted and consolidated correctly
+        AND duplicate entities should be merged
+        AND confidence scores should be maximized
         """
+        # Mock the _extract_entities_from_text method to return sample entities
+        mock_integrator._extract_entities_from_text.side_effect = [
+            [sample_entity_dicts[0], sample_entity_dicts[1]],  # chunk_1: Apple Inc, Steve Jobs
+            [sample_entity_dicts[1]],  # chunk_2: Steve Jobs (duplicate)
+            [sample_entity_dicts[2]]   # chunk_3: Cupertino
+        ]
+        
+        result = await mock_integrator._extract_entities_from_chunks(sample_chunks)
+        
+        # Verify all chunks were processed
+        assert mock_integrator._extract_entities_from_text.call_count == 3
+        
+        # Verify returned entities
+        assert isinstance(result, list)
+        assert len(result) >= 2  # At least 2 unique entities (Steve Jobs deduplicated)
+        
+        # Check that Entity objects were created with proper structure
+        for entity in result:
+            assert hasattr(entity, 'id')
+            assert hasattr(entity, 'name')
+            assert hasattr(entity, 'type')
+            assert hasattr(entity, 'confidence')
+            assert hasattr(entity, 'source_chunks')
+            assert isinstance(entity.source_chunks, list)
+    
         # Setup mock to return different entities for each chunk
         mock_integrator._extract_entities_from_text.side_effect = sample_entity_dicts
         
@@ -1204,8 +1246,13 @@ class TestExtractEntitiesFromChunks:
         single_chunk = [LLMChunk(
             chunk_id="single_chunk",
             content="Tesla Inc. was founded by Elon Musk.",
-            page_number=1,
-            source_page=1
+            source_page=1,
+            source_element="paragraph",
+            token_count=10,
+            semantic_type="text",
+            relationships=[],
+            metadata={},
+            embedding=None
         )]
         
         single_entity_dict = [[{
@@ -1238,8 +1285,13 @@ class TestExtractEntitiesFromChunks:
         duplicate_chunk = [LLMChunk(
             chunk_id="dup_chunk",
             content="Apple Inc. develops products. Apple Inc. is innovative.",
-            page_number=1,
-            source_page=1
+            source_page=1,
+            source_element="paragraph",
+            token_count=15,
+            semantic_type="text",
+            relationships=[],
+            metadata={},
+            embedding=None
         )]
         
         # Simulate same entity extracted multiple times with different confidence
@@ -1281,8 +1333,8 @@ class TestExtractEntitiesFromChunks:
         AND properties should be merged from all mentions
         """
         multi_chunks = [
-            LLMChunk(chunk_id="chunk_a", content="Google was founded in 1998.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="chunk_b", content="Google LLC is a search company.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="chunk_a", content="Google was founded in 1998.", source_page=1, source_element="paragraph", token_count=8, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="chunk_b", content="Google LLC is a search company.", source_page=1, source_element="paragraph", token_count=8, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         multi_entity_dicts = [
@@ -1324,8 +1376,8 @@ class TestExtractEntitiesFromChunks:
         AND the canonical name should be preserved from first occurrence
         """
         case_chunks = [
-            LLMChunk(chunk_id="chunk_1", content="Apple Inc. is great.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="chunk_2", content="apple inc. makes phones.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="chunk_1", content="Apple Inc. is great.", source_page=1, source_element="paragraph", token_count=6, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="chunk_2", content="apple inc. makes phones.", source_page=1, source_element="paragraph", token_count=6, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         case_entity_dicts = [
@@ -1368,8 +1420,13 @@ class TestExtractEntitiesFromChunks:
         conf_chunks = [LLMChunk(
             chunk_id="conf_chunk",
             content="Various entities with different confidence levels.",
-            page_number=1,
-            source_page=1
+            source_page=1,
+            source_element="paragraph",
+            token_count=8,
+            semantic_type="text",
+            relationships=[],
+            metadata={},
+            embedding=None
         )]
         
         mixed_confidence_entities = [[
@@ -1417,8 +1474,8 @@ class TestExtractEntitiesFromChunks:
         AND all unique properties should be preserved
         """
         prop_chunks = [
-            LLMChunk(chunk_id="chunk_1", content="Amazon was founded in 1994.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="chunk_2", content="Amazon is in Seattle.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="chunk_1", content="Amazon was founded in 1994.", source_page=1, source_element="paragraph", token_count=8, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="chunk_2", content="Amazon is in Seattle.", source_page=1, source_element="paragraph", token_count=5, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         property_entity_dicts = [
@@ -1468,8 +1525,8 @@ class TestExtractEntitiesFromChunks:
         AND IDs should be consistent across multiple calls
         """
         id_chunks = [
-            LLMChunk(chunk_id="chunk_1", content="Netflix is streaming.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="chunk_2", content="Netflix has shows.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="chunk_1", content="Netflix is streaming.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="chunk_2", content="Netflix has shows.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         id_entity_dicts = [
@@ -1512,8 +1569,13 @@ class TestExtractEntitiesFromChunks:
         type_chunks = [LLMChunk(
             chunk_id="type_chunk",
             content="John Doe works at IBM in New York on 2024-01-15 for $100,000.",
-            page_number=1,
-            source_page=1
+            source_page=1,
+            source_element="paragraph",
+            token_count=15,
+            semantic_type="text",
+            relationships=[],
+            metadata={},
+            embedding=None
         )]
         
         mixed_type_entities = [[
@@ -1575,14 +1637,24 @@ class TestExtractEntitiesFromChunks:
             LLMChunk(
                 chunk_id="empty_1",
                 content="This is just plain text without any entities.",
-                page_number=1,
-                source_page=1
+                source_page=1,
+                source_element="paragraph",
+                token_count=10,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             ),
             LLMChunk(
                 chunk_id="empty_2", 
                 content="More text that has no named entities.",
-                page_number=1,
-                source_page=1
+                source_page=1,
+                source_element="paragraph",
+                token_count=8,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             )
         ]
         
@@ -1677,8 +1749,13 @@ class TestExtractEntitiesFromChunks:
             LLMChunk(
                 chunk_id=f"chunk_{i}",
                 content=f"Entity{i} Corp is a company.",
-                page_number=i // 10 + 1,
-                source_page=i // 10 + 1
+                source_page=i // 10 + 1,
+                source_element="paragraph",
+                token_count=7,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             ) for i in range(150)
         ]
         
@@ -1716,8 +1793,8 @@ class TestExtractEntitiesFromChunks:
         AND the final result should be deterministic
         """
         order_chunks = [
-            LLMChunk(chunk_id="first", content="Facebook is social.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="second", content="Facebook connects people.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="first", content="Facebook is social.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="second", content="Facebook connects people.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         order_entity_dicts = [
@@ -1761,9 +1838,9 @@ class TestExtractEntitiesFromChunks:
         AND the confidence should be correctly updated during consolidation
         """
         conf_chunks = [
-            LLMChunk(chunk_id="low_conf", content="Twitter is a platform.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="high_conf", content="Twitter Inc. is social media.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="med_conf", content="Twitter has users.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="low_conf", content="Twitter is a platform.", source_page=1, source_element="paragraph", token_count=5, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="high_conf", content="Twitter Inc. is social media.", source_page=1, source_element="paragraph", token_count=6, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="med_conf", content="Twitter has users.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         confidence_entity_dicts = [
@@ -1808,9 +1885,9 @@ class TestExtractEntitiesFromChunks:
         AND the order should be preserved
         """
         source_chunks = [
-            LLMChunk(chunk_id="chunk_a", content="LinkedIn is professional.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="chunk_b", content="LinkedIn connects professionals.", page_number=1, source_page=1),
-            LLMChunk(chunk_id="chunk_c", content="LinkedIn has job listings.", page_number=2, source_page=2)
+            LLMChunk(chunk_id="chunk_a", content="LinkedIn is professional.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="chunk_b", content="LinkedIn connects professionals.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="chunk_c", content="LinkedIn has job listings.", source_page=2, source_element="paragraph", token_count=5, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         source_entity_dicts = [
@@ -1856,9 +1933,9 @@ class TestExtractEntitiesFromChunks:
         AND no errors should be raised
         """
         empty_content_chunks = [
-            LLMChunk(chunk_id="empty", content="", page_number=1, source_page=1),
-            LLMChunk(chunk_id="whitespace", content="   \n\t  ", page_number=1, source_page=1),
-            LLMChunk(chunk_id="valid", content="Tesla makes cars.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="empty", content="", source_page=1, source_element="paragraph", token_count=0, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="whitespace", content="   \n\t  ", source_page=1, source_element="paragraph", token_count=0, semantic_type="text", relationships=[], metadata={}, embedding=None),
+            LLMChunk(chunk_id="valid", content="Tesla makes cars.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         empty_responses = [
@@ -1891,8 +1968,13 @@ class TestExtractEntitiesFromChunks:
         special_chunks = [LLMChunk(
             chunk_id="special",
             content="Café René's company makes naïve AI systems with $1,000€ budget.",
-            page_number=1,
-            source_page=1
+            source_page=1,
+            source_element="paragraph",
+            token_count=15,
+            semantic_type="text",
+            relationships=[],
+            metadata={},
+            embedding=None
         )]
         
         special_entities = [[
@@ -1930,9 +2012,9 @@ class TestExtractEntitiesFromChunks:
         AND the error should indicate invalid chunk types
         """
         mixed_chunks = [
-            LLMChunk(chunk_id="valid", content="Valid chunk.", page_number=1, source_page=1),
+            LLMChunk(chunk_id="valid", content="Valid chunk.", source_page=1, source_element="paragraph", token_count=3, semantic_type="text", relationships=[], metadata={}, embedding=None),
             None,
-            LLMChunk(chunk_id="also_valid", content="Another valid chunk.", page_number=1, source_page=1)
+            LLMChunk(chunk_id="also_valid", content="Another valid chunk.", source_page=1, source_element="paragraph", token_count=4, semantic_type="text", relationships=[], metadata={}, embedding=None)
         ]
         
         with pytest.raises(TypeError) as exc_info:

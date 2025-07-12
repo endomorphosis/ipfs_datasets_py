@@ -21,7 +21,7 @@ from ipfs_datasets_py.llm.llm_graphrag import (
     GraphRAGLLMProcessor,
     ReasoningEnhancer
 )
-from ipfs_datasets_py.llm_interface import LLMInterfaceFactory
+from ipfs_datasets_py.llm.llm_interface import LLMInterfaceFactory
 from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 

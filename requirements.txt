@@ -32,7 +32,7 @@ tiktoken>=0.6.0
 opencv-contrib-python-headless>=4.11.0.86 # NOTE THis library errors with "Clock skew detected"
 
 
-
+Flask>=3.1.1
 
 # Add these one by one after basic setup works:
 # datasets>=2.10.0,<3.0.0

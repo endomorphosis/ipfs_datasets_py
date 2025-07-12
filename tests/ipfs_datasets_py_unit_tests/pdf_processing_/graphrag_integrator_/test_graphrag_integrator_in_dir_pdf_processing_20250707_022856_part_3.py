@@ -1072,7 +1072,7 @@ class TestGetEntityNeighborhood:
         THEN a TypeError should be raised
         AND the error should indicate invalid entity_id type
         """
-        with pytest.raises(TypeError, match="Entity ID cannot be None"):
+        with pytest.raises(TypeError, match="entity_id must be a string."):
             await self.integrator.get_entity_neighborhood(None)
 
     @pytest.mark.asyncio
@@ -1083,7 +1083,7 @@ class TestGetEntityNeighborhood:
         THEN a ValueError should be raised
         AND the error should indicate invalid entity_id value
         """
-        with pytest.raises(ValueError, match="Entity ID cannot be empty"):
+        with pytest.raises(ValueError, match="entity_id must be a non-empty string."):
             await self.integrator.get_entity_neighborhood("")
 
     @pytest.mark.asyncio
@@ -1094,7 +1094,7 @@ class TestGetEntityNeighborhood:
         THEN a ValueError should be raised
         AND the error should indicate invalid depth range
         """
-        with pytest.raises(ValueError, match="Depth must be non-negative"):
+        with pytest.raises(ValueError, match="depth must be a non-negative integer"):
             await self.integrator.get_entity_neighborhood("entity_1", depth=-1)
 
     @pytest.mark.asyncio
@@ -1105,7 +1105,7 @@ class TestGetEntityNeighborhood:
         THEN a TypeError should be raised
         AND the error should indicate expected integer type
         """
-        with pytest.raises(TypeError, match="Depth must be an integer"):
+        with pytest.raises(TypeError, match="depth must be an integer"):
             await self.integrator.get_entity_neighborhood("entity_1", depth=1.5)
 
     @pytest.mark.asyncio

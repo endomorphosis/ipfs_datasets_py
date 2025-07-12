@@ -18,16 +18,19 @@ import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import pydantic
-from mcp.server import FastMCP
-from mcp.types import CallToolResult, TextContent, Tool
-from mcp import CallToolRequest
+try:    
+    from mcp.server import FastMCP
+    from mcp.types import CallToolResult, TextContent, Tool
+    from mcp import CallToolRequest
+except ImportError:
+    print("Failed to import mcp.server. Please ensure the mcp library is installed.")
 
 from .configs import Configs, configs
 from .logger import logger
 
 
 
-from mcp.types import CallToolResult, TextContent, Tool
+
 
 
 def return_text_content(input: Any, result_str: str) -> TextContent:

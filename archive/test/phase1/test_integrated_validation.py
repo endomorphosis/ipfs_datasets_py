@@ -35,7 +35,7 @@ from ipfs_datasets_py.knowledge_graph_extraction import (
     KnowledgeGraph, Entity, Relationship,
     KnowledgeGraphExtractorWithValidation
 )
-from ipfs_datasets_py.llm_semantic_validation import ValidationResult
+from ipfs_datasets_py.llm.llm_semantic_validation import ValidationResult
 
 
 class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
@@ -104,7 +104,7 @@ class TestKnowledgeGraphExtractorWithValidation(unittest.TestCase):
 
         # Create extractor with validation using mocks
         with patch('ipfs_datasets_py.knowledge_graph_extraction.KnowledgeGraphExtractor', return_value=self.mock_extractor):
-            with patch('ipfs_datasets_py.llm_semantic_validation.SPARQLValidator', return_value=self.mock_validator):
+            with patch('ipfs_datasets_py.llm.llm_semantic_validation.SPARQLValidator', return_value=self.mock_validator):
                 self.extractor_with_validation = KnowledgeGraphExtractorWithValidation(
                     validate_during_extraction=True,
                     auto_correct_suggestions=True

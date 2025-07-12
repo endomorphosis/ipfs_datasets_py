@@ -17,8 +17,8 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(parent_dir)
 
 # Import the modules to test
-from ipfs_datasets_py.llm_interface import MockLLMInterface
-from ipfs_datasets_py.llm_semantic_validation import (
+from ipfs_datasets_py.llm.llm_interface import MockLLMInterface
+from ipfs_datasets_py.llm.llm_semantic_validation import (
     SchemaRegistry, SchemaValidator, SemanticAugmenter,
     SemanticValidator, ValidationResult
 )

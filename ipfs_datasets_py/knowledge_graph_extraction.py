@@ -1870,7 +1870,7 @@ class KnowledgeGraphExtractorWithValidation:
 
         # Initialize validator
         try:
-            from ipfs_datasets_py.llm_semantic_validation import SPARQLValidator
+            from ipfs_datasets_py.llm.llm_semantic_validation import SPARQLValidator
             self.validator = SPARQLValidator(
                 endpoint_url=sparql_endpoint_url,
                 tracer=self.tracer,

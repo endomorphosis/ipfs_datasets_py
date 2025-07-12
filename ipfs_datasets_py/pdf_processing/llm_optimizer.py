@@ -25,12 +25,13 @@ from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
 logger = logging.getLogger(__name__)
 
-@dataclass
-class LLMChunk:
+from pydantic import BaseModel, Field, field_validator
+
+class LLMChunk(BaseModel):
     """
     Semantically optimized text chunk designed for effective LLM processing and analysis.
 
-    This dataclass represents an individual text chunk that has been optimized for language model
+    This Pydantic model represents an individual text chunk that has been optimized for language model
     consumption, including the text content, vector embeddings, metadata, and contextual information.
     Each chunk is designed to be semantically coherent, appropriately sized for LLM token limits,
     and enriched with metadata to support various downstream NLP tasks.
@@ -59,13 +60,25 @@ class LLMChunk:
     """
     content: str
     chunk_id: str
-    source_page: int
+    source_page: int = Field(gt=0)
     source_element: str
-    token_count: int
-    semantic_type: str  # 'text', 'table', 'figure_caption', 'header', etc.
-    relationships: List[str]  # Related chunk IDs
-    metadata: Dict[str, Any]
+    token_count: int = Field(ge=0)
+    semantic_type: str = Field(regex=r'^(text|table|figure_caption|header|mixed)$')
+    relationships: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
     embedding: Optional[np.ndarray] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+        
+    @field_validator('content')
+    def validate_content(cls, v):
+        """Validate that content is not None and is a string."""
+        if v is None:
+            raise ValueError("Content cannot be None")
+        if not isinstance(v, str):
+            raise ValueError("Content must be a string")
+        return v
 
 @dataclass
 class LLMDocument:
@@ -1298,12 +1311,26 @@ class TextProcessor:
             >>> keywords = processor.extract_keywords(short_text)
             >>> print(keywords)  # ['brief', 'example'] (excludes stop words)
         """
+        if not isinstance(top_k, int) or top_k <= 0:
+            print(f"Invalid top_k value: {top_k}. Using default value of 20.")
+            top_k = 20
+
+        if not isinstance(text, str):
+            return []
+
         # Simple keyword extraction based on frequency
         words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
         
         # Filter common stop words
-        stop_words = {'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'this', 'that', 'these', 'those', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'}
-        
+        stop_words = {
+            'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 
+            'of', 'with', 'by', 'this', 'that', 'these', 'those', 'is', 
+            'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 
+            'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+            'can', 'very', 'most', 'able', 'way', 'make', 'it', 'from', 
+            'a', 'an'
+        }
+
         filtered_words = [w for w in words if w not in stop_words]
         
         # Count frequency
@@ -1379,6 +1406,19 @@ class ChunkOptimizer:
             >>> optimizer = ChunkOptimizer(max_size=4096, overlap=100, min_size=200)
             >>> # Large chunks with minimal overlap for speed
         """
+        if not isinstance(max_size, int) or not isinstance(overlap, int) or not isinstance(min_size, int):
+            raise TypeError("max_size, overlap, and min_size must be integers.")
+
+        if max_size <= 0 or min_size <= 0:
+            raise ValueError("max_size and min_size must be positive integers")
+        if overlap <= 0:
+            raise ValueError("overlap must be non-negative.")
+
+        if max_size <= min_size:
+            raise ValueError("max_size must be greater than min_size.")
+        if overlap >= max_size:
+            raise ValueError("overlap must be less than max_size.")
+
         self.max_size = max_size
         self.overlap = overlap
         self.min_size = min_size
@@ -1430,6 +1470,18 @@ class ChunkOptimizer:
             >>> optimized = optimizer.optimize_chunk_boundaries(long_text, rough_boundaries)
             >>> # Returns positions aligned with paragraph boundaries
         """
+        if not text or not isinstance(text, str):
+            raise ValueError("Text must be a non-empty string.")
+        if not isinstance(current_boundaries, list):
+            raise ValueError("Current boundaries must be a non-empty list of integers.")
+        
+        # Validate that all boundaries are integers
+        for i, boundary in enumerate(current_boundaries):
+            if not isinstance(boundary, int):
+                raise TypeError(f"Boundary at index {i} must be an integer, got {type(boundary).__name__}")
+        
+        text_length = len(text)
+
         # Find sentence boundaries
         sentence_ends = []
         for match in re.finditer(r'[.!?]+\s+', text):
@@ -1443,16 +1495,19 @@ class ChunkOptimizer:
         optimized_boundaries = []
         
         for boundary in current_boundaries:
+            # Clamp boundary to text length
+            clamped_boundary = min(boundary, text_length)
+            
             # Find closest sentence or paragraph boundary
-            closest_sentence = min(sentence_ends, key=lambda x: abs(x - boundary), default=boundary)
-            closest_paragraph = min(paragraph_ends, key=lambda x: abs(x - boundary), default=boundary)
+            closest_sentence = min(sentence_ends, key=lambda x: abs(x - clamped_boundary), default=clamped_boundary)
+            closest_paragraph = min(paragraph_ends, key=lambda x: abs(x - clamped_boundary), default=clamped_boundary)
             
             # Prefer paragraph boundaries, then sentence boundaries
-            if abs(closest_paragraph - boundary) <= 50:  # Within 50 characters
+            if abs(closest_paragraph - clamped_boundary) <= 50:  # Within 50 characters
                 optimized_boundaries.append(closest_paragraph)
-            elif abs(closest_sentence - boundary) <= 25:  # Within 25 characters
+            elif abs(closest_sentence - clamped_boundary) <= 25:  # Within 25 characters
                 optimized_boundaries.append(closest_sentence)
             else:
-                optimized_boundaries.append(boundary)
+                optimized_boundaries.append(clamped_boundary)
         
         return optimized_boundaries

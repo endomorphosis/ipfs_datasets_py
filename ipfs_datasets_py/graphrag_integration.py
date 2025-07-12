@@ -66,7 +66,7 @@ import numpy as np
 from ipfs_datasets_py.llm.llm_graphrag import (
     ReasoningEnhancer, GraphRAGLLMProcessor, GraphRAGPerformanceMonitor
 )
-from ipfs_datasets_py.llm_semantic_validation import (
+from ipfs_datasets_py.llm.llm_semantic_validation import (
     SchemaValidator, SemanticAugmenter, SemanticValidator
 )
 from ipfs_datasets_py.llm_reasoning_tracer import (

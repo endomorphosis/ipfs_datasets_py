@@ -1346,6 +1346,16 @@ class GraphRAGIntegrator:
                 those at exactly that depth
             - All data is converted to serializable format for easy JSON export
         """
+        if not isinstance(entity_id, str):
+            raise TypeError("entity_id must be a string")
+        if not entity_id:
+            raise ValueError("entity_id must be a non-empty string.")
+        
+        if not isinstance(depth, int):
+            raise TypeError("depth must be an integer")
+        if depth < 1:
+            raise ValueError("depth must be a non-negative integer.")
+
         if entity_id not in self.global_entities:
             return {'error': 'Entity not found'}
         

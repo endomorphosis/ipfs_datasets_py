@@ -22,7 +22,7 @@ import requests
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union, Tuple, Set, Callable, TypeVar, Generic
 
-from ipfs_datasets_py.llm_interface import LLMInterface, MockLLMInterface, LLMInterfaceFactory
+from ipfs_datasets_py.llm.llm_interface import LLMInterface, MockLLMInterface, LLMInterfaceFactory
 from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor, DomainSpecificProcessor
 from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 from ipfs_datasets_py.sparql_query_templates import *
