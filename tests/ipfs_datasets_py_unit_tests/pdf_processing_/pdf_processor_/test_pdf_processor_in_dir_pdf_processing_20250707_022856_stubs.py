@@ -53,7 +53,7 @@ from typing import Dict, List, Any, Optional, Union
 from contextlib import nullcontext
 
 
-import fitz  # PyMuPDF
+import pymupdf  # PyMuPDF
 import pdfplumber
 from PIL import Image
 

@@ -541,7 +541,7 @@ Handles complex page layouts with overlapping elements and mixed content types.
 
 Args:
     page: PyMuPDF page object representing a single PDF page.
-        Must be a valid fitz.Page object with loaded content.
+        Must be a valid pymupdf.Page object with loaded content.
     page_num (int): Zero-based page number for identification and ordering.
         Used for element referencing and cross-page relationship analysis.
 

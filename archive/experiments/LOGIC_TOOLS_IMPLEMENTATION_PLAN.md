@@ -573,7 +573,7 @@ class MultiEngineOCR:
 
 ## PDF Tool Survey and Comparison
 
-### 1. PyMuPDF (fitz)
+### 1. PyMuPDF (pymupdf)
 
 **Strengths:**
 - Comprehensive PDF parsing with excellent text extraction
@@ -596,10 +596,10 @@ class MultiEngineOCR:
 
 **Code Example:**
 ```python
-import fitz  # PyMuPDF
+import pymupdf  # PyMuPDF
 
 def extract_with_pymupdf(pdf_path):
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
     extracted = {
         'text_blocks': [],
         'images': [],

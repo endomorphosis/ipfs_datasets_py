@@ -100,7 +100,6 @@ class TestQualityOfObjectsInModule:
 
 
 
-
 class TestQueryEngineInitialization:
     """Test QueryEngine initialization and configuration."""
 
@@ -487,6 +486,7 @@ class TestQueryEngineQuery:
         raise NotImplementedError("test_query_timeout_handling not implemented")
 
 
+
 class TestQueryEngineNormalizeQuery:
     """Test QueryEngine._normalize_query method for query text standardization."""
 
@@ -678,6 +678,7 @@ class TestQueryEngineNormalizeQuery:
             - Result: "who is bill gates?"
         """
         raise NotImplementedError("test_normalize_query_newlines_and_tabs not implemented")
+
 
 
 class TestQueryEngineProcessEntityQuery:
@@ -932,6 +933,7 @@ class TestQueryEngineProcessEntityQuery:
             - Properties included in result metadata
         """
         raise NotImplementedError("test_process_entity_query_entity_properties_matching not implemented")
+
 
 
 class TestQueryEngineProcessRelationshipQuery:
@@ -1208,6 +1210,7 @@ class TestQueryEngineProcessRelationshipQuery:
         raise NotImplementedError("test_process_relationship_query_bidirectional_entity_matching not implemented")
 
 
+
 class TestQueryEngineProcessSemanticQuery:
     """Test QueryEngine._process_semantic_query method for semantic search using embeddings."""
 
@@ -1476,6 +1479,7 @@ class TestQueryEngineProcessSemanticQuery:
             - No duplicate chunks in results
         """
         raise NotImplementedError("test_process_semantic_query_multiple_knowledge_graphs not implemented")
+
 
 
 class TestQueryEngineProcessDocumentQuery:
@@ -1748,6 +1752,7 @@ class TestQueryEngineProcessDocumentQuery:
         raise NotImplementedError("test_process_document_query_metadata_completeness not implemented")
 
 
+
 class TestQueryEngineProcessCrossDocumentQuery:
     """Test QueryEngine._process_cross_document_query method for cross-document relationship analysis."""
 
@@ -2008,6 +2013,7 @@ class TestQueryEngineProcessCrossDocumentQuery:
             - Directional relationship semantics reflected
         """
         raise NotImplementedError("test_process_cross_document_query_relationship_directionality not implemented")
+
 
 
 class TestQueryEngineProcessGraphTraversalQuery:
@@ -2274,13 +2280,6 @@ class TestQueryEngineProcessGraphTraversalQuery:
 
 
 
-
-import pytest
-from unittest.mock import Mock
-
-from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
-
-
 class TestQueryEngineExtractEntityNamesFromQuery:
     """Test QueryEngine._extract_entity_names_from_query method for entity name detection."""
 
@@ -2509,6 +2508,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         raise NotImplementedError("test_extract_entity_names_case_sensitivity_preservation not implemented")
 
 
+
 class TestQueryEngineGetEntityDocuments:
     """Test QueryEngine._get_entity_documents method for entity document attribution."""
 
@@ -2728,6 +2728,7 @@ class TestQueryEngineGetEntityDocuments:
             - Method is read-only with respect to entity
         """
         raise NotImplementedError("test_get_entity_documents_entity_id_preservation not implemented")
+
 
 
 class TestQueryEngineGetRelationshipDocuments:
@@ -2974,14 +2975,6 @@ class TestQueryEngineGetRelationshipDocuments:
         """
         raise NotImplementedError("test_get_relationship_documents_relationship_id_preservation not implemented")
 
-
-
-
-import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
-from typing import List
-
-from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResult
 
 
 class TestQueryEngineGenerateQuerySuggestions:
@@ -3317,6 +3310,7 @@ class TestQueryEngineGenerateQuerySuggestions:
         raise NotImplementedError("test_generate_query_suggestions_complexity_escalation not implemented")
 
 
+
 class TestQueryEngineGetQueryAnalytics:
     """Test QueryEngine.get_query_analytics method for system performance and usage analytics."""
 
@@ -3563,6 +3557,8 @@ class TestQueryEngineGetQueryAnalytics:
             - No significant rounding errors in metrics
         """
         raise NotImplementedError("test_get_query_analytics_precision_of_calculations not implemented")
+
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

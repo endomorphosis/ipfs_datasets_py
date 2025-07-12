@@ -14,7 +14,7 @@ from typing import Dict, List, Any, Optional, Union
 from contextlib import nullcontext
 
 
-import fitz  # PyMuPDF
+import pymupdf  # PyMuPDF
 import pdfplumber
 from PIL import Image
 
@@ -461,7 +461,7 @@ class PDFProcessor:
             
         # Open with PyMuPDF for analysis
         try:
-            doc = fitz.open(str(pdf_path))
+            doc = pymupdf.open(str(pdf_path))
             page_count = doc.page_count
             doc.close()
         except Exception as e:
@@ -528,7 +528,7 @@ class PDFProcessor:
         
         try:
             # Use PyMuPDF for comprehensive extraction
-            doc = fitz.open(str(pdf_path))
+            doc = pymupdf.open(str(pdf_path))
             
             # Extract document metadata
             decomposed_content['metadata'] = {
@@ -589,7 +589,7 @@ class PDFProcessor:
 
         Args:
             page: PyMuPDF page object representing a single PDF page.
-                Must be a valid fitz.Page object with loaded content.
+                Must be a valid pymupdf.Page object with loaded content.
             page_num (int): Zero-based page number for identification and ordering.
                 Used for element referencing and cross-page relationship analysis.
 
@@ -666,7 +666,7 @@ class PDFProcessor:
             try:
                 # Extract image data
                 xref = img[0]
-                pix = fitz.Pixmap(page.parent, xref)
+                pix = pymupdf.Pixmap(page.parent, xref)
                 
                 if pix.n - pix.alpha < 4:  # GRAY or RGB
                     img_data = pix.tobytes("png")
@@ -780,7 +780,7 @@ class PDFProcessor:
         }
         
         # Use PyMuPDF for comprehensive extraction
-        doc = fitz.open(str(pdf_path))
+        doc = pymupdf.open(str(pdf_path))
         
         try:
             # Extract document metadata
@@ -810,7 +810,7 @@ class PDFProcessor:
                     try:
                         # Extract image data
                         xref = img[0]
-                        pix = fitz.Pixmap(doc, xref)
+                        pix = pymupdf.Pixmap(doc, xref)
                         
                         if pix.n - pix.alpha < 4:  # GRAY or RGB
                             img_data = pix.tobytes("png")
