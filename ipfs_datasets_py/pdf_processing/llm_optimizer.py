@@ -63,7 +63,7 @@ class LLMChunk(BaseModel):
     source_page: int = Field(gt=0)
     source_element: str
     token_count: int = Field(ge=0)
-    semantic_type: str = Field(regex=r'^(text|table|figure_caption|header|mixed)$')
+    semantic_type: str = Field(pattern=r'^(text|table|figure_caption|header|mixed)$')
     relationships: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     embedding: Optional[np.ndarray] = None

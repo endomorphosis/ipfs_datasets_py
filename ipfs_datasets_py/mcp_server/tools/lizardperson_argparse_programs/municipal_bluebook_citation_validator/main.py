@@ -11,11 +11,11 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-from _setup_databases_and_files import make_setup_database_and_files
-from stratified_sampler import make_stratified_sampler
-from citation_validator import make_citation_validator
-from results_analyzer import make_results_analyzer
-from generate_reports import generate_validation_report # TODO Turn into factory function
+from ._setup_databases_and_files import make_setup_database_and_files
+from .stratified_sampler import make_stratified_sampler
+from .citation_validator import make_citation_validator
+from .results_analyzer import make_results_analyzer
+from .generate_reports import generate_validation_report # TODO Turn into factory function
 
 
 def main() -> int:

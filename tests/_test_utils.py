@@ -14,6 +14,7 @@ class BadSignatureError(Exception):
 
 def get_ast_tree(input_path: Path) -> ast.Module:
     """Read and parse the Python file for its AST tree."""
+    input_path = Path(input_path)
     try:
         with open(input_path.resolve(), 'r') as file:
             content = file.read()
@@ -30,9 +31,11 @@ def raise_on_bad_callable_metadata(tree) -> str:
     """
     for node in ast.walk(tree):
         # Check if definition has a good signature and docstring
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
-            raise_on_bad_signature(node, tree)
-            raise_on_bad_docstring(node)
+        if isinstance(node, ast.FunctionDef):
+            raise_on_bad_signature(node)
+            raise_on_bad_docstring(node, tree)
+        elif isinstance(node, ast.ClassDef):
+            raise_on_bad_docstring(node, tree)
 
 
 def raise_on_bad_signature(node) -> None:
@@ -43,6 +46,8 @@ def raise_on_bad_signature(node) -> None:
     - Parameters with default values but no type annotations
     - Parameters without type annotations (excluding 'self' and 'cls')
     - Missing return type annotation
+    - Missing type annotations for keyword-only arguments
+    - Missing type annotations for *args and **kwargs
     
     Args:
         node: An AST node representing a callable object (function or method)
@@ -56,22 +61,63 @@ def raise_on_bad_signature(node) -> None:
             - A parameter has a default value but no type annotation
             - A parameter lacks a type annotation (except 'self' or 'cls')
             - The callable is missing a return type annotation
+            - A keyword-only argument lacks a type annotation
+            - *args or **kwargs lack type annotations
     """
-    node_name = node.name
+    node_name = node.name if hasattr(node, 'name') else 'module'
 
     # Check for default values in parameters
-    for arg in node.args.args:
-        if arg.annotation is None and arg.default is not None:
-            raise BadSignatureError(
-                f"Callable '{node_name}' has a parameter '{arg.arg}' with a default value but no type annotation."
-            )
+    # defaults list corresponds to the last len(defaults) parameters
+    defaults = node.args.defaults
+    args = node.args.args
+    
+    if defaults:
+        # Map defaults to their corresponding arguments
+        num_defaults = len(defaults)
+        args_with_defaults = args[-num_defaults:]
+        
+        for arg in args_with_defaults:
+            if arg.annotation is None:
+                raise BadSignatureError(
+                    f"Callable '{node_name}' has a parameter '{arg.arg}' with a default value but no type annotation."
+                )
 
-    # Check for type annotations in parameters
-    for arg in node.args.args:
-        if arg.annotation is None and arg.name not in ['self', 'cls']:
+    # Check for default values in keyword-only parameters
+    kw_defaults = node.args.kw_defaults
+    kwonly_args = node.args.kwonlyargs
+    
+    if kw_defaults and kwonly_args:
+        for i, (arg, default) in enumerate(zip(kwonly_args, kw_defaults)):
+            if default is not None and arg.annotation is None:
+                raise BadSignatureError(
+                    f"Callable '{node_name}' has a keyword-only parameter '{arg.arg}' with a default value but no type annotation."
+                )
+
+    # Check for type annotations in regular parameters
+    for arg in args:
+        if arg.annotation is None and arg.arg not in ['self', 'cls']:
             raise BadSignatureError(
                 f"Callable '{node_name}' has a parameter '{arg.arg}' without a type annotation."
             )
+
+    # Check for type annotations in keyword-only parameters
+    for arg in kwonly_args:
+        if arg.annotation is None:
+            raise BadSignatureError(
+                f"Callable '{node_name}' has a keyword-only parameter '{arg.arg}' without a type annotation."
+            )
+
+    # Check for type annotation on *args
+    if node.args.vararg and node.args.vararg.annotation is None:
+        raise BadSignatureError(
+            f"Callable '{node_name}' has *{node.args.vararg.arg} without a type annotation."
+        )
+
+    # Check for type annotation on **kwargs
+    if node.args.kwarg and node.args.kwarg.annotation is None:
+        raise BadSignatureError(
+            f"Callable '{node_name}' has **{node.args.kwarg.arg} without a type annotation."
+        )
 
     # Check for return annotation
     if node.returns is None:
@@ -82,7 +128,7 @@ def raise_on_bad_signature(node) -> None:
     return
 
 
-def raise_on_bad_docstring(node, tree: ast.Module) -> None:
+def raise_on_bad_docstring(node, tree: ast.AST) -> None:
     """
     Validate that a node has a proper docstring with required sections.
     
@@ -93,51 +139,66 @@ def raise_on_bad_docstring(node, tree: ast.Module) -> None:
     Raises:
         BadDocumentationError: If the docstring is missing, too short, or lacks required sections.
     """
-    char_length = 50
+    if not isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+        return
+
+    word_length = 50
     node_name = node.name
 
     docstring = ast.get_docstring(node)
     if not docstring:
         raise BadDocumentationError(f"Docstring for '{node_name}' is empty or missing.")
 
-    # Docstring is at least 50 characters long
-    if len(docstring.split()) >= char_length:
+    # Docstring is at least 50 words long
+    word_count = len(docstring.split())
+    if word_count <= word_length:
         raise BadDocumentationError(
-            f"Docstring for '{node_name}' is less than {char_length} characters long."
+            f"Docstring for '{node_name}' is less than {word_length} words long. Current length: {word_count} words."
         )
 
-    # Check the function body for exceptions
+    # Check the function body for exceptions (only for functions, not classes)
     raise_exists = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            for stmt in node.body:
-                if isinstance(stmt, ast.Raise):
-                    raise_exists = True
-                    break
+    if isinstance(node, ast.FunctionDef):
+        for stmt in ast.walk(node):
+            if isinstance(stmt, ast.Raise):
+                raise_exists = True
+                break
 
-    # Docstring contains "Raise:" or "Raises:" if they exist in the function body
-    if any(keyword in docstring for keyword in ['Raises:', 'Raise:']):
-        if raise_exists is True:
-            raise BadDocumentationError(
-                f"Docstring for '{node_name}' contains 'Raises:' or 'Raise:'"
-                "but no exceptions are raised in the callable body."
-            )
+    # Docstring contains "Raises:" if exceptions exist in the function body
+    if raise_exists and not any(keyword in docstring for keyword in ['Raises:', 'Raise:']):
+        raise BadDocumentationError(
+            f"Docstring for '{node_name}' is missing 'Raises:' section "
+            "but exceptions are raised in the callable body."
+        )
 
-    # Docstring contains "Args:" if there are arguments
-    # Remove "self" and "cls" from the args list for class methods
-    node.args.args = [arg for arg in node.args.args if arg.arg not in ['self', 'cls']]
+    # Docstring contains "Args:" if there are arguments (only check for functions)
+    if isinstance(node, ast.FunctionDef):
+        # Create a copy of args list and remove "self" and "cls" from consideration
+        filtered_args = [arg for arg in node.args.args if arg.arg not in ['self', 'cls']]
+        kwonly_args = node.args.kwonlyargs
+        has_vararg = node.args.vararg is not None
+        has_kwarg = node.args.kwarg is not None
+        
+        # Check if function has any arguments that should be documented
+        has_documentable_args = bool(filtered_args or kwonly_args or has_vararg or has_kwarg)
 
-    if node.args.args:
-        if 'Args:' not in docstring:
-            raise BadDocumentationError(
-                f"Docstring for '{node_name}' does not contain 'Args:' "
-                "but the callable has arguments."
-            )
+        if has_documentable_args:
+            if 'Args:' not in docstring:
+                raise BadDocumentationError(
+                    f"Docstring for '{node_name}' does not contain 'Args:' "
+                    "but the callable has arguments."
+                )
 
     # Docstring contains 'Returns:', or 'Examples:'
-    for keyword in ['Returns:', "Examples:"]:
-        if keyword not in docstring:
-            raise BadDocumentationError(f"Docstring for '{node_name}' does not contain '{keyword}'.")
+    if isinstance(node, ast.FunctionDef):
+        if 'Returns:' not in docstring and node.name not in ['__init__', '__new__', '__post_init__']:
+            raise BadDocumentationError(
+                f"Docstring for '{node_name}' does not contain 'Returns:' section "
+            )
+        if 'Examples:' not in docstring:
+            raise BadDocumentationError(
+                f"Docstring for '{node_name}' does not contain 'Examples:' section "
+            )
     return
 
 
@@ -151,6 +212,8 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     Raises:
         NotImplementedError: If the file contains fake or mocked code that needs implementation.
     """
+    path = Path(path)
+
     with open(path.resolve(), 'r') as f:
         code = f.read()
 
@@ -158,9 +221,13 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     for fake_code in [
         "In a real implementation", "In a real scenario", "For testing purposes",
         "In production", "For now", "For demonstration", "In case",
+        "In a full implementation",
     ]:
         if fake_code in code:
-            raise NotImplementedError("This file contains fake code that needs to be removed or implemented.")
+            raise NotImplementedError(
+                "This file contains fake code that needs to be removed or implemented."
+                "Please replace it with code that is ready for production use."
+            )
 
     for mocked_code in [
         "mock", "mocked", "mocking", "Mock", "Mocked",
@@ -171,4 +238,3 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
             raise NotImplementedError(
                 "This file contains mocked code that needs to be replaced with actual implementations."
             )
-

@@ -1,5 +1,3 @@
-# Test file for TestQueryEngineExtractEntityNamesFromQuery
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # File Path: ipfs_datasets_py/ipfs_datasets_py/pdf_processing/query_engine.py

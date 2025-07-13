@@ -819,7 +819,15 @@ class TrOCREngine(OCREngine):
     """
     
     def __init__(self):
-        super().__init__("trocr")
+        # Initialize name and available first
+        self.name = "trocr"
+        self.available = False
+        # Call initialization with error handling
+        try:
+            self._initialize()
+        except Exception as e:
+            logger.warning(f"TrOCR initialization failed: {e}")
+            self.available = False
     
     def _initialize(self):
         try:
@@ -844,9 +852,16 @@ class TrOCREngine(OCREngine):
         if not self.available:
             raise RuntimeError("TrOCR engine not available")
         
+        # Validate image data
+        if not image_data:
+            raise ValueError("Empty image data provided")
+        
         try:
             # Convert image data to PIL Image
-            image = Image.open(io.BytesIO(image_data))
+            try:
+                image = Image.open(io.BytesIO(image_data))
+            except Exception as e:
+                raise ValueError(f"Invalid image data: {e}")
             
             # Ensure RGB format
             if image.mode != 'RGB':
@@ -865,6 +880,9 @@ class TrOCREngine(OCREngine):
                 'engine': 'trocr'
             }
             
+        except ValueError:
+            # Re-raise ValueError for empty or invalid image data
+            raise
         except Exception as e:
             logger.error(f"TrOCR extraction failed: {e}")
             raise
