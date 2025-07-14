@@ -417,7 +417,7 @@ class TestLLMDocumentMetadataManagement:
         
         # Verify specific counts
         assert document.processing_metadata["chunk_count"] == 3
-        assert document.processing_metadata["token_total"] == 75  # 25 + 30 + 20
+        assert document.processing_metadata["token_total"] == expected_token_total
         assert document.processing_metadata["entity_count"] == 4
         assert document.processing_metadata["page_count"] == 2
         assert document.processing_metadata["paragraph_count"] == 2

@@ -152,12 +152,13 @@ class TestLLMChunkInstantiation:
         """
         GIVEN missing required fields during instantiation
         WHEN LLMChunk is instantiated
-        THEN expect ValueError to be raised for missing required parameters
+        THEN expect ValidationError to be raised for missing required parameters
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+        from pydantic import ValidationError
         
         # When/Then - missing content
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             LLMChunk(
                 chunk_id="chunk_0001",
                 source_page=1,
@@ -169,7 +170,7 @@ class TestLLMChunkInstantiation:
             )
         
         # When/Then - missing multiple fields
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             LLMChunk(content="Test content")
 
     def test_instantiation_with_none_embedding(self):

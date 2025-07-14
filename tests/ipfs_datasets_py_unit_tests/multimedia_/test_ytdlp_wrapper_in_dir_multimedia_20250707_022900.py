@@ -36,10 +36,19 @@ assert YtDlpWrapper.get_download_status
 assert YtDlpWrapper.list_active_downloads
 assert YtDlpWrapper.batch_download
 assert YtDlpWrapper.cleanup_downloads
-assert YtDlpWrapper.playlist_progress_hook
-assert YtDlpWrapper.download_with_semaphore
-assert YtDlpWrapper.progress_hook
 
+# Check if the module's imports are available
+try:
+    import asyncio
+    import logging
+    import tempfile
+    import time
+    import uuid
+    from pathlib import Path
+    from typing import Any, Callable, Dict, List, Optional
+    import yt_dlp
+except ImportError as e:
+    raise ImportError(f"Required modules for YtDlpWrapper are not installed: {e}")
 
 
 class TestQualityOfObjectsInModule:

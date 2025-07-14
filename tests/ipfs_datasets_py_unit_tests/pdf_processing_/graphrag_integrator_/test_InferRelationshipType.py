@@ -481,9 +481,18 @@ class TestInferRelationshipType:
         THEN an AttributeError should be raised
         AND the error should indicate missing type attribute
         """
-        # Create mock entity without type attribute
-        mock_entity = Mock()
-        del mock_entity.type  # Remove type attribute
+        # Create an Entity instance and then remove its type attribute
+        mock_entity = Entity(
+            id="test_id",
+            name="Test Entity",
+            type="test_type",
+            description="Test",
+            confidence=0.5,
+            source_chunks=["chunk_1"],
+            properties={}
+        )
+        # Remove the type attribute after creation
+        delattr(mock_entity, 'type')
         
         with pytest.raises(AttributeError, match="Entity must have a 'type' attribute"):
             self.integrator._infer_relationship_type(

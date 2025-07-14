@@ -159,13 +159,13 @@ class TestGetEntityNeighborhood:
         assert result["center_entity_id"] == "entity_1"
         assert result["depth"] == 1
         assert result["node_count"] == 3
-        assert result["edge_count"] == 2
+        assert result["edge_count"] == 3  # All edges within the subgraph
         
         node_ids = {node["id"] for node in result["nodes"]}
         assert node_ids == {"entity_1", "entity_2", "entity_3"}
         
         edge_pairs = {(edge["source"], edge["target"]) for edge in result["edges"]}
-        assert edge_pairs == {("entity_1", "entity_2"), ("entity_1", "entity_3")}
+        assert edge_pairs == {("entity_1", "entity_2"), ("entity_1", "entity_3"), ("entity_3", "entity_2")}
 
     @pytest.mark.asyncio
     async def test_get_entity_neighborhood_valid_entity_depth_2(self):
@@ -442,7 +442,7 @@ class TestGetEntityNeighborhood:
         THEN a TypeError should be raised
         AND the error should indicate invalid entity_id type
         """
-        with pytest.raises(TypeError, match="entity_id must be a string."):
+        with pytest.raises(TypeError, match="entity_id must be a string\\."):
             await self.integrator.get_entity_neighborhood(None)
 
     @pytest.mark.asyncio

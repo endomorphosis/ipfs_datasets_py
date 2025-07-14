@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# File Path: ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py
+# File Path: ipfs_datasets_py/ipfs_datasets_py/multimedia/ffmpeg_wrapper.py
 # Auto-generated on 2025-07-07 02:29:00"
 
 import pytest
@@ -16,18 +16,28 @@ from tests._test_utils import (
 )
 
 home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor_stubs.md")
+file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/ffmpeg_wrapper.py")
+md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/ffmpeg_wrapper_stubs.md")
 
 # Make sure the input file and documentation file exist.
 assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
 assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
 
-from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 # Check if each classes methods are accessible:
-assert MediaProcessor.download_and_convert
-assert MediaProcessor.get_capabilities
+assert FFmpegWrapper.convert_video
+assert FFmpegWrapper.is_available
+
+# Check if the module's imports are available
+try:
+    import logging
+    from pathlib import Path
+    from typing import Dict, Any, Optional
+    import ffmpeg
+except ImportError as e:
+    raise ImportError(f"Required modules for FFmpegWrapper are not installed: {e}")
+
 
 
 
@@ -71,21 +81,21 @@ class TestQualityOfObjectsInModule:
                 pytest.fail(f"Code quality check failed: {e}")
 
 
-class TestMediaProcessorMethodInClassDownloadAndConvert:
-    """Test class for download_and_convert method in MediaProcessor."""
+class TestFFmpegWrapperMethodInClassConvertVideo:
+    """Test class for convert_video method in FFmpegWrapper."""
 
     @pytest.mark.asyncio
-    async def test_download_and_convert(self):
+    async def test_convert_video(self):
         """GIVEN-WHEN-THEN-PLACEHOLDER"""
-        raise NotImplementedError(f"Test for download_and_convert in MediaProcessor is not implemented yet.")
+        raise NotImplementedError(f"Test for convert_video in FFmpegWrapper is not implemented yet.")
 
 
-class TestMediaProcessorMethodInClassGetCapabilities:
-    """Test class for get_capabilities method in MediaProcessor."""
+class TestFFmpegWrapperMethodInClassIsAvailable:
+    """Test class for is_available method in FFmpegWrapper."""
 
-    def test_get_capabilities(self):
+    def test_is_available(self):
         """GIVEN-WHEN-THEN-PLACEHOLDER"""
-        raise NotImplementedError(f"Test for get_capabilities in MediaProcessor is not implemented yet.")
+        raise NotImplementedError(f"Test for is_available in FFmpegWrapper is not implemented yet.")
 
 
 if __name__ == "__main__":

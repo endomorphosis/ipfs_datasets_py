@@ -257,6 +257,7 @@ class TestLLMChunkFieldValidation:
             - Case sensitivity handling
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+        from pydantic import ValidationError
         
         # Valid semantic types based on documentation
         valid_types = ['text', 'table', 'figure_caption', 'header', 'mixed']
@@ -275,7 +276,7 @@ class TestLLMChunkFieldValidation:
             assert chunk.semantic_type == semantic_type
         
         # Other types should be rejected
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             LLMChunk(
                 content="Test content",
                 chunk_id="chunk_0001",

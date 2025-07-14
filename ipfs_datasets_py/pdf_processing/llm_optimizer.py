@@ -25,7 +25,7 @@ from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
 logger = logging.getLogger(__name__)
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, NonNegativeInt
 
 class LLMChunk(BaseModel):
     """
@@ -60,9 +60,9 @@ class LLMChunk(BaseModel):
     """
     content: str
     chunk_id: str
-    source_page: int = Field(gt=0)
+    source_page: NonNegativeInt
     source_element: str
-    token_count: int = Field(ge=0)
+    token_count: NonNegativeInt
     semantic_type: str = Field(pattern=r'^(text|table|figure_caption|header|mixed)$')
     relationships: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -80,8 +80,7 @@ class LLMChunk(BaseModel):
             raise ValueError("Content must be a string")
         return v
 
-@dataclass
-class LLMDocument:
+class LLMDocument(BaseModel):
     """
     Comprehensive container for LLM-optimized document representation with semantic structure.
 
@@ -115,6 +114,10 @@ class LLMDocument:
     key_entities: List[Dict[str, Any]]
     processing_metadata: Dict[str, Any]
     document_embedding: Optional[np.ndarray] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
 
 class LLMOptimizer:
     """

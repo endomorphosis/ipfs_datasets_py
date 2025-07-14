@@ -87,11 +87,10 @@ class TestExtractChunkRelationships:
         return LLMChunk(
             chunk_id="chunk_1",
             content="John Smith works at ACME Corp as a software engineer. He collaborates with Jane Doe.",
-            start_page=1,
-            end_page=1,
             source_page=1,
-            chunk_index=0,
-            chunk_type="text",
+            source_element="paragraph",
+            token_count=18,
+            semantic_type="text",
             metadata={}
         )
 
@@ -265,8 +264,11 @@ class TestExtractChunkRelationships:
         chunk = LLMChunk(
             chunk_id="chunk_1",
             content="This chunk contains different content entirely.",
-            start_page=1, end_page=1, source_page=1, chunk_index=0,
-            chunk_type="text", metadata={}
+            source_page=1,
+            source_element="paragraph",
+            token_count=7,
+            semantic_type="text",
+            metadata={}
         )
         
         entities = [
@@ -348,10 +350,12 @@ class TestExtractChunkRelationships:
             ids = [rel.id for rel in result]
             assert len(ids) == len(set(ids))  # All IDs should be unique
             
-            # Verify ID format (should be MD5 hash)
+            # Verify ID format (should be rel_ prefix + 8 char MD5 hash)
             for rel in result:
-                assert len(rel.id) == 32  # MD5 hash length
-                assert all(c in '0123456789abcdef' for c in rel.id)
+                assert rel.id.startswith('rel_')
+                assert len(rel.id) == 12  # 'rel_' + 8 char hash
+                hash_part = rel.id[4:]  # Remove 'rel_' prefix
+                assert all(c in '0123456789abcdef' for c in hash_part)
 
     @pytest.mark.asyncio
     async def test_extract_chunk_relationships_source_chunks_assignment(self, integrator, sample_entities, sample_chunk):
@@ -386,7 +390,7 @@ class TestExtractChunkRelationships:
             
             for rel in result:
                 assert 'extraction_method' in rel.properties
-                assert rel.properties['extraction_method'] == 'co_occurrence_analysis'
+                assert rel.properties['extraction_method'] == 'co_occurrence'
                 assert 'context_snippet' in rel.properties
                 assert isinstance(rel.properties['context_snippet'], str)
 
@@ -442,8 +446,11 @@ class TestExtractChunkRelationships:
         chunk = LLMChunk(
             chunk_id="chunk_1",
             content="The company called ACME Corporation has many employees.",
-            start_page=1, end_page=1, source_page=1, chunk_index=0,
-            chunk_type="text", metadata={}
+            source_page=1,
+            source_element="paragraph",
+            token_count=10,
+            semantic_type="text",
+            metadata={}
         )
         
         entities = [
@@ -478,13 +485,13 @@ class TestExtractChunkRelationships:
     @pytest.mark.asyncio
     async def test_extract_chunk_relationships_chunk_missing_chunk_id(self, integrator, sample_entities):
         """
-        GIVEN a chunk without chunk_id attribute
+        GIVEN a chunk without chunk_id attribute and entities present
         WHEN _extract_chunk_relationships is called
         THEN an AttributeError should be raised
         AND the error should indicate missing chunk_id
         """
         invalid_chunk = Mock()
-        invalid_chunk.content = "Valid content"
+        invalid_chunk.content = "John Smith works at ACME Corp"
         del invalid_chunk.chunk_id
         
         with pytest.raises(AttributeError):
@@ -498,12 +505,15 @@ class TestExtractChunkRelationships:
         THEN an AttributeError should be raised
         AND the error should indicate missing entity attributes
         """
-        invalid_entity = Mock()
-        del invalid_entity.id
-        del invalid_entity.name
+        invalid_entity1 = Mock()
+        invalid_entity2 = Mock()
+        del invalid_entity1.id
+        del invalid_entity1.name
+        del invalid_entity2.id
+        del invalid_entity2.name
         
         with pytest.raises(AttributeError):
-            await integrator._extract_chunk_relationships([invalid_entity], sample_chunk)
+            await integrator._extract_chunk_relationships([invalid_entity1, invalid_entity2], sample_chunk)
 
     @pytest.mark.asyncio
     async def test_extract_chunk_relationships_invalid_entities_type(self, integrator, sample_chunk):
@@ -538,8 +548,11 @@ class TestExtractChunkRelationships:
         empty_chunk = LLMChunk(
             chunk_id="chunk_1",
             content="   ",  # Whitespace only
-            start_page=1, end_page=1, source_page=1, chunk_index=0,
-            chunk_type="text", metadata={}
+            source_page=1,
+            source_element="paragraph",
+            token_count=1,
+            semantic_type="text",
+            metadata={}
         )
         
         result = await integrator._extract_chunk_relationships(sample_entities, empty_chunk)
@@ -561,8 +574,11 @@ class TestExtractChunkRelationships:
         chunk = LLMChunk(
             chunk_id="chunk_1",
             content=content,
-            start_page=1, end_page=1, source_page=1, chunk_index=0,
-            chunk_type="text", metadata={}
+            source_page=1,
+            source_element="paragraph",
+            token_count=len(content.split()),
+            semantic_type="text",
+            metadata={}
         )
         
         entities = [
@@ -592,8 +608,11 @@ class TestExtractChunkRelationships:
         chunk = LLMChunk(
             chunk_id="chunk_1",
             content="Dr. Smith-Jones and O'Connor Ltd. are collaborating.",
-            start_page=1, end_page=1, source_page=1, chunk_index=0,
-            chunk_type="text", metadata={}
+            source_page=1,
+            source_element="paragraph",
+            token_count=9,
+            semantic_type="text",
+            metadata={}
         )
         
         entities = [

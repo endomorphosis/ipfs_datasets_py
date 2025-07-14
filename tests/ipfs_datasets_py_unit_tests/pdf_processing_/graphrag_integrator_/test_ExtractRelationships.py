@@ -121,31 +121,31 @@ class TestExtractRelationships:
             LLMChunk(
                 chunk_id="chunk_1",
                 content="John Smith works at ACME Corp as a software engineer.",
-                start_page=1,
-                end_page=1,
                 source_page=1,
-                chunk_index=0,
-                chunk_type="text",
+                source_element="paragraph",
+                token_count=12,
+                semantic_type="text",
+                relationships=[],
                 metadata={}
             ),
             LLMChunk(
                 chunk_id="chunk_2",
                 content="John Smith lives in San Francisco.",
-                start_page=1,
-                end_page=1,
                 source_page=1,
-                chunk_index=1,
-                chunk_type="text",
+                source_element="paragraph",
+                token_count=8,
+                semantic_type="text",
+                relationships=[],
                 metadata={}
             ),
             LLMChunk(
                 chunk_id="chunk_3",
                 content="ACME Corp has offices worldwide.",
-                start_page=2,
-                end_page=2,
                 source_page=2,
-                chunk_index=2,
-                chunk_type="text",
+                source_element="paragraph",
+                token_count=6,
+                semantic_type="text",
+                relationships=[],
                 metadata={}
             )
         ]
@@ -161,9 +161,14 @@ class TestExtractRelationships:
         """
         with patch.object(integrator, '_extract_chunk_relationships', new_callable=AsyncMock) as mock_chunk_rels, \
              patch.object(integrator, '_extract_cross_chunk_relationships', new_callable=AsyncMock) as mock_cross_rels, \
-             patch('logging.info') as mock_log:
+             patch('ipfs_datasets_py.pdf_processing.graphrag_integrator.logger.info') as mock_log:
             
             # Setup mock returns
+            # _extract_chunk_relationships will be called 2 times:
+            # - chunk_1 has entities [entity_1, entity_2] -> called -> returns 2 relationships
+            # - chunk_2 has entities [entity_1, entity_3] -> called -> returns 2 relationships
+            # - chunk_3 has entity [entity_2] -> skipped (< 2 entities)
+            # _extract_cross_chunk_relationships called once -> returns 1 relationship
             chunk_rels = [Mock(spec=Relationship) for _ in range(2)]
             cross_rels = [Mock(spec=Relationship) for _ in range(1)]
             mock_chunk_rels.return_value = chunk_rels
@@ -172,12 +177,12 @@ class TestExtractRelationships:
             result = await integrator._extract_relationships(sample_entities, sample_chunks)
             
             # Verify method calls
-            assert mock_chunk_rels.call_count >= 1
+            assert mock_chunk_rels.call_count == 2  # chunk_1 and chunk_2
             mock_cross_rels.assert_called_once_with(sample_entities, sample_chunks)
             
             # Verify result
             assert isinstance(result, list)
-            assert len(result) == 3  # 2 from chunk + 1 from cross-chunk
+            assert len(result) == 5  # 2 calls * 2 rels per call + 1 cross-chunk = 5 total
             
             # Verify logging
             mock_log.assert_called()
@@ -210,10 +215,13 @@ class TestExtractRelationships:
         with patch.object(integrator, '_extract_chunk_relationships', new_callable=AsyncMock) as mock_chunk_rels, \
              patch.object(integrator, '_extract_cross_chunk_relationships', new_callable=AsyncMock) as mock_cross_rels:
             
+            mock_cross_rels.return_value = []
+            
             result = await integrator._extract_relationships(sample_entities, [])
             
             assert result == []
             mock_chunk_rels.assert_not_called()
+            # Cross-chunk method should NOT be called when chunks is empty because method returns early
             mock_cross_rels.assert_not_called()
 
     @pytest.mark.asyncio
@@ -481,7 +489,7 @@ class TestExtractRelationships:
         """
         with patch.object(integrator, '_extract_chunk_relationships', new_callable=AsyncMock) as mock_chunk_rels, \
              patch.object(integrator, '_extract_cross_chunk_relationships', new_callable=AsyncMock) as mock_cross_rels, \
-             patch('logging.info') as mock_log:
+             patch('ipfs_datasets_py.pdf_processing.graphrag_integrator.logger.info') as mock_log:
             
             relationships = [Mock(spec=Relationship) for _ in range(3)]
             mock_chunk_rels.return_value = relationships[:2]
@@ -493,7 +501,8 @@ class TestExtractRelationships:
             mock_log.assert_called()
             
             # Verify the count in the log message matches the result
-            assert len(result) == 3
+            # Same logic: 2 chunks * 2 rels per call + 1 cross-chunk = 5 total
+            assert len(result) == 5
 
     @pytest.mark.asyncio
     async def test_extract_relationships_invalid_entities_type(self, integrator, sample_chunks):
@@ -606,11 +615,11 @@ class TestExtractRelationships:
             chunk = LLMChunk(
                 chunk_id=f"chunk_{i}",
                 content=f"Content for chunk {i}",
-                start_page=i+1,
-                end_page=i+1,
                 source_page=i+1,
-                chunk_index=i,
-                chunk_type="text",
+                source_element="paragraph",
+                token_count=10,
+                semantic_type="text",
+                relationships=[],
                 metadata={}
             )
             large_chunk_set.append(chunk)

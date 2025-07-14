@@ -111,9 +111,17 @@ class TestQueryGraph:
         }
         
         # Setup sample knowledge graphs
+        mock_graph_1 = Mock(spec=KnowledgeGraph)
+        mock_graph_1.relationships = []
+        mock_graph_1.entities = []
+        
+        mock_graph_2 = Mock(spec=KnowledgeGraph)
+        mock_graph_2.relationships = []
+        mock_graph_2.entities = []
+        
         integrator.knowledge_graphs = {
-            "graph_1": Mock(spec=KnowledgeGraph),
-            "graph_2": Mock(spec=KnowledgeGraph)
+            "graph_1": mock_graph_1,
+            "graph_2": mock_graph_2
         }
         
         # Setup sample global graph
@@ -190,8 +198,10 @@ class TestQueryGraph:
                   description="Entity in specific graph", confidence=0.8,
                   source_chunks=["chunk_graph"], properties={})
         ]
-        integrator.knowledge_graphs["graph_1"].entities = graph_entities
-        integrator.knowledge_graphs["graph_1"].relationships = []
+        mock_graph = Mock(spec=KnowledgeGraph)
+        mock_graph.entities = graph_entities
+        mock_graph.relationships = []
+        integrator.knowledge_graphs["graph_1"] = mock_graph
         
         result = await integrator.query_graph("Graph Entity", graph_id="graph_1")
         

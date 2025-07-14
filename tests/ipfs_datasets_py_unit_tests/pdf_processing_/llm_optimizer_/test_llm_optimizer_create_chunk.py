@@ -154,43 +154,44 @@ class TestLLMOptimizerCreateChunk:
         assert not chunk.content.startswith(" "), "Content should not start with whitespace"
         assert not chunk.content.endswith(" "), "Content should not end with whitespace"
         assert len(chunk.content.strip()) == len(chunk.content), "Content should be properly trimmed"
-        @pytest.mark.asyncio
-        async def test_create_chunk_empty_content(self):
-            """
-            GIVEN empty content string
-            WHEN _create_chunk is called
-            THEN expect ValueError to be raised
-            """
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_empty_content(self):
+        """
+        GIVEN empty content string
+        WHEN _create_chunk is called
+        THEN expect ValueError to be raised
+        """
+        
+        # Given
+        optimizer = LLMOptimizer()
+        
+        # Test cases for empty/invalid content
+        empty_content_cases = [
+            "",           # Empty string
+            "   ",        # Only whitespace
+            "\n\t  \n",   # Only whitespace characters
+            None          # None value
+        ]
+        
+        chunk_id = "chunk_001"
+        page_num = 1
+        metadata = {"element_type": "paragraph"}
+        
+        # When/Then - test each empty content case
+        for empty_content in empty_content_cases:
+            with pytest.raises((ValueError, TypeError, AttributeError)) as exc_info:
+                await optimizer._create_chunk(empty_content, chunk_id, page_num, metadata)
             
-            # Given
-            optimizer = LLMOptimizer()
-            
-            # Test cases for empty/invalid content
-            empty_content_cases = [
-                "",           # Empty string
-                "   ",        # Only whitespace
-                "\n\t  \n",   # Only whitespace characters
-                None          # None value
-            ]
-            
-            chunk_id = "chunk_001"
-            page_num = 1
-            metadata = {"element_type": "paragraph"}
-            
-            # When/Then - test each empty content case
-            for empty_content in empty_content_cases:
-                with pytest.raises((ValueError, TypeError, AttributeError)) as exc_info:
-                    await optimizer._create_chunk(empty_content, chunk_id, page_num, metadata)
-                
-                # Verify error message is descriptive
-                if empty_content is None:
-                    error_msg = str(exc_info.value).lower()
-                    assert any(keyword in error_msg for keyword in ["none", "null", "content", "empty"]), \
-                        f"Error message should mention None/empty content issue: {exc_info.value}"
-                else:
-                    error_msg = str(exc_info.value).lower()
-                    assert any(keyword in error_msg for keyword in ["empty", "content", "whitespace", "invalid"]), \
-                        f"Error message should mention empty content issue: {exc_info.value}"
+            # Verify error message is descriptive
+            if empty_content is None:
+                error_msg = str(exc_info.value).lower()
+                assert any(keyword in error_msg for keyword in ["none", "null", "content", "empty"]), \
+                    f"Error message should mention None/empty content issue: {exc_info.value}"
+            else:
+                error_msg = str(exc_info.value).lower()
+                assert any(keyword in error_msg for keyword in ["empty", "content", "whitespace", "invalid"]), \
+                    f"Error message should mention empty content issue: {exc_info.value}"
 
     @pytest.mark.asyncio
     async def test_create_chunk_semantic_type_determination(self):

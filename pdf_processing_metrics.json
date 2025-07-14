@@ -4,8 +4,8 @@
       {
         "name": "system_cpu_percent",
         "type": "gauge",
-        "value": 5.8,
-        "timestamp": 1752392135.9266903,
+        "value": 7.2,
+        "timestamp": 1752465647.6743379,
         "labels": {},
         "description": "CPU usage percentage"
       }
@@ -15,7 +15,7 @@
         "name": "system_cpu_0_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0404444,
+        "timestamp": 1752465647.7873273,
         "labels": {},
         "description": "CPU 0 usage percentage"
       }
@@ -25,7 +25,7 @@
         "name": "system_cpu_1_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0405881,
+        "timestamp": 1752465647.7874916,
         "labels": {},
         "description": "CPU 1 usage percentage"
       }
@@ -35,7 +35,7 @@
         "name": "system_cpu_2_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0406375,
+        "timestamp": 1752465647.7875433,
         "labels": {},
         "description": "CPU 2 usage percentage"
       }
@@ -45,7 +45,7 @@
         "name": "system_cpu_3_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0407145,
+        "timestamp": 1752465647.7875862,
         "labels": {},
         "description": "CPU 3 usage percentage"
       }
@@ -55,7 +55,7 @@
         "name": "system_cpu_4_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.040762,
+        "timestamp": 1752465647.7876267,
         "labels": {},
         "description": "CPU 4 usage percentage"
       }
@@ -65,7 +65,7 @@
         "name": "system_cpu_5_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0408037,
+        "timestamp": 1752465647.7876675,
         "labels": {},
         "description": "CPU 5 usage percentage"
       }
@@ -75,7 +75,7 @@
         "name": "system_cpu_6_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0408406,
+        "timestamp": 1752465647.787704,
         "labels": {},
         "description": "CPU 6 usage percentage"
       }
@@ -85,7 +85,7 @@
         "name": "system_cpu_7_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0408766,
+        "timestamp": 1752465647.7877398,
         "labels": {},
         "description": "CPU 7 usage percentage"
       }
@@ -94,8 +94,8 @@
       {
         "name": "system_cpu_8_percent",
         "type": "gauge",
-        "value": 0.0,
-        "timestamp": 1752392136.0409117,
+        "value": 16.7,
+        "timestamp": 1752465647.787776,
         "labels": {},
         "description": "CPU 8 usage percentage"
       }
@@ -105,7 +105,7 @@
         "name": "system_cpu_9_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0409465,
+        "timestamp": 1752465647.7878108,
         "labels": {},
         "description": "CPU 9 usage percentage"
       }
@@ -114,8 +114,8 @@
       {
         "name": "system_cpu_10_percent",
         "type": "gauge",
-        "value": 0.0,
-        "timestamp": 1752392136.040983,
+        "value": 100.0,
+        "timestamp": 1752465647.7878482,
         "labels": {},
         "description": "CPU 10 usage percentage"
       }
@@ -125,7 +125,7 @@
         "name": "system_cpu_11_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.041018,
+        "timestamp": 1752465647.787884,
         "labels": {},
         "description": "CPU 11 usage percentage"
       }
@@ -135,7 +135,7 @@
         "name": "system_cpu_12_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0410523,
+        "timestamp": 1752465647.7879193,
         "labels": {},
         "description": "CPU 12 usage percentage"
       }
@@ -145,7 +145,7 @@
         "name": "system_cpu_13_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0410867,
+        "timestamp": 1752465647.7879553,
         "labels": {},
         "description": "CPU 13 usage percentage"
       }
@@ -154,8 +154,8 @@
       {
         "name": "system_cpu_14_percent",
         "type": "gauge",
-        "value": 20.0,
-        "timestamp": 1752392136.0411203,
+        "value": 0.0,
+        "timestamp": 1752465647.78799,
         "labels": {},
         "description": "CPU 14 usage percentage"
       }
@@ -165,7 +165,7 @@
         "name": "system_cpu_15_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0411544,
+        "timestamp": 1752465647.7880254,
         "labels": {},
         "description": "CPU 15 usage percentage"
       }
@@ -175,7 +175,7 @@
         "name": "system_cpu_16_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0411887,
+        "timestamp": 1752465647.7880611,
         "labels": {},
         "description": "CPU 16 usage percentage"
       }
@@ -185,7 +185,7 @@
         "name": "system_cpu_17_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0412223,
+        "timestamp": 1752465647.7880964,
         "labels": {},
         "description": "CPU 17 usage percentage"
       }
@@ -195,7 +195,7 @@
         "name": "system_cpu_18_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.041256,
+        "timestamp": 1752465647.7881312,
         "labels": {},
         "description": "CPU 18 usage percentage"
       }
@@ -205,7 +205,7 @@
         "name": "system_cpu_19_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0412893,
+        "timestamp": 1752465647.7881658,
         "labels": {},
         "description": "CPU 19 usage percentage"
       }
@@ -215,7 +215,7 @@
         "name": "system_cpu_20_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0413227,
+        "timestamp": 1752465647.7882004,
         "labels": {},
         "description": "CPU 20 usage percentage"
       }
@@ -225,7 +225,7 @@
         "name": "system_cpu_21_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0413697,
+        "timestamp": 1752465647.788247,
         "labels": {},
         "description": "CPU 21 usage percentage"
       }
@@ -235,7 +235,7 @@
         "name": "system_cpu_22_percent",
         "type": "gauge",
         "value": 0.0,
-        "timestamp": 1752392136.0414047,
+        "timestamp": 1752465647.7882826,
         "labels": {},
         "description": "CPU 22 usage percentage"
       }
@@ -244,8 +244,8 @@
       {
         "name": "system_cpu_23_percent",
         "type": "gauge",
-        "value": 100.0,
-        "timestamp": 1752392136.0414386,
+        "value": 0.0,
+        "timestamp": 1752465647.788318,
         "labels": {},
         "description": "CPU 23 usage percentage"
       }
@@ -254,8 +254,8 @@
       {
         "name": "system_load_1min",
         "type": "gauge",
-        "value": 1.74951171875,
-        "timestamp": 1752392136.0414832,
+        "value": 0.3828125,
+        "timestamp": 1752465647.7884495,
         "labels": {},
         "description": "System load average (1 min)"
       }
@@ -264,8 +264,8 @@
       {
         "name": "system_load_5min",
         "type": "gauge",
-        "value": 1.88232421875,
-        "timestamp": 1752392136.0415235,
+        "value": 0.396484375,
+        "timestamp": 1752465647.7884967,
         "labels": {},
         "description": "System load average (5 min)"
       }
@@ -274,8 +274,8 @@
       {
         "name": "system_load_15min",
         "type": "gauge",
-        "value": 1.8408203125,
-        "timestamp": 1752392136.0415595,
+        "value": 0.63037109375,
+        "timestamp": 1752465647.7885363,
         "labels": {},
         "description": "System load average (15 min)"
       }
@@ -284,8 +284,8 @@
       {
         "name": "system_uptime_seconds",
         "type": "gauge",
-        "value": 128295.06890678406,
-        "timestamp": 1752392136.0689242,
+        "value": 170206.80318117142,
+        "timestamp": 1752465647.8032029,
         "labels": {},
         "description": "System uptime in seconds"
       }
@@ -294,8 +294,8 @@
       {
         "name": "process_memory_rss",
         "type": "gauge",
-        "value": 1055981568,
-        "timestamp": 1752392136.07437,
+        "value": 1135480832,
+        "timestamp": 1752465647.8112934,
         "labels": {},
         "description": "Process RSS memory usage"
       }
@@ -304,8 +304,8 @@
       {
         "name": "process_memory_vms",
         "type": "gauge",
-        "value": 6720245760,
-        "timestamp": 1752392136.0744612,
+        "value": 6797766656,
+        "timestamp": 1752465647.8114388,
         "labels": {},
         "description": "Process VMS memory usage"
       }
@@ -315,7 +315,7 @@
         "name": "system_memory_total",
         "type": "gauge",
         "value": 67380961280,
-        "timestamp": 1752392136.0748596,
+        "timestamp": 1752465647.8117998,
         "labels": {},
         "description": "Total system memory"
       }
@@ -324,8 +324,8 @@
       {
         "name": "system_memory_available",
         "type": "gauge",
-        "value": 47246077952,
-        "timestamp": 1752392136.074925,
+        "value": 54463160320,
+        "timestamp": 1752465647.8118632,
         "labels": {},
         "description": "Available system memory"
       }
@@ -334,8 +334,8 @@
       {
         "name": "system_memory_used",
         "type": "gauge",
-        "value": 19391422464,
-        "timestamp": 1752392136.0749717,
+        "value": 12174213120,
+        "timestamp": 1752465647.8119082,
         "labels": {},
         "description": "Used system memory"
       }
@@ -344,8 +344,8 @@
       {
         "name": "system_memory_percent",
         "type": "gauge",
-        "value": 29.9,
-        "timestamp": 1752392136.0750136,
+        "value": 19.2,
+        "timestamp": 1752465647.8119483,
         "labels": {},
         "description": "System memory usage percentage"
       }
@@ -354,8 +354,8 @@
       {
         "name": "network_bytes_sent",
         "type": "gauge",
-        "value": 12749048289,
-        "timestamp": 1752392136.0753796,
+        "value": 15339312401,
+        "timestamp": 1752465647.8148673,
         "labels": {},
         "description": "Network bytes sent"
       }
@@ -364,8 +364,8 @@
       {
         "name": "network_bytes_recv",
         "type": "gauge",
-        "value": 13437035267,
-        "timestamp": 1752392136.0754402,
+        "value": 15729428713,
+        "timestamp": 1752465647.8149683,
         "labels": {},
         "description": "Network bytes received"
       }
@@ -374,8 +374,8 @@
       {
         "name": "network_packets_sent",
         "type": "gauge",
-        "value": 4439623,
-        "timestamp": 1752392136.0754826,
+        "value": 5834371,
+        "timestamp": 1752465647.8150373,
         "labels": {},
         "description": "Network packets sent"
       }
@@ -384,8 +384,8 @@
       {
         "name": "network_packets_recv",
         "type": "gauge",
-        "value": 4589779,
-        "timestamp": 1752392136.0755208,
+        "value": 6007704,
+        "timestamp": 1752465647.8150854,
         "labels": {},
         "description": "Network packets received"
       }
@@ -395,7 +395,7 @@
         "name": "disk_total",
         "type": "gauge",
         "value": 1081101176832,
-        "timestamp": 1752392136.0756187,
+        "timestamp": 1752465647.8152769,
         "labels": {},
         "description": "Total disk space"
       }
@@ -404,8 +404,8 @@
       {
         "name": "disk_used",
         "type": "gauge",
-        "value": 291846021120,
-        "timestamp": 1752392136.0757113,
+        "value": 291893653504,
+        "timestamp": 1752465647.815363,
         "labels": {},
         "description": "Used disk space"
       }
@@ -414,8 +414,8 @@
       {
         "name": "disk_free",
         "type": "gauge",
-        "value": 734262800384,
-        "timestamp": 1752392136.0757556,
+        "value": 734215168000,
+        "timestamp": 1752465647.8154473,
         "labels": {},
         "description": "Free disk space"
       }
@@ -425,7 +425,7 @@
         "name": "disk_percent",
         "type": "gauge",
         "value": 28.4,
-        "timestamp": 1752392136.0757923,
+        "timestamp": 1752465647.815497,
         "labels": {},
         "description": "Disk usage percentage"
       }
@@ -434,8 +434,8 @@
       {
         "name": "process_cpu_percent",
         "type": "gauge",
-        "value": 111.8,
-        "timestamp": 1752392136.2026215,
+        "value": 100.1,
+        "timestamp": 1752465648.1592782,
         "labels": {},
         "description": "Process CPU usage percentage"
       }
@@ -445,7 +445,7 @@
         "name": "process_threads",
         "type": "gauge",
         "value": 50,
-        "timestamp": 1752392136.2092505,
+        "timestamp": 1752465648.1963918,
         "labels": {},
         "description": "Number of process threads"
       }
@@ -455,7 +455,7 @@
         "name": "process_open_files",
         "type": "gauge",
         "value": 20,
-        "timestamp": 1752392136.4428265,
+        "timestamp": 1752465648.3222842,
         "labels": {},
         "description": "Number of open files"
       }
@@ -465,7 +465,7 @@
         "name": "process_connections",
         "type": "gauge",
         "value": 1,
-        "timestamp": 1752392136.631871,
+        "timestamp": 1752465648.5538826,
         "labels": {},
         "description": "Number of network connections"
       }
@@ -474,8 +474,8 @@
       {
         "name": "gc_count_gen0",
         "type": "gauge",
-        "value": 202,
-        "timestamp": 1752392136.6320946,
+        "value": 6,
+        "timestamp": 1752465648.554043,
         "labels": {},
         "description": "GC collection count for generation 0"
       }
@@ -484,8 +484,8 @@
       {
         "name": "gc_count_gen1",
         "type": "gauge",
-        "value": 5,
-        "timestamp": 1752392136.632165,
+        "value": 8,
+        "timestamp": 1752465648.5540986,
         "labels": {},
         "description": "GC collection count for generation 1"
       }
@@ -494,8 +494,8 @@
       {
         "name": "gc_count_gen2",
         "type": "gauge",
-        "value": 10,
-        "timestamp": 1752392136.632217,
+        "value": 0,
+        "timestamp": 1752465648.5541432,
         "labels": {},
         "description": "GC collection count for generation 2"
       }
@@ -504,8 +504,8 @@
       {
         "name": "gc_objects",
         "type": "gauge",
-        "value": 554096,
-        "timestamp": 1752392136.6847734,
+        "value": 548884,
+        "timestamp": 1752465648.6036065,
         "labels": {},
         "description": "Number of objects tracked by GC"
       }
@@ -515,7 +515,7 @@
         "name": "thread_count",
         "type": "gauge",
         "value": 3,
-        "timestamp": 1752392136.6849303,
+        "timestamp": 1752465648.6037707,
         "labels": {},
         "description": "Number of active threads"
       }
@@ -525,14 +525,14 @@
         "name": "python_version",
         "type": "gauge",
         "value": 3.12,
-        "timestamp": 1752392136.684994,
+        "timestamp": 1752465648.6038337,
         "labels": {},
         "description": "Python version"
       }
     ]
   },
   "operations": [],
-  "timestamp": 1752392152.9416041,
+  "timestamp": 1752465664.3433788,
   "hostname": "Kyle-PC",
-  "uptime": 17.119142055511475
+  "uptime": 16.780078887939453
 }

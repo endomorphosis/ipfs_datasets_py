@@ -1,0 +1,82 @@
+{
+  "batch_id": "batch_sample_123",
+  "batch_status": {
+    "batch_id": "batch_sample_123",
+    "total_jobs": 5,
+    "completed_jobs": 3,
+    "failed_jobs": 2,
+    "pending_jobs": 0,
+    "processing_jobs": 0,
+    "start_time": "2024-01-01T10:00:00",
+    "end_time": "2024-01-01T10:30:00",
+    "total_processing_time": 450.0,
+    "average_job_time": 150.0,
+    "throughput": 0.1,
+    "resource_usage": {}
+  },
+  "completed_jobs": [
+    {
+      "job_id": "batch_sample_123_job_0001",
+      "status": "completed",
+      "processing_time": 120.0,
+      "document_id": "doc_1",
+      "knowledge_graph_id": "graph_1",
+      "ipld_cid": "cid_1",
+      "entity_count": 15,
+      "relationship_count": 25,
+      "chunk_count": 8,
+      "error_message": null
+    },
+    {
+      "job_id": "batch_sample_123_job_0002",
+      "status": "completed",
+      "processing_time": 180.0,
+      "document_id": "doc_2",
+      "knowledge_graph_id": "graph_2",
+      "ipld_cid": "cid_2",
+      "entity_count": 22,
+      "relationship_count": 35,
+      "chunk_count": 12,
+      "error_message": null
+    },
+    {
+      "job_id": "batch_sample_123_job_0003",
+      "status": "completed",
+      "processing_time": 150.0,
+      "document_id": "doc_3",
+      "knowledge_graph_id": "graph_3",
+      "ipld_cid": "cid_3",
+      "entity_count": 18,
+      "relationship_count": 28,
+      "chunk_count": 10,
+      "error_message": null
+    }
+  ],
+  "failed_jobs": [
+    {
+      "job_id": "batch_sample_123_job_0004",
+      "status": "failed",
+      "processing_time": 45.0,
+      "document_id": null,
+      "knowledge_graph_id": null,
+      "ipld_cid": null,
+      "entity_count": 0,
+      "relationship_count": 0,
+      "chunk_count": 0,
+      "error_message": "PDF parsing failed: corrupted file"
+    },
+    {
+      "job_id": "batch_sample_123_job_0005",
+      "status": "failed",
+      "processing_time": 30.0,
+      "document_id": null,
+      "knowledge_graph_id": null,
+      "ipld_cid": null,
+      "entity_count": 0,
+      "relationship_count": 0,
+      "chunk_count": 0,
+      "error_message": "Memory exhausted during processing"
+    }
+  ],
+  "export_timestamp": "2025-07-14T01:50:52.669074"
+}

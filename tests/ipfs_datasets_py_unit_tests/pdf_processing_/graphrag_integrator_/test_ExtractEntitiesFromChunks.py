@@ -174,7 +174,7 @@ class TestExtractEntitiesFromChunks:
         
         # Verify returned entities
         assert isinstance(result, list)
-        assert len(result) >= 2  # At least 2 unique entities (Steve Jobs deduplicated)
+        assert len(result) == 3  # All 3 unique entities (Steve Jobs deduplicated)
         
         # Check that Entity objects were created with proper structure
         for entity in result:
@@ -184,26 +184,17 @@ class TestExtractEntitiesFromChunks:
             assert hasattr(entity, 'confidence')
             assert hasattr(entity, 'source_chunks')
             assert isinstance(entity.source_chunks, list)
-    
-        # Setup mock to return different entities for each chunk
-        mock_integrator._extract_entities_from_text.side_effect = sample_entity_dicts
         
-        result = await mock_integrator._extract_entities_from_chunks(sample_chunks)
+        # Verify deduplication - Steve Jobs should appear in two chunks
+        steve_jobs_entity = next((e for e in result if e.name == 'Steve Jobs'), None)
+        assert steve_jobs_entity is not None
+        assert len(steve_jobs_entity.source_chunks) == 2  # chunk_1 and chunk_2
+        assert steve_jobs_entity.confidence == 0.95  # Maximum confidence
         
-        # Should call _extract_entities_from_text for each chunk
-        assert mock_integrator._extract_entities_from_text.call_count == 3
-        
-        # Verify Entity objects are returned
-        assert all(isinstance(entity, Entity) for entity in result)
-        
-        # Verify deduplication - Steve Jobs and Apple Inc. appear in multiple chunks
-        entity_names = [entity.name for entity in result]
-        assert len(set(entity_names)) == len(entity_names)  # No duplicates
-        
-        # Should have Apple Inc., Steve Jobs, and Microsoft Corporation
-        expected_names = {'Apple Inc.', 'Steve Jobs', 'Microsoft Corporation'}
-        actual_names = set(entity_names)
-        assert actual_names == expected_names
+        # Should have Apple Inc., Steve Jobs, and Cupertino
+        entity_names = {entity.name for entity in result}
+        expected_names = {'Apple Inc.', 'Steve Jobs', 'Cupertino'}
+        assert entity_names == expected_names
 
     @pytest.mark.asyncio
     async def test_extract_entities_from_chunks_empty_list(self, mock_integrator):

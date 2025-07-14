@@ -208,3 +208,54 @@
 - See individual subdirectory TODO.md files for specific TDD tasks
 - See `adhoc_tools/README.md` for tool development standards
 - See CLAUDE.md for complete worker assignment details
+
+## Edge Case Test Requirements
+
+### PDF Processing - GraphRAG Integrator
+**Priority**: High - Based on recent debugging session 2025-07-13
+
+- [ ] **Make test stubs for** `get_entity_neighborhood` method edge cases:
+  - [ ] **Depth validation edge cases**:
+    - Make test stubs for depth=0 validation (should return only center entity)
+    - Make test stubs for negative depth validation (should raise ValueError)
+    - Make test stubs for non-integer depth validation (should raise TypeError)
+    - Make test stubs for extremely large depth values (performance boundaries)
+  
+  - [ ] **Entity ID validation edge cases**:
+    - Make test stubs for None entity_id parameter (should raise TypeError with specific message)
+    - Make test stubs for empty string entity_id parameter (should raise ValueError)
+    - Make test stubs for non-string entity_id types (int, list, dict validation)
+    - Make test stubs for entity_id with special characters and Unicode
+  
+  - [ ] **Graph structure edge cases**:
+    - Make test stubs for isolated entities (no connections)
+    - Make test stubs for self-referencing edges (entity -> entity loops)
+    - Make test stubs for cyclic graphs (prevent infinite traversal)
+    - Make test stubs for disconnected graph components
+    - Make test stubs for empty global graph scenarios
+  
+  - [ ] **Subgraph completeness edge cases**:
+    - Make test stubs for edge count accuracy within subgraph neighborhoods
+    - Make test stubs for indirect edge inclusion (edges between neighbors)
+    - Make test stubs for breadth-first traversal correctness
+    - Make test stubs for predecessor and successor edge handling
+  
+  - [ ] **Performance and scalability edge cases**:
+    - Make test stubs for large neighborhood processing (>1000 nodes)
+    - Make test stubs for concurrent access scenarios
+    - Make test stubs for memory usage patterns with deep neighborhoods
+    - Make test stubs for JSON serialization compatibility of results
+  
+  - [ ] **Error handling edge cases**:
+    - Make test stubs for nonexistent entity lookup scenarios
+    - Make test stubs for corrupted graph data structures
+    - Make test stubs for missing entity attributes in nodes
+    - Make test stubs for malformed edge data validation
+
+**Context**: These edge cases were identified during debugging session where 5 test failures revealed:
+1. Incorrect depth validation (was rejecting depth=0)
+2. Wrong edge count expectations (test expected only direct edges, implementation correctly includes all subgraph edges)
+3. Regex pattern mismatch in error message validation
+4. Need for comprehensive boundary condition testing
+
+**Assignment Suggestion**: Assign to Worker focused on pdf_processing/ directory testing

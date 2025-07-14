@@ -35,6 +35,8 @@ assert MediaUtils.format_file_size
 assert MediaUtils.format_duration
 assert MediaUtils.sanitize_filename
 
+# Check if the module's imports are available
+
 
 
 class TestQualityOfObjectsInModule:

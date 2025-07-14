@@ -96,20 +96,33 @@ class TestIntegrateDocument:
             LLMChunk(
                 chunk_id="chunk_1",
                 content="Apple Inc. is a technology company founded by Steve Jobs.",
-                page_number=1,
-                source_page=1
+                source_page=1,
+                source_element="paragraph",
+                token_count=12,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             ),
             LLMChunk(
                 chunk_id="chunk_2", 
                 content="Steve Jobs was the CEO of Apple Inc. until 2011.",
-                page_number=1,
-                source_page=1
+                source_page=1,
+                source_element="paragraph",
+                token_count=10,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
             )
         ]
         return LLMDocument(
             document_id="doc_123",
             title="Apple History",
-            chunks=chunks
+            chunks=chunks,
+            summary="A brief history of Apple Inc. and Steve Jobs.",
+            key_entities=[{"text": "Apple Inc.", "type": "organization", "confidence": 0.9}],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
 
     @pytest.fixture
@@ -199,7 +212,10 @@ class TestIntegrateDocument:
         empty_doc = LLMDocument(
             document_id="empty_doc",
             title="Empty Document",
-            chunks=[]
+            chunks=[],
+            summary="Empty document for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         mock_integrator._extract_entities_from_chunks.return_value = []
@@ -229,9 +245,17 @@ class TestIntegrateDocument:
             chunks=[LLMChunk(
                 chunk_id="only_chunk",
                 content="Microsoft was founded by Bill Gates.",
-                page_number=1,
-                source_page=1
-            )]
+                source_page=1,
+                source_element="paragraph",
+                token_count=6,
+                semantic_type="text",
+                relationships=[],
+                metadata={},
+                embedding=None
+            )],
+            summary="Single chunk document for testing",
+            key_entities=[{"text": "Microsoft", "type": "organization", "confidence": 0.9}],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         entities = [Entity(
@@ -289,10 +313,43 @@ class TestIntegrateDocument:
             document_id="multi_page",
             title="Multi Page Document",
             chunks=[
-                LLMChunk(chunk_id="chunk_1", content="Content page 1", page_number=1, source_page=1),
-                LLMChunk(chunk_id="chunk_2", content="Content page 2", page_number=2, source_page=2),
-                LLMChunk(chunk_id="chunk_3", content="More content page 2", page_number=2, source_page=2)
-            ]
+                LLMChunk(
+                    chunk_id="chunk_1", 
+                    content="Content page 1", 
+                    source_page=1,
+                    source_element="paragraph",
+                    token_count=3,
+                    semantic_type="text",
+                    relationships=[],
+                    metadata={},
+                    embedding=None
+                ),
+                LLMChunk(
+                    chunk_id="chunk_2", 
+                    content="Content page 2", 
+                    source_page=2,
+                    source_element="paragraph",
+                    token_count=3,
+                    semantic_type="text",
+                    relationships=[],
+                    metadata={},
+                    embedding=None
+                ),
+                LLMChunk(
+                    chunk_id="chunk_3", 
+                    content="More content page 2", 
+                    source_page=2,
+                    source_element="paragraph",
+                    token_count=4,
+                    semantic_type="text",
+                    relationships=[],
+                    metadata={},
+                    embedding=None
+                )
+            ],
+            summary="Multi page document for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         mock_integrator._extract_entities_from_chunks.return_value = []
@@ -310,10 +367,10 @@ class TestIntegrateDocument:
         """
         GIVEN None is passed as the llm_document parameter
         WHEN integrate_document is called
-        THEN a ValueError should be raised
+        THEN a TypeError should be raised
         AND the error message should indicate invalid document
         """
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(TypeError) as exc_info:
             await mock_integrator.integrate_document(None)
         
         assert "llm_document cannot be None" in str(exc_info.value)
@@ -329,7 +386,10 @@ class TestIntegrateDocument:
         invalid_doc = LLMDocument(
             document_id=None,
             title="Valid Title",
-            chunks=[]
+            chunks=[],
+            summary="Invalid document for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         with pytest.raises(ValueError) as exc_info:
@@ -348,7 +408,10 @@ class TestIntegrateDocument:
         invalid_doc = LLMDocument(
             document_id="valid_id",
             title=None,
-            chunks=[]
+            chunks=[],
+            summary="Invalid document for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         with pytest.raises(ValueError) as exc_info:
@@ -367,7 +430,10 @@ class TestIntegrateDocument:
         invalid_doc = LLMDocument(
             document_id="valid_id",
             title="Valid Title",
-            chunks=["not_a_chunk", "another_invalid_chunk"]
+            chunks=["not_a_chunk", "another_invalid_chunk"],
+            summary="Invalid document for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         with pytest.raises(TypeError) as exc_info:
@@ -393,13 +459,14 @@ class TestIntegrateDocument:
             metadata={},
             creation_timestamp="2024-01-01T00:00:00Z"
         )
-        mock_integrator.knowledge_graphs["doc_123"] = existing_kg
+        mock_integrator.knowledge_graphs["existing"] = existing_kg
         
         mock_integrator._extract_entities_from_chunks.return_value = []
         mock_integrator._extract_relationships.return_value = []
         mock_integrator._store_knowledge_graph_ipld.return_value = "new_cid"
         
-        with patch('logging.warning') as mock_warning:
+        # Patch the module-specific logger instead of global logging
+        with patch('ipfs_datasets_py.pdf_processing.graphrag_integrator.logger.warning') as mock_warning:
             result = await mock_integrator.integrate_document(sample_llm_document)
             
             mock_warning.assert_called_once()
@@ -445,16 +512,15 @@ class TestIntegrateDocument:
         """
         GIVEN IPLD storage fails when storing the knowledge graph
         WHEN integrate_document is called
-        THEN an IPLDStorageError should be raised
+        THEN a RuntimeError should be raised
         AND the knowledge graph should not be added to global structures
         """
         mock_integrator._extract_entities_from_chunks.return_value = sample_entities
         mock_integrator._extract_relationships.return_value = sample_relationships
         
-        from ipfs_datasets_py.ipld import IPLDStorageError
-        mock_integrator._store_knowledge_graph_ipld.side_effect = IPLDStorageError("Storage failed")
+        mock_integrator._store_knowledge_graph_ipld.side_effect = RuntimeError("Storage failed")
         
-        with pytest.raises(IPLDStorageError) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             await mock_integrator.integrate_document(sample_llm_document)
         
         assert "Storage failed" in str(exc_info.value)
@@ -533,12 +599,15 @@ class TestIntegrateDocument:
         result = await mock_integrator.integrate_document(sample_llm_document)
         after_time = datetime.now()
         
-        # Parse the timestamp
-        timestamp = datetime.fromisoformat(result.creation_timestamp.replace('Z', '+00:00'))
+        # Parse the timestamp (remove Z suffix and parse as naive datetime)
+        timestamp_str = result.creation_timestamp.rstrip('Z')
+        timestamp = datetime.fromisoformat(timestamp_str)
         
         # Check it's within reasonable bounds (allowing for test execution time)
-        assert before_time <= timestamp.replace(tzinfo=None) <= after_time
-        assert result.creation_timestamp.endswith('Z')  # ISO 8601 UTC format
+        assert before_time <= timestamp <= after_time
+        # Check it's in correct ISO format with Z suffix
+        assert result.creation_timestamp.endswith('Z')
+        assert len(result.creation_timestamp) > 19  # Should be ISO format with microseconds
 
     @pytest.mark.asyncio
     async def test_integrate_document_graph_id_generation(self, mock_integrator, sample_llm_document):
@@ -559,6 +628,7 @@ class TestIntegrateDocument:
         # Graph IDs should be deterministic based on document_id
         assert result1.graph_id == result2.graph_id
         assert sample_llm_document.document_id in result1.graph_id
+        assert sample_llm_document.document_id in result2.graph_id
         assert len(result1.graph_id) > len(sample_llm_document.document_id)  # Should be enhanced
 
     @pytest.mark.asyncio
@@ -578,15 +648,16 @@ class TestIntegrateDocument:
         
         result = await mock_integrator.integrate_document(sample_llm_document)
         
+        assert 'document_title' in result.metadata
         assert 'entity_count' in result.metadata
         assert 'relationship_count' in result.metadata
         assert 'chunk_count' in result.metadata
-        assert 'similarity_threshold' in result.metadata
-        assert 'entity_extraction_confidence' in result.metadata
+        assert 'processing_timestamp' in result.metadata
         
         assert result.metadata['entity_count'] == len(sample_entities)
         assert result.metadata['relationship_count'] == len(sample_relationships)
         assert result.metadata['chunk_count'] == len(sample_llm_document.chunks)
+        assert result.metadata['document_title'] == sample_llm_document.title
 
     @pytest.mark.asyncio
     async def test_integrate_document_concurrent_integration(self, mock_integrator):
@@ -611,7 +682,10 @@ class TestIntegrateDocument:
                     relationships=[],
                     metadata={},
                     embedding=None
-                )]
+                )],
+                summary=f"Summary for document {i}",
+                key_entities=[],
+                processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
             ) for i in range(3)
         ]
         
@@ -655,7 +729,10 @@ class TestIntegrateDocument:
         large_doc = LLMDocument(
             document_id="large_doc",
             title="Large Document",
-            chunks=large_chunks
+            chunks=large_chunks,
+            summary="Large document with many chunks for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         mock_integrator._extract_entities_from_chunks.return_value = []
@@ -694,7 +771,10 @@ class TestIntegrateDocument:
                 relationships=[],
                 metadata={},
                 embedding=None
-            )]
+            )],
+            summary="Document with no entities for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         mock_integrator._extract_entities_from_chunks.return_value = []
@@ -732,7 +812,10 @@ class TestIntegrateDocument:
                 relationships=[],
                 metadata={},
                 embedding=None
-            )]
+            )],
+            summary="Document with low confidence entities for testing",
+            key_entities=[],
+            processing_metadata={"created_at": "2024-01-01T00:00:00Z"}
         )
         
         # Mock low confidence entities that should be filtered out

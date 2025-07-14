@@ -193,11 +193,11 @@ def raise_on_bad_docstring(node, tree: ast.AST) -> None:
     if isinstance(node, ast.FunctionDef):
         if 'Returns:' not in docstring and node.name not in ['__init__', '__new__', '__post_init__']:
             raise BadDocumentationError(
-                f"Docstring for '{node_name}' does not contain 'Returns:' section "
+                f"Docstring for '{node_name}' in  does not contain 'Returns:' section "
             )
-        if 'Examples:' not in docstring:
+        if 'Examples:' not in docstring or 'Example:' not in docstring:
             raise BadDocumentationError(
-                f"Docstring for '{node_name}' does not contain 'Examples:' section "
+                f"Docstring for '{node_name}' does not contain 'Example' section "
             )
     return
 
