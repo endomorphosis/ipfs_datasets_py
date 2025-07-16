@@ -16,8 +16,12 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import re
+import time
 
 
+import nltk
+from nltk import ne_chunk, pos_tag, word_tokenize
+from nltk.chunk import tree2conlltags
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 
@@ -27,6 +31,20 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 
 
 logger = logging.getLogger(__name__)
+
+
+# Ensure required NLTK data is available
+CORPORA = ['punkt', 'averaged_perceptron_tagger_eng', 'maxent_ne_chunker_tab', 'words']
+for corpus in CORPORA:
+    try:
+        nltk.data.find(corpus)
+    except Exception as e:
+        logger.warning(f"NLTK data not found for {corpus}, attempting download: {e}")
+        try:
+            nltk.download(corpus)
+        except Exception as e:
+            raise RuntimeError(f"NLTK data download failed: {e}") from e
+
 
 @dataclass
 class QueryResult:
@@ -399,7 +417,7 @@ class QueryEngine:
         """
         self.graphrag = graphrag_integrator
         self.storage = storage or IPLDStorage()
-        
+
         # Initialize embedding model for semantic search
         try:
             self.embedding_model = SentenceTransformer(embedding_model)
@@ -1453,30 +1471,33 @@ class QueryEngine:
         
         return results[:max_results]
     
-    def _extract_entity_names_from_query(self, query: str) -> List[str]:
+    def _extract_entity_names_from_query(self, query: str, min_chars: int = 3) -> List[str]:
         """
-        Extract potential entity names from query text using capitalization patterns.
+        Extract potential entity names from query text using NLTK NER and POS tagging.
 
-        This method identifies likely entity names within query text by detecting
-        sequences of capitalized words, which typically indicate proper nouns such
-        as person names, organization names, locations, and other named entities.
-        It uses simple heuristics based on capitalization patterns commonly found
-        in entity references.
+        This method identifies likely entity names within query text using proper
+        Natural Language Processing techniques including Named Entity Recognition (NER)
+        and Part-of-Speech (POS) tagging from NLTK. It combines NER results with
+        proper noun detection to identify person names, organization names, locations,
+        and other named entities.
 
         Args:
             query (str): Query string that may contain entity names.
-                Can be normalized or raw query text. Capitalization is required
-                for entity detection.
+                Can be normalized or raw query text. 
+            min_chars (int): Minimum character length for valid entity names.
+                Defaults to 3 characters to filter out short words.
 
         Returns:
             List[str]: List of potential entity names extracted from the query.
-                Each name is a space-separated sequence of capitalized words.
-                Returns empty list if no capitalized sequences are found.
+                Each name is a complete entity as identified by NER.
+                Returns empty list if no entities are found.
                 Names are returned in order of appearance in the query.
 
         Raises:
             TypeError: If query is not a string.
             ValueError: If query is empty or contains only whitespace.
+            ImportError: If NLTK is not available.
+            RuntimeError: If NLTK data cannot be downloaded or loaded.
 
         Examples:
             >>> _extract_entity_names_from_query("Who is Bill Gates?")
@@ -1489,30 +1510,142 @@ class QueryEngine:
             []
 
         Notes:
-            - Only detects capitalized word sequences (minimum 3 characters per word)
-            - Stops collecting words when a non-capitalized word is encountered
-            - Does not validate whether extracted names correspond to actual entities
-            - Simple pattern matching may miss some entities or include false positives
-            - Works best with properly formatted natural language queries
+            - Uses NLTK's named entity recognition for accurate entity detection
+            - Filters out common question words and stop words
+            - Combines NER results with proper noun detection for comprehensive coverage
+            - Handles punctuation and various text formats appropriately
+            - Works with properly formatted natural language queries
         """
-        # Simple approach: look for capitalized words/phrases
-        words = query.split()
+        start_time = time.time()
+        print("Extracting entities from query:", query)
+
+        # Input validation
+        if not isinstance(query, str):
+            raise TypeError("Query must be a string")
+
+        if not query.strip():
+            raise ValueError("Query cannot be empty or contain only whitespace")
+
+        # Tokenize and tag
+        tokens = word_tokenize(query)
+        pos_tags = pos_tag(tokens)
+        
+        # Named Entity Recognition
+        entities = ne_chunk(pos_tags, binary=False)
+        print(f"NER tree: {entities}")
+
+        # Extract entities from NER tree
         entity_names = []
         
-        current_name = []
-        for word in words:
-            if word[0].isupper() and len(word) > 2:
-                current_name.append(word)
+        # Convert tree to IOB tags for easier processing
+        iob_tags = tree2conlltags(entities)
+        
+        current_entity = []
+        current_label = None
+
+        # Check if numbers are in the query
+        has_numbers = any(char.isdigit() for char in query)
+        if has_numbers:
+            # Consider numbers as part of potential entities IF
+            # - They precede or follow a stand-alone proper noun (e.g. 'Death Race 2000', '2020 Olympics')
+            # - They precede 
+            # - The whole query is just a number (e.g. '42', '12345252562667', '3.14')
+            # - They are not standalone question words (e.g. 'What is 42')
+            pass
+        
+        for word, pos, ner in iob_tags:
+            if ner.startswith('B-'):  # Beginning of entity
+                # Save previous entity if exists
+                if current_entity:
+                    print(f"Beginning entity: {current_entity} with label {current_label}")
+                    entity_names.append(' '.join(current_entity))
+                # Start new entity
+                current_entity = [word]
+                current_label = ner[2:]
+            elif ner.startswith('I-') and current_entity:  # Inside entity
+                print(f"Inside entity: {current_entity} with label {current_label}")
+                current_entity.append(word)
+            else:  # Outside entity
+                # Save previous entity if exists
+                print(f"Outside entity: {current_entity} with label {current_label}")
+                if current_entity:
+                    entity_names.append(' '.join(current_entity))
+                current_entity = []
+                current_label = None
+        
+        # Don't forget the last entity
+        if current_entity:
+            entity_names.append(' '.join(current_entity))
+        
+        print(f"Found entities from NER: {entity_names}")
+        
+        # Also find proper nouns that might not be caught by NER
+        proper_nouns = []
+        current_noun_phrase = []
+        
+        for word, pos in pos_tags:
+            if pos in ['NNP', 'NNPS']:  # Proper nouns
+                current_noun_phrase.append(word)
             else:
-                if current_name:
-                    entity_names.append(' '.join(current_name))
-                    current_name = []
+                if current_noun_phrase and len(current_noun_phrase) >= 1:
+                    noun_phrase = ' '.join(current_noun_phrase)
+                    print(f"Found proper noun phrase: {noun_phrase}")
+                    # Only add if not already found by NER and meets criteria
+                    if (noun_phrase not in entity_names and 
+                        len(noun_phrase) >= 3 and
+                        not self._is_question_word(noun_phrase)):
+                        proper_nouns.append(noun_phrase)
+                current_noun_phrase = []
         
-        # Add final name if exists
-        if current_name:
-            entity_names.append(' '.join(current_name))
+        # Don't forget the last noun phrase
+        if current_noun_phrase and len(current_noun_phrase) >= 1:
+            noun_phrase = ' '.join(current_noun_phrase)
+            if (noun_phrase not in entity_names and 
+                len(noun_phrase) >= 3 and
+                not self._is_question_word(noun_phrase)):
+                proper_nouns.append(noun_phrase)
         
-        return entity_names
+        # Combine NER results with proper noun detection
+        all_entities = entity_names + proper_nouns
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_entities = []
+        for entity in all_entities:
+            # if ' ' in entity:
+            #     # split it up and check each word
+            #     words = entity.split()
+            #     for word in words:
+            #         word = word.strip()
+            #         if word not in seen and len(word) >= min_chars:
+            #             seen.add(word)
+            #             unique_entities.append(word)
+            if entity not in seen:
+                seen.add(entity)
+                unique_entities.append(entity)
+        
+        # Filter out obvious non-entities
+        filtered_entities = []
+        for entity in unique_entities:
+            print(entity)
+            if not self._is_question_word(entity) and len(entity.strip()) >= min_chars:
+                print(f"{entity} is a valid entity")
+                filtered_entities.append(entity)
+
+        end_time = time.time()
+        print(f"Entity extraction took {end_time - start_time:.2f} seconds")
+        return filtered_entities
+    
+    def _is_question_word(self, word: str) -> bool:
+        """Helper method to check if a word is a common question word or stop word."""
+        question_words = {
+            'who', 'what', 'when', 'where', 'why', 'how', 'which', 'whose',
+            'can', 'could', 'would', 'should', 'will', 'may', 'might',
+            'is', 'are', 'was', 'were', 'been', 'being', 'have', 'has', 'had',
+            'do', 'does', 'did', 'the', 'and', 'or', 'but', 'a', 'an', 'this',
+            'that', 'these', 'those', 'from', 'to', 'in', 'on', 'at', 'for'
+        }
+        return word in question_words
     
     def _get_entity_documents(self, entity: Entity) -> List[str]:
         """
@@ -1600,15 +1733,58 @@ class QueryEngine:
             - Used for source attribution in relationship query results
             - Critical for establishing relationship provenance and evidence
         """
+        # Type and attribute validation
+        if relationship is None:
+            raise TypeError("Relationship cannot be None")
+        
+        # Check if it's a proper Relationship instance by checking for expected attributes
+        if not hasattr(relationship, 'source_chunks'):
+            # If it's not None but doesn't have source_chunks, it's the wrong type
+            if not isinstance(relationship, type(relationship)) or isinstance(relationship, (str, int, float, list, dict)):
+                raise TypeError(f"Expected Relationship object, got {type(relationship).__name__}")
+            raise AttributeError("Relationship must have source_chunks attribute")
+        
+        if not hasattr(self.graphrag, 'knowledge_graphs'):
+            raise RuntimeError("GraphRAG integrator knowledge graphs are inaccessible")
+        
+        if self.graphrag.knowledge_graphs is None:
+            raise RuntimeError("Knowledge graphs data is corrupted or inaccessible")
+        
         documents = []
-        for kg in self.graphrag.knowledge_graphs.values():
-            if any(chunk.chunk_id in relationship.source_chunks for chunk in kg.chunks):
-                documents.append(kg.document_id)
-        return documents if documents else ['unknown']
+        
+        # Handle both dict and list structures for knowledge_graphs
+        knowledge_graphs = (
+            self.graphrag.knowledge_graphs.values() 
+            if hasattr(self.graphrag.knowledge_graphs, 'values') 
+            else self.graphrag.knowledge_graphs
+        )
+        
+        for kg in knowledge_graphs:
+            if kg.documents is None:
+                raise RuntimeError("Knowledge graph documents data is corrupted")
+            
+            # Check each document in the knowledge graph
+            for doc_id, doc_data in kg.documents.items():
+                doc_chunks = doc_data.get("chunks", [])
+                # Check if any relationship source chunks match document chunks
+                if any(chunk_id in relationship.source_chunks for chunk_id in doc_chunks):
+                    documents.append(doc_id)
+        
+        # Remove duplicates while preserving order
+        unique_documents = []
+        seen = set()
+        for doc_id in documents:
+            if doc_id not in seen:
+                unique_documents.append(doc_id)
+                seen.add(doc_id)
+        
+        return unique_documents if unique_documents else ['unknown']
     
     async def _generate_query_suggestions(self, 
-                                        query: str, 
-                                        results: List[QueryResult]) -> List[str]:
+                                        query: str, # FIXME Currently unused.
+                                        results: List[QueryResult],
+                                        suggestion_limit: int = 5
+                                        ) -> List[str]:
         """
         Generate intelligent follow-up query suggestions based on result content and patterns.
 
@@ -1649,10 +1825,11 @@ class QueryEngine:
             - Limits output to 5 suggestions to avoid overwhelming users
         """
         suggestions = []
+        topk = suggestion_limit
         
         # Entity-based suggestions
         entities_mentioned = set()
-        for result in results[:5]:  # Top 5 results
+        for result in results[:topk]:  # Top 5 results
             if 'entity_name' in result.metadata:
                 entities_mentioned.add(result.metadata['entity_name'])
             if 'source_entity' in result.metadata:
@@ -1667,7 +1844,7 @@ class QueryEngine:
         
         # Document-based suggestions
         documents_mentioned = set()
-        for result in results[:5]:
+        for result in results[:topk]:
             if result.source_document != 'multiple' and result.source_document != 'unknown':
                 documents_mentioned.add(result.source_document)
         
@@ -1677,14 +1854,14 @@ class QueryEngine:
         
         # Type-based suggestions
         types_mentioned = set()
-        for result in results[:5]:
+        for result in results[:topk]:
             if 'relationship_type' in result.metadata:
                 types_mentioned.add(result.metadata['relationship_type'])
         
         for rel_type in list(types_mentioned)[:2]:
             suggestions.append(f"Find all {rel_type.replace('_', ' ')} relationships")
         
-        return suggestions[:5]  # Limit to 5 suggestions
+        return suggestions[:topk]  # Limit to 5 suggestions
     
     async def get_query_analytics(self) -> Dict[str, Any]:
         """

@@ -74,16 +74,18 @@ class TestQueryEngineProcessCrossDocumentQuery:
         entity1 = Entity(
             id="ent_001",
             name="Microsoft",
-            entity_type="Organization",
+            type="Organization",
             description="Technology company",
+            confidence=0.95,
             properties={"industry": "technology"},
             source_chunks=["doc_001_chunk_003"]
         )
         entity2 = Entity(
             id="ent_002", 
             name="GitHub",
-            entity_type="Organization",
+            type="Organization",
             description="Code hosting platform",
+            confidence=0.95,
             properties={"industry": "technology"},
             source_chunks=["doc_002_chunk_005"]
         )
@@ -96,10 +98,11 @@ class TestQueryEngineProcessCrossDocumentQuery:
             relationship_type="acquired",
             description="Microsoft acquired GitHub in 2018",
             confidence=0.95,
-            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"]
+            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"],
+            properties={}
         )
         
-        mock.get_cross_document_relationships.return_value = [cross_rel]
+        mock.cross_document_relationships = [cross_rel]
         mock.global_entities = {"ent_001": entity1, "ent_002": entity2}
         
         return mock
@@ -199,17 +202,23 @@ class TestQueryEngineProcessCrossDocumentQuery:
         rel1 = Relationship(
             id="cross_rel_001",
             source_entity_id="ent_001",
-            target_entity_id="ent_002", 
+            target_entity_id="ent_002",
             relationship_type="acquired",
-            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"]
-        )
+            description="acquired relationship",
+            confidence=0.8,
+            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"],
+            properties={}
+            )
         rel2 = Relationship(
             id="cross_rel_002",
             source_entity_id="ent_003",
             target_entity_id="ent_004",
             relationship_type="partners_with",
-            source_chunks=["doc_003_chunk_001", "doc_002_chunk_002"]
-        )
+            description="partners_with relationship",
+            confidence=0.8,
+            source_chunks=["doc_003_chunk_001", "doc_002_chunk_002"],
+            properties={}
+            )
         mock_graphrag.get_cross_document_relationships.return_value = [rel1, rel2]
         
         # Act
@@ -242,15 +251,21 @@ class TestQueryEngineProcessCrossDocumentQuery:
             source_entity_id="ent_001",
             target_entity_id="ent_002",
             relationship_type="acquired",
-            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"]
-        )
+            description="acquired relationship",
+            confidence=0.8,
+            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"],
+            properties={}
+            )
         rel2 = Relationship(
-            id="cross_rel_002", 
+            id="cross_rel_002",
             source_entity_id="ent_001",
             target_entity_id="ent_003",
             relationship_type="invests_in",
-            source_chunks=["doc_001_chunk_001", "doc_003_chunk_002"]
-        )
+            description="invests_in relationship",
+            confidence=0.8,
+            source_chunks=["doc_001_chunk_001", "doc_003_chunk_002"],
+            properties={}
+            )
         mock_graphrag.get_cross_document_relationships.return_value = [rel1, rel2]
         
         # Act
@@ -283,15 +298,21 @@ class TestQueryEngineProcessCrossDocumentQuery:
             source_entity_id="ent_001",
             target_entity_id="ent_002",
             relationship_type="acquired",
-            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"]
-        )
+            description="acquired relationship",
+            confidence=0.8,
+            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"],
+            properties={}
+            )
         rel2 = Relationship(
             id="cross_rel_002",
-            source_entity_id="ent_001", 
+            source_entity_id="ent_001",
             target_entity_id="ent_003",
             relationship_type="partners_with",
-            source_chunks=["doc_001_chunk_001", "doc_003_chunk_002"]
-        )
+            description="partners_with relationship",
+            confidence=0.8,
+            source_chunks=["doc_001_chunk_001", "doc_003_chunk_002"],
+            properties={}
+            )
         mock_graphrag.get_cross_document_relationships.return_value = [rel1, rel2]
         
         # Act
@@ -325,17 +346,21 @@ class TestQueryEngineProcessCrossDocumentQuery:
             source_entity_id="ent_001",
             target_entity_id="ent_002",
             relationship_type="acquired",
+            description="acquired relationship",
             confidence=0.95,
-            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"]
-        )
+            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"],
+            properties={}
+            )
         rel2 = Relationship(
             id="cross_rel_002",
             source_entity_id="ent_001",
-            target_entity_id="ent_003", 
+            target_entity_id="ent_003",
             relationship_type="mentions",
+            description="mentions relationship",
             confidence=0.65,
-            source_chunks=["doc_001_chunk_001", "doc_003_chunk_002"]
-        )
+            source_chunks=["doc_001_chunk_001", "doc_003_chunk_002"],
+            properties={}
+            )
         mock_graphrag.get_cross_document_relationships.return_value = [rel1, rel2]
         
         # Act
@@ -382,8 +407,11 @@ class TestQueryEngineProcessCrossDocumentQuery:
             entities[f"ent_{i:03d}"] = Entity(
                 id=f"ent_{i:03d}",
                 name=f"Entity_{i:03d}",
-                entity_type="Organization",
-                source_chunks=[f"doc_{i%3:03d}_chunk_001"]
+                type="Organization",
+                description=f"Entity {i} description",
+                confidence=0.8,
+                source_chunks=[f"doc_{i%3:03d}_chunk_001"],
+                properties={}
             )
         mock_graphrag.global_entities = entities
         
@@ -456,8 +484,8 @@ class TestQueryEngineProcessCrossDocumentQuery:
         mock_graphrag.get_cross_document_relationships.return_value = [rel1, rel2]
         
         # Only include ent_001 and ent_002 in global entities (ent_missing is absent)
-        entity1 = Entity(id="ent_001", name="Microsoft", entity_type="Organization", source_chunks=["doc_001_chunk_003"])
-        entity2 = Entity(id="ent_002", name="GitHub", entity_type="Organization", source_chunks=["doc_002_chunk_005"])
+        entity1 = Entity(id="ent_001", name="Microsoft", type="Organization", description="", confidence=0.8, source_chunks=["doc_001_chunk_003"], properties={})
+        entity2 = Entity(id="ent_002", name="GitHub", type="Organization", description="", confidence=0.8, source_chunks=["doc_002_chunk_005"], properties={})
         mock_graphrag.global_entities = {"ent_001": entity1, "ent_002": entity2}
         
         # Act & Assert
@@ -626,24 +654,28 @@ class TestQueryEngineProcessCrossDocumentQuery:
         rel1 = Relationship(
             id="cross_rel_001",
             source_entity_id="ent_001",
-            target_entity_id="ent_002", 
+            target_entity_id="ent_002",
             relationship_type="acquired",
+            description="acquired relationship",
             confidence=0.95,
-            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"]
-        )
+            source_chunks=["doc_001_chunk_003", "doc_002_chunk_005"],
+            properties={}
+            )
         rel2 = Relationship(
             id="cross_rel_002",
             source_entity_id="ent_003",
             target_entity_id="ent_004",
             relationship_type="mentions",
+            description="mentions relationship",
             confidence=0.60,
-            source_chunks=["doc_003_chunk_001", "doc_004_chunk_002"]
-        )
+            source_chunks=["doc_003_chunk_001", "doc_004_chunk_002"],
+            properties={}
+            )
         mock_graphrag.get_cross_document_relationships.return_value = [rel1, rel2]
         
         # Add corresponding entities
-        entity3 = Entity(id="ent_003", name="Apple", entity_type="Organization", source_chunks=["doc_003_chunk_001"])
-        entity4 = Entity(id="ent_004", name="Samsung", entity_type="Organization", source_chunks=["doc_004_chunk_002"])
+        entity3 = Entity(id="ent_003", name="Apple", type="Organization", description="", confidence=0.8, source_chunks=["doc_003_chunk_001"], properties={})
+        entity4 = Entity(id="ent_004", name="Samsung", type="Organization", description="", confidence=0.8, source_chunks=["doc_004_chunk_002"], properties={})
         mock_graphrag.global_entities.update({"ent_003": entity3, "ent_004": entity4})
         
         # Act
@@ -780,8 +812,11 @@ class TestQueryEngineProcessCrossDocumentQuery:
         entity3 = Entity(
             id="ent_003",
             name="Subsidiary Corp",
-            entity_type="Organization",
-            source_chunks=["doc_003_chunk_001"]
+            type="Organization",
+            description="Subsidiary company",
+            confidence=0.8,
+            source_chunks=["doc_003_chunk_001"],
+            properties={}
         )
         mock_graphrag.global_entities["ent_003"] = entity3
         

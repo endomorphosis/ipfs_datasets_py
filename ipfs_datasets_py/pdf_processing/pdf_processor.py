@@ -397,7 +397,7 @@ class PDFProcessor:
                 return result
                 
         except Exception as e:
-            logger.error(f"PDF processing failed for {pdf_path}: {str(e)}")
+            logger.error(f"PDF processing failed for {pdf_path}: {e}")
             
             if self.audit_logger:
                 self.audit_logger.security(
@@ -465,7 +465,7 @@ class PDFProcessor:
             page_count = doc.page_count
             doc.close()
         except Exception as e:
-            raise ValueError(f"Invalid PDF file: {str(e)}")
+            raise ValueError(f"Invalid PDF file: {e}") from e
         
         return {
             'file_path': str(pdf_path),
@@ -549,14 +549,21 @@ class PDFProcessor:
                 page = doc[page_num]
                 page_content = await self._extract_page_content(page, page_num)
                 decomposed_content['pages'].append(page_content)
+                
+                # Aggregate images and annotations at document level
+                decomposed_content['images'].extend(page_content['images'])
+                decomposed_content['annotations'].extend(page_content['annotations'])
             
             # Extract document structure (table of contents)
             toc = doc.get_toc()
             decomposed_content['structure'] = {
                 'table_of_contents': toc,
-                'outline_depth': max([item[0] for item in toc]) if toc else 0
+                'outline': toc,  # Add outline for compatibility
+                'outline_depth': max([item[0] for item in toc], default=0) if toc else 0
             }
             
+            # Store page count before closing document
+            page_count = doc.page_count
             doc.close()
             
             # Use pdfplumber for additional text analysis
@@ -571,12 +578,21 @@ class PDFProcessor:
                     words = page.extract_words()
                     decomposed_content['pages'][i]['words'] = words
             
-            logger.info(f"Successfully decomposed {doc.page_count} pages")
+            logger.info(f"Successfully decomposed {page_count} pages")
             return decomposed_content
             
+        except (ValueError, pymupdf.FileDataError, pymupdf.mupdf.FzErrorFormat) as e:
+            logger.error(f"PDF decomposition failed: {e}")
+            raise ValueError(f"PDF decomposition failed: {e}") from e
+        except MemoryError as e:
+            logger.error(f"PDF decomposition failed: {e}")
+            raise MemoryError(f"PDF decomposition failed: {e}") from e
+        except (RuntimeError, IOError) as e:
+            logger.error(f"PDF decomposition failed: {e}")
+            raise RuntimeError(f"PDF decomposition failed: {e}") from e
         except Exception as e:
-            logger.error(f"PDF decomposition failed: {str(e)}")
-            raise Exception(f"PDF decomposition failed: {str(e)}")
+            logger.error(f"PDF decomposition failed: {e}")
+            raise ValueError(f"PDF decomposition failed: {e}") from e
     
     async def _extract_page_content(self, page, page_num: int) -> Dict[str, Any]:
         """
@@ -677,7 +693,9 @@ class PDFProcessor:
                         'size': len(img_data),
                         'width': pix.width,
                         'height': pix.height,
-                        'colorspace': pix.colorspace.name if pix.colorspace else 'unknown'
+                        'colorspace': pix.colorspace.name if pix.colorspace else 'unknown',
+                        'ext': 'png',  # Default format
+                        'bbox': [0, 0, pix.width, pix.height]  # Default bbox
                     })
                     
                     # Add as structured element
@@ -705,6 +723,7 @@ class PDFProcessor:
                 'type': annot.type[1],  # Annotation type name
                 'content': annot.info.get("content", ""),
                 'author': annot.info.get("title", ""),
+                'page': page_num + 1,  # Add page number
                 'bbox': list(annot.rect)
             }
             page_content['annotations'].append(annot_dict)
@@ -922,7 +941,7 @@ class PDFProcessor:
             
             # Store in IPFS
             try:
-                page_cid = await self.storage.store_json(page_node)
+                page_cid = self.storage.store_json(page_node)
                 ipld_structure['content_map'][f'page_{page_num}'] = page_cid
                 ipld_structure['document']['pages'][page_num] = {
                     'cid': page_cid,
@@ -933,7 +952,7 @@ class PDFProcessor:
         
         # Store document metadata
         try:
-            doc_cid = await self.storage.store_json(ipld_structure['document'])
+            doc_cid = self.storage.store_json(ipld_structure['document'])
             ipld_structure['root_cid'] = doc_cid
         except Exception as e:
             logger.error(f"Failed to store document in IPLD: {e}")
