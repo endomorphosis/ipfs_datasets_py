@@ -202,10 +202,10 @@ class SuryaOCR(OCREngine):
     - Robust performance on handwritten and printed text
 
     Attributes:
-        det_processor: Surya detection processor for text detection preprocessing
+        detection_predictor: Surya detection processor for text detection preprocessing
         det_model: Loaded Surya detection model for identifying text regions
         rec_model: Loaded Surya recognition model for character recognition
-        rec_processor: Surya recognition processor for text recognition preprocessing
+        recognition_predictor: Surya recognition processor for text recognition preprocessing
         run_ocr: Surya OCR execution function for processing images
 
     Dependencies:
@@ -264,18 +264,14 @@ class SuryaOCR(OCREngine):
         """
         try:
             # Import Surya components
-            from surya.ocr import run_ocr
-            from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_det_processor
-            from surya.model.recognition.model import load_model as load_rec_model
-            from surya.model.recognition.processor import load_processor as load_rec_processor
-            
+            import surya
+            from surya.recognition import RecognitionPredictor
+            from surya.detection import DetectionPredictor
+
             # Load models
-            self.det_processor = load_det_processor()
-            self.det_model = load_det_model()
-            self.rec_model = load_rec_model()
-            self.rec_processor = load_rec_processor()
-            self.run_ocr = run_ocr
-            
+            self.detection_predictor = DetectionPredictor()
+            self.recognition_predictor = RecognitionPredictor()
+
             self.available = True
             logger.info("Surya OCR engine initialized successfully")
             
@@ -286,7 +282,7 @@ class SuryaOCR(OCREngine):
             logger.error(f"Failed to initialize Surya OCR: {e}")
             self.available = False
     
-    def extract_text(self, image_data: bytes, languages: List[str] = ['en']) -> Dict[str, Any]:
+    def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """
         Extract text from image data using the Surya transformer-based OCR engine.
 
@@ -299,9 +295,6 @@ class SuryaOCR(OCREngine):
             image_data (bytes): Raw image data in any PIL-supported format (PNG, JPEG, TIFF, etc.).
                 The image should contain text content to be extracted. Higher resolution
                 images typically provide better accuracy.
-            languages (List[str], optional): List of language codes for text recognition.
-                Supported languages include 'en' (English), 'es' (Spanish), 'fr' (French),
-                'de' (German), and many others. Defaults to ['en'].
 
         Returns:
             Dict[str, Any]: Comprehensive extraction results containing:
@@ -324,7 +317,7 @@ class SuryaOCR(OCREngine):
             >>> surya_engine = SuryaOCR()
             >>> with open('multilingual_doc.png', 'rb') as f:
             ...     image_data = f.read()
-            >>> result = surya_engine.extract_text(image_data, languages=['en', 'es'])
+            >>> result = surya_engine.extract_text(image_data)
             >>> print(f"Extracted text: {result['text']}")
             >>> for block in result['text_blocks']:
             ...     print(f"Line: {block['text']} (confidence: {block['confidence']:.2f})")
@@ -338,18 +331,16 @@ class SuryaOCR(OCREngine):
         """
         if not self.available:
             raise RuntimeError("Surya OCR engine not available")
-        
+
         try:
             # Convert image data to PIL Image
             image = Image.open(io.BytesIO(image_data))
             
             # Run OCR
-            predictions = self.run_ocr(
-                [image], [languages], 
-                self.det_model, self.det_processor, 
-                self.rec_model, self.rec_processor
+            predictions = self.recognition_predictor(
+                [image], det_predictor=self.detection_predictor,
             )
-            
+
             # Process results
             result = predictions[0]
             full_text = ""
@@ -467,8 +458,7 @@ class TesseractOCR(OCREngine):
         """
         try:
             import pytesseract
-            from PIL import Image
-            
+
             self.pytesseract = pytesseract
             self.available = True
             logger.info("Tesseract OCR engine initialized successfully")
@@ -876,7 +866,7 @@ class TrOCREngine(OCREngine):
             
             return {
                 'text': generated_text.strip(),
-                'confidence': 0.8,  # TrOCR doesn't provide confidence scores
+                'confidence': 0.0,  # TrOCR doesn't provide confidence scores
                 'engine': 'trocr'
             }
             
@@ -1000,17 +990,18 @@ class MultiEngineOCR:
             raise RuntimeError("No OCR engines available")
         
         # Define engine order based on strategy
-        if strategy == 'quality_first':
-            engine_order = ['surya', 'tesseract', 'easyocr', 'trocr']
-        elif strategy == 'speed_first':
-            engine_order = ['tesseract', 'surya', 'easyocr', 'trocr']
-        elif strategy == 'accuracy_first':
-            engine_order = ['surya', 'easyocr', 'trocr', 'tesseract']
-        else:
-            engine_order = list(self.engines.keys())
+        match strategy:
+            case 'quality_first':
+                engines = ['surya', 'tesseract', 'easyocr', 'trocr']
+            case 'speed_first':
+                engines = ['tesseract', 'surya', 'easyocr', 'trocr']
+            case 'accuracy_first':
+                engines = ['surya', 'easyocr', 'trocr', 'tesseract']
+            case _:
+                engines = list(self.engines.keys())
         
         # Filter to only available engines
-        available_engines = [name for name in engine_order if name in self.engines]
+        available_engines = [name for name in engines if name in self.engines]
         
         results = []
         

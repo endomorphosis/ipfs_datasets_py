@@ -97,7 +97,7 @@ class TestSuryaOCREngine:
         WHEN initializing SuryaOCR
         THEN should successfully load detection and recognition models
         AND should set available to True
-        AND should initialize det_processor, det_model, rec_model, rec_processor, run_ocr
+        AND should initialize detection_predictor, det_model, rec_model, recognition_predictor, run_ocr
         """
         # Mock surya imports to simulate successful initialization
         with patch('ipfs_datasets_py.pdf_processing.ocr_engine.importlib.import_module') as mock_import:
@@ -117,13 +117,16 @@ class TestSuryaOCREngine:
         AND should set available to False
         AND should not crash the application
         """
-        with patch.object(SuryaOCR, '_initialize', side_effect=ImportError("No module named 'surya'")):
-            engine = SuryaOCR()
-            # Should not crash and should have name set
-            assert hasattr(engine, 'name')
-            assert engine.name == 'surya'
-            # Available status depends on error handling in _initialize
-            assert hasattr(engine, 'available')
+        # Mock the surya imports to simulate missing dependencies
+        with patch('builtins.__import__', side_effect=ImportError("No module named 'surya'")):
+            with patch('ipfs_datasets_py.pdf_processing.ocr_engine.logger'):
+                engine = SuryaOCR()
+                
+                # Should not crash and should set available to False
+                assert engine.available == False
+                assert engine.name == 'surya'
+                assert hasattr(engine, 'detection_predictor') == False or engine.detection_predictor is None
+                assert hasattr(engine, 'det_model') == False or engine.det_model is None
 
     def test_surya_ocr_initialization_model_download_failure(self):
         """
@@ -132,11 +135,23 @@ class TestSuryaOCREngine:
         THEN should handle RuntimeError appropriately
         AND should set available to False
         """
-        with patch.object(SuryaOCR, '_initialize', side_effect=RuntimeError("Model download failed")):
-            engine = SuryaOCR()
-            assert hasattr(engine, 'available')
-            assert hasattr(engine, 'name')
-            assert engine.name == 'surya'
+        # Mock surya imports to be successful
+        mock_surya_modules = {
+            'surya.ocr': Mock(),
+            'surya.model.detection.segformer': Mock(),
+            'surya.model.recognition.model': Mock(),
+            'surya.model.recognition.processor': Mock()
+        }
+        
+        with patch.dict('sys.modules', mock_surya_modules):
+            # Mock the load_det_model to raise RuntimeError (model download failure)
+            with patch('surya.model.detection.segformer.load_model', side_effect=RuntimeError("Model download failed")):
+                with patch('ipfs_datasets_py.pdf_processing.ocr_engine.logger'):
+                    engine = SuryaOCR()
+                    
+                    # Should handle the error gracefully and set available to False
+                    assert engine.available == False
+                    assert engine.name == 'surya'
 
     def test_surya_ocr_initialization_insufficient_memory(self):
         """
@@ -145,10 +160,23 @@ class TestSuryaOCREngine:
         THEN should handle MemoryError gracefully
         AND should set available to False
         """
-        with patch.object(SuryaOCR, '_initialize', side_effect=MemoryError("Insufficient memory")):
-            engine = SuryaOCR()
-            assert hasattr(engine, 'available')
-            assert hasattr(engine, 'name')
+        # Mock surya imports to be successful
+        mock_surya_modules = {
+            'surya.ocr': Mock(),
+            'surya.model.detection.segformer': Mock(),
+            'surya.model.recognition.model': Mock(),
+            'surya.model.recognition.processor': Mock()
+        }
+        
+        with patch.dict('sys.modules', mock_surya_modules):
+            # Mock the load_det_model to raise MemoryError
+            with patch('surya.model.detection.segformer.load_model', side_effect=MemoryError("Insufficient memory")):
+                with patch('ipfs_datasets_py.pdf_processing.ocr_engine.logger'):
+                    engine = SuryaOCR()
+                    
+                    # Should handle the error gracefully and set available to False
+                    assert engine.available == False
+                    assert engine.name == 'surya'
 
     def create_test_image_data(self):
         """Helper method to create test image data."""
@@ -175,17 +203,21 @@ class TestSuryaOCREngine:
             
             # Mock the actual OCR components
             engine.run_ocr = Mock()
-            engine.det_processor = Mock()
+            engine.detection_predictor = Mock()
             engine.det_model = Mock()
             engine.rec_model = Mock()
-            engine.rec_processor = Mock()
+            engine.recognition_predictor = Mock()
             
-            # Mock OCR results
+            # Create mock result object with text_lines attribute
+            mock_result = Mock()
             mock_text_lines = [
                 Mock(text="Hello World", confidence=0.95, bbox=[10, 10, 90, 30]),
                 Mock(text="Test Text", confidence=0.88, bbox=[10, 35, 80, 45])
             ]
-            engine.run_ocr.return_value = ([mock_text_lines], ["en"])
+            mock_result.text_lines = mock_text_lines
+            
+            # Mock run_ocr to return list containing our mock result
+            engine.run_ocr.return_value = [mock_result]
             
             image_data = self.create_test_image_data()
             result = engine.extract_text(image_data, languages=['en'])
@@ -218,10 +250,10 @@ class TestSuryaOCREngine:
             
             # Mock OCR components
             engine.run_ocr = Mock()
-            engine.det_processor = Mock()
+            engine.detection_predictor = Mock()
             engine.det_model = Mock()
             engine.rec_model = Mock()
-            engine.rec_processor = Mock()
+            engine.recognition_predictor = Mock()
             
             # Mock multilingual results
             mock_text_lines = [
@@ -291,10 +323,10 @@ class TestSuryaOCREngine:
             
             # Mock OCR components
             engine.run_ocr = Mock()
-            engine.det_processor = Mock()
+            engine.detection_predictor = Mock()
             engine.det_model = Mock()
             engine.rec_model = Mock()
-            engine.rec_processor = Mock()
+            engine.recognition_predictor = Mock()
             
             # Create larger test image
             img = Image.new('RGB', (2000, 1000), color='white')
@@ -323,10 +355,10 @@ class TestSuryaOCREngine:
             
             # Mock OCR components
             engine.run_ocr = Mock()
-            engine.det_processor = Mock()
+            engine.detection_predictor = Mock()
             engine.det_model = Mock()
             engine.rec_model = Mock()
-            engine.rec_processor = Mock()
+            engine.recognition_predictor = Mock()
             
             # Mock varying confidence scores
             mock_text_lines = [
@@ -364,10 +396,10 @@ class TestSuryaOCREngine:
             
             # Mock OCR components
             engine.run_ocr = Mock()
-            engine.det_processor = Mock()
+            engine.detection_predictor = Mock()
             engine.det_model = Mock()
             engine.rec_model = Mock()
-            engine.rec_processor = Mock()
+            engine.recognition_predictor = Mock()
             
             # Mock text with bounding boxes
             mock_text_lines = [

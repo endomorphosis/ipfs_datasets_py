@@ -406,10 +406,10 @@ class TestOCREngineConfigurationAndCustomization:
             engine = SuryaOCR()
             engine.available = True
             engine.run_ocr = Mock()
-            engine.det_processor = Mock()
+            engine.detection_predictor = Mock()
             engine.det_model = Mock()
             engine.rec_model = Mock()
-            engine.rec_processor = Mock()
+            engine.recognition_predictor = Mock()
             
             # Test multilingual specification
             mock_text_lines_multi = [

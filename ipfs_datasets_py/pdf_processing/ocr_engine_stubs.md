@@ -224,10 +224,10 @@ Key Features:
 - Robust performance on handwritten and printed text
 
 Attributes:
-    det_processor: Surya detection processor for text detection preprocessing
+    detection_predictor: Surya detection processor for text detection preprocessing
     det_model: Loaded Surya detection model for identifying text regions
     rec_model: Loaded Surya recognition model for character recognition
-    rec_processor: Surya recognition processor for text recognition preprocessing
+    recognition_predictor: Surya recognition processor for text recognition preprocessing
     run_ocr: Surya OCR execution function for processing images
 
 Dependencies:

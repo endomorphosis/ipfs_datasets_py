@@ -442,21 +442,21 @@ def extract_text_with_easyocr(image_data, languages=['en']):
 **Code Example:**
 ```python
 from surya.ocr import run_ocr
-from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_det_processor
+from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_detection_predictor
 from surya.model.recognition.model import load_model as load_rec_model
-from surya.model.recognition.processor import load_processor as load_rec_processor
+from surya.model.recognition.processor import load_processor as load_recognition_predictor
 from PIL import Image
 
 def extract_text_with_surya(image_data, languages=['en']):
     # Load models
-    det_processor, det_model = load_det_processor(), load_det_model()
-    rec_model, rec_processor = load_rec_model(), load_rec_processor()
+    detection_predictor, det_model = load_detection_predictor(), load_det_model()
+    rec_model, recognition_predictor = load_rec_model(), load_recognition_predictor()
     
     # Convert image
     image = Image.open(io.BytesIO(image_data))
     
     # Run OCR
-    predictions = run_ocr([image], [languages], det_model, det_processor, rec_model, rec_processor)
+    predictions = run_ocr([image], [languages], det_model, detection_predictor, rec_model, recognition_predictor)
     
     # Process results
     result = predictions[0]

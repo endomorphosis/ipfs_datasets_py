@@ -112,10 +112,10 @@ class TestOCREngineIntegration:
             surya = SuryaOCR()
             surya.available = True
             surya.run_ocr = Mock(return_value=([Mock(text="surya", confidence=0.9)], ["en"]))
-            surya.det_processor = Mock()
+            surya.detection_predictor = Mock()
             surya.det_model = Mock()
             surya.rec_model = Mock()
-            surya.rec_processor = Mock()
+            surya.recognition_predictor = Mock()
             engines.append(surya)
         
         with patch.object(TesseractOCR, '_initialize'):
@@ -199,10 +199,10 @@ class TestOCREngineIntegration:
             surya = SuryaOCR()
             surya.available = True
             surya.run_ocr = Mock(return_value=([Mock(text="Sample Text", confidence=0.95)], ["en"]))
-            surya.det_processor = Mock()
+            surya.detection_predictor = Mock()
             surya.det_model = Mock()
             surya.rec_model = Mock()
-            surya.rec_processor = Mock()
+            surya.recognition_predictor = Mock()
             engines['surya'] = surya
         
         with patch.object(TesseractOCR, '_initialize'):
