@@ -167,7 +167,7 @@ class TestOptimizeForLlm:
                         'chunk_id': i // chunk_size,
                         'word_count': len(chunk_words),
                         'start_position': i,
-                        'semantic_type': 'paragraph'
+                        'semantic_types': 'paragraph'
                     }
                 })
             
@@ -823,7 +823,7 @@ class TestOptimizeForLlm:
                         assert 0.0 <= score <= 1.0
 
     @pytest.mark.asyncio
-    async def test_optimize_for_llm_semantic_type_classification(self, processor, mock_llm_optimizer):
+    async def test_optimize_for_llm_semantic_types_classification(self, processor, mock_llm_optimizer):
         """
         GIVEN diverse content types within document
         WHEN _optimize_for_llm classifies content semantically
@@ -865,7 +865,7 @@ class TestOptimizeForLlm:
         def mock_classify_content(content, **kwargs):
             classified_chunks = []
             
-            semantic_type_mapping = {
+            semantic_types_mapping = {
                 'title': 'document_title',
                 'author': 'authorship_info',
                 'abstract': 'summary_content',
@@ -881,24 +881,24 @@ class TestOptimizeForLlm:
             
             for page in content['pages']:
                 for element in page.get('elements', []):
-                    semantic_type = semantic_type_mapping.get(element['type'], 'unknown')
+                    semantic_types = semantic_types_mapping.get(element['type'], 'unknown')
                     
                     classified_chunks.append({
                         'text': element['content'],
                         'metadata': {
                             'original_type': element['type'],
-                            'semantic_type': semantic_type,
-                            'semantic_role': self._get_semantic_role(semantic_type),
-                            'processing_priority': self._get_processing_priority(semantic_type),
-                            'content_category': self._get_content_category(semantic_type),
-                            'importance_score': self._get_importance_score(semantic_type),
+                            'semantic_types': semantic_types,
+                            'semantic_role': self._get_semantic_role(semantic_types),
+                            'processing_priority': self._get_processing_priority(semantic_types),
+                            'content_category': self._get_content_category(semantic_types),
+                            'importance_score': self._get_importance_score(semantic_types),
                             'page': page['page_number']
                         }
                     })
             
             return classified_chunks
         
-        def _get_semantic_role(semantic_type):
+        def _get_semantic_role(semantic_types):
             role_mapping = {
                 'document_title': 'primary_identifier',
                 'authorship_info': 'metadata',
@@ -912,9 +912,9 @@ class TestOptimizeForLlm:
                 'mathematical_content': 'formula',
                 'executable_content': 'code'
             }
-            return role_mapping.get(semantic_type, 'unclassified')
+            return role_mapping.get(semantic_types, 'unclassified')
         
-        def _get_processing_priority(semantic_type):
+        def _get_processing_priority(semantic_types):
             priority_mapping = {
                 'document_title': 'high',
                 'summary_content': 'high',
@@ -926,9 +926,9 @@ class TestOptimizeForLlm:
                 'reference_material': 'low',
                 'supplementary_info': 'low'
             }
-            return priority_mapping.get(semantic_type, 'medium')
+            return priority_mapping.get(semantic_types, 'medium')
         
-        def _get_content_category(semantic_type):
+        def _get_content_category(semantic_types):
             category_mapping = {
                 'document_title': 'metadata',
                 'authorship_info': 'metadata',
@@ -942,9 +942,9 @@ class TestOptimizeForLlm:
                 'mathematical_content': 'technical',
                 'executable_content': 'technical'
             }
-            return category_mapping.get(semantic_type, 'general')
+            return category_mapping.get(semantic_types, 'general')
         
-        def _get_importance_score(semantic_type):
+        def _get_importance_score(semantic_types):
             importance_mapping = {
                 'document_title': 0.95,
                 'summary_content': 0.90,
@@ -958,7 +958,7 @@ class TestOptimizeForLlm:
                 'reference_material': 0.55,
                 'supplementary_info': 0.50
             }
-            return importance_mapping.get(semantic_type, 0.50)
+            return importance_mapping.get(semantic_types, 0.50)
         
         # Inject helper methods into mock
         mock_classify_content._get_semantic_role = _get_semantic_role
@@ -978,7 +978,7 @@ class TestOptimizeForLlm:
             chunks = result['chunks']
             
             # Verify all expected semantic types are present
-            semantic_types = set(chunk['metadata']['semantic_type'] for chunk in chunks)
+            semantic_types = set(chunk['metadata']['semantic_types'] for chunk in chunks)
             expected_types = {
                 'document_title', 'authorship_info', 'summary_content', 'section_header',
                 'body_text', 'reference_material', 'visual_description', 'mathematical_content'
@@ -990,7 +990,7 @@ class TestOptimizeForLlm:
             for chunk in chunks:
                 metadata = chunk['metadata']
                 
-                assert 'semantic_type' in metadata
+                assert 'semantic_types' in metadata
                 assert 'semantic_role' in metadata
                 assert 'processing_priority' in metadata
                 assert 'content_category' in metadata

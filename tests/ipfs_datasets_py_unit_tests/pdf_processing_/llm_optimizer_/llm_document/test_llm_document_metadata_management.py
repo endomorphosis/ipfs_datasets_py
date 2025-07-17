@@ -91,9 +91,9 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -166,9 +166,9 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -236,9 +236,9 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for timestamp tracking",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -317,9 +317,9 @@ class TestLLMDocumentMetadataManagement:
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=len(encoding.encode("First chunk with specific token count")),
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -327,9 +327,9 @@ class TestLLMDocumentMetadataManagement:
                 content="Second chunk with different token count",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=len(encoding.encode("Second chunk with different token count")),
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],
                 metadata={}
             ),
@@ -337,9 +337,9 @@ class TestLLMDocumentMetadataManagement:
                 content="Third chunk completing the set",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_element="table",
+                source_elements=["table"],
                 token_count=len(encoding.encode("Third chunk completing the set")),
-                semantic_type="table",
+                semantic_types={"table"},
                 relationships=["chunk_0002"],
                 metadata={}
             )
@@ -364,10 +364,10 @@ class TestLLMDocumentMetadataManagement:
             "token_total": expected_token_total,
             "entity_count": expected_entity_count,
             "page_count": expected_page_count,
-            "paragraph_count": len([c for c in chunks if c.source_element == "paragraph"]),
-            "table_count": len([c for c in chunks if c.source_element == "table"]),
-            "text_chunks": len([c for c in chunks if c.semantic_type == "text"]),
-            "table_chunks": len([c for c in chunks if c.semantic_type == "table"]),
+            "paragraph_count": len([c for c in chunks if c.source_elements == ["paragraph"]]),
+            "table_count": len([c for c in chunks if c.source_elements == ["table"]]),
+            "text_chunks": len([c for c in chunks if c.semantic_types == "text"]),
+            "table_chunks": len([c for c in chunks if c.semantic_types == "table"]),
             "avg_tokens_per_chunk": expected_token_total / expected_chunk_count,
             "min_chunk_tokens": min(chunk.token_count for chunk in chunks),
             "max_chunk_tokens": max(chunk.token_count for chunk in chunks)
@@ -395,14 +395,14 @@ class TestLLMDocumentMetadataManagement:
         assert document.processing_metadata["page_count"] == actual_page_count, "page_count should match unique pages"
         
         # Validate element type counts
-        actual_paragraph_count = len([c for c in document.chunks if c.source_element == "paragraph"])
-        actual_table_count = len([c for c in document.chunks if c.source_element == "table"])
+        actual_paragraph_count = len([c for c in document.chunks if c.source_elements == ["paragraph"]])
+        actual_table_count = len([c for c in document.chunks if c.source_elements == ["table"]])
         assert document.processing_metadata["paragraph_count"] == actual_paragraph_count, "paragraph_count should match actual paragraphs"
         assert document.processing_metadata["table_count"] == actual_table_count, "table_count should match actual tables"
         
         # Validate semantic type counts
-        actual_text_chunks = len([c for c in document.chunks if c.semantic_type == "text"])
-        actual_table_chunks = len([c for c in document.chunks if c.semantic_type == "table"])
+        actual_text_chunks = len([c for c in document.chunks if c.semantic_types == "text"])
+        actual_table_chunks = len([c for c in document.chunks if c.semantic_types == "table"])
         assert document.processing_metadata["text_chunks"] == actual_text_chunks, "text_chunks should match actual text chunks"
         assert document.processing_metadata["table_chunks"] == actual_table_chunks, "table_chunks should match actual table chunks"
         

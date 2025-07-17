@@ -89,9 +89,9 @@ class TestLLMDocumentEmbeddingHandling:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -156,9 +156,9 @@ class TestLLMDocumentEmbeddingHandling:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -179,7 +179,7 @@ class TestLLMDocumentEmbeddingHandling:
             original_array = np.array(test_data, dtype=dtype)
             
             document = LLMDocument(
-                document_id=f"doc_{dtype.name}",
+                document_id=f"doc_{dtype.__name__}",
                 title="Dtype Preservation Test",
                 chunks=[sample_chunk],
                 summary="Testing dtype preservation",
@@ -227,9 +227,9 @@ class TestLLMDocumentEmbeddingHandling:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -252,6 +252,7 @@ class TestLLMDocumentEmbeddingHandling:
         
         for i, original_array in enumerate(test_cases):
             # Create a copy to verify original values
+            original_array: np.ndarray
             expected_values = original_array.copy()
             
             # When
@@ -321,9 +322,9 @@ class TestLLMDocumentEmbeddingHandling:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )

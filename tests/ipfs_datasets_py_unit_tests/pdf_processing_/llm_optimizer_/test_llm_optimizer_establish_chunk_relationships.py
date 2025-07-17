@@ -94,9 +94,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="First chunk in sequence",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -104,9 +104,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="Second chunk follows first",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -114,9 +114,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="Third chunk completes sequence",
                 chunk_id="chunk_0003",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=14,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -157,9 +157,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="First paragraph on page 1",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -167,9 +167,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="Second paragraph on page 1",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -177,9 +177,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="Table on page 1",
                 chunk_id="chunk_0003",
                 source_page=1,
-                source_element="table",
+                source_elements=["table"],
                 token_count=15,
-                semantic_type="table",
+                semantic_types={"table"},
                 relationships=[],
                 metadata={}
             ),
@@ -187,9 +187,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="First paragraph on page 2",
                 chunk_id="chunk_0004",
                 source_page=2,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=11,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -265,9 +265,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content="Single lonely chunk",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -304,9 +304,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 content=f"Chunk {i+1} content for performance testing",
                 chunk_id=f"chunk_{i+1:04d}",
                 source_page=(i // 10) + 1,  # 10 chunks per page
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=15,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -352,9 +352,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
             content="Valid chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -364,9 +364,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
             content="Chunk without ID",
             chunk_id="",  # Empty ID should cause issues
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )

@@ -113,23 +113,9 @@ class TestLLMOptimizerCreateOptimalChunks:
                 }
             ]
         }
-        
-        # Valid decomposed content
-        decomposed_content = {
-            "pages": [
-                {
-                    "page_number": 1,
-                    "elements": [
-                        {"type": "paragraph", "content": "First paragraph content", "metadata": {}},
-                        {"type": "paragraph", "content": "Second paragraph content", "metadata": {}}
-                    ]
-                }
-            ],
-            "metadata": {"document_id": "test_doc"}
-        }
-        
+
         # When
-        chunks = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
+        chunks = await optimizer._create_optimal_chunks(structured_text)
         
         # Then
         assert isinstance(chunks, list), "Should return list of chunks"
@@ -151,7 +137,7 @@ class TestLLMOptimizerCreateOptimalChunks:
             assert len(chunk.content.strip()) > 0, f"Chunk {i} should have non-empty content"
             assert isinstance(chunk.chunk_id, str), f"Chunk {i} should have string ID"
             assert chunk.source_page > 0, f"Chunk {i} should have valid page number"
-            assert isinstance(chunk.semantic_type, str), f"Chunk {i} should have semantic type"
+            assert isinstance(chunk.semantic_types, str), f"Chunk {i} should have semantic type"
             assert isinstance(chunk.relationships, list), f"Chunk {i} should have relationships list"
             assert isinstance(chunk.metadata, dict), f"Chunk {i} should have metadata dict"
 
@@ -196,7 +182,7 @@ class TestLLMOptimizerCreateOptimalChunks:
         }
         
         # When
-        chunks = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
+        chunks: list[LLMChunk] = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
         
         # Then - verify basic structure
         assert isinstance(chunks, list), "Should return list of chunks"
@@ -262,191 +248,166 @@ class TestLLMOptimizerCreateOptimalChunks:
         # Verify chunk IDs are unique
         chunk_ids = [chunk.chunk_id for chunk in chunks]
         assert len(chunk_ids) == len(set(chunk_ids)), "All chunk IDs should be unique"
-        @pytest.mark.asyncio
-        async def test_create_optimal_chunks_page_boundary_respect(self):
-            """
-            GIVEN content spanning multiple pages
-            WHEN _create_optimal_chunks is called
-            THEN expect:
-                - Page boundaries considered in chunking
-                - Source page information preserved
-                - Cross-page relationships handled
-            """
+
+    @pytest.mark.asyncio
+    async def test_create_optimal_chunks_page_boundary_respect(self):
+        """
+        GIVEN content spanning multiple pages
+        WHEN _create_optimal_chunks is called
+        THEN expect:
+            - Page boundaries considered in chunking
+            - Source page information preserved
+            - Cross-page relationships handled
+        """
+        
+        # Given
+        optimizer = LLMOptimizer(max_chunk_size=100, chunk_overlap=20, min_chunk_size=30)
+        
+        # Content spanning multiple pages
+        structured_text = {
+            "pages": [
+                {
+                    "page_number": 1,
+                    "elements": [
+                        {
+                            "type": "paragraph",
+                            "content": "This is the first paragraph on page 1. It contains substantial content that establishes the document context and introduces key concepts for analysis.",
+                            "metadata": {"element_id": "p1_1"}
+                        },
+                        {
+                            "type": "paragraph",
+                            "content": "This is the second paragraph on page 1. It continues the narrative with additional details and supporting information for comprehensive understanding.",
+                            "metadata": {"element_id": "p1_2"}
+                        }
+                    ],
+                    "full_text": "Page 1 content combined for analysis."
+                },
+                {
+                    "page_number": 2,
+                    "elements": [
+                        {
+                            "type": "paragraph",
+                            "content": "This paragraph begins page 2 and transitions from the previous page content. It maintains document flow while introducing new concepts and detailed analysis.",
+                            "metadata": {"element_id": "p2_1"}
+                        },
+                        {
+                            "type": "table",
+                            "content": "Table 1: Key Research Results\nMethod A: 95% accuracy\nMethod B: 87% accuracy\nMethod C: 92% accuracy\nAnalysis shows significant performance differences.",
+                            "metadata": {"table_id": "table_2_1", "element_id": "t2_1"}
+                        }
+                    ],
+                    "full_text": "Page 2 content with table data."
+                },
+                {
+                    "page_number": 3,
+                    "elements": [
+                        {
+                            "type": "paragraph",
+                            "content": "Page 3 concludes the analysis with comprehensive findings and recommendations. The synthesis of previous pages provides complete understanding.",
+                            "metadata": {"element_id": "p3_1"}
+                        }
+                    ],
+                    "full_text": "Page 3 conclusion content."
+                }
+            ]
+        }
+
+        # When
+        chunks: list[LLMChunk] = await optimizer._create_optimal_chunks(structured_text)
+        
+        # Then - verify page boundary handling
+        assert isinstance(chunks, list), "Should return list of chunks"
+        assert len(chunks) > 0, "Should create chunks for multi-page content"
+        
+        # Verify all chunks have valid source page information
+        for i, chunk in enumerate(chunks):
+            assert hasattr(chunk, 'source_page'), f"Chunk {i} should have source_page attribute"
+            assert isinstance(chunk.source_page, int), f"Chunk {i} source_page should be integer"
+            assert 1 <= chunk.source_page <= 3, f"Chunk {i} source_page {chunk.source_page} should be between 1 and 3"
+        
+        # Verify page representation - all pages should be represented in chunks
+        page_numbers_in_chunks = {chunk.source_page for chunk in chunks}
+        expected_pages = {1, 2, 3}
+        assert expected_pages.issubset(page_numbers_in_chunks), f"All pages should be represented, found pages: {page_numbers_in_chunks}"
+        
+        # Verify page boundary considerations
+        page_chunks = {}
+        for chunk in chunks:
+            page_num = chunk.source_page
+            if page_num not in page_chunks:
+                page_chunks[page_num] = []
+            page_chunks[page_num].append(chunk)
+        
+        # Each page should have at least one chunk
+        for page_num in expected_pages:
+            assert page_num in page_chunks, f"Page {page_num} should have associated chunks"
+            assert len(page_chunks[page_num]) > 0, f"Page {page_num} should have at least one chunk"
+        
+        # Verify cross-page relationships are handled appropriately
+        chunk_by_id = {chunk.chunk_id: chunk for chunk in chunks}
+        
+        for chunk in chunks:
+            # Check relationships point to existing chunks
+            for relationship_id in chunk.relationships:
+                if relationship_id in chunk_by_id:
+                    related_chunk = chunk_by_id[relationship_id]
+                    # Cross-page relationships should be logical (adjacent pages or same page)
+                    page_distance = abs(chunk.source_page - related_chunk.source_page)
+                    assert page_distance <= 1, f"Chunk on page {chunk.source_page} should not relate to chunk on distant page {related_chunk.source_page}"
+        
+        # Verify page-specific content is preserved
+        page_1_chunks = page_chunks.get(1, [])
+        page_2_chunks = page_chunks.get(2, [])
+        page_3_chunks = page_chunks.get(3, [])
+        
+        # Page 1 content themes should appear in page 1 chunks
+        page_1_content = " ".join(chunk.content for chunk in page_1_chunks).lower()
+        assert "page 1" in page_1_content or "first" in page_1_content or "context" in page_1_content, "Page 1 chunks should contain page 1 content themes"
+        
+        # Page 2 should contain table content
+        page_2_content = " ".join(chunk.content for chunk in page_2_chunks).lower()
+        assert "page 2" in page_2_content or "table" in page_2_content or "method" in page_2_content or "accuracy" in page_2_content, "Page 2 chunks should contain page 2 content themes"
+        
+        # Page 3 should contain conclusion content
+        page_3_content = " ".join(chunk.content for chunk in page_3_chunks).lower()
+        assert "page 3" in page_3_content or "concludes" in page_3_content or "findings" in page_3_content, "Page 3 chunks should contain page 3 content themes"
+        
+        # Verify chunk ordering respects page sequence
+        for i in range(len(chunks) - 1):
+            current_chunk = chunks[i]
+            next_chunk = chunks[i + 1]
             
-            # Given
-            optimizer = LLMOptimizer(max_chunk_size=100, chunk_overlap=20, min_chunk_size=30)
-            
-            # Content spanning multiple pages
-            structured_text = {
-                "pages": [
-                    {
-                        "page_number": 1,
-                        "elements": [
-                            {
-                                "type": "paragraph",
-                                "content": "This is the first paragraph on page 1. It contains substantial content that establishes the document context and introduces key concepts for analysis.",
-                                "metadata": {"element_id": "p1_1"}
-                            },
-                            {
-                                "type": "paragraph",
-                                "content": "This is the second paragraph on page 1. It continues the narrative with additional details and supporting information for comprehensive understanding.",
-                                "metadata": {"element_id": "p1_2"}
-                            }
-                        ],
-                        "full_text": "Page 1 content combined for analysis."
-                    },
-                    {
-                        "page_number": 2,
-                        "elements": [
-                            {
-                                "type": "paragraph",
-                                "content": "This paragraph begins page 2 and transitions from the previous page content. It maintains document flow while introducing new concepts and detailed analysis.",
-                                "metadata": {"element_id": "p2_1"}
-                            },
-                            {
-                                "type": "table",
-                                "content": "Table 1: Key Research Results\nMethod A: 95% accuracy\nMethod B: 87% accuracy\nMethod C: 92% accuracy\nAnalysis shows significant performance differences.",
-                                "metadata": {"table_id": "table_2_1", "element_id": "t2_1"}
-                            }
-                        ],
-                        "full_text": "Page 2 content with table data."
-                    },
-                    {
-                        "page_number": 3,
-                        "elements": [
-                            {
-                                "type": "paragraph",
-                                "content": "Page 3 concludes the analysis with comprehensive findings and recommendations. The synthesis of previous pages provides complete understanding.",
-                                "metadata": {"element_id": "p3_1"}
-                            }
-                        ],
-                        "full_text": "Page 3 conclusion content."
-                    }
-                ]
-            }
-            
-            decomposed_content = {
-                "pages": [
-                    {
-                        "page_number": 1,
-                        "elements": [
-                            {"type": "paragraph", "content": "Page 1 paragraph 1", "metadata": {}},
-                            {"type": "paragraph", "content": "Page 1 paragraph 2", "metadata": {}}
-                        ]
-                    },
-                    {
-                        "page_number": 2,
-                        "elements": [
-                            {"type": "paragraph", "content": "Page 2 paragraph 1", "metadata": {}},
-                            {"type": "table", "content": "Page 2 table", "metadata": {}}
-                        ]
-                    },
-                    {
-                        "page_number": 3,
-                        "elements": [
-                            {"type": "paragraph", "content": "Page 3 paragraph", "metadata": {}}
-                        ]
-                    }
-                ],
-                "metadata": {"document_id": "multi_page_test_doc"}
-            }
-            
-            # When
-            chunks = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
-            
-            # Then - verify page boundary handling
-            assert isinstance(chunks, list), "Should return list of chunks"
-            assert len(chunks) > 0, "Should create chunks for multi-page content"
-            
-            # Verify all chunks have valid source page information
-            for i, chunk in enumerate(chunks):
-                assert hasattr(chunk, 'source_page'), f"Chunk {i} should have source_page attribute"
-                assert isinstance(chunk.source_page, int), f"Chunk {i} source_page should be integer"
-                assert 1 <= chunk.source_page <= 3, f"Chunk {i} source_page {chunk.source_page} should be between 1 and 3"
-            
-            # Verify page representation - all pages should be represented in chunks
-            page_numbers_in_chunks = {chunk.source_page for chunk in chunks}
-            expected_pages = {1, 2, 3}
-            assert expected_pages.issubset(page_numbers_in_chunks), f"All pages should be represented, found pages: {page_numbers_in_chunks}"
-            
-            # Verify page boundary considerations
-            page_chunks = {}
-            for chunk in chunks:
-                page_num = chunk.source_page
-                if page_num not in page_chunks:
-                    page_chunks[page_num] = []
-                page_chunks[page_num].append(chunk)
-            
-            # Each page should have at least one chunk
-            for page_num in expected_pages:
-                assert page_num in page_chunks, f"Page {page_num} should have associated chunks"
-                assert len(page_chunks[page_num]) > 0, f"Page {page_num} should have at least one chunk"
-            
-            # Verify cross-page relationships are handled appropriately
-            chunk_by_id = {chunk.chunk_id: chunk for chunk in chunks}
-            
-            for chunk in chunks:
-                # Check relationships point to existing chunks
-                for relationship_id in chunk.relationships:
-                    if relationship_id in chunk_by_id:
-                        related_chunk = chunk_by_id[relationship_id]
-                        # Cross-page relationships should be logical (adjacent pages or same page)
-                        page_distance = abs(chunk.source_page - related_chunk.source_page)
-                        assert page_distance <= 1, f"Chunk on page {chunk.source_page} should not relate to chunk on distant page {related_chunk.source_page}"
-            
-            # Verify page-specific content is preserved
-            page_1_chunks = page_chunks.get(1, [])
-            page_2_chunks = page_chunks.get(2, [])
-            page_3_chunks = page_chunks.get(3, [])
-            
-            # Page 1 content themes should appear in page 1 chunks
-            page_1_content = " ".join(chunk.content for chunk in page_1_chunks).lower()
-            assert "page 1" in page_1_content or "first" in page_1_content or "context" in page_1_content, "Page 1 chunks should contain page 1 content themes"
-            
-            # Page 2 should contain table content
-            page_2_content = " ".join(chunk.content for chunk in page_2_chunks).lower()
-            assert "page 2" in page_2_content or "table" in page_2_content or "method" in page_2_content or "accuracy" in page_2_content, "Page 2 chunks should contain page 2 content themes"
-            
-            # Page 3 should contain conclusion content
-            page_3_content = " ".join(chunk.content for chunk in page_3_chunks).lower()
-            assert "page 3" in page_3_content or "concludes" in page_3_content or "findings" in page_3_content, "Page 3 chunks should contain page 3 content themes"
-            
-            # Verify chunk ordering respects page sequence
-            for i in range(len(chunks) - 1):
-                current_chunk = chunks[i]
-                next_chunk = chunks[i + 1]
-                
-                # Page numbers should not decrease significantly (allowing for minor variations due to chunking strategy)
-                assert next_chunk.source_page >= current_chunk.source_page - 1, f"Chunk sequence should generally follow page order: chunk {i} page {current_chunk.source_page}, chunk {i+1} page {next_chunk.source_page}"
-            
-            # Verify semantic types are preserved across pages
-            table_chunks = [chunk for chunk in chunks if chunk.semantic_type == "table" or "table" in chunk.content.lower()]
-            if table_chunks:
-                # Table chunks should primarily be from page 2
-                table_pages = {chunk.source_page for chunk in table_chunks}
-                assert 2 in table_pages, "Table content should be associated with page 2"
-            
-            # Verify page boundary chunking efficiency
-            # Should not create excessive small chunks due to page boundaries
-            small_chunks = [chunk for chunk in chunks if chunk.token_count < optimizer.min_chunk_size]
-            assert len(small_chunks) <= 1, f"Should have at most 1 small chunk (last chunk), found {len(small_chunks)} small chunks"
-            
-            # Verify cross-page continuity in relationships
-            cross_page_relationships = 0
-            for chunk in chunks:
-                for rel_id in chunk.relationships:
-                    if rel_id in chunk_by_id:
-                        related_chunk = chunk_by_id[rel_id]
-                        if chunk.source_page != related_chunk.source_page:
-                            cross_page_relationships += 1
-            
-            # Should have some cross-page relationships for document continuity
-            assert cross_page_relationships >= 0, "Cross-page relationships count should be non-negative"
-            # But not excessive - most relationships should be within-page
-            total_relationships = sum(len(chunk.relationships) for chunk in chunks)
-            if total_relationships > 0:
-                cross_page_ratio = cross_page_relationships / total_relationships
-                assert cross_page_ratio <= 0.5, f"Cross-page relationships should not dominate: {cross_page_ratio:.2f} ratio"
+            # Page numbers should not decrease significantly (allowing for minor variations due to chunking strategy)
+            assert next_chunk.source_page >= current_chunk.source_page - 1, f"Chunk sequence should generally follow page order: chunk {i} page {current_chunk.source_page}, chunk {i+1} page {next_chunk.source_page}"
+        
+        # Verify semantic types are preserved across pages
+        table_chunks = [chunk for chunk in chunks if chunk.semantic_types == "table" or "table" in chunk.content.lower()]
+        if table_chunks:
+            # Table chunks should primarily be from page 2
+            table_pages = {chunk.source_page for chunk in table_chunks}
+            assert 2 in table_pages, "Table content should be associated with page 2"
+        
+        # Verify page boundary chunking efficiency
+        # Should not create excessive small chunks due to page boundaries
+        small_chunks = [chunk for chunk in chunks if chunk.token_count < optimizer.min_chunk_size]
+        assert len(small_chunks) <= 1, f"Should have at most 1 small chunk (last chunk), found {len(small_chunks)} small chunks"
+        
+        # Verify cross-page continuity in relationships
+        cross_page_relationships = 0
+        for chunk in chunks:
+            for rel_id in chunk.relationships:
+                if rel_id in chunk_by_id:
+                    related_chunk = chunk_by_id[rel_id]
+                    if chunk.source_page != related_chunk.source_page:
+                        cross_page_relationships += 1
+        
+        # Should have some cross-page relationships for document continuity
+        assert cross_page_relationships >= 0, "Cross-page relationships count should be non-negative"
+        # But not excessive - most relationships should be within-page
+        total_relationships = sum(len(chunk.relationships) for chunk in chunks)
+        if total_relationships > 0:
+            cross_page_ratio = cross_page_relationships / total_relationships
+            assert cross_page_ratio <= 0.5, f"Cross-page relationships should not dominate: {cross_page_ratio:.2f} ratio"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_semantic_grouping(self):
@@ -499,32 +460,20 @@ class TestLLMOptimizerCreateOptimalChunks:
                 }
             ]
         }
-        
-        decomposed_content = {
-            "pages": [
-                {
-                    "page_number": 1,
-                    "elements": [
-                        {"type": "header", "content": "Document Title", "metadata": {}},
-                        {"type": "paragraph", "content": "Intro paragraph", "metadata": {}},
-                        {"type": "table", "content": "Table content", "metadata": {}},
-                        {"type": "paragraph", "content": "Analysis paragraph", "metadata": {}},
-                        {"type": "figure_caption", "content": "Figure caption", "metadata": {}}
-                    ]
-                }
-            ],
-            "metadata": {"document_id": "semantic_test_doc"}
-        }
-        
+
         # When
-        chunks = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
+        chunks = await optimizer._create_optimal_chunks(structured_text)
         
         # Then - verify semantic grouping
         assert isinstance(chunks, list), "Should return list of chunks"
         assert len(chunks) > 0, "Should create chunks for semantic content"
         
         # Verify semantic types are preserved
-        semantic_types_found = {chunk.semantic_type for chunk in chunks}
+        semantic_types_found = []
+        for chunk in chunks:
+            list_ = list(chunk.semantic_types)
+            semantic_types_found.extend(list_)
+        semantic_types_found = set(semantic_types_found)
         expected_types = {"text", "table", "header", "mixed", "figure_caption"}
         
         # At least some semantic types should be represented
@@ -532,23 +481,25 @@ class TestLLMOptimizerCreateOptimalChunks:
         assert all(st in expected_types for st in semantic_types_found), f"Unexpected semantic types: {semantic_types_found - expected_types}"
         
         # Verify logical grouping - related elements should be near each other
-        header_chunks = [c for c in chunks if "title" in c.content.lower() or c.semantic_type == "header"]
-        table_chunks = [c for c in chunks if "table" in c.content.lower() or c.semantic_type == "table"]
+        header_chunks = [c for c in chunks if "title" in c.content.lower() or c.semantic_types == "header"]
+        table_chunks = [c for c in chunks if "table" in c.content.lower() or c.semantic_types == "table"]
         
         if header_chunks:
             # Header content should be preserved with appropriate semantic type
             header_chunk = header_chunks[0]
-            assert header_chunk.semantic_type in ["header", "text", "mixed"], f"Header chunk has unexpected type: {header_chunk.semantic_type}"
+            for element in header_chunk.semantic_types:
+                assert element in ["header", "text", "mixed"], f"Header chunk has unexpected type: {header_chunk.semantic_types}"
         
         if table_chunks:
             # Table content should be preserved with appropriate semantic type
             table_chunk = table_chunks[0]
-            assert table_chunk.semantic_type in ["table", "mixed"], f"Table chunk has unexpected type: {table_chunk.semantic_type}"
+            for element in header_chunk.semantic_types:
+                assert element in ["table", "mixed"], f"Table chunk has unexpected type: {table_chunk.semantic_types}"
         
         # Verify source element information is preserved
         for chunk in chunks:
-            assert isinstance(chunk.source_element, str), "Source element should be string"
-            assert len(chunk.source_element) > 0, "Source element should not be empty"
+            assert isinstance(chunk.source_elements, list), "Source element should be list of strings"
+            assert len(chunk.source_elements) > 0, "Source elements should not be empty"
         
         # Verify content coherence within chunks
         for chunk in chunks:

@@ -90,9 +90,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -140,9 +140,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -190,9 +190,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -262,9 +262,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -318,9 +318,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -396,9 +396,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -459,9 +459,9 @@ class TestLLMDocumentFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )

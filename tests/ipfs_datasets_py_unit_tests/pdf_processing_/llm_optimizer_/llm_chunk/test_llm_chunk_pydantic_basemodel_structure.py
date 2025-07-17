@@ -95,23 +95,21 @@ class TestLLMChunkPydanticBaseModelStructure:
             - content (str)
             - chunk_id (str)
             - source_page (int)
-            - source_element (str)
+            - source_elements (list[str])
             - token_count (int)
-            - semantic_type (str)
+            - semantic_types (str)
             - relationships (List[str])
-            - metadata (Dict[str, Any])
             - embedding (Optional[np.ndarray])
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         
         # When
-        fields = LLMChunk.__fields__
-        field_names = set(fields.keys())
+        field_names = set(LLMChunk.model_fields.keys())
         
         # Then
         expected_fields = {
-            'content', 'chunk_id', 'source_page', 'source_element',
-            'token_count', 'semantic_type', 'relationships', 'metadata', 'embedding'
+            'content', 'chunk_id', 'source_page', 'source_elements',
+            'token_count', 'semantic_types', 'relationships', 'embedding'
         }
         assert expected_fields.issubset(field_names)
         assert len(field_names) == len(expected_fields)
@@ -124,9 +122,9 @@ class TestLLMChunkPydanticBaseModelStructure:
             - content: str type annotation
             - chunk_id: str type annotation
             - source_page: int type annotation
-            - source_element: str type annotation
+            - source_elements: str | list[str] type annotation
             - token_count: int type annotation
-            - semantic_type: str type annotation
+            - semantic_types: str type annotation
             - relationships: List[str] type annotation
             - metadata: Dict[str, Any] type annotation
             - embedding: Optional[np.ndarray] type annotation
@@ -143,19 +141,17 @@ class TestLLMChunkPydanticBaseModelStructure:
         assert fields['content'].annotation == str
         assert fields['chunk_id'].annotation == str
         assert fields['source_page'].annotation == int
-        assert fields['source_element'].annotation == str
+        assert fields['source_elements'].annotation == list[str]
         assert fields['token_count'].annotation == int
-        assert fields['semantic_type'].annotation == str
+        assert fields['semantic_types'].annotation == set[str]
         
         # Check complex types by annotation
         assert 'relationships' in annotations
-        assert 'metadata' in annotations
         assert 'embedding' in annotations
         
         # Verify complex type structures
-        from typing import List, Dict, Any, Optional
+        from typing import List, Optional
         assert annotations['relationships'] == List[str]
-        assert annotations['metadata'] == Dict[str, Any]
         assert annotations['embedding'] == Optional[np.ndarray]
 
     def test_field_defaults(self):
@@ -171,14 +167,13 @@ class TestLLMChunkPydanticBaseModelStructure:
         
         # Then - check which fields have defaults
         # Most fields should not have defaults (required)
-        required_fields = ['content', 'chunk_id', 'source_page', 'source_element', 
-                          'token_count', 'semantic_type']
+        required_fields = ['content', 'chunk_id', 'source_page', 'source_elements', 
+                          'token_count', 'semantic_types']
         for field_name in required_fields:
             assert fields[field_name].is_required(), f"Field {field_name} should be required"
         
         # Fields with defaults
         assert not fields['relationships'].is_required(), "relationships should have default"
-        assert not fields['metadata'].is_required(), "metadata should have default"
         assert not fields['embedding'].is_required(), "embedding should have default"
         
         # Check specific default values
@@ -198,11 +193,10 @@ class TestLLMChunkPydanticBaseModelStructure:
             'content': 'This is test content for the chunk.',
             'chunk_id': 'chunk_0001',
             'source_page': 1,
-            'source_element': 'paragraph',
+            'source_elements': ['paragraph'],
             'token_count': 8,
-            'semantic_type': 'text',
+            'semantic_types':{ 'text'},
             'relationships': ['chunk_0000', 'chunk_0002'],
-            'metadata': {'test_key': 'test_value'},
             'embedding': np.array([0.1, 0.2, 0.3])
         }
         
@@ -213,11 +207,10 @@ class TestLLMChunkPydanticBaseModelStructure:
         assert chunk.content == 'This is test content for the chunk.'
         assert chunk.chunk_id == 'chunk_0001'
         assert chunk.source_page == 1
-        assert chunk.source_element == 'paragraph'
+        assert chunk.source_elements == ['paragraph']
         assert chunk.token_count == 8
-        assert chunk.semantic_type == 'text'
+        assert chunk.semantic_types == {'text'}
         assert chunk.relationships == ['chunk_0000', 'chunk_0002']
-        assert chunk.metadata == {'test_key': 'test_value'}
         assert np.array_equal(chunk.embedding, np.array([0.1, 0.2, 0.3]))
 
     def test_model_validation(self):
@@ -229,15 +222,15 @@ class TestLLMChunkPydanticBaseModelStructure:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         from pydantic import ValidationError
         
-        # Test invalid semantic_type
+        # Test invalid semantic_types
         with pytest.raises(ValidationError):
             LLMChunk(
                 content='Test content',
                 chunk_id='chunk_0001',
                 source_page=1,
-                source_element='paragraph',
+                source_elements=["paragraph"],
                 token_count=5,
-                semantic_type='invalid_type'  # Should match pattern
+                semantic_types={'invalid_type'}  # Should match pattern
             )
         
         # Test negative source_page
@@ -246,9 +239,9 @@ class TestLLMChunkPydanticBaseModelStructure:
                 content='Test content',
                 chunk_id='chunk_0001',
                 source_page=-5,  # Should be > 0
-                source_element='paragraph',
+                source_elements=["paragraph"],
                 token_count=5,
-                semantic_type='text'
+                semantic_types={'text'}
             )
         
         # Test negative token_count
@@ -257,9 +250,9 @@ class TestLLMChunkPydanticBaseModelStructure:
                 content='Test content',
                 chunk_id='chunk_0001',
                 source_page=1,
-                source_element='paragraph',
+                source_elements=["paragraph"],
                 token_count=-1,  # Should be >= 0
-                semantic_type='text'
+                semantic_types={'text'}
             )
 
     def test_default_values(self):
@@ -275,14 +268,13 @@ class TestLLMChunkPydanticBaseModelStructure:
             content='Test content',
             chunk_id='chunk_0001',
             source_page=1,
-            source_element='paragraph',
+            source_elements=["paragraph"],
             token_count=5,
-            semantic_type='text'
+            semantic_types={'text'}
         )
         
         # Then - check defaults
         assert chunk.relationships == []
-        assert chunk.metadata == {}
         assert chunk.embedding is None
 
 

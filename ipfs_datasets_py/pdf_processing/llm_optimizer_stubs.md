@@ -1,8 +1,8 @@
 # Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py'
 
-Files last updated: 1751977150.400055
+Files last updated: 1752722887.5299017
 
-Stub file last updated: 2025-07-08 05:37:03
+Stub file last updated: 2025-07-16 20:28:21
 
 ## ChunkOptimizer
 
@@ -32,12 +32,11 @@ Attributes:
 ## LLMChunk
 
 ```python
-@dataclass
-class LLMChunk:
+class LLMChunk(BaseModel):
     """
     Semantically optimized text chunk designed for effective LLM processing and analysis.
 
-This dataclass represents an individual text chunk that has been optimized for language model
+This Pydantic model represents an individual text chunk that has been optimized for language model
 consumption, including the text content, vector embeddings, metadata, and contextual information.
 Each chunk is designed to be semantically coherent, appropriately sized for LLM token limits,
 and enriched with metadata to support various downstream NLP tasks.
@@ -49,9 +48,9 @@ Attributes:
     content (str): The actual text content of the chunk, optimized for LLM processing.
     chunk_id (str): Unique identifier for this chunk within the document.
     source_page (int): Page number from the original document where this chunk originates.
-    source_element (str): Type of source element that contributed to this chunk.
+    source_elements (list[str]): Type of source elements that contributed to this chunk.
     token_count (int): Number of tokens in the content using the specified tokenizer.
-    semantic_type (str): Classification of the chunk content type:
+    semantic_types (str): Classification of the chunk content type:
         - 'text': Regular paragraph text
         - 'table': Structured table data
         - 'figure_caption': Figure or table caption
@@ -69,11 +68,34 @@ Attributes:
 * **Method:** False
 * **Class:** N/A
 
+## LLMChunkMetadata
+
+```python
+class LLMChunkMetadata(BaseModel):
+    """
+    Metadata container for LLM-processed document chunks.
+
+This class stores metadata associated with document chunks that have been
+processed for Large Language Model (LLM) consumption, including source
+element information, semantic classification, and document location.
+
+Attributes:
+    source_elements (List[str]): List of source element identifiers or types
+        that contributed to this chunk. Defaults to an empty list.
+    semantic_types (set): Set of semantic type classifications for the chunk
+        content (e.g., 'header', 'paragraph', 'table'). Defaults to an empty set.
+    page_number (int): The page number in the source document where this
+        chunk originates.
+    """
+```
+* **Async:** False
+* **Method:** False
+* **Class:** N/A
+
 ## LLMDocument
 
 ```python
-@dataclass
-class LLMDocument:
+class LLMDocument(BaseModel):
     """
     Comprehensive container for LLM-optimized document representation with semantic structure.
 
@@ -99,6 +121,29 @@ Attributes:
         including timestamps, chunk counts, token counts, and model information.
     document_embedding (Optional[np.ndarray]): Document-level vector embedding representing
         the overall semantic content. Shape depends on the embedding model used.
+    """
+```
+* **Async:** False
+* **Method:** False
+* **Class:** N/A
+
+## LLMDocumentProcessingMetadata
+
+```python
+class LLMDocumentProcessingMetadata(BaseModel):
+    """
+    Metadata model for tracking LLM document processing optimization details.
+
+This class stores comprehensive information about the document processing
+optimization performed by a Language Learning Model, including timing,
+tokenization statistics, and model specifications.
+
+Attributes:
+    optimization_timestamp (float): Unix timestamp when the optimization was performed.
+    chunk_count (NonNegativeInt): Number of document chunks processed during optimization.
+    total_tokens (NonNegativeInt): Total number of tokens generated or processed.
+    model_used (str): Identifier or name of the LLM model used for processing.
+    tokenizer_used (str): Identifier or name of the tokenizer used for text preprocessing.
     """
 ```
 * **Async:** False
@@ -192,6 +237,62 @@ the PDF processing pipeline, ensuring consistent and high-quality text handling.
 * **Async:** False
 * **Method:** False
 * **Class:** N/A
+
+## __eq__
+
+```python
+def __eq__(self, other: Any) -> bool:
+    """
+    Check if this LLMChunk is equal to another object.
+
+Two LLMChunk instances are considered equal if:
+1. The other object is also an LLMChunk instance
+2. Their embedding arrays are equal (using numpy array comparison)
+3. All other fields in their model dictionaries are equal
+
+Args:
+    other (Any): The object to compare with this LLMChunk.
+    
+Returns:
+    bool: True if the objects are equal, False otherwise.
+    
+Note:
+    Embedding arrays are compared separately using a specialized numpy
+    array equality function before comparing other model fields.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** LLMChunk
+
+## __eq__
+
+```python
+def __eq__(self, other: Any) -> bool:
+    """
+    Check equality between two LLMDocument instances.
+
+Compares all fields of the LLMDocument except for the document_embedding field,
+which is handled separately using a specialized numpy array comparison function.
+This approach ensures proper equality checking for numpy arrays while maintaining
+efficient comparison for other fields.
+
+Args:
+    other (Any): The object to compare with this LLMDocument instance.
+
+Returns:
+    bool: True if both objects are LLMDocument instances and all fields
+          (including embeddings) are equal, False otherwise.
+
+Note:
+    The document_embedding field is compared using _numpy_ndarrays_are_equal()
+    to handle numpy array equality properly, while other fields are compared
+    using standard dictionary equality after model serialization.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** LLMDocument
 
 ## __init__
 
@@ -321,6 +422,44 @@ Examples:
 * **Method:** True
 * **Class:** ChunkOptimizer
 
+## __str__
+
+```python
+def __str__(self) -> str:
+    """
+    Generate a concise string representation of the LLMChunk.
+
+This method provides a human-readable summary of the document's key attributes,
+including the document ID, title, number of chunks, and summary length.
+It is designed to be informative yet concise for quick inspection.
+
+Returns:
+    str: String representation of the LLMDocument.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** LLMChunk
+
+## __str__
+
+```python
+def __str__(self) -> str:
+    """
+    Generate a concise string representation of the LLMDocument.
+
+This method provides a human-readable summary of the document's key attributes,
+including the document ID, title, number of chunks, and summary length.
+It is designed to be informative yet concise for quick inspection.
+
+Returns:
+    str: String representation of the LLMDocument.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** LLMDocument
+
 ## _count_tokens
 
 ```python
@@ -399,9 +538,9 @@ Returns:
         - content: Cleaned and stripped text content
         - chunk_id: Formatted identifier (e.g., "chunk_0001")
         - source_page: Source page number
-        - source_element: List of contributing element types
+        - source_elements: List of contributing element types
         - token_count: Accurate token count using configured tokenizer
-        - semantic_type: Primary semantic type classification
+        - semantic_types: Primary semantic type classification
         - relationships: Empty list (populated later by _establish_chunk_relationships)
         - metadata: Enhanced metadata with timestamps and counts
         - embedding: None (populated later by _generate_embeddings)
@@ -420,7 +559,7 @@ Examples:
     ... }
     >>> chunk = await optimizer._create_chunk(content, 0, 1, metadata)
     >>> print(chunk.chunk_id)  # "chunk_0000"
-    >>> print(chunk.semantic_type)  # "header" (prioritized)
+    >>> print(chunk.semantic_types)  # "header" (prioritized)
     >>> print(chunk.token_count)  # Actual token count
 
 Note:
@@ -914,6 +1053,25 @@ Note:
 * **Method:** True
 * **Class:** LLMOptimizer
 
+## _numpy_ndarrays_are_equal
+
+```python
+def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) -> bool:
+    """
+    Compare two numpy arrays for equality, handling None values properly.
+
+Args:
+    x: First numpy array or None
+    y: Second numpy array or None
+    
+Returns:
+    bool: True if arrays are equal, False otherwise
+    """
+```
+* **Async:** False
+* **Method:** False
+* **Class:** N/A
+
 ## extract_keywords
 
 ```python
@@ -1140,3 +1298,62 @@ Note:
 * **Async:** False
 * **Method:** True
 * **Class:** TextProcessor
+
+## validate_and_copy_embedding
+
+```python
+@field_validator("document_embedding")
+@classmethod
+def validate_and_copy_embedding(cls, v: Optional[np.ndarray]) -> Optional[np.ndarray]:
+    """
+    Validates and creates a copy of the document embedding array.
+
+This validator ensures that the document_embedding field is either None or a valid
+numpy array. If a valid numpy array is provided, it creates and returns a copy of
+the array to prevent external modifications to the original data.
+
+Args:
+    v (Optional[np.ndarray]): The document embedding to validate. Can be None
+        or a numpy array containing the embedding vectors.
+
+Returns:
+    Optional[np.ndarray]: None if input is None, otherwise a copy of the input
+        numpy array.
+
+Raises:
+    ValueError: If the input is not None and not a numpy array.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** LLMDocument
+
+## validate_content
+
+```python
+@field_validator("content")
+def validate_content(cls, v) -> str:
+    """
+    Validates the content field to ensure it meets required criteria.
+
+This validator ensures that the content field is not None and is of string type.
+It is typically used with Pydantic models to enforce data validation rules.
+
+Args:
+    cls: The class being validated (automatically provided by Pydantic)
+    v: The value being validated for the content field
+
+Returns:
+    str: The validated content value if it passes all checks
+
+Raises:
+    ValueError: If content is None or not a string type
+
+Example:
+    This validator will automatically run when a Pydantic model with a 
+    content field is instantiated or when the field is set.
+    """
+```
+* **Async:** False
+* **Method:** True
+* **Class:** LLMChunk

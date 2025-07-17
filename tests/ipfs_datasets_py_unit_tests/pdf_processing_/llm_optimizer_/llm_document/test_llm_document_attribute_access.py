@@ -91,9 +91,9 @@ class TestLLMDocumentAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -125,9 +125,9 @@ class TestLLMDocumentAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -163,9 +163,9 @@ class TestLLMDocumentAttributeAccess:
                 content="First chunk content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -173,9 +173,9 @@ class TestLLMDocumentAttributeAccess:
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],
                 metadata={}
             )
@@ -212,9 +212,9 @@ class TestLLMDocumentAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -252,9 +252,9 @@ class TestLLMDocumentAttributeAccess:
             content="John Doe works at OpenAI in San Francisco",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -302,9 +302,9 @@ class TestLLMDocumentAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -354,9 +354,9 @@ class TestLLMDocumentAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -391,9 +391,9 @@ class TestLLMDocumentAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )

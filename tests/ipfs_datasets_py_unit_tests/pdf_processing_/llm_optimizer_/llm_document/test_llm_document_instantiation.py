@@ -11,6 +11,7 @@ import os
 import pytest
 import time
 import numpy as np
+from pydantic import ValidationError
 
 from tests._test_utils import (
     raise_on_bad_callable_metadata,
@@ -63,6 +64,13 @@ try:
     from dataclasses import dataclass
     import re
 
+    from pydantic import (
+        BaseModel, 
+        Field, 
+        field_validator,
+        NonNegativeInt,
+        ValidationError
+    )
     import tiktoken
     from transformers import AutoTokenizer
     import numpy as np
@@ -91,9 +99,9 @@ class TestLLMDocumentInstantiation:
             content="Sample chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -137,9 +145,9 @@ class TestLLMDocumentInstantiation:
             content="Minimal chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -167,12 +175,12 @@ class TestLLMDocumentInstantiation:
         """
         GIVEN missing required fields during instantiation
         WHEN LLMDocument is instantiated
-        THEN expect ValueError to be raised for missing required parameters
+        THEN expect ValidationError to be raised for missing required parameters
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # When/Then - missing document_id
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             LLMDocument(
                 title="Test Document",
                 chunks=[],
@@ -182,11 +190,11 @@ class TestLLMDocumentInstantiation:
             )
         
         # When/Then - missing multiple fields
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             LLMDocument(document_id="doc_001")
         
         # When/Then - missing chunks field
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             LLMDocument(
                 document_id="doc_001",
                 title="Test Document",
@@ -211,9 +219,9 @@ class TestLLMDocumentInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -248,9 +256,9 @@ class TestLLMDocumentInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -318,9 +326,9 @@ class TestLLMDocumentInstantiation:
                 content="First chunk content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -328,9 +336,9 @@ class TestLLMDocumentInstantiation:
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],
                 metadata={}
             ),
@@ -338,9 +346,9 @@ class TestLLMDocumentInstantiation:
                 content="Third chunk content",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_element="table",
+                source_elements=["table"],
                 token_count=8,
-                semantic_type="table",
+                semantic_types={"table"},
                 relationships=["chunk_0002"],
                 metadata={}
             )
@@ -384,9 +392,9 @@ class TestLLMDocumentInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -422,9 +430,9 @@ class TestLLMDocumentInstantiation:
             content="John Doe works at OpenAI in San Francisco",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )

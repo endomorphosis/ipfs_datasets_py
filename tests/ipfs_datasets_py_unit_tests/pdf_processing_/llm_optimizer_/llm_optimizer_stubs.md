@@ -32,11 +32,11 @@ class LLMChunk:
             typically formatted as "chunk_XXXX" where XXXX is a zero-padded number.
         source_page (int): Page number from the original PDF document where
             this chunk's content originated.
-        source_element (str): Type or identifier of the source element(s) that
+        source_elements (list[str]): Type or identifier of the source element(s) that
             contributed to this chunk (e.g., 'paragraph', 'table', 'header').
         token_count (int): Number of tokens in the content as calculated by
             the configured tokenizer, used for chunk size management.
-        semantic_type (str): Primary semantic classification of the chunk content.
+        semantic_types (str): Primary semantic classification of the chunk content.
             Common types include:
             - 'text': Regular paragraph content
             - 'table': Tabular data and structures
@@ -58,9 +58,9 @@ class LLMChunk:
         ...     content="The quarterly results show significant growth...",
         ...     chunk_id="chunk_0015",
         ...     source_page=3,
-        ...     source_element="paragraph",
+        ...     source_elements=["paragraph"],
         ...     token_count=245,
-        ...     semantic_type="text",
+        ...     semantic_types={"text"},
         ...     relationships=["chunk_0014", "chunk_0016"],
         ...     metadata={"creation_timestamp": 1625097600.0}
         ... )

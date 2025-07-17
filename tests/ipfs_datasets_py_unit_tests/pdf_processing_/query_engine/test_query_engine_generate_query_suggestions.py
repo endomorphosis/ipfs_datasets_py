@@ -644,7 +644,7 @@ class TestQueryEngineGenerateQuerySuggestions:
                 relevance_score=0.7,
                 source_document="doc1",
                 source_chunks=["chunk1"],
-                metadata={"semantic_type": "paragraph"}
+                metadata={"semantic_types": "paragraph"}
             ),
             QueryResult(
                 id="doc_result",

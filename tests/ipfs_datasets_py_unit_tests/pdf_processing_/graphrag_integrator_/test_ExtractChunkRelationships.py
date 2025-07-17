@@ -88,9 +88,9 @@ class TestExtractChunkRelationships:
             chunk_id="chunk_1",
             content="John Smith works at ACME Corp as a software engineer. He collaborates with Jane Doe.",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=18,
-            semantic_type="text",
+            semantic_types={"text"},
             metadata={}
         )
 
@@ -265,9 +265,9 @@ class TestExtractChunkRelationships:
             chunk_id="chunk_1",
             content="This chunk contains different content entirely.",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=7,
-            semantic_type="text",
+            semantic_types={"text"},
             metadata={}
         )
         
@@ -447,9 +447,9 @@ class TestExtractChunkRelationships:
             chunk_id="chunk_1",
             content="The company called ACME Corporation has many employees.",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             metadata={}
         )
         
@@ -549,9 +549,9 @@ class TestExtractChunkRelationships:
             chunk_id="chunk_1",
             content="   ",  # Whitespace only
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=1,
-            semantic_type="text",
+            semantic_types={"text"},
             metadata={}
         )
         
@@ -575,9 +575,9 @@ class TestExtractChunkRelationships:
             chunk_id="chunk_1",
             content=content,
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=len(content.split()),
-            semantic_type="text",
+            semantic_types={"text"},
             metadata={}
         )
         
@@ -609,9 +609,9 @@ class TestExtractChunkRelationships:
             chunk_id="chunk_1",
             content="Dr. Smith-Jones and O'Connor Ltd. are collaborating.",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=9,
-            semantic_type="text",
+            semantic_types={"text"},
             metadata={}
         )
         

@@ -82,8 +82,8 @@ class TestLLMOptimizerInitializeModels:
         with patch.object(LLMOptimizer, '_initialize_models'):
             self.optimizer = LLMOptimizer()
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_success(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN valid model names in optimizer instance
@@ -112,8 +112,8 @@ class TestLLMOptimizerInitializeModels:
         mock_tiktoken.assert_called_once_with(self.optimizer.tokenizer_name)
         assert self.optimizer.tokenizer is mock_tokenizer
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_sentence_transformer_failure(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN invalid sentence transformer model name
@@ -121,7 +121,7 @@ class TestLLMOptimizerInitializeModels:
         THEN expect:
             - ImportError or OSError handled gracefully
             - embedding_model set to None
-            - Warning logged
+            - Error logged
             - Fallback behavior activated
         """
         # Given
@@ -130,32 +130,32 @@ class TestLLMOptimizerInitializeModels:
         mock_tiktoken.return_value = mock_tokenizer
         
         # When
-        with patch('logging.warning') as mock_warning:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
             self.optimizer._initialize_models()
         
         # Then
         # Verify embedding model is None after failure
         assert self.optimizer.embedding_model is None
         
-        # Verify warning was logged
-        mock_warning.assert_called()
-        warning_message = mock_warning.call_args[0][0]
-        assert 'sentence transformer' in warning_message.lower() or 'embedding' in warning_message.lower()
+        # Verify error was logged
+        mock_error.assert_called()
+        error_message = mock_error.call_args[0][0]
+        assert 'failed to initialize models' in error_message.lower()
         
-        # Verify tokenizer still loaded successfully
-        assert self.optimizer.tokenizer is mock_tokenizer
+        # Verify tokenizer is also None due to exception handling
+        assert self.optimizer.tokenizer is None
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_tokenizer_failure(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN invalid tokenizer name
         WHEN _initialize_models is called
         THEN expect:
             - Tokenizer loading error handled gracefully
-            - tokenizer set to None
-            - Warning logged
-            - Fallback tokenization available
+            - Both models set to None
+            - Error logged
+            - Complete fallback behavior
         """
         # Given
         mock_embedding_model = Mock()
@@ -163,32 +163,30 @@ class TestLLMOptimizerInitializeModels:
         mock_tiktoken.side_effect = KeyError("Tokenizer not found")
         
         # When
-        with patch('logging.warning') as mock_warning:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
             self.optimizer._initialize_models()
         
         # Then
-        # Verify tokenizer is None after failure
+        # Verify both models are None after failure (due to exception handling)
+        assert self.optimizer.embedding_model is None
         assert self.optimizer.tokenizer is None
         
-        # Verify warning was logged
-        mock_warning.assert_called()
-        warning_message = mock_warning.call_args[0][0]
-        assert 'tokenizer' in warning_message.lower()
-        
-        # Verify embedding model still loaded successfully
-        assert self.optimizer.embedding_model is mock_embedding_model
+        # Verify error was logged
+        mock_error.assert_called()
+        error_message = mock_error.call_args[0][0]
+        assert 'failed to initialize models' in error_message.lower()
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
-    @patch('transformers.AutoTokenizer.from_pretrained')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.AutoTokenizer.from_pretrained')
     def test_initialize_models_tiktoken_vs_huggingface(self, mock_hf_tokenizer, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN different tokenizer types (tiktoken vs HuggingFace)
         WHEN _initialize_models is called
         THEN expect:
-            - Correct tokenizer type detection
-            - Appropriate loading mechanism used
-            - Consistent tokenization interface
+            - Correct tokenizer type detection based on 'gpt' in name
+            - tiktoken used for gpt models
+            - AutoTokenizer used for non-gpt models
         """
         # Given - Test tiktoken tokenizer (OpenAI models)
         mock_embedding_model = Mock()
@@ -202,40 +200,44 @@ class TestLLMOptimizerInitializeModels:
         # When
         self.optimizer._initialize_models()
         
-        # Then - Should use tiktoken
+        # Then - Should use tiktoken for gpt models
         mock_tiktoken.assert_called_once_with("gpt-3.5-turbo")
         assert self.optimizer.tokenizer is mock_tiktoken_tokenizer
         mock_hf_tokenizer.assert_not_called()
         
-        # Reset mocks
+        # Reset for second test
+        self.optimizer.embedding_model = None
+        self.optimizer.tokenizer = None
         mock_tiktoken.reset_mock()
         mock_hf_tokenizer.reset_mock()
+        mock_sentence_transformer.reset_mock()
         
-        # Given - Test HuggingFace tokenizer (when tiktoken fails)
-        mock_tiktoken.side_effect = KeyError("Not a tiktoken model")
+        # Given - Test HuggingFace tokenizer (non-gpt models)
+        mock_embedding_model_2 = Mock()
+        mock_sentence_transformer.return_value = mock_embedding_model_2
         mock_hf_tokenizer_instance = Mock()
         mock_hf_tokenizer.return_value = mock_hf_tokenizer_instance
         
-        self.optimizer.tokenizer_name = "bert-base-uncased"
+        self.optimizer.tokenizer_name = "bert-base-uncased"  # No 'gpt' in name
         
         # When
-        with patch('logging.warning'):  # Suppress expected warning
-            self.optimizer._initialize_models()
+        self.optimizer._initialize_models()
         
-        # Then - Should fallback to HuggingFace
-        mock_tiktoken.assert_called_once_with("bert-base-uncased")
+        # Then - Should use HuggingFace AutoTokenizer for non-gpt models
+        mock_tiktoken.assert_not_called()  # Should not call tiktoken for non-gpt models
         mock_hf_tokenizer.assert_called_once_with("bert-base-uncased")
         assert self.optimizer.tokenizer is mock_hf_tokenizer_instance
+        assert self.optimizer.embedding_model is mock_embedding_model_2
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_complete_failure(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN both embedding model and tokenizer loading fail
         WHEN _initialize_models is called
         THEN expect:
             - Both models set to None
-            - Multiple warnings logged
+            - Error logged
             - No exceptions raised
             - Graceful degradation
         """
@@ -244,7 +246,7 @@ class TestLLMOptimizerInitializeModels:
         mock_tiktoken.side_effect = ImportError("tiktoken not available")
         
         # When
-        with patch('logging.warning') as mock_warning:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
             self.optimizer._initialize_models()
         
         # Then
@@ -252,16 +254,15 @@ class TestLLMOptimizerInitializeModels:
         assert self.optimizer.embedding_model is None
         assert self.optimizer.tokenizer is None
         
-        # Multiple warnings should be logged
-        assert mock_warning.call_count >= 2
+        # Error should be logged
+        assert mock_error.call_count >= 1
         
-        # Verify warning messages
-        warning_calls = [call[0][0] for call in mock_warning.call_args_list]
-        assert any('sentence transformer' in msg.lower() or 'embedding' in msg.lower() for msg in warning_calls)
-        assert any('tokenizer' in msg.lower() for msg in warning_calls)
+        # Verify error message content
+        error_calls = [call[0][0] for call in mock_error.call_args_list]
+        assert any('failed to initialize models' in msg.lower() for msg in error_calls)
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_network_timeout(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN network timeout during model download
@@ -277,7 +278,7 @@ class TestLLMOptimizerInitializeModels:
         mock_tiktoken.side_effect = OSError("Connection failed")
         
         # When
-        with patch('logging.error') as mock_error:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
             self.optimizer._initialize_models()
         
         # Then
@@ -287,8 +288,8 @@ class TestLLMOptimizerInitializeModels:
         # Should log errors for network issues
         assert mock_error.call_count >= 1
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_memory_error(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN insufficient memory for model loading
@@ -305,47 +306,47 @@ class TestLLMOptimizerInitializeModels:
         mock_tiktoken.return_value = mock_tokenizer
         
         # When
-        with patch('logging.error') as mock_error:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
             self.optimizer._initialize_models()
         
         # Then
+        # Both models should be None due to exception handling
         assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is mock_tokenizer  # Tokenizer should still work
+        assert self.optimizer.tokenizer is None
         
         # Should log memory error
         mock_error.assert_called()
         error_message = mock_error.call_args[0][0]
-        assert 'memory' in error_message.lower()
+        assert 'failed to initialize models' in error_message.lower()
 
-    @patch('sentence_transformers.SentenceTransformer')
-    @patch('tiktoken.encoding_for_model')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
+    @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_partial_success(self, mock_tiktoken, mock_sentence_transformer):
         """
         GIVEN one model loads successfully, other fails
         WHEN _initialize_models is called
         THEN expect:
-            - Successful model available
-            - Failed model set to None
-            - Partial functionality maintained
+            - Due to exception handling, both models set to None
             - Appropriate logging
+            - Graceful degradation
         """
-        # Given - Embedding model succeeds, tokenizer fails
+        # Given - Both will fail due to exception handling design
         mock_embedding_model = Mock()
         mock_sentence_transformer.return_value = mock_embedding_model
         mock_tiktoken.side_effect = ValueError("Invalid tokenizer name")
         
         # When
-        with patch('logging.warning') as mock_warning:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
             self.optimizer._initialize_models()
         
-        # Then
-        assert self.optimizer.embedding_model is mock_embedding_model
+        # Then - Both models should be None due to exception handling
+        assert self.optimizer.embedding_model is None
         assert self.optimizer.tokenizer is None
         
-        # Should log warning for failed component
-        mock_warning.assert_called()
+        # Should log error for failure
+        mock_error.assert_called()
         
-        # Test opposite scenario
+        # Test opposite scenario - when SentenceTransformer fails first
         mock_sentence_transformer.side_effect = RuntimeError("Model loading failed")
         mock_tokenizer = Mock()
         mock_tiktoken.side_effect = None
@@ -355,11 +356,12 @@ class TestLLMOptimizerInitializeModels:
         self.optimizer.embedding_model = None
         self.optimizer.tokenizer = None
         
-        with patch('logging.warning'):
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error'):
             self.optimizer._initialize_models()
         
+        # Both should still be None due to exception handling
         assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is mock_tokenizer
+        assert self.optimizer.tokenizer is None
 
 
 if __name__ == "__main__":

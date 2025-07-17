@@ -76,7 +76,7 @@ class TestQueryEngineProcessSemanticQuery:
                         embedding=np.array([0.1, 0.2, 0.3, 0.4]),
                         document_id="doc_001",
                         page_number=1,
-                        semantic_type="paragraph"
+                        semantic_types={"paragraph"}
                     ),
                     Mock(
                         chunk_id="chunk_002", 
@@ -84,7 +84,7 @@ class TestQueryEngineProcessSemanticQuery:
                         embedding=np.array([0.2, 0.3, 0.4, 0.5]),
                         document_id="doc_001",
                         page_number=2,
-                        semantic_type="paragraph"
+                        semantic_types={"paragraph"}
                     ),
                     Mock(
                         chunk_id="chunk_003",
@@ -92,7 +92,7 @@ class TestQueryEngineProcessSemanticQuery:
                         embedding=np.array([0.05, 0.1, 0.15, 0.2]),
                         document_id="doc_001",
                         page_number=3,
-                        semantic_type="heading"
+                        semantic_types={"heading"}
                     )
                 ],
                 entities=[
@@ -108,7 +108,7 @@ class TestQueryEngineProcessSemanticQuery:
                         embedding=np.array([0.15, 0.25, 0.35, 0.45]),
                         document_id="doc_002",
                         page_number=1,
-                        semantic_type="paragraph"
+                        semantic_types={"paragraph"}
                     )
                 ],
                 entities=[]
@@ -228,7 +228,7 @@ class TestQueryEngineProcessSemanticQuery:
             content="Content without embedding",
             document_id="doc_001",
             page_number=4,
-            semantic_type="paragraph"
+            semantic_types={"paragraph"}
         )
         del chunk_no_embedding.embedding  # Remove embedding attribute
         
@@ -269,11 +269,11 @@ class TestQueryEngineProcessSemanticQuery:
             assert all(r.source_document == "doc_001" for r in results)
 
     @pytest.mark.asyncio
-    async def test_process_semantic_query_semantic_type_filter(self, query_engine):
+    async def test_process_semantic_query_semantic_types_filter(self, query_engine):
         """
         GIVEN a QueryEngine instance with chunks of different semantic types
         AND normalized query "research methodology"
-        AND filters {"semantic_type": "paragraph"}
+        AND filters {"semantic_types": "paragraph"}
         WHEN _process_semantic_query is called
         THEN expect:
             - Only paragraph-type chunks processed
@@ -281,7 +281,7 @@ class TestQueryEngineProcessSemanticQuery:
             - Semantic type filtering applied before similarity calculation
         """
         query = "research methodology"
-        filters = {"semantic_type": "paragraph"}
+        filters = {"semantic_types": "paragraph"}
         
         with patch('ipfs_datasets_py.pdf_processing.query_engine.cosine_similarity') as mock_cosine:
             mock_cosine.return_value = np.array([[0.8, 0.6, 0.5]])
@@ -290,7 +290,7 @@ class TestQueryEngineProcessSemanticQuery:
             
             # Should only have paragraph chunks (3 total: 2 from doc_001, 1 from doc_002)
             assert len(results) == 3
-            assert all("paragraph" in r.metadata.get("semantic_type", "") for r in results)
+            assert all("paragraph" in r.metadata.get("semantic_types", "") for r in results)
 
     @pytest.mark.asyncio
     async def test_process_semantic_query_min_similarity_threshold(self, query_engine):
@@ -472,7 +472,7 @@ class TestQueryEngineProcessSemanticQuery:
             # Verify metadata contains expected fields
             assert "document_id" in result.metadata
             assert "page_number" in result.metadata
-            assert "semantic_type" in result.metadata
+            assert "semantic_types" in result.metadata
             assert "similarity_score" in result.metadata
 
     @pytest.mark.asyncio
@@ -496,7 +496,7 @@ class TestQueryEngineProcessSemanticQuery:
             embedding=np.array([0.1, 0.2, 0.3, 0.4]),
             document_id="doc_001",
             page_number=1,
-            semantic_type="paragraph"
+            semantic_types={"paragraph"}
         )
         
         query_engine.graphrag.knowledge_graphs["doc_001"].chunks = [long_chunk]
@@ -587,7 +587,7 @@ class TestQueryEngineProcessSemanticQuery:
         THEN expect QueryResult.metadata to contain:
             - document_id: str
             - page_number: int
-            - semantic_type: str
+            - semantic_types: str
             - related_entities: List[str]
             - full_content: str (if truncated)
             - similarity_score: float
@@ -605,7 +605,7 @@ class TestQueryEngineProcessSemanticQuery:
             # Verify all required metadata fields
             assert isinstance(metadata["document_id"], str)
             assert isinstance(metadata["page_number"], int)
-            assert isinstance(metadata["semantic_type"], str)
+            assert isinstance(metadata["semantic_types"], str)
             assert isinstance(metadata["related_entities"], list)
             assert isinstance(metadata["similarity_score"], float)
             
@@ -670,7 +670,7 @@ class TestQueryEngineProcessSemanticQuery:
                     embedding=np.array([0.3, 0.4, 0.5, 0.6]),
                     document_id="doc_003",
                     page_number=1,
-                    semantic_type="paragraph"
+                    semantic_types={"paragraph"}
                 )
             ],
             entities=[]

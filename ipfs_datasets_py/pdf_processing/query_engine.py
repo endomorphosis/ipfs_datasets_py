@@ -211,7 +211,7 @@ class SemanticSearchResult:
             Links back to the original PDF document.
         page_number (int): Page number in the source document where chunk appears.
             1-indexed page numbering following PDF conventions.
-        semantic_type (str): Classification of the chunk's semantic content.
+        semantic_types (str): Classification of the chunk's semantic content.
             Values may include: 'paragraph', 'heading', 'list', 'table', 'figure_caption',
             'abstract', 'conclusion', 'methodology', etc.
         related_entities (List[str]): Names of entities extracted from this chunk.
@@ -224,7 +224,7 @@ class SemanticSearchResult:
         similarity_score (float): Semantic similarity score (0.0-1.0)
         document_id (str): Source document identifier
         page_number (int): Source page number (1-indexed)
-        semantic_type (str): Content type classification
+        semantic_types (str): Content type classification
         related_entities (List[str]): Entity names found in chunk
 
     Usage Example:
@@ -234,7 +234,7 @@ class SemanticSearchResult:
             similarity_score=0.87,
             document_id="doc_001",
             page_number=3,
-            semantic_type="paragraph",
+            semantic_types={"paragraph"},
             related_entities=["Bill Gates", "Paul Allen", "Microsoft"]
         )
 
@@ -249,7 +249,7 @@ class SemanticSearchResult:
     similarity_score: float
     document_id: str
     page_number: int
-    semantic_type: str
+    semantic_types: str
     related_entities: List[str]
 
 class QueryEngine:
@@ -464,7 +464,7 @@ class QueryEngine:
                 If None, query type will be auto-detected. Defaults to None.
             filters (Optional[Dict[str, Any]], optional): Additional filtering criteria.
                 Common filter keys: 'document_id', 'entity_type', 'relationship_type',
-                'semantic_type', 'min_similarity'. Structure varies by query type.
+                'semantic_types', 'min_similarity'. Structure varies by query type.
                 Defaults to None (no filtering).
             max_results (int, optional): Maximum number of results to return.
                 Must be positive integer. Large values may impact performance.
@@ -969,7 +969,7 @@ class QueryEngine:
             filters (Optional[Dict[str, Any]]): Semantic search filtering criteria.
                 Supported filter keys:
                 - 'document_id': Limit search to specific document
-                - 'semantic_type': Filter by chunk content type (paragraph, heading, etc.)
+                - 'semantic_types': Filter by chunk content type (paragraph, heading, etc.)
                 - 'min_similarity': Minimum cosine similarity threshold (0.0-1.0)
                 - 'page_range': Tuple of (start_page, end_page) for page filtering
             max_results (int): Maximum number of semantic results to return.
@@ -1039,8 +1039,8 @@ class QueryEngine:
         if filters:
             if 'document_id' in filters:
                 chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if d == filters['document_id']]
-            if 'semantic_type' in filters:
-                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if c.semantic_type == filters['semantic_type']]
+            if 'semantic_types' in filters:
+                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if c.semantic_types == filters['semantic_types']]
             if 'min_similarity' in filters:
                 chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if s >= filters['min_similarity']]
         
@@ -1062,7 +1062,7 @@ class QueryEngine:
                 source_document=doc_id,
                 source_chunks=[chunk.chunk_id],
                 metadata={
-                    'semantic_type': chunk.semantic_type,
+                    'semantic_types': chunk.semantic_types,
                     'source_page': chunk.source_page,
                     'token_count': chunk.token_count,
                     'related_entities': related_entities,

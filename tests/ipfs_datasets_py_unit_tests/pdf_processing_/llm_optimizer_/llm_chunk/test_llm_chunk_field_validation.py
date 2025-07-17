@@ -92,9 +92,9 @@ class TestLLMChunkFieldValidation:
             content="Valid content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -105,9 +105,9 @@ class TestLLMChunkFieldValidation:
             content="",
             chunk_id="chunk_0002",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=0,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -119,9 +119,9 @@ class TestLLMChunkFieldValidation:
             content=long_content,
             chunk_id="chunk_0003",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -133,9 +133,9 @@ class TestLLMChunkFieldValidation:
                 content=None,
                 chunk_id="chunk_0004",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
                 )
@@ -148,9 +148,9 @@ class TestLLMChunkFieldValidation:
                     content=invalid_content,
                     chunk_id="chunk_invalid",
                     source_page=1,
-                    source_element="text",
+                    source_elements=["text"],
                     token_count=5,
-                    semantic_type="text",
+                    semantic_types={"text"},
                     relationships=[],
                     metadata={}
                 )
@@ -174,9 +174,9 @@ class TestLLMChunkFieldValidation:
                 content="Test content",
                 chunk_id=chunk_id,
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -200,9 +200,9 @@ class TestLLMChunkFieldValidation:
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=page_num,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -213,9 +213,9 @@ class TestLLMChunkFieldValidation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=0,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -239,17 +239,17 @@ class TestLLMChunkFieldValidation:
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=token_count,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
             assert chunk.token_count == token_count
 
-    def test_semantic_type_field_validation(self):
+    def test_semantic_types_field_validation(self):
         """
-        GIVEN various semantic_type field values
+        GIVEN various semantic_types field values
         WHEN LLMChunk is instantiated
         THEN expect:
             - Valid semantic type strings accepted ('text', 'table', 'header', etc.)
@@ -262,40 +262,37 @@ class TestLLMChunkFieldValidation:
         # Valid semantic types based on documentation
         valid_types = ['text', 'table', 'figure_caption', 'header', 'mixed']
         
-        for semantic_type in valid_types:
+        for semantic_types in valid_types:
             chunk = LLMChunk(
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type=semantic_type,
+                semantic_types={semantic_types},
                 relationships=[],
-                metadata={}
             )
-            assert chunk.semantic_type == semantic_type
+            assert chunk.semantic_types == {semantic_types}
         
         # Other types should be rejected
         with pytest.raises(ValidationError):
-            LLMChunk(
+            _ = LLMChunk(
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type=123,  # Invalid type
+                semantic_types=123,  # Invalid type
                 relationships=[],
-                metadata={}
             )
-            custom_chunk = LLMChunk(
+            _ = LLMChunk(
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="custom_type",
+                semantic_types="custom_type",
                 relationships=[],
-                metadata={}
             )
 
 
@@ -323,47 +320,14 @@ class TestLLMChunkFieldValidation:
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=relationships,
                 metadata={}
             )
             assert chunk.relationships == relationships
             assert isinstance(chunk.relationships, list)
-
-    def test_metadata_field_validation(self):
-        """
-        GIVEN various metadata field values (dict, empty dict, invalid types)
-        WHEN LLMChunk is instantiated
-        THEN expect:
-            - Valid Dict[str, Any] accepted
-            - Invalid types rejected
-            - Empty dictionaries handled correctly
-        """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
-        # Valid dictionaries
-        valid_metadata = [
-            {},
-            {"confidence": 0.9},
-            {"confidence": 0.9, "source": "pdf", "page_info": {"x": 100, "y": 200}},
-            {"complex_data": [1, 2, 3], "nested": {"key": "value"}}
-        ]
-        
-        for metadata in valid_metadata:
-            chunk = LLMChunk(
-                content="Test content",
-                chunk_id="chunk_0001",
-                source_page=1,
-                source_element="text",
-                token_count=5,
-                semantic_type="text",
-                relationships=[],
-                metadata=metadata
-            )
-            assert chunk.metadata == metadata
-            assert isinstance(chunk.metadata, dict)
 
     def test_embedding_field_validation(self):
         """
@@ -391,9 +355,9 @@ class TestLLMChunkFieldValidation:
                 content="Test content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={},
                 embedding=embedding

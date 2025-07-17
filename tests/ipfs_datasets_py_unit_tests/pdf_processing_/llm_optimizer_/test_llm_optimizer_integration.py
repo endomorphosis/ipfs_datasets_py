@@ -184,7 +184,7 @@ class TestLLMOptimizerIntegration:
             assert isinstance(chunk.chunk_id, str)
             assert isinstance(chunk.token_count, int)
             assert chunk.token_count > 0
-            assert isinstance(chunk.semantic_type, str)
+            assert isinstance(chunk.semantic_types, str)
             assert isinstance(chunk.relationships, list)
             assert isinstance(chunk.metadata, dict)
         
@@ -369,7 +369,7 @@ class TestLLMOptimizerIntegration:
                 assert chunk1.content == chunk2.content
                 assert chunk1.chunk_id == chunk2.chunk_id
                 assert chunk1.token_count == chunk2.token_count
-                assert chunk1.semantic_type == chunk2.semantic_type
+                assert chunk1.semantic_types == chunk2.semantic_types
                 assert chunk1.source_page == chunk2.source_page
                 
             # Summary should be identical (deterministic extraction)

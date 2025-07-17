@@ -106,12 +106,18 @@ class TestLLMOptimizerGetChunkOverlap:
         assert len(overlap) > 0
         
         # Check that overlap comes from the end of content
-        assert overlap in content
-        assert content.endswith(overlap) or content.rstrip().endswith(overlap.rstrip())
+        # Note: overlap text has normalized whitespace while original content may have newlines
+        overlap_words = overlap.split()
+        content_words = content.split()
+        
+        # Check that overlap words are from the end of content words
+        assert len(overlap_words) <= len(content_words)
+        expected_overlap_words_list = content_words[-len(overlap_words):]
+        assert overlap_words == expected_overlap_words_list
         
         # Check word count approximation
         overlap_word_count = len(overlap.split())
-        assert overlap_word_count <= expected_overlap_words + 10  # Allow some tolerance
+        assert overlap_word_count <= expected_overlap_words
         
         # Ensure complete words are preserved (no partial words)
         words = overlap.split()

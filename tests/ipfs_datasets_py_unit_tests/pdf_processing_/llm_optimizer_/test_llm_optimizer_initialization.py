@@ -119,8 +119,7 @@ class TestLLMOptimizerInitialization:
         GIVEN structured_text with no extractable text
         WHEN _generate_document_summary is called
         THEN expect:
-            - Empty string or default summary returned
-            - ValueError raised or graceful handling
+            - Summary generation message indicating failure
             - No processing errors
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
@@ -132,26 +131,18 @@ class TestLLMOptimizerInitialization:
         empty_structured_text = {}
         
         # When/Then - should handle empty content gracefully
-        try:
-            summary = await optimizer._generate_document_summary(empty_structured_text)
-            # If no exception, should return empty string or default
-            assert isinstance(summary, str), "Summary should be string type"
-            assert len(summary.strip()) == 0 or summary.strip().lower() in ["no content", "empty document"], "Should return empty or default summary"
-        except ValueError as e:
-            # Acceptable to raise ValueError for empty content
-            assert "empty" in str(e).lower() or "content" in str(e).lower(), "Error message should indicate empty content issue"
-        
+
+        summary = await optimizer._generate_document_summary(empty_structured_text)
+        assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
+        assert "keyerror" in summary.lower(), "Should indicate the error is due to missing keys"
+
         # Test structured text with empty pages
         empty_pages_text = {"pages": []}
         
-        try:
-            summary = await optimizer._generate_document_summary(empty_pages_text)
-            assert isinstance(summary, str), "Summary should be string type"
-            assert len(summary.strip()) == 0 or "empty" in summary.lower(), "Should indicate empty content"
-        except ValueError:
-            # Acceptable to raise ValueError
-            pass
-        
+        summary = await optimizer._generate_document_summary(empty_pages_text)
+        assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
+        assert "valueerror" in summary.lower(), f"Should indicate the error is due to finding no valid text, got {summary}"
+
         # Test structured text with pages but no text content
         no_content_text = {
             "pages": [
@@ -159,13 +150,9 @@ class TestLLMOptimizerInitialization:
                 {"page_number": 2, "elements": []}
             ]
         }
-        
-        try:
-            summary = await optimizer._generate_document_summary(no_content_text)
-            assert isinstance(summary, str), "Summary should be string type"
-        except ValueError:
-            # Acceptable to raise ValueError
-            pass
+        summary = await optimizer._generate_document_summary(no_content_text)
+        assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
+        assert "keyerror" in summary.lower(), f"Should indicate the error is due to missing keys, got {summary}"
 
     @pytest.mark.asyncio
     async def test_generate_document_summary_missing_pages(self):

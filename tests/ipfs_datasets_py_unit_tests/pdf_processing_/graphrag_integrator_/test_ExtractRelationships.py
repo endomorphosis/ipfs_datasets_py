@@ -122,9 +122,9 @@ class TestExtractRelationships:
                 chunk_id="chunk_1",
                 content="John Smith works at ACME Corp as a software engineer.",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -132,9 +132,9 @@ class TestExtractRelationships:
                 chunk_id="chunk_2",
                 content="John Smith lives in San Francisco.",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=8,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -142,9 +142,9 @@ class TestExtractRelationships:
                 chunk_id="chunk_3",
                 content="ACME Corp has offices worldwide.",
                 source_page=2,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=6,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -616,9 +616,9 @@ class TestExtractRelationships:
                 chunk_id=f"chunk_{i}",
                 content=f"Content for chunk {i}",
                 source_page=i+1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )

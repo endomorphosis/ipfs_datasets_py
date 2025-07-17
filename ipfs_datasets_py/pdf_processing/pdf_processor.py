@@ -1318,9 +1318,9 @@ class PDFProcessor:
                     content=f"Entity: {entity.get('text', '')}",
                     chunk_id=f"chunk_{i:04d}",
                     source_page=1,
-                    source_element=['entity'],
+                    source_elements=['entity'],
                     token_count=len(entity.get('text', '').split()),
-                    semantic_type='entity',
+                    semantic_types={'entity'},
                     relationships=[],
                     metadata={'entity_type': entity.get('type', 'unknown')}
                 )

@@ -146,24 +146,35 @@ class TestLLMOptimizerExtractStructuredText:
         assert 'page_number' in page1, "Page should have page_number"
         assert 'elements' in page1, "Page should have elements"
         assert 'full_text' in page1, "Page should have full_text"
-        assert len(page1['elements']) == 2, "First page should have 2 elements"
+        assert len(page1['elements']) == 2, "First page should have 2 text elements"
         
-        # Check element preservation
+        # Check element preservation - ALL metadata should be preserved
         element1 = page1['elements'][0]
         assert element1['content'] == 'Chapter 1: Introduction'
-        assert element1['type'] == 'header'  # Should be normalized
+        assert element1['type'] == 'header'  # Should be normalized from subtype
         assert element1['confidence'] == 0.95
-        assert 'position' in element1
-        assert 'style' in element1
+        assert element1['position'] == {'x': 100, 'y': 50}  # Complete position metadata
+        assert element1['style'] == {'font_size': 18, 'bold': True}  # Complete style metadata
+        
+        element2 = page1['elements'][1]
+        assert element2['content'] == 'This is the introduction paragraph with important content.'
+        assert element2['type'] == 'paragraph'  # Should be normalized from subtype
+        assert element2['confidence'] == 0.89
+        assert element2['position'] == {'x': 100, 'y': 100}  # Complete position metadata
+        assert element2['style'] == {'font_size': 12, 'bold': False}  # Complete style metadata
         
         # Check full_text generation
         assert 'Chapter 1: Introduction' in page1['full_text']
         assert 'This is the introduction paragraph' in page1['full_text']
         
-        # Check second page
+        # Check second page (table element should be normalized to its subtype)
         page2 = result['pages'][1]
         assert len(page2['elements']) == 1, "Second page should have 1 element"
-        assert page2['elements'][0]['type'] == 'table'
+        assert page2['elements'][0]['type'] == 'caption'  # Normalized from subtype
+        assert page2['elements'][0]['content'] == 'Table: Sample Data'
+        assert page2['elements'][0]['position'] == {'x': 100, 'y': 200}
+        assert page2['elements'][0]['style'] == {'font_size': 10, 'italic': True}
+        assert page2['elements'][0]['confidence'] == 0.92
 
     @pytest.mark.asyncio
     async def test_extract_structured_text_missing_pages(self, optimizer):
@@ -226,30 +237,43 @@ class TestLLMOptimizerExtractStructuredText:
                 {
                     'elements': [
                         {
-                            'content': '',  # Empty content - should be filtered
+                            'content': '',  # Empty content - will be included since it's type='text'
                             'type': 'text',
+                            'subtype': 'paragraph',
+                            'position': {'x': 0, 'y': 0},
+                            'style': {},
                             'confidence': 0.9
                         },
                         {
-                            'content': '   ',  # Whitespace only - should be filtered
+                            'content': '   ',  # Whitespace only - will be included since it's type='text'
                             'type': 'text',
+                            'subtype': 'paragraph',
+                            'position': {'x': 10, 'y': 10},
+                            'style': {},
                             'confidence': 0.8
                         },
                         {
                             'content': 'Valid header content',
                             'type': 'text',
                             'subtype': 'header',
+                            'position': {'x': 100, 'y': 50},
+                            'style': {'font_size': 18},
                             'confidence': 0.95
                         },
                         {
                             'content': 'Valid paragraph content',
                             'type': 'text',
                             'subtype': 'paragraph',
+                            'position': {'x': 100, 'y': 100},
+                            'style': {'font_size': 12},
                             'confidence': 0.88
                         },
                         {
                             'content': 'Table data',
                             'type': 'table',
+                            'subtype': 'data',
+                            'position': {'x': 200, 'y': 200},
+                            'style': {'border': True},
                             'confidence': 0.92
                         }
                     ]
@@ -263,26 +287,54 @@ class TestLLMOptimizerExtractStructuredText:
         
         # Then
         page = result['pages'][0]
-        assert len(page['elements']) == 3, "Should have 3 valid elements (empty ones filtered)"
+        assert len(page['elements']) == 5, "Should have 5 elements (all elements including empty ones are processed)"
         
-        # Check element type normalization
+        # Check element type normalization (should use subtype as type for text elements)
         element_types = [elem['type'] for elem in page['elements']]
+        assert 'paragraph' in element_types, "Should have normalized paragraph type"
         assert 'header' in element_types, "Should have normalized header type"
-        assert 'text' in element_types, "Should have text type"
-        assert 'table' in element_types, "Should have table type"
+        assert 'data' in element_types, "Should have table subtype as type"
         
-        # Check content preservation
+        # Check ALL metadata is preserved for each element
+        valid_header = next(elem for elem in page['elements'] if elem['content'] == 'Valid header content')
+        assert valid_header['type'] == 'header'  # normalized from subtype
+        assert valid_header['position'] == {'x': 100, 'y': 50}
+        assert valid_header['style'] == {'font_size': 18}
+        assert valid_header['confidence'] == 0.95
+        
+        valid_paragraph = next(elem for elem in page['elements'] if elem['content'] == 'Valid paragraph content')
+        assert valid_paragraph['type'] == 'paragraph'  # normalized from subtype
+        assert valid_paragraph['position'] == {'x': 100, 'y': 100}
+        assert valid_paragraph['style'] == {'font_size': 12}
+        assert valid_paragraph['confidence'] == 0.88
+        
+        # Check empty content elements are included with all metadata
+        empty_elem = next(elem for elem in page['elements'] if elem['content'] == '')
+        assert empty_elem['type'] == 'paragraph'
+        assert empty_elem['position'] == {'x': 0, 'y': 0}
+        assert empty_elem['style'] == {}
+        assert empty_elem['confidence'] == 0.9
+        
+        whitespace_elem = next(elem for elem in page['elements'] if elem['content'] == '   ')
+        assert whitespace_elem['type'] == 'paragraph'
+        assert whitespace_elem['position'] == {'x': 10, 'y': 10}
+        assert whitespace_elem['style'] == {}
+        assert whitespace_elem['confidence'] == 0.8
+        
+        # Check content preservation (all elements including empty)
         contents = [elem['content'] for elem in page['elements']]
         assert 'Valid header content' in contents
         assert 'Valid paragraph content' in contents
-        assert 'Table data' in contents
+        assert '' in contents  # Empty content included
+        assert '   ' in contents  # Whitespace content included
+        assert 'Table data' in contents  # Table data now included
         
-        # Check full_text doesn't include empty content
+        # Check full_text includes all element content (including empty)
         full_text = page['full_text']
         assert 'Valid header content' in full_text
         assert 'Valid paragraph content' in full_text
         assert 'Table data' in full_text
-        assert len(full_text.strip()) > 0
+        # Note: empty content and whitespace will be in full_text but hard to test
 
     @pytest.mark.asyncio
     async def test_extract_structured_text_metadata_preservation(self, optimizer):

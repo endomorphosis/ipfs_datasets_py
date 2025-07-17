@@ -10,7 +10,7 @@ Optimizes extracted content for LLM consumption by:
 """
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Annotated
 from dataclasses import dataclass
 import re
 
@@ -22,10 +22,96 @@ from sentence_transformers import SentenceTransformer
 
 from ipfs_datasets_py.utils.text_processing import TextProcessor
 from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.tag import pos_tag
+from nltk.chunk import ne_chunk
+from nltk.tree import Tree
 
 logger = logging.getLogger(__name__)
 
-from pydantic import BaseModel, Field, field_validator, NonNegativeInt
+from pydantic import (
+    AfterValidator as AV,
+    BaseModel, 
+    Field, 
+    field_validator,
+    NonNegativeInt,
+    ValidationError,
+    computed_field
+)
+
+def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) -> bool:
+    """
+    Compare two numpy arrays for equality, handling None values properly.
+    
+    Args:
+        x: First numpy array or None
+        y: Second numpy array or None
+        
+    Returns:
+        bool: True if arrays are equal, False otherwise
+    """
+    # Both None - they're equal
+    if x is None and y is None:
+        return True
+    
+    # One is None, the other isn't - they're not equal
+    if x is None or y is None:
+        return False
+    
+    # Neither is a numpy array - they're not equal
+    if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
+        return False
+    
+    # Different shapes - they're not equal
+    if x.shape != y.shape:
+        return False
+    
+    try:
+        # Check if all elements are equal (within floating point tolerance)
+        return np.allclose(x, y, equal_nan=True)
+    except Exception as e:
+        logger.error(f"Unexpected error comparing numpy arrays: {e}")
+        return False
+
+# def _turn_str_into_list_of_str(s: Any) -> List[str]:
+#     match s:
+#         case str():
+#             return [s]
+#         case list():
+#             if not all(isinstance(item, str) for item in s):
+#                 raise ValidationError("All items in source_elements list must be strings")
+#             return s
+#         case _:
+#             raise ValidationError(f"Unsupported type for source_elements: {type(s).__name__}")
+
+def _test_set_elements(s: set[str]) -> set[str]:
+    """
+    Validates that all elements in a set are valid semantic types.
+
+    Args:
+        s (set[str]): A set of strings representing semantic types to validate.
+
+    Returns:
+        set[str]: The original set if all elements are valid.
+
+    Raises:
+        ValueError: If any element in the set is not one of the valid semantic types:
+            "text", "table", "figure_caption", "header", or "mixed".
+
+    Note:
+        The function currently contains a bug where it checks `s not in valid_set` 
+        instead of `item not in valid_set`.
+    """
+    if s is None:
+        raise ValueError("Semantic types set cannot be None")
+
+    valid_set = {"text", "table", "figure_caption", "header", "mixed"}
+    for item in s:
+        print(item)
+        if item not in valid_set:
+            raise ValueError(f"Invalid semantic type: {item}. Must be one of {valid_set}.")
+    return s
 
 class LLMChunk(BaseModel):
     """
@@ -43,9 +129,9 @@ class LLMChunk(BaseModel):
         content (str): The actual text content of the chunk, optimized for LLM processing.
         chunk_id (str): Unique identifier for this chunk within the document.
         source_page (int): Page number from the original document where this chunk originates.
-        source_element (str): Type of source element that contributed to this chunk.
+        source_elements (list[str]): Type of source elements that contributed to this chunk.
         token_count (int): Number of tokens in the content using the specified tokenizer.
-        semantic_type (str): Classification of the chunk content type:
+        semantic_types (str): Classification of the chunk content type:
             - 'text': Regular paragraph text
             - 'table': Structured table data
             - 'figure_caption': Figure or table caption
@@ -53,32 +139,100 @@ class LLMChunk(BaseModel):
             - 'mixed': Multiple content types combined
         relationships (List[str]): List of chunk IDs that are semantically or structurally
             related to this chunk, enabling cross-chunk reasoning and context.
-        metadata (Dict[str, Any]): Additional chunk-specific metadata including semantic types,
-            creation timestamp, and source element counts.
         embedding (Optional[np.ndarray]): Vector embedding representing the semantic content.
             Shape depends on the embedding model used. None if embeddings not generated.
     """
     content: str
     chunk_id: str
     source_page: NonNegativeInt
-    source_element: str
+    source_elements: list[str]
     token_count: NonNegativeInt
-    semantic_type: str = Field(pattern=r'^(text|table|figure_caption|header|mixed)$')
+    semantic_types: Annotated[set[str], AV(_test_set_elements)]
     relationships: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
     embedding: Optional[np.ndarray] = None
 
     class Config:
         arbitrary_types_allowed = True
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check if this LLMChunk is equal to another object.
         
+        Two LLMChunk instances are considered equal if:
+        1. The other object is also an LLMChunk instance
+        2. Their embedding arrays are equal (using numpy array comparison)
+        3. All other fields in their model dictionaries are equal
+        
+        Args:
+            other (Any): The object to compare with this LLMChunk.
+            
+        Returns:
+            bool: True if the objects are equal, False otherwise.
+            
+        Note:
+            Embedding arrays are compared separately using a specialized numpy
+            array equality function before comparing other model fields.
+        """
+        if not isinstance(other, LLMChunk):
+            return False
+        # Perform the array equality check separately from the rest of the fields.
+        if not _numpy_ndarrays_are_equal(self.embedding, other.embedding):
+            return False
+
+        self_dict = self.model_dump()
+        other_dict = other.model_dump()
+        # Remove embeddings from comparison.
+        self_dict.pop('embedding', None)
+        other_dict.pop('embedding', None)
+
+        return self_dict == other_dict
+
+    def __str__(self) -> str:
+        """
+        Generate a concise string representation of the LLMChunk.
+
+        This method provides a human-readable summary of the document's key attributes,
+        including the document ID, title, number of chunks, and summary length.
+        It is designed to be informative yet concise for quick inspection.
+
+        Returns:
+            str: String representation of the LLMDocument.
+        """
+        original_string = super().__str__()
+        if self.embedding is not None and 'embedding' in original_string:
+            # Remove the embedding field from the string representation
+            original_string = re.sub(r'embedding=array\([^)]*\)', 'embedding=<omitted>)', original_string) 
+        return original_string
+
     @field_validator('content')
-    def validate_content(cls, v):
-        """Validate that content is not None and is a string."""
+    def validate_content(cls, v) -> str:
+        """
+        Validates the content field to ensure it meets required criteria.
+
+        This validator ensures that the content field is not None and is of string type.
+        It is typically used with Pydantic models to enforce data validation rules.
+
+        Args:
+            cls: The class being validated (automatically provided by Pydantic)
+            v: The value being validated for the content field
+
+        Returns:
+            str: The validated content value if it passes all checks
+
+        Raises:
+            ValueError: If content is None or not a string type
+
+        Example:
+            This validator will automatically run when a Pydantic model with a 
+            content field is instantiated or when the field is set.
+        """
         if v is None:
             raise ValueError("Content cannot be None")
         if not isinstance(v, str):
             raise ValueError("Content must be a string")
         return v
+
+
 
 class LLMDocument(BaseModel):
     """
@@ -117,6 +271,119 @@ class LLMDocument(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality between two LLMDocument instances.
+
+        Compares all fields of the LLMDocument except for the document_embedding field,
+        which is handled separately using a specialized numpy array comparison function.
+        This approach ensures proper equality checking for numpy arrays while maintaining
+        efficient comparison for other fields.
+
+        Args:
+            other (Any): The object to compare with this LLMDocument instance.
+
+        Returns:
+            bool: True if both objects are LLMDocument instances and all fields
+                  (including embeddings) are equal, False otherwise.
+
+        Note:
+            The document_embedding field is compared using _numpy_ndarrays_are_equal()
+            to handle numpy array equality properly, while other fields are compared
+            using standard dictionary equality after model serialization.
+        """
+        if not isinstance(other, LLMDocument):
+            return False
+
+        # Perform the array equality check separately from the rest of the fields.
+        if not _numpy_ndarrays_are_equal(self.document_embedding, other.document_embedding):
+            return False
+
+        self_dict = self.model_dump()
+        other_dict = other.model_dump()
+        # Remove embeddings from comparison.
+        self_dict.pop('document_embedding', None)
+        other_dict.pop('document_embedding', None)
+
+        return self_dict == other_dict
+
+    def __str__(self) -> str:
+        """
+        Generate a concise string representation of the LLMDocument.
+
+        This method provides a human-readable summary of the document's key attributes,
+        including the document ID, title, number of chunks, and summary length.
+        It is designed to be informative yet concise for quick inspection.
+
+        Returns:
+            str: String representation of the LLMDocument.
+        """
+        original_string = super().__str__()
+        chunk_str_list = ', '.join([
+            f"(chunk_id={chunk.chunk_id}, token_count={chunk.token_count})" 
+            for chunk in self.chunks
+        ])
+        original_string = re.sub(r'chunks=\[.*\]', f'chunks=[{chunk_str_list}]', original_string)
+
+        if 'document_embedding' in original_string:
+            # Remove the document_embedding field from the string representation
+            original_string = re.sub(r'document_embedding=array\([^)]*\)', 'document_embedding=<omitted>)', original_string) 
+        
+        # If the chunk is still too long, truncate to 499 characters.
+        if len(original_string) > 500:
+            original_string = original_string[:496] + '...'
+        return original_string
+
+    @field_validator('document_embedding')
+    @classmethod
+    def validate_and_copy_embedding(cls, v: Optional[np.ndarray]) -> Optional[np.ndarray]:
+        """
+        Validates and creates a copy of the document embedding array.
+
+        This validator ensures that the document_embedding field is either None or a valid
+        numpy array. If a valid numpy array is provided, it creates and returns a copy of
+        the array to prevent external modifications to the original data.
+
+        Args:
+            v (Optional[np.ndarray]): The document embedding to validate. Can be None
+                or a numpy array containing the embedding vectors.
+
+        Returns:
+            Optional[np.ndarray]: None if input is None, otherwise a copy of the input
+                numpy array.
+
+        Raises:
+            ValueError: If the input is not None and not a numpy array.
+        """
+        if v is None:
+            return None
+        if not isinstance(v, np.ndarray):
+            raise ValueError(f"document_embedding must be a numpy array, got {type(v)}")
+        return v.copy()  # This creates a copy!
+
+
+class LLMDocumentProcessingMetadata(BaseModel):
+    """
+    Metadata model for tracking LLM document processing optimization details.
+
+    This class stores comprehensive information about the document processing
+    optimization performed by a Language Learning Model, including timing,
+    tokenization statistics, and model specifications.
+
+    Attributes:
+        optimization_timestamp (float): Unix timestamp when the optimization was performed.
+        chunk_count (NonNegativeInt): Number of document chunks processed during optimization.
+        total_tokens (NonNegativeInt): Total number of tokens generated or processed.
+        model_used (str): Identifier or name of the LLM model used for processing.
+        tokenizer_used (str): Identifier or name of the tokenizer used for text preprocessing.
+    """
+    optimization_timestamp: float
+    chunk_count: NonNegativeInt
+    total_tokens: NonNegativeInt
+    model_used: str
+    tokenizer_used: str
+
 
 
 class LLMOptimizer:
@@ -385,7 +652,7 @@ class LLMOptimizer:
         document_summary = await self._generate_document_summary(structured_text)
         
         # Create optimal chunks
-        chunks = await self._create_optimal_chunks(structured_text, decomposed_content)
+        chunks = await self._create_optimal_chunks(structured_text)
         
         # Generate embeddings
         chunks_with_embeddings = await self._generate_embeddings(chunks)
@@ -404,13 +671,13 @@ class LLMOptimizer:
             summary=document_summary,
             key_entities=key_entities,
             document_embedding=document_embedding,
-            processing_metadata={
-                'optimization_timestamp': asyncio.get_event_loop().time(),
-                'chunk_count': len(chunks_with_embeddings),
-                'total_tokens': sum(chunk.token_count for chunk in chunks_with_embeddings),
-                'model_used': self.model_name,
-                'tokenizer_used': self.tokenizer_name
-            }
+            processing_metadata= LLMDocumentProcessingMetadata(
+                optimization_timestamp=asyncio.get_event_loop().time(),
+                chunk_count=len(chunks_with_embeddings),
+                total_tokens=sum(chunk.token_count for chunk in chunks_with_embeddings),
+                model_used=self.model_name,
+                tokenizer_used=self.tokenizer_name
+            ).model_dump()
         )
         
         logger.info(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
@@ -485,31 +752,53 @@ class LLMOptimizer:
             consistent processing. Text elements are concatenated to create page-level
             full_text for document-wide operations.
         """
+        # Validate required keys
+        if 'pages' not in decomposed_content:
+            raise KeyError("'pages' key is required in decomposed_content")
+            
         structured_text = {
             'pages': [],
             'metadata': decomposed_content.get('metadata', {}),
             'structure': decomposed_content.get('structure', {})
         }
         
-        for page_num, page_content in enumerate(decomposed_content.get('pages', [])):
+        for page_num, page_content in enumerate(decomposed_content['pages']):
             page_text = {
                 'page_number': page_num + 1,
                 'elements': [],
                 'full_text': ''
             }
             
-            # Extract text elements with context
+            # Extract all elements with context, preserving all metadata
             for element in page_content.get('elements', []):
-                if element.get('type') == 'text':
-                    text_element = {
-                        'content': element.get('content', ''),
-                        'type': element.get('subtype', 'paragraph'),
-                        'position': element.get('position', {}),
-                        'style': element.get('style', {}),
-                        'confidence': element.get('confidence', 1.0)
-                    }
-                    page_text['elements'].append(text_element)
-                    page_text['full_text'] += text_element['content'] + '\n'
+                # Create element preserving ALL original metadata
+                processed_element = {}
+                
+                # Preserve all fields from the original element
+                for key, value in element.items():
+                    processed_element[key] = value
+                
+                # Normalize type field: use subtype if available
+                if 'subtype' in element:
+                    processed_element['type'] = element.get('subtype')
+                elif element.get('type') == 'text':
+                    # Default text elements to 'paragraph' if no subtype
+                    processed_element['type'] = 'paragraph'
+                else:
+                    processed_element['type'] = element.get('type', 'unknown')
+                
+                # Ensure required fields have defaults if missing
+                if 'content' not in processed_element:
+                    processed_element['content'] = ''
+                if 'position' not in processed_element:
+                    processed_element['position'] = {}
+                if 'style' not in processed_element:
+                    processed_element['style'] = {}
+                if 'confidence' not in processed_element:
+                    processed_element['confidence'] = 1.0
+                
+                page_text['elements'].append(processed_element)
+                page_text['full_text'] += processed_element['content'] + '\n'
             
             structured_text['pages'].append(page_text)
         
@@ -554,44 +843,51 @@ class LLMOptimizer:
             >>> print(len(summary))  # Typically 200-500 characters
             >>> print(summary)  # "This paper presents a novel approach..."
         """
-        # Combine all text content
-        full_text = ""
-        for page in structured_text['pages']:
-            full_text += page['full_text'] + "\n"
-        
-        # Basic extractive summarization (can be enhanced with LLM)
-        sentences = self.text_processor.split_sentences(full_text)
-        
-        # Score sentences by position and keyword frequency
-        scored_sentences = []
-        keywords = self.text_processor.extract_keywords(full_text, top_k=20)
-        
-        for i, sentence in enumerate(sentences[:50]):  # First 50 sentences
-            score = 0
-            # Position weight (earlier sentences get higher scores)
-            score += (50 - i) / 50 * 0.3
+        try:
+            # Combine all text content
+            full_text = ""
+            for page in structured_text['pages']:
+                full_text += page['full_text'] + "\n"
             
-            # Keyword presence
-            for keyword in keywords:
-                if keyword.lower() in sentence.lower():
-                    score += 0.1
+            if not full_text.strip():
+                raise ValueError("No valid text content found in structured_text")
             
-            # Length penalty for very short/long sentences
-            words = len(sentence.split())
-            if 10 <= words <= 30:
-                score += 0.2
+            # Basic extractive summarization (can be enhanced with LLM)
+            sentences = self.text_processor.split_sentences(full_text)
             
-            scored_sentences.append((sentence, score))
-        
-        # Select top sentences for summary
-        scored_sentences.sort(key=lambda x: x[1], reverse=True)
-        summary_sentences = [sent[0] for sent in scored_sentences[:5]]
-        
-        return " ".join(summary_sentences)
+            # Score sentences by position and keyword frequency
+            scored_sentences = []
+            keywords = self.text_processor.extract_keywords(full_text, top_k=20)
+            
+            for i, sentence in enumerate(sentences[:50]):  # First 50 sentences
+                score = 0
+                # Position weight (earlier sentences get higher scores)
+                score += (50 - i) / 50 * 0.3
+                
+                # Keyword presence
+                for keyword in keywords:
+                    if keyword.lower() in sentence.lower():
+                        score += 0.1
+                
+                # Length penalty for very short/long sentences
+                words = len(sentence.split())
+                if 10 <= words <= 30:
+                    score += 0.2
+                
+                scored_sentences.append((sentence, score))
+            
+            # Select top sentences for summary
+            scored_sentences.sort(key=lambda x: x[1], reverse=True)
+            summary_sentences = [sent[0] for sent in scored_sentences[:5]]
+            
+            return " ".join(summary_sentences)
+
+        except Exception as e:
+            msg = f"Summary generation failed with a {type(e).__name__}: {e}"
+            logger.error(msg)
+            return msg
     
-    async def _create_optimal_chunks(self, 
-                                   structured_text: Dict[str, Any],
-                                   decomposed_content: Dict[str, Any]) -> List[LLMChunk]:
+    async def _create_optimal_chunks(self, structured_text: Dict[str, Any]) -> List[LLMChunk]:
         """
         Create semantically coherent text chunks optimized for LLM processing with intelligent boundary detection.
 
@@ -607,8 +903,6 @@ class LLMOptimizer:
             structured_text (Dict[str, Any]): Structured text representation with pages and
                 elements from _extract_structured_text. Expected format includes pages with
                 elements containing content, type, and metadata.
-            decomposed_content (Dict[str, Any]): Original decomposed content for additional
-                context and metadata preservation during chunk creation.
 
         Returns:
             List[LLMChunk]: List of optimized text chunks with the following properties:
@@ -635,7 +929,7 @@ class LLMOptimizer:
             ...         }
             ...     ]
             ... }
-            >>> chunks = await optimizer._create_optimal_chunks(structured_text, decomposed_content)
+            >>> chunks = await optimizer._create_optimal_chunks(structured_text)
             >>> print(f"Created {len(chunks)} chunks")
             >>> print(f"First chunk: {chunks[0].chunk_id}")
 
@@ -651,12 +945,8 @@ class LLMOptimizer:
             
             # Process elements by semantic type
             current_chunk_content = ""
-            current_chunk_metadata = {
-                'source_elements': [],
-                'semantic_types': set(),
-                'page_number': page_num
-            }
-            
+            source_elements = []
+
             for element in page['elements']:
                 element_content = element['content'].strip()
                 if not element_content:
@@ -673,7 +963,7 @@ class LLMOptimizer:
                         current_chunk_content,
                         chunk_id_counter,
                         page_num,
-                        current_chunk_metadata
+                        source_elements
                     )
                     chunks.append(chunk)
                     chunk_id_counter += 1
@@ -681,11 +971,6 @@ class LLMOptimizer:
                     # Start new chunk with overlap
                     overlap_content = self._get_chunk_overlap(current_chunk_content)
                     current_chunk_content = overlap_content + "\n" + element_content
-                    current_chunk_metadata = {
-                        'source_elements': [element['type']],
-                        'semantic_types': {element['type']},
-                        'page_number': page_num
-                    }
                 else:
                     # Add element to current chunk
                     if current_chunk_content:
@@ -693,16 +978,15 @@ class LLMOptimizer:
                     else:
                         current_chunk_content = element_content
                     
-                    current_chunk_metadata['source_elements'].append(element['type'])
-                    current_chunk_metadata['semantic_types'].add(element['type'])
-            
+                    source_elements.append(element['type'])
+
             # Create final chunk for page if content remains
             if current_chunk_content.strip():
                 chunk = await self._create_chunk(
                     current_chunk_content,
                     chunk_id_counter,
                     page_num,
-                    current_chunk_metadata
+                    ['text'] # TODO Can't figure out the source elements for the last chunk if not page elements.
                 )
                 chunks.append(chunk)
                 chunk_id_counter += 1
@@ -711,21 +995,22 @@ class LLMOptimizer:
         chunks = self._establish_chunk_relationships(chunks)
         
         return chunks
-    
+
+
     async def _create_chunk(self, 
                           content: str, 
                           chunk_id: int, 
                           page_num: int,
-                          metadata: Dict[str, Any]) -> LLMChunk:
+                          source_elements: list[str]) -> LLMChunk:
         """
-        Create a single LLMChunk instance with comprehensive metadata and semantic type classification.
+        Create a single LLMChunk instance with content processing and semantic type classification.
 
         This method constructs an individual LLMChunk from text content and associated metadata,
-        performing token counting, semantic type determination, and metadata enrichment. It
-        creates a fully-formed chunk ready for embedding generation and relationship establishment.
+        performing token counting and semantic type determination. It creates a fully-formed 
+        chunk ready for embedding generation and relationship establishment.
 
-        The method analyzes the content's semantic characteristics to assign appropriate types
-        and generates comprehensive metadata for downstream processing and analysis.
+        The method analyzes the source elements to determine the primary semantic type following
+        a priority hierarchy and generates comprehensive metadata for downstream processing.
 
         Args:
             content (str): The actual text content to be included in the chunk. Should be
@@ -734,73 +1019,73 @@ class LLMOptimizer:
                 Used to generate the formatted chunk_id string (e.g., "chunk_0001").
             page_num (int): Page number from the original document where this content
                 originated. Used for traceability and same-page relationship establishment.
-            metadata (Dict[str, Any]): Chunk creation metadata containing:
-                - 'source_elements': List of element types that contributed to this chunk
-                - 'semantic_types': Set of semantic content types present in the chunk
-                - 'page_number': Page number for verification and consistency
+            source_elements (list[str]): List of element types that contributed to this chunk
+                (e.g., ['paragraph', 'header', 'table']).
 
         Returns:
             LLMChunk: Fully constructed chunk instance with the following attributes populated:
                 - content: Cleaned and stripped text content
                 - chunk_id: Formatted identifier (e.g., "chunk_0001")
                 - source_page: Source page number
-                - source_element: List of contributing element types
+                - source_elements: List of contributing element types
                 - token_count: Accurate token count using configured tokenizer
-                - semantic_type: Primary semantic type classification
+                - semantic_types: Set of semantic content types present in the chunk
                 - relationships: Empty list (populated later by _establish_chunk_relationships)
-                - metadata: Enhanced metadata with timestamps and counts
                 - embedding: None (populated later by _generate_embeddings)
 
         Raises:
-            ValueError: If content is empty or token counting fails.
-            TypeError: If metadata structure is invalid or missing required keys.
+            ValueError: If content is empty, token counting fails, or invalid semantic type is determined.
+            TypeError: If source_elements structure is invalid.
             RuntimeError: If chunk creation fails due to processing errors.
 
         Examples:
             >>> content = "This is the introduction to our research paper..."
-            >>> metadata = {
-            ...     'source_elements': ['header', 'paragraph'],
-            ...     'semantic_types': {'header', 'text'},
-            ...     'page_number': 1
-            ... }
-            >>> chunk = await optimizer._create_chunk(content, 0, 1, metadata)
+            >>> source_elements = ['header', 'paragraph']
+            >>> chunk = await optimizer._create_chunk(content, 0, 1, source_elements)
             >>> print(chunk.chunk_id)  # "chunk_0000"
-            >>> print(chunk.semantic_type)  # "header" (prioritized)
+            >>> print(chunk.semantic_types)  # {'header', 'paragraph'}
             >>> print(chunk.token_count)  # Actual token count
 
         Note:
-            Semantic type determination follows a priority hierarchy: header > table > mixed > text.
-            The method automatically strips whitespace and validates content before processing.
-            Timestamps are added to metadata for processing tracking and debugging.
+            Semantic type determination follows a priority hierarchy: header > table > 
+            figure_caption > mixed > text. The method automatically strips whitespace 
+            and validates content before processing.
         """
         token_count = self._count_tokens(content)
         
         # Determine primary semantic type
-        semantic_types = metadata.get('semantic_types', set())
-        if len(semantic_types) == 1:
-            primary_type = list(semantic_types)[0]
-        elif 'header' in semantic_types:
+        semantic_types = set(source_elements)
+
+        # Priority hierarchy: header > table > figure_caption > mixed > text
+        primary_type = None
+        if 'header' in semantic_types:
             primary_type = 'header'
         elif 'table' in semantic_types:
             primary_type = 'table'
-        else:
+        elif 'figure_caption' in semantic_types:
+            primary_type = 'figure_caption'
+        elif len(semantic_types) > 1:
             primary_type = 'mixed'
+        elif len(semantic_types) == 1:
+            primary_type = list(semantic_types)[0]
+        else:
+            primary_type = 'text'
+        
+        # Validate semantic type against allowed values
+        allowed_types = {'text', 'table', 'figure_caption', 'header', 'mixed'}
+        if primary_type is None or primary_type not in allowed_types:
+            raise ValueError(f"Invalid semantic type '{primary_type}' for chunk creation.")
         
         chunk = LLMChunk(
             content=content.strip(),
             chunk_id=f"chunk_{chunk_id:04d}",
             source_page=page_num,
-            source_element=metadata.get('source_elements', []),
+            source_elements=source_elements,
             token_count=token_count,
-            semantic_type=primary_type,
+            semantic_types=semantic_types,
             relationships=[],  # Will be populated later
-            metadata={
-                'semantic_types': list(semantic_types),
-                'creation_timestamp': asyncio.get_event_loop().time(),
-                'source_elements_count': len(metadata.get('source_elements', []))
-            }
         )
-        
+
         return chunk
     
     def _establish_chunk_relationships(self, chunks: List[LLMChunk]) -> List[LLMChunk]:
@@ -934,15 +1219,16 @@ class LLMOptimizer:
     
     async def _extract_key_entities(self, structured_text: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Extract key entities and concepts from document text using pattern-based recognition.
+        Extract key entities and concepts from document text using NLTK's advanced named entity recognition.
 
-        This method performs named entity recognition to identify and extract important
-        entities such as dates, email addresses, organizations, and other significant
-        information from the document text. It uses regex patterns for reliable extraction
+        This method performs comprehensive named entity recognition to identify and extract important
+        entities such as people, organizations, locations, dates, and other significant information
+        from the document text. It leverages NLTK's pre-trained models for reliable extraction
         and includes confidence scoring for each identified entity.
 
-        The extraction process combines multiple pattern-based approaches to identify
-        various entity types while limiting results to prevent overwhelming downstream processing.
+        The extraction process uses NLTK's named entity chunking combined with part-of-speech
+        tagging to identify various entity types with high accuracy while limiting results
+        to prevent overwhelming downstream processing.
 
         Args:
             structured_text (Dict[str, Any]): Structured text representation containing
@@ -952,29 +1238,151 @@ class LLMOptimizer:
         Returns:
             List[Dict[str, Any]]: List of extracted entities, each containing:
                 - 'text' (str): The actual entity text as found in the document
-                - 'type' (str): Entity type classification ('date', 'email', 'organization', etc.)
+                - 'type' (str): Entity type classification ('PERSON', 'ORGANIZATION', 'GPE', 
+                  'DATE', 'MONEY', 'PERCENT', etc.)
                 - 'confidence' (float): Confidence score between 0.0 and 1.0 indicating
-                  extraction reliability and pattern match strength
+                  extraction reliability based on entity type and context
 
         Raises:
             KeyError: If structured_text is missing required 'pages' key.
             ValueError: If no valid text content is found for entity extraction.
+            ImportError: If required NLTK packages are not available (handled with fallback).
             TypeError: If structured_text format is incompatible with processing.
 
         Examples:
             >>> structured_text = {
             ...     'pages': [
-            ...         {'full_text': 'Contact John Smith at john@company.com on 12/25/2024.'},
-            ...         {'full_text': 'ACME Corporation announced new partnerships.'}
+            ...         {'full_text': 'John Smith works at Microsoft in Seattle on January 15, 2024.'},
+            ...         {'full_text': 'The project cost $2.5 million and achieved 95% accuracy.'}
             ...     ]
             ... }
             >>> entities = await optimizer._extract_key_entities(structured_text)
             >>> print(entities)
             >>> # [
-            >>> #     {'text': '12/25/2024', 'type': 'date', 'confidence': 0.8},
-            >>> #     {'text': 'john@company.com', 'type': 'email', 'confidence': 0.9},
-            >>> #     {'text': 'ACME Corporation', 'type': 'organization', 'confidence': 0.6}
+            >>> #     {'text': 'John Smith', 'type': 'PERSON', 'confidence': 0.9},
+            >>> #     {'text': 'Microsoft', 'type': 'ORGANIZATION', 'confidence': 0.85},
+            >>> #     {'text': 'Seattle', 'type': 'GPE', 'confidence': 0.8},
+            >>> #     {'text': 'January 15, 2024', 'type': 'DATE', 'confidence': 0.7},
+            >>> #     {'text': '$2.5 million', 'type': 'MONEY', 'confidence': 0.8},
+            >>> #     {'text': '95%', 'type': 'PERCENT', 'confidence': 0.9}
             >>> # ]
+        """
+        try:
+        except ImportError:
+            logger.warning("NLTK not available, falling back to basic pattern matching")
+            return await self._extract_entities_fallback(structured_text)
+        
+        # Ensure required NLTK data is downloaded
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            logger.info("Downloading required NLTK data...")
+            nltk.download('punkt', quiet=True)
+            nltk.download('averaged_perceptron_tagger', quiet=True)
+            nltk.download('maxent_ne_chunker', quiet=True)
+            nltk.download('words', quiet=True)
+        
+        # Combine all text for entity extraction
+        full_text = ""
+        for page in structured_text['pages']:
+            full_text += page['full_text'] + "\n"
+        
+        if not full_text.strip():
+            raise ValueError("No valid text content found for entity extraction")
+        
+        entities = []
+        
+        # Process text in sentences for better entity recognition
+        sentences = sent_tokenize(full_text)
+        
+        for sentence in sentences[:50]:  # Limit to first 50 sentences for performance
+            # Tokenize and tag parts of speech
+            tokens = word_tokenize(sentence)
+            pos_tags = pos_tag(tokens)
+            
+            # Named entity recognition
+            named_entities = ne_chunk(pos_tags, binary=False)
+            
+            # Extract entities from the parse tree
+            for chunk in named_entities:
+                if isinstance(chunk, Tree):
+                    entity_text = ' '.join([token for token, pos in chunk.leaves()])
+                    entity_type = chunk.label()
+                    
+                    # Calculate confidence based on entity type and length
+                    confidence = self._calculate_entity_confidence(entity_type, entity_text)
+                    
+                    entities.append({
+                        'text': entity_text,
+                        'type': entity_type,
+                        'confidence': confidence
+                    })
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_entities = []
+        for entity in entities:
+            entity_key = (entity['text'].lower(), entity['type'])
+            if entity_key not in seen:
+                seen.add(entity_key)
+                unique_entities.append(entity)
+        
+        # Sort by confidence and limit results
+        unique_entities.sort(key=lambda x: x['confidence'], reverse=True)
+        return unique_entities[:50]  # Return top 50 entities
+    
+    def _calculate_entity_confidence(self, entity_type: str, entity_text: str) -> float:
+        """
+        Calculate confidence score for extracted entities based on type and characteristics.
+        
+        Args:
+            entity_type (str): The NLTK entity type (PERSON, ORGANIZATION, GPE, etc.)
+            entity_text (str): The actual entity text
+            
+        Returns:
+            float: Confidence score between 0.0 and 1.0
+        """
+        base_confidence = {
+            'PERSON': 0.85,
+            'ORGANIZATION': 0.80,
+            'GPE': 0.75,  # Geopolitical entity (countries, cities, states)
+            'LOCATION': 0.75,
+            'DATE': 0.70,
+            'TIME': 0.70,
+            'MONEY': 0.85,
+            'PERCENT': 0.90,
+            'FACILITY': 0.65,
+            'EVENT': 0.60
+        }.get(entity_type, 0.50)
+        
+        # Adjust confidence based on entity characteristics
+        text_length = len(entity_text.split())
+        
+        # Longer entities (2-4 words) tend to be more reliable
+        if 2 <= text_length <= 4:
+            base_confidence += 0.05
+        elif text_length > 4:
+            base_confidence -= 0.05
+        
+        # Single character entities are likely noise
+        if len(entity_text.strip()) == 1:
+            base_confidence -= 0.3
+        
+        # Entities with mixed case are more likely to be valid
+        if entity_text.istitle() or any(c.isupper() for c in entity_text):
+            base_confidence += 0.05
+        
+        return max(0.0, min(1.0, base_confidence))
+    
+    async def _extract_entities_fallback(self, structured_text: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Fallback entity extraction using basic pattern matching when NLTK is unavailable.
+        
+        Args:
+            structured_text (Dict[str, Any]): Structured text representation
+            
+        Returns:
+            List[Dict[str, Any]]: List of extracted entities with basic pattern matching
         """
         # Combine all text for entity extraction
         full_text = ""
@@ -983,36 +1391,61 @@ class LLMOptimizer:
         
         entities = []
         
-        # Basic entity extraction (can be enhanced with NER models)
-        # Extract dates
-        date_pattern = r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b'
-        dates = re.findall(date_pattern, full_text)
-        for date in dates[:10]:  # Limit to first 10
-            entities.append({
-                'text': date,
-                'type': 'date',
-                'confidence': 0.8
-            })
+        # Date patterns
+        date_patterns = [
+            r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b',
+            r'\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b',
+            r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b'
+        ]
         
-        # Extract email addresses
+        for pattern in date_patterns:
+            dates = re.findall(pattern, full_text)
+            for date in dates[:10]:
+                entities.append({
+                    'text': date,
+                    'type': 'DATE',
+                    'confidence': 0.7
+                })
+        
+        # Email addresses
         email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         emails = re.findall(email_pattern, full_text)
-        for email in emails[:5]:  # Limit to first 5
+        for email in emails[:5]:
             entities.append({
                 'text': email,
-                'type': 'email',
+                'type': 'EMAIL',
                 'confidence': 0.9
             })
         
-        # Extract potential organizations (capitalized multi-word phrases)
-        org_pattern = r'\b[A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b'
-        orgs = re.findall(org_pattern, full_text)
-        for org in orgs[:10]:  # Limit to first 10
-            if len(org.split()) >= 2:  # At least 2 words
+        # Money amounts
+        money_pattern = r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\$\d+(?:\.\d{2})?[KMB]?'
+        money_amounts = re.findall(money_pattern, full_text)
+        for amount in money_amounts[:10]:
+            entities.append({
+                'text': amount,
+                'type': 'MONEY',
+                'confidence': 0.8
+            })
+        
+        # Percentages
+        percent_pattern = r'\d+(?:\.\d+)?%'
+        percentages = re.findall(percent_pattern, full_text)
+        for percent in percentages[:10]:
+            entities.append({
+                'text': percent,
+                'type': 'PERCENT',
+                'confidence': 0.9
+            })
+        
+        # Capitalized phrases (potential proper nouns)
+        proper_noun_pattern = r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b'
+        proper_nouns = re.findall(proper_noun_pattern, full_text)
+        for noun in proper_nouns[:15]:
+            if len(noun.split()) >= 2:
                 entities.append({
-                    'text': org,
-                    'type': 'organization',
-                    'confidence': 0.6
+                    'text': noun,
+                    'type': 'PROPER_NOUN',
+                    'confidence': 0.5
                 })
         
         return entities
@@ -1473,16 +1906,19 @@ class ChunkOptimizer:
             >>> optimized = optimizer.optimize_chunk_boundaries(long_text, rough_boundaries)
             >>> # Returns positions aligned with paragraph boundaries
         """
-        if not text or not isinstance(text, str):
-            raise ValueError("Text must be a non-empty string.")
-        if not isinstance(current_boundaries, list):
-            raise ValueError("Current boundaries must be a non-empty list of integers.")
-        
+        if not isinstance(text, str):
+            raise TypeError("Text must be a string.")
+    
+        if not text:
+            raise ValueError("Text cannot be empty.")
+
         # Validate that all boundaries are integers
         for i, boundary in enumerate(current_boundaries):
             if not isinstance(boundary, int):
                 raise TypeError(f"Boundary at index {i} must be an integer, got {type(boundary).__name__}")
-        
+            if boundary < 0:
+                raise ValueError(f"Boundary at index {i} cannot be negative: {boundary}")
+
         text_length = len(text)
 
         # Find sentence boundaries

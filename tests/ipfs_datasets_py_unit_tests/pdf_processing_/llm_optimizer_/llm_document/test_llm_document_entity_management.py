@@ -91,9 +91,9 @@ class TestLLMDocumentEntityManagement:
             content="John Doe works at OpenAI in San Francisco on January 1st, 2024",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=15,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -149,9 +149,9 @@ class TestLLMDocumentEntityManagement:
             content="Test content with entities",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -213,9 +213,9 @@ class TestLLMDocumentEntityManagement:
             content="Dr. Jane Smith from Microsoft visited New York on December 25, 2023, and sent email to contact@example.com",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=20,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -281,9 +281,9 @@ class TestLLMDocumentEntityManagement:
             content="Test content with various confidence entities",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )

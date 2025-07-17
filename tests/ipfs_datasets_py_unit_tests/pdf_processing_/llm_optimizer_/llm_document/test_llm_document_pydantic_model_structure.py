@@ -63,6 +63,14 @@ try:
     from dataclasses import dataclass
     import re
 
+    from pydantic import (
+        BaseModel, 
+        Field, 
+        field_validator,
+        NonNegativeInt,
+        ValidationError
+    )
+
     import tiktoken
     from transformers import AutoTokenizer
     import numpy as np
@@ -76,18 +84,18 @@ except ImportError as e:
 class TestLLMDocumentDataclassStructure:
     """Test LLMDocument dataclass structure and field definitions."""
 
-    def test_is_dataclass(self):
+    def test_is_pydantic_model(self):
         """
         GIVEN LLMDocument class
-        WHEN checked for dataclass decorator
-        THEN expect LLMDocument to be properly decorated as a dataclass
+        WHEN checked for being a Pydantic BaseModel
+        THEN expect LLMDocument to be a Pydantic BaseModel
         """
         from dataclasses import is_dataclass
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument
         
         # When/Then
-        assert is_dataclass(LLMDocument)
-        assert hasattr(LLMDocument, '__dataclass_fields__')
+        assert issubclass(LLMDocument, BaseModel), "LLMDocument should be a Pydantic BaseModel"
+
 
     def test_required_fields_present(self):
         """
@@ -105,9 +113,8 @@ class TestLLMDocumentDataclassStructure:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument
         
         # When
-        fields = LLMDocument.__dataclass_fields__
-        field_names = set(fields.keys())
-        
+        field_names = set(LLMDocument.model_fields.keys())
+
         # Then
         expected_fields = {
             'document_id', 'title', 'chunks', 'summary',
@@ -132,17 +139,19 @@ class TestLLMDocumentDataclassStructure:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument
         
         # When
-        fields = LLMDocument.__dataclass_fields__
+        fields = LLMDocument.model_fields
+        annotations = LLMDocument.__annotations__
         
         # Then - check core types (complex generic types may need different handling)
-        assert fields['document_id'].type == str
-        assert fields['title'].type == str
-        assert fields['summary'].type == str
+        assert fields['document_id'].annotation == str
+        assert fields['title'].annotation == str
+        assert fields['summary'].annotation == str
+
         # Note: For complex types like List[LLMChunk], we check that annotation exists
-        assert hasattr(fields['chunks'], 'type')
-        assert hasattr(fields['key_entities'], 'type')
-        assert hasattr(fields['processing_metadata'], 'type')
-        assert hasattr(fields['document_embedding'], 'type')
+        assert hasattr(fields['chunks'], 'annotation')
+        assert hasattr(fields['key_entities'], 'annotation')
+        assert hasattr(fields['processing_metadata'], 'annotation')
+        assert hasattr(fields['document_embedding'], 'annotation')
 
     def test_field_defaults(self):
         """
@@ -154,14 +163,14 @@ class TestLLMDocumentDataclassStructure:
         from dataclasses import MISSING
         
         # When
-        fields = LLMDocument.__dataclass_fields__
+        fields = LLMDocument.model_fields
         
         # Then - check which fields have defaults
         # Most fields should not have defaults (required)
-        required_fields = ['document_id', 'title', 'chunks', 'summary', 
-                          'key_entities', 'processing_metadata']
+        required_fields = {'document_id', 'title', 'chunks', 'summary', 
+                          'key_entities', 'processing_metadata'}
         for field_name in required_fields:
-            assert fields[field_name].default is MISSING
+            assert fields[field_name].is_required()
         
         # document_embedding should have default None
         assert fields['document_embedding'].default is None

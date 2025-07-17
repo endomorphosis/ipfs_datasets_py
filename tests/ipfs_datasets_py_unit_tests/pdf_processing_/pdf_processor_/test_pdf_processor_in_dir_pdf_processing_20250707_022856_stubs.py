@@ -1621,7 +1621,7 @@
 #         raise NotImplementedError("test_optimize_for_llm_chunk_metadata_generation needs to be implemented")
 
 #     @pytest.mark.asyncio
-#     async def test_optimize_for_llm_semantic_type_classification(self):
+#     async def test_optimize_for_llm_semantic_types_classification(self):
 #         """
 #         GIVEN diverse content types within document
 #         WHEN _optimize_for_llm classifies content semantically
@@ -1631,7 +1631,7 @@
 #             - Classification supports targeted processing
 #             - Type information preserved in chunk metadata
 #         """
-#         raise NotImplementedError("test_optimize_for_llm_semantic_type_classification needs to be implemented")
+#         raise NotImplementedError("test_optimize_for_llm_semantic_types_classification needs to be implemented")
 
 #     @pytest.mark.asyncio
 #     async def test_optimize_for_llm_large_document_memory_management(self):

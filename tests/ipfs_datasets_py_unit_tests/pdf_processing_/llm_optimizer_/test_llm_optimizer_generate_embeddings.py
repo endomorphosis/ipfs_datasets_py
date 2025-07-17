@@ -86,9 +86,9 @@ class TestLLMOptimizerGenerateEmbeddings:
                 content="This is the first chunk of text for testing embeddings.",
                 chunk_id="chunk_0000",
                 source_page=1,
-                source_element=["paragraph"],
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={"test": True},
                 embedding=None
@@ -97,9 +97,9 @@ class TestLLMOptimizerGenerateEmbeddings:
                 content="This is the second chunk with different content for embedding generation.",
                 chunk_id="chunk_0001", 
                 source_page=1,
-                source_element=["paragraph"],
+                source_elements=["paragraph"],
                 token_count=14,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={"test": True},
                 embedding=None
@@ -108,9 +108,9 @@ class TestLLMOptimizerGenerateEmbeddings:
                 content="Final chunk for comprehensive embedding testing scenarios.",
                 chunk_id="chunk_0002",
                 source_page=2,
-                source_element=["paragraph"],
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={"test": True},
                 embedding=None
@@ -159,19 +159,24 @@ class TestLLMOptimizerGenerateEmbeddings:
         GIVEN embedding model is None or unavailable
         WHEN _generate_embeddings is called
         THEN expect:
-            - RuntimeError raised
-            - Clear error message about model availability
-            - No partial embeddings generated
+            - Warning logged about model unavailability
+            - Chunks returned unchanged
+            - No embeddings generated
         """
         # Given
         chunks = self.mock_chunks.copy()
         self.optimizer.embedding_model = None
         
-        # When & Then
-        with pytest.raises(RuntimeError) as exc_info:
-            await self.optimizer._generate_embeddings(chunks)
+        # When
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.warning') as mock_log:
+            result_chunks = await self.optimizer._generate_embeddings(chunks)
         
-        assert "embedding model" in str(exc_info.value).lower()
+        # Then
+        assert len(result_chunks) == 3
+        assert result_chunks == chunks  # Should return unchanged
+        
+        # Verify warning was logged
+        mock_log.assert_called_once_with("No embedding model available, skipping embedding generation")
         
         # Verify no embeddings were set
         for chunk in chunks:
@@ -219,9 +224,9 @@ class TestLLMOptimizerGenerateEmbeddings:
                 content=f"Content for chunk number {i} in batch processing test.",
                 chunk_id=f"chunk_{i:04d}",
                 source_page=i // 10 + 1,
-                source_element=["paragraph"],
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={"batch_test": True},
                 embedding=None
@@ -230,8 +235,10 @@ class TestLLMOptimizerGenerateEmbeddings:
         
         # Mock embedding model with realistic batch size
         mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(50, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
+        # First batch: 32 chunks, second batch: 18 chunks
+        batch1_embeddings = np.random.rand(32, 384)
+        batch2_embeddings = np.random.rand(18, 384)
+        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
@@ -244,8 +251,16 @@ class TestLLMOptimizerGenerateEmbeddings:
             assert isinstance(chunk.embedding, np.ndarray)
             assert chunk.embedding.shape == (384,)
         
-        # Verify single batch call was made
-        mock_embedding_model.encode.assert_called_once()
+        # Verify batch calls were made (50 chunks = 2 batches of 32 and 18)
+        assert mock_embedding_model.encode.call_count == 2
+        
+        # Verify first batch has 32 chunks
+        first_batch_call = mock_embedding_model.encode.call_args_list[0]
+        assert len(first_batch_call[0][0]) == 32
+        
+        # Verify second batch has 18 chunks  
+        second_batch_call = mock_embedding_model.encode.call_args_list[1]
+        assert len(second_batch_call[0][0]) == 18
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_error_handling(self):
@@ -266,7 +281,7 @@ class TestLLMOptimizerGenerateEmbeddings:
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        with patch('logging.warning') as mock_log:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
             result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
@@ -275,9 +290,9 @@ class TestLLMOptimizerGenerateEmbeddings:
             assert chunk.embedding is None  # Should remain None after failure
         
         # Verify error was logged
-        mock_log.assert_called()
-        log_message = mock_log.call_args[0][0]
-        assert "embedding generation failed" in log_message.lower()
+        mock_log.assert_called_once()
+        log_call_args = mock_log.call_args[0][0]
+        assert "Failed to generate embeddings for batch 1: Embedding generation failed" == log_call_args
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_memory_constraints(self):
@@ -298,7 +313,7 @@ class TestLLMOptimizerGenerateEmbeddings:
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        with patch('logging.error') as mock_log:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
             result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
@@ -307,9 +322,9 @@ class TestLLMOptimizerGenerateEmbeddings:
             assert chunk.embedding is None
         
         # Verify memory error was logged appropriately
-        mock_log.assert_called()
-        log_message = mock_log.call_args[0][0]
-        assert "memory" in log_message.lower()
+        mock_log.assert_called_once()
+        log_call_args = mock_log.call_args[0][0]
+        assert "Failed to generate embeddings for batch 1: Insufficient memory for embeddings" == log_call_args
 
 
 if __name__ == "__main__":

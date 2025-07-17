@@ -284,7 +284,7 @@ Args:
         Links back to the original PDF document.
     page_number (int): Page number in the source document where chunk appears.
         1-indexed page numbering following PDF conventions.
-    semantic_type (str): Classification of the chunk's semantic content.
+    semantic_types (str): Classification of the chunk's semantic content.
         Values may include: 'paragraph', 'heading', 'list', 'table', 'figure_caption',
         'abstract', 'conclusion', 'methodology', etc.
     related_entities (List[str]): Names of entities extracted from this chunk.
@@ -297,7 +297,7 @@ Attributes:
     similarity_score (float): Semantic similarity score (0.0-1.0)
     document_id (str): Source document identifier
     page_number (int): Source page number (1-indexed)
-    semantic_type (str): Content type classification
+    semantic_types (str): Content type classification
     related_entities (List[str]): Entity names found in chunk
 
 Usage Example:
@@ -307,7 +307,7 @@ Usage Example:
         similarity_score=0.87,
         document_id="doc_001",
         page_number=3,
-        semantic_type="paragraph",
+        semantic_types={"paragraph"},
         related_entities=["Bill Gates", "Paul Allen", "Microsoft"]
     )
 
@@ -999,7 +999,7 @@ Args:
     filters (Optional[Dict[str, Any]]): Semantic search filtering criteria.
         Supported filter keys:
         - 'document_id': Limit search to specific document
-        - 'semantic_type': Filter by chunk content type (paragraph, heading, etc.)
+        - 'semantic_types': Filter by chunk content type (paragraph, heading, etc.)
         - 'min_similarity': Minimum cosine similarity threshold (0.0-1.0)
         - 'page_range': Tuple of (start_page, end_page) for page filtering
     max_results (int): Maximum number of semantic results to return.
@@ -1120,7 +1120,7 @@ Args:
         If None, query type will be auto-detected. Defaults to None.
     filters (Optional[Dict[str, Any]], optional): Additional filtering criteria.
         Common filter keys: 'document_id', 'entity_type', 'relationship_type',
-        'semantic_type', 'min_similarity'. Structure varies by query type.
+        'semantic_types', 'min_similarity'. Structure varies by query type.
         Defaults to None (no filtering).
     max_results (int, optional): Maximum number of results to return.
         Must be positive integer. Large values may impact performance.

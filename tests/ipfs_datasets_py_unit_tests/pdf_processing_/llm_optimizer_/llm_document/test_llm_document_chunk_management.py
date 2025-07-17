@@ -90,9 +90,9 @@ class TestLLMDocumentChunkManagement:
             content="Initial chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -111,9 +111,9 @@ class TestLLMDocumentChunkManagement:
             content="New chunk content",
             chunk_id="chunk_0002",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=8,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_0001"],
             metadata={}
         )
@@ -150,9 +150,9 @@ class TestLLMDocumentChunkManagement:
                 content="First chunk",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=8,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -160,9 +160,9 @@ class TestLLMDocumentChunkManagement:
                 content="Second chunk",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=9,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],
                 metadata={}
             ),
@@ -170,9 +170,9 @@ class TestLLMDocumentChunkManagement:
                 content="Third chunk",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_element="table",
+                source_elements=["table"],
                 token_count=12,
-                semantic_type="table",
+                semantic_types={"table"},
                 relationships=["chunk_0002"],
                 metadata={}
             )
@@ -218,9 +218,9 @@ class TestLLMDocumentChunkManagement:
                 content=f"Chunk {i} content",
                 chunk_id=f"chunk_{i:04d}",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             )
@@ -271,9 +271,9 @@ class TestLLMDocumentChunkManagement:
                 content="First chunk",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=8,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -281,9 +281,9 @@ class TestLLMDocumentChunkManagement:
                 content="Second chunk",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=9,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],
                 metadata={}
             )
@@ -306,9 +306,9 @@ class TestLLMDocumentChunkManagement:
             content="Third chunk",
             chunk_id="chunk_0003",
             source_page=2,
-            source_element="table",
+            source_elements=["table"],
             token_count=12,
-            semantic_type="table",
+            semantic_types={"table"},
             relationships=["chunk_0002"],
             metadata={}
         )
@@ -346,9 +346,9 @@ class TestLLMDocumentChunkManagement:
                 content="First chunk content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],  # No predecessors
                 metadata={}
             ),
@@ -356,9 +356,9 @@ class TestLLMDocumentChunkManagement:
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],  # References first chunk
                 metadata={}
             ),
@@ -366,9 +366,9 @@ class TestLLMDocumentChunkManagement:
                 content="Third chunk content",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_element="table",
+                source_elements=["table"],
                 token_count=8,
-                semantic_type="table",
+                semantic_types={"table"},
                 relationships=["chunk_0001", "chunk_0002"],  # References both previous
                 metadata={}
             )

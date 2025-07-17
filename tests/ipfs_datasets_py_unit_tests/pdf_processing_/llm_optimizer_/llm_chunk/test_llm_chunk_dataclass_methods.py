@@ -92,9 +92,9 @@ class TestLLMChunkDataclassMethods:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000"],
             metadata={"confidence": 0.9},
             embedding=embedding.copy()
@@ -104,9 +104,9 @@ class TestLLMChunkDataclassMethods:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000"],
             metadata={"confidence": 0.9},
             embedding=embedding.copy()
@@ -129,9 +129,9 @@ class TestLLMChunkDataclassMethods:
             content="Test content 1",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000"],
             metadata={"confidence": 0.9},
             embedding=np.array([0.1, 0.2, 0.3])
@@ -141,9 +141,9 @@ class TestLLMChunkDataclassMethods:
             content="Test content 2",  # Different content
             chunk_id="chunk_0002",     # Different ID
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000"],
             metadata={"confidence": 0.9},
             embedding=np.array([0.1, 0.2, 0.3])
@@ -169,9 +169,9 @@ class TestLLMChunkDataclassMethods:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000"],
             metadata={"confidence": 0.9},
             embedding=np.array([0.1, 0.2])
@@ -202,9 +202,9 @@ class TestLLMChunkDataclassMethods:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000"],
             metadata={"confidence": 0.9},
             embedding=np.array([0.1, 0.2])
@@ -218,45 +218,6 @@ class TestLLMChunkDataclassMethods:
         assert len(repr_str) > 0
         assert "LLMChunk" in repr_str  # Should include class name
         assert "chunk_0001" in repr_str  # Should include chunk ID
-
-    def test_hash_method_if_frozen(self):
-        """
-        GIVEN LLMChunk dataclass (if frozen=True)
-        WHEN hash() is called
-        THEN expect consistent hash values for equal instances
-        """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        from dataclasses import is_dataclass
-        import numpy as np
-        
-        # Given - check if dataclass is frozen
-        chunk1 = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_element="text",
-            token_count=5,
-            semantic_type="text",
-            relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
-            embedding=np.array([0.1, 0.2])
-        )
-        
-        chunk2 = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_element="text",
-            token_count=5,
-            semantic_type="text",
-            relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
-            embedding=np.array([0.1, 0.2])
-        )
-        
-        # When/Then - equal instances should have same hash
-        assert hash(chunk1) == hash(chunk2)
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

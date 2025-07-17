@@ -12,6 +12,8 @@ import pytest
 import time
 import numpy as np
 
+from pydantic import ValidationError
+
 from tests._test_utils import (
     raise_on_bad_callable_metadata,
     raise_on_bad_callable_code_quality,
@@ -88,56 +90,60 @@ class TestLLMChunkSemanticTypeClassification:
         valid_types = ['text', 'table', 'figure_caption', 'header', 'mixed']
         
         # When/Then - all should be accepted
-        for semantic_type in valid_types:
+        for idx, semantic_types in enumerate(valid_types, start=1):
             chunk = LLMChunk(
                 content="Test content",
-                chunk_id=f"chunk_{semantic_type}",
+                chunk_id=f"chunk_{semantic_types}",
                 source_page=1,
-                source_element="test",
+                source_elements=["test"],
                 token_count=5,
-                semantic_type=semantic_type,
+                semantic_types={semantic_types},
                 relationships=[],
                 metadata={}
             )
-            assert chunk.semantic_type == semantic_type
+            assert chunk.semantic_types == {semantic_types}
 
     def test_invalid_semantic_types(self):
         """
         GIVEN invalid semantic type values
         WHEN LLMChunk is instantiated
         THEN expect:
-            - Invalid types handled appropriately
-            - Validation or warning mechanisms if implemented
+            - Invalid types raise pydantic ValidationError
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         
-        # Given - since dataclass doesn't enforce validation by default,
-        # these should still work but may be flagged by type checkers
-        potentially_invalid_types = ['invalid_type', 'HEADER', 'Text', 123, None]
+        # Given - potentially invalid semantic types
+        potentially_invalid_types = ['invalid_type', 'HEADER', 'Text', 123, None, 'texttablefigure_captionheadermixed']
         
-        # When/Then - dataclass accepts these but they may not be semantically valid
-        for semantic_type in potentially_invalid_types:
-            # Should not raise an error during instantiation
-            chunk = LLMChunk(
-                content="Test content",
-                chunk_id="chunk_0001",
-                source_page=1,
-                source_element="test",
-                token_count=5,
-                semantic_type=semantic_type,
-                relationships=[],
-                metadata={}
-            )
-            assert chunk.semantic_type == semantic_type
+        # When/Then - each should raise ValidationError
+        for semantic_types in potentially_invalid_types:
+            with pytest.raises(ValidationError) as exc_info:
+                # Should raise an error during instantiation
+                chunk = LLMChunk(
+                    content="Test content",
+                    chunk_id="chunk_0001",
+                    source_page=1,
+                    source_elements=["test"],
+                    token_count=5,
+                    semantic_types={semantic_types},
+                    relationships=[],
+                    metadata={}
+                )
 
-    def test_semantic_type_case_sensitivity(self):
+
+    def test_semantic_types_case_sensitivity(self):
         """
         GIVEN semantic type values with different casing
         WHEN LLMChunk is instantiated
-        THEN expect consistent handling of case variations
+        THEN expect:
+            - Case variations of valid types should be accepted
+            - No normalization, exact match required
+            - Invalid types should raise ValidationError
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         
+        valid_types = ['text', 'table', 'figure_caption', 'header', 'mixed']
+
         # Given - different case variations
         case_variations = [
             ('text', 'TEXT', 'Text', 'tEXt'),
@@ -145,20 +151,25 @@ class TestLLMChunkSemanticTypeClassification:
             ('table', 'TABLE', 'Table', 'tABle')
         ]
         
-        # When/Then - all variations should be accepted as-is (no normalization)
+        # When/Then - no ValidationError for valid types, ValidationError for invalid types
         for variations in case_variations:
             for variant in variations:
-                chunk = LLMChunk(
-                    content="Test content",
-                    chunk_id=f"chunk_{variant}",
-                    source_page=1,
-                    source_element="test",
-                    token_count=5,
-                    semantic_type=variant,
-                    relationships=[],
-                    metadata={}
-                )
-                assert chunk.semantic_type == variant  # Exact match, no case normalization
+                try:
+                    chunk = LLMChunk(
+                        content="Test content",
+                        chunk_id=f"chunk_{variant}",
+                        source_page=1,
+                        source_elements=["test"],
+                        token_count=5,
+                        semantic_types={variant},
+                        relationships=[],
+                        metadata={}
+                    )
+                except ValidationError as e:
+                    assert variant not in valid_types, f"Unexpected ValidationError for {variant}: {e}"
+                else:
+                    assert chunk.semantic_types == {variant}  # Exact match, no case normalization
+                    assert variant in valid_types
 
 
 if __name__ == "__main__":

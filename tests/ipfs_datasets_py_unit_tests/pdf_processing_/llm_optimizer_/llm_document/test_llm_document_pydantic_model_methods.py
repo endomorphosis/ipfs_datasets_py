@@ -88,9 +88,9 @@ class TestLLMDocumentDataclassMethods:
             content="Test chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -99,9 +99,9 @@ class TestLLMDocumentDataclassMethods:
             content="Test chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -180,9 +180,9 @@ class TestLLMDocumentDataclassMethods:
             content="Test chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
             metadata={}
         )
@@ -299,9 +299,9 @@ class TestLLMDocumentDataclassMethods:
                 content="First chunk content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=10,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={}
             ),
@@ -309,9 +309,9 @@ class TestLLMDocumentDataclassMethods:
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=12,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=["chunk_0001"],
                 metadata={}
             )
@@ -347,6 +347,7 @@ class TestLLMDocumentDataclassMethods:
         assert "2" in str_repr, "Chunk count should be represented"
         
         # Verify readability - should not be overly verbose
+        print(str_repr)
         assert len(str_repr) < 500, "String representation should be concise and readable"
         
         # Test with None embedding
@@ -398,9 +399,9 @@ class TestLLMDocumentDataclassMethods:
                 content="First chunk content for testing repr",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="paragraph",
+                source_elements=["paragraph"],
                 token_count=15,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
                 metadata={"test_meta": "value"}
             ),
@@ -408,9 +409,9 @@ class TestLLMDocumentDataclassMethods:
                 content="Second chunk with relationships",
                 chunk_id="chunk_0002",
                 source_page=2,
-                source_element="table",
+                source_elements=["table"],
                 token_count=20,
-                semantic_type="table",
+                semantic_types={"table"},
                 relationships=["chunk_0001"],
                 metadata={}
             )

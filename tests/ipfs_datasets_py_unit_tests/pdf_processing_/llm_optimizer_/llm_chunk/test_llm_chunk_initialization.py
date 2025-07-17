@@ -96,11 +96,10 @@ class TestLLMChunkInstantiation:
             content="Test content here",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_0000", "chunk_0002"],
-            metadata={"confidence": 0.9},
             embedding=embedding
         )
         
@@ -108,11 +107,10 @@ class TestLLMChunkInstantiation:
         assert chunk.content == "Test content here"
         assert chunk.chunk_id == "chunk_0001"
         assert chunk.source_page == 1
-        assert chunk.source_element == "paragraph"
+        assert chunk.source_elements == ["paragraph"]
         assert chunk.token_count == 10
-        assert chunk.semantic_type == "text"
+        assert chunk.semantic_types == {"text"}
         assert chunk.relationships == ["chunk_0000", "chunk_0002"]
-        assert chunk.metadata == {"confidence": 0.9}
         assert np.array_equal(chunk.embedding, embedding)
 
     def test_instantiation_with_minimal_fields(self):
@@ -130,22 +128,20 @@ class TestLLMChunkInstantiation:
             content="Minimal content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
-            metadata={}
         )
         
         # Then
         assert chunk.content == "Minimal content"
         assert chunk.chunk_id == "chunk_0001"
         assert chunk.source_page == 1
-        assert chunk.source_element == "text"
+        assert chunk.source_elements == ["text"]
         assert chunk.token_count == 5
-        assert chunk.semantic_type == "text"
+        assert chunk.semantic_types == {"text"}
         assert chunk.relationships == []
-        assert chunk.metadata == {}
         assert chunk.embedding is None  # Default value
 
     def test_instantiation_missing_required_fields(self):
@@ -162,11 +158,10 @@ class TestLLMChunkInstantiation:
             LLMChunk(
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_element="text",
+                source_elements=["text"],
                 token_count=5,
-                semantic_type="text",
+                semantic_types={"text"},
                 relationships=[],
-                metadata={}
             )
         
         # When/Then - missing multiple fields
@@ -189,11 +184,10 @@ class TestLLMChunkInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
-            metadata={},
             embedding=None
         )
         
@@ -220,11 +214,10 @@ class TestLLMChunkInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
-            metadata={},
             embedding=embedding
         )
         
@@ -250,11 +243,10 @@ class TestLLMChunkInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
-            metadata={}
         )
         
         # Then
@@ -281,11 +273,10 @@ class TestLLMChunkInstantiation:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=relationships,
-            metadata={}
         )
         
         # Then

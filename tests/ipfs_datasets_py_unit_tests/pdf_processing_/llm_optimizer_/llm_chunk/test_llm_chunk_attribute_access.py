@@ -83,9 +83,9 @@ class TestLLMChunkAttributeAccess:
             content="Sample test content for testing",
             chunk_id="chunk_test_001",
             source_page=1,
-            source_element="paragraph",
+            source_elements=["paragraph"],
             token_count=10,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=["chunk_000", "chunk_002"],
             metadata={"confidence": 0.95, "source": "test"},
             embedding=np.array([0.1, 0.2, 0.3, 0.4])
@@ -126,11 +126,10 @@ class TestLLMChunkAttributeAccess:
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_element="text",
+            source_elements=["text"],
             token_count=5,
-            semantic_type="text",
+            semantic_types={"text"},
             relationships=[],
-            metadata={},
             embedding=None
         )
         
@@ -175,30 +174,6 @@ class TestLLMChunkAttributeAccess:
         assert "chunk_003" in self.sample_chunk.relationships
         assert "chunk_000" not in self.sample_chunk.relationships
         assert "chunk_002" in self.sample_chunk.relationships
-
-    def test_metadata_attribute_modification(self):
-        """
-        GIVEN LLMChunk instance with metadata dict
-        WHEN metadata dict is modified
-        THEN expect:
-            - Modifications reflected in instance
-            - Dict mutability works as expected
-        """
-        # Given - initial state
-        original_metadata = self.sample_chunk.metadata.copy()
-        assert original_metadata == {"confidence": 0.95, "source": "test"}
-        
-        # When - modify the dict
-        self.sample_chunk.metadata["new_key"] = "new_value"
-        self.sample_chunk.metadata["confidence"] = 0.99
-        del self.sample_chunk.metadata["source"]
-        
-        # Then - changes should be reflected
-        assert len(self.sample_chunk.metadata) == 2
-        assert self.sample_chunk.metadata["new_key"] == "new_value"
-        assert self.sample_chunk.metadata["confidence"] == 0.99
-        assert "source" not in self.sample_chunk.metadata
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

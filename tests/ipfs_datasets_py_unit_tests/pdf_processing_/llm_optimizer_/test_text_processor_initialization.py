@@ -33,7 +33,8 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
+    LLMMetadata
 )
 
 
@@ -385,8 +386,6 @@ class TestTextProcessorInitialization:
             - Technical abbreviations handled
             - Complex sentence structures preserved
         """
-
-        
         # Given
         processor = TextProcessor()
         

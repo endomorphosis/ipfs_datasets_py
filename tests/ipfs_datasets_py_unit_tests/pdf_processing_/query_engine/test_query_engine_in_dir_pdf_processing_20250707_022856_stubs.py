@@ -1280,18 +1280,18 @@
 #         raise NotImplementedError("test_process_semantic_query_document_id_filter not implemented")
 
 #     @pytest.mark.asyncio
-#     async def test_process_semantic_query_semantic_type_filter(self):
+#     async def test_process_semantic_query_semantic_types_filter(self):
 #         """
 #         GIVEN a QueryEngine instance with chunks of different semantic types
 #         AND normalized query "research methodology"
-#         AND filters {"semantic_type": "paragraph"}
+#         AND filters {"semantic_types": "paragraph"}
 #         WHEN _process_semantic_query is called
 #         THEN expect:
 #             - Only paragraph-type chunks processed
 #             - Headings, lists, tables filtered out
 #             - Semantic type filtering applied before similarity calculation
 #         """
-#         raise NotImplementedError("test_process_semantic_query_semantic_type_filter not implemented")
+#         raise NotImplementedError("test_process_semantic_query_semantic_types_filter not implemented")
 
 #     @pytest.mark.asyncio
 #     async def test_process_semantic_query_min_similarity_threshold(self):
@@ -1447,7 +1447,7 @@
 #         THEN expect QueryResult.metadata to contain:
 #             - document_id: str
 #             - page_number: int
-#             - semantic_type: str
+#             - semantic_types: str
 #             - related_entities: List[str]
 #             - full_content: str (if truncated)
 #             - similarity_score: float
