@@ -142,7 +142,6 @@ class TestErrorMonitorInitialization:
         """
         raise NotImplementedError("test_init_missing_traceback_in_resources test needs to be implemented")
 
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 ```

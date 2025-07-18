@@ -66,7 +66,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 

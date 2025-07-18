@@ -629,7 +629,7 @@ Each task follows the Red-Green-Refactor cycle:
             - [ ] Run all tests to confirm they fail (red phase)
             - [ ] Implement the method to make tests pass (green phase)
             - [ ] Refactor implementation while keeping tests passing (refactor phase)
-        - [ ] extract_with_fallback
+        - [ ] extract_with_ocr
             - [ ] Write function stub with type hints for arguments, return type hint, and comprehensive Google-style docstring listing arguments, returns, exceptions, and example usage
             - [ ] Write test that calls the actual (not-yet-implemented) callable and verify it fails immediately
             - [ ] Write additional test cases for edge cases, error conditions, and expected behaviors

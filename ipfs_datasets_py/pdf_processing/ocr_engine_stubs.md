@@ -107,7 +107,7 @@ Processing Strategies:
     - accuracy_first: Prioritizes most accurate engines (Surya → EasyOCR → TrOCR → Tesseract)
 
 Public Methods:
-    extract_with_fallback(image_data, strategy, confidence_threshold) -> Dict[str, Any]:
+    extract_with_ocr(image_data, strategy, confidence_threshold) -> Dict[str, Any]:
         Extract text using multiple engines with intelligent fallback based on confidence scores
         and processing strategy.
     get_available_engines() -> List[str]: Get list of successfully initialized OCR engines.
@@ -117,7 +117,7 @@ Usage Example:
     multi_ocr = MultiEngineOCR()
     
     # High-quality extraction with fallback
-    result = multi_ocr.extract_with_fallback(
+    result = multi_ocr.extract_with_ocr(
         image_data=document_bytes,
         strategy='quality_first',
         confidence_threshold=0.8
@@ -1028,10 +1028,10 @@ Notes:
 * **Method:** True
 * **Class:** TrOCREngine
 
-## extract_with_fallback
+## extract_with_ocr
 
 ```python
-def extract_with_fallback(self, image_data: bytes, strategy: str = "quality_first", confidence_threshold: float = 0.8) -> Dict[str, Any]:
+def extract_with_ocr(self, image_data: bytes, strategy: str = "quality_first", confidence_threshold: float = 0.8) -> Dict[str, Any]:
     """
     Extract text using multiple engines with intelligent fallback.
 
@@ -1057,7 +1057,7 @@ def get_available_engines(self) -> List[str]:
 
 This method returns the names of all OCR engines that were successfully initialized
 during the MultiEngineOCR constructor and are currently available for text extraction.
-The list reflects the actual engines that can be used by extract_with_fallback()
+The list reflects the actual engines that can be used by extract_with_ocr()
 and other processing methods.
 
 Returns:

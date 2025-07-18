@@ -11,7 +11,6 @@ Optimizes extracted content for LLM consumption by:
 import asyncio
 import logging
 from typing import Dict, List, Any, Optional, Annotated
-from dataclasses import dataclass
 import re
 
 
@@ -854,6 +853,7 @@ class LLMOptimizer:
             
             # Basic extractive summarization (can be enhanced with LLM)
             sentences = self.text_processor.split_sentences(full_text)
+            print(f"sentences:\n{sentences}")
             
             # Score sentences by position and keyword frequency
             scored_sentences = []
@@ -878,9 +878,11 @@ class LLMOptimizer:
             
             # Select top sentences for summary
             scored_sentences.sort(key=lambda x: x[1], reverse=True)
+            print(f"scored sentences:\n{scored_sentences}")
             summary_sentences = [sent[0] for sent in scored_sentences[:5]]
-            
-            return " ".join(summary_sentences)
+            print(f"summary sentences:\n{summary_sentences}")
+
+            return ".".join(summary_sentences)
 
         except Exception as e:
             msg = f"Summary generation failed with a {type(e).__name__}: {e}"
@@ -1267,7 +1269,8 @@ class LLMOptimizer:
             >>> #     {'text': '95%', 'type': 'PERCENT', 'confidence': 0.9}
             >>> # ]
         """
-        try:
+        try: # TODO
+            pass
         except ImportError:
             logger.warning("NLTK not available, falling back to basic pattern matching")
             return await self._extract_entities_fallback(structured_text)

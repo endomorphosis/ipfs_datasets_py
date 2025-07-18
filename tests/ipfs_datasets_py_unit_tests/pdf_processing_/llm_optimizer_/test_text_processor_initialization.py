@@ -6,6 +6,7 @@
 from datetime import datetime
 import pytest
 import os
+from typing import List
 
 import os
 import pytest
@@ -34,7 +35,6 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     TextProcessor,
     LLMChunk,
     LLMDocument,
-    LLMMetadata
 )
 
 

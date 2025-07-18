@@ -9,6 +9,10 @@ import logging
 from typing import List, Dict, Any, Optional
 from collections import Counter
 
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+
+
 logger = logging.getLogger(__name__)
 
 class TextProcessor:
@@ -197,22 +201,29 @@ class TextProcessor:
         return text.strip()
     
     def split_sentences(self, text: str) -> List[str]:
-        """Split text into sentences."""
+        """Split text into sentences using NLTK."""
+        if not isinstance(text, str):
+            raise TypeError("Input text must be a string")
         if not text:
             return []
-        
-        # Basic sentence splitting
-        sentences = re.split(r'[.!?]+', text)
-        
-        # Clean and filter sentences
-        cleaned_sentences = []
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if len(sentence) > 10:  # Minimum sentence length
-                cleaned_sentences.append(sentence)
-        
-        return cleaned_sentences
-    
+
+        try:
+            # Use NLTK's sentence tokenizer
+            sentences = sent_tokenize(text)
+        except Exception as e:
+            logger.error(f"Error splitting sentences: {e}")
+            return []
+        else:
+            if not sentences:
+                return []
+
+            # Clean and filter sentences
+            cleaned_sentences = [
+                sentence.strip() for sentence in sentences if len(sentence.strip()) > 0
+            ]
+
+            return cleaned_sentences
+
     def split_paragraphs(self, text: str) -> List[str]:
         """Split text into paragraphs."""
         if not text:

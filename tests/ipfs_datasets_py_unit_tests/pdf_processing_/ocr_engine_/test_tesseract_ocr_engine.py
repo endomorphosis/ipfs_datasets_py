@@ -67,7 +67,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -109,7 +109,7 @@ class TestTesseractOCREngine:
         AND should set available to True
         AND should initialize pytesseract attribute
         """
-        with patch('ipfs_datasets_py.pdf_processing.ocr_engine.pytesseract') as mock_pytesseract:
+        with patch('builtins.__import__') as mock_pytesseract:
             with patch.object(TesseractOCR, '_initialize') as mock_init:
                 mock_init.return_value = None
                 engine = TesseractOCR()
@@ -128,6 +128,7 @@ class TestTesseractOCREngine:
             assert hasattr(engine, 'name')
             assert engine.name == 'tesseract'
             assert hasattr(engine, 'available')
+            assert not engine.available
 
     def test_tesseract_ocr_initialization_missing_system_tesseract(self):
         """
@@ -492,6 +493,12 @@ class TestTesseractOCREngine:
                 mock_preprocess.return_value = self.create_test_image()
                 
                 image_data = self.create_test_image_data()
+
+                engine.pytesseract.image_to_data.return_value = {
+                    'level': [1], 'page_num': [1], 'block_num': [0], 'par_num': [0], 
+                    'line_num': [0], 'word_num': [0], 'left': [0], 'top': [0], 'width': [100], 
+                    'height': [50], 'conf': [-1], 'text': ['']
+                }
                 
                 # Test PSM 6 (uniform block of text)
                 engine.pytesseract.image_to_string.return_value = "Block of text"
@@ -545,7 +552,7 @@ class TestTesseractOCREngine:
                 
                 # Mock TesseractError for invalid config
                 from pytesseract import TesseractError
-                engine.pytesseract.image_to_string.side_effect = TesseractError("Invalid configuration")
+                engine.pytesseract.image_to_string.side_effect = TesseractError("Invalid configuration", "Error details")
                 
                 invalid_config = "--invalid-option nonsense"
                 image_data = self.create_test_image_data()
@@ -555,7 +562,7 @@ class TestTesseractOCREngine:
                     engine.extract_text(image_data, config=invalid_config)
                 
                 # Test another type of invalid config
-                engine.pytesseract.image_to_string.side_effect = TesseractError("PSM value out of range")
+                engine.pytesseract.image_to_string.side_effect = TesseractError("PSM value out of range", "Error details")
                 invalid_psm_config = "--psm 99"  # Invalid PSM value
                 
                 with pytest.raises((TesseractError, RuntimeError, Exception)):

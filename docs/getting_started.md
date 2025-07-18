@@ -288,7 +288,7 @@ from ipfs_datasets_py.pdf_processing import MultiEngineOCR
 ocr = MultiEngineOCR()
 
 # Extract text with quality-first strategy
-result = ocr.extract_with_fallback(
+result = ocr.extract_with_ocr(
     image_data=image_bytes,
     strategy='quality_first'  # Uses Surya → PaddleOCR → Tesseract → EasyOCR
 )

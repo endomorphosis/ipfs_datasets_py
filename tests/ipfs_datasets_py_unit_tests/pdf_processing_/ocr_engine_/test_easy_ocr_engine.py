@@ -67,7 +67,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -434,13 +434,12 @@ class TestEasyOCREngine:
         """
         GIVEN an EasyOCR instance
         WHEN calling extract_text() with empty bytes
-        THEN should raise PIL.UnidentifiedImageError
+        THEN should raise ValueError
         """
         engine, mock_reader = self.create_mock_engine_for_extract_text([])
         
-        # PIL.Image.open will raise UnidentifiedImageError for empty bytes
-        from PIL import UnidentifiedImageError
-        with pytest.raises(UnidentifiedImageError):
+        # PIL.Image.open will raise ValueError for empty bytes
+        with pytest.raises(ValueError):
             engine.extract_text(b'')
 
     def test_easyocr_extract_text_invalid_image_format(self):

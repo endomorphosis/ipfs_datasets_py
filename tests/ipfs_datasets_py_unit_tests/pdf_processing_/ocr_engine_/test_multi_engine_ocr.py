@@ -68,7 +68,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -111,15 +111,15 @@ class TestMultiEngineOCR:
              patch('ipfs_datasets_py.pdf_processing.ocr_engine.TrOCREngine') as mock_trocr:
             
             # Mock all engines as available
-            mock_surya.return_value = MockOCREngine('surya', True)
-            mock_tesseract.return_value = MockOCREngine('tesseract', True)
-            mock_easy.return_value = MockOCREngine('easyocr', True)
-            mock_trocr.return_value = MockOCREngine('trocr', True)
+            mock_surya.return_value = MockOCREngine('surya', True, text="surya result", confidence=0.95)
+            mock_tesseract.return_value = MockOCREngine('tesseract', True, text="tesseract result", confidence=0.69)
+            mock_easy.return_value = MockOCREngine('easyocr', True, text="easyocr result", confidence=0.420)
+            mock_trocr.return_value = MockOCREngine('trocr', True, text="trocr result", confidence=0.360)
             
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(
+            result = multi_ocr.extract_with_ocr(
                 image_data, 
                 strategy='quality_first', 
                 confidence_threshold=0.8
@@ -130,10 +130,10 @@ class TestMultiEngineOCR:
             assert result['engine'] == 'surya'
             assert result['confidence'] == 0.95
 
-    def test_extract_with_fallback_speed_first_strategy(self):
+    def test_extract_with_ocr_speed_first_strategy(self):
         """
         GIVEN a MultiEngineOCR instance with multiple engines
-        WHEN calling extract_with_fallback() with strategy='speed_first'
+        WHEN calling extract_with_ocr() with strategy='speed_first'
         THEN should try engines in order: Tesseract → Surya → EasyOCR → TrOCR
         AND should prioritize fastest processing
         """
@@ -151,7 +151,7 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(
+            result = multi_ocr.extract_with_ocr(
                 image_data,
                 strategy='speed_first',
                 confidence_threshold=0.8
@@ -162,10 +162,10 @@ class TestMultiEngineOCR:
             assert result['engine'] == 'tesseract'
             assert result['confidence'] == 0.85
 
-    def test_extract_with_fallback_accuracy_first_strategy(self):
+    def test_extract_with_ocr_accuracy_first_strategy(self):
         """
         GIVEN a MultiEngineOCR instance with multiple engines
-        WHEN calling extract_with_fallback() with strategy='accuracy_first'
+        WHEN calling extract_with_ocr() with strategy='accuracy_first'
         THEN should try engines in order: Surya → EasyOCR → TrOCR → Tesseract
         AND should prioritize most accurate engines
         """
@@ -183,7 +183,7 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(
+            result = multi_ocr.extract_with_ocr(
                 image_data,
                 strategy='accuracy_first',
                 confidence_threshold=0.9
@@ -194,10 +194,10 @@ class TestMultiEngineOCR:
             assert result['engine'] == 'surya'
             assert result['confidence'] == 0.97
 
-    def test_extract_with_fallback_confidence_threshold_met(self):
+    def test_extract_with_ocr_confidence_threshold_met(self):
         """
         GIVEN a MultiEngineOCR instance and high-quality image
-        WHEN calling extract_with_fallback() with confidence_threshold=0.8
+        WHEN calling extract_with_ocr() with confidence_threshold=0.8
         THEN should stop at first engine meeting threshold
         AND should return results from that engine
         """
@@ -210,7 +210,7 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(
+            result = multi_ocr.extract_with_ocr(
                 image_data,
                 strategy='quality_first',
                 confidence_threshold=0.85
@@ -220,10 +220,10 @@ class TestMultiEngineOCR:
             assert result['confidence'] >= 0.85
             assert result['engine'] == 'surya'
 
-    def test_extract_with_fallback_confidence_threshold_not_met(self):
+    def test_extract_with_ocr_confidence_threshold_not_met(self):
         """
         GIVEN a MultiEngineOCR instance and low-quality image
-        WHEN calling extract_with_fallback() with high confidence_threshold
+        WHEN calling extract_with_ocr() with high confidence_threshold
         THEN should try all available engines
         AND should return best available result even below threshold
         """
@@ -239,7 +239,7 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(
+            result = multi_ocr.extract_with_ocr(
                 image_data,
                 strategy='quality_first',
                 confidence_threshold=0.9  # High threshold
@@ -252,10 +252,10 @@ class TestMultiEngineOCR:
             assert 'text' in result
             assert 'engine' in result
 
-    def test_extract_with_fallback_single_engine_available(self):
+    def test_extract_with_ocr_single_engine_available(self):
         """
         GIVEN a MultiEngineOCR instance with only one available engine
-        WHEN calling extract_with_fallback()
+        WHEN calling extract_with_ocr()
         THEN should use the single available engine
         AND should return its results regardless of strategy
         """
@@ -273,16 +273,16 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(image_data)
+            result = multi_ocr.extract_with_ocr(image_data)
             
             assert result['engine'] == 'tesseract'
             assert result['text'] == "only option"
 
-    def test_extract_with_fallback_no_engines_available(self):
+    def test_extract_with_ocr_no_engines_available(self):
         """
         GIVEN a MultiEngineOCR instance with no available engines
-        WHEN calling extract_with_fallback()
-        THEN should raise appropriate error
+        WHEN calling extract_with_ocr()
+        THEN should raise Runtime error
         AND should indicate no engines available
         """
         multi_ocr = MultiEngineOCR()
@@ -290,13 +290,13 @@ class TestMultiEngineOCR:
         
         image_data = self.create_test_image_data()
         
-        with pytest.raises((RuntimeError, ValueError), match="no.*engine|not.*available"):
-            multi_ocr.extract_with_fallback(image_data)
+        with pytest.raises(RuntimeError, match="No OCR engines available"):
+            multi_ocr.extract_with_ocr(image_data)
 
-    def test_extract_with_fallback_engine_failure_handling(self):
+    def test_extract_with_ocr_engine_failure_handling(self):
         """
         GIVEN a MultiEngineOCR instance where first engine fails
-        WHEN calling extract_with_fallback()
+        WHEN calling extract_with_ocr()
         THEN should continue to next engine in strategy order
         AND should handle individual engine failures gracefully
         """
@@ -313,28 +313,28 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(image_data, strategy='quality_first')
+            result = multi_ocr.extract_with_ocr(image_data, strategy='quality_first')
             
             # Should have fallen back to Tesseract
             assert result['engine'] == 'tesseract'
             assert result['text'] == "fallback success"
 
-    def test_extract_with_fallback_invalid_strategy(self):
+    def test_extract_with_ocr_invalid_strategy(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() with invalid strategy
+        WHEN calling extract_with_ocr() with invalid strategy
         THEN should raise ValueError or use default strategy
         """
         multi_ocr = MultiEngineOCR()
         image_data = self.create_test_image_data()
         
         with pytest.raises(ValueError, match="strategy|invalid"):
-            multi_ocr.extract_with_fallback(image_data, strategy='invalid_strategy')
+            multi_ocr.extract_with_ocr(image_data, strategy='invalid_strategy')
 
-    def test_extract_with_fallback_invalid_confidence_threshold(self):
+    def test_extract_with_ocr_invalid_confidence_threshold(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() with confidence_threshold outside [0.0, 1.0]
+        WHEN calling extract_with_ocr() with confidence_threshold outside [0.0, 1.0]
         THEN should raise ValueError
         """
         multi_ocr = MultiEngineOCR()
@@ -345,12 +345,12 @@ class TestMultiEngineOCR:
         
         for threshold in invalid_thresholds:
             with pytest.raises(ValueError, match="confidence.*threshold|range"):
-                multi_ocr.extract_with_fallback(image_data, confidence_threshold=threshold)
+                multi_ocr.extract_with_ocr(image_data, confidence_threshold=threshold)
 
-    def test_extract_with_fallback_result_format_consistency(self):
+    def test_extract_with_ocr_result_format_consistency(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() with any engine
+        WHEN calling extract_with_ocr() with any engine
         THEN should return consistent result format
         AND should include text, confidence, engine metadata
         """
@@ -360,7 +360,7 @@ class TestMultiEngineOCR:
             multi_ocr = MultiEngineOCR()
             
             image_data = self.create_test_image_data()
-            result = multi_ocr.extract_with_fallback(image_data)
+            result = multi_ocr.extract_with_ocr(image_data)
             
             # Check consistent format
             assert isinstance(result, dict)
@@ -372,10 +372,10 @@ class TestMultiEngineOCR:
             assert isinstance(result['engine'], str)
             assert 0.0 <= result['confidence'] <= 1.0
 
-    def test_extract_with_fallback_performance_monitoring(self):
+    def test_extract_with_ocr_performance_monitoring(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() multiple times
+        WHEN calling extract_with_ocr() multiple times
         THEN should track engine performance and failure modes
         AND should provide comprehensive logging
         """
@@ -388,7 +388,7 @@ class TestMultiEngineOCR:
             # Multiple calls to test performance monitoring
             results = []
             for _ in range(3):
-                result = multi_ocr.extract_with_fallback(image_data)
+                result = multi_ocr.extract_with_ocr(image_data)
                 results.append(result)
             
             # All results should be consistent
@@ -396,10 +396,10 @@ class TestMultiEngineOCR:
                 assert result['engine'] == 'tesseract'
                 assert result['text'] == "monitored"
 
-    def test_extract_with_fallback_thread_safety(self):
+    def test_extract_with_ocr_thread_safety(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() from multiple threads
+        WHEN calling extract_with_ocr() from multiple threads
         THEN should be thread-safe for concurrent processing
         AND should not interfere between concurrent requests
         """
@@ -415,7 +415,7 @@ class TestMultiEngineOCR:
             def extract_text_thread():
                 try:
                     for _ in range(10):
-                        result = multi_ocr.extract_with_fallback(image_data)
+                        result = multi_ocr.extract_with_ocr(image_data)
                         results.append(result)
                         time.sleep(0.001)  # Small delay
                 except Exception as e:
@@ -438,29 +438,29 @@ class TestMultiEngineOCR:
                 assert result['engine'] == 'tesseract'
                 assert result['text'] == "thread safe"
 
-    def test_extract_with_fallback_empty_image_data(self):
+    def test_extract_with_ocr_empty_image_data(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() with empty image data
+        WHEN calling extract_with_ocr() with empty image data
         THEN should raise ValueError
         """
         multi_ocr = MultiEngineOCR()
         
         with pytest.raises(ValueError):
-            multi_ocr.extract_with_fallback(b'')
+            multi_ocr.extract_with_ocr(b'')
 
-    def test_extract_with_fallback_none_image_data(self):
+    def test_extract_with_ocr_none_image_data(self):
         """
         GIVEN a MultiEngineOCR instance
-        WHEN calling extract_with_fallback() with None image data
+        WHEN calling extract_with_ocr() with None image data
         THEN should raise TypeError or ValueError
         """
         multi_ocr = MultiEngineOCR()
         
         with pytest.raises((TypeError, ValueError)):
-            multi_ocr.extract_with_fallback(None)
+            multi_ocr.extract_with_ocr(None)
 
-    def test_extract_with_fallback_strategy_engine_ordering(self):
+    def test_extract_with_ocr_strategy_engine_ordering(self):
         """
         GIVEN a MultiEngineOCR instance with all engines available
         WHEN testing different strategies
@@ -492,7 +492,7 @@ class TestMultiEngineOCR:
             
             for strategy in strategies:
                 # Use very high threshold to force trying all engines
-                result = multi_ocr.extract_with_fallback(
+                result = multi_ocr.extract_with_ocr(
                     image_data, 
                     strategy=strategy, 
                     confidence_threshold=0.99
@@ -600,12 +600,12 @@ class TestMultiEngineOCR:
         assert isinstance(available, list)
         assert len(available) == 0
 
-    def test_get_available_engines_reflects_initialization_state(self):
+    def test_get_available_engines_reflects_current_state(self):
         """
         GIVEN a MultiEngineOCR instance
         WHEN calling get_available_engines()
         THEN should reflect engines available at initialization time
-        AND should not re-check engine availability
+        AND should re-check engine availability when state changes
         """
         with patch('ipfs_datasets_py.pdf_processing.ocr_engine.SuryaOCR') as mock_surya:
             mock_engine = MockOCREngine('surya', True)
@@ -620,9 +620,9 @@ class TestMultiEngineOCR:
             # Change engine availability after initialization
             mock_engine.available = False
             
-            # Should still return as available (doesn't re-check)
+            # Should return as unavailable now
             available_again = multi_ocr.get_available_engines()
-            assert 'surya' in available_again
+            assert 'surya' not in available_again
 
     def test_classify_document_type_printed_placeholder(self):
         """
@@ -636,10 +636,10 @@ class TestMultiEngineOCR:
         doc_type = multi_ocr.classify_document_type(image_data)
         assert doc_type == 'printed'
 
-    def test_extract_with_fallback_quality_first_strategy(self):
+    def test_extract_with_ocr_quality_first_strategy(self):
         """
         GIVEN a MultiEngineOCR instance with multiple engines
-        WHEN calling extract_with_fallback() with strategy='quality_first'
+        WHEN calling extract_with_ocr() with strategy='quality_first'
         THEN should try engines in order: Surya → Tesseract → EasyOCR → TrOCR
         AND should stop when confidence threshold is met
         """

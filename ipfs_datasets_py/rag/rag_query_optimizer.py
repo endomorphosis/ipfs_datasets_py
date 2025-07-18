@@ -95,6 +95,8 @@ try:
     VISUALIZATION_AVAILABLE = True
 except ImportError:
     VISUALIZATION_AVAILABLE = False
+    # Create dummy Figure type for type annotations
+    Figure = Any
 
 # Import for Wikipedia-specific optimizations
 # Import necessary components

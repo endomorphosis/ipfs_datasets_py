@@ -21,6 +21,7 @@
         "psutil",
         "pydantic",
         "sparql",
+        "tesseract",
         "uvicorn"
     ],
     "cSpell.ignoreWords": [

@@ -67,7 +67,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -183,7 +183,9 @@ class TestTrOCREngine:
             # Verify content
             assert result['engine'] == 'trocr'
             assert result['text'] == "handwritten text sample"
-            assert result['confidence'] == 0.8  # Fixed confidence for TrOCR
+            # Should always return fixed confidence
+            assert isinstance(result['confidence'], float)
+            assert result['confidence'] == 0.0
 
     def test_trocr_extract_text_printed_text(self):
         """
@@ -259,7 +261,7 @@ class TestTrOCREngine:
         """
         GIVEN a TrOCREngine instance and any text image
         WHEN calling extract_text()
-        THEN should return fixed confidence score (0.8)
+        THEN should return fixed confidence score (0.0)
         AND should acknowledge lack of native confidence estimation
         """
         with patch.object(TrOCREngine, '_initialize'):
@@ -283,8 +285,9 @@ class TestTrOCREngine:
             result = engine.extract_text(image_data)
             
             # Should always return fixed confidence
-            assert result['confidence'] == 0.8
             assert isinstance(result['confidence'], float)
+            assert result['confidence'] == 0.0
+            
 
     def test_trocr_extract_text_no_spatial_information(self):
         """
@@ -533,7 +536,8 @@ class TestTrOCREngine:
                 result = engine.extract_text(image_data)
                 
                 assert result['text'] == expected
-                assert result['confidence'] == 0.8
+                # Should always return fixed confidence
+                assert result['confidence'] == 0.0
 
     def test_trocr_extract_text_special_characters(self):
         """

@@ -8,22 +8,277 @@ Integrates processed PDF content into GraphRAG knowledge graph:
 - Enables semantic querying and retrieval
 - Maintains IPLD data integrity
 """
-import logging
 import hashlib
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime
-import uuid
+import logging
 import re
+import time
+import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 
 import networkx as nx
 import numpy as np
+from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
+
 
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
 
 
 logger = logging.getLogger(__name__)
+
+
+
+
+def get_continuous_chunks(text, label):
+    chunked = ne_chunk(pos_tag(word_tokenize(text)))
+    prev = None
+    continuous_chunk = []
+    current_chunk = []
+
+    for subtree in chunked:
+        if type(subtree) == Tree and subtree.label() == label:
+            current_chunk.append(" ".join([token for token, pos in subtree.leaves()]))
+        if current_chunk:
+            named_entity = " ".join(current_chunk)
+            if named_entity not in continuous_chunk:
+                continuous_chunk.append(named_entity)
+                current_chunk = []
+        else:
+            continue
+
+    return continuous_chunk
+
+def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str]:
+    """
+    Extract potential entity names from query text using NLTK NER and POS tagging.
+
+    This method identifies likely entity names within query text using proper
+    Natural Language Processing techniques including Named Entity Recognition (NER)
+    and Part-of-Speech (POS) tagging from NLTK. It combines NER results with
+    proper noun detection to identify person names, organization names, locations,
+    and other named entities.
+
+    Args:
+        query (str): Query string that may contain entity names.
+            Can be normalized or raw query text. 
+        min_chars (int): Minimum character length for valid entity names.
+            Defaults to 0 characters to filter capture abbreviations (e.g. CA, NY).
+
+    Returns:
+        List[str]: List of potential entity names extracted from the query.
+            Each name is a complete entity as identified by NER.
+            Returns empty list if no entities are found.
+            Names are returned in order of appearance in the query.
+
+    Raises:
+        TypeError: If query is not a string.
+        ValueError: If query is empty or contains only whitespace.
+        ImportError: If NLTK is not available.
+        RuntimeError: If NLTK data cannot be downloaded or loaded.
+
+    Examples:
+        >>> _extract_entity_names_from_query("Who is Bill Gates?")
+        ['Bill Gates']
+        >>> _extract_entity_names_from_query("Microsoft and Apple are competitors")
+        ['Microsoft', 'Apple']
+        >>> _extract_entity_names_from_query("path from John Smith to Mary Johnson")
+        ['John Smith', 'Mary Johnson']
+        >>> _extract_entity_names_from_query("what is artificial intelligence")
+        []
+
+    Notes:
+        - Uses NLTK's named entity recognition for accurate entity detection
+        - Filters out common question words and stop words
+        - Combines NER results with proper noun detection for comprehensive coverage
+        - Handles punctuation and various text formats appropriately
+        - Works with properly formatted natural language queries
+    """
+    start_time = time.time()
+    print("Extracting entities from query:", query)
+
+    # Input validation
+    if not isinstance(query, str):
+        raise TypeError("Query must be a string")
+
+    if not query.strip():
+        raise ValueError("Query cannot be empty or contain only whitespace")
+
+    # Tokenize and tag
+    tokens = word_tokenize(query)
+    pos_tags = pos_tag(tokens)
+    
+    # Named Entity Recognition
+    entities = ne_chunk(pos_tags, binary=False)
+    print(f"NER tree: {entities}")
+
+    # Extract entities from NER tree
+    entity_names = []
+    
+    # Convert tree to IOB tags for easier processing
+    iob_tags = tree2conlltags(entities)
+    print(f"IOB tags: {iob_tags}")
+    
+    current_entity = []
+    current_label = None
+
+    for word, pos, ner in iob_tags:
+        if ner.startswith('B-'):  # Beginning of entity
+            # Save previous entity if exists
+            if current_entity:
+                print(f"Beginning entity: {current_entity} with label {current_label}")
+                entity_names.append(' '.join(current_entity))
+            # Start new entity
+            current_entity = [word]
+            current_label = ner[2:]
+        elif ner.startswith('I-') and current_entity:  # Inside entity
+            print(f"Inside entity: {current_entity} with label {current_label}")
+            current_entity.append(word)
+        else:  # Outside entity
+            # Save previous entity if exists
+            print(f"Outside entity: {current_entity} with label {current_label}")
+            if current_entity:
+                entity_names.append(' '.join(current_entity))
+            current_entity = []
+            current_label = None
+    
+    # Don't forget the last entity
+    if current_entity:
+        entity_names.append(' '.join(current_entity))
+    
+    print(f"Found entities from NER: {entity_names}")
+    
+    # Also find proper nouns that might not be caught by NER
+    proper_nouns = []
+    current_noun_phrase = []
+    
+    for word, pos in pos_tags:
+        if pos in ['NNP', 'NNPS']:  # Proper nouns
+            current_noun_phrase.append(word)
+        else:
+            if current_noun_phrase and len(current_noun_phrase) >= 1:
+                noun_phrase = ' '.join(current_noun_phrase)
+                print(f"Found proper noun phrase: {noun_phrase}")
+                # Only add if not already found by NER and meets criteria
+                if (noun_phrase not in entity_names and 
+                    len(noun_phrase) >= min_chars and
+                    not _is_question_word(noun_phrase)):
+                    proper_nouns.append(noun_phrase)
+            current_noun_phrase = []
+    
+    # Don't forget the last noun phrase
+    if current_noun_phrase and len(current_noun_phrase) >= 1:
+        noun_phrase = ' '.join(current_noun_phrase)
+        if (noun_phrase not in entity_names and 
+            len(noun_phrase) >= 3 and
+            not _is_question_word(noun_phrase)):
+            proper_nouns.append(noun_phrase)
+    
+    # Combine NER results with proper noun detection
+    all_entities = entity_names + proper_nouns
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_entities = []
+    for entity in all_entities:
+        # if ' ' in entity:
+        #     # split it up and check each word
+        #     words = entity.split()
+        #     for word in words:
+        #         word = word.strip()
+        #         if word not in seen and len(word) >= min_chars:
+        #             seen.add(word)
+        #             unique_entities.append(word)
+        if entity not in seen:
+            seen.add(entity)
+            unique_entities.append(entity)
+    
+    # Filter out obvious non-entities
+    filtered_entities = []
+    for entity in unique_entities:
+        print(entity)
+        if not _is_question_word(entity) and len(entity.strip()) >= min_chars:
+            print(f"{entity} is a valid entity")
+            filtered_entities.append(entity)
+
+    print(f"filtered_entities:\n{filtered_entities}")
+
+    # Check if numbers are in the query
+    has_numbers = any(char.isdigit() for char in query)
+    if has_numbers:
+        print("has_numbers is True")
+        # Consider numbers as part of potential entities IF
+        # - They precede or follow a stand-alone proper noun (e.g. 'Death Race 2000', '2020 Olympics')
+        # - They are preceded by a determiner (e.g. 'the 19th century', 'The 1970s')
+        # Alternatively, consider numbers as NOT entities if:
+        # - The whole query is just a number (e.g. '42', '12345252562667', '3.14')
+        # - They are the only things left if NLP strips out all non-numeric content.
+        # (e.g. 'What is 42') -> ('42')
+        # Append the numbers
+        for entity in filtered_entities:
+            # Check immediately before and after the entity in the query for a number
+            entity_start = query.find(entity)
+            print(f"Checking entity: {entity} at position {entity_start}")
+            if entity_start != -1:
+                # Check for numbers before the entity
+                before_text = query[:entity_start].strip()
+                print(f"Check before entity: {before_text}")
+                if before_text and before_text[-1].isdigit():
+                    # Find the full number before the entity
+                    words_before = before_text.split()
+                    print(f"words_before: {words_before}")
+                    if words_before:
+                        last_word = words_before[-1]
+                        if any(char.isdigit() for char in last_word):
+                            number_entity = f"{last_word} {entity}"
+                            print(f"Found number before entity: {number_entity}")
+                            if number_entity not in filtered_entities:
+                                filtered_entities.append(number_entity)
+
+                
+                # Check for numbers after the entity
+                entity_end = entity_start + len(entity)
+                after_text = query[entity_end:].strip()
+                if after_text and after_text[0].isdigit():
+                    # Find the full number after the entity
+                    words_after = after_text.split()
+                    print(f"Check after entity: {before_text}")
+                    if words_after:
+                        first_word = words_after[0]
+                        print(f"first_word: {first_word}")
+                        if any(char.isdigit() for char in first_word):
+                            number_entity = f"{entity} {first_word}"
+                            print(f"Found number after entity: {number_entity}")
+                            if number_entity not in filtered_entities:
+                                filtered_entities.append(number_entity)
+        
+        # Consolidate entries
+        # Ex: ['Main Street', 'San Francisco', 'New York', '123 Main Street', '123']
+        # becomes ['San Francisco', 'New York', '123 Main Street']
+        consolidated_entities = []
+        for entity in filtered_entities:
+           pass 
+
+
+    end_time = time.time()
+    print(f"Entity extraction took {end_time - start_time:.2f} seconds")
+    print(f"filtered_entities on return:\n{filtered_entities}")
+    return filtered_entities
+
+def _is_question_word(word: str) -> bool:
+    """Helper method to check if a word is a common question word or stop word."""
+    question_words = {
+        'who', 'what', 'when', 'where', 'why', 'how', 'which', 'whose',
+        'can', 'could', 'would', 'should', 'will', 'may', 'might',
+        'is', 'are', 'was', 'were', 'been', 'being', 'have', 'has', 'had',
+        'do', 'does', 'did', 'the', 'and', 'or', 'but', 'a', 'an', 'this',
+        'that', 'these', 'those', 'from', 'to', 'in', 'on', 'at', 'for'
+    }
+    return word in question_words
+
+
 
 @dataclass
 class Entity:
@@ -462,6 +717,9 @@ class GraphRAGIntegrator:
         # Input validation
         if llm_document is None:
             raise TypeError("llm_document cannot be None")
+
+        if not isinstance(llm_document, LLMDocument):
+            raise TypeError("llm_document must be an instance of LLMDocument")
         
         if not hasattr(llm_document, 'document_id') or llm_document.document_id is None:
             raise ValueError("document_id is required")
@@ -681,8 +939,15 @@ class GraphRAGIntegrator:
             return []
         
         entities = []
-        
+
+        results = _extract_entity_names_from_query(text)
+        print(f"results:\n{results}")
+        for result in results:
+            output = get_continuous_chunks(result, 'GPE')
+            print(f"output:\n{output}")
+
         # Named Entity Recognition patterns (can be enhanced with NLP models)
+        # TODO Replace with NLTK or other NLP library for better accuracy.
         # Process organizations first to avoid conflicts with person patterns
         patterns = {
             'organization': [
@@ -707,10 +972,10 @@ class GraphRAGIntegrator:
                 r'\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s+(?:dollars?|USD|cents?)\b'  # 25000 dollars
             ]
         }
-        
+
         # Track all matches to avoid overlaps
         all_matches = []
-        
+
         for entity_type, type_patterns in patterns.items():
             for pattern in type_patterns:
                 for match in re.finditer(pattern, text):
@@ -725,7 +990,8 @@ class GraphRAGIntegrator:
         
         # Sort by start position and remove overlaps (prefer longer matches)
         all_matches.sort(key=lambda x: (x['start'], -(x['end'] - x['start'])))
-        
+        print(f"all_matches:\n{all_matches}")
+
         # Remove overlapping matches
         non_overlapping = []
         for match in all_matches:
@@ -738,7 +1004,8 @@ class GraphRAGIntegrator:
             
             if not overlaps:
                 non_overlapping.append(match)
-        
+        print(f"non_overlapping:\n{non_overlapping}")
+
         # Convert to entity format
         for match in non_overlapping:
             entities.append({

@@ -67,7 +67,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -325,7 +325,7 @@ class TestOCREngineIntegration:
             'engine': 'easyocr'
         }
         
-        result = multi_engine.extract_with_fallback(test_image)
+        result = multi_engine.extract_with_ocr(test_image)
         assert result['text'] == 'Fallback success'
         assert result['engine'] == 'easyocr'
         
@@ -342,7 +342,7 @@ class TestOCREngineIntegration:
             'engine': 'easyocr'
         }
         
-        result = multi_engine.extract_with_fallback(test_image, strategy='best_confidence')
+        result = multi_engine.extract_with_ocr(test_image, strategy='best_confidence')
         assert result['confidence'] == 0.95
         assert result['engine'] == 'easyocr'
 

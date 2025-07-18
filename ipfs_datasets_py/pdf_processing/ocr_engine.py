@@ -5,14 +5,23 @@ Implements intelligent OCR processing with multiple engines and fallback strateg
 Supports Surya, Tesseract, EasyOCR, TrOCR, PaddleOCR, and GOT-OCR2.0.
 """
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import logging
 import io
 import numpy as np
 from typing import Dict, List, Any
+from cachetools import cached
+
 from PIL import Image
 import cv2
 
 logger = logging.getLogger(__name__)
+
+
+
+
+
+
 
 class OCREngine(ABC):
     """
@@ -67,9 +76,18 @@ class OCREngine(ABC):
     """
     
     def __init__(self, name: str):
+        if name is None:
+            raise TypeError("OCR engine name cannot be None")
+        if not isinstance(name, str):
+            raise TypeError(f"OCR engine name must be a string, got {type(name).__name__}")
+        
         self.name = name
         self.available = False
-        self._initialize()
+        try:
+            self._initialize()
+        except Exception as e:
+            logger.warning(f"Failed to initialize OCR engine '{name}': {e}")
+            self.available = False
     
     @abstractmethod
     def _initialize(self):
@@ -102,7 +120,41 @@ class OCREngine(ABC):
             - Memory and resource cleanup should be handled if initialization fails
         """
         pass
-    
+
+    def _get_image_data(self, image_data: bytes) -> Image:
+        """
+        Convert raw image bytes to a PIL Image object.
+
+        This method validates the OCR engine availability and image data before
+        converting the provided bytes to a PIL Image object that can be processed
+        by the OCR engine.
+
+        Args:
+            image_data (bytes): Raw image data in bytes format
+
+        Returns:
+            Image: PIL Image object ready for OCR processing
+
+        Raises:
+            RuntimeError: If the OCR engine is not available
+            ValueError: If image data is empty or invalid/corrupted
+        """
+        if not self.available:
+            raise RuntimeError(f"{self.name.capitalize()} engine not available")
+        
+        if not isinstance(image_data, bytes):
+            raise TypeError(f"Expected image_data to be bytes, got {type(image_data).__name__}")
+
+        # Validate image data
+        if not image_data:
+            raise ValueError("Empty image data provided")
+
+        # Convert image data to PIL Image
+        try:
+            return Image.open(io.BytesIO(image_data))
+        except Exception as e:
+            raise ValueError(f"Invalid image data: {e}")
+
     @abstractmethod
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """
@@ -265,12 +317,11 @@ class SuryaOCR(OCREngine):
         try:
             # Import Surya components
             import surya
-            from surya.recognition import RecognitionPredictor
-            from surya.detection import DetectionPredictor
 
             # Load models
-            self.detection_predictor = DetectionPredictor()
-            self.recognition_predictor = RecognitionPredictor()
+            self.surya = surya
+            self.detection_predictor = self.surya.detection.DetectionPredictor()
+            self.recognition_predictor = self.surya.recognition.RecognitionPredictor()
 
             self.available = True
             logger.info("Surya OCR engine initialized successfully")
@@ -334,7 +385,7 @@ class SuryaOCR(OCREngine):
 
         try:
             # Convert image data to PIL Image
-            image = Image.open(io.BytesIO(image_data))
+            image = super()._get_image_data(image_data)
             
             # Run OCR
             predictions = self.recognition_predictor(
@@ -470,8 +521,10 @@ class TesseractOCR(OCREngine):
             logger.error(f"Failed to initialize Tesseract OCR: {e}")
             self.available = False
     
-    def extract_text(self, image_data: bytes, 
-                    config: str = '--psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz .,!?-') -> Dict[str, Any]:
+    def extract_text(self, 
+                     image_data: bytes, 
+                    config: str = '--psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz .,!?-'
+                    ) -> Dict[str, Any]:
         """
         Extract text from image data using Tesseract OCR with configurable parameters and preprocessing.
 
@@ -535,13 +588,10 @@ class TesseractOCR(OCREngine):
             - Processing time varies with image size and complexity
             - Word-level confidence scores help identify potentially incorrect text
         """
-        if not self.available:
-            raise RuntimeError("Tesseract OCR engine not available")
-        
         try:
             # Convert image data to PIL Image
-            image = Image.open(io.BytesIO(image_data))
-            
+            image = super()._get_image_data(image_data)
+
             # Preprocess image for better OCR
             image = self._preprocess_image(image)
             
@@ -550,6 +600,7 @@ class TesseractOCR(OCREngine):
             
             # Get confidence data
             data = self.pytesseract.image_to_data(image, output_type=self.pytesseract.Output.DICT)
+            print(f"pytesseract data:\n{data}")
             
             # Calculate average confidence
             confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
@@ -696,7 +747,7 @@ class EasyOCR(OCREngine):
     def _initialize(self):
         try:
             import easyocr
-            
+
             self.reader = easyocr.Reader(['en'])  # Initialize with English
             self.available = True
             logger.info("EasyOCR engine initialized successfully")
@@ -710,17 +761,15 @@ class EasyOCR(OCREngine):
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """Extract text using EasyOCR."""
-        if not self.available:
-            raise RuntimeError("EasyOCR engine not available")
-        
         try:
+            image = super()._get_image_data(image_data)
+
             # Convert image data to numpy array
-            image = Image.open(io.BytesIO(image_data))
             image_array = np.array(image)
-            
+
             # Run OCR
             results = self.reader.readtext(image_array)
-            
+
             # Process results
             full_text = ""
             text_blocks = []
@@ -809,16 +858,8 @@ class TrOCREngine(OCREngine):
     """
     
     def __init__(self):
-        # Initialize name and available first
-        self.name = "trocr"
-        self.available = False
-        # Call initialization with error handling
-        try:
-            self._initialize()
-        except Exception as e:
-            logger.warning(f"TrOCR initialization failed: {e}")
-            self.available = False
-    
+        super().__init__("trocr")
+
     def _initialize(self):
         try:
             from transformers import TrOCRProcessor, VisionEncoderDecoderModel
@@ -839,20 +880,10 @@ class TrOCREngine(OCREngine):
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
         """Extract text using TrOCR."""
-        if not self.available:
-            raise RuntimeError("TrOCR engine not available")
-        
-        # Validate image data
-        if not image_data:
-            raise ValueError("Empty image data provided")
-        
+
         try:
-            # Convert image data to PIL Image
-            try:
-                image = Image.open(io.BytesIO(image_data))
-            except Exception as e:
-                raise ValueError(f"Invalid image data: {e}")
-            
+            image = super()._get_image_data(image_data)
+
             # Ensure RGB format
             if image.mode != 'RGB':
                 image = image.convert('RGB')
@@ -916,7 +947,7 @@ class MultiEngineOCR:
         - accuracy_first: Prioritizes most accurate engines (Surya → EasyOCR → TrOCR → Tesseract)
 
     Public Methods:
-        extract_with_fallback(image_data, strategy, confidence_threshold) -> Dict[str, Any]:
+        extract_with_ocr(image_data, strategy, confidence_threshold) -> Dict[str, Any]:
             Extract text using multiple engines with intelligent fallback based on confidence scores
             and processing strategy.
         get_available_engines() -> List[str]: Get list of successfully initialized OCR engines.
@@ -926,7 +957,7 @@ class MultiEngineOCR:
         multi_ocr = MultiEngineOCR()
         
         # High-quality extraction with fallback
-        result = multi_ocr.extract_with_fallback(
+        result = multi_ocr.extract_with_ocr(
             image_data=document_bytes,
             strategy='quality_first',
             confidence_threshold=0.8
@@ -948,7 +979,7 @@ class MultiEngineOCR:
     def __init__(self):
         """Initialize all available OCR engines."""
         self.engines = {}
-        
+
         # Initialize engines
         engine_classes = [
             SuryaOCR,
@@ -961,22 +992,21 @@ class MultiEngineOCR:
             try:
                 engine = engine_class()
                 if engine.is_available():
-                    self.engines[engine.name] = engine
                     logger.info(f"OCR engine '{engine.name}' is available")
                 else:
                     logger.warning(f"OCR engine '{engine.name}' is not available")
+                self.engines[engine.name] = engine
             except Exception as e:
                 logger.error(f"Failed to initialize {engine_class.__name__}: {e}")
-        
         if not self.engines:
             logger.warning("No OCR engines available!")
     
-    def extract_with_fallback(self, 
+    def extract_with_ocr(self, 
                             image_data: bytes, 
                             strategy: str = 'quality_first',
                             confidence_threshold: float = 0.8) -> Dict[str, Any]:
         """
-        Extract text using multiple engines with intelligent fallback.
+        Extract text using multiple OCR engines.
         
         Args:
             image_data: Image data as bytes
@@ -988,7 +1018,19 @@ class MultiEngineOCR:
         """
         if not self.engines:
             raise RuntimeError("No OCR engines available")
-        
+
+        if not isinstance(confidence_threshold, float):
+            raise TypeError("confidence_threshold must be a float")
+
+        if not isinstance(image_data, bytes):
+            raise TypeError("image_data must be bytes")
+
+        if not image_data:
+            raise ValueError("image_data cannot be empty")
+
+        if confidence_threshold < 0.0 or confidence_threshold > 1.0:
+            raise ValueError("confidence_threshold must be between 0.0 and 1.0")
+
         # Define engine order based on strategy
         match strategy:
             case 'quality_first':
@@ -998,7 +1040,7 @@ class MultiEngineOCR:
             case 'accuracy_first':
                 engines = ['surya', 'easyocr', 'trocr', 'tesseract']
             case _:
-                engines = list(self.engines.keys())
+                raise ValueError(f"Unknown strategy: {strategy}")
         
         # Filter to only available engines
         available_engines = [name for name in engines if name in self.engines]
@@ -1028,7 +1070,7 @@ class MultiEngineOCR:
             logger.info(f"Returning best result from {best_result['engine']} with confidence {best_result['confidence']:.2f}")
             return best_result
         
-        # If all engines failed, return empty result
+        # If all engines failed, return empty result with error
         logger.error("All OCR engines failed")
         return {
             'text': '',
@@ -1036,14 +1078,19 @@ class MultiEngineOCR:
             'engine': 'none',
             'error': 'All OCR engines failed'
         }
-    
+
     def get_available_engines(self) -> List[str]:
         """Get list of available OCR engines."""
-        return list(self.engines.keys())
-    
+        return [
+            name for name, engine in self.engines.items() if engine.is_available()
+        ]
+
     def classify_document_type(self, image_data: bytes) -> str:
         """
         Classify document type to select optimal OCR strategy.
+
+        Args:
+            image_data: Image data as bytes
         
         Returns:
             Document type ('printed', 'handwritten', 'scientific', 'mixed')

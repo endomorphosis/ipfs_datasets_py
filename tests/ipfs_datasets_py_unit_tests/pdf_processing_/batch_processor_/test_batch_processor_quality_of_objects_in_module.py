@@ -91,6 +91,8 @@ class TestQualityOfObjectsInModule:
         try:
             raise_on_bad_callable_metadata(tree)
         except (BadDocumentationError, BadSignatureError) as e:
+            import traceback
+            traceback.print_exc()
             pytest.fail(f"Code metadata quality check failed: {e}")
 
     def test_callable_objects_quality(self):
@@ -104,13 +106,15 @@ class TestQualityOfObjectsInModule:
         """
         try:
             raise_on_bad_callable_code_quality(file_path)
-        except (BadDocumentationError, BadSignatureError) as e:
+        except Exception as e:
             for indicator in ["mock", "placeholder", "stub", "example"]:
                 if indicator in file_path:
                     break
             else:
+                import traceback
+                traceback.print_exc()
                 # If no indicator is found, fail the test
-                pytest.fail(f"Code quality check failed: {e}")
+                pytest.fail(f"Code quality check failed with {type(e).__name__}: {e}")
 
 
 

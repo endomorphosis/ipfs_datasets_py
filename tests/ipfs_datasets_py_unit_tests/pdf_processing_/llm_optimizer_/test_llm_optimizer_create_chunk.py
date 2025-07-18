@@ -94,14 +94,10 @@ class TestLLMOptimizerCreateChunk:
         
         chunk_id = 1
         page_num = 1
-        metadata = LLMChunkMetadata(
-            source_elements=["paragraph"],
-            semantic_types={"paragraph"},
-            page_number=page_num
-        ).model_dump()
+        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, metadata)
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
         
         # Then - verify LLMChunk instance and basic structure
         assert isinstance(chunk, LLMChunk), "Should return LLMChunk instance"
@@ -129,15 +125,6 @@ class TestLLMOptimizerCreateChunk:
         # Verify source element
         assert chunk.source_elements is not None, "Source element should be populated"
         assert isinstance(chunk.source_elements, list), "Source element should be a list of strings"
-        
-        # Verify metadata enhancement
-        assert chunk.metadata is not None, "Metadata should be present"
-        assert isinstance(chunk.metadata, dict), "Metadata should be dictionary"
-        
-        # Original metadata should be preserved
-        for key, value in metadata.items():
-            assert key in chunk.metadata.keys(), f"Original metadata key '{key}' should be preserved"
-            assert chunk.metadata[key] == value, f"Metadata value for '{key}' should be preserved"
 
         # Verify chunk coherence
         assert not chunk.content.startswith(" "), "Content should not start with whitespace"
@@ -165,12 +152,12 @@ class TestLLMOptimizerCreateChunk:
         
         chunk_id = "chunk_0001"
         page_num = 1
-        metadata = {"element_type": "paragraph"}
+        source_elements = ["paragraph"]
         
         # When/Then - test each empty content case
         for empty_content in empty_content_cases:
             with pytest.raises((ValidationError)) as exc_info:
-                await optimizer._create_chunk(empty_content, chunk_id, page_num, metadata)
+                await optimizer._create_chunk(empty_content, chunk_id, page_num, source_elements)
             
             # Verify error message is descriptive
             if empty_content is None:
@@ -342,7 +329,7 @@ class TestLLMOptimizerCreateChunk:
                 test_case["content"], 
                 chunk_id, 
                 page_num, 
-                test_case["metadata"]
+                test_case["metadata"]['source_elements']
             )
             
             # Then - verify semantic type determination

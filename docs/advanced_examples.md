@@ -140,7 +140,7 @@ for strategy in ocr_strategies:
     with open("sample_scanned_page.png", "rb") as f:
         image_data = f.read()
     
-    result = ocr.extract_with_fallback(image_data, strategy=strategy)
+    result = ocr.extract_with_ocr(image_data, strategy=strategy)
     print(f"Strategy '{strategy}': {result['confidence']:.2f} confidence, "
           f"engine: {result['engine']}")
 

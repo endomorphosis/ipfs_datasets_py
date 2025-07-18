@@ -67,7 +67,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -98,6 +98,8 @@ class ConcreteOCREngine(OCREngine):
     def _initialize(self):
         """Test implementation of _initialize."""
         if self.should_fail_init:
+            # Simulate initialization failure by raising an exception
+            # The base class will catch this and set available = False
             raise RuntimeError("Simulated initialization failure")
         self.available = True
     

@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TesseractOCR methods (_initialize, extract_text, _preprocess_image) with traditional OCR and preprocessing details
   - EasyOCR methods (_initialize, extract_text) with neural network-based complex layout processing
   - TrOCREngine methods (_initialize, extract_text) with transformer-based handwritten text recognition
-  - MultiEngineOCR methods (__init__, extract_with_fallback, get_available_engines, classify_document_type) with intelligent orchestration capabilities
+  - MultiEngineOCR methods (__init__, extract_with_ocr, get_available_engines, classify_document_type) with intelligent orchestration capabilities
 
 ### Improved
 - Documentation consistency across all classes following project standards

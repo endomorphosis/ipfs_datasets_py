@@ -68,7 +68,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -469,7 +469,7 @@ class TestOCREngineConfigurationAndCustomization:
             strategies = ['quality_first', 'speed_first', 'accuracy_first']
             
             for strategy in strategies:
-                result = multi_ocr.extract_with_fallback(
+                result = multi_ocr.extract_with_ocr(
                     image_data, 
                     strategy=strategy, 
                     confidence_threshold=0.7
@@ -485,7 +485,7 @@ class TestOCREngineConfigurationAndCustomization:
             
             # Test invalid strategy handling
             with pytest.raises(ValueError):
-                multi_ocr.extract_with_fallback(image_data, strategy='invalid_strategy')
+                multi_ocr.extract_with_ocr(image_data, strategy='invalid_strategy')
                 
             # Test custom strategy concept (if implemented)
             # For now, verify that we can at least specify the built-in strategies
@@ -562,11 +562,11 @@ class TestOCREngineConfigurationAndCustomization:
                     mock_tesseract.reset_mock()
                     mock_easyocr.reset_mock()
                     
-                    # Call extract_with_fallback with threshold
-                    if hasattr(multi_engine, 'extract_with_fallback'):
+                    # Call extract_with_ocr with threshold
+                    if hasattr(multi_engine, 'extract_with_ocr'):
                         if primary_conf >= threshold:
                             # Primary should be sufficient
-                            result = multi_engine.extract_with_fallback(
+                            result = multi_engine.extract_with_ocr(
                                 test_image_data, 
                                 confidence_threshold=threshold
                             )
@@ -575,14 +575,14 @@ class TestOCREngineConfigurationAndCustomization:
                         else:
                             # Should try fallback
                             if fallback_conf >= threshold:
-                                result = multi_engine.extract_with_fallback(
+                                result = multi_engine.extract_with_ocr(
                                     test_image_data,
                                     confidence_threshold=threshold
                                 )
                                 expected_text = fallback_result['text']
                             else:
                                 # Both below threshold, should still return best available
-                                result = multi_engine.extract_with_fallback(
+                                result = multi_engine.extract_with_ocr(
                                     test_image_data,
                                     confidence_threshold=threshold
                                 )
@@ -619,13 +619,13 @@ class TestOCREngineConfigurationAndCustomization:
             }
             
             # Very high threshold should cause fallback
-            if hasattr(multi_engine, 'extract_with_fallback'):
-                result = multi_engine.extract_with_fallback(test_image_data, confidence_threshold=0.95)
+            if hasattr(multi_engine, 'extract_with_ocr'):
+                result = multi_engine.extract_with_ocr(test_image_data, confidence_threshold=0.95)
                 assert isinstance(result, (dict, str))
             
             # Test threshold of 0.0 (should accept any result)
-            if hasattr(multi_engine, 'extract_with_fallback'):
-                result = multi_engine.extract_with_fallback(test_image_data, confidence_threshold=0.0)
+            if hasattr(multi_engine, 'extract_with_ocr'):
+                result = multi_engine.extract_with_ocr(test_image_data, confidence_threshold=0.0)
                 assert isinstance(result, (dict, str))
             
             # Test threshold of 1.0 (very strict)
@@ -635,8 +635,8 @@ class TestOCREngineConfigurationAndCustomization:
                 'metadata': {'engine': 'tesseract'}
             }
             
-            if hasattr(multi_engine, 'extract_with_fallback'):
-                result = multi_engine.extract_with_fallback(test_image_data, confidence_threshold=1.0)
+            if hasattr(multi_engine, 'extract_with_ocr'):
+                result = multi_engine.extract_with_ocr(test_image_data, confidence_threshold=1.0)
                 assert isinstance(result, (dict, str))
 
 

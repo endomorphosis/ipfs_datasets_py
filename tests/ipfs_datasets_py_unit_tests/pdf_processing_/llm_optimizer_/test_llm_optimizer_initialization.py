@@ -113,6 +113,8 @@ class TestLLMOptimizerInitialization:
         assert hasattr(optimizer, 'text_processor'), "Optimizer should have text_processor attribute"
         assert hasattr(optimizer, 'chunk_optimizer'), "Optimizer should have chunk_optimizer attribute"
 
+class TestLLMOptimizerGenerateDocumentSummary:
+
     @pytest.mark.asyncio
     async def test_generate_document_summary_empty_content(self):
         """
@@ -159,7 +161,7 @@ class TestLLMOptimizerInitialization:
         """
         GIVEN structured_text missing 'pages' key
         WHEN _generate_document_summary is called
-        THEN expect KeyError to be raised
+        THEN expect error message to be returned
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
         
@@ -172,13 +174,14 @@ class TestLLMOptimizerInitialization:
             "content": "Some content but no pages structure"
         }
         
-        # When/Then
-        with pytest.raises((KeyError, ValueError, AttributeError)) as exc_info:
-            await optimizer._generate_document_summary(missing_pages_text)
+        # When
+        result = await optimizer._generate_document_summary(missing_pages_text)
         
-        # Error message should be clear about the issue
-        error_message = str(exc_info.value).lower()
-        assert any(keyword in error_message for keyword in ["pages", "missing", "key", "structure"]), f"Error message should be descriptive: {error_message}"
+        # Then - should return error message instead of raising exception
+        assert isinstance(result, str), "Result should be string type"
+        assert "summary generation failed" in result.lower(), "Should indicate summary generation failure"
+        assert "keyerror" in result.lower(), "Should indicate KeyError occurred"
+        assert "'pages'" in result, "Should mention missing 'pages' key"
 
     @pytest.mark.asyncio
     async def test_generate_document_summary_keyword_analysis(self):

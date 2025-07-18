@@ -67,7 +67,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -602,7 +602,7 @@ class TestOCREnginePerformance:
             multi_engine.engines = {'tesseract': tesseract_engine}
             
             start_time = time.time()
-            multi_result = multi_engine.extract_with_fallback(image_data, strategy='speed_first')
+            multi_result = multi_engine.extract_with_ocr(image_data, strategy='speed_first')
             multi_time = time.time() - start_time
             
             assert isinstance(multi_result, dict)
@@ -637,7 +637,7 @@ class TestOCREnginePerformance:
             multi_engine.engines = {'surya': mock_engine1, 'tesseract': mock_engine2}
             
             # Should successfully fallback despite first engine failure
-            result = multi_engine.extract_with_fallback(image_data)
+            result = multi_engine.extract_with_ocr(image_data)
             assert result['text'] == 'Fallback Success'
             assert result['engine'] == 'tesseract'
             

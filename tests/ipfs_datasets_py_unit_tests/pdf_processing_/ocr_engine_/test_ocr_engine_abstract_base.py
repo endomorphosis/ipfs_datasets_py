@@ -69,7 +69,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -296,9 +296,8 @@ class TestOCREngineAbstractBase:
         
         # Failed initialization
         engine_fail = ConcreteOCREngine("fail", should_fail_init=True)
-        # The available state depends on how the concrete class handles failures
-        # We just verify it has the attribute and it's a boolean
-        assert hasattr(engine_fail, 'available')
+        # The available state should be False when initialization fails
+        assert engine_fail.available == False
         assert isinstance(engine_fail.available, bool)
 
 

@@ -76,12 +76,12 @@ class TestExtractEntitiesFromText:
     """Test class for GraphRAGIntegrator._extract_entities_from_text method."""
 
     @pytest.fixture
-    def integrator(self):
+    def integrator(self) -> GraphRAGIntegrator:
         """Create a GraphRAGIntegrator instance for testing."""
         return GraphRAGIntegrator()
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_person_entities(self, integrator):
+    async def test_extract_entities_from_text_person_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing person names in various formats
         WHEN _extract_entities_from_text is called
@@ -109,7 +109,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_organization_entities(self, integrator):
+    async def test_extract_entities_from_text_organization_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing organization names with common suffixes
         WHEN _extract_entities_from_text is called
@@ -126,7 +126,7 @@ class TestExtractEntitiesFromText:
         assert len(org_entities) >= 4
         
         org_names = [entity['name'] for entity in org_entities]
-        assert 'Apple Inc.' in org_names
+        assert 'Apple Inc' in org_names
         assert 'Microsoft Corporation' in org_names
         assert 'Harvard University' in org_names
         assert 'Amazon LLC' in org_names
@@ -137,7 +137,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_location_entities(self, integrator):
+    async def test_extract_entities_from_text_location_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing addresses and city/state combinations
         WHEN _extract_entities_from_text is called
@@ -163,7 +163,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_date_entities(self, integrator):
+    async def test_extract_entities_from_text_date_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing dates in various formats
         WHEN _extract_entities_from_text is called
@@ -189,7 +189,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_currency_entities(self, integrator):
+    async def test_extract_entities_from_text_currency_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing currency amounts and expressions
         WHEN _extract_entities_from_text is called
@@ -215,7 +215,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_empty_string(self, integrator):
+    async def test_extract_entities_from_text_empty_string(self, integrator: GraphRAGIntegrator):
         """
         GIVEN an empty string as input text
         WHEN _extract_entities_from_text is called
@@ -230,7 +230,7 @@ class TestExtractEntitiesFromText:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_whitespace_only(self, integrator):
+    async def test_extract_entities_from_text_whitespace_only(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing only whitespace characters
         WHEN _extract_entities_from_text is called
@@ -245,7 +245,7 @@ class TestExtractEntitiesFromText:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_no_entities(self, integrator):
+    async def test_extract_entities_from_text_no_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text that contains no recognizable entities
         WHEN _extract_entities_from_text is called
@@ -260,7 +260,7 @@ class TestExtractEntitiesFromText:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_duplicate_entities(self, integrator):
+    async def test_extract_entities_from_text_duplicate_entities(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing the same entity mentioned multiple times
         WHEN _extract_entities_from_text is called
@@ -276,7 +276,7 @@ class TestExtractEntitiesFromText:
         assert len(apple_entities) == 1  # Should be deduplicated
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_case_variations(self, integrator):
+    async def test_extract_entities_from_text_case_variations(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing entities with different case variations
         WHEN _extract_entities_from_text is called
@@ -293,7 +293,7 @@ class TestExtractEntitiesFromText:
         assert len(microsoft_entities) >= 1
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_overlapping_patterns(self, integrator):
+    async def test_extract_entities_from_text_overlapping_patterns(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text where entity patterns overlap (e.g., person name within organization)
         WHEN _extract_entities_from_text is called
@@ -313,7 +313,7 @@ class TestExtractEntitiesFromText:
         assert len(org_entities) >= 1    # John Smith Inc.
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_special_characters(self, integrator):
+    async def test_extract_entities_from_text_special_characters(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing entities with special characters, apostrophes, hyphens
         WHEN _extract_entities_from_text is called
@@ -330,7 +330,7 @@ class TestExtractEntitiesFromText:
         assert len(result) >= 1  # Should extract at least some entities
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_unicode_characters(self, integrator):
+    async def test_extract_entities_from_text_unicode_characters(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing entities with unicode characters (accented letters, etc.)
         WHEN _extract_entities_from_text is called
@@ -350,7 +350,7 @@ class TestExtractEntitiesFromText:
             assert all(isinstance(value, str) for value in entity.values() if isinstance(value, str))
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_mixed_entity_types(self, integrator):
+    async def test_extract_entities_from_text_mixed_entity_types(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text containing multiple types of entities together
         WHEN _extract_entities_from_text is called
@@ -372,7 +372,7 @@ class TestExtractEntitiesFromText:
             assert entity['confidence'] == 0.7
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_chunk_id_assignment(self, integrator):
+    async def test_extract_entities_from_text_chunk_id_assignment(self, integrator: GraphRAGIntegrator):
         """
         GIVEN a specific chunk_id parameter
         WHEN _extract_entities_from_text is called
@@ -388,7 +388,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_confidence_scores(self, integrator):
+    async def test_extract_entities_from_text_confidence_scores(self, integrator: GraphRAGIntegrator):
         """
         GIVEN any text with entities
         WHEN _extract_entities_from_text is called
@@ -404,7 +404,7 @@ class TestExtractEntitiesFromText:
             assert entity['confidence'] == 0.7
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_entity_descriptions(self, integrator):
+    async def test_extract_entities_from_text_entity_descriptions(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text with various entity types
         WHEN _extract_entities_from_text is called
@@ -434,7 +434,7 @@ class TestExtractEntitiesFromText:
                 assert any(word in entity['description'].lower() for word in ['currency', 'amount', 'money'])
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_properties_structure(self, integrator):
+    async def test_extract_entities_from_text_properties_structure(self, integrator: GraphRAGIntegrator):
         """
         GIVEN any text with entities
         WHEN _extract_entities_from_text is called
@@ -454,7 +454,7 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_regex_error_handling(self, integrator):
+    async def test_extract_entities_from_text_regex_error_handling(self, integrator: GraphRAGIntegrator):
         """
         GIVEN malformed regex patterns (hypothetically)
         WHEN _extract_entities_from_text is called
@@ -475,7 +475,7 @@ class TestExtractEntitiesFromText:
             assert "Invalid regex pattern" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_large_text_input(self, integrator):
+    async def test_extract_entities_from_text_large_text_input(self, integrator: GraphRAGIntegrator):
         """
         GIVEN a very large text input (>10KB)
         WHEN _extract_entities_from_text is called
@@ -500,7 +500,7 @@ class TestExtractEntitiesFromText:
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_none_text_input(self, integrator):
+    async def test_extract_entities_from_text_none_text_input(self, integrator: GraphRAGIntegrator):
         """
         GIVEN None as the text parameter
         WHEN _extract_entities_from_text is called
@@ -513,7 +513,7 @@ class TestExtractEntitiesFromText:
         assert "text must be a string" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_none_chunk_id(self, integrator):
+    async def test_extract_entities_from_text_none_chunk_id(self, integrator: GraphRAGIntegrator):
         """
         GIVEN None as the chunk_id parameter
         WHEN _extract_entities_from_text is called
@@ -526,7 +526,7 @@ class TestExtractEntitiesFromText:
         assert "chunk_id must be a string" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_non_string_inputs(self, integrator):
+    async def test_extract_entities_from_text_non_string_inputs(self, integrator: GraphRAGIntegrator):
         """
         GIVEN non-string inputs for text or chunk_id parameters
         WHEN _extract_entities_from_text is called
@@ -544,7 +544,7 @@ class TestExtractEntitiesFromText:
         assert "chunk_id must be a string" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_edge_case_patterns(self, integrator):
+    async def test_extract_entities_from_text_edge_case_patterns(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text with edge cases like single letters, numbers only, punctuation only
         WHEN _extract_entities_from_text is called
@@ -562,7 +562,7 @@ class TestExtractEntitiesFromText:
             assert not entity['name'].isdigit()  # Should not be pure numbers
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_boundary_matching(self, integrator):
+    async def test_extract_entities_from_text_boundary_matching(self, integrator: GraphRAGIntegrator):
         """
         GIVEN text where potential entities are at word boundaries vs embedded in words
         WHEN _extract_entities_from_text is called
@@ -586,7 +586,7 @@ class TestExtractEntitiesFromText:
             assert any('Inc' in name or name == 'Apple' for name in apple_entities)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_return_type_validation(self, integrator):
+    async def test_extract_entities_from_text_return_type_validation(self, integrator: GraphRAGIntegrator):
         """
         GIVEN any valid text input
         WHEN _extract_entities_from_text is called

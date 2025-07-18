@@ -171,7 +171,6 @@ class TestLLMOptimizerGenerateDocumentEmbedding:
         THEN expect:
             - RuntimeError raised
             - Clear error message
-            - None returned on graceful handling
         """
         # Given
         summary = "Test summary content"

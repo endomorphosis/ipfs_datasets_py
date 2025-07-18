@@ -544,7 +544,7 @@ class MultiEngineOCR:
             'got_ocr': GOTOCREngine()
         }
         
-    def extract_with_fallback(self, image_data, strategy='quality_first'):
+    def extract_with_ocr(self, image_data, strategy='quality_first'):
         results = []
         
         if strategy == 'quality_first':

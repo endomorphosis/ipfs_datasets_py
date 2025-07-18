@@ -13,11 +13,32 @@ from unittest.mock import Mock, patch, MagicMock
 import pytest
 import numpy as np
 from PIL import Image
-
+from pydantic import BaseModel
 
 import cv2
 import torch
 import pytesseract
+from surya.recognition.schema import BaseChar
+
+# NOTE These are already in the surya module, but we redefine them here for clarity.
+class TextChar(BaseChar):
+    bbox_valid: bool = True  # This is false when the given bbox is not valid
+
+
+class TextWord(BaseChar):
+    bbox_valid: bool = True
+
+
+class TextLine(BaseChar):
+    chars: List[TextChar]  # Individual characters in the line
+    original_text_good: bool = False
+    words: List[TextWord] | None = None
+
+
+class OCRResult(BaseModel):
+    text_lines: List[TextLine]
+    image_bbox: List[float]
+
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import (
     OCREngine,
@@ -67,7 +88,7 @@ assert EasyOCR._initialize
 assert EasyOCR.extract_text
 assert TrOCREngine._initialize
 assert TrOCREngine.extract_text
-assert MultiEngineOCR.extract_with_fallback
+assert MultiEngineOCR.extract_with_ocr
 assert MultiEngineOCR.get_available_engines
 assert MultiEngineOCR.classify_document_type
 
@@ -94,39 +115,15 @@ class TestOCREngineErrorHandling:
         """
         GIVEN any OCR engine
         WHEN calling extract_text(None)
-        THEN should raise ValueError or TypeError
+        THEN should raise TypeError
         """
-        # Test TesseractOCR
-        with patch.object(TesseractOCR, '_initialize'):
-            tesseract_engine = TesseractOCR()
-            tesseract_engine.available = True
-            
-            with pytest.raises((ValueError, TypeError)):
-                tesseract_engine.extract_text(None)
-        
-        # Test EasyOCR
-        with patch.object(EasyOCR, '_initialize'):
-            easy_engine = EasyOCR()
-            easy_engine.available = True
-            
-            with pytest.raises((ValueError, TypeError)):
-                easy_engine.extract_text(None)
-        
-        # Test SuryaOCR
-        with patch.object(SuryaOCR, '_initialize'):
-            surya_engine = SuryaOCR()
-            surya_engine.available = True
-            
-            with pytest.raises((ValueError, TypeError)):
-                surya_engine.extract_text(None)
-        
-        # Test TrOCREngine
-        with patch.object(TrOCREngine, '_initialize'):
-            trocr_engine = TrOCREngine()
-            trocr_engine.available = True
-            
-            with pytest.raises((ValueError, TypeError)):
-                trocr_engine.extract_text(None)
+        for engine in [SuryaOCR, EasyOCR, TesseractOCR, TrOCREngine]:
+            with patch.object(engine, '_initialize'):
+                ocr_engine = engine()
+                ocr_engine.available = True
+                
+                with pytest.raises(TypeError):
+                    ocr_engine.extract_text(None)
 
     def test_all_engines_handle_empty_bytes(self):
         """
@@ -134,37 +131,13 @@ class TestOCREngineErrorHandling:
         WHEN calling extract_text(b'')
         THEN should raise ValueError
         """
-        # Test TesseractOCR
-        with patch.object(TesseractOCR, '_initialize'):
-            tesseract_engine = TesseractOCR()
-            tesseract_engine.available = True
-            
-            with pytest.raises(ValueError):
-                tesseract_engine.extract_text(b'')
-        
-        # Test EasyOCR
-        with patch.object(EasyOCR, '_initialize'):
-            easy_engine = EasyOCR()
-            easy_engine.available = True
-            
-            with pytest.raises(ValueError):
-                easy_engine.extract_text(b'')
-        
-        # Test SuryaOCR
-        with patch.object(SuryaOCR, '_initialize'):
-            surya_engine = SuryaOCR()
-            surya_engine.available = True
-            
-            with pytest.raises(ValueError):
-                surya_engine.extract_text(b'')
-        
-        # Test TrOCREngine
-        with patch.object(TrOCREngine, '_initialize'):
-            trocr_engine = TrOCREngine()
-            trocr_engine.available = True
-            
-            with pytest.raises(ValueError):
-                trocr_engine.extract_text(b'')
+        for engine in [SuryaOCR, EasyOCR, TesseractOCR, TrOCREngine]:
+            with patch.object(engine, '_initialize'):
+                ocr_engine = engine()
+                ocr_engine.available = True
+                
+                with pytest.raises(ValueError):
+                    ocr_engine.extract_text(b'')
 
     def test_all_engines_handle_non_image_data(self):
         """
@@ -450,12 +423,15 @@ class TestOCREngineErrorHandling:
             assert result['text'] == ""
             assert 'confidence' in result
         
+        from surya.recognition.schema import OCRResult
+
         # Test SuryaOCR
         with patch.object(SuryaOCR, '_initialize'):
             surya_engine = SuryaOCR()
             surya_engine.available = True
-            surya_engine.run_ocr = Mock()
-            surya_engine.run_ocr.return_value = ([], ["en"])  # No text lines found
+            surya_engine.detection_predictor = Mock()
+            surya_engine.recognition_predictor = Mock(spec=OCRResult)
+            surya_engine.recognition_predictor.return_value = ([], ["en"])  # No text lines found
             
             result = surya_engine.extract_text(no_text_image_data)
             assert isinstance(result, dict)

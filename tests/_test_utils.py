@@ -1,15 +1,54 @@
+"""
+Utility functions for testing the quality of Python code and its metadata.
+
+These are meant so ensure the LLM-generated code has a unified style and quality,
+making it easier for developers and other LLMs to understand, test, use, and maintain.
+
+These functions check for:
+- The quality of callable objects' metadata. This includes:
+    - Detailed, Google-style docstrings.
+    - Detailed signatures with type hints and return annotations.
+- The quality of callable objects' code. This includes:
+    - No intentionally fake or simplified code (e.g., "In a real implementation, ...")
+    - No mocked objects or placeholders that are not explicitly marked as such.
+    - Unnecessary fallbacks that clutters the codebase and make it harder to test and debug.
+"""
+
 import ast
 from pathlib import Path
 
+
+class FalsifiedCodeError(NotImplementedError):
+    """Custom exception for falsified code."""
+    pass
+
+class UnlabeledMockError(NotImplementedError):
+    """Custom exception for unlabeled mocks."""
+    pass
+
+class UnlabeledPlaceholderError(NotImplementedError):
+    """Custom exception for unlabeled placeholders."""
+    pass
+
+class SilentlyIgnoredErrorsError(NotImplementedError):
+    """Custom exception for code that silently ignores errors."""
+    pass
+
+
+
+class UnnecessaryFallbackError(Exception):
+    """Custom exception for unnecessary fallback code."""
+    pass
 
 class BadDocumentationError(Exception):
     """Custom exception for bad documentation."""
     pass
 
-
 class BadSignatureError(Exception):
     """Custom exception for bad function signatures."""
     pass
+
+
 
 
 def get_ast_tree(input_path: Path) -> ast.Module:
@@ -169,6 +208,7 @@ def raise_on_bad_docstring(node, tree: ast.AST) -> None:
         raise BadDocumentationError(
             f"Docstring for '{node_name}' is missing 'Raises:' section "
             "but exceptions are raised in the callable body."
+            f"{docstring}"
         )
 
     # Docstring contains "Args:" if there are arguments (only check for functions)
@@ -187,32 +227,77 @@ def raise_on_bad_docstring(node, tree: ast.AST) -> None:
                 raise BadDocumentationError(
                     f"Docstring for '{node_name}' does not contain 'Args:' "
                     "but the callable has arguments."
+                    "{docstring}"
                 )
 
     # Docstring contains 'Returns:', or 'Examples:'
     if isinstance(node, ast.FunctionDef):
-        if 'Returns:' not in docstring and node.name not in ['__init__', '__new__', '__post_init__']:
-            raise BadDocumentationError(
-                f"Docstring for '{node_name}' in  does not contain 'Returns:' section "
-            )
-        if 'Examples:' not in docstring or 'Example:' not in docstring:
-            raise BadDocumentationError(
-                f"Docstring for '{node_name}' does not contain 'Example' section "
-            )
-    return
+        if node.name in ['__init__', '__new__', '__post_init__']:
+            # Initialization methods like __init__, __new__, and __post_init__ do not require 'Returns:'
+            pass
 
+        # NOTE: Due to the raise_on_bad_signature function, we already know that
+        # if it's a function, the return type is annotated, so we can safely check for 'Returns:'
+        if node.returns.id != 'None' and 'Returns:' not in docstring:
+            raise BadDocumentationError(
+                f"Docstring for '{node_name}' in does not contain 'Returns:' section "
+                f"{docstring}"
+            )
+    # NOTE This affects classes as well, but we don't check for return types in classes.
+    if 'Examples:' in docstring or 'Example:' in docstring:
+        return
+    else:
+        raise BadDocumentationError(
+            f"Docstring for '{node_name}' does not contain 'Example' section "
+            f"{docstring}"
+        )
 
 def raise_on_bad_callable_code_quality(path: Path) -> None:
     """
-    Ensure the code quality by checking for placeholder or mock code that should be implemented.
-    
+    Validate code quality by detecting placeholder, mock, or falsified implementations.
+
+    This function analyzes Python source code to identify patterns that indicate
+    incomplete, fake, or production-unready code. It checks for specific phrases
+    and patterns commonly used in LLM-generated code that signal placeholder
+    implementations, mock objects, or simplified code that needs replacement.
+
+    The function performs several quality checks:
+    - Detects falsified code patterns (e.g., "In a real implementation")
+    - Identifies unlabeled mock code outside of test contexts
+    - Finds unnecessary fallback implementations
+    - Catches silently suppressed errors
+
+    Files containing mock indicators in their path ("mock", "placeholder", "stub", 
+    "example") are exempt from certain checks, as they are expected to contain
+    placeholder code.
+
     Args:
-        path: Path to the Python file to analyze.
+        path: Path to the Python file to analyze for code quality issues.
         
     Raises:
-        NotImplementedError: If the file contains fake or mocked code that needs implementation.
+        FalsifiedCodeError: If the file contains fake or simplified code patterns
+            that indicate incomplete implementation.
+        UnlabeledMockError: If the file contains mock code outside of test files
+            or files with mock indicators in their path.
+        UnnecessaryFallbackError: If the file contains unnecessary fallback code
+            that should be removed or raise appropriate errors.
+        SilentlyIgnoredErrorsError: If the file contains code that purposefully
+            suppresses or ignores errors without proper logging or handling.
+
+    Examples:
+        >>> # Check a production file for code quality issues
+        >>> raise_on_bad_callable_code_quality(Path("src/module.py"))
+        
+        >>> # Mock files are exempt from certain checks
+        >>> raise_on_bad_callable_code_quality(Path("tests/mock_data.py"))
     """
     path = Path(path)
+    # NOTE We purposefully don't include "tests" here, 
+    # as test implementations can be faked as well.
+    mock_indicators = [ 
+        "mock", "placeholder", "stub", "example"
+    ]
+    full_path = str(path.resolve())
 
     with open(path.resolve(), 'r') as f:
         code = f.read()
@@ -221,12 +306,16 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     for fake_code in [
         "In a real implementation", "In a real scenario", "For testing purposes",
         "In production", "For now", "For demonstration", "In case",
-        "In a full implementation",
+        "In a full implementation", "simplified", "This would be",
+        "depends on", "can be"
     ]:
         if fake_code in code:
-            raise NotImplementedError(
+            for indicator in mock_indicators:
+                if indicator in full_path:
+                    break
+            raise FalsifiedCodeError(
                 "This file contains fake code that needs to be removed or implemented."
-                "Please replace it with code that is ready for production use."
+                "Replace it with code that is ready for production use."
             )
 
     for mocked_code in [
@@ -235,6 +324,43 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
         "Mocked function", "Mocked class", "Mocked method",
     ]:
         if mocked_code in code:
-            raise NotImplementedError(
-                "This file contains mocked code that needs to be replaced with actual implementations."
+            for indicator in mock_indicators:
+                if indicator in full_path:
+                    break
+            if "test" not in full_path:
+                raise UnlabeledMockError(
+                    "This file contains code that is mocked or intended to be mocked."
+                    "Replace this code with actual implementations"
+                    'or move it to a file with "mock", "placeholder", "stub", "example" in the file path.'
+                )
+        
+    fallback_indicators = [
+        "mock", "placeholder", "stub", "example", "backup", "fallback"
+    ]
+
+    for fallback in [
+        "fallback", "fallbacks", "Fallback", "Fallbacks",
+        #"backup", "backups", "backup code", "backup implementation",
+        #"Backup code", "Backup implementation",
+    ]:
+        if fallback in code:
+            for indicator in fallback_indicators:
+                if indicator in full_path:
+                    break
+            raise UnnecessaryFallbackError(
+                "This file contains unnecessary fallback code."
+                "This code must be removed or raise an appropriate error."
+            )
+        
+    for suppressed_error in [
+        "silently", "silently", "ignore errors", "ignore exceptions",
+        "ignore error", "ignore exception", "suppress errors",
+    ]:
+        if suppressed_error in code:
+            for indicator in fallback_indicators:
+                if indicator in full_path:
+                    break
+            raise SilentlyIgnoredErrorsError(
+                "This file contains errors that are purposefully suppressed or ignored."
+                "All errors must be explicitly logged or raised."
             )
