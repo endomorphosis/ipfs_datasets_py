@@ -24,7 +24,8 @@ assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Chec
 assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
 
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
-from ipfs_datasets_py.pdf_processing.graphrag_integrator import Entity, Relationship
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
+from ipfs_datasets_py.ipld.storage import IPLDStorage
 
 # Check if each classes methods are accessible:
 assert QueryEngine.query
@@ -49,32 +50,59 @@ class TestQueryEngineGetEntityDocuments:
     @pytest.fixture
     def mock_graphrag_integrator(self):
         """Create a mock GraphRAG integrator with sample knowledge graphs."""
-        mock_integrator = Mock()
+        mock_integrator = MagicMock(spec=GraphRAGIntegrator)
         
-        # Create sample knowledge graphs
-        mock_kg1 = Mock()
+        # Create sample knowledge graphs with proper structure
+        mock_kg1 = MagicMock()
+        mock_kg1.document_id = "document_001"
         mock_kg1.document_chunks = {
-            "document_001": ["doc1_chunk1", "doc1_chunk2", "doc1_chunk3", "doc1_chunk5", "doc1_chunk7"],
-            "document_002": ["doc2_chunk1", "doc2_chunk2", "doc2_chunk3", "doc2_chunk8"],
-            "document_003": ["doc3_chunk1", "doc3_chunk2"]
+            "document_001": ["doc1_chunk1", "doc1_chunk2", "doc1_chunk3", "doc1_chunk5", "doc1_chunk7"]
         }
         
-        mock_kg2 = Mock()
+        # Create second knowledge graph
+        mock_kg2 = MagicMock()
+        mock_kg2.document_id = "document_002"
         mock_kg2.document_chunks = {
-            "document_004": ["doc4_chunk1", "doc4_chunk2"],
-            "document_005": ["doc5_chunk1", "doc5_chunk3"]
+            "document_002": ["doc2_chunk1", "doc2_chunk2", "doc2_chunk3", "doc2_chunk8"]
         }
         
-        mock_integrator.knowledge_graphs = [mock_kg1, mock_kg2]
+        # Create additional knowledge graphs for tests that expect more documents
+        mock_kg3 = MagicMock()
+        mock_kg3.document_id = "document_003"
+        mock_kg3.document_chunks = {
+            "document_003": ["doc3_chunk1", "doc3_chunk2", "doc3_chunk3"]
+        }
+        
+        mock_kg4 = MagicMock()
+        mock_kg4.document_id = "document_004"
+        mock_kg4.document_chunks = {
+            "document_004": ["doc4_chunk1", "doc4_chunk2", "doc4_chunk3"]
+        }
+        
+        mock_kg5 = MagicMock()
+        mock_kg5.document_id = "document_005"
+        mock_kg5.document_chunks = {
+            "document_005": ["doc5_chunk1", "doc5_chunk2", "doc5_chunk3"]
+        }
+        
+        # Set up the knowledge_graphs collection
+        mock_integrator.knowledge_graphs = {
+            "document_001": mock_kg1,
+            "document_002": mock_kg2,
+            "document_003": mock_kg3,
+            "document_004": mock_kg4,
+            "document_005": mock_kg5
+        }
+        
         return mock_integrator
 
     @pytest.fixture
     def mock_storage(self):
         """Create a mock IPLD storage."""
-        return Mock()
+        return MagicMock(spec=IPLDStorage)
 
     @pytest.fixture
-    def query_engine(self, mock_graphrag_integrator, mock_storage):
+    def query_engine(self, mock_graphrag_integrator, mock_storage) -> QueryEngine:
         """Create a QueryEngine instance with mocked dependencies."""
         with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer'):
             engine = QueryEngine(
@@ -84,7 +112,7 @@ class TestQueryEngineGetEntityDocuments:
             )
             return engine
 
-    def test_get_entity_documents_single_document_entity(self, query_engine):
+    def test_get_entity_documents_single_document_entity(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with knowledge graphs
         AND entity with source_chunks from single document
@@ -99,8 +127,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_001",
             name="Test Entity",
-            entity_type="Person",
-            source_chunks=["doc1_chunk5", "doc1_chunk7"]
+            type="Person",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=["doc1_chunk5", "doc1_chunk7"],
+            properties={"role": "engineer", "company": "Tech Corp"}
         )
         
         # Call method under test
@@ -110,7 +141,7 @@ class TestQueryEngineGetEntityDocuments:
         assert result == ["document_001"]
         assert len(result) == 1
 
-    def test_get_entity_documents_multi_document_entity(self, query_engine):
+    def test_get_entity_documents_multi_document_entity(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with knowledge graphs
         AND entity with source_chunks from multiple documents
@@ -125,8 +156,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_002",
             name="Multi Doc Entity",
-            entity_type="Organization",
-            source_chunks=["doc1_chunk3", "doc2_chunk8", "doc3_chunk1"]
+            type="Organization",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=["doc1_chunk3", "doc2_chunk8", "doc3_chunk1"],
+            properties={}
         )
         
         # Call method under test
@@ -137,7 +171,7 @@ class TestQueryEngineGetEntityDocuments:
         assert set(result) == set(expected)
         assert len(result) == len(set(result))  # No duplicates
 
-    def test_get_entity_documents_no_identifiable_documents(self, query_engine):
+    def test_get_entity_documents_no_identifiable_documents(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with source_chunks that don't match any document patterns
@@ -151,8 +185,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_003",
             name="Unknown Source Entity",
-            entity_type="Concept",
-            source_chunks=["random_chunk1", "unmatched_chunk2", "fake_chunk3"]
+            type="Concept",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=["random_chunk1", "unmatched_chunk2", "fake_chunk3"],
+            properties={}
         )
         
         # Call method under test
@@ -161,7 +198,7 @@ class TestQueryEngineGetEntityDocuments:
         # Verify unknown document returned
         assert result == ["unknown"]
 
-    def test_get_entity_documents_knowledge_graph_iteration(self, query_engine):
+    def test_get_entity_documents_knowledge_graph_iteration(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with multiple knowledge graphs
         AND entity present across different knowledge graphs
@@ -175,8 +212,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_004",
             name="Cross Graph Entity",
-            entity_type="Technology",
-            source_chunks=["doc1_chunk2", "doc4_chunk1", "doc5_chunk3"]
+            type="Technology",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=["doc1_chunk2", "doc4_chunk1", "doc5_chunk3"],
+            properties={}
         )
         
         # Call method under test
@@ -186,7 +226,7 @@ class TestQueryEngineGetEntityDocuments:
         expected = ["document_001", "document_004", "document_005"]
         assert set(result) == set(expected)
 
-    def test_get_entity_documents_chunk_to_document_mapping(self, query_engine):
+    def test_get_entity_documents_chunk_to_document_mapping(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with various chunk identifier formats
@@ -200,8 +240,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_005",
             name="Varied Format Entity",
-            entity_type="Location",
-            source_chunks=["doc1_chunk1", "doc2_chunk3", "doc4_chunk2"]
+            type="Location",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=["doc1_chunk1", "doc2_chunk3", "doc4_chunk2"],
+            properties={}
         )
         
         # Call method under test
@@ -211,7 +254,7 @@ class TestQueryEngineGetEntityDocuments:
         expected = ["document_001", "document_002", "document_004"]
         assert set(result) == set(expected)
 
-    def test_get_entity_documents_empty_source_chunks(self, query_engine):
+    def test_get_entity_documents_empty_source_chunks(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with empty source_chunks list
@@ -225,8 +268,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_006",
             name="Empty Chunks Entity",
-            entity_type="Person",
-            source_chunks=[]
+            type="Person",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=[],
+            properties={}
         )
         
         # Call method under test
@@ -235,7 +281,7 @@ class TestQueryEngineGetEntityDocuments:
         # Verify unknown document returned for empty chunks
         assert result == ["unknown"]
 
-    def test_get_entity_documents_invalid_entity_type(self, query_engine):
+    def test_get_entity_documents_invalid_entity_type(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND non-Entity object passed as parameter
@@ -249,7 +295,7 @@ class TestQueryEngineGetEntityDocuments:
         with pytest.raises(TypeError, match="entity is not an Entity instance"):
             query_engine._get_entity_documents(invalid_entity)
 
-    def test_get_entity_documents_missing_source_chunks_attribute(self, query_engine):
+    def test_get_entity_documents_missing_source_chunks_attribute(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity object lacking source_chunks attribute
@@ -264,28 +310,32 @@ class TestQueryEngineGetEntityDocuments:
         with pytest.raises(AttributeError, match="source_chunks"):
             query_engine._get_entity_documents(mock_entity)
 
-    def test_get_entity_documents_corrupted_knowledge_graph(self, query_engine):
+    def test_get_entity_documents_corrupted_knowledge_graph(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with corrupted knowledge graph data
         AND valid entity object
         WHEN _get_entity_documents is called
         THEN expect RuntimeError to be raised
         """
-        # Corrupt the knowledge graphs
-        query_engine.graphrag.knowledge_graphs[0].document_chunks = None
-        
+        # Corrupt the knowledge graphs by setting document_chunks to None
+        first_kg = list(query_engine.graphrag.knowledge_graphs.values())[0]
+        first_kg.document_chunks = None
+
         entity = Entity(
             id="test_entity_007",
             name="Test Entity",
-            entity_type="Person",
-            source_chunks=["doc1_chunk1"]
+            type="Person",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=["doc1_chunk1"],
+            properties={}
         )
-        
+
         # Verify RuntimeError is raised
         with pytest.raises(RuntimeError, match="knowledge graph data is corrupted"):
             query_engine._get_entity_documents(entity)
 
-    def test_get_entity_documents_inaccessible_knowledge_graph(self, query_engine):
+    def test_get_entity_documents_inaccessible_knowledge_graph(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with inaccessible knowledge graph data
         AND valid entity object
@@ -298,15 +348,18 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_008",
             name="Test Entity",
-            entity_type="Person",
-            source_chunks=["doc1_chunk1"]
+            type="Person",
+            source_chunks=["doc1_chunk1"],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Verify RuntimeError is raised
         with pytest.raises(RuntimeError, match="knowledge graph data is.*inaccessible"):
             query_engine._get_entity_documents(entity)
 
-    def test_get_entity_documents_unique_document_ids(self, query_engine):
+    def test_get_entity_documents_unique_document_ids(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with source_chunks containing duplicate document references
@@ -321,8 +374,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_009",
             name="Duplicate Doc Entity",
-            entity_type="Organization",
-            source_chunks=["doc1_chunk1", "doc1_chunk2", "doc1_chunk3"]
+            type="Organization",
+            source_chunks=["doc1_chunk1", "doc1_chunk2", "doc1_chunk3"],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Call method under test
@@ -332,7 +388,7 @@ class TestQueryEngineGetEntityDocuments:
         assert result == ["document_001"]
         assert len(result) == 1
 
-    def test_get_entity_documents_knowledge_graph_iteration_order(self, query_engine):
+    def test_get_entity_documents_knowledge_graph_iteration_order(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with multiple knowledge graphs
         AND entity appearing in different graphs
@@ -346,8 +402,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_010",
             name="Order Test Entity",
-            entity_type="Technology",
-            source_chunks=["doc4_chunk1", "doc1_chunk1", "doc5_chunk1"]
+            type="Technology",
+            source_chunks=["doc4_chunk1", "doc1_chunk1", "doc5_chunk1"],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Call method multiple times
@@ -360,7 +419,7 @@ class TestQueryEngineGetEntityDocuments:
         expected_order = ["document_001", "document_004", "document_005"]
         assert result1 == expected_order
 
-    def test_get_entity_documents_performance_with_large_graphs(self, query_engine):
+    def test_get_entity_documents_performance_with_large_graphs(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with large knowledge graphs
         AND entity with many source chunks
@@ -378,7 +437,16 @@ class TestQueryEngineGetEntityDocuments:
             doc_id = f"document_{i:03d}"
             large_chunks[doc_id] = [f"doc{i}_chunk{j}" for j in range(50)]
         
-        query_engine.graphrag.knowledge_graphs[0].document_chunks = large_chunks
+        # Add to the first available knowledge graph, or create one if none exist
+        if query_engine.graphrag.knowledge_graphs:
+            # Get the first knowledge graph from the dictionary
+            first_kg = next(iter(query_engine.graphrag.knowledge_graphs.values()))
+            first_kg.document_chunks = large_chunks
+        else:
+            # Create a mock knowledge graph if none exist
+            mock_kg = MagicMock()
+            mock_kg.document_chunks = large_chunks
+            query_engine.graphrag.knowledge_graphs["test_kg"] = mock_kg
         
         # Create entity with many chunks
         source_chunks = []
@@ -388,8 +456,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_011",
             name="Large Graph Entity",
-            entity_type="Concept",
-            source_chunks=source_chunks
+            type="Concept",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=source_chunks,
+            properties={}
         )
         
         # Measure execution time
@@ -401,7 +472,7 @@ class TestQueryEngineGetEntityDocuments:
         assert execution_time < 1.0
         assert len(result) > 0  # Should find some documents
 
-    def test_get_entity_documents_chunk_identifier_patterns(self, query_engine):
+    def test_get_entity_documents_chunk_identifier_patterns(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with various chunk identifier patterns
@@ -413,20 +484,23 @@ class TestQueryEngineGetEntityDocuments:
             - Flexible pattern matching implemented
         """
         # Add knowledge graph with different naming patterns
-        mock_kg_patterns = Mock()
+        mock_kg_patterns = MagicMock()
         mock_kg_patterns.document_chunks = {
             "document_001": ["doc1_chunk1", "doc1_section2", "doc1_para3"],
             "paper_002": ["paper2_ch1", "paper2_sec2"],
             "report_003": ["rep3_p1", "rep3_p2"]
         }
-        query_engine.graphrag.knowledge_graphs.append(mock_kg_patterns)
+        query_engine.graphrag.knowledge_graphs["patterns_test_kg"] = mock_kg_patterns
         
         # Create entity with mixed patterns
         entity = Entity(
             id="test_entity_012",
             name="Pattern Test Entity",
-            entity_type="Method",
-            source_chunks=["doc1_section2", "paper2_ch1", "rep3_p1"]
+            type="Method",
+            source_chunks=["doc1_section2", "paper2_ch1", "rep3_p1"],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Call method under test
@@ -436,7 +510,7 @@ class TestQueryEngineGetEntityDocuments:
         expected = ["document_001", "paper_002", "report_003"]
         assert set(result) == set(expected)
 
-    def test_get_entity_documents_source_attribution_accuracy(self, query_engine):
+    def test_get_entity_documents_source_attribution_accuracy(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with known document-chunk mappings
         AND entity with specific source chunks
@@ -450,8 +524,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_013",
             name="Accuracy Test Entity",
-            entity_type="Process",
-            source_chunks=["doc1_chunk5", "doc2_chunk8", "doc5_chunk3"]
+            type="Process",
+            source_chunks=["doc1_chunk5", "doc2_chunk8", "doc5_chunk3"],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Call method under test
@@ -462,7 +539,7 @@ class TestQueryEngineGetEntityDocuments:
         assert set(result) == set(expected)
         assert len(result) == 3  # No false positives
 
-    def test_get_entity_documents_cross_graph_consistency(self, query_engine):
+    def test_get_entity_documents_cross_graph_consistency(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance with entity appearing in multiple graphs
         AND same entity with different chunk references across graphs
@@ -476,8 +553,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_014",
             name="Cross Graph Consistency Entity",
-            entity_type="Framework",
-            source_chunks=["doc1_chunk1", "doc4_chunk2", "doc5_chunk1"]
+            type="Framework",
+            source_chunks=["doc1_chunk1", "doc4_chunk2", "doc5_chunk1"],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Call method under test
@@ -487,7 +567,7 @@ class TestQueryEngineGetEntityDocuments:
         expected = ["document_001", "document_004", "document_005"]
         assert set(result) == set(expected)
 
-    def test_get_entity_documents_malformed_chunk_identifiers(self, query_engine):
+    def test_get_entity_documents_malformed_chunk_identifiers(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with malformed or unexpected chunk identifier formats
@@ -501,14 +581,17 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id="test_entity_015",
             name="Malformed Chunks Entity",
-            entity_type="Data",
+            type="Data",
             source_chunks=[
                 "doc1_chunk1",  # Valid
                 "malformed_identifier",  # Invalid
                 "",  # Empty
                 "doc2_chunk8",  # Valid
                 "another_bad_format"  # Invalid
-            ]
+            ],
+            description="Test entity description",
+            confidence=0.9,
+            properties={}
         )
         
         # Call method under test
@@ -518,7 +601,7 @@ class TestQueryEngineGetEntityDocuments:
         expected = ["document_001", "document_002"]
         assert set(result) == set(expected)
 
-    def test_get_entity_documents_none_entity_input(self, query_engine):
+    def test_get_entity_documents_none_entity_input(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND None passed as entity parameter
@@ -529,7 +612,7 @@ class TestQueryEngineGetEntityDocuments:
         with pytest.raises(TypeError, match="entity is not an Entity instance"):
             query_engine._get_entity_documents(None)
 
-    def test_get_entity_documents_entity_id_preservation(self, query_engine):
+    def test_get_entity_documents_entity_id_preservation(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND entity with specific ID and source chunks
@@ -547,8 +630,11 @@ class TestQueryEngineGetEntityDocuments:
         entity = Entity(
             id=original_id,
             name=original_name,
-            entity_type="Algorithm",
-            source_chunks=original_chunks.copy()
+            type="Algorithm",
+            description="Test entity description",
+            confidence=0.9,
+            source_chunks=original_chunks.copy(),
+            properties={}
         )
         
         # Call method under test

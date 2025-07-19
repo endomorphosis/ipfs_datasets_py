@@ -249,7 +249,7 @@ class TestQueryEngineInitialization:
         
         with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
              patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'), \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.logging') as mock_logging:
+             patch('ipfs_datasets_py.pdf_processing.query_engine.logger') as mock_logger:
             
             mock_st.side_effect = Exception("Model not found")
             
@@ -258,7 +258,7 @@ class TestQueryEngineInitialization:
             
             # THEN
             assert engine.embedding_model is None
-            mock_logging.warning.assert_called()
+            mock_logger.warning.assert_called()
             assert engine.graphrag is mock_graphrag  # Instance still created
 
     def test_init_with_none_graphrag_integrator(self):
@@ -387,7 +387,7 @@ class TestQueryEngineInitialization:
         
         with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
              patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'), \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.logging') as mock_logging:
+             patch('ipfs_datasets_py.pdf_processing.query_engine.logger') as mock_logger:
             
             mock_st.side_effect = ImportError("sentence-transformers not installed")
             
@@ -396,7 +396,7 @@ class TestQueryEngineInitialization:
             
             # THEN
             assert engine.embedding_model is None
-            mock_logging.error.assert_called()
+            mock_logger.error.assert_called()
             assert engine.graphrag is mock_graphrag
 
     def test_init_with_uninitialized_graphrag_integrator(self):

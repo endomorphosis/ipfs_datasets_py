@@ -81,7 +81,7 @@ class TestQueryEngineNormalizeQuery:
         
         return engine
 
-    def test_normalize_query_basic_lowercasing(self, query_engine):
+    def test_normalize_query_basic_lowercasing(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "WHO Is Bill Gates?"
@@ -93,7 +93,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("WHO Is Bill Gates?")
         assert result == "who bill gates?"  # "is" is a stop word and should be removed
 
-    def test_normalize_query_whitespace_cleanup(self, query_engine):
+    def test_normalize_query_whitespace_cleanup(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query with extra whitespace "  Who   is    Bill   Gates?  "
@@ -106,7 +106,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("  Who   is    Bill   Gates?  ")
         assert result == "who bill gates?"
 
-    def test_normalize_query_stop_word_removal(self, query_engine):
+    def test_normalize_query_stop_word_removal(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "Who is the CEO of the Microsoft company?"
@@ -118,7 +118,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("Who is the CEO of the Microsoft company?")
         assert result == "who ceo microsoft company?"
 
-    def test_normalize_query_all_stop_words_comprehensive(self, query_engine):
+    def test_normalize_query_all_stop_words_comprehensive(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query containing all documented stop words:
@@ -129,7 +129,7 @@ class TestQueryEngineNormalizeQuery:
         with pytest.raises(ValueError, match="Query cannot be empty after normalization"):
             query_engine._normalize_query("The a an and or but in on at to for of with by")
 
-    def test_normalize_query_punctuation_preservation(self, query_engine):
+    def test_normalize_query_punctuation_preservation(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "Who founded Microsoft Corporation?"
@@ -142,7 +142,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("Who founded Microsoft Corporation?")
         assert result == "who founded microsoft corporation?"
 
-    def test_normalize_query_mixed_case_entity_names(self, query_engine):
+    def test_normalize_query_mixed_case_entity_names(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "What is BiLL GaTeS doing?"
@@ -154,7 +154,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("What is BiLL GaTeS doing?")
         assert result == "what bill gates doing?"
 
-    def test_normalize_query_empty_string_input(self, query_engine):
+    def test_normalize_query_empty_string_input(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND empty query ""
@@ -164,7 +164,7 @@ class TestQueryEngineNormalizeQuery:
         with pytest.raises(ValueError, match="Query cannot be empty"):
             query_engine._normalize_query("")
 
-    def test_normalize_query_whitespace_only_input(self, query_engine):
+    def test_normalize_query_whitespace_only_input(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND whitespace-only query "   \n\t   "
@@ -174,7 +174,7 @@ class TestQueryEngineNormalizeQuery:
         with pytest.raises(ValueError, match="Query cannot be empty"):
             query_engine._normalize_query("   \n\t   ")
 
-    def test_normalize_query_non_string_input(self, query_engine):
+    def test_normalize_query_non_string_input(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND non-string input (int, list, dict, None)
@@ -193,7 +193,7 @@ class TestQueryEngineNormalizeQuery:
         with pytest.raises(TypeError, match="Query must be a string"):
             query_engine._normalize_query(None)
 
-    def test_normalize_query_single_character_words(self, query_engine):
+    def test_normalize_query_single_character_words(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "I am a CEO"
@@ -207,7 +207,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("I am a CEO")
         assert result == "i am ceo"
 
-    def test_normalize_query_multiple_consecutive_stop_words(self, query_engine):
+    def test_normalize_query_multiple_consecutive_stop_words(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "the and or but Microsoft"
@@ -220,7 +220,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("the and or but Microsoft")
         assert result == "microsoft"
 
-    def test_normalize_query_stop_words_at_boundaries(self, query_engine):
+    def test_normalize_query_stop_words_at_boundaries(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "The Microsoft company and Google"
@@ -232,7 +232,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("The Microsoft company and Google")
         assert result == "microsoft company google"
 
-    def test_normalize_query_numeric_content(self, query_engine):
+    def test_normalize_query_numeric_content(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "Companies founded in 1975 by Bill"
@@ -245,7 +245,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("Companies founded in 1975 by Bill")
         assert result == "companies founded 1975 bill"
 
-    def test_normalize_query_special_characters(self, query_engine):
+    def test_normalize_query_special_characters(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query "Microsoft's CEO & co-founder"
@@ -258,7 +258,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("Microsoft's CEO & co-founder")
         assert result == "microsoft's ceo & co-founder"
 
-    def test_normalize_query_unicode_characters(self, query_engine):
+    def test_normalize_query_unicode_characters(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query with unicode "Café münü naïve résumé"
@@ -270,7 +270,7 @@ class TestQueryEngineNormalizeQuery:
         result = query_engine._normalize_query("Café münü naïve résumé")
         assert result == "café münü naïve résumé"
 
-    def test_normalize_query_very_long_input(self, query_engine):
+    def test_normalize_query_very_long_input(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND very long query (1000+ characters)
@@ -296,7 +296,7 @@ class TestQueryEngineNormalizeQuery:
         # Check that it's still a reasonable length (stop words removed)
         assert len(result) < len(long_query)
 
-    def test_normalize_query_newlines_and_tabs(self, query_engine):
+    def test_normalize_query_newlines_and_tabs(self, query_engine: QueryEngine):
         """
         GIVEN a QueryEngine instance
         AND query with newlines and tabs "Who\nis\tBill\nGates?"

@@ -415,6 +415,25 @@ class QueryEngine:
             - Caches are initialized as empty dictionaries and populated during operation
             - IPLD storage is created with default settings if not provided
         """
+        # Validate inputs
+        if graphrag_integrator is None:
+            raise TypeError("graphrag_integrator cannot be None")
+        
+        if not isinstance(graphrag_integrator, GraphRAGIntegrator):
+            raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
+        
+        if hasattr(graphrag_integrator, 'is_initialized') and not graphrag_integrator.is_initialized:
+            raise RuntimeError("GraphRAGIntegrator must be properly initialized")
+        
+        if storage is not None and not isinstance(storage, IPLDStorage):
+            raise TypeError("storage must be an IPLDStorage instance")
+        
+        if not isinstance(embedding_model, str):
+            raise TypeError("embedding_model must be a string")
+        
+        if embedding_model == "":
+            raise ValueError("embedding_model cannot be empty")
+
         self.graphrag = graphrag_integrator
         self.storage = storage or IPLDStorage()
 
@@ -422,8 +441,11 @@ class QueryEngine:
         try:
             self.embedding_model = SentenceTransformer(embedding_model)
             logger.info(f"Loaded embedding model: {embedding_model}")
-        except Exception as e:
+        except ImportError as e:
             logger.error(f"Failed to load embedding model: {e}")
+            self.embedding_model = None
+        except Exception as e:
+            logger.warning(f"Failed to load embedding model: {e}")
             self.embedding_model = None
         
         # Query processing components
@@ -600,23 +622,36 @@ class QueryEngine:
             'relationship ai automation'
 
         Notes:
-            - Stop words removed: 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'
+            - Stop words removed: 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is'
             - Punctuation is preserved for potential entity name matching
             - Single character words are not specifically filtered unless they are stop words
             - Normalization improves both keyword and semantic matching effectiveness
         """
+        # Input validation
+        if not isinstance(query, str):
+            raise TypeError("Query must be a string")
+        
+        if not query or not query.strip():
+            raise ValueError("Query cannot be empty")
+        
         # Convert to lowercase
         normalized = query.lower().strip()
         
-        # Remove extra whitespace
+        # Remove extra whitespace (including newlines, tabs, etc.)
         normalized = re.sub(r'\s+', ' ', normalized)
         
         # Remove common stop words for better matching
-        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is'}
         words = normalized.split()
         filtered_words = [word for word in words if word not in stop_words]
         
-        return ' '.join(filtered_words)
+        result = ' '.join(filtered_words)
+        
+        # Check if result is empty after stop word removal
+        if not result:
+            raise ValueError("Query cannot be empty after normalization")
+        
+        return result
     
     def _detect_query_type(self, query: str) -> str:
         """
@@ -1687,10 +1722,39 @@ class QueryEngine:
             - Used for source attribution in query results
             - Performance scales with number of documents and chunks
         """
+        # Type checking
+        if not isinstance(entity, Entity):
+            raise TypeError("entity is not an Entity instance")
+        
+        # Attribute checking
+        if not hasattr(entity, 'source_chunks'):
+            raise AttributeError("Entity lacks required source_chunks attribute")
+        
+        # Knowledge graph accessibility checking
+        if self.graphrag is None or self.graphrag.knowledge_graphs is None:
+            raise RuntimeError("knowledge graph data is inaccessible")
+        
         documents = []
-        for kg in self.graphrag.knowledge_graphs.values():
-            if any(chunk.chunk_id in entity.source_chunks for chunk in kg.chunks):
-                documents.append(kg.document_id)
+        try:
+            for kg in self.graphrag.knowledge_graphs.values():
+                print(f"Checking knowledge graph {kg.document_id} for entity {entity.name}")
+                
+                # Check if knowledge graph data is corrupted
+                if not hasattr(kg, 'document_chunks') or kg.document_chunks is None:
+                    raise RuntimeError("knowledge graph data is corrupted")
+                
+                # Check if any of the entity's source chunks are in this knowledge graph's documents
+                for doc_id, chunks in kg.document_chunks.items():
+                    if any(chunk in entity.source_chunks for chunk in chunks):
+                        print(f"Entity {entity.name} found in document {doc_id}")
+                        if doc_id not in documents:
+                            documents.append(doc_id)
+                        break
+                else:
+                    print(f"Entity {entity.name} not found in document {kg.document_id}")
+        except (AttributeError, TypeError) as e:
+            raise RuntimeError(f"knowledge graph data is corrupted: {e}")
+        
         return documents if documents else ['unknown']
     
     def _get_relationship_documents(self, relationship: Relationship) -> List[str]:
@@ -1919,13 +1983,16 @@ class QueryEngine:
         query_types = {}
         total_processing_time = 0
         result_counts = []
-        
-        for cached_response in self.query_cache.values():
-            query_type = cached_response.query_type
-            query_types[query_type] = query_types.get(query_type, 0) + 1
-            total_processing_time += cached_response.processing_time
-            result_counts.append(cached_response.total_results)
-        
+
+        try:
+            for cached_response in self.query_cache.values():
+                query_type = cached_response.query_type
+                query_types[query_type] = query_types.get(query_type, 0) + 1
+                total_processing_time += cached_response.processing_time
+                result_counts.append(cached_response.total_results)
+        except Exception as e:
+            raise RuntimeError(f"Cache data is corrupted or inaccessible: {e}")
+
         avg_processing_time = total_processing_time / len(self.query_cache)
         avg_results = sum(result_counts) / len(result_counts) if result_counts else 0
         

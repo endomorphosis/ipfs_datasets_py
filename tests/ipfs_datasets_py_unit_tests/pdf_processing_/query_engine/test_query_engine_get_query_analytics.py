@@ -326,7 +326,7 @@ class TestQueryEngineGetQueryAnalytics:
         GIVEN a QueryEngine instance with cached queries missing processing times
         AND some QueryResponse objects lacking processing_time
         WHEN get_query_analytics is called
-        THEN expect ValueError to be raised
+        THEN expect RuntimeError to be raised
         """
         # Create response with None processing_time
         response_without_time = create_mock_query_response("test", "entity_search", 1, 0.1)
@@ -338,7 +338,8 @@ class TestQueryEngineGetQueryAnalytics:
         }
         self.query_engine.embedding_cache = {}
         
-        with pytest.raises(ValueError, match="Missing processing time information"):
+        # Missing this key is considered a corruption.
+        with pytest.raises(RuntimeError, match="Cache data is corrupted"):
             await self.query_engine.get_query_analytics()
 
     @pytest.mark.asyncio
