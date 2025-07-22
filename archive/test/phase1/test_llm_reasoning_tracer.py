@@ -12,7 +12,7 @@ import tempfile
 from typing import Dict, Any, List
 
 # Import the module to test
-from ipfs_datasets_py.llm_reasoning_tracer import (
+from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningTrace,
     ReasoningNode,

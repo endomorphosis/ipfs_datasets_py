@@ -24,7 +24,7 @@ from ipfs_datasets_py.cross_document_reasoning import (
     EntityMediatedConnection,
     InformationRelationType
 )
-from ipfs_datasets_py.llm_reasoning_tracer import LLMReasoningTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import LLMReasoningTracer
 from ipfs_datasets_py import (
     UnifiedGraphRAGQueryOptimizer,
     QueryRewriter,

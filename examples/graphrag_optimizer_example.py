@@ -22,7 +22,7 @@ from ipfs_datasets_py.llm.llm_graphrag import (
     ReasoningEnhancer
 )
 from ipfs_datasets_py.llm.llm_interface import LLMInterfaceFactory
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 
 def create_mock_documents() -> List[Dict[str, Any]]:

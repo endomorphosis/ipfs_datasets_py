@@ -19,7 +19,7 @@ The tests cover:
 import unittest
 import json
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor, KnowledgeGraph
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 class TestWikipediaIntegration(unittest.TestCase):
     """Test case for Wikipedia integration and SPARQL validation."""

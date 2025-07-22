@@ -548,9 +548,7 @@ class LLMOptimizer:
         the model name. If model loading fails, fallback tokenization methods are used.
 
         Raises:
-            ImportError: If required model libraries are not installed (logged as warning).
-            OSError: If model files cannot be accessed or downloaded (logged as error).
-            RuntimeError: If both primary and fallback model loading fail.
+            OSError: If model files cannot be accessed or downloaded.
 
         Side Effects:
             Sets self.embedding_model to SentenceTransformer instance or None on failure.
@@ -576,21 +574,24 @@ class LLMOptimizer:
             # Initialize sentence transformer for embeddings
             self.embedding_model = SentenceTransformer(self.model_name)
             logger.info(f"Loaded embedding model: {self.model_name}")
-            
+        except Exception as e:
+            raise OSError(f"Could not load embedding model for LLMOptimizer: {self.model_name}: {e}") from e
+
             # Initialize tokenizer for token counting
+        try:
             if "gpt" in self.tokenizer_name.lower():
                 self.tokenizer = tiktoken.encoding_for_model(self.tokenizer_name)
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
-            
+
             logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
-            
+
         except Exception as e:
-            logger.error(f"Failed to initialize models: {e}")
-            # Fallback to basic tokenization
-            self.embedding_model = None
-            self.tokenizer = None
-    
+            raise OSError(
+                f"Could not load tokenizer for LLMOptimizer: {self.model_name}, {self.tokenizer_name}: {e}"
+            ) from e
+
+
     async def optimize_for_llm(self, 
                               decomposed_content: Dict[str, Any],
                               document_metadata: Dict[str, Any]) -> LLMDocument:
@@ -1148,7 +1149,7 @@ class LLMOptimizer:
                 c.chunk_id for c in chunks 
                 if c.source_page == chunk.source_page and c.chunk_id != chunk.chunk_id
             ]
-            relationships.extend(same_page_chunks[:3])  # Limit to 3 for performance
+            relationships.extend(same_page_chunks)
             
             chunk.relationships = list(set(relationships))
         
@@ -1298,7 +1299,7 @@ class LLMOptimizer:
         # Process text in sentences for better entity recognition
         sentences = sent_tokenize(full_text)
         
-        for sentence in sentences[:50]:  # Limit to first 50 sentences for performance
+        for sentence in sentences:
             # Tokenize and tag parts of speech
             tokens = word_tokenize(sentence)
             pos_tags = pos_tag(tokens)
@@ -1526,13 +1527,12 @@ class LLMOptimizer:
     
     def _count_tokens(self, text: str) -> int:
         """
-        Count the number of tokens in text using the configured tokenizer with fallback approximation.
+        Count the number of tokens in text using the configured tokenizer.
 
         This method provides accurate token counting using the initialized tokenizer, which is
         essential for chunk size management and LLM compatibility. It handles both tiktoken
-        tokenizers (for OpenAI models) and HuggingFace tokenizers, with graceful fallback
-        to approximation methods when tokenizers are unavailable.
-
+        tokenizers (for OpenAI models) and HuggingFace tokenizers.
+    
         Accurate token counting ensures chunks remain within LLM context limits and enables
         precise overlap calculations for optimal chunk boundary management.
 
@@ -1542,12 +1542,10 @@ class LLMOptimizer:
 
         Returns:
             int: Number of tokens in the input text according to the configured tokenizer.
-                Returns 0 for empty input. Uses approximation (word_count * 1.3) if
-                tokenizer is unavailable or fails.
+                Returns 0 for empty input.
 
         Raises:
-            Warning: Logged when tokenizer fails and fallback approximation is used.
-                Does not raise exceptions to maintain processing continuity.
+            RuntimeError: If no tokenizer is available for token counting.
 
         Examples:
             >>> text = "This is a sample text for token counting."
@@ -1557,19 +1555,13 @@ class LLMOptimizer:
             >>> # Empty text handling
             >>> empty_count = optimizer._count_tokens("")
             >>> print(empty_count)  # 0
-            
-            >>> # Fallback approximation when tokenizer unavailable
-            >>> # Logs: "Token counting failed: ..."
-            >>> approx_count = optimizer._count_tokens("Hello world")
-            >>> print(approx_count)  # ~2.6 (2 words * 1.3 approximation factor)
         """
         if not text:
             return 0
-        
+
         if self.tokenizer is None:
-            # Fallback: approximate token count
-            return len(text.split()) * 1.3  # Rough approximation
-        
+            raise RuntimeError("No tokenizer available for token counting")
+
         try:
             if hasattr(self.tokenizer, 'encode'):
                 # tiktoken or similar
@@ -1578,8 +1570,7 @@ class LLMOptimizer:
                 # HuggingFace tokenizer
                 return len(self.tokenizer.tokenize(text))
         except Exception as e:
-            logger.warning(f"Token counting failed: {e}")
-            return len(text.split()) * 1.3
+            raise RuntimeError("Token counting failed") from e
     
     def _get_chunk_overlap(self, content: str) -> str:
         """

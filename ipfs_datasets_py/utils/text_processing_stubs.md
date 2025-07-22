@@ -1,16 +1,8 @@
 # Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/utils/text_processing.py'
 
-## ChunkOptimizer
+Files last updated: 1753049622.4231493
 
-```python
-class ChunkOptimizer:
-    """
-    Utility class for optimizing text chunks.
-    """
-```
-* **Async:** False
-* **Method:** False
-* **Class:** N/A
+Stub file last updated: 2025-07-20 15:24:23
 
 ## TextProcessor
 
@@ -195,63 +187,6 @@ Notes:
 * **Method:** True
 * **Class:** TextProcessor
 
-## __init__
-
-```python
-def __init__(self, max_size: int, overlap: int, min_size: int):
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
-
-## _chunk_by_sentences
-
-```python
-def _chunk_by_sentences(self, sentences: List[str]) -> List[Dict[str, Any]]:
-    """
-    Create chunks preserving sentence boundaries.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
-
-## _chunk_by_words
-
-```python
-def _chunk_by_words(self, text: str) -> List[Dict[str, Any]]:
-    """
-    Create chunks by word count.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
-
-## _get_overlap_sentences
-
-```python
-def _get_overlap_sentences(self, sentences: List[str]) -> List[str]:
-    """
-    Get overlap sentences for chunk continuity.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
-
-## analyze_chunk_quality
-
-```python
-def analyze_chunk_quality(self, chunk: Dict[str, Any]) -> Dict[str, float]:
-    """
-    Analyze the quality of a text chunk.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
-
 ## calculate_readability_score
 
 ```python
@@ -275,18 +210,6 @@ def clean_text(self, text: str) -> str:
 * **Async:** False
 * **Method:** True
 * **Class:** TextProcessor
-
-## create_chunks
-
-```python
-def create_chunks(self, text: str, preserve_sentences: bool = True) -> List[Dict[str, Any]]:
-    """
-    Create optimized text chunks.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
 
 ## extract_keywords
 
@@ -312,18 +235,6 @@ def extract_phrases(self, text: str, min_length: int = 2, max_length: int = 4) -
 * **Method:** True
 * **Class:** TextProcessor
 
-## optimize_chunk_boundaries
-
-```python
-def optimize_chunk_boundaries(self, text: str, current_boundaries: List[int]) -> List[int]:
-    """
-    Optimize chunk boundaries to respect sentence and paragraph breaks.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** ChunkOptimizer
-
 ## split_paragraphs
 
 ```python
@@ -341,7 +252,7 @@ def split_paragraphs(self, text: str) -> List[str]:
 ```python
 def split_sentences(self, text: str) -> List[str]:
     """
-    Split text into sentences.
+    Split text into sentences using NLTK.
     """
 ```
 * **Async:** False

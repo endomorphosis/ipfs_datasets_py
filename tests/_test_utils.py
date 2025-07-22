@@ -49,16 +49,16 @@ class BadSignatureError(Exception):
     pass
 
 
-
-
 def get_ast_tree(input_path: Path) -> ast.Module:
     """Read and parse the Python file for its AST tree."""
     input_path = Path(input_path)
     try:
         with open(input_path.resolve(), 'r') as file:
             content = file.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File '{input_path}' does not exist.")
     except Exception as e:
-        raise IOError(f"Failed to read file {input_path}: {e}") from e
+        raise IOError(f"Failed to read file '{input_path}': {e}") from e
     
     tree = ast.parse(content)
     return tree
@@ -70,14 +70,58 @@ def raise_on_bad_callable_metadata(tree) -> str:
     """
     for node in ast.walk(tree):
         # Check if definition has a good signature and docstring
-        if isinstance(node, ast.FunctionDef):
-            raise_on_bad_signature(node)
-            raise_on_bad_docstring(node, tree)
-        elif isinstance(node, ast.ClassDef):
-            raise_on_bad_docstring(node, tree)
+        match node:
+            case ast.FunctionDef() | ast.AsyncFunctionDef():
+                raise_on_bad_signature(node)
+                raise_on_bad_docstring(node, tree)
+            case ast.ClassDef():
+                # Classes should have a docstring, but not a signature
+                raise_on_bad_docstring(node, tree)
+            case ast.Module():
+                # Modules should have a docstring, but not a signature
+                if not ast.get_docstring(node):
+                    raise BadDocumentationError(
+                        f"Module '{node.name}' is missing a docstring."
+                    )
+            case _:
+                # Ignore other nodes
+                continue
+
+def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int = 50) -> None:
+    if not isinstance(node, ast.Module):
+        return
+
+    docstring = ast.get_docstring(node)
+    # Check if the module has a docstring
+    if docstring is None:
+        raise BadDocumentationError(
+            f"Module '{node.name}' is missing a docstring."
+        )
+
+    # Check if the docstring is too short
+    if len(docstring.split()) < min_docstring_word_count:
+        raise BadDocumentationError(
+            f"Module '{node.name}' docstring is too short. "
+            f"Expected at least 50 words, got {len(docstring.split())} words."
+        )
+
+    # Check if the docstring references the module's public API
+    public_api = [name for name in dir(node) if not name.startswith('_')]
+    for api in public_api:
+        if api in docstring:
+            continue
+        else:
+            # TODO
+            pass
+    if not any(api in docstring for api in public_api):
+        raise BadDocumentationError(
+            f"Module '{node.name}' docstring does not reference the public API. "
+            "Please include references to the module's public functions, classes, and variables."
+        )
 
 
-def raise_on_bad_signature(node) -> None:
+
+def raise_on_bad_signature(node: ast.AST) -> None:
     """
     Validate the signature of a callable object and raise errors for bad patterns.
     
@@ -167,7 +211,7 @@ def raise_on_bad_signature(node) -> None:
     return
 
 
-def raise_on_bad_docstring(node, tree: ast.AST) -> None:
+def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
     """
     Validate that a node has a proper docstring with required sections.
     
@@ -227,29 +271,27 @@ def raise_on_bad_docstring(node, tree: ast.AST) -> None:
                 raise BadDocumentationError(
                     f"Docstring for '{node_name}' does not contain 'Args:' "
                     "but the callable has arguments."
-                    "{docstring}"
                 )
 
     # Docstring contains 'Returns:', or 'Examples:'
-    if isinstance(node, ast.FunctionDef):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         if node.name in ['__init__', '__new__', '__post_init__']:
             # Initialization methods like __init__, __new__, and __post_init__ do not require 'Returns:'
             pass
-
-        # NOTE: Due to the raise_on_bad_signature function, we already know that
-        # if it's a function, the return type is annotated, so we can safely check for 'Returns:'
-        if node.returns.id != 'None' and 'Returns:' not in docstring:
-            raise BadDocumentationError(
-                f"Docstring for '{node_name}' in does not contain 'Returns:' section "
-                f"{docstring}"
-            )
+        else:
+            # NOTE: Due to the raise_on_bad_signature function, we already know that
+            # if it's a function, the return type is annotated, so we can safely check for 'Returns:'
+            if ast.unparse(node.returns) != 'None' and 'Returns:' not in docstring:
+                raise BadDocumentationError(
+                    f"Docstring for '{node_name}' in does not contain 'Returns:' section "
+                    "despite having a return type annotation other than None."
+                )
     # NOTE This affects classes as well, but we don't check for return types in classes.
     if 'Examples:' in docstring or 'Example:' in docstring:
         return
     else:
         raise BadDocumentationError(
             f"Docstring for '{node_name}' does not contain 'Example' section "
-            f"{docstring}"
         )
 
 def raise_on_bad_callable_code_quality(path: Path) -> None:
@@ -267,14 +309,17 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     - Finds unnecessary fallback implementations
     - Catches silently suppressed errors
 
-    Files containing mock indicators in their path ("mock", "placeholder", "stub", 
+    Files containing mock indicators in their path (e.g. "mock", "placeholder", "stub", 
     "example") are exempt from certain checks, as they are expected to contain
-    placeholder code.
+    placeholder code. The same is true for paths indicating the presence of
+    fallback code (e.g. "fallback", "fallbacks", "Fallback", "Fallbacks")
 
     Args:
         path: Path to the Python file to analyze for code quality issues.
         
     Raises:
+        FileNotFoundError: If the specified file does not exist.
+        IOError: If the file cannot be read or parsed.
         FalsifiedCodeError: If the file contains fake or simplified code patterns
             that indicate incomplete implementation.
         UnlabeledMockError: If the file contains mock code outside of test files
@@ -292,6 +337,7 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
         >>> raise_on_bad_callable_code_quality(Path("tests/mock_data.py"))
     """
     path = Path(path)
+
     # NOTE We purposefully don't include "tests" here, 
     # as test implementations can be faked as well.
     mock_indicators = [ 
@@ -299,23 +345,28 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     ]
     full_path = str(path.resolve())
 
-    with open(path.resolve(), 'r') as f:
-        code = f.read()
+    try:
+        with open(path.resolve(), 'r') as f:
+            code = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File '{path}' does not exist.")
+    except IOError as e:
+        raise IOError(f"Failed to read file '{path}': {e}") from e
 
     # NOTE We purposefully don't used `ast` here because it strips out comments.
     for fake_code in [
         "In a real implementation", "In a real scenario", "For testing purposes",
         "In production", "For now", "For demonstration", "In case",
         "In a full implementation", "simplified", "This would be",
-        "depends on", "can be"
+        "depends on", "simple approximation"
     ]:
         if fake_code in code:
             for indicator in mock_indicators:
                 if indicator in full_path:
                     break
             raise FalsifiedCodeError(
-                "This file contains fake code that needs to be removed or implemented."
-                "Replace it with code that is ready for production use."
+                f"'{full_path}' contains fake code '{fake_code}' that needs to be removed or implemented."
+                " Replace it with code that is ready for production use."
             )
 
     for mocked_code in [
@@ -329,8 +380,8 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
                     break
             if "test" not in full_path:
                 raise UnlabeledMockError(
-                    "This file contains code that is mocked or intended to be mocked."
-                    "Replace this code with actual implementations"
+                    f"'{full_path}' contains code '{mocked_code}' that is mocked or intended to be mocked."
+                    " Replace this code with actual implementations"
                     'or move it to a file with "mock", "placeholder", "stub", "example" in the file path.'
                 )
         
@@ -348,7 +399,7 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
                 if indicator in full_path:
                     break
             raise UnnecessaryFallbackError(
-                "This file contains unnecessary fallback code."
+                f"'{full_path}' contains unnecessary fallback code '{fallback}'."
                 "This code must be removed or raise an appropriate error."
             )
         
@@ -361,6 +412,6 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
                 if indicator in full_path:
                     break
             raise SilentlyIgnoredErrorsError(
-                "This file contains errors that are purposefully suppressed or ignored."
+                f"'{full_path}' contains errors that are purposefully suppressed or ignored '{suppressed_error}'."
                 "All errors must be explicitly logged or raised."
             )

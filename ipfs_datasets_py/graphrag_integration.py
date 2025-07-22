@@ -69,7 +69,7 @@ from ipfs_datasets_py.llm.llm_graphrag import (
 from ipfs_datasets_py.llm.llm_semantic_validation import (
     SchemaValidator, SemanticAugmenter, SemanticValidator
 )
-from ipfs_datasets_py.llm_reasoning_tracer import (
+from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     ReasoningTrace, ReasoningNodeType # Removed ReasoningStep, TracingManager, StepType, ConfidenceLevel
 )
 from ipfs_datasets_py.knowledge_graph_extraction import (

@@ -597,7 +597,7 @@ This example demonstrates cross-document reasoning with the GraphRAG system and 
 
 ```python
 from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
-from ipfs_datasets_py.llm_reasoning_tracer import ReasoningTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import ReasoningTracer
 from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 import numpy as np

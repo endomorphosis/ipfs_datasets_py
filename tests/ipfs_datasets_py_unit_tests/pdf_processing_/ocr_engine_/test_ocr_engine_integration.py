@@ -111,11 +111,21 @@ class TestOCREngineIntegration:
         with patch.object(SuryaOCR, '_initialize'):
             surya = SuryaOCR()
             surya.available = True
-            surya.run_ocr = Mock(return_value=([Mock(text="surya", confidence=0.9)], ["en"]))
+            
+            # Mock Surya components properly
             surya.detection_predictor = Mock()
-            surya.det_model = Mock()
-            surya.rec_model = Mock()
             surya.recognition_predictor = Mock()
+            
+            # Mock the result structure that Surya returns
+            mock_text_line = Mock()
+            mock_text_line.text = "surya"
+            mock_text_line.confidence = 0.9
+            mock_text_line.bbox = [10, 10, 50, 25]
+            
+            mock_result = Mock()
+            mock_result.text_lines = [mock_text_line]
+            
+            surya.recognition_predictor.return_value = [mock_result]
             engines.append(surya)
         
         with patch.object(TesseractOCR, '_initialize'):
@@ -144,9 +154,14 @@ class TestOCREngineIntegration:
             trocr.available = True
             trocr.processor = Mock()
             trocr.model = Mock()
-            trocr.processor.return_value = {'pixel_values': Mock()}
+            
+            # Mock processor return value with pixel_values attribute
+            mock_processor_output = Mock()
+            mock_processor_output.pixel_values = Mock()
+            trocr.processor.return_value = mock_processor_output
+            
             trocr.model.generate.return_value = Mock()
-            trocr.processor.decode.return_value = "trocr"
+            trocr.processor.batch_decode.return_value = ["trocr"]
             engines.append(trocr)
         
         # Test all engines have consistent interface
@@ -198,11 +213,21 @@ class TestOCREngineIntegration:
         with patch.object(SuryaOCR, '_initialize'):
             surya = SuryaOCR()
             surya.available = True
-            surya.run_ocr = Mock(return_value=([Mock(text="Sample Text", confidence=0.95)], ["en"]))
+            
+            # Mock Surya components properly
             surya.detection_predictor = Mock()
-            surya.det_model = Mock()
-            surya.rec_model = Mock()
             surya.recognition_predictor = Mock()
+            
+            # Mock the result structure that Surya returns
+            mock_text_line = Mock()
+            mock_text_line.text = "Sample Text"
+            mock_text_line.confidence = 0.95
+            mock_text_line.bbox = [10, 10, 50, 25]
+            
+            mock_result = Mock()
+            mock_result.text_lines = [mock_text_line]
+            
+            surya.recognition_predictor.return_value = [mock_result]
             engines['surya'] = surya
         
         with patch.object(TesseractOCR, '_initialize'):
@@ -312,7 +337,12 @@ class TestOCREngineIntegration:
         mock_surya.name = 'surya'
         mock_surya.is_available.return_value = True
         
-        multi_engine.engines = [mock_tesseract, mock_easyocr, mock_surya]
+        # Fix the engines dictionary structure - should be keyed by name
+        multi_engine.engines = {
+            'tesseract': mock_tesseract,
+            'easyocr': mock_easyocr,
+            'surya': mock_surya
+        }
         
         # Create test image data
         test_image = self.create_test_image_data()
@@ -342,7 +372,7 @@ class TestOCREngineIntegration:
             'engine': 'easyocr'
         }
         
-        result = multi_engine.extract_with_ocr(test_image, strategy='best_confidence')
+        result = multi_engine.extract_with_ocr(test_image, strategy='quality_first')
         assert result['confidence'] == 0.95
         assert result['engine'] == 'easyocr'
 
@@ -432,7 +462,9 @@ class TestOCREngineIntegration:
                 
                 surya_engine = SuryaOCR()
                 surya_engine.available = True
-                surya_engine.run_ocr = Mock()
+                # Mock Surya components properly
+                surya_engine.detection_predictor = Mock()
+                surya_engine.recognition_predictor = Mock()
                 
                 trocr_engine = TrOCREngine()
                 trocr_engine.available = True
@@ -447,10 +479,21 @@ class TestOCREngineIntegration:
                     ([[10, 10], [90, 10], [90, 30], [10, 30]], 'EasyOCR Text', 0.92)
                 ]
                 
-                mock_surya_lines = [Mock(text="Surya Text", confidence=0.88)]
-                surya_engine.run_ocr.return_value = ([mock_surya_lines], ["en"])
+                # Mock Surya result structure
+                mock_text_line = Mock()
+                mock_text_line.text = "Surya Text"
+                mock_text_line.confidence = 0.88
+                mock_text_line.bbox = [10, 10, 90, 30]
                 
-                trocr_engine.processor.return_value = {'pixel_values': Mock()}
+                mock_result = Mock()
+                mock_result.text_lines = [mock_text_line]
+                
+                surya_engine.recognition_predictor.return_value = [mock_result]
+                
+                # Mock TrOCR processor output
+                mock_processor_output = Mock()
+                mock_processor_output.pixel_values = Mock()
+                trocr_engine.processor.return_value = mock_processor_output
                 trocr_engine.model.generate.return_value = Mock()
                 trocr_engine.processor.batch_decode.return_value = ["TrOCR Text"]
                 

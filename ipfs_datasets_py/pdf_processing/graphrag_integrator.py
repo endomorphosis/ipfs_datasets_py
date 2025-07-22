@@ -149,11 +149,11 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         entity_names.append(' '.join(current_entity))
     
     print(f"Found entities from NER: {entity_names}")
-    
+
     # Also find proper nouns that might not be caught by NER
     proper_nouns = []
     current_noun_phrase = []
-    
+
     for word, pos in pos_tags:
         if pos in ['NNP', 'NNPS']:  # Proper nouns
             current_noun_phrase.append(word)
@@ -278,7 +278,9 @@ def _is_question_word(word: str) -> bool:
     }
     return word in question_words
 
+import nltk
 
+from nltk.corpus import brown
 
 @dataclass
 class Entity:
@@ -912,7 +914,7 @@ class GraphRAGIntegrator:
             List[Dict[str, Any]]: A list of unique entities found in the text, where each
                                  entity is represented as a dictionary containing:
                                  - 'name': The extracted entity text
-                                 - 'type': Entity category ('person', 'organization', 'location', 'date', 'currency')
+                                 - 'type': Entity category. 
                                  - 'description': Human-readable description of the entity
                                  - 'confidence': Confidence score (0.7 for pattern matching)
                                  - 'properties': Additional metadata including extraction method and source chunk

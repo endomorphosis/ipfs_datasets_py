@@ -1303,6 +1303,33 @@ class QueryEngine:
         query_words = set(query.split())
         
         for cross_rel in cross_relationships:
+            # Apply filters first
+            if filters:
+                # Filter by relationship type
+                if "relationship_type" in filters and cross_rel.relationship_type != filters["relationship_type"]:
+                    continue
+                    
+                # Filter by confidence
+                if "min_confidence" in filters and cross_rel.confidence < filters["min_confidence"]:
+                    continue
+                    
+                # Filter by source/target documents (extract from chunks)
+                source_docs = set()
+                target_docs = set()
+                for chunk in cross_rel.source_chunks:
+                    if "_chunk_" in chunk:
+                        doc_id = chunk.split("_chunk_")[0]
+                        source_docs.add(doc_id)
+                        target_docs.add(doc_id)
+                
+                if "source_document" in filters:
+                    if filters["source_document"] not in source_docs:
+                        continue
+                        
+                if "target_document" in filters:
+                    if filters["target_document"] not in target_docs:
+                        continue
+            
             score = 0
             
             # Get entities
@@ -1332,21 +1359,37 @@ class QueryEngine:
         scored_relationships.sort(key=lambda x: x[1], reverse=True)
         
         for cross_rel, score, source_entity, target_entity in scored_relationships[:max_results]:
-            content = f"Cross-document: {source_entity.name} ({cross_rel.source_document_id}) "
+            # Extract document IDs from source chunks
+            source_docs = set()
+            target_docs = set()
+            for chunk in cross_rel.source_chunks:
+                if "_chunk_" in chunk:
+                    doc_id = chunk.split("_chunk_")[0]
+                    if doc_id in source_entity.source_chunks[0] if source_entity.source_chunks else False:
+                        source_docs.add(doc_id)
+                    elif doc_id in target_entity.source_chunks[0] if target_entity.source_chunks else False:
+                        target_docs.add(doc_id)
+                    else:
+                        source_docs.add(doc_id)  # fallback to source
+            
+            source_doc = list(source_docs)[0] if source_docs else "unknown"
+            target_doc = list(target_docs)[0] if target_docs else list(source_docs)[0] if source_docs else "unknown"
+            
+            content = f"Cross-document: {source_entity.name} ({source_doc}) "
             content += f"{cross_rel.relationship_type.replace('_', ' ')} "
-            content += f"{target_entity.name} ({cross_rel.target_document_id})"
+            content += f"{target_entity.name} ({target_doc})"
             
             result = QueryResult(
                 id=cross_rel.id,
                 type='cross_document_relationship',
                 content=content,
                 relevance_score=score / 10.0,
-                source_document=f"{cross_rel.source_document_id}, {cross_rel.target_document_id}",
-                source_chunks=cross_rel.evidence_chunks,
+                source_document="multiple",
+                source_chunks=cross_rel.source_chunks,
                 metadata={
                     'relationship_type': cross_rel.relationship_type,
-                    'source_document': cross_rel.source_document_id,
-                    'target_document': cross_rel.target_document_id,
+                    'source_document': source_doc,
+                    'target_document': target_doc,
                     'source_entity': {
                         'id': source_entity.id,
                         'name': source_entity.name,
@@ -1357,7 +1400,8 @@ class QueryEngine:
                         'name': target_entity.name,
                         'type': target_entity.type
                     },
-                    'confidence': cross_rel.confidence
+                    'confidence': cross_rel.confidence,
+                    'evidence_chunks': cross_rel.source_chunks
                 }
             )
             results.append(result)

@@ -24,7 +24,7 @@ parent_dir = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(parent_dir)
 
 # Import the LLM reasoning tracer
-from ipfs_datasets_py.llm_reasoning_tracer import (
+from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
     ReasoningTrace

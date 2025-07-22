@@ -3,17 +3,18 @@ Text Processing Utilities for PDF Pipeline
 
 Provides text processing, chunking, and optimization utilities.
 """
-
-import re
-import logging
-from typing import List, Dict, Any, Optional
+from __future__ import annotations
 from collections import Counter
+import inspect
+import logging
+import re
+from typing import Any, Callable, Optional
+
+# from types import ModuleType
+# from functools import partial
 
 import nltk
-from nltk.tokenize import sent_tokenize, word_tokenize
-
-
-logger = logging.getLogger(__name__)
+# from nltk.tokenize import sent_tokenize
 
 class TextProcessor:
     """
@@ -71,9 +72,9 @@ class TextProcessor:
     Public Methods:
         clean_text(text: str) -> str:
             Comprehensive text cleaning with normalization and standardization
-        split_sentences(text: str) -> List[str]:
+        split_sentences(text: str) -> list[str]:
             Intelligent sentence segmentation with quality filtering
-        extract_keywords(text: str, max_keywords: int = 10) -> List[str]:
+        extract_keywords(text: str, max_keywords: int = 10) -> list[str]:
             Keyword extraction using frequency and relevance analysis
         calculate_readability(text: str) -> Dict[str, float]:
             Readability metrics including Flesch score and complexity measures
@@ -81,7 +82,7 @@ class TextProcessor:
             Language detection with confidence scoring
         normalize_encoding(text: str) -> str:
             Character encoding normalization and standardization
-        chunk_text(text: str, chunk_size: int, overlap: int = 0) -> List[str]:
+        chunk_text(text: str, chunk_size: int, overlap: int = 0) -> list[str]:
             Intelligent text chunking with context preservation
         assess_quality(text: str) -> Dict[str, Any]:
             Comprehensive text quality assessment and metrics
@@ -133,8 +134,32 @@ class TextProcessor:
         - Language detection enables multilingual processing with appropriate models
         - Processing speed scales linearly with text length for predictable performance
     """
-    
-    def __init__(self):
+    STOP_WORDS = {
+        # Articles
+        'the', 'a', 'an',
+        # Conjunctions
+        'and', 'or', 'but', 'so', 'yet', 'for', 'nor',
+        # Prepositions
+        'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 
+        'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between',
+        # Pronouns
+        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
+        'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs',
+        'this', 'that', 'these', 'those',
+        # Auxiliary verbs
+        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
+        'have', 'has', 'had', 'having',
+        'do', 'does', 'did', 'doing',
+        'will', 'would', 'shall', 'should', 'may', 'might', 'can', 'could', 'must',
+        # Common adverbs/modifiers
+        'not', 'no', 'yes', 'very', 'too', 'so', 'just', 'only', 'even', 'also', 'still'
+    }
+
+    def __init__(self, 
+                 stop_words: Optional[set[str]] = None,
+                 logger: logging.Logger = logging.getLogger(__name__),
+                 sent_tokenize: Callable = nltk.tokenize.sent_tokenize,
+                 ):
         """
         Initialize Text Processing Utility with Comprehensive Language Resources
 
@@ -183,7 +208,22 @@ class TextProcessor:
             - Memory footprint is minimized while maintaining comprehensive functionality
             - Thread-safe initialization enables concurrent processing operations
         """
-    
+        if stop_words is not None:
+            if not isinstance(stop_words, set):
+                raise TypeError("stop_words must be a set of strings")
+            if not all(isinstance(word, str) for word in stop_words):
+                raise TypeError("All stop words must be strings")
+
+        if not isinstance(logger, logging.Logger):
+            raise TypeError("logger must be an instance of logging.Logger")
+
+        if not inspect.isfunction(sent_tokenize):
+            raise TypeError("sent_tokenize must be a callable function")
+
+        self.logger = logger
+        self.stop_words = stop_words if stop_words is not None else self.STOP_WORDS
+        self.sent_tokenize = sent_tokenize
+
     def clean_text(self, text: str) -> str:
         """Clean and normalize text."""
         if not text:
@@ -200,8 +240,8 @@ class TextProcessor:
         
         return text.strip()
     
-    def split_sentences(self, text: str) -> List[str]:
-        """Split text into sentences using NLTK."""
+    def split_sentences(self, text: str) -> list[str]:
+        """Split text into sentences."""
         if not isinstance(text, str):
             raise TypeError("Input text must be a string")
         if not text:
@@ -209,9 +249,9 @@ class TextProcessor:
 
         try:
             # Use NLTK's sentence tokenizer
-            sentences = sent_tokenize(text)
+            sentences = self.sent_tokenize(text)
         except Exception as e:
-            logger.error(f"Error splitting sentences: {e}")
+            self.logger.error(f"Error splitting sentences: {e}")
             return []
         else:
             if not sentences:
@@ -224,7 +264,7 @@ class TextProcessor:
 
             return cleaned_sentences
 
-    def split_paragraphs(self, text: str) -> List[str]:
+    def split_paragraphs(self, text: str, min_paragraph_length: int = 20) -> list[str]:
         """Split text into paragraphs."""
         if not text:
             return []
@@ -236,12 +276,12 @@ class TextProcessor:
         cleaned_paragraphs = []
         for paragraph in paragraphs:
             paragraph = paragraph.strip()
-            if len(paragraph) > 20:  # Minimum paragraph length
+            if len(paragraph) > min_paragraph_length:
                 cleaned_paragraphs.append(paragraph)
         
         return cleaned_paragraphs
     
-    def extract_keywords(self, text: str, top_k: int = 20) -> List[str]:
+    def extract_keywords(self, text: str, top_k: int = 20) -> list[str]:
         """Extract keywords from text."""
         if not text:
             return []
@@ -259,7 +299,7 @@ class TextProcessor:
         top_keywords = [word for word, freq in word_freq.most_common(top_k)]
         return top_keywords
     
-    def extract_phrases(self, text: str, min_length: int = 2, max_length: int = 4) -> List[str]:
+    def extract_phrases(self, text: str, min_length: int = 2, max_length: int = 4) -> list[str]:
         """Extract key phrases from text."""
         if not text:
             return []
@@ -281,9 +321,13 @@ class TextProcessor:
         phrase_freq = Counter(phrases)
         top_phrases = [phrase for phrase, freq in phrase_freq.most_common(20)]
         return top_phrases
-    
+
+
     def calculate_readability_score(self, text: str) -> float:
-        """Calculate a simple readability score."""
+        """Calculate a readability score."""
+        if not isinstance(text, str):
+            raise TypeError("Input text must be a string")
+
         if not text:
             return 0.0
         
@@ -292,194 +336,135 @@ class TextProcessor:
         
         if not sentences or not words:
             return 0.0
-        
+
         # Simple metrics
         avg_sentence_length = len(words) / len(sentences)
         avg_word_length = sum(len(word) for word in words) / len(words)
         
         # Simple readability score (lower is easier to read)
-        readability = (avg_sentence_length * 0.4) + (avg_word_length * 0.6)
-        
+        readability: int = (avg_sentence_length * 0.4) + (avg_word_length * 0.6)
+
         # Normalize to 0-1 scale (inverted so higher is better)
         normalized_score = max(0, min(1, 1 - (readability - 10) / 20))
-        
+
         return normalized_score
 
-class ChunkOptimizer:
-    """Utility class for optimizing text chunks."""
-    
-    def __init__(self, max_size: int, overlap: int, min_size: int):
-        self.max_size = max_size
-        self.overlap = overlap
-        self.min_size = min_size
-        self.text_processor = TextProcessor()
-    
-    def create_chunks(self, text: str, preserve_sentences: bool = True) -> List[Dict[str, Any]]:
-        """Create optimized text chunks."""
-        if not text:
-            return []
+
+    # def calculate_readability_score(self, 
+    #                                 text: str, 
+    #                                 metrics_dict: Optional[dict[str, tuple[Callable, float]]] = None,
+    #                                 ) -> float:
+    #     """Calculate a readability score."""
+    #     if not isinstance(text, str):
+    #         raise TypeError("Input text must be a string")
+
+    #     if not text:
+    #         return 0.0
         
-        chunks = []
+    #     sentences = self.split_sentences(text)
+    #     words = text.split()
         
-        if preserve_sentences:
-            sentences = self.text_processor.split_sentences(text)
-            chunks = self._chunk_by_sentences(sentences)
-        else:
-            chunks = self._chunk_by_words(text)
+    #     if not sentences or not words:
+    #         return 0.0
+
+    #     # Simple metrics
+    #     avg_sentence_length = len(words) / len(sentences)
+    #     avg_word_length = sum(len(word) for word in words) / len(words)
         
-        return chunks
-    
-    def _chunk_by_sentences(self, sentences: List[str]) -> List[Dict[str, Any]]:
-        """Create chunks preserving sentence boundaries."""
-        chunks = []
-        current_chunk = []
-        current_size = 0
-        
-        for sentence in sentences:
-            sentence_words = len(sentence.split())
+    #     # Simple readability score (lower is easier to read)
+    #     readability: int = (avg_sentence_length * 0.4) + (avg_word_length * 0.6)
+
+    #     if metrics_dict is not None:
+    #         if not isinstance(metrics_dict, dict):
+    #             raise TypeError("metrics_dict must be a dictionary")
+    #         correct_key_values = [
+    #             isinstance(k, str) 
+    #             and isinstance(v, tuple) 
+    #             and len(v) == 2
+    #             and inspect.isfunction(v[0])
+    #             and isinstance(v[1], (int, float))
+    #             for k, v in metrics_dict.items()
+    #         ]
+    #         if not all(correct_key_values):
+    #             raise TypeError(
+    #                 "metrics_dict must contain string keys and tuple values of (function, weight)"
+    #             )
+
+    #         total_weight = sum(weight for _, weight in metrics_dict.values())
+    #         if total_weight != 1:
+    #             raise ValueError("Total weight of metrics must sum to 1")
+
+    #         # Zero out readability if metrics_dict is provided
+    #         readability = 0
+    #         metric_dict = {}
+
+    #         # Check the function signature of each metric.
+    #         # The criteria are:
+    #         # 1. The function must accept only key-word parameters.
+    #         # 2. The function signature must contain one or more of the following parameters:
+    #         # - text: str
+    #         # - sentences: list[str]
+    #         # - words: list[str]
+    #         # 3. The function must return a single real numeric value.
+
+    #         for metric, (func, weight) in metrics_dict.items():
+
+    #             kwarg_dict = {}
+    #             params = inspect.signature(func).parameters
+
+    #             if any(p.kind != inspect.Parameter.KEYWORD_ONLY for p in params.values()):
+    #                 raise ValueError(f"Metric '{metric}' must accept only keyword parameters.")
+
+    #             if 'text' in params:
+    #                 kwarg_dict['text'] = text
+    #             if 'sentences' in params:
+    #                 kwarg_dict['sentences'] = sentences
+    #             if 'words' in params:
+    #                 kwarg_dict['words'] = words
+
+    #             if any(kwarg_dict.get(p) is None for p in ['text', 'sentences', 'words']):
+    #                 raise ValueError(
+    #                     f"Metric '{metric}' must have "
+    #                     "'text' or 'sentences', or 'words' as parameters."
+    #                 )
+
+    #             metric_dict.update({metric: partial(func, **kwarg_dict)})
             
-            # Check if adding this sentence would exceed max size
-            if current_size + sentence_words > self.max_size and current_chunk:
-                # Create chunk with current content
-                chunk_text = '. '.join(current_chunk) + '.'
-                chunks.append({
-                    'text': chunk_text,
-                    'word_count': current_size,
-                    'sentence_count': len(current_chunk),
-                    'type': 'sentence_boundary'
-                })
-                
-                # Start new chunk with overlap
-                overlap_sentences = self._get_overlap_sentences(current_chunk)
-                current_chunk = overlap_sentences + [sentence]
-                current_size = sum(len(s.split()) for s in current_chunk)
-            else:
-                current_chunk.append(sentence)
-                current_size += sentence_words
+    #         readability = sum(func() * weight for func, weight in metric_dict.values())
+
+    #     # Normalize to 0-1 scale (inverted so higher is better)
+    #     normalized_score = max(0, min(1, 1 - (readability - 10) / 20))
         
-        # Add final chunk if content remains
-        if current_chunk:
-            chunk_text = '. '.join(current_chunk) + '.'
-            chunks.append({
-                'text': chunk_text,
-                'word_count': current_size,
-                'sentence_count': len(current_chunk),
-                'type': 'sentence_boundary'
-            })
-        
-        return chunks
-    
-    def _chunk_by_words(self, text: str) -> List[Dict[str, Any]]:
-        """Create chunks by word count."""
-        words = text.split()
-        chunks = []
-        
-        for i in range(0, len(words), self.max_size - self.overlap):
-            chunk_words = words[i:i + self.max_size]
-            
-            if len(chunk_words) >= self.min_size:
-                chunk_text = ' '.join(chunk_words)
-                chunks.append({
-                    'text': chunk_text,
-                    'word_count': len(chunk_words),
-                    'start_word': i,
-                    'end_word': i + len(chunk_words),
-                    'type': 'word_boundary'
-                })
-        
-        return chunks
-    
-    def _get_overlap_sentences(self, sentences: List[str]) -> List[str]:
-        """Get overlap sentences for chunk continuity."""
-        if not sentences:
-            return []
-        
-        # Calculate overlap based on word count
-        total_words = sum(len(s.split()) for s in sentences)
-        overlap_words = min(self.overlap, total_words // 2)
-        
-        # Get sentences from the end that fit within overlap
-        overlap_sentences = []
-        current_words = 0
-        
-        for sentence in reversed(sentences):
-            sentence_words = len(sentence.split())
-            if current_words + sentence_words <= overlap_words:
-                overlap_sentences.insert(0, sentence)
-                current_words += sentence_words
-            else:
-                break
-        
-        return overlap_sentences
-    
-    def optimize_chunk_boundaries(self, text: str, current_boundaries: List[int]) -> List[int]:
-        """Optimize chunk boundaries to respect sentence and paragraph breaks."""
-        # Find sentence boundaries
-        sentence_ends = []
-        for match in re.finditer(r'[.!?]+\s+', text):
-            sentence_ends.append(match.end())
-        
-        # Find paragraph boundaries  
-        paragraph_ends = []
-        for match in re.finditer(r'\n\s*\n', text):
-            paragraph_ends.append(match.end())
-        
-        optimized_boundaries = []
-        
-        for boundary in current_boundaries:
-            # Find closest sentence or paragraph boundary
-            closest_sentence = min(sentence_ends, key=lambda x: abs(x - boundary), default=boundary)
-            closest_paragraph = min(paragraph_ends, key=lambda x: abs(x - boundary), default=boundary)
-            
-            # Prefer paragraph boundaries, then sentence boundaries
-            if abs(closest_paragraph - boundary) <= 50:  # Within 50 characters
-                optimized_boundaries.append(closest_paragraph)
-            elif abs(closest_sentence - boundary) <= 25:  # Within 25 characters
-                optimized_boundaries.append(closest_sentence)
-            else:
-                optimized_boundaries.append(boundary)
-        
-        return optimized_boundaries
-    
-    def analyze_chunk_quality(self, chunk: Dict[str, Any]) -> Dict[str, float]:
-        """Analyze the quality of a text chunk."""
-        text = chunk.get('text', '')
-        
-        if not text:
-            return {'overall_quality': 0.0}
-        
-        # Calculate various quality metrics
-        readability = self.text_processor.calculate_readability_score(text)
-        
-        # Length appropriateness (optimal range)
-        word_count = len(text.split())
-        length_score = 1.0
-        if word_count < self.min_size:
-            length_score = word_count / self.min_size
-        elif word_count > self.max_size:
-            length_score = self.max_size / word_count
-        
-        # Sentence completeness
-        sentences = self.text_processor.split_sentences(text)
-        completeness_score = 1.0 if sentences else 0.5
-        
-        # Content diversity (unique words)
-        words = text.lower().split()
-        unique_words = len(set(words))
-        diversity_score = unique_words / len(words) if words else 0.0
-        
-        # Overall quality score
-        overall_quality = (
-            readability * 0.3 +
-            length_score * 0.3 +
-            completeness_score * 0.2 +
-            diversity_score * 0.2
-        )
-        
-        return {
-            'overall_quality': overall_quality,
-            'readability': readability,
-            'length_score': length_score,
-            'completeness_score': completeness_score,
-            'diversity_score': diversity_score
-        }
+    #     return normalized_score
+
+def make_text_processor(mock_dict: Optional[dict[str, Any]] = None) -> 'TextProcessor':
+    """Factory Function to create TextProcessor instance with default configurations."""
+    stop_words = {
+        # Articles
+        'the', 'a', 'an',
+        # Conjunctions
+        'and', 'or', 'but', 'so', 'yet', 'for', 'nor',
+        # Prepositions
+        'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 
+        'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between',
+        # Pronouns
+        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
+        'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs',
+        'this', 'that', 'these', 'those',
+        # Auxiliary verbs
+        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
+        'have', 'has', 'had', 'having',
+        'do', 'does', 'did', 'doing',
+        'will', 'would', 'shall', 'should', 'may', 'might', 'can', 'could', 'must',
+        # Common adverbs/modifiers
+        'not', 'no', 'yes', 'very', 'too', 'so', 'just', 'only', 'even', 'also', 'still'
+    }
+    init_dict = {
+        "stop_words": stop_words,
+        "logger": logging.getLogger(__name__),
+        "sent_tokenize": nltk.tokenize.sent_tokenize,
+    }
+    if mock_dict is not None:
+        init_dict.update(mock_dict)
+
+    return TextProcessor(**init_dict)

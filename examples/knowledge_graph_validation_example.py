@@ -6,11 +6,9 @@ This example shows how to use the KnowledgeGraphExtractorWithValidation to extra
 knowledge graphs from text, Wikipedia articles, and multiple documents, with
 automatic validation against Wikidata's SPARQL endpoint and correction suggestions.
 """
-
 import os
 import sys
 import json
-from typing import Dict, List, Any
 
 # Add parent directory to path to import the modules
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

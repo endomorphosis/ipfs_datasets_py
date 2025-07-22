@@ -29,7 +29,7 @@ from ipfs_datasets_py.rag.rag_query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
     QueryMetricsCollector
 )
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 
 class WikipediaRelationshipWeightCalculator:

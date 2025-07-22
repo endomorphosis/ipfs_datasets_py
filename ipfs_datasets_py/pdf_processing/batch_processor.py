@@ -173,6 +173,28 @@ class BatchJobResult:
         chunk_count (int): Number of text chunks generated. 0 if failed.
         error_message (Optional[str]): Detailed error message if processing failed.
             None for successful jobs.
+    
+    Example:
+        >>> # Successful job result
+        >>> result = BatchJobResult(
+        ...     job_id='job_123',
+        ...     status='completed',
+        ...     processing_time=12.5,
+        ...     document_id='doc_456',
+        ...     knowledge_graph_id='kg_789',
+        ...     ipld_cid='Qm...',
+        ...     entity_count=42,
+        ...     relationship_count=10,
+        ...     chunk_count=5
+        ... )
+        
+        >>> # Failed job result
+        >>> failed_result = BatchJobResult(
+        ...     job_id='job_124',
+        ...     status='failed',
+        ...     processing_time=0.0,
+        ...     error_message='Failed to extract text from PDF'
+        ... )
     """
     job_id: str
     status: str
@@ -209,6 +231,27 @@ class BatchStatus:
         throughput (float): Documents processed per second for completed batches.
         resource_usage (Dict[str, Any]): Current resource usage statistics including
             memory, CPU, and worker thread information.
+    
+    Example:
+        >>> # Example batch status for a running batch
+        >>> status = BatchStatus(
+        ...     batch_id='batch_123',
+        ...     total_jobs=100,
+        ...     completed_jobs=75,
+        ...     failed_jobs=5,
+        ...     pending_jobs=20,
+        ...     processing_jobs=10,
+        ...     start_time='2024-01-01T12:00:00',
+        ...     end_time=None,  # Still running
+        ...     total_processing_time=1500.0,
+        ...     average_job_time=20.0,
+        ...     throughput=3.0,
+        ...     resource_usage={
+        ...         'memory_usage_mb': 2048,
+        ...         'cpu_usage_percent': 75.0,
+        ...         'active_workers': 8
+        ...     }
+        ... )
     """
     batch_id: str
     total_jobs: int
@@ -267,7 +310,7 @@ class BatchProcessor:
         stop_event (Event): Threading event for coordinating worker shutdown.
         processing_stats (Dict[str, Any]): Accumulated statistics across all operations.
 
-    Usage Example:
+    Example:
         processor = BatchProcessor(
             max_workers=8,
             max_memory_mb=4096,
