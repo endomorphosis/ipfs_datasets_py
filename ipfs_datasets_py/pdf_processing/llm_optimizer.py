@@ -10,22 +10,28 @@ Optimizes extracted content for LLM consumption by:
 """
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Annotated
+from typing import Any, Optional, Annotated
 import re
+from enum import StrEnum
+import os
 
 
 import tiktoken
 from transformers import AutoTokenizer
 import numpy as np
 from sentence_transformers import SentenceTransformer
-
-from ipfs_datasets_py.utils.text_processing import TextProcessor
-from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.tag import pos_tag
 from nltk.chunk import ne_chunk
 from nltk.tree import Tree
+import pydantic
+
+import openai
+
+
+from ipfs_datasets_py.utils.text_processing import TextProcessor
+from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +79,7 @@ def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) 
         logger.error(f"Unexpected error comparing numpy arrays: {e}")
         return False
 
-# def _turn_str_into_list_of_str(s: Any) -> List[str]:
+# def _turn_str_into_list_of_str(s: Any) -> list[str]:
 #     match s:
 #         case str():
 #             return [s]
@@ -112,6 +118,66 @@ def _test_set_elements(s: set[str]) -> set[str]:
             raise ValueError(f"Invalid semantic type: {item}. Must be one of {valid_set}.")
     return s
 
+
+class Classification(StrEnum):
+    pass
+
+# NOTE: From https://huggingface.co/datasets/KnutJaegersberg/wikipedia_categories, 7/25/2025
+CLASSIFICATIONS = {
+    "Science and technology",
+    "Engineering",
+    "Industry",
+    "Language",
+    "Government",
+    "Education",
+    "Nature",
+    "Mass media",
+    "People",
+    "Military",
+    "Energy",
+    "Knowledge",
+    "Life",
+    "Organizations",
+    "History",
+    "Concepts",
+    "Philosophy",
+    "Food and drink",
+    "Humanities",
+    "World",
+    "Geography",
+    "Law",
+    "Business",
+    "Events",
+    "Entertainment",
+    "Culture",
+    "Religion",
+    "Ethics",
+    "Sports",
+    "Music",
+    "Academic Disciplines",
+    "Politics",
+    "Economy",
+    "Society",
+    "Mathematics",
+    "Policy",
+    "Health"
+}
+
+class ClassificationResult(BaseModel):
+    """Result of entity classification."""
+    entity: str
+    category: str
+    confidence: float
+
+
+
+
+
+
+
+
+
+
 class LLMChunk(BaseModel):
     """
     Semantically optimized text chunk designed for effective LLM processing and analysis.
@@ -136,7 +202,7 @@ class LLMChunk(BaseModel):
             - 'figure_caption': Figure or table caption
             - 'header': Section or chapter heading
             - 'mixed': Multiple content types combined
-        relationships (List[str]): List of chunk IDs that are semantically or structurally
+        relationships (list[str]): list of chunk IDs that are semantically or structurally
             related to this chunk, enabling cross-chunk reasoning and context.
         embedding (Optional[np.ndarray]): Vector embedding representing the semantic content.
             Shape depends on the embedding model used. None if embeddings not generated.
@@ -147,7 +213,7 @@ class LLMChunk(BaseModel):
     source_elements: list[str]
     token_count: NonNegativeInt
     semantic_types: Annotated[set[str], AV(_test_set_elements)]
-    relationships: List[str] = Field(default_factory=list)
+    relationships: list[str] = Field(default_factory=list)
     embedding: Optional[np.ndarray] = None
 
     class Config:
@@ -250,22 +316,22 @@ class LLMDocument(BaseModel):
     Attributes:
         document_id (str): Unique identifier for the document within the system.
         title (str): Human-readable title or name of the document.
-        chunks (List[LLMChunk]): List of semantically optimized text chunks with embeddings.
+        chunks (list[LLMChunk]): list of semantically optimized text chunks with embeddings.
             Each chunk contains content, metadata, embeddings, and relationship information.
         summary (str): Comprehensive document summary generated from the full content.
-        key_entities (List[Dict[str, Any]]): Key entities extracted from the document content
+        key_entities (list[dict[str, Any]]): Key entities extracted from the document content
             including text, type classification, and confidence scores.
-        processing_metadata (Dict[str, Any]): Document processing and optimization metadata
+        processing_metadata (dict[str, Any]): Document processing and optimization metadata
             including timestamps, chunk counts, token counts, and model information.
         document_embedding (Optional[np.ndarray]): Document-level vector embedding representing
             the overall semantic content. Shape depends on the embedding model used.
     """
     document_id: str
     title: str
-    chunks: List[LLMChunk]
+    chunks: list[LLMChunk]
     summary: str
-    key_entities: List[Dict[str, Any]]
-    processing_metadata: Dict[str, Any]
+    key_entities: list[dict[str, Any]]
+    processing_metadata: dict[str, Any]
     document_embedding: Optional[np.ndarray] = None
 
     class Config:
@@ -451,7 +517,9 @@ class LLMOptimizer:
                  tokenizer_name: str = "gpt-3.5-turbo",
                  max_chunk_size: int = 2048,
                  chunk_overlap: int = 200,
-                 min_chunk_size: int = 100):
+                 min_chunk_size: int = 100,
+                 entity_classifications: list[str] = CLASSIFICATIONS,
+                 ):
         """
         Initialize the LLM Optimizer with model configurations and processing parameters.
 
@@ -517,15 +585,19 @@ class LLMOptimizer:
             Models are loaded lazily during initialization. If model loading fails,
             the optimizer will use fallback methods with reduced functionality.
         """
-        self.model_name = model_name
-        self.tokenizer_name = tokenizer_name
-        self.max_chunk_size = max_chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.min_chunk_size = min_chunk_size
-        
+        self.model_name: str = model_name
+        self.tokenizer_name: str = tokenizer_name
+        self.max_chunk_size: int = max_chunk_size
+        self.chunk_overlap: int = chunk_overlap
+        self.min_chunk_size: int = min_chunk_size
+        self.api_key = os.environ["OPENAI_API_KEY"]
+        self.entity_classifications: set[str] = entity_classifications
+
+        self.openai_async_client = openai.AsyncOpenAI(api_key=self.api)
+
         # Initialize models
         self._initialize_models()
-        
+
         # Text processing utilities
         self.text_processor = TextProcessor()
         self.chunk_optimizer = ChunkOptimizer(
@@ -533,7 +605,7 @@ class LLMOptimizer:
             overlap=chunk_overlap,
             min_size=min_chunk_size
         )
-        
+
     def _initialize_models(self):
         """
         Initialize embedding and tokenization models with error handling and fallback options.
@@ -575,7 +647,7 @@ class LLMOptimizer:
             self.embedding_model = SentenceTransformer(self.model_name)
             logger.info(f"Loaded embedding model: {self.model_name}")
         except Exception as e:
-            raise OSError(f"Could not load embedding model for LLMOptimizer: {self.model_name}: {e}") from e
+            raise RuntimeError(f"Could not load embedding model for LLMOptimizer: {self.model_name}: {e}") from e
 
             # Initialize tokenizer for token counting
         try:
@@ -587,14 +659,21 @@ class LLMOptimizer:
             logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
 
         except Exception as e:
-            raise OSError(
+            raise RuntimeError(
                 f"Could not load tokenizer for LLMOptimizer: {self.model_name}, {self.tokenizer_name}: {e}"
             ) from e
 
+        try:
+            self.openai_async_client = openai.AsyncOpenAI()
+        except Exception as e:
+            raise RuntimeError(f"Could not initialize OpenAI client: {e}") from e
+
 
     async def optimize_for_llm(self, 
-                              decomposed_content: Dict[str, Any],
-                              document_metadata: Dict[str, Any]) -> LLMDocument:
+                              decomposed_content: dict[str, Any],
+                              document_metadata: dict[str, Any],
+                              
+                              ) -> LLMDocument:
         """
         Transform decomposed PDF content into an LLM-optimized document with semantic structure.
 
@@ -607,19 +686,19 @@ class LLMOptimizer:
         through intelligent chunking, token-aware segmentation, and contextual enrichment.
 
         Args:
-            decomposed_content (Dict[str, Any]): Content from PDF decomposition stage containing
+            decomposed_content (dict[str, Any]): Content from PDF decomposition stage containing
                 pages, elements, metadata, and structure information. Expected structure:
                 {
                     'pages': [{'elements': [...], 'metadata': {...}}, ...],
                     'metadata': {...},
                     'structure': {...}
                 }
-            document_metadata (Dict[str, Any]): Document metadata and properties including
+            document_metadata (dict[str, Any]): Document metadata and properties including
                 document_id, title, author, creation_date, and other document-level information.
 
         Returns:
             LLMDocument: Comprehensive container with optimized chunks, embeddings, and metadata
-                containing document_id, title, chunks (List[LLMChunk]), summary, key_entities,
+                containing document_id, title, chunks (list[LLMChunk]), summary, key_entities,
                 document_embedding, and processing_metadata.
 
         Raises:
@@ -643,47 +722,66 @@ class LLMOptimizer:
             ...     print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
             >>> print(f"Document summary: {llm_doc.summary[:100]}...")
         """
-        logger.info("Starting LLM optimization process")
+        timeout = 30 # seconds
+        import asyncio
+
+        async with asyncio.timeout(timeout):
         
-        # Extract text content with structure preservation
-        structured_text = await self._extract_structured_text(decomposed_content)
-        
-        # Generate document summary
-        document_summary = await self._generate_document_summary(structured_text)
-        
-        # Create optimal chunks
-        chunks = await self._create_optimal_chunks(structured_text)
-        
-        # Generate embeddings
-        chunks_with_embeddings = await self._generate_embeddings(chunks)
-        
-        # Extract key entities
-        key_entities = await self._extract_key_entities(structured_text)
-        
-        # Create document-level embedding
-        document_embedding = await self._generate_document_embedding(document_summary, structured_text)
-        
-        # Build LLM document
-        llm_document = LLMDocument(
-            document_id=document_metadata.get('document_id', ''),
-            title=document_metadata.get('title', ''),
-            chunks=chunks_with_embeddings,
-            summary=document_summary,
-            key_entities=key_entities,
-            document_embedding=document_embedding,
-            processing_metadata= LLMDocumentProcessingMetadata(
-                optimization_timestamp=asyncio.get_event_loop().time(),
-                chunk_count=len(chunks_with_embeddings),
-                total_tokens=sum(chunk.token_count for chunk in chunks_with_embeddings),
-                model_used=self.model_name,
-                tokenizer_used=self.tokenizer_name
-            ).model_dump()
-        )
-        
-        logger.info(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
-        return llm_document
+            print("Starting LLM optimization process")
+            
+            # Extract text content with structure preservation
+            structured_text = await self._extract_structured_text(decomposed_content)
+
+            print("Extracted structured text content with preserved document structure")
+            
+            # Generate document summary
+            document_summary = await self._generate_document_summary(structured_text)
+
+            print("Generated document summary")
+            
+            # Create optimal chunks
+            chunks = await self._create_optimal_chunks(structured_text)
+
+            print(f"Created {len(chunks)} initial chunks")
+
+            # Generate embeddings
+            chunks_with_embeddings = await self._generate_embeddings(chunks)
+
+            print("Generated embeddings for all chunks")
+
+            # Extract key entities
+            key_entities = await self._extract_key_entities(structured_text)
+
+            print(f"Extracted {len(key_entities)} key entities from document")
+
+            # Create document-level embedding
+            document_embedding = await self._generate_document_embedding(document_summary, structured_text)
+
+            print("Generated document-level embedding")
+
+            # Build LLM document
+            llm_document = LLMDocument(
+                document_id=document_metadata.get('document_id', ''),
+                title=document_metadata.get('title', ''),
+                chunks=chunks_with_embeddings,
+                summary=document_summary,
+                key_entities=key_entities,
+                document_embedding=document_embedding,
+                processing_metadata= LLMDocumentProcessingMetadata(
+                    optimization_timestamp=asyncio.get_event_loop().time(),
+                    chunk_count=len(chunks_with_embeddings),
+                    total_tokens=sum(chunk.token_count for chunk in chunks_with_embeddings),
+                    model_used=self.model_name,
+                    tokenizer_used=self.tokenizer_name
+                ).model_dump()
+            )
+            
+            print(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
+            return llm_document
+
+        raise TimeoutError(f"LLM optimization process timed out after '{timeout}' seconds")
     
-    async def _extract_structured_text(self, decomposed_content: Dict[str, Any]) -> Dict[str, Any]:
+    async def _extract_structured_text(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """
         Extract and organize text content while preserving document structure and element context.
 
@@ -696,13 +794,13 @@ class LLMOptimizer:
         types to enable intelligent chunking and context-aware processing.
 
         Args:
-            decomposed_content (Dict[str, Any]): Raw decomposed PDF content containing pages,
+            decomposed_content (dict[str, Any]): Raw decomposed PDF content containing pages,
                 elements, and metadata from the PDF decomposition stage. Expected to contain
                 'pages' list with element dictionaries including content, type, position,
                 style, and confidence information.
 
         Returns:
-            Dict[str, Any]: Structured text representation with the following format:
+            dict[str, Any]: Structured text representation with the following format:
                 {
                     'pages': [
                         {
@@ -711,16 +809,16 @@ class LLMOptimizer:
                                 {
                                     'content': str,
                                     'type': str,
-                                    'position': Dict[str, Any],
-                                    'style': Dict[str, Any],
+                                    'position': dict[str, Any],
+                                    'style': dict[str, Any],
                                     'confidence': float
                                 }, ...
                             ],
                             'full_text': str
                         }, ...
                     ],
-                    'metadata': Dict[str, Any],
-                    'structure': Dict[str, Any]
+                    'metadata': dict[str, Any],
+                    'structure': dict[str, Any]
                 }
 
         Raises:
@@ -804,7 +902,7 @@ class LLMOptimizer:
         
         return structured_text
     
-    async def _generate_document_summary(self, structured_text: Dict[str, Any]) -> str:
+    async def _generate_document_summary(self, structured_text: dict[str, Any]) -> str:
         """
         Generate a comprehensive extractive summary of the document using keyword and position analysis.
 
@@ -818,7 +916,7 @@ class LLMOptimizer:
         to identify the most informative content for the summary.
 
         Args:
-            structured_text (Dict[str, Any]): Structured text representation from
+            structured_text (dict[str, Any]): Structured text representation from
                 _extract_structured_text containing pages with full_text content.
                 Expected format: {'pages': [{'full_text': str, ...}, ...]}
 
@@ -890,7 +988,7 @@ class LLMOptimizer:
             logger.error(msg)
             return msg
     
-    async def _create_optimal_chunks(self, structured_text: Dict[str, Any]) -> List[LLMChunk]:
+    async def _create_optimal_chunks(self, structured_text: dict[str, Any]) -> list[LLMChunk]:
         """
         Create semantically coherent text chunks optimized for LLM processing with intelligent boundary detection.
 
@@ -903,12 +1001,12 @@ class LLMOptimizer:
         to create chunks that maximize LLM comprehension while maintaining processing efficiency.
 
         Args:
-            structured_text (Dict[str, Any]): Structured text representation with pages and
+            structured_text (dict[str, Any]): Structured text representation with pages and
                 elements from _extract_structured_text. Expected format includes pages with
                 elements containing content, type, and metadata.
 
         Returns:
-            List[LLMChunk]: List of optimized text chunks with the following properties:
+            list[LLMChunk]: list of optimized text chunks with the following properties:
                 - Each chunk respects max_chunk_size token limits
                 - Overlapping content maintains narrative continuity
                 - Semantic relationships established between related chunks
@@ -1022,7 +1120,7 @@ class LLMOptimizer:
                 Used to generate the formatted chunk_id string (e.g., "chunk_0001").
             page_num (int): Page number from the original document where this content
                 originated. Used for traceability and same-page relationship establishment.
-            source_elements (list[str]): List of element types that contributed to this chunk
+            source_elements (list[str]): list of element types that contributed to this chunk
                 (e.g., ['paragraph', 'header', 'table']).
 
         Returns:
@@ -1030,7 +1128,7 @@ class LLMOptimizer:
                 - content: Cleaned and stripped text content
                 - chunk_id: Formatted identifier (e.g., "chunk_0001")
                 - source_page: Source page number
-                - source_elements: List of contributing element types
+                - source_elements: list of contributing element types
                 - token_count: Accurate token count using configured tokenizer
                 - semantic_types: Set of semantic content types present in the chunk
                 - relationships: Empty list (populated later by _establish_chunk_relationships)
@@ -1091,7 +1189,7 @@ class LLMOptimizer:
 
         return chunk
     
-    def _establish_chunk_relationships(self, chunks: List[LLMChunk]) -> List[LLMChunk]:
+    def _establish_chunk_relationships(self, chunks: list[LLMChunk]) -> list[LLMChunk]:
         """
         Establish semantic and structural relationships between chunks to preserve document coherence.
 
@@ -1104,12 +1202,12 @@ class LLMOptimizer:
         (same-page chunks) connections while limiting relationship counts for performance.
 
         Args:
-            chunks (List[LLMChunk]): List of LLMChunk instances with populated content and
+            chunks (list[LLMChunk]): list of LLMChunk instances with populated content and
                 metadata but empty relationships lists. Chunks should be ordered logically
                 (typically by page and position within page).
 
         Returns:
-            List[LLMChunk]: The same list of chunks with populated relationships attributes.
+            list[LLMChunk]: The same list of chunks with populated relationships attributes.
                 Each chunk will have its relationships list populated with chunk IDs of
                 related chunks including:
                 - Adjacent chunks (sequential relationships)
@@ -1155,7 +1253,7 @@ class LLMOptimizer:
         
         return chunks
     
-    async def _generate_embeddings(self, chunks: List[LLMChunk]) -> List[LLMChunk]:
+    async def _generate_embeddings(self, chunks: list[LLMChunk]) -> list[LLMChunk]:
         """
         Generate vector embeddings for all chunks using the configured sentence transformer model.
 
@@ -1167,12 +1265,12 @@ class LLMOptimizer:
         handling to ensure processing continues even if individual batches fail.
 
         Args:
-            chunks (List[LLMChunk]): List of LLMChunk instances with populated content.
+            chunks (list[LLMChunk]): list of LLMChunk instances with populated content.
                 Each chunk should have valid content text for embedding generation.
                 Chunks may or may not have existing embeddings (will be overwritten).
 
         Returns:
-            List[LLMChunk]: The same list of chunks with populated embedding attributes.
+            list[LLMChunk]: The same list of chunks with populated embedding attributes.
                 Successfully processed chunks will have numpy arrays in their embedding
                 attribute. Failed chunks will retain None embeddings with error logging.
 
@@ -1219,8 +1317,102 @@ class LLMOptimizer:
                 # Continue without embeddings for this batch
         
         return chunks
-    
-    async def _extract_key_entities(self, structured_text: Dict[str, Any]) -> List[Dict[str, Any]]:
+
+    async def _get_entity_classification(
+        self, 
+        sentence: str, 
+        *,
+        openai_client: Any, 
+        classifications: set[str] = CLASSIFICATIONS,
+        retries: int = 3,
+        timeout: int = 30
+    ) -> ClassificationResult:
+        """
+        Classify the type of entity in a sentence using an OpenAI language model.
+
+        This function analyzes a given text segment and assigns it to one of the
+        provided classification categories using OpenAI's completion API.
+
+        Args:
+            sentence (str): A semantic unit of English text to classify.
+                Must satisfy the following criteria:
+                - Non-empty string containing at least one word
+                - Represents a single, coherent semantic unit.
+                - Maximum of 512 characters.
+                - No leading/trailing whitespace
+
+            openai_client (Any): An OpenAI client instance with access to completion methods.
+                The client must support the chat completions API and log probability functionality
+                in order to constrain outputs to the specified classifications.
+
+            classifications (set[str], optional): Set of categories to classify the sentence into.
+                Requirements:
+                - Non-empty set with at least one classification
+                - Each classification should be a non-empty string
+                - Classifications should be mutually exclusive when possible
+
+                Defaults to the predefined CLASSIFICATIONS set based on Wikipedia categories.
+                These categories are:
+                - "Science and technology", "Engineering", "Industry", "Language",
+                - "Government", "Education", "Nature", "Mass media", "People",
+                - "Military", "Energy", "Knowledge", "Life", "Organizations",
+                - "History", "Concepts", "Philosophy", "Food and drink",
+                - "Humanities", "World", "Geography", "Law", "Business",
+                - "Events", "Entertainment", "Culture", "Religion",
+                - "Ethics", "Sports", "Music", "Academic Disciplines",
+                - "Politics", "Economy", "Society", "Mathematics",
+                - "Policy", "Health"
+
+        Returns:
+            ClassificationResult: An object containing:
+                - entity (str): The original sentence being classified.
+                - category (str): The most probable classification of the entity in the sentence.
+                - confidence (int): A float between 0 and 1.
+                    This represents the model's confidence in the classification.
+
+        Classification Process:
+            - Let temperature be 0.0 (ensures deterministic output).
+            - Let base log threshold be the natural log of 0.05 (e.g. statistical significance threshold). 
+            - Run the sentence through the OpenAI completion API, with a list of categories.
+            - OpenAI's API will return the top 20 most probable categories in log Probability format.
+            - For each category in the response:
+                - If the log probability is below the threshold, exclude from further consideration.
+            - If no categories remain after filtering, assign it as "unclassified" with confidence 0.0.
+            - Else, re-perform classification with the remaining categories.
+            - Continue until either:
+                - No categories remain after filtering.
+                - All categories are above the threshold.
+                - The number of retries exceeds the specified limit.
+            - If multiple categories remain, select the one with the highest log probability.
+            - Convert this log probability into a probability score between 0 and 1.
+
+        Raises:
+            TypeError: If arguments have incorrect types.
+            ValueError: If text is empty, categories is empty, or openai client is not set.
+            asyncio.TimeoutError: If the API request exceeds the timeout.
+            openai.APIError: If the OpenAI API returns an error.
+            RuntimeError: If max retries exceeded or response parsing fails.
+
+        Example:
+            >>> import openai
+            >>> client = openai.AsyncOpenAI(api_key="your-api-key")
+            >>> sentence = "Apple Inc."
+            >>> classifications = {'Technology', 'Business', 'Science', 'Other'}
+            >>> result = await _get_entity_classification(
+            ...     sentence,
+            ...     openai_client=client,
+            ...     classifications=classifications
+            ... )
+            >>> print(result)
+            'Business'
+        """
+        pass
+
+
+    async def _extract_key_entities(self, 
+                                    structured_text: dict[str, Any],
+                                    max_entities: int = 50
+                                    ) -> list[dict[str, Any]]:
         """
         Extract key entities and concepts from document text using NLTK's advanced named entity recognition.
 
@@ -1234,15 +1426,16 @@ class LLMOptimizer:
         to prevent overwhelming downstream processing.
 
         Args:
-            structured_text (Dict[str, Any]): Structured text representation containing
+            structured_text (dict[str, Any]): Structured text representation containing
                 pages with full_text content. Expected format from _extract_structured_text
                 with 'pages' list containing page dictionaries with 'full_text' keys.
+            max_entities (int): Maximum number of entities to extract. Defaults to 50.
+                This limits the number of entities returned to prevent excessive output.
 
         Returns:
-            List[Dict[str, Any]]: List of extracted entities, each containing:
+            list[dict[str, Any]]: list of extracted entities, each containing:
                 - 'text' (str): The actual entity text as found in the document
-                - 'type' (str): Entity type classification ('PERSON', 'ORGANIZATION', 'GPE', 
-                  'DATE', 'MONEY', 'PERCENT', etc.)
+                - 'type' (str): Entity type classification. The classifications are arbitrary.
                 - 'confidence' (float): Confidence score between 0.0 and 1.0 indicating
                   extraction reliability based on entity type and context
 
@@ -1270,21 +1463,27 @@ class LLMOptimizer:
             >>> #     {'text': '95%', 'type': 'PERCENT', 'confidence': 0.9}
             >>> # ]
         """
-        try: # TODO
-            pass
-        except ImportError:
-            logger.warning("NLTK not available, falling back to basic pattern matching")
-            return await self._extract_entities_fallback(structured_text)
+        if not isinstance(structured_text, dict):
+            raise TypeError("structured_text must be a dictionary")
+        if 'pages' not in structured_text.keys():
+            raise KeyError("'pages' key is required in structured_text")
+        if not isinstance(structured_text['pages'], list):
+            raise TypeError("'pages' value must be a list")
+        if not structured_text['pages']:
+            raise ValueError("No pages found in structured_text for entity extraction")
+        if not isinstance(max_entities, int):
+            raise TypeError("max_entities must be an integer")
+        if max_entities <= 0:
+            raise ValueError("max_entities must be a positive integer")
         
-        # Ensure required NLTK data is downloaded
-        try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            logger.info("Downloading required NLTK data...")
-            nltk.download('punkt', quiet=True)
-            nltk.download('averaged_perceptron_tagger', quiet=True)
-            nltk.download('maxent_ne_chunker', quiet=True)
-            nltk.download('words', quiet=True)
+        # Validate page structure
+        for idx, page in enumerate(structured_text['pages']):
+            if not isinstance(page, dict):
+                raise TypeError(f"Page {idx} must be a dictionary")
+            if 'full_text' not in page:
+                raise KeyError(f"Page {idx} missing required 'full_text' key")
+            if not isinstance(page['full_text'], str):
+                raise TypeError(f"Page {idx} 'full_text' must be a string")
         
         # Combine all text for entity extraction
         full_text = ""
@@ -1300,28 +1499,22 @@ class LLMOptimizer:
         sentences = sent_tokenize(full_text)
         
         for sentence in sentences:
-            # Tokenize and tag parts of speech
-            tokens = word_tokenize(sentence)
-            pos_tags = pos_tag(tokens)
-            
-            # Named entity recognition
-            named_entities = ne_chunk(pos_tags, binary=False)
-            
-            # Extract entities from the parse tree
-            for chunk in named_entities:
-                if isinstance(chunk, Tree):
-                    entity_text = ' '.join([token for token, pos in chunk.leaves()])
-                    entity_type = chunk.label()
-                    
-                    # Calculate confidence based on entity type and length
-                    confidence = self._calculate_entity_confidence(entity_type, entity_text)
-                    
-                    entities.append({
-                        'text': entity_text,
-                        'type': entity_type,
-                        'confidence': confidence
-                    })
-        
+
+            # Named entity recognition via LLM
+            result: ClassificationResult = await self._get_entity_classification(
+                sentence,
+                openai_client=self.openai_async_client,
+                classifications=self.entity_classifications,
+                retries=3,
+                timeout=30
+            )
+
+            entities.append({
+                'text': result.entity,
+                'type': result.category,
+                'confidence': result.confidence
+            })
+
         # Remove duplicates while preserving order
         seen = set()
         unique_entities = []
@@ -1333,7 +1526,10 @@ class LLMOptimizer:
         
         # Sort by confidence and limit results
         unique_entities.sort(key=lambda x: x['confidence'], reverse=True)
-        return unique_entities[:50]  # Return top 50 entities
+
+        top_k_unique_entities = unique_entities[:max_entities]
+
+        return top_k_unique_entities
     
     def _calculate_entity_confidence(self, entity_type: str, entity_text: str) -> float:
         """
@@ -1346,6 +1542,7 @@ class LLMOptimizer:
         Returns:
             float: Confidence score between 0.0 and 1.0
         """
+        # TODO Where the hell do these numbers come from?
         base_confidence = {
             'PERSON': 0.85,
             'ORGANIZATION': 0.80,
@@ -1378,15 +1575,15 @@ class LLMOptimizer:
         
         return max(0.0, min(1.0, base_confidence))
     
-    async def _extract_entities_fallback(self, structured_text: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _extract_entities_fallback(self, structured_text: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Fallback entity extraction using basic pattern matching when NLTK is unavailable.
         
         Args:
-            structured_text (Dict[str, Any]): Structured text representation
+            structured_text (dict[str, Any]): Structured text representation
             
         Returns:
-            List[Dict[str, Any]]: List of extracted entities with basic pattern matching
+            list[dict[str, Any]]: list of extracted entities with basic pattern matching
         """
         # Combine all text for entity extraction
         full_text = ""
@@ -1456,7 +1653,7 @@ class LLMOptimizer:
     
     async def _generate_document_embedding(self, 
                                          summary: str, 
-                                         structured_text: Dict[str, Any]) -> Optional[np.ndarray]:
+                                         structured_text: dict[str, Any]) -> Optional[np.ndarray]:
         """
         Generate a comprehensive document-level vector embedding representing the entire document's semantic content.
 
@@ -1472,7 +1669,7 @@ class LLMOptimizer:
         Args:
             summary (str): Comprehensive document summary generated by _generate_document_summary
                 containing the most important sentences and key information from the document.
-            structured_text (Dict[str, Any]): Structured text representation containing
+            structured_text (dict[str, Any]): Structured text representation containing
                 pages with elements for header and title extraction. Used to supplement
                 the summary with structural information.
 
@@ -1503,7 +1700,7 @@ class LLMOptimizer:
             >>> print(type(doc_embedding))  # <class 'numpy.ndarray'>
         """
         if not self.embedding_model:
-            return None
+            raise RuntimeError("No embedding model available for document embedding generation")
         
         # Combine summary with key parts of document
         doc_text = summary
@@ -1638,7 +1835,7 @@ class TextProcessor:
     the PDF processing pipeline, ensuring consistent and high-quality text handling.
     """
     
-    def split_sentences(self, text: str) -> List[str]:
+    def split_sentences(self, text: str) -> list[str]:
         """
         Intelligently split text into individual sentences using advanced linguistic rules and pattern recognition.
 
@@ -1659,7 +1856,7 @@ class TextProcessor:
                 Handles empty strings and None values gracefully.
 
         Returns:
-            List[str]: List of individual sentences with leading/trailing whitespace stripped.
+            list[str]: list of individual sentences with leading/trailing whitespace stripped.
                 Each element represents a complete sentence unit. Empty sentences are filtered
                 out. Maintains original sentence content and internal formatting.
 
@@ -1688,11 +1885,68 @@ class TextProcessor:
             sentence segmentation for higher accuracy with complex academic texts.
             The method preserves sentence content while normalizing whitespace.
         """
-        # Basic sentence splitting (can be enhanced with NLTK or spaCy)
-        sentences = re.split(r'[.!?]+', text)
-        return [s.strip() for s in sentences if s.strip()]
+        if not isinstance(text, str):
+            if text is None:
+                raise TypeError("Input text cannot be None")
+            raise TypeError(f"Input must be string, got {type(text).__name__}")
+        
+        if not text.strip():
+            return []
+        
+        # Common abbreviations that should not split sentences
+        abbreviations = {
+            'Dr.', 'Mr.', 'Mrs.', 'Ms.', 'Prof.', 'Ph.D.', 'M.D.', 'B.A.', 'M.A.', 'M.S.',
+            'B.S.', 'Ph.D', 'LLC.', 'Inc.', 'Corp.', 'Ltd.', 'Co.', 'vs.', 'etc.', 'i.e.',
+            'e.g.', 'al.', 'et.', 'Jan.', 'Feb.', 'Mar.', 'Apr.', 'Jun.', 'Jul.', 'Aug.',
+            'Sep.', 'Sept.', 'Oct.', 'Nov.', 'Dec.', 'U.S.', 'U.K.', 'U.S.A.', 'a.m.', 'p.m.',
+            'A.M.', 'P.M.', 'St.', 'Ave.', 'Blvd.', 'Rd.', 'Jr.', 'Sr.', 'II.', 'III.', 'IV.'
+        }
+        
+        # Create a temporary marker for abbreviations to protect them
+        protected_text = text
+        abbrev_markers = {}
+        
+        for i, abbrev in enumerate(abbreviations):
+            if abbrev in protected_text:
+                marker = f"__ABBREV_{i}__"
+                abbrev_markers[marker] = abbrev
+                protected_text = protected_text.replace(abbrev, marker)
+        
+        # Protect decimal numbers (e.g., 3.14, 15.7%)
+        decimal_pattern = r'\b\d+\.\d+\b'
+        decimals = re.findall(decimal_pattern, protected_text)
+        decimal_markers = {}
+        
+        for i, decimal in enumerate(decimals):
+            marker = f"__DECIMAL_{i}__"
+            decimal_markers[marker] = decimal
+            protected_text = protected_text.replace(decimal, marker)
+        
+        # Split on sentence terminators including Unicode punctuation
+        # ASCII: . ! ?
+        # Unicode: 。 ！ ？ … (Chinese/Japanese punctuation)
+        sentence_pattern = r'[.!?。！？]+(?:\s|$)'
+        
+        # Split sentences
+        sentences = re.split(sentence_pattern, protected_text)
+        
+        # Restore protected abbreviations and decimals
+        restored_sentences = []
+        for sentence in sentences:
+            if sentence.strip():  # Skip empty sentences
+                # Restore decimals
+                for marker, original in decimal_markers.items():
+                    sentence = sentence.replace(marker, original)
+                
+                # Restore abbreviations
+                for marker, original in abbrev_markers.items():
+                    sentence = sentence.replace(marker, original)
+                
+                restored_sentences.append(sentence.strip())
+        
+        return restored_sentences
     
-    def extract_keywords(self, text: str, top_k: int = 20) -> List[str]:
+    def extract_keywords(self, text: str, top_k: int = 20) -> list[str]:
         """
         Extract the most significant keywords and phrases from text using sophisticated frequency analysis and filtering.
 
@@ -1715,9 +1969,9 @@ class TextProcessor:
                 keyword coverage. Defaults to 20.
 
         Returns:
-            List[str]: Ordered list of the most significant keywords ranked by frequency
+            list[str]: Ordered list of the most significant keywords ranked by frequency
                 and importance. Each keyword is a lowercase string with stop words removed.
-                List length may be less than top_k if insufficient unique keywords exist.
+                list length may be less than top_k if insufficient unique keywords exist.
                 Returns empty list if no valid keywords are found.
 
         Raises:
@@ -1853,7 +2107,7 @@ class ChunkOptimizer:
         self.overlap = overlap
         self.min_size = min_size
     
-    def optimize_chunk_boundaries(self, text: str, current_boundaries: List[int]) -> List[int]:
+    def optimize_chunk_boundaries(self, text: str, current_boundaries: list[int]) -> list[int]:
         """
         Analyze and optimize chunk boundary positions to respect natural language structure and semantic coherence.
 
@@ -1872,12 +2126,12 @@ class ChunkOptimizer:
             text (str): The complete text content to analyze for optimal boundary positions.
                 Should contain the full document or section being chunked, with original
                 formatting and punctuation preserved for accurate boundary detection.
-            current_boundaries (List[int]): List of current character positions where chunk
+            current_boundaries (list[int]): list of current character positions where chunk
                 boundaries are planned. These positions will be analyzed and potentially
                 adjusted to align with natural language structures.
 
         Returns:
-            List[int]: Optimized boundary positions that respect natural language structure
+            list[int]: Optimized boundary positions that respect natural language structure
                 while maintaining reasonable proximity to the original positions. Boundaries
                 are adjusted to align with sentence endings or paragraph breaks when possible,
                 falling back to original positions when natural boundaries are not available.

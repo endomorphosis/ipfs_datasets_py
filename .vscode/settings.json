@@ -36,5 +36,7 @@
         "lizardpersons",
         "numpy",
         "pbar"
-    ]
+    ],
+    "mypy.runUsingActiveInterpreter": true,
+    "mypy.dmypyExecutable": "/home/kylerose1946/ipfs_datasets_py/.venv/bin/dmypy"
 }

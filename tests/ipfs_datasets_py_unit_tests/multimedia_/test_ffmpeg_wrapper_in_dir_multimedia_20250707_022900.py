@@ -39,6 +39,11 @@ except ImportError as e:
     raise ImportError(f"Required modules for FFmpegWrapper are not installed: {e}")
 
 
+class TestStaticTypeChecks:
+    """
+    Run mypy static type checks on the module.
+    If it passes, 
+    """
 
 
 class TestQualityOfObjectsInModule:

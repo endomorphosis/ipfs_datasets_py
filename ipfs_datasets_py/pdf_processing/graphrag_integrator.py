@@ -816,6 +816,8 @@ class GraphRAGIntegrator:
                 - List of source chunk IDs where the entity was found
 
         Raises:
+            TypeError: If chunks is not a list or contains non-LLMChunk instances.
+
             Exception: May raise exceptions from the underlying entity extraction service
                 or if chunk processing fails.
 
@@ -828,18 +830,11 @@ class GraphRAGIntegrator:
         # Validate input types
         if not isinstance(chunks, list):
             raise TypeError("chunks must be a list")
-        
+
         for chunk in chunks:
-            if chunk is None:
-                raise TypeError("All chunks must be LLMChunk instances, found None")
-            # Check if it's a basic type that clearly isn't an LLMChunk
-            if isinstance(chunk, (str, int, float, dict, list)):
-                raise TypeError("All chunks must be LLMChunk instances")
-            if not hasattr(chunk, 'content'):
-                raise AttributeError("Chunk missing required 'content' attribute")
-            if not hasattr(chunk, 'chunk_id'):
-                raise AttributeError("Chunk missing required 'chunk_id' attribute")
-        
+            if not isinstance(chunk, LLMChunk):
+                raise TypeError(f"All chunks must be LLMChunk instances, got {type(chunk).__name__}")
+
         entity_mentions = {}  # Track entity mentions across chunks
         
         for chunk in chunks:

@@ -37,6 +37,8 @@ pymupdf>=1.26.3
 yt-dlp>=2025.6.30
 surya-ocr>=0.14.6
 pillow>=10.4.0
+ffmpeg-python>=0.2.0
+openai>=1.97.1
 
 # For testing only
 Faker>=37.4.2

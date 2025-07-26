@@ -8,7 +8,7 @@ automatic validation against Wikidata's SPARQL endpoint and correction suggestio
 """
 import os
 import sys
-import json
+
 
 # Add parent directory to path to import the modules
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

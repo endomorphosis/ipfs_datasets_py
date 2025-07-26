@@ -67,6 +67,7 @@ class VectorProcessor:
     def create_embedding(self, text: str) -> List[float]:
         """Create a simple embedding for text (mock implementation)."""
         # This is a mock implementation - in practice, you'd use a real embedding model
+        # TODO GRRRRRRRRRRRRRRRRRRRRRRRR
         import hashlib
         text_hash = hashlib.md5(text.encode()).hexdigest()
         # Convert hash to pseudo-random vector
@@ -127,31 +128,31 @@ class VectorTools:
 class VectorSimilarityCalculator:
     """Calculator for vector similarity operations."""
 
-    def __init__(self):
-        """Initialize the calculator."""
-        pass
-
-    def cosine_similarity(self, vector1: List[float], vector2: List[float]) -> float:
+    @staticmethod
+    def cosine_similarity(vector1: List[float], vector2: List[float]) -> float:
         """Calculate cosine similarity between two vectors."""
         return VectorTools.cosine_similarity(vector1, vector2)
 
-    def euclidean_distance(self, vector1: List[float], vector2: List[float]) -> float:
+    @staticmethod
+    def euclidean_distance(vector1: List[float], vector2: List[float]) -> float:
         """Calculate Euclidean distance between two vectors."""
         return VectorTools.euclidean_distance(vector1, vector2)
 
-    def batch_similarity(self, vectors: List[List[float]], query_vector: List[float]) -> List[float]:
+    @classmethod
+    def batch_similarity(cls, vectors: List[List[float]], query_vector: List[float]) -> List[float]:
         """Calculate similarities between a query vector and multiple vectors."""
         similarities = []
         for vector in vectors:
-            sim = self.cosine_similarity(query_vector, vector)
+            sim = cls.cosine_similarity(query_vector, vector)
             similarities.append(sim)
         return similarities
 
-    def find_most_similar(self, vectors: Dict[str, List[float]], query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+    @classmethod
+    def find_most_similar(cls, vectors: Dict[str, List[float]], query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
         """Find the most similar vectors to a query vector."""
         similarities = []
         for vector_id, vector in vectors.items():
-            sim = self.cosine_similarity(query_vector, vector)
+            sim = cls.cosine_similarity(query_vector, vector)
             similarities.append({"id": vector_id, "similarity": sim})
 
         # Sort by similarity (descending)

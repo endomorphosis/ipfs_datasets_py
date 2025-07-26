@@ -284,7 +284,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         # Should handle special characters appropriately
         assert isinstance(result, list)
         # Entities with special characters should be captured
-        
+
     def test_extract_entity_names_consecutive_entities(self):
         """
         GIVEN a QueryEngine instance

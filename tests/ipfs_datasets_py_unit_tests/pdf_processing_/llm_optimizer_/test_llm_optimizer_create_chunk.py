@@ -32,7 +32,6 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     TextProcessor,
     LLMChunk,
     LLMDocument,
-    LLMChunkMetadata
 )
 
 

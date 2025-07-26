@@ -21,9 +21,6 @@ import torch
 import psutil
 from datasets import Dataset
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Import vector store modules
 try:
@@ -92,7 +89,11 @@ class MemoryMonitor:
 class AdaptiveBatchProcessor:
     """Intelligent batch size optimization based on performance metrics and memory usage"""
     
-    def __init__(self, max_memory_percent: float = 80.0, min_batch_size: int = 1, max_batch_size: int = 512):
+    def __init__(self, 
+                 max_memory_percent: float = 80.0, 
+                 min_batch_size: int = 1, 
+                 max_batch_size: int = 512
+                ) -> None:
         self.max_memory_percent = max_memory_percent
         self.min_batch_size = min_batch_size
         self.max_batch_size = max_batch_size

@@ -13,7 +13,6 @@ These functions check for:
     - No mocked objects or placeholders that are not explicitly marked as such.
     - Unnecessary fallbacks that clutters the codebase and make it harder to test and debug.
 """
-
 import ast
 from pathlib import Path
 
@@ -48,9 +47,43 @@ class BadSignatureError(Exception):
     """Custom exception for bad function signatures."""
     pass
 
+class CheatingTestError(Exception):
+    """Custom exception for test cheating patterns."""
+    pass
+
+
 
 def get_ast_tree(input_path: Path) -> ast.Module:
-    """Read and parse the Python file for its AST tree."""
+    """
+    Parse a Python source file into an Abstract Syntax Tree (AST).
+
+    This function reads a Python source file from the specified path and converts
+    it into an AST Module object for further analysis. It handles common file
+    reading errors and provides detailed error messages for debugging.
+
+    Args:
+        input_path: Path to the Python source file to parse. Can be a string
+            or Path object that will be converted to a resolved Path.
+
+    Returns:
+        ast.Module: The parsed AST representation of the Python source code,
+            containing all module-level nodes and statements.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist at the given path.
+        IOError: If the file cannot be read due to permission issues or other
+            I/O related problems.
+        SyntaxError: If the Python source code contains syntax errors that
+            prevent successful parsing.
+
+    Examples:
+        >>> from pathlib import Path
+        >>> tree = get_ast_tree(Path("example.py"))
+        >>> isinstance(tree, ast.Module)
+        True
+        >>> len(tree.body) > 0  # Has some content
+        True
+    """
     input_path = Path(input_path)
     try:
         with open(input_path.resolve(), 'r') as file:
@@ -64,9 +97,55 @@ def get_ast_tree(input_path: Path) -> ast.Module:
     return tree
 
 
-def raise_on_bad_callable_metadata(tree) -> str:
+def raise_on_bad_callable_metadata(tree: ast.Module) -> str:
     """
-    Ensure the quality of the metadata of callable objects (functions, methods, classes) in a Python module.
+    Validate callable objects' metadata to ensure comprehensive documentation and proper signatures.
+    
+    This function performs comprehensive validation of all callable objects (functions, methods, 
+    and classes) within a Python AST module to ensure they meet high-quality metadata standards.
+    It systematically checks each callable for proper documentation and signature quality.
+    
+    The validation process includes:
+    - Function and method signature validation (type hints, return annotations)
+    - Comprehensive docstring validation (Google-style format, required sections)
+    - Class documentation requirements
+    - Module-level documentation standards
+    
+    Args:
+        tree: The parsed AST module containing callable objects to validate.
+        
+    Returns:
+        str: A success message indicating all metadata validation checks passed.
+        
+    Raises:
+        BadSignatureError: When function signatures lack proper type annotations,
+            return type annotations, or have other signature-related issues.
+        BadDocumentationError: When docstrings are missing, too short, lack
+            required sections (Args, Returns, Raises, Examples), or don't meet
+            Google-style documentation standards.
+            
+    Examples:
+        >>> import ast
+        >>> code = '''
+        ... def well_documented_func(param: str) -> str:
+        ...     \'\'\'
+        ...     A properly documented function with comprehensive metadata.
+        ...     
+        ...     Args:
+        ...         param: A string parameter for demonstration.
+        ...         
+        ...     Returns:
+        ...         str: The processed parameter value.
+        ...         
+        ...     Examples:
+        ...         >>> well_documented_func("test")
+        ...         'test'
+        ...     \'\'\'
+        ...     return param
+        ... '''
+        >>> tree = ast.parse(code)
+        >>> raise_on_bad_callable_metadata(tree)
+        'All callable metadata validation checks passed.'
     """
     for node in ast.walk(tree):
         # Check if definition has a good signature and docstring
@@ -87,7 +166,74 @@ def raise_on_bad_callable_metadata(tree) -> str:
                 # Ignore other nodes
                 continue
 
+
+def raise_on_test_cheating(tree: ast.FunctionDef | ast.AsyncFunctionDef, reset: bool = False) -> None:
+    """
+    Validate that the module does not contain any test cheating patterns.
+
+    This function checks for common patterns that indicate test cheating.
+    These patterns include:
+    - Unauthorized changes to the docstring of the test method.
+    - Unauthorized changes to magic numbers of a test method.
+
+    Args:
+        tree: The parsed AST module to validate for test cheating patterns.
+        reset: If True, resets the internal state of the validator before checking.
+
+    Raises:
+        BadDocumentationError: If any test cheating patterns are detected.
+    """
+    pass
+
+
+
+
 def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int = 50) -> None:
+    """
+    Validates that a module AST node has proper documentation.
+
+    This function performs comprehensive validation of a module's docstring to ensure
+    it meets documentation quality standards. It checks for the presence of a docstring,
+    validates minimum length requirements, and verifies that the docstring references
+    the module's public API elements.
+
+    Args:
+        node (ast.AST): The AST node to validate. Must be an ast.Module instance.
+        min_docstring_word_count (int, optional): Minimum number of words required
+            in the docstring. Defaults to 50.
+
+    Returns:
+        None: This function doesn't return a value but raises exceptions for validation failures.
+
+    Raises:
+        BadDocumentationError: Raised when the module docstring fails validation checks:
+            - When the module has no docstring
+            - When the docstring is shorter than the minimum word count
+            - When the docstring doesn't reference any public API elements
+
+    Note:
+        Public API elements are identified as attributes that don't start with underscore.
+        Non-module AST nodes are silently ignored and won't trigger validation.
+
+    Examples:
+        >>> import ast
+        >>> code = '''
+        ... \"\"\"Module documentation example.
+        ... This module provides utility functions for data processing.
+        ... 
+        ... The main function process_data handles input validation and transformation.
+        ...\"\"\"
+        ...
+        ... def process_data():
+        ...     pass
+        ... '''
+        >>> tree = ast.parse(code)
+        >>> raise_on_bad_module_docstring(tree)  # No exception raised
+        
+        >>> bad_code = 'def func(): pass'  # No docstring
+        >>> bad_tree = ast.parse(bad_code)
+        >>> raise_on_bad_module_docstring(bad_tree)  # Raises BadDocumentationError
+    """
     if not isinstance(node, ast.Module):
         return
 
@@ -102,7 +248,7 @@ def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int =
     if len(docstring.split()) < min_docstring_word_count:
         raise BadDocumentationError(
             f"Module '{node.name}' docstring is too short. "
-            f"Expected at least 50 words, got {len(docstring.split())} words."
+            f"Expected at least {min_docstring_word_count} words, got {len(docstring.split())} words."
         )
 
     # Check if the docstring references the module's public API
@@ -213,16 +359,43 @@ def raise_on_bad_signature(node: ast.AST) -> None:
 
 def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
     """
-    Validate that a node has a proper docstring with required sections.
+    Validate that a callable object has a comprehensive, well-structured docstring.
+    
+    This function enforces Google-style docstring standards for functions and classes,
+    ensuring they contain appropriate sections based on the callable's characteristics.
+    It validates docstring length, required sections (Args, Returns, Raises, Examples),
+    and ensures documentation aligns with the actual function signature and implementation.
+    
+    The validation includes:
+    - Minimum word count requirements (50+ words)
+    - Required 'Args:' section for functions with parameters
+    - Required 'Returns:' section for functions returning non-None values
+    - Required 'Raises:' section for functions that raise exceptions
+    - Required 'Examples:' section for all callables
+    - Special handling for initialization methods (__init__, __new__, __post_init__)
     
     Args:
-        node: The AST node to check for docstring quality.
-        tree: The full AST tree for context when checking for raises.
+        node: An AST node representing a function, async function, or class definition
+              that should be validated for proper docstring documentation.
+        tree: The complete AST tree of the module, used for additional context
+              when analyzing the callable's implementation and usage patterns.
         
     Raises:
-        BadDocumentationError: If the docstring is missing, too short, or lacks required sections.
+        BadDocumentationError: If the docstring is missing, too short (< 50 words),
+            lacks required sections based on the callable's signature or implementation,
+            or fails to meet Google-style documentation standards.
+    
+    Examples:
+        >>> # Validate a function node's docstring
+        >>> tree = ast.parse(source_code)
+        >>> func_node = tree.body[0]  # First function in module
+        >>> raise_on_bad_docstring(func_node, tree)
+        
+        >>> # Validate a class node's docstring  
+        >>> class_node = tree.body[1]  # First class in module
+        >>> raise_on_bad_docstring(class_node, tree)
     """
-    if not isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return
 
     word_length = 50
@@ -236,12 +409,13 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
     word_count = len(docstring.split())
     if word_count <= word_length:
         raise BadDocumentationError(
-            f"Docstring for '{node_name}' is less than {word_length} words long. Current length: {word_count} words."
+            f"Docstring for '{node_name}' is less than {word_length} words long. "
+            f"Current length: {word_count} words."
         )
 
     # Check the function body for exceptions (only for functions, not classes)
     raise_exists = False
-    if isinstance(node, ast.FunctionDef):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         for stmt in ast.walk(node):
             if isinstance(stmt, ast.Raise):
                 raise_exists = True
@@ -252,11 +426,10 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
         raise BadDocumentationError(
             f"Docstring for '{node_name}' is missing 'Raises:' section "
             "but exceptions are raised in the callable body."
-            f"{docstring}"
         )
 
     # Docstring contains "Args:" if there are arguments (only check for functions)
-    if isinstance(node, ast.FunctionDef):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         # Create a copy of args list and remove "self" and "cls" from consideration
         filtered_args = [arg for arg in node.args.args if arg.arg not in ['self', 'cls']]
         kwonly_args = node.args.kwonlyargs
@@ -293,6 +466,36 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
         raise BadDocumentationError(
             f"Docstring for '{node_name}' does not contain 'Example' section "
         )
+
+
+
+
+
+
+
+
+
+_FAKE_CODE_INDICATORS = [
+    "In a real implementation", "In a real scenario", "For testing purposes",
+    "In production", "For now", "For demonstration", "In case",
+    "In a full implementation", "simplified", "This would be",
+    "depends on", "simple approximation", "can be enhanced",
+    "placeholder"
+]
+
+_MOCKED_CODE_INDICATORS = [
+    "mock", "mocked", "mocking", "Mock", "Mocked",
+    "Mocking", "Mocked code", "Mocking behavior",
+    "Mocked function", "Mocked class", "Mocked method",
+]
+
+_FALLBACK_INDICATORS = [
+    "fallback", "fallbacks", "Fallback", "Fallbacks",
+    #"backup", "backups", "backup code", "backup implementation",
+    #"Backup code", "Backup implementation",
+]
+
+
 
 def raise_on_bad_callable_code_quality(path: Path) -> None:
     """
@@ -340,7 +543,7 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
 
     # NOTE We purposefully don't include "tests" here, 
     # as test implementations can be faked as well.
-    mock_indicators = [ 
+    mock_file_indicators = [ 
         "mock", "placeholder", "stub", "example"
     ]
     full_path = str(path.resolve())
@@ -350,68 +553,56 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
             code = f.read()
     except FileNotFoundError:
         raise FileNotFoundError(f"File '{path}' does not exist.")
-    except IOError as e:
+    except Exception as e:
         raise IOError(f"Failed to read file '{path}': {e}") from e
 
     # NOTE We purposefully don't used `ast` here because it strips out comments.
-    for fake_code in [
-        "In a real implementation", "In a real scenario", "For testing purposes",
-        "In production", "For now", "For demonstration", "In case",
-        "In a full implementation", "simplified", "This would be",
-        "depends on", "simple approximation"
-    ]:
-        if fake_code in code:
-            for indicator in mock_indicators:
+    for fake_code in _FAKE_CODE_INDICATORS:
+        if fake_code in code.lower():
+            for indicator in mock_file_indicators:
                 if indicator in full_path:
                     break
             raise FalsifiedCodeError(
-                f"'{full_path}' contains fake code '{fake_code}' that needs to be removed or implemented."
+                f"'{full_path}' contains fake code that needs to be removed or implemented."
                 " Replace it with code that is ready for production use."
             )
 
-    for mocked_code in [
-        "mock", "mocked", "mocking", "Mock", "Mocked",
-        "Mocking", "Mocked code", "Mocking behavior",
-        "Mocked function", "Mocked class", "Mocked method",
-    ]:
-        if mocked_code in code:
-            for indicator in mock_indicators:
+    for mocked_code in _MOCKED_CODE_INDICATORS:
+        if mocked_code in code.lower():
+            for indicator in mock_file_indicators:
                 if indicator in full_path:
                     break
             if "test" not in full_path:
                 raise UnlabeledMockError(
-                    f"'{full_path}' contains code '{mocked_code}' that is mocked or intended to be mocked."
-                    " Replace this code with actual implementations"
+                    f"'{full_path}' contains code that is mocked or intended to be mocked."
+                    " Replace this code with actual implementations "
                     'or move it to a file with "mock", "placeholder", "stub", "example" in the file path.'
                 )
         
-    fallback_indicators = [
+    fallback_file_indicators = [
         "mock", "placeholder", "stub", "example", "backup", "fallback"
     ]
 
-    for fallback in [
-        "fallback", "fallbacks", "Fallback", "Fallbacks",
-        #"backup", "backups", "backup code", "backup implementation",
-        #"Backup code", "Backup implementation",
-    ]:
-        if fallback in code:
-            for indicator in fallback_indicators:
+    for fallback in _FALLBACK_INDICATORS:
+        if fallback in code.lower():
+            for indicator in fallback_file_indicators:
                 if indicator in full_path:
                     break
             raise UnnecessaryFallbackError(
-                f"'{full_path}' contains unnecessary fallback code '{fallback}'."
-                "This code must be removed or raise an appropriate error."
+                f"'{full_path}' contains unnecessary fallback code. "
+                "This code must either be removed, raise an appropriate error, "
+                "or be moved to another file with 'fallback' somewhere in the path."
             )
-        
+
     for suppressed_error in [
         "silently", "silently", "ignore errors", "ignore exceptions",
         "ignore error", "ignore exception", "suppress errors",
     ]:
-        if suppressed_error in code:
-            for indicator in fallback_indicators:
+        if suppressed_error in code.lower():
+            for indicator in fallback_file_indicators:
                 if indicator in full_path:
                     break
             raise SilentlyIgnoredErrorsError(
-                f"'{full_path}' contains errors that are purposefully suppressed or ignored '{suppressed_error}'."
+                f"'{full_path}' contains errors that are purposefully suppressed or ignored."
                 "All errors must be explicitly logged or raised."
             )

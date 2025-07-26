@@ -267,7 +267,7 @@ class TestLLMOptimizerGenerateDocumentEmbedding:
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        with patch('logging.error') as mock_log:
+        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
             result_embedding = await self.optimizer._generate_document_embedding(summary, structured_text)
         
         # Then

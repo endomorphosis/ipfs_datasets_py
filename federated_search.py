@@ -28,7 +28,6 @@ from typing import Dict, List, Any, Optional, Tuple, TypeVar
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 import random
-from concurrent.futures import ThreadPoolExecutor
 import hashlib
 
 # Conditional imports for optional dependencies
@@ -213,7 +212,7 @@ class FederatedSearch:
         if hasattr(self.node, 'register_protocol_handler'):
             # Register the federated search handler
             self.node.register_protocol_handler(
-                NetworkProtocol.FEDERATED_SEARCH,
+                NetworkProtocol.FEDERATED_SEARCH, # TODO This doesn't exist!
                 self._handle_federated_search
             )
         else:
@@ -229,12 +228,12 @@ class FederatedSearch:
         try:
             # Read request data
             request_data = await stream.read()
-            request = json.loads(request_data.decode())
+            request: dict = json.loads(request_data.decode())
 
             # Process the search request
             if request.get("action") == "search":
                 # Convert dict to SearchQuery
-                query_dict = request.get("query", {})
+                query_dict: dict[str, Any] = request.get("query", {})
                 query_type = SearchType(query_dict.get("query_type", "vector"))
                 query = SearchQuery(
                     dataset_id=query_dict.get("dataset_id", ""),
@@ -244,20 +243,21 @@ class FederatedSearch:
                 )
 
                 # Set type-specific parameters
-                if query_type == SearchType.VECTOR:
-                    query.vector = query_dict.get("vector")
-                    query.distance_metric = query_dict.get("distance_metric", "cosine")
-                    query.min_similarity = query_dict.get("min_similarity", 0.0)
-                    query.vector_field = query_dict.get("vector_field", "vector")
-                elif query_type == SearchType.KEYWORD:
-                    query.query_text = query_dict.get("query_text")
-                    query.fields = query_dict.get("fields")
-                    query.operator = query_dict.get("operator", "and")
-                elif query_type == SearchType.HYBRID:
-                    query.vector = query_dict.get("vector")
-                    query.query_text = query_dict.get("query_text")
-                    query.vector_weight = query_dict.get("vector_weight", 0.5)
-                    query.text_weight = query_dict.get("text_weight", 0.5)
+                match query_type:
+                    case SearchType.VECTOR:
+                        query.vector = query_dict.get("vector")
+                        query.distance_metric = query_dict.get("distance_metric", "cosine")
+                        query.min_similarity = query_dict.get("min_similarity", 0.0)
+                        query.vector_field = query_dict.get("vector_field", "vector")
+                    case SearchType.KEYWORD:
+                        query.query_text = query_dict.get("query_text")
+                        query.fields = query_dict.get("fields")
+                        query.operator = query_dict.get("operator", "and")
+                    case SearchType.HYBRID:
+                        query.vector = query_dict.get("vector")
+                        query.query_text = query_dict.get("query_text")
+                        query.vector_weight = query_dict.get("vector_weight", 0.5)
+                        query.text_weight = query_dict.get("text_weight", 0.5)
 
                 # Set common parameters
                 query.include_metadata = query_dict.get("include_metadata", True)
@@ -354,17 +354,18 @@ class FederatedSearch:
                 continue
 
             # Choose the appropriate search method based on query type
-            if query.query_type == SearchType.VECTOR:
-                shard_results = await self._vector_search_shard(shard, shard_path, query)
-            elif query.query_type == SearchType.KEYWORD:
-                shard_results = await self._keyword_search_shard(shard, shard_path, query)
-            elif query.query_type == SearchType.HYBRID:
-                shard_results = await self._hybrid_search_shard(shard, shard_path, query)
-            elif query.query_type == SearchType.FILTER:
-                shard_results = await self._filter_search_shard(shard, shard_path, query)
-            else:
-                logging.warning(f"Unsupported query type: {query.query_type}")
-                shard_results = []
+            match query.query_type:
+                case SearchType.VECTOR:
+                    shard_results = await self._vector_search_shard(shard, shard_path, query)
+                case SearchType.KEYWORD:
+                    shard_results = await self._keyword_search_shard(shard, shard_path, query)
+                case SearchType.HYBRID:
+                    shard_results = await self._hybrid_search_shard(shard, shard_path, query)
+                case SearchType.FILTER:
+                    shard_results = await self._filter_search_shard(shard, shard_path, query)
+                case _:
+                    logging.warning(f"Unsupported query type: {query.query_type}")
+                    shard_results = []
 
             # Add shard's results to the combined results
             results.extend(shard_results)
@@ -729,16 +730,17 @@ class FederatedSearch:
 
         try:
             # Load the shard data
-            if shard.format == "parquet":
-                import pyarrow.parquet as pq
-                shard_data = pq.read_table(shard_path)
-            elif shard.format == "arrow":
-                import pyarrow as pa
-                with pa.memory_map(shard_path, "r") as source:
-                    shard_data = pa.ipc.open_file(source).read_all()
-            else:
-                logging.warning(f"Unsupported shard format: {shard.format}")
-                return results
+            match shard.format:
+                case "parquet":
+                    import pyarrow.parquet as pq
+                    shard_data = pq.read_table(shard_path)
+                case "arrow":
+                    import pyarrow as pa
+                    with pa.memory_map(shard_path, "r") as source:
+                        shard_data = pa.ipc.open_file(source).read_all()
+                case _:
+                    logging.warning(f"Unsupported shard format: {shard.format}")
+                    return results
 
             # Convert to pandas DataFrame for filtering
             import pandas as pd
@@ -785,28 +787,29 @@ class FederatedSearch:
                     continue
 
                 # Apply the filter based on operator
-                if operator == "eq":
-                    mask &= df[field] == value
-                elif operator == "neq":
-                    mask &= df[field] != value
-                elif operator == "gt":
-                    mask &= df[field] > value
-                elif operator == "gte":
-                    mask &= df[field] >= value
-                elif operator == "lt":
-                    mask &= df[field] < value
-                elif operator == "lte":
-                    mask &= df[field] <= value
-                elif operator == "in":
-                    mask &= df[field].isin(value)
-                elif operator == "nin":
-                    mask &= ~df[field].isin(value)
-                elif operator == "contains":
-                    if isinstance(value, str):
-                        mask &= df[field].astype(str).str.contains(value, regex=False)
-                elif operator == "between":
-                    if isinstance(value, list) and len(value) == 2:
-                        mask &= (df[field] >= value[0]) & (df[field] <= value[1])
+                match operator:
+                    case "eq":
+                        mask &= df[field] == value
+                    case "neq":
+                        mask &= df[field] != value
+                    case "gt":
+                        mask &= df[field] > value
+                    case "gte":
+                        mask &= df[field] >= value
+                    case "lt":
+                        mask &= df[field] < value
+                    case "lte":
+                        mask &= df[field] <= value
+                    case "in":
+                        mask &= df[field].isin(value)
+                    case "nin":
+                        mask &= ~df[field].isin(value)
+                    case "contains":
+                        if isinstance(value, str):
+                            mask &= df[field].astype(str).str.contains(value, regex=False)
+                    case "between":
+                        if isinstance(value, list) and len(value) == 2:
+                            mask &= (df[field] >= value[0]) & (df[field] <= value[1])
 
             # Get filtered rows
             filtered_df = df[mask]

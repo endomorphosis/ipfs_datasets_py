@@ -3,10 +3,10 @@
 This module provides an Elasticsearch-based vector store for embedding operations,
 migrated and adapted from ipfs_embeddings_py.
 """
-
+from __future__ import annotations
 import logging
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TypeAlias
 import asyncio
 import json
 
@@ -19,11 +19,12 @@ try:
     ELASTICSEARCH_AVAILABLE = True
 except ImportError:
     Elasticsearch = None
-    AsyncElasticsearch = None
+    AsyncElasticsearch = Any
     NotFoundError = Exception
     ESConnectionError = Exception
     ELASTICSEARCH_AVAILABLE = False
 
+AsyncElasticsearchType: TypeAlias = Any
 logger = logging.getLogger(__name__)
 
 
@@ -67,7 +68,7 @@ class ElasticsearchVectorStore(BaseVectorStore):
         }
         return mapping.get(distance_metric.lower(), "cosine")
     
-    def _create_client(self) -> AsyncElasticsearch:
+    def _create_client(self) -> AsyncElasticsearchType:
         """Create Elasticsearch async client connection."""
         try:
             client_args = {

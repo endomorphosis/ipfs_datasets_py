@@ -119,31 +119,23 @@ class TestLLMOptimizerInitializeModels:
         GIVEN invalid sentence transformer model name
         WHEN _initialize_models is called
         THEN expect:
-            - ImportError or OSError handled gracefully
-            - embedding_model set to None
-            - Error logged
-            - Fallback behavior activated
+            - RuntimeError raised immediately
+            - Exception contains clear error message
         """
         # Given
-        mock_sentence_transformer.side_effect = OSError("Model not found")
+        mock_sentence_transformer.side_effect = ValueError("Model not found")
         mock_tokenizer = Mock()
         mock_tiktoken.return_value = mock_tokenizer
         
-        # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
+        # When/Then - Expect RuntimeError to be raised
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Then
-        # Verify embedding model is None after failure
-        assert self.optimizer.embedding_model is None
-        
-        # Verify error was logged
-        mock_error.assert_called()
-        error_message = mock_error.call_args[0][0]
-        assert 'failed to initialize models' in error_message.lower()
-        
-        # Verify tokenizer is also None due to exception handling
-        assert self.optimizer.tokenizer is None
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load embedding model for LLMOptimizer" in error_message
+        assert "sentence-transformers/all-MiniLM-L6-v2" in error_message
+        assert "Model not found" in error_message
 
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
@@ -152,29 +144,23 @@ class TestLLMOptimizerInitializeModels:
         GIVEN invalid tokenizer name
         WHEN _initialize_models is called
         THEN expect:
-            - Tokenizer loading error handled gracefully
-            - Both models set to None
-            - Error logged
-            - Complete fallback behavior
+            - RuntimeError raised immediately
+            - Exception contains clear error message about tokenizer failure
         """
         # Given
         mock_embedding_model = Mock()
         mock_sentence_transformer.return_value = mock_embedding_model
         mock_tiktoken.side_effect = KeyError("Tokenizer not found")
         
-        # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
+        # When/Then - Expect RuntimeError to be raised
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Then
-        # Verify both models are None after failure (due to exception handling)
-        assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is None
-        
-        # Verify error was logged
-        mock_error.assert_called()
-        error_message = mock_error.call_args[0][0]
-        assert 'failed to initialize models' in error_message.lower()
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load tokenizer for LLMOptimizer" in error_message
+        assert "gpt-3.5-turbo" in error_message
+        assert "Tokenizer not found" in error_message
 
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
@@ -236,30 +222,21 @@ class TestLLMOptimizerInitializeModels:
         GIVEN both embedding model and tokenizer loading fail
         WHEN _initialize_models is called
         THEN expect:
-            - Both models set to None
-            - Error logged
-            - No exceptions raised
-            - Graceful degradation
+            - RuntimeError raised immediately
+            - Exception contains clear error message about embedding model failure
         """
         # Given
         mock_sentence_transformer.side_effect = ImportError("SentenceTransformers not available")
         mock_tiktoken.side_effect = ImportError("tiktoken not available")
         
-        # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
+        # When/Then - Expect RuntimeError to be raised for embedding model failure
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Then
-        # Both models should be None
-        assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is None
-        
-        # Error should be logged
-        assert mock_error.call_count >= 1
-        
-        # Verify error message content
-        error_calls = [call[0][0] for call in mock_error.call_args_list]
-        assert any('failed to initialize models' in msg.lower() for msg in error_calls)
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load embedding model for LLMOptimizer" in error_message
+        assert "SentenceTransformers not available" in error_message
 
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
@@ -268,25 +245,20 @@ class TestLLMOptimizerInitializeModels:
         GIVEN network timeout during model download
         WHEN _initialize_models is called
         THEN expect:
-            - Timeout error handled gracefully
-            - Models set to None
-            - Appropriate error logging
-            - No hanging or infinite retry
+            - RuntimeError raised immediately
+            - Exception contains clear error message about network issues
         """
         # Given
-        mock_sentence_transformer.side_effect = OSError("Network timeout")
-        mock_tiktoken.side_effect = OSError("Connection failed")
-        
-        # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
+        mock_sentence_transformer.side_effect = TimeoutError("Network timeout")
+
+        # When/Then - Expect TimeoutError to be raised
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Then
-        assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is None
-        
-        # Should log errors for network issues
-        assert mock_error.call_count >= 1
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load embedding model for LLMOptimizer" in error_message
+        assert "Network timeout" in error_message
 
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
@@ -295,56 +267,47 @@ class TestLLMOptimizerInitializeModels:
         GIVEN insufficient memory for model loading
         WHEN _initialize_models is called
         THEN expect:
-            - MemoryError handled gracefully
-            - Models set to None
-            - Memory error logged
-            - System stability maintained
+            - MemoryError raised
+            - Exception contains clear error message about memory issues
         """
         # Given
         mock_sentence_transformer.side_effect = MemoryError("Insufficient memory")
         mock_tokenizer = Mock()
         mock_tiktoken.return_value = mock_tokenizer
         
-        # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
+        # When/Then - Expect MemoryError to be raised
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Then
-        # Both models should be None due to exception handling
-        assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is None
-        
-        # Should log memory error
-        mock_error.assert_called()
-        error_message = mock_error.call_args[0][0]
-        assert 'failed to initialize models' in error_message.lower()
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load embedding model for LLMOptimizer" in error_message
+        assert "Insufficient memory" in error_message
 
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
     @patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
     def test_initialize_models_partial_success(self, mock_tiktoken, mock_sentence_transformer):
         """
-        GIVEN one model loads successfully, other fails
+        GIVEN embedding model loads successfully but tokenizer fails
         WHEN _initialize_models is called
         THEN expect:
-            - Due to exception handling, both models set to None
-            - Appropriate logging
-            - Graceful degradation
+            - RuntimeError raised immediately when tokenizer fails (no graceful handling)
+            - Exception contains clear error message about tokenizer failure
+            - No partial success state - fail completely when any component fails
         """
-        # Given - Both will fail due to exception handling design
+        # Given - Embedding model succeeds, tokenizer fails
         mock_embedding_model = Mock()
         mock_sentence_transformer.return_value = mock_embedding_model
         mock_tiktoken.side_effect = ValueError("Invalid tokenizer name")
         
-        # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_error:
+        # When/Then - Expect RuntimeError to be raised for tokenizer failure
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Then - Both models should be None due to exception handling
-        assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is None
-        
-        # Should log error for failure
-        mock_error.assert_called()
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load tokenizer for LLMOptimizer" in error_message
+        assert "Invalid tokenizer name" in error_message
         
         # Test opposite scenario - when SentenceTransformer fails first
         mock_sentence_transformer.side_effect = RuntimeError("Model loading failed")
@@ -356,12 +319,14 @@ class TestLLMOptimizerInitializeModels:
         self.optimizer.embedding_model = None
         self.optimizer.tokenizer = None
         
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error'):
+        # When/Then - Expect RuntimeError to be raised for embedding model failure
+        with pytest.raises(RuntimeError) as exc_info:
             self.optimizer._initialize_models()
         
-        # Both should still be None due to exception handling
-        assert self.optimizer.embedding_model is None
-        assert self.optimizer.tokenizer is None
+        # Verify exception message contains expected information
+        error_message = str(exc_info.value)
+        assert "Could not load embedding model for LLMOptimizer" in error_message
+        assert "Model loading failed" in error_message
 
 
 if __name__ == "__main__":
