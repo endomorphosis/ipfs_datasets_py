@@ -593,7 +593,7 @@ class LLMOptimizer:
         self.api_key = os.environ["OPENAI_API_KEY"]
         self.entity_classifications: set[str] = entity_classifications
 
-        self.openai_async_client = openai.AsyncOpenAI(api_key=self.api)
+        self.openai_async_client = openai.AsyncOpenAI(api_key=self.api_key)
 
         # Initialize models
         self._initialize_models()

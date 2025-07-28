@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import re
 import time
+import networkx as nx
 
 
 import nltk
@@ -777,6 +778,17 @@ class QueryEngine:
             - Relevance scores are normalized to 0-1 range for consistency
             - Results include source document attribution for traceability
         """
+        # Input validation
+        if max_results <= 0:
+            raise ValueError("max_results must be positive")
+        
+        if filters is not None and not isinstance(filters, dict):
+            raise TypeError("filters must be a dictionary")
+        
+        # Check GraphRAG data integrity
+        if not hasattr(self.graphrag, 'global_entities') or self.graphrag.global_entities is None:
+            raise RuntimeError("GraphRAG data is corrupted or inaccessible")
+        
         results = []
         
         # Get all entities from GraphRAG
@@ -786,15 +798,19 @@ class QueryEngine:
         if filters:
             if 'entity_type' in filters:
                 all_entities = [e for e in all_entities if e.type == filters['entity_type']]
+            
+            if 'confidence' in filters:
+                min_confidence = filters['confidence']
+                all_entities = [e for e in all_entities if e.confidence >= min_confidence]
+            
             if 'document_id' in filters:
                 # Filter by document (check if entity appears in document chunks)
                 doc_entities = []
+                target_doc_id = filters['document_id']
                 for entity in all_entities:
-                    for kg in self.graphrag.knowledge_graphs.values():
-                        if kg.document_id == filters['document_id']:
-                            if any(chunk.chunk_id in entity.source_chunks for chunk in kg.chunks):
-                                doc_entities.append(entity)
-                                break
+                    entity_docs = self._get_entity_documents(entity)
+                    if target_doc_id in entity_docs:
+                        doc_entities.append(entity)
                 all_entities = doc_entities
         
         # Score entities by query relevance
@@ -806,23 +822,73 @@ class QueryEngine:
             entity_words = set(entity.name.lower().split())
             entity_desc_words = set(entity.description.lower().split())
             
-            # Name similarity
-            name_overlap = len(query_words.intersection(entity_words))
-            score += name_overlap * 2
-            
-            # Description similarity
-            desc_overlap = len(query_words.intersection(entity_desc_words))
-            score += desc_overlap
-            
-            # Exact name match bonus
-            if any(word in entity.name.lower() for word in query_words):
-                score += 3
-            
-            # Type match
-            if entity.type in query:
-                score += 1
+            # Check for exact name match first
+            if query.lower() == entity.name.lower():
+                score = 10  # Perfect match gets score of 10 (1.0 after normalization)
+            elif query_words == entity_words:
+                score = 10  # Word set match also gets perfect score
+            else:
+                # Name similarity
+                name_overlap = len(query_words.intersection(entity_words))
+                score += name_overlap * 2
+                
+                # Description similarity - exact word matches
+                desc_overlap = len(query_words.intersection(entity_desc_words))
+                score += desc_overlap
+                
+                # Partial word matches in description and name
+                for query_word in query_words:
+                    # Check partial matches in description words
+                    for desc_word in entity_desc_words:
+                        if query_word in desc_word or desc_word in query_word:
+                            if len(query_word) > 3 and len(desc_word) > 3:  # Avoid short word false matches
+                                score += 0.5
+                        # Handle plurals and word stems
+                        elif (query_word.endswith('s') and query_word[:-1] in desc_word) or \
+                             (desc_word.endswith('s') and desc_word[:-1] in query_word) or \
+                             (query_word[:-2] in desc_word and len(query_word) > 4) or \
+                             (desc_word[:-2] in query_word and len(desc_word) > 4):
+                            score += 0.5
+                    
+                    # Check partial matches in name words  
+                    for name_word in entity_words:
+                        if query_word in name_word or name_word in query_word:
+                            if len(query_word) > 3 and len(name_word) > 3:
+                                score += 0.5
+                
+                # Partial name match bonus
+                if any(word in entity.name.lower() for word in query_words):
+                    score += 3
+                
+                # Type match
+                if entity.type.lower() in query.lower():
+                    score += 1
+                
+                # Property matching - check if query matches any property values
+                if hasattr(entity, 'properties') and entity.properties:
+                    for prop_key, prop_value in entity.properties.items():
+                        if isinstance(prop_value, str):
+                            prop_words = set(prop_value.lower().split())
+                            # Exact property value matches
+                            prop_overlap = len(query_words.intersection(prop_words))
+                            score += prop_overlap * 1.5  # Property matches are valuable
+                            
+                            # Partial property matches
+                            for query_word in query_words:
+                                for prop_word in prop_words:
+                                    if query_word in prop_word or prop_word in query_word:
+                                        if len(query_word) > 3 and len(prop_word) > 3:
+                                            score += 0.5
+                                    # Handle plurals and word stems in properties
+                                    elif (query_word.endswith('s') and query_word[:-1] in prop_word) or \
+                                         (prop_word.endswith('s') and prop_word[:-1] in query_word) or \
+                                         (query_word[:-2] in prop_word and len(query_word) > 4) or \
+                                         (prop_word[:-2] in query_word and len(prop_word) > 4):
+                                        score += 0.5
             
             if score > 0:
+                # Cap the maximum score at 10 to ensure normalized score doesn't exceed 1.0
+                score = min(score, 10)
                 scored_entities.append((entity, score))
         
         # Sort and limit results
@@ -1162,74 +1228,194 @@ class QueryEngine:
             - Entity sampling is limited to first 5 entities for readability
             - Content sampling analyzes first 10 chunks for performance optimization
         """
+        # Input validation
+        if not isinstance(query, str):
+            raise TypeError("query must be a string")
+        
+        if query.strip() == "":
+            raise ValueError("query cannot be empty")
+            
+        if not isinstance(max_results, int) or max_results <= 0:
+            raise ValueError("max_results must be positive integer")
+            
+        if filters is not None and not isinstance(filters, dict):
+            raise TypeError("filters must be a dictionary")
+        
         results = []
         
         # Get all knowledge graphs (documents)
-        all_documents = list(self.graphrag.knowledge_graphs.values())
+        try:
+            all_documents = list(self.graphrag.knowledge_graphs.values())
+        except AttributeError:
+            raise RuntimeError("GraphRAG integrator not properly initialized")
         
         # Apply filters
         if filters:
             if 'document_id' in filters:
                 all_documents = [kg for kg in all_documents if kg.document_id == filters['document_id']]
+            
+            if 'min_entities' in filters:
+                min_entities = filters['min_entities']
+                all_documents = [kg for kg in all_documents if len(kg.entities) >= min_entities]
+            
+            if 'min_relationships' in filters:
+                min_relationships = filters['min_relationships']
+                all_documents = [kg for kg in all_documents if len(kg.relationships) >= min_relationships]
+                
+            if 'creation_date' in filters:
+                from datetime import datetime
+                filter_date = datetime.strptime(filters['creation_date'], "%Y-%m-%d")
+                filtered_docs = []
+                for kg in all_documents:
+                    try:
+                        if hasattr(kg, 'metadata') and kg.metadata and 'creation_date' in kg.metadata:
+                            creation_date = datetime.strptime(kg.metadata['creation_date'], "%Y-%m-%d")
+                            if creation_date >= filter_date:
+                                filtered_docs.append(kg)
+                    except (ValueError, KeyError, TypeError):
+                        continue  # Skip documents with invalid or missing dates
+                all_documents = filtered_docs
         
         # Score documents by query relevance
         scored_documents = []
-        query_words = set(query.split())
+        query_words = set(query.lower().split())
         
         for kg in all_documents:
-            score = 0
-            
-            # Title match
-            title_words = set(kg.metadata.get('document_title', '').lower().split())
-            title_overlap = len(query_words.intersection(title_words))
-            score += title_overlap * 3
-            
-            # Entity matches
-            entity_matches = 0
-            for entity in kg.entities:
-                entity_words = set(entity.name.lower().split())
-                if query_words.intersection(entity_words):
-                    entity_matches += 1
-            score += entity_matches
-            
-            # Content matches (sample chunks)
-            content_matches = 0
-            for chunk in kg.chunks[:10]:  # Sample first 10 chunks
-                chunk_words = set(chunk.content.lower().split())
-                content_overlap = len(query_words.intersection(chunk_words))
-                content_matches += content_overlap
-            score += content_matches * 0.1
-            
-            if score > 0:
-                scored_documents.append((kg, score))
+            try:
+                # Validate knowledge graph structure
+                if not hasattr(kg, 'metadata') or kg.metadata is None:
+                    raise RuntimeError("Corrupted document metadata")
+                
+                if not hasattr(kg, 'entities') or not hasattr(kg, 'relationships'):
+                    raise AttributeError("Missing required metadata")
+                
+                score = 0
+                
+                # Title match
+                document_title = kg.metadata.get('document_title', '')
+                if hasattr(kg, 'document_id'):
+                    document_title = document_title or kg.document_id
+                title_words = set(document_title.lower().split())
+                title_overlap = len(query_words.intersection(title_words))
+                score += title_overlap * 3
+                
+                # Entity matches
+                entity_matches = 0
+                entities_to_check = kg.entities[:5] if hasattr(kg.entities, '__len__') else kg.entities
+                for entity in entities_to_check:
+                    try:
+                        entity_name = getattr(entity, 'name', str(entity))
+                        entity_words = set(entity_name.lower().split())
+                        if query_words.intersection(entity_words):
+                            entity_matches += 1
+                    except (AttributeError, TypeError):
+                        continue
+                score += entity_matches
+                
+                # Content matches (sample chunks)
+                content_matches = 0
+                if hasattr(kg, 'chunks') and kg.chunks:
+                    chunks_to_check = kg.chunks[:10] if len(kg.chunks) > 10 else kg.chunks
+                    for chunk in chunks_to_check:
+                        try:
+                            chunk_content = getattr(chunk, 'content', str(chunk))
+                            chunk_words = set(chunk_content.lower().split())
+                            content_overlap = len(query_words.intersection(chunk_words))
+                            content_matches += content_overlap
+                        except (AttributeError, TypeError):
+                            continue
+                score += content_matches * 0.1
+                
+                if score > 0:
+                    scored_documents.append((kg, score))
+                    
+            except (RuntimeError, AttributeError) as e:
+                # Re-raise validation errors
+                raise e
+            except Exception as e:
+                # Log other errors but continue processing
+                logger.warning(f"Error processing document {getattr(kg, 'document_id', 'unknown')}: {e}")
+                continue
         
         # Sort and limit results
         scored_documents.sort(key=lambda x: x[1], reverse=True)
         
         for kg, score in scored_documents[:max_results]:
-            # Create document summary
-            summary = f"Document: {kg.metadata.get('document_title', kg.document_id)}\n"
-            summary += f"Entities: {len(kg.entities)}, Relationships: {len(kg.relationships)}, Chunks: {len(kg.chunks)}\n"
-            summary += f"Key entities: {', '.join([e.name for e in kg.entities[:5]])}"
-            
-            result = QueryResult(
-                id=kg.document_id,
-                type='document',
-                content=summary,
-                relevance_score=score / 20.0,  # Normalize score
-                source_document=kg.document_id,
-                source_chunks=[chunk.chunk_id for chunk in kg.chunks],
-                metadata={
-                    'graph_id': kg.graph_id,
-                    'title': kg.metadata.get('document_title', ''),
-                    'entity_count': len(kg.entities),
-                    'relationship_count': len(kg.relationships),
-                    'chunk_count': len(kg.chunks),
-                    'creation_timestamp': kg.creation_timestamp,
-                    'ipld_cid': kg.ipld_cid
+            try:
+                # Create document summary
+                document_title = kg.metadata.get('document_title', getattr(kg, 'document_id', 'Unknown Document'))
+                entity_count = len(kg.entities) if hasattr(kg, 'entities') and kg.entities else 0
+                relationship_count = len(kg.relationships) if hasattr(kg, 'relationships') and kg.relationships else 0
+                chunk_count = len(kg.chunks) if hasattr(kg, 'chunks') and kg.chunks else 0
+                
+                summary = f"Document: {document_title}\n"
+                summary += f"Entities: {entity_count}, Relationships: {relationship_count}, Chunks: {chunk_count}\n"
+                
+                # Get key entities (first 5)
+                key_entities = []
+                if hasattr(kg, 'entities') and kg.entities:
+                    for entity in kg.entities[:5]:
+                        try:
+                            entity_name = getattr(entity, 'name', str(entity))
+                            key_entities.append(entity_name)
+                        except (AttributeError, TypeError):
+                            continue
+                
+                if key_entities:
+                    summary += f"Key entities: {', '.join(key_entities)}"
+                
+                # Normalize relevance score based on query length and match types
+                # Calculate max possible score for this query
+                query_word_count = len(query_words)
+                max_title_score = query_word_count * 3  # All words match title
+                max_entity_score = min(5, len(kg.entities)) if hasattr(kg, 'entities') and kg.entities else 0  # Up to 5 entities match
+                max_content_score = query_word_count * 2 * 0.1  # Reasonable content matches
+                
+                max_possible_score = max_title_score + max_entity_score + max_content_score
+                max_possible_score = max(max_possible_score, 1.0)  # Avoid division by zero
+                
+                normalized_score = min(1.0, score / max_possible_score)
+                
+                # Build comprehensive metadata
+                metadata = {
+                    'entity_count': entity_count,
+                    'relationship_count': relationship_count,
+                    'key_entities': key_entities,
+                    'processing_date': kg.metadata.get('processing_date', kg.metadata.get('creation_date', 'Unknown')),
+                    'ipld_storage_details': {
+                        'ipld_cid': getattr(kg, 'ipld_cid', None),
+                        'storage_available': self.storage is not None
+                    },
+                    'document_characteristics': {
+                        'chunk_count': chunk_count,
+                        'content_density': entity_count / max(1, chunk_count),
+                        'relationship_density': relationship_count / max(1, entity_count)
+                    }
                 }
-            )
-            results.append(result)
+                
+                # Add additional metadata from knowledge graph
+                if hasattr(kg, 'graph_id'):
+                    metadata['graph_id'] = kg.graph_id
+                if hasattr(kg, 'creation_timestamp'):
+                    metadata['creation_timestamp'] = kg.creation_timestamp
+                
+                # Source chunks (empty for document-level queries)
+                source_chunks = []
+                
+                result = QueryResult(
+                    id=getattr(kg, 'document_id', f'doc_{len(results)}'),
+                    type='document',
+                    content=summary,
+                    relevance_score=normalized_score,
+                    source_document=getattr(kg, 'document_id', f'doc_{len(results)}'),
+                    source_chunks=source_chunks,
+                    metadata=metadata
+                )
+                results.append(result)
+                
+            except Exception as e:
+                logger.warning(f"Error creating result for document {getattr(kg, 'document_id', 'unknown')}: {e}")
+                continue
         
         return results
     
@@ -1465,6 +1651,16 @@ class QueryEngine:
             - Returns empty results if fewer than 2 entities can be identified
             - Path finding is limited to prevent excessive computation
         """
+        # Input validation
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("Query must be a non-empty string")
+        
+        if not isinstance(max_results, int) or max_results <= 0:
+            raise ValueError("max_results must be a positive integer")
+        
+        if filters is not None and not isinstance(filters, dict):
+            raise TypeError("Filters must be a dictionary or None")
+        
         results = []
         
         # Extract entity names from query for path finding
@@ -1474,17 +1670,29 @@ class QueryEngine:
             logger.info("Need at least 2 entities for graph traversal")
             return results
         
-        # Find entities in graph
+        # Validate graph availability
+        if not hasattr(self.graphrag, 'global_graph') or self.graphrag.global_graph is None:
+            raise RuntimeError("NetworkX graph is not available or corrupted")
+        
+        # Find entities in graph - improved logic
         start_entities = []
         end_entities = []
         
+        # Split entity names more intelligently
+        mid_point = len(entity_names) // 2
+        start_names = entity_names[:mid_point] if mid_point > 0 else entity_names[:1]
+        end_names = entity_names[mid_point:] if mid_point > 0 else entity_names[1:]
+        
+        # Find start entities
         for entity in self.graphrag.global_entities.values():
-            for name in entity_names[:len(entity_names)//2]:
+            for name in start_names:
                 if name.lower() in entity.name.lower():
                     start_entities.append(entity)
                     break
-            
-            for name in entity_names[len(entity_names)//2:]:
+        
+        # Find end entities  
+        for entity in self.graphrag.global_entities.values():
+            for name in end_names:
                 if name.lower() in entity.name.lower():
                     end_entities.append(entity)
                     break
@@ -1493,9 +1701,13 @@ class QueryEngine:
             logger.info("Could not find entities for graph traversal")
             return results
         
-        # Find paths between entities
-        import networkx as nx
+        # Apply filters if provided
+        max_path_length = filters.get('max_path_length') if filters else None
+        entity_types_filter = filters.get('entity_types') if filters else None
+        relationship_types_filter = filters.get('relationship_types') if filters else None
+        min_confidence = filters.get('min_confidence') if filters else None
         
+        # Find paths between entities
         for start_entity in start_entities[:3]:  # Limit to first 3
             for end_entity in end_entities[:3]:
                 if start_entity.id == end_entity.id:
@@ -1510,37 +1722,92 @@ class QueryEngine:
                     )
                     
                     if len(path) > 1:
-                        # Create path description
+                        # Apply max_path_length filter
+                        if max_path_length and len(path) > max_path_length:
+                            continue
+                        
+                        # Build path with entities and relationships
                         path_entities = []
-                        for entity_id in path:
+                        path_relationships = []
+                        entity_types_in_path = []
+                        relationship_types_in_path = []
+                        
+                        for i, entity_id in enumerate(path):
                             entity = self.graphrag.global_entities.get(entity_id)
                             if entity:
                                 path_entities.append(entity.name)
-                        
-                        path_description = " → ".join(path_entities)
-                        
-                        # Calculate path relevance
-                        relevance = 1.0 / len(path)  # Shorter paths are more relevant
-                        
-                        result = QueryResult(
-                            id=f"path_{start_entity.id}_{end_entity.id}",
-                            type='graph_path',
-                            content=f"Path: {path_description}",
-                            relevance_score=relevance,
-                            source_document='multiple',
-                            source_chunks=[],  # Paths don't have specific chunks
-                            metadata={
-                                'path_length': len(path),
-                                'path_entities': path,
-                                'start_entity': start_entity.name,
-                                'end_entity': end_entity.name
-                            }
-                        )
-                        results.append(result)
+                                entity_types_in_path.append(entity.type)
+                                
+                                # Apply entity type filter
+                                if entity_types_filter and entity.type not in entity_types_filter:
+                                    break  # Skip this path
+                                
+                                # Get relationship to next entity
+                                if i < len(path) - 1:
+                                    next_entity_id = path[i + 1]
+                                    edge_data = self.graphrag.global_graph.get_edge_data(entity_id, next_entity_id, {})
+                                    relationship = edge_data.get('relationship', 'connected')
+                                    confidence = edge_data.get('confidence', 1.0)
+                                    
+                                    # Apply relationship type filter
+                                    if relationship_types_filter and relationship not in relationship_types_filter:
+                                        break  # Skip this path
+                                    
+                                    # Apply confidence filter
+                                    if min_confidence and confidence < min_confidence:
+                                        break  # Skip this path
+                                    
+                                    path_relationships.append({
+                                        'type': relationship,
+                                        'confidence': confidence,
+                                        'from': entity.name,
+                                        'to': self.graphrag.global_entities.get(next_entity_id, {}).name if self.graphrag.global_entities.get(next_entity_id) else next_entity_id
+                                    })
+                                    relationship_types_in_path.append(relationship)
+                        else:
+                            # Path passed all filters, create formatted description
+                            path_parts = []
+                            for i, entity_name in enumerate(path_entities):
+                                path_parts.append(entity_name)
+                                if i < len(path_relationships):
+                                    path_parts.append("→")
+                                    path_parts.append(path_relationships[i]['type'])
+                                    path_parts.append("→")
+                            
+                            if path_parts and path_parts[-1] == "→":
+                                path_parts = path_parts[:-1]  # Remove trailing arrow
+                            
+                            path_description = " ".join(path_parts)
+                            
+                            # Calculate path relevance (inverse of length, normalized)
+                            relevance = 1.0 / len(path) if len(path) > 0 else 0.0
+                            relevance = min(1.0, max(0.0, relevance))  # Ensure 0.0-1.0 range
+                            
+                            result = QueryResult(
+                                id=f"path_{start_entity.id}_{end_entity.id}",
+                                type='graph_path',
+                                content=f"Path: {path_description}",
+                                relevance_score=relevance,
+                                source_document='multiple',
+                                source_chunks=[],  # Paths don't have specific chunks
+                                metadata={
+                                    'path_length': len(path),
+                                    'path_entities': path,
+                                    'path_relationships': path_relationships,
+                                    'start_entity': start_entity.name,
+                                    'end_entity': end_entity.name,
+                                    'entity_types_in_path': entity_types_in_path,
+                                    'relationship_types_in_path': relationship_types_in_path
+                                }
+                            )
+                            results.append(result)
                 
                 except nx.NetworkXNoPath:
                     # No path found
                     continue
+                except ImportError as e:
+                    logger.error(f"NetworkX library not available: {e}")
+                    raise ImportError(f"NetworkX is required for graph traversal: {e}")
                 except Exception as e:
                     logger.warning(f"Error finding path: {e}")
                     continue

@@ -664,6 +664,9 @@ class TestExtractEntitiesFromChunks:
         THEN an AttributeError should be raised
         AND the error should indicate missing content
         """
+        from unittest.mock import MagicMock
+        invalid_chunk = MagicMock(spec_set=LLMChunk)
+        del invalid_chunk.content  # Remove content attribute
         class InvalidChunk:
             def __init__(self):
                 self.chunk_id = "invalid"

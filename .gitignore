@@ -38,3 +38,4 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+pdf_processing_metrics.json
