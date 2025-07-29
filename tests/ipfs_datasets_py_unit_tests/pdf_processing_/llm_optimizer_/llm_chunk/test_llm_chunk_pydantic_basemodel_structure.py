@@ -7,8 +7,7 @@ from datetime import datetime
 import pytest
 import os
 
-import os
-import pytest
+from typing import List, Dict, Any, Optional, Set
 import time
 import numpy as np
 
@@ -81,7 +80,7 @@ class TestLLMChunkPydanticBaseModelStructure:
         THEN expect LLMChunk to be properly defined as a Pydantic model
         """
         from pydantic import BaseModel
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         
         # When/Then
         assert issubclass(LLMChunk, BaseModel)
@@ -101,7 +100,7 @@ class TestLLMChunkPydanticBaseModelStructure:
             - relationships (List[str])
             - embedding (Optional[np.ndarray])
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         
         # When
         field_names = set(LLMChunk.model_fields.keys())
@@ -129,7 +128,7 @@ class TestLLMChunkPydanticBaseModelStructure:
             - metadata: Dict[str, Any] type annotation
             - embedding: Optional[np.ndarray] type annotation
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         from typing import get_origin, get_args
         import numpy as np
         
@@ -151,7 +150,7 @@ class TestLLMChunkPydanticBaseModelStructure:
         
         # Verify complex type structures
         from typing import List, Optional
-        assert annotations['relationships'] == List[str]
+        assert annotations['relationships'] == list[str]
         assert annotations['embedding'] == Optional[np.ndarray]
 
     def test_field_defaults(self):
@@ -160,7 +159,7 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN inspecting default values
         THEN expect appropriate default values where specified in documentation
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         
         # When
         fields = LLMChunk.model_fields
@@ -185,7 +184,7 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN creating an instance with valid data
         THEN expect successful instantiation with all fields properly set
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         import numpy as np
         
         # Given
@@ -219,7 +218,7 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN creating an instance with invalid data
         THEN expect appropriate validation errors
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         from pydantic import ValidationError
         
         # Test invalid semantic_types
@@ -261,7 +260,7 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN creating an instance with minimal required data
         THEN expect default values to be properly applied
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+
         
         # Given - minimal required data
         chunk = LLMChunk(

@@ -8,7 +8,7 @@ import pytest
 import os
 import asyncio
 import numpy as np
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from pydantic import BaseModel
 
 from tests._test_utils import (
@@ -32,7 +32,8 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
+    ClassificationResult
 )
 
 # Wikipedia categories from the docstring
@@ -76,12 +77,6 @@ CLASSIFICATIONS = {
     "Health"
 }
 
-class ClassificationResult(BaseModel):
-    """Result of entity classification."""
-    entity: str
-    category: str
-    confidence: float
-
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -122,7 +117,10 @@ class TestLLMOptimizerGetEntityClassification:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.optimizer = LLMOptimizer()
+        # Mock the OPENAI_API_KEY environment variable
+        with patch.dict(os.environ, {'OPENAI_API_KEY': 'fake-api-key'}):
+            self.optimizer = LLMOptimizer()
+        
         self.mock_openai_client = Mock()
         self.mock_openai_client.chat = Mock()
         self.mock_openai_client.chat.completions = Mock()
