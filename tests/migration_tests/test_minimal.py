@@ -4,7 +4,6 @@ import numpy as np
 from ipfs_datasets_py.rag.rag_query_optimizer import (
     GraphRAGQueryStats,
     GraphRAGQueryOptimizer,
-    VectorIndexPartitioner
 )
 
 class TestGraphRAGQueryOptimizerMethods(unittest.TestCase):

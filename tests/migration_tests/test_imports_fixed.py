@@ -9,25 +9,25 @@ sys.path.insert(0, '.')
 print("Starting import tests...")
 
 # Test 1: Basic config import
-print("\n=== Test 1: Config Import ===")
+print("\n=== Test 1: config Import ===")
 try:
-    from ipfs_datasets_py.config import Config
-    print("✅ Config import successful")
-    config = Config()
-    print("✅ Config instantiation successful")
+    from ipfs_datasets_py.config import config
+    print("✅ config import successful")
+    config = config()
+    print("✅ config instantiation successful")
 except Exception as e:
-    print(f"❌ Config import/instantiation failed: {e}")
+    print(f"❌ config import/instantiation failed: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
 
 # Test 2: Base tool import
-print("\n=== Test 2: BaseTool Import ===")
+print("\n=== Test 2: BaseDevelopmentTool Import ===")
 try:
-    from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseTool
-    print("✅ BaseTool import successful")
+    from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseDevelopmentTool
+    print("✅ BaseDevelopmentTool import successful")
 except Exception as e:
-    print(f"❌ BaseTool import failed: {e}")
+    print(f"❌ BaseDevelopmentTool import failed: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

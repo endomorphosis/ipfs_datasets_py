@@ -15,6 +15,7 @@ These functions check for:
 """
 import ast
 from pathlib import Path
+from typing import Literal
 
 
 class FalsifiedCodeError(NotImplementedError):
@@ -97,7 +98,7 @@ def get_ast_tree(input_path: Path) -> ast.Module:
     return tree
 
 
-def raise_on_bad_callable_metadata(tree: ast.Module) -> str:
+def has_good_callable_metadata(tree: ast.Module) -> Literal[True]:
     """
     Validate callable objects' metadata to ensure comprehensive documentation and proper signatures.
     
@@ -115,7 +116,7 @@ def raise_on_bad_callable_metadata(tree: ast.Module) -> str:
         tree: The parsed AST module containing callable objects to validate.
         
     Returns:
-        str: A success message indicating all metadata validation checks passed.
+        Literal[True]: Indicates that the validation was successful.
         
     Raises:
         BadSignatureError: When function signatures lack proper type annotations,
@@ -144,7 +145,7 @@ def raise_on_bad_callable_metadata(tree: ast.Module) -> str:
         ...     return param
         ... '''
         >>> tree = ast.parse(code)
-        >>> raise_on_bad_callable_metadata(tree)
+        >>> has_good_callable_metadata(tree)
         'All callable metadata validation checks passed.'
     """
     for node in ast.walk(tree):
@@ -165,6 +166,7 @@ def raise_on_bad_callable_metadata(tree: ast.Module) -> str:
             case _:
                 # Ignore other nodes
                 continue
+    return True
 
 
 def raise_on_test_cheating(tree: ast.FunctionDef | ast.AsyncFunctionDef, reset: bool = False) -> None:

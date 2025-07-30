@@ -16,7 +16,7 @@ from resource_monitor import (
 )
 
 from _test_utils import (
-    _raise_on_bad_callable_metadata,
+    _has_good_callable_metadata,
     _raise_on_fake_code,
     _raise_on_mocked_code,
 )
@@ -40,7 +40,7 @@ class TestErrorMonitorInitialization(unittest.TestCase):
         Ensure that the docstring of the ErrorMonitor class meets the standards set forth in `_example_docstring_format.md`.
         """
         try:
-            _raise_on_bad_callable_metadata(ResourceMonitor)
+            _has_good_callable_metadata(ResourceMonitor)
         except Exception as e:
             self.fail(f"Callable metadata in ResourceMonitor does not meet standards: {e}")
 
@@ -101,7 +101,7 @@ class TestErrorMonitorInitialization:
         Ensure that the docstring of the ErrorMonitor class meets the standards set forth in `_example_docstring_format.md`.
         """
         try:
-            _raise_on_bad_callable_metadata(ResourceMonitor)
+            _has_good_callable_metadata(ResourceMonitor)
         except Exception as e:
             self.fail(f"Callable metadata in ResourceMonitor does not meet standards: {e}")
 

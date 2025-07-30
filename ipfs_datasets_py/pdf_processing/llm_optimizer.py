@@ -170,6 +170,106 @@ class ClassificationResult(BaseModel):
     confidence: float
 
 
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+LLMChunkMetadata model for structured metadata container for LLM chunk creation and processing.
+
+This module provides a Pydantic model that captures essential metadata about chunk creation
+including source provenance, content metrics, processing details, and semantic classification.
+"""
+
+import json
+import math
+import time
+from datetime import datetime
+from typing import Literal, Any, Dict
+from pydantic import (
+    BaseModel, Field, field_validator, model_validator, NonNegativeFloat, NonNegativeInt, PositiveInt
+)
+
+
+
+
+
+
+import re
+
+# ISO 8601 datetime regex pattern
+ISO_DATETIME_PATTERN = r'^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
+
+# Compiled regex for better performance
+ISO_DATETIME_REGEX = re.compile(ISO_DATETIME_PATTERN)
+
+UNREALISTIC_TOKEN_WORD_RATIO = 10.0
+
+
+def validate_iso_datetime(datetime_string: str) -> bool:
+    """
+    Validate if a string matches ISO 8601 datetime format.
+    
+    Args:
+        datetime_string: String to validate
+        
+    Returns:
+        bool: True if string matches ISO 8601 format, False otherwise
+        
+    Examples:
+        >>> validate_iso_datetime("2025-01-15T10:30:45")
+        True
+        >>> validate_iso_datetime("2025-01-15T10:30:45Z")
+        True
+        >>> validate_iso_datetime("2025-01-15T10:30:45+00:00")
+        True
+        >>> validate_iso_datetime("2025-01-15T10:30:45.123Z")
+        True
+        >>> validate_iso_datetime("not-a-date")
+        False
+    """
+    if not datetime_string:
+        return False
+    return bool(ISO_DATETIME_REGEX.match(datetime_string))
+
+def is_valid_iso_datetime(datetime_string: str) -> bool:
+    """Alternative function name for clarity."""
+    return validate_iso_datetime(datetime_string)
+
+# Test examples
+if __name__ == "__main__":
+    test_cases = [
+        # Valid cases
+        "2025-01-15T10:30:45",
+        "2025-01-15T10:30:45Z",
+        "2025-01-15T10:30:45+00:00",
+        "2025-01-15T10:30:45.123Z",
+        "2025-01-15T10:30:45.123456+05:30",
+        "2025-01-15",
+        "2025-W03",
+        "2025-W03-1",
+        "2025-015",
+        "+2025-01-15T10:30:45Z",
+        "-0001-01-01T00:00:00Z",
+        
+        # Invalid cases
+        "not-a-date",
+        "2025/01/15 10:30:45",
+        "2025-13-01T10:30:45",
+        "2025-01-32T10:30:45",
+        "2025-01-15T25:00:00",
+        "2025-01-15T10:60:45",
+        "",
+        "2025",
+        "10:30:45"
+    ]
+    
+    print("Testing ISO 8601 datetime validation:")
+    for test_case in test_cases:
+        result = validate_iso_datetime(test_case)
+        print(f"'{test_case}' -> {result}")
+
+
+import hashlib
+
 class LLMChunkMetadata(BaseModel):
     """
     Structured metadata container for LLM chunk creation and processing information.
@@ -182,7 +282,7 @@ class LLMChunkMetadata(BaseModel):
     Attributes:
         # Source provenance (required - use defaults if not provided)
         element_type: str  # Original PDF element type, defaults to "text" if unknown
-        element_id: str    # Source element identifier, defaults to generated ID if unknown
+        element_id: str    # Source element identifier, defaults to hash of instance creation time if unknown
         section: str       # Document section name, defaults to "unknown" if not provided
         confidence: float  # Extraction confidence (0.0-1.0), defaults to 1.0 for calculated fields
         source_file: str   # Source document identifier, defaults to "unknown" if not provided
@@ -206,13 +306,319 @@ class LLMChunkMetadata(BaseModel):
         contains_table: bool        # True if table elements present in source_elements
         contains_figure: bool       # True if figure/caption elements present
         is_header: bool            # True if primary semantic type is header
-        
+
         # Position and structure (with defaults)
         original_position: str     # JSON string of position coordinates, defaults to "{}" if unknown
         chunk_position_in_doc: int # Sequential position of chunk in document, defaults to 0
         page_number: int          # Source page number (from method parameter)
         total_chunks_on_page: int # Number of chunks on same page, defaults to 1 if unknown
     """
+    # Source provenance fields
+    element_type: str = Field(
+        default="text",
+        min_length=1,
+        max_length=100,
+        description="Original PDF element type, defaults to 'text' if unknown"
+    )
+    element_id: str = Field(
+        default_factory=lambda: f"element_{hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]}",
+        max_length=255,
+        description="Source element identifier, defaults to hash of instance creation time if unknown"
+    )
+    section: str = Field(
+        default="unknown",
+        min_length=1,
+        max_length=200,
+        description="Document section name, defaults to 'unknown' if not provided"
+    )
+    confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Extraction confidence (0.0-1.0), defaults to 1.0 for calculated fields"
+    )
+    source_file: str = Field(
+        default="unknown",
+        min_length=1,
+        max_length=500,
+        description="Source document identifier, defaults to 'unknown' if not provided"
+    )
+    extraction_method: str = Field(
+        default="llm_optimization",
+        min_length=1,
+        max_length=50,
+        description="Extraction method, defaults to 'llm_optimization'"
+    )
+
+    # Content metrics fields
+    character_count: NonNegativeInt = Field(
+        ...,
+        ge=0,
+        description="Total character count in content (len(content))"
+    )
+    word_count: NonNegativeInt = Field(
+        ...,
+        ge=0,
+        description="Number of words in content (len(content.split()))"
+    )
+    sentence_count: NonNegativeInt = Field(
+        ...,
+        ge=0,
+        description="Number of sentences detected (count of sentence delimiters)"
+    )
+    token_count: NonNegativeInt = Field(
+        ...,
+        ge=0,
+        description="Actual token count from configured tokenizer"
+    )
+
+    # Processing information fields
+    creation_timestamp: NonNegativeFloat = Field(
+        ...,
+        ge=0.0,
+        lt=4102444800.0,  # Jan 1, 2100
+        description="Unix timestamp of chunk creation (time.time())"
+    )
+    created_at: str = Field(
+        ...,
+        min_length=1,
+        description="ISO format creation timestamp (datetime.now().isoformat())"
+    )
+    processing_method: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Processing approach, always 'llm_optimization'"
+    )
+    tokenizer_used: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Tokenizer model identifier from optimizer config"
+    )
+    semantic_type: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Primary semantic classification from source_elements"
+    )
+
+    # Semantic analysis flags
+    has_mixed_elements: bool = Field(
+        ...,
+        description="True if multiple semantic types detected"
+    )
+    contains_table: bool = Field(
+        ...,
+        description="True if table elements present in source_elements"
+    )
+    contains_figure: bool = Field(
+        ...,
+        description="True if figure/caption elements present"
+    )
+    is_header: bool = Field(
+        ...,
+        description="True if primary semantic type is header"
+    )
+
+    # Position and structure fields
+    original_position: str = Field(
+        default='{}',
+        description="JSON string of position coordinates, defaults to '{}' if unknown"
+    )
+    chunk_position_in_doc: NonNegativeInt = Field(
+        default=0,
+        ge=0,
+        description="Sequential position of chunk in document, defaults to 0"
+    )
+    page_number: PositiveInt = Field(
+        ...,
+        ge=1,
+        description="Source page number (from method parameter)"
+    )
+    total_chunks_on_page: NonNegativeInt = Field(
+        default=1,
+        ge=0,
+        description="Number of chunks on same page, defaults to 1 if unknown"
+    )
+
+    @field_validator('element_type', 'element_id', 'section', 'source_file', 'extraction_method', 
+                    'processing_method', 'tokenizer_used', 'semantic_type')
+    @classmethod
+    def validate_non_whitespace_strings(cls, v: str) -> str:
+        """Validate that string fields are not empty or whitespace-only."""
+        if not v or v.isspace():
+            raise ValueError("String field must not be empty or contain only whitespace")
+        return v
+
+    @field_validator('confidence')
+    @classmethod
+    def validate_confidence_finite(cls, v: float) -> float:
+        """Validate that confidence is finite (not inf or nan)."""
+        if not math.isfinite(v):
+            raise ValueError("Confidence must be a finite number (not inf or nan)")
+        return v
+
+    @field_validator('creation_timestamp')
+    @classmethod
+    def validate_creation_timestamp_reasonable(cls, v: float) -> float:
+        """Validate that creation_timestamp is within reasonable bounds."""
+        if v < 0:
+            raise ValueError("Creation timestamp must be non-negative")
+
+        # Get tomorrow as a reference point
+        tomorrow_timestamp = time.time() + 86400  # Current time + 24 hours (86400 seconds)
+        if v > tomorrow_timestamp:
+            raise ValueError("creation_timestamp cannot be in the future (beyond tomorrow)")
+
+        return v
+
+    @field_validator('created_at')
+    @classmethod
+    def validate_iso_format(cls, v: str) -> str:
+        """Validate that created_at is in valid ISO datetime format."""
+        if not v or v.isspace():
+            raise ValueError("Created_at field must not be empty or contain only whitespace")
+        
+        # Parse various ISO 8601 formats
+        if not bool(ISO_DATETIME_REGEX.match(v)):
+            raise ValueError(f"created_at must be in valid ISO 8601 format, got '{v}'")
+
+        try:
+            datetime.fromisoformat(v)
+            return v
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"created_at must be in valid ISO datetime format, got '{v}': {e}")
+
+    @field_validator('semantic_type')
+    @classmethod
+    def validate_semantic_type_enum(cls, v: str) -> str:
+        """Validate that semantic_type is one of the allowed values."""
+        allowed_types = {
+            'text', 'paragraph', 'header', 'title', 'table', 'figure', 
+            'caption', 'list', 'footer', 'reference', 'equation', 'code'
+        }
+        if v.lower() not in allowed_types:
+            raise ValueError(f"semantic_type must be one of: {', '.join(sorted(allowed_types))}")
+        return v
+
+    @field_validator('original_position')
+    @classmethod
+    def validate_json_format(cls, v: Any) -> str:
+        """Validate that original_position is valid JSON."""
+        match v:
+            case str():
+                try:
+                    # Validate that it's valid JSON by parsing it, but return the original string
+                    json.loads(v)
+                    return v  # Return the original string, not the parsed dict
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"original_position must be valid JSON format: {e}") from e
+            case dict():
+                # Convert dict to JSON string for consistency
+                try:
+                    return json.dumps(v)
+                except (TypeError, ValueError) as e:
+                    raise ValueError(f"original_position must be a JSON serializable dict: {e}") from e
+            case _:
+                raise ValueError("original_position must be a JSON string or dict")
+
+    @model_validator(mode='after')
+    def validate_logical_consistency(self) -> 'LLMChunkMetadata':
+        """Validate logical consistency between fields."""
+        error_msg = ""
+
+        # Word count should not exceed character count
+        if self.word_count > self.character_count:
+            error_msg += "word_count cannot exceed character_count | "
+
+        # Sentence count should not exceed word count
+        if self.sentence_count > self.word_count:
+            error_msg += "sentence_count cannot exceed word_count | "
+
+        if error_msg:
+            raise ValueError(f"logical consistency error(s): {error_msg.rstrip(' | ')}")
+
+        # Token count should have reasonable ratio to word count (0.5x to 1.5x)
+        if self.word_count > 0:  # Avoid division by zero
+            token_word_ratio = self.token_count / self.word_count
+            if token_word_ratio > UNREALISTIC_TOKEN_WORD_RATIO:
+                raise ValueError("token_count to word_count ratio is unrealistic (logical consistency error)")
+        
+        # Chunk position should not exceed total chunks
+        if self.chunk_position_in_doc > self.total_chunks_on_page:
+            raise ValueError("chunk_position_in_doc cannot exceed total_chunks_on_page")
+        
+        # Zero character count should imply zero word and sentence counts
+        if self.character_count == 0:
+            if self.word_count != 0:
+                raise ValueError("Zero character_count must imply zero word_count (logical consistency error)")
+            if self.sentence_count != 0:
+                raise ValueError("Zero character_count must imply zero sentence_count (logical consistency error)")
+        
+        # Zero word count should imply zero sentence count
+        if (
+            (self.word_count == 0 and self.sentence_count != 0) or
+            (self.sentence_count == 0 and self.word_count != 0)
+        ):
+            raise ValueError("Zero word_count must imply zero sentence_count (logical consistency error)")
+        
+        # Semantic type and is_header flag consistency
+        if self.semantic_type.lower() == 'header' and not self.is_header:
+            raise ValueError("semantic_type 'header' must have is_header flag set to True (semantic consistency error)")
+        
+        # Validate timestamp consistency (within 1 second tolerance)
+        created_dt = datetime.fromisoformat(self.validate_iso_format(self.created_at))
+        created_timestamp = created_dt.timestamp()
+        if abs(self.creation_timestamp - created_timestamp) > 1.0:
+            raise ValueError(f"creation_timestamp '{self.creation_timestamp}' and created_at '{created_timestamp}' must represent the same time (timestamp consistency error)")
+
+        # Extraction method and processing method consistency
+        if self.extraction_method != self.processing_method:
+            raise ValueError("extraction_method must be compatible with processing_method (method consistency error)")
+
+        return self
+
+    def __str__(self) -> str:
+        """String representation with key information, censoring sensitive data."""
+        return (f"LLMChunkMetadata(element_type='{self.element_type}', "
+                f"semantic_type='{self.semantic_type}', "
+                f"source_file='{self.source_file}', "
+                f"character_count={self.character_count}, "
+                f"word_count={self.word_count})")
+
+    def __repr__(self) -> str:
+        """Detailed representation for debugging, censoring sensitive data."""
+        # Get all field values
+        field_values = []
+        for field_name, field_info in self.model_dump().items():
+            value = getattr(self, field_name)
+            # Censor sensitive information
+            field_values.append(f"{field_name}={repr(value)}")
+        
+        return f"LLMChunkMetadata({', '.join(field_values)})"
+
+    def __hash__(self) -> int:
+        """Hash implementation for use in sets and as dict keys."""
+        # Create a tuple of all field values for hashing
+        values = []
+        for val in self.model_dump().values():
+            if isinstance(val, dict):
+                # Convert dicts to sorted tuples for consistent hashing
+                val = tuple(sorted(val.items()))
+            values.append(val)
+        return hash(tuple(values))
+
+    def __eq__(self, other: Any) -> bool:
+        """Equality comparison."""
+        if not isinstance(other, LLMChunkMetadata):
+            return False
+        return all(getattr(self, field) == getattr(other, field) 
+                  for field in self.model_dump().keys())
+
+    def __ne__(self, other: Any) -> bool:
+        """Inequality comparison."""
+        return not self.__eq__(other)
 
 
 

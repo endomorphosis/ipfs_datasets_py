@@ -8,7 +8,7 @@ import pytest
 import os
 
 from tests._test_utils import (
-    raise_on_bad_callable_metadata,
+    has_good_callable_metadata,
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
@@ -62,7 +62,7 @@ class TestQualityOfObjectsInModule:
         """
         tree = get_ast_tree(file_path)
         try:
-            raise_on_bad_callable_metadata(tree)
+            has_good_callable_metadata(tree)
         except (BadDocumentationError, BadSignatureError) as e:
             pytest.fail(f"Code metadata quality check failed: {e}")
 
