@@ -36,6 +36,13 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -84,20 +91,7 @@ class TestLLMDocumentEntityManagement:
             - 'type' key with string value
             - 'confidence' key with float value
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="John Doe works at OpenAI in San Francisco on January 1st, 2024",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=15,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92},
@@ -105,13 +99,10 @@ class TestLLMDocumentEntityManagement:
             {"type": "DATE", "value": "January 1st, 2024", "confidence": 0.85}
         ]
         
-        document = LLMDocument(
-            document_id="doc_001",
+        document = LLMDocumentTestDataFactory.create_document_instance(
             title="Entity Structure Test",
-            chunks=[sample_chunk],
             summary="Document for testing entity structure",
-            key_entities=key_entities,
-            processing_metadata={}
+            key_entities=key_entities
         )
         
         # When/Then - validate structure of each entity
@@ -145,15 +136,11 @@ class TestLLMDocumentEntityManagement:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # Given
-        sample_chunk = LLMChunk(
+        sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content with entities",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         initial_entities = [
@@ -209,15 +196,11 @@ class TestLLMDocumentEntityManagement:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # Given
-        sample_chunk = LLMChunk(
+        sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Dr. Jane Smith from Microsoft visited New York on December 25, 2023, and sent email to contact@example.com",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["text"],
-            token_count=20,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=20
         )
         
         diverse_entities = [
@@ -277,15 +260,11 @@ class TestLLMDocumentEntityManagement:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # Given
-        sample_chunk = LLMChunk(
+        sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content with various confidence entities",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         entities_with_varying_confidence = [

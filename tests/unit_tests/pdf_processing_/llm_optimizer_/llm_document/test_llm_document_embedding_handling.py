@@ -2,15 +2,12 @@
 # -*- coding: utf-8 -*-
 # File Path: ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py
 # Auto-generated on 2025-07-07 02:28:56"
-
-from datetime import datetime
-import pytest
 import os
 
-import os
+
 import pytest
-import time
 import numpy as np
+
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -36,23 +33,27 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
-assert LLMOptimizer._initialize_models
-assert LLMOptimizer.optimize_for_llm
-assert LLMOptimizer._extract_structured_text
-assert LLMOptimizer._generate_document_summary
-assert LLMOptimizer._create_optimal_chunks
-assert LLMOptimizer._create_chunk
-assert LLMOptimizer._establish_chunk_relationships
-assert LLMOptimizer._generate_embeddings
-assert LLMOptimizer._extract_key_entities
-assert LLMOptimizer._generate_document_embedding
-assert LLMOptimizer._count_tokens
-assert LLMOptimizer._get_chunk_overlap
-assert TextProcessor.split_sentences
-assert TextProcessor.extract_keywords
-assert ChunkOptimizer.optimize_chunk_boundaries
+assert LLMOptimizer._initialize_models, "LLMOptimizer._initialize_models method should be accessible"
+assert LLMOptimizer.optimize_for_llm, "LLMOptimizer.optimize_for_llm method should be accessible"
+assert LLMOptimizer._extract_structured_text, "LLMOptimizer._extract_structured_text method should be accessible"
+assert LLMOptimizer._generate_document_summary, "LLMOptimizer._generate_document_summary method should be accessible"
+assert LLMOptimizer._create_optimal_chunks, "LLMOptimizer._create_optimal_chunks method should be accessible"
+assert LLMOptimizer._create_chunk, "LLMOptimizer._create_chunk method should be accessible"
+assert LLMOptimizer._establish_chunk_relationships, "LLMOptimizer._establish_chunk_relationships method should be accessible"
+assert LLMOptimizer._generate_embeddings, "LLMOptimizer._generate_embeddings method should be accessible"
+assert LLMOptimizer._extract_key_entities, "LLMOptimizer._extract_key_entities method should be accessible"
+assert LLMOptimizer._generate_document_embedding, "LLMOptimizer._generate_document_embedding method should be accessible"
+assert LLMOptimizer._count_tokens, "LLMOptimizer._count_tokens method should be accessible"
+assert LLMOptimizer._get_chunk_overlap, "LLMOptimizer._get_chunk_overlap method should be accessible"
+assert TextProcessor.split_sentences, "TextProcessor.split_sentences method should be accessible"
+assert TextProcessor.extract_keywords, "TextProcessor.extract_keywords method should be accessible"
+assert ChunkOptimizer.optimize_chunk_boundaries, "ChunkOptimizer.optimize_chunk_boundaries method should be accessible"
 
 
 # 4. Check if the modules's imports are accessible:
@@ -71,363 +72,518 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
+@pytest.mark.parametrize("shape", [
+    (5,),           # 1D vector
+    (10,),          # Different 1D size
+    (3, 4),         # 2D matrix
+    (2, 3, 4),      # 3D tensor
+    (1, 384),       # Common embedding dimension
+    (768,),         # Another common embedding size
+])
+class TestLLMDocumentEmbeddingShapePreservation:
 
-class TestLLMDocumentEmbeddingHandling:
-    """Test LLMDocument document-level embedding handling."""
-
-    def test_document_embedding_shape_preservation(self):
+    def test_document_embedding_shape_preservation(self, shape):
         """
         GIVEN numpy array with specific shape as document_embedding
         WHEN LLMDocument is instantiated and accessed
         THEN expect original array shape preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        import numpy as np
-        
-        # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+        # Create array with specific shape
+        original_array = np.random.rand(*shape).astype(np.float32)
+        document = LLMDocumentTestDataFactory.create_document_instance(
+            document_embedding=original_array
         )
-        
-        # Test different shapes
-        shapes_to_test = [
-            (5,),           # 1D vector
-            (10,),          # Different 1D size
-            (3, 4),         # 2D matrix
-            (2, 3, 4),      # 3D tensor
-            (1, 384),       # Common embedding dimension
-            (768,),         # Another common embedding size
-        ]
-        
-        for shape in shapes_to_test:
-            # Create array with specific shape
-            original_array = np.random.rand(*shape).astype(np.float32)
-            
-            document = LLMDocument(
-                document_id=f"doc_{len(shape)}d",
-                title="Shape Preservation Test",
-                chunks=[sample_chunk],
-                summary="Testing shape preservation",
-                key_entities=[],
-                processing_metadata={},
-                document_embedding=original_array
-            )
-            
-            # When/Then - verify shape preservation
-            assert document.document_embedding.shape == shape, f"Shape {shape} not preserved, got {document.document_embedding.shape}"
-            assert document.document_embedding.shape == original_array.shape, "Shape should match original array"
-            
-            # Verify it's the same array (reference check)
-            assert np.array_equal(document.document_embedding, original_array), f"Array values changed for shape {shape}"
-            
-        # Test edge case: empty array
-        empty_array = np.array([], dtype=np.float32)
-        document_empty = LLMDocument(
-            document_id="doc_empty",
-            title="Empty Array Test",
-            chunks=[sample_chunk],
-            summary="Testing empty array",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=empty_array
-        )
-        
-        assert document_empty.document_embedding.shape == (0,), "Empty array shape should be preserved"
-        assert document_empty.document_embedding.size == 0, "Empty array should have size 0"
+        # When/Then - verify shape preservation
+        assert document.document_embedding.shape == shape, f"Shape {shape} not preserved, got {document.document_embedding.shape}"
 
-    def test_document_embedding_dtype_preservation(self):
+    def test_document_embedding_shape_matches_original(self, shape):
         """
-        GIVEN numpy array with specific dtype as document_embedding
+        GIVEN numpy array with specific shape as document_embedding
         WHEN LLMDocument is instantiated and accessed
-        THEN expect original array dtype preserved
+        THEN expect shape matches original array shape
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        import numpy as np
-        
-        # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+        # Create array with specific shape
+        original_array = np.random.rand(*shape).astype(np.float32)
+        document = LLMDocumentTestDataFactory.create_document_instance(
+            document_embedding=original_array
         )
-        
-        # Test different dtypes
-        dtypes_to_test = [
-            np.float32,
-            np.float64,
-            np.int32,
-            np.int64,
-            np.float16,
-        ]
-        
-        test_data = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
-        for dtype in dtypes_to_test:
-            # Create array with specific dtype
-            original_array = np.array(test_data, dtype=dtype)
-            
-            document = LLMDocument(
-                document_id=f"doc_{dtype.__name__}",
-                title="Dtype Preservation Test",
-                chunks=[sample_chunk],
-                summary="Testing dtype preservation",
-                key_entities=[],
-                processing_metadata={},
-                document_embedding=original_array
-            )
-            
-            # When/Then - verify dtype preservation
-            assert document.document_embedding.dtype == dtype, f"Dtype {dtype} not preserved, got {document.document_embedding.dtype}"
-            assert document.document_embedding.dtype == original_array.dtype, "Dtype should match original array"
-            
-            # Verify values are preserved (within dtype precision)
-            if dtype in [np.float16, np.float32, np.float64]:
-                assert np.allclose(document.document_embedding, original_array, rtol=1e-6), f"Float values changed for dtype {dtype}"
-            else:
-                assert np.array_equal(document.document_embedding, original_array), f"Integer values changed for dtype {dtype}"
-        
-        # Test with boolean dtype
-        bool_array = np.array([True, False, True, False], dtype=np.bool_)
-        document_bool = LLMDocument(
-            document_id="doc_bool",
-            title="Boolean Dtype Test",
-            chunks=[sample_chunk],
-            summary="Testing boolean dtype",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=bool_array
-        )
-        
-        assert document_bool.document_embedding.dtype == np.bool_, "Boolean dtype should be preserved"
-        assert np.array_equal(document_bool.document_embedding, bool_array), "Boolean values should be preserved"
+        # When/Then - verify shape matches original
+        assert document.document_embedding.shape == original_array.shape, "Shape should match original array"
 
-    def test_document_embedding_data_integrity(self):
+    def test_document_embedding_values_unchanged(self, shape):
+        """
+        GIVEN numpy array with specific shape as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect array values remain unchanged
+        """
+        # Create array with specific shape
+        original_array = np.random.rand(*shape).astype(np.float32)
+        document = LLMDocumentTestDataFactory.create_document_instance(
+            document_embedding=original_array
+        )
+        # When/Then - verify values unchanged
+        assert np.array_equal(document.document_embedding, original_array), f"Array values changed for shape {shape}"
+
+
+class TestLLMDocumentEmbeddingHandling:
+    """Test LLMDocument document-level embedding handling."""
+
+    def test_document_embedding_empty_array_shape_preservation(self):
+        """
+        GIVEN numpy array with empty shape as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect empty array shape preserved
+        """
+        empty_array = np.array([], dtype=np.float32)
+        document_empty = LLMDocumentTestDataFactory.create_document_instance(document_embedding=empty_array)
+
+        assert document_empty.document_embedding.shape == (0,), f"Empty array shape (0,) should be preserved, got {document_empty.document_embedding.shape}"
+
+    def test_document_embedding_empty_array_size_preservation(self):
+        """
+        GIVEN numpy array with empty shape as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect empty array size preserved
+        """
+        empty_array = np.array([], dtype=np.float32)
+        document_empty = LLMDocumentTestDataFactory.create_document_instance(document_embedding=empty_array)
+
+        assert document_empty.document_embedding.size == 0, f"Empty array should have size 0, got {document_empty.document_embedding.size}"
+
+    @pytest.mark.parametrize("dtype", [
+        np.float32,     # Common embedding dtype
+        np.float64,     # Higher precision float
+        np.float16,     # Lower precision float
+        np.int32,       # 32-bit integer
+        np.int64,       # 64-bit integer
+        np.bool_,       # Boolean dtype
+    ])
+    def test_document_embedding_dtype_preservation(self, dtype):
+        """
+        GIVEN numpy array with arbitrary dtype as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect dtype to be preserved
+        """
+        test_data = [0.1, 0.2, 0.3, 0.4, 0.5]
+        original_array = np.array(test_data, dtype=dtype)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=original_array)
+        
+        assert document.document_embedding.dtype == dtype, f"Dtype '{dtype}' should be preserved, got {document.document_embedding.dtype}"
+
+    @pytest.mark.parametrize("dtype,rtol", [
+        (np.float32, 1e-6),     # Common embedding dtype
+        (np.float64, 1e-15),    # Higher precision float
+        (np.float16, 1e-3),     # Lower precision float
+    ])
+    def test_document_embedding_float_values_preserved(self, dtype, rtol):
+        """
+        GIVEN numpy array with float32 values as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect float32 values preserved within precision
+        """
+        test_data = [0.1, 0.2, 0.3, 0.4, 0.5]
+        original_array = np.array(test_data, dtype=dtype)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=original_array)
+        
+        assert np.allclose(document.document_embedding, original_array, rtol=rtol), f"'{dtype}' values not preserved within tolerance '{rtol}', got '{document.document_embedding}' compared to '{original_array}'"
+
+    @pytest.mark.parametrize("dtype", [
+        np.int32,       # 32-bit integer
+        np.int64,       # 64-bit integer
+    ])
+    def test_document_embedding_int_values_preserved(self, dtype):
+        """
+        GIVEN numpy array with int32 values as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect int32 values preserved exactly
+        """
+        test_data = [1, 2, 3, 4, 5]
+        original_array = np.array(test_data, dtype=dtype)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=original_array)
+        
+        assert np.array_equal(document.document_embedding, original_array), f"'{dtype}' values not preserved, got '{document.document_embedding}' compared to '{original_array}'"
+
+    def test_document_embedding_bool_values_preserved(self):
+        """
+        GIVEN numpy array with bool values as document_embedding
+        WHEN LLMDocument is instantiated and accessed
+        THEN expect bool values preserved exactly
+        """
+        test_data = [True, False, True, False]
+        bool_array = np.array(test_data, dtype=np.bool_)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=bool_array)
+
+        assert np.array_equal(document.document_embedding, bool_array), f"'bool_' values not preserved, got '{document.document_embedding}' compared to '{bool_array}'"
+
+    @pytest.mark.parametrize("test_array", [
+        np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32),
+        np.array([1e-8, 2e-8, 3e-8], dtype=np.float64),
+        np.array([1e8, 2e8, 3e8], dtype=np.float64),
+        np.array([-1.5, 0.0, 1.5, -2.5, 2.5], dtype=np.float32),
+        np.array([0.123456789, 0.987654321, 0.555555555], dtype=np.float64),
+        np.array([10, 20, 30, 40, 50], dtype=np.int32),
+    ])
+    def test_document_embedding_values_preserved(self, test_array):
         """
         GIVEN numpy array with specific values as document_embedding
         WHEN LLMDocument is instantiated and accessed
-        THEN expect document stores a copy and preserves original values
+        THEN expect values are preserved exactly
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        import numpy as np
+        expected_values = test_array.copy()
         
-        # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
         
-        # Test with specific values that could be subject to precision issues
-        test_cases = [
-            # Basic values
-            np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32),
-            # Very small values
-            np.array([1e-8, 2e-8, 3e-8], dtype=np.float64),
-            # Very large values
-            np.array([1e8, 2e8, 3e8], dtype=np.float64),
-            # Mixed positive/negative
-            np.array([-1.5, 0.0, 1.5, -2.5, 2.5], dtype=np.float32),
-            # High precision values
-            np.array([0.123456789, 0.987654321, 0.555555555], dtype=np.float64),
-            # Integer values
-            np.array([10, 20, 30, 40, 50], dtype=np.int32),
-        ]
-        
-        for i, original_array in enumerate(test_cases):
-            # Create a copy to verify original values
-            original_array: np.ndarray
-            expected_values = original_array.copy()
-            
-            # When
-            document = LLMDocument(
-                document_id=f"doc_integrity_{i}",
-                title="Data Integrity Test",
-                chunks=[sample_chunk],
-                summary="Testing data integrity",
-                key_entities=[],
-                processing_metadata={},
-                document_embedding=original_array
-            )
-            
-            # Then - verify values are preserved exactly
-            assert np.array_equal(document.document_embedding, expected_values), f"Values not preserved for test case {i}"
-            assert document.document_embedding.dtype == original_array.dtype, f"Dtype not preserved for test case {i}"
-            
-            # Verify precision for floating point arrays
-            if original_array.dtype in [np.float32, np.float64]:
-                assert np.allclose(document.document_embedding, expected_values, rtol=1e-15, atol=1e-15), f"Float precision lost for test case {i}"
-            
-            # Test that document stores a copy, not a reference
-            # Modify the original array after document creation
-            if original_array.size > 0:
-                if original_array.dtype in [np.float32, np.float64]:
-                    original_array[0] = 999.999
-                else:
-                    original_array[0] = 999
-                
-                # Document embedding should still match expected values (proving it's a copy)
-                assert np.array_equal(document.document_embedding, expected_values), f"Document not storing copy for test case {i}"
-                assert document.document_embedding[0] != 999, f"Document storing reference instead of copy for test case {i}"
-        
-        # Test with array containing NaN and inf
-        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
-        document_special = LLMDocument(
-            document_id="doc_special",
-            title="Special Values Test",
-            chunks=[sample_chunk],
-            summary="Testing special values",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=special_values
-        )
-        
-        # Then - verify special values are preserved
-        result_array = document_special.document_embedding
-        assert np.isnan(result_array[0]), "NaN value should be preserved"
-        assert np.isinf(result_array[1]) and result_array[1] > 0, "Positive infinity should be preserved"
-        assert np.isinf(result_array[2]) and result_array[2] < 0, "Negative infinity should be preserved"
-        assert result_array[3] == 0.0, "Zero should be preserved"
-        assert result_array[4] == 1.0, "One should be preserved"
+        assert np.array_equal(document.document_embedding, expected_values), "Document embedding values should match expected values"
 
-    def test_document_embedding_memory_sharing(self):
+    @pytest.mark.parametrize("test_array", [
+        np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32),
+        np.array([1e-8, 2e-8, 3e-8], dtype=np.float64),
+        np.array([1e8, 2e8, 3e8], dtype=np.float64),
+        np.array([-1.5, 0.0, 1.5, -2.5, 2.5], dtype=np.float32),
+        np.array([0.123456789, 0.987654321, 0.555555555], dtype=np.float64),
+        np.array([10, 20, 30, 40, 50], dtype=np.int32),
+    ])
+    def test_document_embedding_dtype_preserved_after_instantiation(self, test_array):
+        """
+        GIVEN numpy array with specific dtype as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect dtype is preserved
+        """
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        assert document.document_embedding.dtype == test_array.dtype, f"Document embedding dtype should match test array dtype, expected {test_array.dtype}, got {document.document_embedding.dtype}"
+
+    @pytest.mark.parametrize("test_array,rtol,atol", [
+        (np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32), 1e-6, 1e-6),
+        (np.array([1e-8, 2e-8, 3e-8], dtype=np.float64), 1e-15, 1e-15),
+        (np.array([1e8, 2e8, 3e8], dtype=np.float64), 1e-9, 1e-9),
+        (np.array([-1.5, 0.0, 1.5, -2.5, 2.5], dtype=np.float32), 1e-6, 1e-6),
+        (np.array([0.123456789, 0.987654321, 0.555555555], dtype=np.float64), 1e-15, 1e-15),
+    ])
+    def test_document_embedding_float_precision_preserved(self, test_array, rtol, atol):
+        """
+        GIVEN numpy array with floating point values as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect float precision is preserved within tolerance
+        """
+        expected_values = test_array.copy()
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        assert np.allclose(document.document_embedding, expected_values, rtol=rtol, atol=atol), f"Document embedding values should match expected values within tolerance for {test_array.dtype}"
+
+    @pytest.mark.parametrize("test_array", [
+        np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32),
+        np.array([1e-8, 2e-8, 3e-8], dtype=np.float64),
+        np.array([1e8, 2e8, 3e8], dtype=np.float64),
+        np.array([-1.5, 0.0, 1.5, -2.5, 2.5], dtype=np.float32),
+        np.array([0.123456789, 0.987654321, 0.555555555], dtype=np.float64),
+    ])
+    def test_document_embedding_stores_copy_not_reference_float(self, test_array):
+        """
+        GIVEN numpy float array as document_embedding
+        WHEN original array is modified after document creation
+        THEN expect document embedding remains unchanged (proving it's a copy)
+        """
+        expected_values = test_array.copy()
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        # Modify the original array
+        test_array = 999.999
+        
+        assert np.array_equal(document.document_embedding, expected_values), "Document embedding should remain unchanged when original array is modified (proving it's a copy)"
+
+    @pytest.mark.parametrize("test_array", [
+        np.array([10, 20, 30, 40, 50], dtype=np.int32),
+    ])
+    def test_document_embedding_stores_copy_not_reference_int(self, test_array):
+        """
+        GIVEN numpy integer array as document_embedding
+        WHEN original array is modified after document creation
+        THEN expect document embedding remains unchanged (proving it's a copy)
+        """
+        expected_values = test_array.copy()
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        # Modify the original array
+        test_array = 999
+        
+        assert np.array_equal(document.document_embedding, expected_values), "Document embedding should remain unchanged when original array is modified (proving it's a copy for integer arrays)"
+
+    @pytest.mark.parametrize("test_array,test_id", [
+        (np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32), "basic_values"),
+        (np.array([1e-8, 2e-8, 3e-8], dtype=np.float64), "small_values"),
+        (np.array([1e8, 2e8, 3e8], dtype=np.float64), "large_values"),
+        (np.array([-1.5, 0.0, 1.5, -2.5, 2.5], dtype=np.float32), "mixed_values"),
+        (np.array([0.123456789, 0.987654321, 0.555555555], dtype=np.float64), "high_precision"),
+    ])
+    def test_document_embedding_first_element_unchanged_after_float_modification(self, test_array, test_id):
+        """
+        GIVEN numpy float array as document_embedding
+        WHEN original array's first element is modified after document creation
+        THEN expect document embedding's first element remains unchanged
+        """
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        # Modify the original array
+        modified_number = 999
+        test_array[0] = modified_number
+        
+        assert document.document_embedding[0] != modified_number, f"document_embedding[0] should remain unchanged after input was modified to '{modified_number}', got {document.document_embedding[0]}"
+
+    @pytest.mark.parametrize("test_array,test_id", [
+        np.array([10, 20, 30, 40, 50], dtype=np.int32),
+    ])
+    def test_document_embedding_first_element_unchanged_after_int_modification(self, test_array):
+        """
+        GIVEN numpy integer array as document_embedding
+        WHEN original array's first element is modified after document creation
+        THEN expect document embedding's first element remains unchanged
+        """
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+
+        # Modify the original array
+        modified_number = 999
+        test_array = modified_number
+
+        assert document.document_embedding[0] != modified_number, f"document_embedding[0] should remain unchanged after input was modified to '{modified_number}', got {document.document_embedding[0]}"
+
+    def test_document_embedding_nan_value_preserved(self):
+        """
+        GIVEN numpy array containing NaN as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect NaN value is preserved
+        """
+        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+        
+        assert np.isnan(document.document_embedding[0]) == True, f"NaN value should be preserved in document embedding, got {document.document_embedding[0]}"
+
+    def test_document_embedding_positive_infinity_preserved(self):
+        """
+        GIVEN numpy array containing positive infinity as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect positive infinity value is preserved
+        """
+        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+
+        assert np.isinf(document.document_embedding[1]) == True, f"Positive infinity value should be preserved in document embedding, got {document.document_embedding[1]}"
+
+    def test_document_embedding_positive_value_preserved(self):
+        """
+        GIVEN numpy array containing positive value as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect positive value is preserved
+        """
+        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+
+        assert document.document_embedding[1] > 0, f"Positive value should be preserved in document embedding, got {document.document_embedding[1]}"
+
+    def test_document_embedding_negative_infinity_preserved(self):
+        """
+        GIVEN numpy array containing negative infinity as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect negative infinity value is preserved
+        """
+        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+
+        assert np.isinf(document.document_embedding[2]) == True, f"Negative infinity value should be preserved in document embedding, got {document.document_embedding[2]}"
+
+    def test_document_embedding_negative_value_preserved(self):
+        """
+        GIVEN numpy array containing negative value as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect negative value is preserved
+        """
+        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+
+        assert document.document_embedding[2] < 0, f"Negative value should be preserved in document embedding, got {document.document_embedding[2]}"
+
+    def test_document_embedding_zero_value_preserved(self):
+        """
+        GIVEN numpy array containing zero as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect zero value is preserved
+        """
+        test_value = 0.0
+        array = [np.nan, np.inf, -np.inf, 0.0, 1.0]
+        special_values = np.array(array, dtype=np.float64)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+
+        assert document.document_embedding[3] == test_value, f"Zero value should be preserved in document embedding, got {document.document_embedding[3]}"
+
+    def test_document_embedding_one_value_preserved(self):
+        """
+        GIVEN numpy array containing one as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect one value is preserved
+        """
+        special_values = np.array([np.nan, np.inf, -np.inf, 0.0, 1.0], dtype=np.float64)
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=special_values)
+
+        assert document.document_embedding[4] == 1.0, f"One value should be preserved in document embedding, got {document.document_embedding[4]}"
+
+    def test_document_embedding_memory_sharing_basic_setup(self):
         """
         GIVEN numpy array as document_embedding
         WHEN LLMDocument is instantiated
-        THEN expect:
-            - Memory sharing behavior documented
-            - No unexpected array copying
+        THEN expect basic memory sharing analysis can be performed
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        import numpy as np
-        
-        # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
-        # Test memory sharing behavior
         original_array = np.array([0.1, 0.2, 0.3, 0.4, 0.5], dtype=np.float32)
-        original_id = id(original_array)
-        original_data_ptr = original_array.__array_interface__['data'][0]
         
-        document = LLMDocument(
-            document_id="doc_memory",
-            title="Memory Sharing Test",
-            chunks=[sample_chunk],
-            summary="Testing memory sharing",
-            key_entities=[],
-            processing_metadata={},
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_embedding=original_array
         )
         
-        # When/Then - analyze memory sharing behavior
-        document_array = document.document_embedding
-        document_id = id(document_array)
-        document_data_ptr = document_array.__array_interface__['data'][0]
+        assert document.document_embedding is not None, "Document embedding should not be None for basic memory sharing analysis"
+
+    def test_document_embedding_memory_independence_verification(self):
+        """
+        GIVEN numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect memory is not shared between original and document arrays
+        """
+        original_array = np.array([0.1, 0.2, 0.3, 0.4, 0.5], dtype=np.float32)
         
-        # Test whether arrays share memory
-        memory_shared = (original_data_ptr == document_data_ptr)
-        reference_shared = (original_id == document_id)
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=original_array)
         
-        if memory_shared:
-            # If memory is shared, modifications should be visible in both
-            print("Memory is shared between original and document embedding")
-            original_value = original_array[0]
-            document_array[0] = 999.0
-            assert original_array[0] == 999.0, "Modification should be visible in original array when memory is shared"
-            # Restore original value
-            document_array[0] = original_value
-        else:
-            # If memory is not shared, arrays should be independent
-            print("Memory is not shared - arrays are independent")
-            original_value = original_array[0]
-            document_array[0] = 999.0
-            assert original_array[0] == original_value, "Original array should not be modified when memory is not shared"
+        # Check if memory is *not* shared
+        original_data_ptr = original_array.__array_interface__['data'][0]
+        document_data_ptr = document.document_embedding.__array_interface__['data'][0]
+        assert original_data_ptr != document_data_ptr, f"Memory should not be shared, but got {original_data_ptr} == {document_data_ptr}"
+
+    def test_document_embedding_original_array_unchanged_after_modification(self):
+        """
+        GIVEN numpy array as document_embedding
+        WHEN document embedding is modified after instantiation
+        THEN expect original array remains unchanged
+        """
+        original_array = np.array([0.1, 0.2, 0.3, 0.4, 0.5], dtype=np.float32)
+        original_value = original_array[0]
         
-        # Test with different array configurations
-        test_arrays = [
-            # Different shapes and sizes
-            np.array([1.0], dtype=np.float32),  # Single element
-            np.ones((100,), dtype=np.float32),   # Larger array
-            np.eye(3, dtype=np.float64),         # 2D array
-            np.zeros((2, 3, 4), dtype=np.float32),  # 3D array
-        ]
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=original_array)
         
-        for i, test_array in enumerate(test_arrays):
-            doc_test = LLMDocument(
-                document_id=f"doc_mem_{i}",
-                title="Memory Test",
-                chunks=[sample_chunk],
-                summary="Testing memory behavior",
-                key_entities=[],
-                processing_metadata={},
-                document_embedding=test_array
-            )
-            
-            # Verify the document has a valid embedding
-            assert doc_test.document_embedding is not None, f"Document embedding should not be None for test {i}"
-            assert isinstance(doc_test.document_embedding, np.ndarray), f"Document embedding should be numpy array for test {i}"
-            assert doc_test.document_embedding.shape == test_array.shape, f"Shape should be preserved for test {i}"
-            
-        # Test memory behavior with array views
+        # Modify document embedding
+        document.document_embedding[0] = 999.0
+        
+        # Verify original array is unchanged
+        assert original_array[0] == original_value, f"Original array should remain unchanged, expected {original_value}, got {original_array[0]}"
+
+    def test_document_embedding_single_element_array_handling(self):
+        """
+        GIVEN single element numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect valid embedding with correct shape
+        """
+        test_array = np.array([1.0], dtype=np.float32)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        assert document.document_embedding.shape == test_array.shape, f"Document embedding shape should match test array shape, expected {test_array.shape}, got {document.document_embedding.shape}"
+
+    def test_document_embedding_large_array_handling(self):
+        """
+        GIVEN large numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect valid embedding is not None
+        """
+        test_array = np.ones((100,), dtype=np.float32)
+
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        assert document.document_embedding is not None, "Document embedding should not be None for large arrays"
+
+    def test_document_embedding_2d_array_handling(self):
+        """
+        GIVEN 2D numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect array is numpy ndarray type
+        """
+        test_array = np.eye(3, dtype=np.float64)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        assert isinstance(document.document_embedding, np.ndarray), f"Document embedding should be numpy ndarray type, got {type(document.document_embedding)}"
+
+    def test_document_embedding_3d_array_shape_preservation(self):
+        """
+        GIVEN 3D numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect shape is preserved
+        """
+        test_array = np.zeros((2, 3, 4), dtype=np.float32)
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=test_array)
+        
+        assert document.document_embedding.shape == test_array.shape, f"Document embedding shape should be preserved for 3D arrays, expected {test_array.shape}, got {document.document_embedding.shape}"
+
+    def test_document_embedding_array_view_shape_preservation(self):
+        """
+        GIVEN numpy array view as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect view shape is preserved
+        """
         base_array = np.arange(20, dtype=np.float32)
-        view_array = base_array[5:15]  # Create a view
+        view_array = base_array[5:15]
         
-        document_view = LLMDocument(
-            document_id="doc_view",
-            title="View Test",
-            chunks=[sample_chunk],
-            summary="Testing array view behavior",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=view_array
-        )
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=view_array)
         
-        # Verify view properties are handled correctly
-        assert document_view.document_embedding.shape == view_array.shape, "View shape should be preserved"
-        assert np.array_equal(document_view.document_embedding, view_array), "View data should be preserved"
+        assert document.document_embedding.shape == view_array.shape, f"Document embedding shape should be preserved for array views, expected {view_array.shape}, got {document.document_embedding.shape}"
+
+    def test_document_embedding_array_view_data_preservation(self):
+        """
+        GIVEN numpy array view as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect view data is preserved
+        """
+        base_array = np.arange(20, dtype=np.float32)
+        view_array = base_array[5:15]
         
-        # Test with read-only array
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=view_array)
+        
+        assert np.array_equal(document.document_embedding, view_array), f"Document embedding data should be preserved for array views, expected {view_array}, got {document.document_embedding}"
+
+    def test_document_embedding_readonly_array_not_none(self):
+        """
+        GIVEN read-only numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect embedding is not None
+        """
         readonly_array = np.array([1.0, 2.0, 3.0], dtype=np.float32)
         readonly_array.flags.writeable = False
         
-        document_readonly = LLMDocument(
-            document_id="doc_readonly",
-            title="Read-only Test",
-            chunks=[sample_chunk],
-            summary="Testing read-only array",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=readonly_array
-        )
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=readonly_array)
         
-        assert document_readonly.document_embedding is not None, "Read-only array should be handled"
-        assert np.array_equal(document_readonly.document_embedding, readonly_array), "Read-only array data should be preserved"
+        assert document.document_embedding is not None, "Document embedding should not be None for read-only arrays"
 
+    def test_document_embedding_readonly_array_data_preservation(self):
+        """
+        GIVEN read-only numpy array as document_embedding
+        WHEN LLMDocument is instantiated
+        THEN expect array data is preserved
+        """
+        readonly_array = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        readonly_array.flags.writeable = False
+        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=readonly_array)
+        
+        assert np.array_equal(document.document_embedding, readonly_array), f"Document embedding data should be preserved for read-only arrays, expected {readonly_array}, got {document.document_embedding}"
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

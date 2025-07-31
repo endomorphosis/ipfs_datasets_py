@@ -607,7 +607,7 @@ class BatchProcessor:
             failed_jobs=0,
             pending_jobs=len(pdf_paths),
             processing_jobs=0,
-            start_time=datetime.utcnow().isoformat()
+            start_time=datetime.now().isoformat()
         )
         self.active_batches[batch_id] = batch_status
         

@@ -14,7 +14,7 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
     LLMChunkMetadataTestDataFactory as DataFactory
 )
-from .llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg
 
 class TestLLMChunkMetadataTimestampValidation:
     """Test suite for timestamp field validation."""

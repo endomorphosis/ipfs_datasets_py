@@ -36,6 +36,13 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -84,26 +91,18 @@ class TestLLMDocumentDataclassMethods:
         import numpy as np
         
         # Given - create identical chunks
-        chunk1 = LLMChunk(
+        chunk1 = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
-        chunk2 = LLMChunk(
+        chunk2 = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         # Create identical key entities
@@ -176,15 +175,11 @@ class TestLLMDocumentDataclassMethods:
         import numpy as np
         
         # Given - create base document
-        base_chunk = LLMChunk(
+        base_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test chunk content",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         base_document = LLMDocument(
@@ -295,25 +290,17 @@ class TestLLMDocumentDataclassMethods:
         
         # Given
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=10,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                token_count=10
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=12,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
-                metadata={}
+                token_count=12
             )
         ]
         
@@ -395,25 +382,17 @@ class TestLLMDocumentDataclassMethods:
         
         # Given
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk content for testing repr",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=15,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={"test_meta": "value"}
+                token_count=15
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk with relationships",
                 chunk_id="chunk_0002",
                 source_page=2,
-                source_elements=["table"],
-                token_count=20,
-                semantic_types={"table"},
-                relationships=["chunk_0001"],
-                metadata={}
+                token_count=20
             )
         ]
         

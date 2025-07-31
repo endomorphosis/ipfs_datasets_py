@@ -178,22 +178,19 @@ LLMChunkMetadata model for structured metadata container for LLM chunk creation 
 This module provides a Pydantic model that captures essential metadata about chunk creation
 including source provenance, content metrics, processing details, and semantic classification.
 """
-
+from datetime import datetime
+import hashlib
 import json
 import math
+import re
 import time
-from datetime import datetime
-from typing import Literal, Any, Dict
+from typing import Any
+
+
 from pydantic import (
     BaseModel, Field, field_validator, model_validator, NonNegativeFloat, NonNegativeInt, PositiveInt
 )
 
-
-
-
-
-
-import re
 
 # ISO 8601 datetime regex pattern
 ISO_DATETIME_PATTERN = r'^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
@@ -204,71 +201,7 @@ ISO_DATETIME_REGEX = re.compile(ISO_DATETIME_PATTERN)
 UNREALISTIC_TOKEN_WORD_RATIO = 10.0
 
 
-def validate_iso_datetime(datetime_string: str) -> bool:
-    """
-    Validate if a string matches ISO 8601 datetime format.
-    
-    Args:
-        datetime_string: String to validate
-        
-    Returns:
-        bool: True if string matches ISO 8601 format, False otherwise
-        
-    Examples:
-        >>> validate_iso_datetime("2025-01-15T10:30:45")
-        True
-        >>> validate_iso_datetime("2025-01-15T10:30:45Z")
-        True
-        >>> validate_iso_datetime("2025-01-15T10:30:45+00:00")
-        True
-        >>> validate_iso_datetime("2025-01-15T10:30:45.123Z")
-        True
-        >>> validate_iso_datetime("not-a-date")
-        False
-    """
-    if not datetime_string:
-        return False
-    return bool(ISO_DATETIME_REGEX.match(datetime_string))
 
-def is_valid_iso_datetime(datetime_string: str) -> bool:
-    """Alternative function name for clarity."""
-    return validate_iso_datetime(datetime_string)
-
-# Test examples
-if __name__ == "__main__":
-    test_cases = [
-        # Valid cases
-        "2025-01-15T10:30:45",
-        "2025-01-15T10:30:45Z",
-        "2025-01-15T10:30:45+00:00",
-        "2025-01-15T10:30:45.123Z",
-        "2025-01-15T10:30:45.123456+05:30",
-        "2025-01-15",
-        "2025-W03",
-        "2025-W03-1",
-        "2025-015",
-        "+2025-01-15T10:30:45Z",
-        "-0001-01-01T00:00:00Z",
-        
-        # Invalid cases
-        "not-a-date",
-        "2025/01/15 10:30:45",
-        "2025-13-01T10:30:45",
-        "2025-01-32T10:30:45",
-        "2025-01-15T25:00:00",
-        "2025-01-15T10:60:45",
-        "",
-        "2025",
-        "10:30:45"
-    ]
-    
-    print("Testing ISO 8601 datetime validation:")
-    for test_case in test_cases:
-        result = validate_iso_datetime(test_case)
-        print(f"'{test_case}' -> {result}")
-
-
-import hashlib
 
 class LLMChunkMetadata(BaseModel):
     """
@@ -314,133 +247,41 @@ class LLMChunkMetadata(BaseModel):
         total_chunks_on_page: int # Number of chunks on same page, defaults to 1 if unknown
     """
     # Source provenance fields
-    element_type: str = Field(
-        default="text",
-        min_length=1,
-        max_length=100,
-        description="Original PDF element type, defaults to 'text' if unknown"
-    )
+    element_type: str = Field(default="text", min_length=1, max_length=100, description="Original PDF element type")
     element_id: str = Field(
         default_factory=lambda: f"element_{hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]}",
         max_length=255,
         description="Source element identifier, defaults to hash of instance creation time if unknown"
     )
-    section: str = Field(
-        default="unknown",
-        min_length=1,
-        max_length=200,
-        description="Document section name, defaults to 'unknown' if not provided"
-    )
-    confidence: float = Field(
-        default=1.0,
-        ge=0.0,
-        le=1.0,
-        description="Extraction confidence (0.0-1.0), defaults to 1.0 for calculated fields"
-    )
-    source_file: str = Field(
-        default="unknown",
-        min_length=1,
-        max_length=500,
-        description="Source document identifier, defaults to 'unknown' if not provided"
-    )
-    extraction_method: str = Field(
-        default="llm_optimization",
-        min_length=1,
-        max_length=50,
-        description="Extraction method, defaults to 'llm_optimization'"
-    )
+    section: str = Field(default="unknown", min_length=1, max_length=200, description="Document section name")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Extraction confidence (0.0-1.0)")
+    source_file: str = Field(default="unknown", min_length=1, max_length=500, description="Source document identifier")
+    extraction_method: str = Field(default="llm_optimization", min_length=1, max_length=50, description="Extraction method")
 
     # Content metrics fields
-    character_count: NonNegativeInt = Field(
-        ...,
-        ge=0,
-        description="Total character count in content (len(content))"
-    )
-    word_count: NonNegativeInt = Field(
-        ...,
-        ge=0,
-        description="Number of words in content (len(content.split()))"
-    )
-    sentence_count: NonNegativeInt = Field(
-        ...,
-        ge=0,
-        description="Number of sentences detected (count of sentence delimiters)"
-    )
-    token_count: NonNegativeInt = Field(
-        ...,
-        ge=0,
-        description="Actual token count from configured tokenizer"
-    )
+    character_count: NonNegativeInt = Field(ge=0, description="Total character count in content (len(content))")
+    word_count: NonNegativeInt = Field(ge=0, description="Number of words in content (len(content.split()))")
+    sentence_count: NonNegativeInt = Field(ge=0, description="Number of sentences detected (count of sentence delimiters)")
+    token_count: NonNegativeInt = Field(ge=0, description="Actual token count from configured tokenizer")
 
-    # Processing information fields
-    creation_timestamp: NonNegativeFloat = Field(
-        ...,
-        ge=0.0,
-        lt=4102444800.0,  # Jan 1, 2100
-        description="Unix timestamp of chunk creation (time.time())"
-    )
-    created_at: str = Field(
-        ...,
-        min_length=1,
-        description="ISO format creation timestamp (datetime.now().isoformat())"
-    )
-    processing_method: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        description="Processing approach, always 'llm_optimization'"
-    )
-    tokenizer_used: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        description="Tokenizer model identifier from optimizer config"
-    )
-    semantic_type: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        description="Primary semantic classification from source_elements"
-    )
+    # Processing information fields # NOTE lt = Jan 1, 2100
+    creation_timestamp: NonNegativeFloat = Field(ge=0.0, lt=4102444800.0, description="Unix timestamp of chunk creation (time.time())")
+    created_at: str = Field(min_length=1, description="ISO format creation timestamp (datetime.now().isoformat())")
+    processing_method: str = Field(min_length=1, max_length=50, description="Processing approach, always 'llm_optimization'")
+    tokenizer_used: str = Field(min_length=1, max_length=100, description="Tokenizer model identifier from optimizer config")
+    semantic_type: str = Field(min_length=1, max_length=50, description="Primary semantic classification from source_elements")
 
     # Semantic analysis flags
-    has_mixed_elements: bool = Field(
-        ...,
-        description="True if multiple semantic types detected"
-    )
-    contains_table: bool = Field(
-        ...,
-        description="True if table elements present in source_elements"
-    )
-    contains_figure: bool = Field(
-        ...,
-        description="True if figure/caption elements present"
-    )
-    is_header: bool = Field(
-        ...,
-        description="True if primary semantic type is header"
-    )
+    has_mixed_elements: bool = Field(description="True if multiple semantic types detected")
+    contains_table: bool = Field(description="True if table elements present in source_elements")
+    contains_figure: bool = Field(description="True if figure/caption elements present")
+    is_header: bool = Field(description="True if primary semantic type is header")
 
     # Position and structure fields
-    original_position: str = Field(
-        default='{}',
-        description="JSON string of position coordinates, defaults to '{}' if unknown"
-    )
-    chunk_position_in_doc: NonNegativeInt = Field(
-        default=0,
-        ge=0,
-        description="Sequential position of chunk in document, defaults to 0"
-    )
-    page_number: PositiveInt = Field(
-        ...,
-        ge=1,
-        description="Source page number (from method parameter)"
-    )
-    total_chunks_on_page: NonNegativeInt = Field(
-        default=1,
-        ge=0,
-        description="Number of chunks on same page, defaults to 1 if unknown"
-    )
+    original_position: str = Field(default='{}', description="JSON string of position coordinates, defaults to '{}' if unknown")
+    chunk_position_in_doc: NonNegativeInt = Field(default=0, ge=0, description="Sequential position of chunk in document")
+    page_number: PositiveInt = Field(ge=1, description="Source page number (from method parameter)")
+    total_chunks_on_page: NonNegativeInt = Field(default=1, ge=0, description="Number of chunks on same page, defaults to 1 if unknown")
 
     @field_validator('element_type', 'element_id', 'section', 'source_file', 'extraction_method', 
                     'processing_method', 'tokenizer_used', 'semantic_type')
@@ -465,12 +306,10 @@ class LLMChunkMetadata(BaseModel):
         """Validate that creation_timestamp is within reasonable bounds."""
         if v < 0:
             raise ValueError("Creation timestamp must be non-negative")
-
         # Get tomorrow as a reference point
         tomorrow_timestamp = time.time() + 86400  # Current time + 24 hours (86400 seconds)
         if v > tomorrow_timestamp:
             raise ValueError("creation_timestamp cannot be in the future (beyond tomorrow)")
-
         return v
 
     @field_validator('created_at')
@@ -580,7 +419,7 @@ class LLMChunkMetadata(BaseModel):
         return self
 
     def __str__(self) -> str:
-        """String representation with key information, censoring sensitive data."""
+        """String representation with key information"""
         return (f"LLMChunkMetadata(element_type='{self.element_type}', "
                 f"semantic_type='{self.semantic_type}', "
                 f"source_file='{self.source_file}', "
@@ -588,7 +427,7 @@ class LLMChunkMetadata(BaseModel):
                 f"word_count={self.word_count})")
 
     def __repr__(self) -> str:
-        """Detailed representation for debugging, censoring sensitive data."""
+        """Detailed representation for debugging"""
         # Get all field values
         field_values = []
         for field_name, field_info in self.model_dump().items():
@@ -620,6 +459,27 @@ class LLMChunkMetadata(BaseModel):
         """Inequality comparison."""
         return not self.__eq__(other)
 
+from enum import StrEnum
+
+class ValidSemanticType(StrEnum):
+    """
+    Enum representing valid semantic types for LLM chunks.
+    
+    This enum defines the allowed semantic types that can be assigned to an LLMChunk.
+    It is used to ensure that only valid types are set, preventing errors during processing.
+
+    Attributes:
+        TEXT: Regular text
+        TABLE: Structured table data
+        FIGURE_CAPTION: Figure or table caption
+        HEADER: Section or chapter heading
+        MIXED: Multiple content types combined
+    """
+    TEXT = "text"
+    TABLE = "table"
+    FIGURE_CAPTION = "figure_caption"
+    HEADER = "header"
+    MIXED = "mixed"
 
 
 class LLMChunk(BaseModel):
@@ -659,7 +519,7 @@ class LLMChunk(BaseModel):
     source_page: NonNegativeInt
     source_elements: list[str]
     token_count: NonNegativeInt
-    semantic_types: str  # Changed from set to str to match docstring and tests
+    semantic_types: ValidSemanticType
     metadata: LLMChunkMetadata
     relationships: list[str] = Field(default_factory=list)
     embedding: Optional[np.ndarray] = None
@@ -688,6 +548,7 @@ class LLMChunk(BaseModel):
         """
         if not isinstance(other, LLMChunk):
             return False
+
         # Perform the array equality check separately from the rest of the fields.
         if not _numpy_ndarrays_are_equal(self.embedding, other.embedding):
             return False
@@ -716,6 +577,28 @@ class LLMChunk(BaseModel):
             # Remove the embedding field from the string representation
             original_string = re.sub(r'embedding=array\([^)]*\)', 'embedding=<omitted>)', original_string) 
         return original_string
+    
+    @field_validator('semantic_types')
+    def validate_semantic_types(cls, v: str) -> str:
+        """
+        Validate that the semantic_types field contains valid semantic_types.
+
+        This method checks that the semantic_types field is a valid instance of ValidSemanticType.
+        It raises a ValueError if the semantic type is not recognized.
+
+        Raises:
+            ValueError: If the semantic_types field contains an invalid semantic type.
+        """
+        if v == "":
+            raise ValueError("Semantic type cannot be an empty string")
+
+        v = v.lower()
+
+        valid_types = {type.value for type in ValidSemanticType}
+        if v not in valid_types:
+            raise ValueError(f"Invalid semantic type: '{v}'. Must be one of {valid_types}")
+        return v
+
 
     @field_validator('content')
     def validate_content(cls, v) -> str:
@@ -1609,7 +1492,7 @@ class LLMOptimizer:
             and validates content before processing.
         """
         token_count = self._count_tokens(content)
-        
+
         # Determine primary semantic type
         semantic_types = set(source_elements)
         
@@ -1626,7 +1509,7 @@ class LLMOptimizer:
         
         # Convert source elements to semantic types
         mapped_semantic_types = set()
-        for element in source_elements:
+        for element in semantic_types:
             mapped_type = element_to_semantic_map.get(element, 'text')  # Default to 'text'
             mapped_semantic_types.add(mapped_type)
         
@@ -1649,18 +1532,34 @@ class LLMOptimizer:
             raise ValueError(f"Invalid semantic type '{primary_type}' for chunk creation.")
         
         # Format chunk ID appropriately
-        if isinstance(chunk_id, int):
-            formatted_chunk_id = f"chunk_{chunk_id:04d}"
-        else:
-            # If chunk_id is already a string, use it as-is
-            formatted_chunk_id = str(chunk_id)
-        
+        formatted_chunk_id = f"chunk_{chunk_id:04d}" if isinstance(chunk_id, int) else str(chunk_id)
+
+        metadata = LLMChunkMetadata(
+            element_type=primary_type,
+            element_id=chunk_id,
+            character_count=len(content),
+            word_count=len(content.split()),
+            sentence_count=len(content.split('.')),
+            token_count=token_count,
+            creation_timestamp=datetime.now().isoformat(),
+            created_at=datetime.now().isoformat(),
+            processing_method="LLMOptimizer",
+            character_count_with_spaces=len(content.replace(" ", "")),
+            tokenizer_used= self.tokenizer_name,
+            semantic_type=primary_type,
+            has_mixed_elements='mixed' in mapped_semantic_types,
+            contains_table='table' in mapped_semantic_types,
+            contains_figure='figure_caption' in mapped_semantic_types,
+            is_header='header' in mapped_semantic_types,
+        )
+
         chunk = LLMChunk(
             content=content.strip(),
             chunk_id=formatted_chunk_id,
             source_page=page_num,
             source_elements=source_elements,
             token_count=token_count,
+            metadata=metadata,
             semantic_types=primary_type,  # Use the primary_type string
             relationships=[],  # Will be populated later
         )
@@ -1792,7 +1691,7 @@ class LLMOptimizer:
                     
             except Exception as e:
                 logger.error(f"Failed to generate embeddings for batch {i//batch_size + 1}: {e}")
-                # Continue without embeddings for this batch
+                chunk.embedding = None
         
         return chunks
 

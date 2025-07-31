@@ -13,7 +13,7 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
     LLMChunkMetadataTestDataFactory as DataFactory
 )
-from .llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg, field_values_exactly_match_dict_values
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg, field_values_exactly_match_dict_values
 
 class TestLLMChunkMetadataConfidenceValidation:
     """Test suite for confidence field range validation."""

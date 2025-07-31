@@ -9,6 +9,7 @@ import os
 
 import os
 import pytest
+from unittest.mock import MagicMock
 import time
 import numpy as np
 
@@ -33,7 +34,12 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
+    LLMChunkMetadata
+)
+
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
 )
 
 
@@ -78,39 +84,29 @@ except ImportError as e:
 class TestLLMDocumentAttributeAccess:
     """Test LLMDocument attribute access and modification."""
 
+    @pytest.fixture
+    def metadata(self) -> MagicMock:
+        """
+        Fixture to create a mock LLMChunkMetadata instance for testing.
+        
+        Returns:
+            MagicMock: Mocked LLMChunkMetadata instance.
+        """
+        return MagicMock(spec=LLMChunkMetadata)
+
     def test_document_id_attribute_access(self):
         """
         GIVEN LLMDocument instance with document_id
         WHEN document_id attribute is accessed
         THEN expect correct document_id value returned
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
-        document = LLMDocument(
-            document_id="doc_test_123",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
-            processing_metadata={}
+        document = LLMDocumentTestDataFactory.create_document_instance(
+            document_id="doc_test_123"
         )
         
         # When/Then
         assert document.document_id == "doc_test_123"
-        assert isinstance(document.document_id, str)
-        assert hasattr(document, 'document_id')
 
     def test_title_attribute_access(self):
         """
@@ -118,33 +114,14 @@ class TestLLMDocumentAttributeAccess:
         WHEN title attribute is accessed
         THEN expect correct title value returned
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Advanced Document Processing Analysis",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
-            processing_metadata={}
+        document = LLMDocumentTestDataFactory.create_document_instance(
+            title="Advanced Document Processing Analysis"
         )
         
         # When/Then
         assert document.title == "Advanced Document Processing Analysis"
-        assert isinstance(document.title, str)
-        assert hasattr(document, 'title')
+
 
     def test_chunks_attribute_access(self):
         """
@@ -155,49 +132,37 @@ class TestLLMDocumentAttributeAccess:
             - All chunks accessible and valid
             - List order preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+        from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+            LLMChunkTestDataFactory
+        )
         
         # Given
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk content",
                 chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=10,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                source_page=1
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=12,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
-                metadata={}
+                relationships=["chunk_0001"]
             )
         ]
         
-        document = LLMDocument(
-            document_id="doc_001",
+        document = LLMDocumentTestDataFactory.create_document_instance(
             title="Multi-chunk Document",
             chunks=chunks,
-            summary="Document with multiple chunks",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document with multiple chunks"
         )
         
         # When/Then
         assert isinstance(document.chunks, list)
         assert len(document.chunks) == 2
         assert all(isinstance(chunk, LLMChunk) for chunk in document.chunks)
-        assert document.chunks[0].chunk_id == "chunk_0001"
-        assert document.chunks[1].chunk_id == "chunk_0002"
-        assert document.chunks == chunks  # Order preserved
-        assert hasattr(document, 'chunks')
+        assert document.chunks == chunks  # Order preserved and validates chunk_ids
+
 
     def test_summary_attribute_access(self):
         """
@@ -205,36 +170,17 @@ class TestLLMDocumentAttributeAccess:
         WHEN summary attribute is accessed
         THEN expect correct summary string returned
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         summary_text = "This document analyzes advanced machine learning techniques for document processing and optimization."
         
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary=summary_text,
-            key_entities=[],
-            processing_metadata={}
+        document = LLMDocumentTestDataFactory.create_document_instance(
+            summary=summary_text
         )
         
         # When/Then
         assert document.summary == summary_text
-        assert isinstance(document.summary, str)
-        assert len(document.summary) > 0
-        assert hasattr(document, 'summary')
+
+
 
     def test_key_entities_attribute_access(self):
         """
@@ -245,33 +191,17 @@ class TestLLMDocumentAttributeAccess:
             - Entity structure preserved
             - All entities accessible
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="John Doe works at OpenAI in San Francisco",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92},
             {"type": "GPE", "value": "San Francisco", "confidence": 0.88}
         ]
         
-        document = LLMDocument(
-            document_id="doc_001",
+        document = LLMDocumentTestDataFactory.create_document_instance(
             title="Entity Rich Document",
-            chunks=[sample_chunk],
             summary="Document with multiple entities",
-            key_entities=key_entities,
-            processing_metadata={}
+            key_entities=key_entities
         )
         
         # When/Then
@@ -285,7 +215,7 @@ class TestLLMDocumentAttributeAccess:
         assert document.key_entities[0]["value"] == "John Doe"
         assert document.key_entities[1]["type"] == "ORG"
         assert document.key_entities[2]["type"] == "GPE"
-        assert hasattr(document, 'key_entities')
+
 
     def test_processing_metadata_attribute_access(self):
         """
@@ -295,20 +225,7 @@ class TestLLMDocumentAttributeAccess:
             - Dictionary returned with metadata
             - All metadata keys and values accessible
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         processing_metadata = {
             "processing_time": 2.45,
             "model": "advanced_optimizer_v2",
@@ -320,12 +237,7 @@ class TestLLMDocumentAttributeAccess:
             "timestamp": "2024-01-01T12:00:00Z"
         }
         
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
+        document = LLMDocumentTestDataFactory.create_document_instance(
             processing_metadata=processing_metadata
         )
         
@@ -339,7 +251,7 @@ class TestLLMDocumentAttributeAccess:
         assert document.processing_metadata["model"] == "advanced_optimizer_v2"
         assert document.processing_metadata["chunk_count"] == 5
         assert "timestamp" in document.processing_metadata
-        assert hasattr(document, 'processing_metadata')
+
 
     def test_document_embedding_attribute_access_none(self):
         """
@@ -347,33 +259,14 @@ class TestLLMDocumentAttributeAccess:
         WHEN document_embedding attribute is accessed
         THEN expect None returned
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
-            processing_metadata={},
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_embedding=None
         )
         
         # When/Then
         assert document.document_embedding is None
-        assert hasattr(document, 'document_embedding')
+
 
     def test_document_embedding_attribute_access_array(self):
         """
@@ -384,29 +277,10 @@ class TestLLMDocumentAttributeAccess:
             - Array properties preserved (shape, dtype)
             - Array data integrity maintained
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         document_embedding = np.array([0.15, 0.25, 0.35, 0.45, 0.55], dtype=np.float32)
         
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
-            processing_metadata={},
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_embedding=document_embedding
         )
         
@@ -416,7 +290,7 @@ class TestLLMDocumentAttributeAccess:
         assert document.document_embedding.dtype == np.float32
         assert np.array_equal(document.document_embedding, document_embedding)
         assert np.allclose(document.document_embedding, [0.15, 0.25, 0.35, 0.45, 0.55])
-        assert hasattr(document, 'document_embedding')
+
 
 
 if __name__ == "__main__":

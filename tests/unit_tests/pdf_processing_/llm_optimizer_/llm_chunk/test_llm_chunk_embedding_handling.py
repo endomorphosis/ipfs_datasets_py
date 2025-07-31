@@ -35,6 +35,7 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMChunk,
     LLMDocument
 )
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
 
 
 # Check if each classes methods are accessible:
@@ -82,8 +83,6 @@ class TestLLMChunkEmbeddingHandling:
         WHEN LLMChunk is instantiated and accessed
         THEN expect original array shape preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
         # Given - arrays with different shapes
         test_arrays = [
             np.array([1.0, 2.0, 3.0]),                    # 1D array
@@ -95,17 +94,7 @@ class TestLLMChunkEmbeddingHandling:
         
         # When/Then - shape should be preserved for each array
         for original_array in test_arrays:
-            chunk = LLMChunk(
-                content="Test content",
-                chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["text"],
-                token_count=5,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={},
-                embedding=original_array
-            )
+            chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
             
             assert chunk.embedding.shape == original_array.shape
             assert chunk.embedding.ndim == original_array.ndim
@@ -117,8 +106,6 @@ class TestLLMChunkEmbeddingHandling:
         WHEN LLMChunk is instantiated and accessed
         THEN expect original dtype preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
         # Given - arrays with different dtypes
         test_arrays = [
             np.array([1.0, 2.0, 3.0], dtype=np.float32),
@@ -130,17 +117,7 @@ class TestLLMChunkEmbeddingHandling:
         
         # When/Then - dtype should be preserved for each array
         for original_array in test_arrays:
-            chunk = LLMChunk(
-                content="Test content",
-                chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["text"],
-                token_count=5,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={},
-                embedding=original_array
-            )
+            chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
             
             assert chunk.embedding.dtype == original_array.dtype
             assert np.array_equal(chunk.embedding, original_array)
@@ -151,24 +128,12 @@ class TestLLMChunkEmbeddingHandling:
         WHEN LLMChunk is instantiated and accessed
         THEN expect original array values unchanged
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
         # Given - array with specific values
         original_values = [0.123456789, -0.987654321, 1e-10, 1e10, 0.0, -0.0]
         original_array = np.array(original_values, dtype=np.float64)
         
         # When
-        chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={},
-            embedding=original_array
-        )
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
         
         # Then - values should be exactly preserved
         assert np.array_equal(chunk.embedding, original_array)
@@ -178,17 +143,7 @@ class TestLLMChunkEmbeddingHandling:
         special_values = [np.inf, -np.inf, 0.0, -0.0]
         special_array = np.array(special_values)
         
-        chunk_special = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0002",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={},
-            embedding=special_array
-        )
+        chunk_special = LLMChunkTestDataFactory.create_chunk_instance(embedding=special_array)
         
         assert np.array_equal(chunk_special.embedding, special_array, equal_nan=True)
         assert np.isinf(chunk_special.embedding[0]) and chunk_special.embedding[0] > 0
@@ -208,17 +163,7 @@ class TestLLMChunkEmbeddingHandling:
         original_array = np.array([1.0, 2.0, 3.0, 4.0])
         
         # When
-        chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={},
-            embedding=original_array
-        )
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
         
         # Then - check if arrays share memory (implementation dependent)
         # Note: dataclass field assignment may or may not copy the array
@@ -240,17 +185,7 @@ class TestLLMChunkEmbeddingHandling:
         
         # Test with view of array
         array_view = original_array[1:3]
-        chunk_view = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0002",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={},
-            embedding=array_view
-        )
+        chunk_view = LLMChunkTestDataFactory.create_chunk_instance(embedding=array_view)
         
         # Verify the view is preserved
         assert chunk_view.embedding.shape == (2,)

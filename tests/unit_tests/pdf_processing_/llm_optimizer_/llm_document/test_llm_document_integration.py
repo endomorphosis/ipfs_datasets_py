@@ -44,6 +44,13 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -96,32 +103,25 @@ class TestLLMDocumentIntegration:
         
         # Given - create chunks with consistent content theme
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Machine learning algorithms are transforming data analysis in modern computing systems.",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=15,
-                semantic_types={"text"},
-                relationships=[],
+                token_count=15
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Deep neural networks provide powerful tools for pattern recognition and classification tasks.",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
                 token_count=14,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
+                relationships=["chunk_0001"]
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Data preprocessing and feature engineering are crucial steps in machine learning pipelines.",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_elements=["paragraph"],
                 token_count=13,
-                semantic_types={"text"},
-                relationships=["chunk_0002"],
+                relationships=["chunk_0002"]
             )
         ]
         
@@ -198,32 +198,25 @@ class TestLLMDocumentIntegration:
         """
         # Given - create chunks with specific named entities
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Dr. Sarah Johnson from Stanford University published groundbreaking research on artificial intelligence.",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=16,
-                semantic_types={"text"},
-                relationships=[],
+                token_count=16
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="The study was conducted in collaboration with Microsoft Research and OpenAI in San Francisco.",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
                 token_count=15,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
+                relationships=["chunk_0001"]
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="The research was published on January 15, 2024, and received significant attention from the AI community.",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_elements=["paragraph"],
                 token_count=17,
-                semantic_types={"text"},
-                relationships=["chunk_0002"],
+                relationships=["chunk_0002"]
             )
         ]
         
@@ -342,14 +335,12 @@ class TestLLMDocumentIntegration:
             ]
             content = content_base + content_extensions[i % len(content_extensions)]
             
-            chunk = LLMChunk(
+            chunk = LLMChunkTestDataFactory.create_chunk_instance(
                 content=content,
                 chunk_id=f"chunk_{i+1:05d}",  # 5-digit padding for production scale
                 source_page=(i // 20) + 1,  # 20 chunks per page for realistic documents
-                source_elements=["paragraph"] if i % 4 != 3 else ["table"],
                 token_count=45 + (i % 15),  # More realistic token counts
-                semantic_types={"text"} if i % 7 != 0 else ({"table"} if i % 14 == 0 else {"header"}),
-                relationships=[f"chunk_{max(1, i):05d}"] if i > 0 else [],
+                relationships=[f"chunk_{max(1, i):05d}"] if i > 0 else []
             )
             chunks.append(chunk)
         

@@ -73,24 +73,15 @@ class TestLLMOptimizerCreateChunk:
     """Test LLMOptimizer._create_chunk method."""
 
     @pytest.mark.asyncio
-    async def test_create_chunk_valid_parameters(self):
+    async def test_create_chunk_returns_llm_chunk_instance(self):
         """
         GIVEN valid content, chunk_id, page_num, and metadata
         WHEN _create_chunk is called
-        THEN expect:
-            - LLMChunk instance returned
-            - All fields populated correctly
-            - Token count calculated accurately
-            - Metadata enhanced appropriately
+        THEN expect LLMChunk instance returned
         """
         # Given
         optimizer = LLMOptimizer()
-        
-        content = "This is a comprehensive paragraph containing multiple sentences for analysis. " \
-                 "It includes various elements such as technical terms, numerical references, " \
-                 "and contextual information that would be typical in a research document. " \
-                 "The content length is sufficient to provide meaningful token count validation."
-        
+        content = "This is a comprehensive paragraph containing multiple sentences for analysis."
         chunk_id = 1
         page_num = 1
         source_elements = ["paragraph"]
@@ -98,36 +89,312 @@ class TestLLMOptimizerCreateChunk:
         # When
         chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
         
-        # Then - verify LLMChunk instance and basic structure
-        assert isinstance(chunk, LLMChunk), "Should return LLMChunk instance"
-        assert chunk.chunk_id == "chunk_0001", f"Expected chunk ID '{chunk_id}', got '{chunk.chunk_id}'"
-        assert chunk.content == content, "Content should match input exactly"
-        assert chunk.source_page == page_num, f"Expected page number {page_num}, got {chunk.source_page}"
-        
-        # Verify token count calculation
-        assert isinstance(chunk.token_count, int), "Token count should be integer"
-        assert chunk.token_count > 0, "Token count should be positive for non-empty content"
-        
-        # Rough validation - content has ~50 words, should be reasonable token count
-        word_count = len(content.split())
-        assert 30 <= chunk.token_count <= word_count * 2, f"Token count {chunk.token_count} seems unreasonable for {word_count} words"
-        
-        # Verify semantic type determination
-        assert chunk.semantic_types is not None, "Semantic type should be determined"
-        assert isinstance(chunk.semantic_types, str), "Semantic type should be string"
-        assert len(chunk.semantic_types) > 0, "Semantic type should not be empty"
-        
-        # Common semantic types for paragraph content
-        expected_semantic_types = ["text", "paragraph", "content", "mixed", "narrative"]
-        assert chunk.semantic_types in expected_semantic_types, f"Unexpected semantic type: {chunk.semantic_types}"
-        
-        # Verify source element
-        assert chunk.source_elements is not None, "Source element should be populated"
-        assert isinstance(chunk.source_elements, list), "Source element should be a list of strings"
+        # Then
+        assert isinstance(chunk, LLMChunk), f"Should return LLMChunk instance, got {type(chunk).__name__}"
 
-        # Verify chunk coherence
+    @pytest.mark.asyncio
+    async def test_create_chunk_sets_correct_chunk_id(self):
+        """
+        GIVEN valid parameters with chunk_id
+        WHEN _create_chunk is called
+        THEN expect chunk_id formatted correctly
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+        expected_id = "chunk_0001"
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert chunk.chunk_id == expected_id, f"Expected chunk ID '{expected_id}', got '{chunk.chunk_id}'"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_preserves_content_exactly(self):
+        """
+        GIVEN content string
+        WHEN _create_chunk is called
+        THEN expect content preserved exactly
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "This is a comprehensive paragraph containing multiple sentences for analysis."
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert chunk.content == content, f"Content should match input exactly\n===Expected===\n{content}\n===chunk.content===\n{chunk.content}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_sets_correct_page_number(self):
+        """
+        GIVEN page_num parameter
+        WHEN _create_chunk is called
+        THEN expect source_page set correctly
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert chunk.source_page == page_num, f"Expected page number {page_num}, got {chunk.source_page}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_token_count_is_integer(self):
+        """
+        GIVEN valid content
+        WHEN _create_chunk is called
+        THEN expect token_count is integer
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert isinstance(chunk.token_count, int), f"token_count must be integer, got {type(chunk.token_count).__name__}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_token_count_is_positive(self):
+        """
+        GIVEN non-empty content
+        WHEN _create_chunk is called
+        THEN expect positive token count
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert chunk.token_count > 0, f"token_count must be positive for non-empty content, got {chunk.token_count}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_token_count_is_reasonable(self):
+        """
+        GIVEN content with known word count
+        WHEN _create_chunk is called
+        THEN expect reasonable token count relative to word count
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "This is a comprehensive paragraph containing multiple sentences for analysis. " \
+                 "It includes various elements such as technical terms, numerical references, " \
+                 "and contextual information that would be typical in a research document."
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        word_count = len(content.split())
+        assert 30 <= chunk.token_count <= word_count * 2, f"token_count {chunk.token_count} seems unreasonable for {word_count} words"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_types_not_none(self):
+        """
+        GIVEN valid content
+        WHEN _create_chunk is called
+        THEN expect semantic_types is not None
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types is not None, "Semantic type should be determined, but got None instead."
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_types_is_string(self):
+        """
+        GIVEN valid content
+        WHEN _create_chunk is called
+        THEN expect semantic_types is string
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert isinstance(chunk.semantic_types, str), f"Semantic type should be string, got {type(chunk.semantic_types).__name__}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_types_not_empty(self):
+        """
+        GIVEN valid content
+        WHEN _create_chunk is called
+        THEN expect semantic_types is not empty
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert len(chunk.semantic_types) > 0, f"Semantic type should not be empty (i.e. greater than 0), got {len(chunk.semantic_types)}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_types_is_expected_value(self):
+        """
+        GIVEN paragraph content
+        WHEN _create_chunk is called
+        THEN expect semantic_types is appropriate for paragraph content
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "This is a paragraph of text content."
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        expected_semantic_types = ["text", "paragraph", "content", "mixed", "narrative"]
+        assert chunk.semantic_types in expected_semantic_types, f"Unexpected semantic type '{chunk.semantic_types}'. Expected one of {expected_semantic_types}."
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_source_elements_not_none(self):
+        """
+        GIVEN source_elements parameter
+        WHEN _create_chunk is called
+        THEN expect source_elements is not None
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert chunk.source_elements is not None, "Source element should be populated, got None instead."
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_source_elements_is_list(self):
+        """
+        GIVEN source_elements parameter
+        WHEN _create_chunk is called
+        THEN expect source_elements is list
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
+        assert isinstance(chunk.source_elements, list), f"Source element should be a list, got {type(chunk.source_elements).__name__} instead."
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_content_no_leading_whitespace(self):
+        """
+        GIVEN content that may have whitespace
+        WHEN _create_chunk is called
+        THEN expect content does not start with whitespace
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content without leading space"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
         assert not chunk.content.startswith(" "), "Content should not start with whitespace"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_content_no_trailing_whitespace(self):
+        """
+        GIVEN content that may have whitespace
+        WHEN _create_chunk is called
+        THEN expect content does not end with whitespace
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content without trailing space"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
         assert not chunk.content.endswith(" "), "Content should not end with whitespace"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_content_properly_trimmed(self):
+        """
+        GIVEN content
+        WHEN _create_chunk is called
+        THEN expect content is properly trimmed of whitespace
+        """
+        # Given
+        optimizer = LLMOptimizer()
+        content = "Test content that should be trimmed"
+        chunk_id = 1
+        page_num = 1
+        source_elements = ["paragraph"]
+
+        # When
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        
+        # Then
         assert len(chunk.content.strip()) == len(chunk.content), "Content should be properly trimmed"
 
     @pytest.mark.asyncio
@@ -954,7 +1221,7 @@ class TestLLMOptimizerCreateChunk:
                 assert isinstance(chunk, LLMChunk), "Should return LLMChunk even with token counting failure"
                 assert chunk.content == content, "Content should be preserved"
                 assert chunk.chunk_id == "chunk_0001", "Chunk ID should be preserved"
-                assert isinstance(chunk.token_count, int), "Token count should be integer (fallback value)"
+                assert isinstance(chunk.token_count, int), "token_count should be integer (fallback value)"
                 assert chunk.token_count > 0, "Fallback token count should be positive"
                 
                 # Fallback might estimate based on word count or character count
@@ -1016,8 +1283,8 @@ class TestLLMOptimizerCreateChunk:
                 # Should handle problematic content gracefully
                 assert isinstance(chunk, LLMChunk), f"Should handle problematic content case {i+1}"
                 assert chunk.content == problematic_content, f"Content should be preserved for case {i+1}"
-                assert isinstance(chunk.token_count, int), f"Token count should be integer for case {i+1}"
-                assert chunk.token_count >= 0, f"Token count should be non-negative for case {i+1}"
+                assert isinstance(chunk.token_count, int), f"token_count should be integer for case {i+1}"
+                assert chunk.token_count >= 0, f"token_count should be non-negative for case {i+1}"
                 
             except (ValueError, UnicodeError, Exception) as e:
                 # Some problematic content might legitimately cause errors

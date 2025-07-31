@@ -352,7 +352,7 @@ class PDFProcessor:
             )
         
         # Performance monitoring
-        operation_context = None
+        operation_context: MonitoringSystem = None
         if self.monitoring:
             operation_context = self.monitoring.start_operation_trace(
                 "pdf_processing_pipeline",
@@ -1472,10 +1472,10 @@ class PDFProcessor:
             >>> # "What entities are connected to contract negotiations?"
 
         Note:
-            Query interface supports both keyword-based and semantic search capabilities.
-            Natural language processing enables intuitive query formulation.
-            Graph traversal algorithms provide comprehensive relationship exploration.
-            Results include relevance scoring and context-aware ranking.
+            - Query interface supports both keyword-based and semantic search capabilities.
+            - Natural language processing enables intuitive query formulation.
+            - Graph traversal algorithms provide comprehensive relationship exploration.
+            - Results include relevance scoring and context-aware ranking.
         """
         self.logger.info("Stage 10: Setting up query interface")
         

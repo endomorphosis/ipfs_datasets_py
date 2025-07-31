@@ -467,13 +467,13 @@ async def search_vector_index(
     Returns:
         Dictionary with search results
     """
-    try:
+    try: # TODO _search_qdrant_index and _search_elasticsearch_index are hallucinated. Make them or remove them.
         if backend == "faiss":
             return await _search_faiss_index(index_name, query, top_k, config)
         elif backend == "qdrant":
-            return await _search_qdrant_index(index_name, query, top_k, filters, config)
+            pass # return await _search_qdrant_index(index_name, query, top_k, filters, config)
         elif backend == "elasticsearch":
-            return await _search_elasticsearch_index(index_name, query, top_k, filters, config)
+            pass # return await _search_elasticsearch_index(index_name, query, top_k, filters, config)
         else:
             return {
                 "status": "error",

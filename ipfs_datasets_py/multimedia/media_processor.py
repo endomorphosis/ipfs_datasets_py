@@ -4,16 +4,50 @@ Media processor that coordinates between different multimedia libraries.
 This module provides a unified interface for processing multimedia content
 using various backends like FFmpeg and yt-dlp.
 """
-
-import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, Any, Optional
 from pathlib import Path
 
 from .ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
 from .ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
 
-logger = logging.getLogger(__name__)
+
+
+def make_media_processor(
+    default_output_dir: Optional[str] = None,
+    enable_logging: bool = True,
+    logger: logging.Logger = logging.getLogger(__name__),
+    ytdlp: Optional[YtDlpWrapper] = None,
+    ffmpeg: Optional[FFmpegWrapper] = None
+) -> 'MediaProcessor':
+    """
+    Factory function to create a MediaProcessor instance.
+
+    Args:
+        default_output_dir (Optional[str], optional): Default directory path for output files.
+            If not provided, defaults to the current working directory. The directory will
+            be created if it doesn't exist. Defaults to None.
+        enable_logging (bool, optional): Enable detailed logging for debugging and monitoring.
+            When True, logs initialization status, operation progress, and error details.
+            Defaults to True.
+
+    Returns:
+        MediaProcessor: Configured MediaProcessor instance.
+    """
+    input_dict = {
+        "default_output_dir": default_output_dir,
+        "enable_logging": enable_logging,
+        "logger": logger,
+        "ytdlp": ytdlp,
+        "ffmpeg": ffmpeg
+    }
+    if input_dict["ytdlp"] is None and YTDLP_AVAILABLE:
+        input_dict["ytdlp"] = YtDlpWrapper(default_output_dir, enable_logging)
+
+    if input_dict["ffmpeg"] is None and FFMPEG_AVAILABLE:
+        input_dict["ffmpeg"] = FFmpegWrapper(default_output_dir, enable_logging)
+
+    return MediaProcessor(**input_dict)
 
 
 class MediaProcessor:
@@ -96,8 +130,12 @@ class MediaProcessor:
     """
     
     def __init__(self, 
-                 default_output_dir: Optional[str] = None,
-                 enable_logging: bool = True) -> None:
+                default_output_dir: Optional[str] = None,
+                enable_logging: bool = True,
+                logger: logging.Logger =  logging.getLogger(__name__),
+                ytdlp: Optional[YtDlpWrapper] = None,
+                ffmpeg: Optional[FFmpegWrapper] = None
+                ) -> None:
         """
         Initialize the MediaProcessor with specified configuration options.
 
@@ -150,12 +188,12 @@ class MediaProcessor:
             The initialization process logs the availability status of backend libraries
             (yt-dlp and FFmpeg) when logging is enabled.
         """
-        self.default_output_dir = Path(default_output_dir) if default_output_dir else Path.cwd()
-        self.enable_logging = enable_logging
-        
+        self.default_output_dir: Path = Path(default_output_dir) if default_output_dir else Path.cwd()
+        self.enable_logging: bool = enable_logging
+
         # Initialize component wrappers
-        self.ytdlp = YtDlpWrapper(default_output_dir, enable_logging) if YTDLP_AVAILABLE else None
-        self.ffmpeg = FFmpegWrapper(default_output_dir, enable_logging) if FFMPEG_AVAILABLE else None
+        self.ytdlp: Optional[YtDlpWrapper] = ytdlp
+        self.ffmpeg: Optional[FFmpegWrapper] = ffmpeg
         
         logger.info(f"MediaProcessor initialized - YT-DLP: {YTDLP_AVAILABLE}, FFmpeg: {FFMPEG_AVAILABLE}")
     
@@ -273,7 +311,7 @@ class MediaProcessor:
             return download_result
             
         except Exception as e:
-            logger.error(f"Error in download_and_convert: {e}")
+            self.logger.error(f"Error in download_and_convert: {e}")
             return {
                 "status": "error",
                 "error": str(e)

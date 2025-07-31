@@ -36,6 +36,13 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -83,39 +90,26 @@ class TestLLMDocumentChunkManagement:
             - List mutability works as expected
             - No corruption of existing chunks
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        initial_chunk = LLMChunk(
+        initial_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Initial chunk content",
             chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            source_page=1
         )
         
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Modifiable Document",
             chunks=[initial_chunk],
-            summary="Document for testing modifications",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document for testing modifications"
         )
         
         # When - append new chunk
-        new_chunk = LLMChunk(
+        new_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="New chunk content",
             chunk_id="chunk_0002",
             source_page=1,
-            source_elements=["paragraph"],
-            token_count=8,
-            semantic_types={"text"},
-            relationships=["chunk_0001"],
-            metadata={}
+            relationships=["chunk_0001"]
         )
         
         document.chunks.append(new_chunk)
@@ -142,49 +136,32 @@ class TestLLMDocumentChunkManagement:
             - IndexError for invalid indices
             - Consistent ordering maintained
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk",
                 chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=8,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                source_page=1
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=9,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
-                metadata={}
+                relationships=["chunk_0001"]
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_elements=["table"],
-                token_count=12,
-                semantic_types={"table"},
-                relationships=["chunk_0002"],
-                metadata={}
+                relationships=["chunk_0002"]
             )
         ]
         
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Multi-chunk Document",
             chunks=chunks,
-            summary="Document with multiple chunks for indexing",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document with multiple chunks for indexing"
         )
         
         # When/Then - valid indices
@@ -210,30 +187,21 @@ class TestLLMDocumentChunkManagement:
             - Iteration order matches list order
             - No chunks skipped or duplicated
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content=f"Chunk {i} content",
                 chunk_id=f"chunk_{i:04d}",
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=10,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                source_page=1
             )
             for i in range(1, 6)  # Create 5 chunks
         ]
         
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Iteration Test Document",
             chunks=chunks,
-            summary="Document for testing chunk iteration",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document for testing chunk iteration"
         )
         
         # When - iterate over chunks
@@ -263,54 +231,37 @@ class TestLLMDocumentChunkManagement:
             - Correct count returned via len(chunks)
             - Count updates when chunks modified
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given - document with initial chunks
         initial_chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk",
                 chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=8,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                source_page=1
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=9,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
-                metadata={}
+                relationships=["chunk_0001"]
             )
         ]
         
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Count Test Document",
             chunks=initial_chunks,
-            summary="Document for testing chunk counting",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document for testing chunk counting"
         )
         
         # When/Then - initial count
         assert len(document.chunks) == 2
         
         # When - add chunk
-        new_chunk = LLMChunk(
+        new_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Third chunk",
             chunk_id="chunk_0003",
             source_page=2,
-            source_elements=["table"],
-            token_count=12,
-            semantic_types={"table"},
-            relationships=["chunk_0002"],
-            metadata={}
+            relationships=["chunk_0002"]
         )
         document.chunks.append(new_chunk)
         
@@ -338,49 +289,33 @@ class TestLLMDocumentChunkManagement:
             - Bidirectional relationships consistent
             - No broken or invalid chunk ID references
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given - chunks with relationships
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk content",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=10,
-                semantic_types={"text"},
-                relationships=[],  # No predecessors
-                metadata={}
+                relationships=[]  # No predecessors
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=12,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],  # References first chunk
-                metadata={}
+                relationships=["chunk_0001"]  # References first chunk
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk content",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_elements=["table"],
-                token_count=8,
-                semantic_types={"table"},
-                relationships=["chunk_0001", "chunk_0002"],  # References both previous
-                metadata={}
+                relationships=["chunk_0001", "chunk_0002"]  # References both previous
             )
         ]
         
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Relationship Test Document",
             chunks=chunks,
-            summary="Document for testing chunk relationships",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document for testing chunk relationships"
         )
         
         # When/Then - verify relationships exist and are valid

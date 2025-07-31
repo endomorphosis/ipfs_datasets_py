@@ -33,8 +33,10 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
+    LLMChunkMetadata
 )
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
 
 
 # Check if each classes methods are accessible:
@@ -76,18 +78,10 @@ class TestLLMChunkAttributeAccess:
 
     def setup_method(self):
         """Set up test fixtures with sample LLMChunk instance."""
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        import numpy as np
-        
-        self.sample_chunk = LLMChunk(
+        self.sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Sample test content for testing",
             chunk_id="chunk_test_001",
-            source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
             relationships=["chunk_000", "chunk_002"],
-            metadata={"confidence": 0.95, "source": "test"},
             embedding=np.array([0.1, 0.2, 0.3, 0.4])
         )
 
@@ -99,8 +93,7 @@ class TestLLMChunkAttributeAccess:
         """
         # When/Then
         assert self.sample_chunk.content == "Sample test content for testing"
-        assert isinstance(self.sample_chunk.content, str)
-        assert hasattr(self.sample_chunk, 'content')
+
 
     def test_chunk_id_attribute_access(self):
         """
@@ -119,19 +112,8 @@ class TestLLMChunkAttributeAccess:
         WHEN embedding attribute is accessed
         THEN expect None returned
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
         # Given
-        chunk_none_embedding = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            embedding=None
-        )
+        chunk_none_embedding = LLMChunkTestDataFactory.create_chunk_instance(embedding=None)
         
         # When/Then
         assert chunk_none_embedding.embedding is None

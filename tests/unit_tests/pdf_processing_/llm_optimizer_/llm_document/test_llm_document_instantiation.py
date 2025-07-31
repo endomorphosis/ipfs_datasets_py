@@ -37,6 +37,10 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -92,43 +96,24 @@ class TestLLMDocumentInstantiation:
             - All fields accessible with correct values
             - No errors or exceptions raised
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Sample chunk content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
-        document_embedding = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        document_data = LLMDocumentTestDataFactory.create_valid_baseline_data()
         
         # When
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="This is a test document summary",
-            key_entities=[{"type": "PERSON", "value": "John Doe", "confidence": 0.95}],
-            processing_metadata={"processing_time": 1.23, "model": "test_model"},
-            document_embedding=document_embedding
-        )
+        document = LLMDocument(**document_data)
         
         # Then
-        assert document.document_id == "doc_001"
-        assert document.title == "Test Document"
-        assert len(document.chunks) == 1
-        assert document.chunks[0] == sample_chunk
-        assert document.summary == "This is a test document summary"
-        assert len(document.key_entities) == 1
-        assert document.key_entities[0]["type"] == "PERSON"
-        assert document.processing_metadata["processing_time"] == 1.23
-        assert np.array_equal(document.document_embedding, document_embedding)
+        assert document.document_id == document_data["document_id"]
+        assert document.title == document_data["title"]
+        assert len(document.chunks) == len(document_data["chunks"])
+        assert document.chunks == document_data["chunks"]
+        assert document.summary == document_data["summary"]
+        assert document.key_entities == document_data["key_entities"]
+        assert document.processing_metadata == document_data["processing_metadata"]
+        if document_data["document_embedding"] is not None:
+            assert np.array_equal(document.document_embedding, document_data["document_embedding"])
+        else:
+            assert document.document_embedding is None
 
     def test_instantiation_with_minimal_fields(self):
         """
@@ -138,37 +123,19 @@ class TestLLMDocumentInstantiation:
             - Instance created successfully if all required fields provided
             - Default values applied where appropriate
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Minimal chunk content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
+        document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
         
         # When - using minimal required fields
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Minimal Document",
-            chunks=[sample_chunk],
-            summary="Minimal summary",
-            key_entities=[],
-            processing_metadata={}
-        )
+        document = LLMDocument(**document_data)
         
         # Then
-        assert document.document_id == "doc_001"
-        assert document.title == "Minimal Document"
-        assert len(document.chunks) == 1
-        assert document.summary == "Minimal summary"
-        assert document.key_entities == []
-        assert document.processing_metadata == {}
+        assert document.document_id == document_data["document_id"]
+        assert document.title == document_data["title"]
+        assert len(document.chunks) == len(document_data["chunks"])
+        assert document.summary == document_data["summary"]
+        assert document.key_entities == document_data["key_entities"]
+        assert document.processing_metadata == document_data["processing_metadata"]
         assert document.document_embedding is None  # Default value
 
     def test_instantiation_missing_required_fields(self):
@@ -177,31 +144,21 @@ class TestLLMDocumentInstantiation:
         WHEN LLMDocument is instantiated
         THEN expect ValidationError to be raised for missing required parameters
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+        from pydantic import ValidationError
         
         # When/Then - missing document_id
+        data_missing_id = LLMDocumentTestDataFactory.create_data_missing_field("document_id")
         with pytest.raises(ValidationError):
-            LLMDocument(
-                title="Test Document",
-                chunks=[],
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata={}
-            )
+            LLMDocument(**data_missing_id)
         
         # When/Then - missing multiple fields
         with pytest.raises(ValidationError):
             LLMDocument(document_id="doc_001")
         
         # When/Then - missing chunks field
+        data_missing_chunks = LLMDocumentTestDataFactory.create_data_missing_field("chunks")
         with pytest.raises(ValidationError):
-            LLMDocument(
-                document_id="doc_001",
-                title="Test Document",
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata={}
-            )
+            LLMDocument(**data_missing_chunks)
 
     def test_instantiation_with_none_document_embedding(self):
         """
@@ -212,30 +169,12 @@ class TestLLMDocumentInstantiation:
             - document_embedding field properly set to None
             - Optional type handling works correctly
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
+        document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+        document_data["document_embedding"] = None
         
         # When
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=None
-        )
+        document = LLMDocument(**document_data)
         
         # Then
         assert document.document_embedding is None
@@ -249,32 +188,13 @@ class TestLLMDocumentInstantiation:
             - document_embedding field contains numpy array
             - Array shape and dtype preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         document_embedding = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32)
+        document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+        document_data["document_embedding"] = document_embedding
         
         # When
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Test Document",
-            chunks=[sample_chunk],
-            summary="Test summary",
-            key_entities=[],
-            processing_metadata={},
-            document_embedding=document_embedding
-        )
+        document = LLMDocument(**document_data)
         
         # Then
         assert isinstance(document.document_embedding, np.ndarray)
@@ -291,17 +211,12 @@ class TestLLMDocumentInstantiation:
             - chunks field is empty list
             - List type maintained
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument
+        # Given
+        document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+        document_data["chunks"] = []
         
         # When
-        document = LLMDocument(
-            document_id="doc_001",
-            title="Empty Document",
-            chunks=[],
-            summary="Document with no chunks",
-            key_entities=[],
-            processing_metadata={}
-        )
+        document = LLMDocument(**document_data)
         
         # Then
         assert isinstance(document.chunks, list)
@@ -318,50 +233,37 @@ class TestLLMDocumentInstantiation:
             - List order preserved
             - All chunk instances accessible
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+        from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+            LLMChunkTestDataFactory
+        )
         
         # Given
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk content",
                 chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=10,
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                source_page=1
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=12,
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
-                metadata={}
+                relationships=["chunk_0001"]
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk content",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_elements=["table"],
-                token_count=8,
-                semantic_types={"table"},
-                relationships=["chunk_0002"],
-                metadata={}
+                relationships=["chunk_0002"]
             )
         ]
         
         # When
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Multi-chunk Document",
             chunks=chunks,
-            summary="Document with multiple chunks",
-            key_entities=[],
-            processing_metadata={}
+            summary="Document with multiple chunks"
         )
         
         # Then
@@ -385,29 +287,12 @@ class TestLLMDocumentInstantiation:
             - Instance created successfully
             - key_entities field is empty list
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
+        document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+        document_data["key_entities"] = []
         
         # When
-        document = LLMDocument(
-            document_id="doc_001",
-            title="No Entities Document",
-            chunks=[sample_chunk],
-            summary="Document with no entities",
-            key_entities=[],
-            processing_metadata={}
-        )
+        document = LLMDocument(**document_data)
         
         # Then
         assert isinstance(document.key_entities, list)
@@ -423,20 +308,7 @@ class TestLLMDocumentInstantiation:
             - key_entities field contains provided entity data
             - Entity structure preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
         # Given
-        sample_chunk = LLMChunk(
-            content="John Doe works at OpenAI in San Francisco",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95, "start": 0, "end": 8},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92, "start": 18, "end": 24},
@@ -444,13 +316,11 @@ class TestLLMDocumentInstantiation:
         ]
         
         # When
-        document = LLMDocument(
+        document = LLMDocumentTestDataFactory.create_document_instance(
             document_id="doc_001",
             title="Entity Rich Document",
-            chunks=[sample_chunk],
             summary="Document with multiple entities",
-            key_entities=key_entities,
-            processing_metadata={}
+            key_entities=key_entities
         )
         
         # Then

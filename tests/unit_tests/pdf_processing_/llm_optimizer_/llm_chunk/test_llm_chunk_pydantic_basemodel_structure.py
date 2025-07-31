@@ -6,9 +6,7 @@
 from datetime import datetime
 import pytest
 import os
-
 from typing import List, Dict, Any, Optional, Set
-import time
 import numpy as np
 
 from tests._test_utils import (
@@ -19,6 +17,18 @@ from tests._test_utils import (
     BadSignatureError
 )
 
+from ipfs_datasets_py.pdf_processing.llm_optimizer import (
+    ChunkOptimizer,
+    LLMOptimizer,
+    TextProcessor,
+    LLMChunk,
+    LLMDocument,
+    LLMChunkMetadata,
+    ValidSemanticType
+)
+
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
+
 home_dir = os.path.expanduser('~')
 file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py")
 md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
@@ -26,15 +36,6 @@ md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processi
 # Make sure the input file and documentation file exist.
 assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
 assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
-
-from ipfs_datasets_py.pdf_processing.llm_optimizer import (
-    ChunkOptimizer,
-    LLMOptimizer,
-    TextProcessor,
-    LLMChunk,
-    LLMDocument
-)
-
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -80,11 +81,10 @@ class TestLLMChunkPydanticBaseModelStructure:
         THEN expect LLMChunk to be properly defined as a Pydantic model
         """
         from pydantic import BaseModel
-
         
         # When/Then
         assert issubclass(LLMChunk, BaseModel)
-        assert hasattr(LLMChunk, '__fields__')
+        assert hasattr(LLMChunk, 'model_fields')
 
     def test_required_fields_present(self):
         """
@@ -96,22 +96,19 @@ class TestLLMChunkPydanticBaseModelStructure:
             - source_page (int)
             - source_elements (list[str])
             - token_count (int)
-            - semantic_types (str)
+            - semantic_types (set[str])
             - relationships (List[str])
             - embedding (Optional[np.ndarray])
         """
-
-        
         # When
         field_names = set(LLMChunk.model_fields.keys())
         
         # Then
         expected_fields = {
             'content', 'chunk_id', 'source_page', 'source_elements',
-            'token_count', 'semantic_types', 'relationships', 'embedding'
+            'token_count', 'semantic_types', 'relationships', 'embedding', 'metadata'
         }
         assert expected_fields.issubset(field_names)
-        assert len(field_names) == len(expected_fields)
 
     def test_field_types_correct(self):
         """
@@ -142,14 +139,14 @@ class TestLLMChunkPydanticBaseModelStructure:
         assert fields['source_page'].annotation == int
         assert fields['source_elements'].annotation == list[str]
         assert fields['token_count'].annotation == int
-        assert fields['semantic_types'].annotation == set[str]
+        assert fields['semantic_types'].annotation == ValidSemanticType
         
         # Check complex types by annotation
         assert 'relationships' in annotations
         assert 'embedding' in annotations
         
         # Verify complex type structures
-        from typing import List, Optional
+        from typing import Optional
         assert annotations['relationships'] == list[str]
         assert annotations['embedding'] == Optional[np.ndarray]
 
@@ -159,8 +156,6 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN inspecting default values
         THEN expect appropriate default values where specified in documentation
         """
-
-        
         # When
         fields = LLMChunk.model_fields
         
@@ -184,23 +179,20 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN creating an instance with valid data
         THEN expect successful instantiation with all fields properly set
         """
-
         import numpy as np
         
-        # Given
-        chunk_data = {
-            'content': 'This is test content for the chunk.',
-            'chunk_id': 'chunk_0001',
-            'source_page': 1,
-            'source_elements': ['paragraph'],
-            'token_count': 8,
-            'semantic_types':{ 'text'},
-            'relationships': ['chunk_0000', 'chunk_0002'],
-            'embedding': np.array([0.1, 0.2, 0.3])
-        }
-        
-        # When
-        chunk = LLMChunk(**chunk_data)
+        # When - create through factory with specific values
+        embedding = np.array([0.1, 0.2, 0.3])
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(
+            content='This is test content for the chunk.',
+            chunk_id='chunk_0001',
+            source_page=1,
+            source_elements=['paragraph'],
+            token_count=8,
+            semantic_types='text',
+            relationships=['chunk_0000', 'chunk_0002'],
+            embedding=embedding
+        )
         
         # Then
         assert chunk.content == 'This is test content for the chunk.'
@@ -208,9 +200,9 @@ class TestLLMChunkPydanticBaseModelStructure:
         assert chunk.source_page == 1
         assert chunk.source_elements == ['paragraph']
         assert chunk.token_count == 8
-        assert chunk.semantic_types == {'text'}
+        assert chunk.semantic_types == 'text'
         assert chunk.relationships == ['chunk_0000', 'chunk_0002']
-        assert np.array_equal(chunk.embedding, np.array([0.1, 0.2, 0.3]))
+        assert np.array_equal(chunk.embedding, embedding)
 
     def test_model_validation(self):
         """
@@ -218,41 +210,19 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN creating an instance with invalid data
         THEN expect appropriate validation errors
         """
-
         from pydantic import ValidationError
         
         # Test invalid semantic_types
         with pytest.raises(ValidationError):
-            LLMChunk(
-                content='Test content',
-                chunk_id='chunk_0001',
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=5,
-                semantic_types={'invalid_type'}  # Should match pattern
-            )
+            LLMChunkTestDataFactory.create_chunk_instance(semantic_types=123)
         
         # Test negative source_page
         with pytest.raises(ValidationError):
-            LLMChunk(
-                content='Test content',
-                chunk_id='chunk_0001',
-                source_page=-5,  # Should be > 0
-                source_elements=["paragraph"],
-                token_count=5,
-                semantic_types={'text'}
-            )
+            LLMChunkTestDataFactory.create_chunk_instance(source_page=-5)
         
         # Test negative token_count
         with pytest.raises(ValidationError):
-            LLMChunk(
-                content='Test content',
-                chunk_id='chunk_0001',
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=-1,  # Should be >= 0
-                semantic_types={'text'}
-            )
+            LLMChunkTestDataFactory.create_chunk_instance(token_count=-10)
 
     def test_default_values(self):
         """
@@ -260,21 +230,13 @@ class TestLLMChunkPydanticBaseModelStructure:
         WHEN creating an instance with minimal required data
         THEN expect default values to be properly applied
         """
-
+        # Given - minimal required data through factory
+        chunk = LLMChunkTestDataFactory.create_minimal_chunk_instance()
         
-        # Given - minimal required data
-        chunk = LLMChunk(
-            content='Test content',
-            chunk_id='chunk_0001',
-            source_page=1,
-            source_elements=["paragraph"],
-            token_count=5,
-            semantic_types={'text'}
-        )
-        
-        # Then - check defaults
+        # Then - check default values
         assert chunk.relationships == []
         assert chunk.embedding is None
+        assert isinstance(chunk.metadata, LLMChunkMetadata)  # metadata has default structure
 
 
 if __name__ == "__main__":

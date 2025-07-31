@@ -18,11 +18,15 @@
         "Jaccard",
         "kylerose",
         "LAION",
+        "ndarray",
+        "ndarrays",
         "psutil",
         "pydantic",
+        "pytest",
         "sparql",
         "tesseract",
-        "uvicorn"
+        "uvicorn",
+        "ytdlp"
     ],
     "cSpell.ignoreWords": [
         "Chunker",

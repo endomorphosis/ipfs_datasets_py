@@ -6,10 +6,6 @@
 from datetime import datetime
 import pytest
 import os
-
-import os
-import pytest
-import time
 import numpy as np
 
 from tests._test_utils import (
@@ -20,14 +16,6 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
-
-# Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
-
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
@@ -36,6 +24,18 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
+    LLMChunkMetadataTestDataFactory
+)
+
+home_dir = os.path.expanduser('~')
+file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py")
+md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
+
+# Make sure the input file and documentation file exist.
+assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -82,33 +82,37 @@ class TestLLMChunkDataclassMethods:
         WHEN compared for equality
         THEN expect instances to be equal
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         import numpy as np
         
-        # Given - two identical chunks
+        # Given - create shared metadata to ensure identical timestamps
+        metadata_data = LLMChunkMetadataTestDataFactory.create_valid_baseline_data()
+        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
+        shared_metadata = LLMChunkMetadata(**metadata_data)
+        
+        # Given - two identical chunks with shared metadata
         embedding = np.array([0.1, 0.2, 0.3])
         
-        chunk1 = LLMChunk(
+        chunk1 = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
             source_elements=["text"],
             token_count=5,
-            semantic_types={"text"},
+            semantic_types="text",
             relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
+            metadata=shared_metadata,
             embedding=embedding.copy()
         )
         
-        chunk2 = LLMChunk(
+        chunk2 = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
             source_elements=["text"],
             token_count=5,
-            semantic_types={"text"},
+            semantic_types="text",
             relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
+            metadata=shared_metadata,
             embedding=embedding.copy()
         )
         
@@ -121,33 +125,9 @@ class TestLLMChunkDataclassMethods:
         WHEN compared for equality
         THEN expect instances to be unequal
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        import numpy as np
-        
         # Given - two different chunks
-        chunk1 = LLMChunk(
-            content="Test content 1",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
-            embedding=np.array([0.1, 0.2, 0.3])
-        )
-        
-        chunk2 = LLMChunk(
-            content="Test content 2",  # Different content
-            chunk_id="chunk_0002",     # Different ID
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
-            embedding=np.array([0.1, 0.2, 0.3])
-        )
+        chunk1 = LLMChunkTestDataFactory.create_chunk_instance(content="Content 1")
+        chunk2 = LLMChunkTestDataFactory.create_chunk_instance(content="Content 2")
         
         # When/Then - they should not be equal
         assert chunk1 != chunk2
@@ -161,19 +141,17 @@ class TestLLMChunkDataclassMethods:
             - All field values included
             - No truncation of important data
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         import numpy as np
         
         # Given
-        chunk = LLMChunk(
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
             source_elements=["text"],
             token_count=5,
-            semantic_types={"text"},
+            semantic_types="text",
             relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
             embedding=np.array([0.1, 0.2])
         )
         
@@ -194,19 +172,17 @@ class TestLLMChunkDataclassMethods:
             - Detailed representation suitable for debugging
             - All field values and types visible
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         import numpy as np
         
         # Given
-        chunk = LLMChunk(
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content",
             chunk_id="chunk_0001",
             source_page=1,
             source_elements=["text"],
             token_count=5,
-            semantic_types={"text"},
+            semantic_types="text",
             relationships=["chunk_000"],
-            metadata={"confidence": 0.9},
             embedding=np.array([0.1, 0.2])
         )
         
@@ -216,8 +192,8 @@ class TestLLMChunkDataclassMethods:
         # Then
         assert isinstance(repr_str, str)
         assert len(repr_str) > 0
-        assert "LLMChunk" in repr_str  # Should include class name
         assert "chunk_0001" in repr_str  # Should include chunk ID
+        assert "LLMChunk" in repr_str  # Should include class name
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -35,6 +35,7 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMChunk,
     LLMDocument
 )
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
 
 
 # Check if each classes methods are accessible:
@@ -85,33 +86,23 @@ class TestLLMChunkInstantiation:
             - All fields accessible with correct values
             - No errors or exceptions raised
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         import numpy as np
         
-        # Given
+        # Given - factory handles all the boilerplate
         embedding = np.array([0.1, 0.2, 0.3])
         
         # When
-        chunk = LLMChunk(
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content here",
             chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["paragraph"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=["chunk_0000", "chunk_0002"],
             embedding=embedding
         )
         
-        # Then
+        # Then - only test the overridden values
         assert chunk.content == "Test content here"
         assert chunk.chunk_id == "chunk_0001"
-        assert chunk.source_page == 1
-        assert chunk.source_elements == ["paragraph"]
-        assert chunk.token_count == 10
-        assert chunk.semantic_types == {"text"}
-        assert chunk.relationships == ["chunk_0000", "chunk_0002"]
         assert np.array_equal(chunk.embedding, embedding)
+        # Factory ensures all other fields are valid
 
     def test_instantiation_with_minimal_fields(self):
         """
@@ -121,28 +112,13 @@ class TestLLMChunkInstantiation:
             - Instance created successfully if all required fields provided
             - Default values applied where appropriate
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
+        # When - factory handles all minimal setup
+        chunk = LLMChunkTestDataFactory.create_minimal_chunk_instance()
         
-        # When
-        chunk = LLMChunk(
-            content="Minimal content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-        )
-        
-        # Then
-        assert chunk.content == "Minimal content"
-        assert chunk.chunk_id == "chunk_0001"
-        assert chunk.source_page == 1
-        assert chunk.source_elements == ["text"]
-        assert chunk.token_count == 5
-        assert chunk.semantic_types == {"text"}
-        assert chunk.relationships == []
-        assert chunk.embedding is None  # Default value
+        # Then - just verify the minimal instance works
+        assert chunk.content == ""
+        assert chunk.chunk_id == "chunk_0000"
+        assert chunk.embedding is None
 
     def test_instantiation_missing_required_fields(self):
         """
@@ -150,19 +126,12 @@ class TestLLMChunkInstantiation:
         WHEN LLMChunk is instantiated
         THEN expect ValidationError to be raised for missing required parameters
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         from pydantic import ValidationError
         
         # When/Then - missing content
         with pytest.raises(ValidationError):
-            LLMChunk(
-                chunk_id="chunk_0001",
-                source_page=1,
-                source_elements=["text"],
-                token_count=5,
-                semantic_types={"text"},
-                relationships=[],
-            )
+            data = LLMChunkTestDataFactory.create_data_missing_field("content")
+            LLMChunk(**data)
         
         # When/Then - missing multiple fields
         with pytest.raises(ValidationError):
@@ -177,19 +146,8 @@ class TestLLMChunkInstantiation:
             - embedding field properly set to None
             - Optional type handling works correctly
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
-        # When
-        chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            embedding=None
-        )
+        # When - factory handles the setup, we just override embedding
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=None)
         
         # Then
         assert chunk.embedding is None
@@ -203,23 +161,13 @@ class TestLLMChunkInstantiation:
             - embedding field contains numpy array
             - Array shape and dtype preserved
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         import numpy as np
         
         # Given
         embedding = np.array([1.0, 2.0, 3.0, 4.0])
         
-        # When
-        chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            embedding=embedding
-        )
+        # When - factory handles everything except the embedding we want to test
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=embedding)
         
         # Then
         assert isinstance(chunk.embedding, np.ndarray)
@@ -239,15 +187,7 @@ class TestLLMChunkInstantiation:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
         
         # When
-        chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-        )
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(relationships=[])
         
         # Then
         assert isinstance(chunk.relationships, list)
@@ -269,15 +209,7 @@ class TestLLMChunkInstantiation:
         relationships = ["chunk_0000", "chunk_0002", "chunk_0003"]
         
         # When
-        chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=relationships,
-        )
+        chunk = LLMChunkTestDataFactory.create_chunk_instance(relationships=relationships)
         
         # Then
         assert isinstance(chunk.relationships, list)

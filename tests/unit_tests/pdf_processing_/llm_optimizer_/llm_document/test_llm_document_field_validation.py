@@ -36,6 +36,10 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -83,46 +87,22 @@ class TestLLMDocumentFieldValidation:
             - Invalid types rejected appropriately
             - Empty strings handled correctly
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
-        # Given - sample chunk for testing
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         # Valid document IDs should work
         valid_ids = ["doc_001", "document_abc", "test_doc_123", ""]
         
         for doc_id in valid_ids:
-            document = LLMDocument(
-                document_id=doc_id,
-                title="Test Document",
-                chunks=[sample_chunk],
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata={}
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["document_id"] = doc_id
+            document = LLMDocument(**document_data)
             assert document.document_id == doc_id
         
         # Invalid types should be handled based on implementation
         invalid_types = [123, [], {}, None]
         for invalid_id in invalid_types:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["document_id"] = invalid_id
             with pytest.raises(ValueError):
-                document = LLMDocument(
-                    document_id=invalid_id,
-                    title="Test Document",
-                    chunks=[sample_chunk],
-                    summary="Test summary",
-                    key_entities=[],
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
 
     def test_title_field_validation(self):
         """
@@ -133,46 +113,22 @@ class TestLLMDocumentFieldValidation:
             - Invalid types rejected
             - Empty titles handled appropriately
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
-        # Given - sample chunk for testing
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         # Valid titles should work
         valid_titles = ["Document Title", "Multi-word Document Title", "Title with Numbers 123", ""]
         
         for title in valid_titles:
-            document = LLMDocument(
-                document_id="doc_001",
-                title=title,
-                chunks=[sample_chunk],
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata={}
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["title"] = title
+            document = LLMDocument(**document_data)
             assert document.title == title
         
         # Invalid types should raise ValueError with runtime validation
         invalid_types = [123, [], {}, None]
         for invalid_title in invalid_types:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["title"] = invalid_title
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title=invalid_title,
-                    chunks=[sample_chunk],
-                    summary="Test summary",
-                    key_entities=[],
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
 
     def test_chunks_field_validation(self):
         """
@@ -183,19 +139,12 @@ class TestLLMDocumentFieldValidation:
             - Invalid list contents rejected
             - Type checking for list elements
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+        from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+            LLMChunkTestDataFactory
+        )
         
         # Valid chunks list should work
-        valid_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
+        valid_chunk = LLMChunkTestDataFactory.create_chunk_instance()
         
         valid_chunks_lists = [
             [valid_chunk],
@@ -204,28 +153,18 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for chunks_list in valid_chunks_lists:
-            document = LLMDocument(
-                document_id="doc_001",
-                title="Test Document",
-                chunks=chunks_list,
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata={}
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["chunks"] = chunks_list
+            document = LLMDocument(**document_data)
             assert document.chunks == chunks_list
         
         # Invalid types should raise ValueError with runtime validation
         invalid_chunks = [None, "not a list", 123, {}]
         for invalid_chunk_list in invalid_chunks:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["chunks"] = invalid_chunk_list
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=invalid_chunk_list,
-                    summary="Test summary",
-                    key_entities=[],
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
         
         # List with invalid chunk types should raise ValueError
         invalid_chunk_contents = [
@@ -236,15 +175,10 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for invalid_contents in invalid_chunk_contents:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["chunks"] = invalid_contents
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=invalid_contents,
-                    summary="Test summary",
-                    key_entities=[],
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
 
     def test_summary_field_validation(self):
         """
@@ -255,20 +189,6 @@ class TestLLMDocumentFieldValidation:
             - Invalid types rejected
             - Empty summaries handled appropriately
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
-        # Given - sample chunk for testing
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         # Valid summaries should work
         valid_summaries = [
             "This is a comprehensive document summary",
@@ -279,28 +199,18 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for summary in valid_summaries:
-            document = LLMDocument(
-                document_id="doc_001",
-                title="Test Document",
-                chunks=[sample_chunk],
-                summary=summary,
-                key_entities=[],
-                processing_metadata={}
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["summary"] = summary
+            document = LLMDocument(**document_data)
             assert document.summary == summary
         
         # Invalid types should raise ValueError with runtime validation
         invalid_summaries = [123, [], {}, None]
         for invalid_summary in invalid_summaries:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["summary"] = invalid_summary
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=[sample_chunk],
-                    summary=invalid_summary,
-                    key_entities=[],
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
 
     def test_key_entities_field_validation(self):
         """
@@ -311,20 +221,6 @@ class TestLLMDocumentFieldValidation:
             - Invalid structures rejected
             - Entity dictionary format validation
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
-        # Given - sample chunk for testing
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         # Valid key_entities should work
         valid_entities_lists = [
             [],  # Empty list
@@ -338,28 +234,18 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for entities_list in valid_entities_lists:
-            document = LLMDocument(
-                document_id="doc_001",
-                title="Test Document",
-                chunks=[sample_chunk],
-                summary="Test summary",
-                key_entities=entities_list,
-                processing_metadata={}
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["key_entities"] = entities_list
+            document = LLMDocument(**document_data)
             assert document.key_entities == entities_list
         
         # Invalid types should raise ValueError with runtime validation
         invalid_entities = [None, "not a list", 123, {}]
         for invalid_entity_list in invalid_entities:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["key_entities"] = invalid_entity_list
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=[sample_chunk],
-                    summary="Test summary",
-                    key_entities=invalid_entity_list,
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
         
         # List with invalid entity types should raise ValueError
         invalid_entity_contents = [
@@ -370,15 +256,10 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for invalid_contents in invalid_entity_contents:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["key_entities"] = invalid_contents
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=[sample_chunk],
-                    summary="Test summary",
-                    key_entities=invalid_contents,
-                    processing_metadata={}
-                )
+                LLMDocument(**document_data)
 
     def test_processing_metadata_field_validation(self):
         """
@@ -389,20 +270,6 @@ class TestLLMDocumentFieldValidation:
             - Invalid types rejected
             - Empty dictionaries handled correctly
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
-        # Given - sample chunk for testing
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         # Valid processing_metadata should work
         valid_metadata = [
             {},  # Empty dict
@@ -420,28 +287,18 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for metadata in valid_metadata:
-            document = LLMDocument(
-                document_id="doc_001",
-                title="Test Document",
-                chunks=[sample_chunk],
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata=metadata
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["processing_metadata"] = metadata
+            document = LLMDocument(**document_data)
             assert document.processing_metadata == metadata
         
         # Invalid types should raise ValueError with runtime validation
         invalid_metadata = [None, "not a dict", 123, []]
         for invalid_meta in invalid_metadata:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["processing_metadata"] = invalid_meta
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=[sample_chunk],
-                    summary="Test summary",
-                    key_entities=[],
-                    processing_metadata=invalid_meta
-                )
+                LLMDocument(**document_data)
 
     def test_document_embedding_field_validation(self):
         """
@@ -452,20 +309,6 @@ class TestLLMDocumentFieldValidation:
             - None values accepted (Optional type)
             - Invalid types rejected appropriately
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-        
-        # Given - sample chunk for testing
-        sample_chunk = LLMChunk(
-            content="Test content",
-            chunk_id="chunk_0001",
-            source_page=1,
-            source_elements=["text"],
-            token_count=5,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
-        )
-        
         # Valid document embeddings should work
         valid_embeddings = [
             None,  # Optional type allows None
@@ -477,15 +320,9 @@ class TestLLMDocumentFieldValidation:
         ]
         
         for embedding in valid_embeddings:
-            document = LLMDocument(
-                document_id="doc_001",
-                title="Test Document",
-                chunks=[sample_chunk],
-                summary="Test summary",
-                key_entities=[],
-                processing_metadata={},
-                document_embedding=embedding
-            )
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["document_embedding"] = embedding
+            document = LLMDocument(**document_data)
             if embedding is None:
                 assert document.document_embedding is None
             else:
@@ -495,16 +332,10 @@ class TestLLMDocumentFieldValidation:
         # Invalid types should raise ValueError with runtime validation
         invalid_embeddings = ["not an array", 123, [], {}]
         for invalid_embedding in invalid_embeddings:
+            document_data = LLMDocumentTestDataFactory.create_minimal_valid_data()
+            document_data["document_embedding"] = invalid_embedding
             with pytest.raises(ValueError):
-                LLMDocument(
-                    document_id="doc_001",
-                    title="Test Document",
-                    chunks=[sample_chunk],
-                    summary="Test summary",
-                    key_entities=[],
-                    processing_metadata={},
-                    document_embedding=invalid_embedding
-                )
+                LLMDocument(**document_data)
 
 
 if __name__ == "__main__":

@@ -36,6 +36,13 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument
 )
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
+    LLMDocumentTestDataFactory
+)
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory
+)
+
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -87,15 +94,11 @@ class TestLLMDocumentMetadataManagement:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # Given
-        sample_chunk = LLMChunk(
+        sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         comprehensive_metadata = {
@@ -162,15 +165,11 @@ class TestLLMDocumentMetadataManagement:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         
         # Given
-        sample_chunk = LLMChunk(
+        sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         initial_metadata = {
@@ -232,15 +231,11 @@ class TestLLMDocumentMetadataManagement:
         import re
         
         # Given
-        sample_chunk = LLMChunk(
+        sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content for timestamp tracking",
             chunk_id="chunk_0001",
             source_page=1,
-            source_elements=["text"],
-            token_count=10,
-            semantic_types={"text"},
-            relationships=[],
-            metadata={}
+            token_count=10
         )
         
         timestamp_metadata = {
@@ -313,35 +308,23 @@ class TestLLMDocumentMetadataManagement:
 
         # Given - create multiple chunks with known token counts
         chunks = [
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=len(encoding.encode("First chunk with specific token count")),
-                semantic_types={"text"},
-                relationships=[],
-                metadata={}
+                token_count=len(encoding.encode("First chunk with specific token count"))
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk with different token count",
                 chunk_id="chunk_0002",
                 source_page=1,
-                source_elements=["paragraph"],
-                token_count=len(encoding.encode("Second chunk with different token count")),
-                semantic_types={"text"},
-                relationships=["chunk_0001"],
-                metadata={}
+                token_count=len(encoding.encode("Second chunk with different token count"))
             ),
-            LLMChunk(
+            LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk completing the set",
                 chunk_id="chunk_0003",
                 source_page=2,
-                source_elements=["table"],
-                token_count=len(encoding.encode("Third chunk completing the set")),
-                semantic_types={"table"},
-                relationships=["chunk_0002"],
-                metadata={}
+                token_count=len(encoding.encode("Third chunk completing the set"))
             )
         ]
         
