@@ -54,6 +54,9 @@ class TestMemoryUsageBounds:
         GIVEN MediaProcessor initialization
         WHEN establishing baseline memory usage
         THEN expect RSS measurement immediately after __init__ completion
+        
+        NOTE: "Immediately after" timing is ambiguous - garbage collection and lazy loading may affect baseline
+        NOTE: Baseline measurement should allow for initialization stabilization period
         """
         raise NotImplementedError("test_baseline_memory_measured_after_processor_initialization test needs to be implemented")
 
@@ -62,6 +65,9 @@ class TestMemoryUsageBounds:
         GIVEN memory monitoring during operation
         WHEN MediaProcessor tracks memory usage
         THEN expect RSS sampling every 100ms from method entry to exit
+        
+        NOTE: Fixed 100ms sampling may miss short-lived memory spikes or create excessive overhead
+        NOTE: Sampling frequency should be adaptive based on operation duration and memory volatility
         """
         raise NotImplementedError("test_peak_memory_sampling_every_100_milliseconds test needs to be implemented")
 
@@ -70,6 +76,9 @@ class TestMemoryUsageBounds:
         GIVEN 100MB file being processed
         WHEN calculating memory bound
         THEN expect bound = baseline + (100 × 0.10) + 50 = baseline + 60MB
+        
+        NOTE: 10% file size factor appears arbitrary - needs justification based on actual MediaProcessor memory usage patterns
+        NOTE: Factor should vary based on operation type (streaming vs buffered, conversion complexity)
         """
         raise NotImplementedError("test_memory_bound_calculation_includes_file_size_factor test needs to be implemented")
 
@@ -126,6 +135,9 @@ class TestMemoryUsageBounds:
         GIVEN peak memory usage exceeding calculated bound
         WHEN MediaProcessor detects bound violation
         THEN expect warning to be logged with actual vs expected memory usage
+        
+        NOTE: Warning-only enforcement provides no protection against actual memory exhaustion
+        NOTE: Response to bound violations should include protective measures, not just logging
         """
         raise NotImplementedError("test_memory_bound_enforcement_triggers_warning_when_exceeded test needs to be implemented")
 
@@ -134,6 +146,9 @@ class TestMemoryUsageBounds:
         GIVEN concurrent operations with memory monitoring
         WHEN multiple threads sample memory simultaneously
         THEN expect thread-safe memory measurement without race conditions
+        
+        NOTE: Thread safety mechanism not specified - unclear if locking, atomic operations, or other synchronization used
+        NOTE: Performance impact of thread safety measures on monitoring accuracy and overhead unclear
         """
         raise NotImplementedError("test_memory_sampling_thread_safety_for_concurrent_monitoring test needs to be implemented")
 
@@ -150,6 +165,9 @@ class TestMemoryUsageBounds:
         GIVEN baseline memory measurement
         WHEN verifying measurement stability
         THEN expect baseline to be stable ±10MB over 5-second period
+        
+        NOTE: ±10MB tolerance and 5-second period appear arbitrary - needs justification based on system behavior
+        NOTE: Stability criteria should account for garbage collection and other system memory fluctuations
         """
         raise NotImplementedError("test_baseline_memory_stability_verification test needs to be implemented")
 
@@ -158,6 +176,9 @@ class TestMemoryUsageBounds:
         GIVEN process memory map changes during monitoring
         WHEN MediaProcessor continues memory measurement
         THEN expect graceful handling of memory layout changes
+        
+        NOTE: "Graceful handling" not defined - unclear what constitutes appropriate response to memory map changes
+        NOTE: Specific memory map change scenarios and their impact on measurement accuracy not specified
         """
         raise NotImplementedError("test_memory_measurement_handles_process_memory_map_changes test needs to be implemented")
 
@@ -166,6 +187,9 @@ class TestMemoryUsageBounds:
         GIVEN memory sampling every 100ms
         WHEN measuring sampling overhead
         THEN expect <1% performance impact on main operation
+        
+        NOTE: 1% overhead threshold needs justification - may be too strict for high-frequency sampling
+        NOTE: Performance impact measurement methodology not specified
         """
         raise NotImplementedError("test_memory_sampling_performance_overhead_under_1_percent test needs to be implemented")
 
@@ -182,6 +206,9 @@ class TestMemoryUsageBounds:
         GIVEN memory usage approaching bound
         WHEN MediaProcessor detects memory pressure
         THEN expect explicit garbage collection to be triggered
+        
+        NOTE: Memory pressure detection threshold and mechanism not specified
+        NOTE: Explicit GC may cause performance degradation and should be used judiciously
         """
         raise NotImplementedError("test_garbage_collection_triggered_on_memory_pressure test needs to be implemented")
 
@@ -190,6 +217,9 @@ class TestMemoryUsageBounds:
         GIVEN memory monitoring completion
         WHEN MediaProcessor logs memory statistics
         THEN expect log to include peak usage, baseline, and calculated bound
+        
+        NOTE: Logging format, level, and frequency not specified - may impact performance or create log spam
+        NOTE: Statistical aggregation (average, percentiles) may be more useful than just peak values
         """
         raise NotImplementedError("test_memory_usage_logging_includes_peak_and_baseline_values test needs to be implemented")
 
@@ -206,6 +236,9 @@ class TestMemoryUsageBounds:
         GIVEN operation with predictable memory requirements
         WHEN MediaProcessor starts operation
         THEN expect preemptive validation of available memory vs expected usage
+        
+        NOTE: "Predictable memory requirements" assumption may not hold for all media processing operations
+        NOTE: Available memory detection should account for system reserves and other processes
         """
         raise NotImplementedError("test_memory_bound_validation_on_operation_start test needs to be implemented")
 

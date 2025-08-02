@@ -677,26 +677,16 @@ class TestInferRelationshipType:
         THEN 'collaborates_with' should be returned
         """
         # Test collaborates
-        result = self.integrator._infer_relationship_type(
-            self.person_entity, self.person_entity2, 
-            "John Smith collaborates with Jane Doe on projects"
-        )
-        assert result == "collaborates_with"
-        
-        # Test works together
-        result = self.integrator._infer_relationship_type(
-            self.person_entity, self.person_entity2, 
-            "John Smith works together with Jane Doe"
-        )
-        assert result == "collaborates_with"
-        
-        # Test colleagues
-        result = self.integrator._infer_relationship_type(
-            self.person_entity, self.person_entity2, 
+        sentences = [
+            "John Smith collaborates with Jane Doe on projects",
+            "John Smith works together with Jane Doe",
             "John Smith and Jane Doe are colleagues"
-        )
-        assert result == "collaborates_with"
-
+        ]
+        for sentence in sentences:
+            result = self.integrator._infer_relationship_type(
+                self.person_entity, self.person_entity2, sentence
+            )
+            assert result == "collaborates_with"
 
 
 if __name__ == "__main__":

@@ -52,6 +52,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN network speed measurement requirement
         WHEN MediaProcessor measures theoretical network speed
         THEN expect Fast.com API to be called within 5 minutes of download operation
+        
+        NOTE: Fast.com API dependency creates external service reliability risk - needs fallback measurement method
+        NOTE: API rate limiting and authentication requirements not specified
         """
         raise NotImplementedError("test_fast_com_api_network_speed_measurement test needs to be implemented")
 
@@ -60,6 +63,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN cached network speed measurement
         WHEN checking cache validity
         THEN expect cached result to be valid for exactly 5 minutes
+        
+        NOTE: Fixed 5-minute cache duration may be inappropriate for varying network conditions
+        NOTE: Cache invalidation should consider network stability and measurement accuracy changes
         """
         raise NotImplementedError("test_network_speed_cache_validity_5_minutes test needs to be implemented")
 
@@ -68,6 +74,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN YouTube URL download
         WHEN determining theoretical max speed
         THEN expect platform rate limit to be set at 2.0 MB/s
+        
+        NOTE: YouTube rate limits vary by region, account type, and time of day - fixed 2.0 MB/s may be inaccurate
+        NOTE: Rate limit values should be configurable and updated based on observed platform behavior
         """
         raise NotImplementedError("test_youtube_platform_rate_limit_2mbps test needs to be implemented")
 
@@ -124,6 +133,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN download operation timing
         WHEN measuring transfer duration
         THEN expect timing to exclude initial connection/handshake time
+        
+        NOTE: Separating connection time from transfer time may not reflect real-world user experience
+        NOTE: Method for accurately distinguishing connection vs transfer phases not specified
         """
         raise NotImplementedError("test_download_timing_excludes_connection_establishment test needs to be implemented")
 
@@ -172,6 +184,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN download efficiency measurement
         WHEN comparing against threshold
         THEN expect efficiency ratio to be ≥ 0.70
+        
+        NOTE: 70% threshold appears arbitrary - needs justification based on real-world network performance data
+        NOTE: Threshold should account for network conditions, platform rate limiting, and server performance
         """
         raise NotImplementedError("test_efficiency_ratio_threshold_70_percent test needs to be implemented")
 
@@ -180,6 +195,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN download URL "https://youtube.com/watch?v=abc"
         WHEN determining platform for rate limiting
         THEN expect platform to be detected as "youtube.com"
+        
+        NOTE: Domain-based platform detection may miss CDN endpoints, redirects, or alternative domains
+        NOTE: Platform detection should handle URL variations and potential obfuscation
         """
         raise NotImplementedError("test_platform_detection_from_url_domain test needs to be implemented")
 
@@ -212,6 +230,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN Fast.com API speed test
         WHEN measurement takes longer than 30 seconds
         THEN expect timeout and fallback to conservative estimate
+        
+        NOTE: 30-second timeout may be insufficient for accurate speed measurement on slower connections
+        NOTE: Timeout handling should provide meaningful fallback rather than arbitrary conservative estimate
         """
         raise NotImplementedError("test_network_speed_measurement_timeout_30_seconds test needs to be implemented")
 
@@ -220,6 +241,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN failed Fast.com API measurement
         WHEN calculating theoretical speed
         THEN expect fallback to conservative 10 MB/s estimate
+        
+        NOTE: Fixed 10 MB/s fallback may be too optimistic for slow connections or too conservative for fast ones
+        NOTE: Fallback estimate should be based on historical data or user configuration rather than fixed value
         """
         raise NotImplementedError("test_fallback_speed_estimate_10mbps_when_measurement_fails test needs to be implemented")
 
@@ -228,6 +252,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN interrupted download
         WHEN checking server resume support
         THEN expect HTTP Range request capability to be detected
+        
+        NOTE: Range request detection method not specified - should test with actual Range header
+        NOTE: Server support may vary between initial detection and actual resume attempt
         """
         raise NotImplementedError("test_partial_download_resume_capability_detection test needs to be implemented")
 
@@ -236,6 +263,9 @@ class TestDownloadThroughputEfficiency:
         GIVEN multiple concurrent downloads
         WHEN measuring individual download efficiency
         THEN expect each download to be measured independently
+        
+        NOTE: Independent measurement assumption ignores bandwidth sharing and network contention effects
+        NOTE: Real-world efficiency will be affected by concurrent operations using same network resources
         """
         raise NotImplementedError("test_concurrent_downloads_do_not_affect_individual_efficiency test needs to be implemented")
 

@@ -28,7 +28,15 @@ STATUS_DICT_CREATION_OPERATIONS = [
 
 
 class TestStatusResponseTime:
-    """Test status response time criteria for status reporting."""
+    """Test status response time criteria for status reporting.
+    
+    NOTE: Class has multiple vague requirements that need clarification:
+    1. 5ms threshold is arbitrary without hardware baseline context
+    2. "Timing budget" concept undefined across multiple test methods  
+    3. "Minimal" CPU/memory usage lacks quantitative thresholds
+    4. Thread safety requirements not specified with concurrency levels
+    5. Cache locality optimization benefits not quantified
+    """
 
     def test_ensure_docstring_quality(self):
         """
@@ -45,6 +53,10 @@ class TestStatusResponseTime:
         GIVEN status dictionary generation
         WHEN MediaProcessor measures status response time
         THEN expect time.perf_counter() to be used for high-precision timing
+        
+        NOTE: Implementation-specific testing constrains timing mechanism flexibility
+        NOTE: perf_counter availability and precision varies across platforms
+        NOTE: Mock doesn't validate actual timing accuracy or proper counter usage patterns
         """
         raise NotImplementedError("test_status_timing_measurement_uses_perf_counter test needs to be implemented")
 
@@ -53,6 +65,10 @@ class TestStatusResponseTime:
         GIVEN operation completion
         WHEN measuring status response time
         THEN expect timing from operation completion to return statement execution
+        
+        NOTE: "Operation completion" point ambiguous - success callback, cleanup finish, or return preparation?
+        NOTE: "Return statement execution" unclear - function return or status object creation completion?
+        NOTE: Timing measurement boundaries vague and may not capture relevant performance bottlenecks
         """
         raise NotImplementedError("test_status_timing_measurement_from_completion_to_return test needs to be implemented")
 
@@ -61,6 +77,11 @@ class TestStatusResponseTime:
         GIVEN status dictionary generation
         WHEN measuring generation time
         THEN expect time to be ≤ 5ms
+        
+        NOTE: 5ms threshold is arbitrary without:
+        - Hardware baseline specification
+        - Measurement under load conditions
+        - Comparison with industry standards
         """
         raise NotImplementedError("test_status_response_time_threshold_5_milliseconds test needs to be implemented")
 
@@ -85,6 +106,8 @@ class TestStatusResponseTime:
         GIVEN status dictionary creation
         WHEN MediaProcessor instantiates new dictionary
         THEN expect instantiation to complete within timing budget
+        
+        NOTE: "Timing budget" concept undefined - needs specific threshold
         """
         raise NotImplementedError("test_status_dict_instantiation_performance test needs to be implemented")
 
@@ -117,6 +140,8 @@ class TestStatusResponseTime:
         GIVEN status dictionary generation
         WHEN MediaProcessor creates status object
         THEN expect minimal memory allocation for status creation
+        
+        NOTE: "Minimal memory allocation" lacks quantitative threshold
         """
         raise NotImplementedError("test_status_generation_memory_efficiency test needs to be implemented")
 
@@ -125,6 +150,8 @@ class TestStatusResponseTime:
         GIVEN status dictionary generation
         WHEN MediaProcessor creates status object
         THEN expect minimal CPU usage for status creation
+        
+        NOTE: "Minimal CPU usage" lacks quantitative measurement criteria
         """
         raise NotImplementedError("test_status_generation_cpu_efficiency test needs to be implemented")
 

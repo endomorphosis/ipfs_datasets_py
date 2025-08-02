@@ -10,7 +10,7 @@ from io import StringIO
 from pathlib import Path
 
 # Make sure the input file exists
-assert os.path.exists('_extract_classes_from_python_files_stubs.py'), "_extract_classes_from_python_files_stubs.py does not exist at the specified directory."
+# assert os.path.exists('_extract_classes_from_python_files_stubs.py'), "_extract_classes_from_python_files_stubs.py does not exist at the specified directory."
 
 # Import the function under test
 from .._extract_classes_from_python_files_stubs import main

@@ -52,6 +52,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message clarity evaluation
         WHEN counting distinct error message types
         THEN expect exactly 15 error message types (matching exception types)
+        
+        NOTE: Fixed count of 15 lacks justification - should be based on actual exception types in MediaProcessor
+        NOTE: Count should be dynamically determined from actual codebase rather than hardcoded
         """
         raise NotImplementedError("test_error_message_count_matches_exception_types test needs to be implemented")
 
@@ -60,6 +63,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message clarity evaluation
         WHEN assigning clarity scores
         THEN expect integer values from 1 to 5 inclusive
+        
+        NOTE: Integer-only scoring may lack precision - half-points or decimal scores could provide better granularity
+        NOTE: Scale justification and anchor points for each integer value need clearer definition
         """
         raise NotImplementedError("test_clarity_score_scale_1_to_5_integer_values test needs to be implemented")
 
@@ -68,6 +74,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message clarity evaluation
         WHEN conducting evaluation
         THEN expect exactly 5 software engineers as evaluators
+        
+        NOTE: Human evaluator requirement makes test non-reproducible and not suitable for automated testing
+        NOTE: Subjective evaluation criteria need to be replaced with objective, measurable standards
         """
         raise NotImplementedError("test_evaluator_count_exactly_5_software_engineers test needs to be implemented")
 
@@ -92,6 +101,9 @@ class TestErrorMessageClarityScore:
         GIVEN average error message clarity score
         WHEN comparing against threshold
         THEN expect score to be ≥ 4.0
+        
+        NOTE: 4.0 threshold lacks justification - needs empirical basis for what constitutes acceptable clarity
+        NOTE: Threshold should be based on objective criteria rather than subjective human evaluation
         """
         raise NotImplementedError("test_clarity_threshold_4_point_0_minimum test needs to be implemented")
 
@@ -156,6 +168,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message evaluation
         WHEN checking message content
         THEN expect technical jargon to be avoided or explained
+        
+        NOTE: "Technical jargon" definition subjective and context-dependent - needs objective criteria
+        NOTE: What constitutes acceptable explanation vs avoidance not specified
         """
         raise NotImplementedError("test_error_message_excludes_technical_jargon test needs to be implemented")
 
@@ -164,6 +179,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message evaluation process
         WHEN 5 evaluators rate messages
         THEN expect independent evaluation without discussion or influence
+        
+        NOTE: Human independence enforcement not practical in automated testing environment
+        NOTE: Evaluation process needs to be replaced with objective, algorithmic assessment
         """
         raise NotImplementedError("test_evaluator_independence_prevents_bias test needs to be implemented")
 
@@ -172,6 +190,9 @@ class TestErrorMessageClarityScore:
         GIVEN 5 evaluator scores for same message type
         WHEN checking evaluation consistency
         THEN expect inter-rater reliability within acceptable range
+        
+        NOTE: "Acceptable range" for inter-rater reliability not defined - needs specific statistical thresholds
+        NOTE: Method for measuring and validating consistency (correlation, variance, etc.) not specified
         """
         raise NotImplementedError("test_evaluation_consistency_check_across_evaluators test needs to be implemented")
 
@@ -204,6 +225,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message clarity evaluation
         WHEN considering international users
         THEN expect messages to be clear for non-native English speakers
+        
+        NOTE: Localization testing methodology not specified - unclear how to objectively measure clarity for non-native speakers
+        NOTE: Language complexity metrics and cultural considerations not defined
         """
         raise NotImplementedError("test_error_message_localization_considerations test needs to be implemented")
 
@@ -212,6 +236,9 @@ class TestErrorMessageClarityScore:
         GIVEN error message evaluation
         WHEN checking message tone
         THEN expect professional, helpful tone without blame or frustration
+        
+        NOTE: Tone assessment is subjective and culturally dependent - needs objective measurement criteria
+        NOTE: "Professional" and "helpful" definitions vary across contexts and user expectations
         """
         raise NotImplementedError("test_error_message_tone_professional_and_helpful test needs to be implemented")
 

@@ -46,7 +46,15 @@ ERROR_MESSAGE_MAX_LENGTH = 200
 
 
 class TestURLEdgeCaseHandling:
-    """Test URL edge case handling with specific, testable scenarios."""
+    """Test URL edge case handling with specific, testable scenarios.
+    
+    NOTE: Class has multiple vague requirements that need clarification:
+    1. 90% success ratio is arbitrary without failure tolerance analysis
+    2. 200-character error message limit lacks user experience justification
+    3. 5-hop redirect limit is arbitrary without performance analysis
+    4. 10-second timeout lacks network condition considerations
+    5. "Appropriate responses" criteria undefined for success calculation
+    """
 
     def test_ensure_docstring_quality(self):
         """
@@ -63,6 +71,10 @@ class TestURLEdgeCaseHandling:
         GIVEN URL "http://example.com/video.mp4" that redirects to HTTPS
         WHEN MediaProcessor processes the URL
         THEN expect successful following of redirect (not error classification)
+        
+        NOTE: Success criteria undefined - what constitutes successful redirect following?
+        NOTE: Redirect chain limits not specified - how many redirects are acceptable?
+        NOTE: Hardcoded test URL may not represent real-world redirect scenarios
         """
         raise NotImplementedError("test_http_to_https_redirect_follows_and_succeeds test needs to be implemented")
 
@@ -190,6 +202,8 @@ class TestURLEdgeCaseHandling:
         GIVEN any error response message
         WHEN checking message length
         THEN expect message to be ≤ 200 characters including error code
+        
+        NOTE: 200-character limit is arbitrary without user interface constraints analysis
         """
         raise NotImplementedError("test_error_message_length_constraint_enforced test needs to be implemented")
 
@@ -222,6 +236,8 @@ class TestURLEdgeCaseHandling:
         GIVEN 13 edge case test results
         WHEN calculating success ratio
         THEN expect (appropriate_responses / total_cases) ≥ 0.90
+        
+        NOTE: 90% success ratio is arbitrary without failure tolerance requirements
         """
         raise NotImplementedError("test_edge_case_success_ratio_calculation_method test needs to be implemented")
 
@@ -230,6 +246,8 @@ class TestURLEdgeCaseHandling:
         GIVEN URL with redirect chain >5 hops
         WHEN MediaProcessor follows redirects
         THEN expect redirect following to stop at 5 hops maximum
+        
+        NOTE: 5-hop limit is arbitrary without analysis of legitimate redirect chains
         """
         raise NotImplementedError("test_redirect_chain_limit_enforced_at_5_hops test needs to be implemented")
 

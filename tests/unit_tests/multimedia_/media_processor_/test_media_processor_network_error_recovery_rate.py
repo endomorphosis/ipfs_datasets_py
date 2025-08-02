@@ -180,6 +180,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN recovery attempt after network error
         WHEN determining success criteria
         THEN expect final attempt to return HTTP 200 with complete file
+        
+        NOTE: HTTP 200 requirement may be too strict - other 2xx codes (206, 201) could indicate successful recovery
+        NOTE: "Complete file" verification method not specified - content validation vs size check unclear
         """
         raise NotImplementedError("test_successful_recovery_definition_requires_http_200 test needs to be implemented")
 
@@ -188,6 +191,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN successful recovery attempt returning HTTP 200
         WHEN verifying download completion
         THEN expect received file size to match Content-Length header
+        
+        NOTE: Content-Length header may be missing, incorrect, or not reflect actual content size
+        NOTE: File integrity verification should use checksums or content validation, not just size comparison
         """
         raise NotImplementedError("test_complete_file_verification_after_recovery test needs to be implemented")
 
@@ -204,6 +210,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN network error recovery measurements
         WHEN comparing against threshold
         THEN expect recovery success rate to be ≥ 0.80
+        
+        NOTE: 80% threshold lacks justification - needs empirical data on achievable recovery rates
+        NOTE: Threshold should account for network conditions and platform-specific limitations
         """
         raise NotImplementedError("test_recovery_success_rate_threshold_80_percent test needs to be implemented")
 
@@ -220,6 +229,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN connection reset during partial download
         WHEN MediaProcessor attempts recovery
         THEN expect HTTP Range request to resume from last received byte
+        
+        NOTE: Server support for Range requests not guaranteed - should verify Accept-Ranges header first
+        NOTE: Partial file integrity validation needed before resume to prevent corruption
         """
         raise NotImplementedError("test_partial_download_resume_after_connection_reset test needs to be implemented")
 
@@ -228,6 +240,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN retry delay of 2.0 seconds
         WHEN MediaProcessor implements delay using time.sleep()
         THEN expect actual delay to be within ±100ms of target
+        
+        NOTE: ±100ms tolerance may be too strict for systems under heavy load or with limited timer precision
+        NOTE: Timing accuracy requirements should account for system scheduling variability
         """
         raise NotImplementedError("test_retry_delay_timing_accuracy_within_100ms test needs to be implemented")
 
@@ -236,6 +251,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN network error occurring mid-transfer
         WHEN MediaProcessor detects transfer interruption
         THEN expect error to be classified as recoverable network error
+        
+        NOTE: Mid-transfer error detection mechanism not specified - may miss subtle connectivity issues
+        NOTE: Classification criteria for "recoverable" vs permanent network errors need clear definition
         """
         raise NotImplementedError("test_network_error_detection_during_transfer test needs to be implemented")
 
@@ -244,6 +262,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN retry attempt after recoverable error
         WHEN MediaProcessor makes new request
         THEN expect original request headers to be preserved
+        
+        NOTE: Some headers may need modification for retries (Authorization, timestamp-based headers, etc.)
+        NOTE: Header preservation policy should account for security and protocol requirements
         """
         raise NotImplementedError("test_retry_attempts_preserve_original_request_headers test needs to be implemented")
 
@@ -260,6 +281,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN recoverable connection error
         WHEN MediaProcessor attempts retry
         THEN expect new connection to be established (pool reset)
+        
+        NOTE: Connection pool reset may be unnecessary for all error types and could impact performance
+        NOTE: Pool reset strategy should distinguish between connection-specific vs general network issues
         """
         raise NotImplementedError("test_connection_pooling_reset_after_recoverable_error test needs to be implemented")
 
@@ -268,6 +292,9 @@ class TestNetworkErrorRecoveryRate:
         GIVEN DNS-related recoverable error
         WHEN MediaProcessor attempts retry
         THEN expect fresh DNS resolution to be performed
+        
+        NOTE: DNS cache bypass mechanism not specified - may require low-level socket configuration
+        NOTE: Fresh DNS resolution may not solve the underlying connectivity issue and could add latency
         """
         raise NotImplementedError("test_dns_resolution_cache_bypass_on_retry test needs to be implemented")
 

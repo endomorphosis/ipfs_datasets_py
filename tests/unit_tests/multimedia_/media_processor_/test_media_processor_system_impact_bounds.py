@@ -28,7 +28,15 @@ SYSTEM_IDLE_PROCESS_EXCLUSIONS = ["System Idle Process", "kernel_task", "idle"]
 
 
 class TestSystemImpactBounds:
-    """Test system impact bounds criteria for system stability."""
+    """Test system impact bounds criteria for system stability.
+    
+    NOTE: Class has multiple vague requirements that need clarification:
+    1. 80% CPU threshold is arbitrary without workload context
+    2. 60-second measurement interval lacks justification 
+    3. "System stability" undefined without specific metrics
+    4. Emergency 90% threshold comes from unclear source
+    5. ±5% accuracy requirement lacks validation methodology
+    """
 
     def test_ensure_docstring_quality(self):
         """
@@ -45,6 +53,10 @@ class TestSystemImpactBounds:
         GIVEN CPU usage monitoring
         WHEN MediaProcessor measures process CPU usage
         THEN expect psutil.Process().cpu_percent(interval=60) to be used
+        
+        NOTE: Implementation-specific testing locks in psutil dependency without considering alternatives
+        NOTE: 60-second interval hardcoded without justification for this specific duration
+        NOTE: Mock doesn't validate actual CPU measurement accuracy or edge case handling
         """
         raise NotImplementedError("test_cpu_usage_measurement_uses_psutil_cpu_percent test needs to be implemented")
 
@@ -53,6 +65,10 @@ class TestSystemImpactBounds:
         GIVEN CPU usage measurement
         WHEN MediaProcessor configures measurement interval
         THEN expect interval to be exactly 60 seconds for 1-minute rolling average
+        
+        NOTE: 60-second interval arbitrary without justification for system responsiveness vs accuracy tradeoff
+        NOTE: Fixed interval doesn't adapt to system load or operation complexity variations
+        NOTE: "Exactly 60 seconds" constraint too rigid for dynamic monitoring needs
         """
         raise NotImplementedError("test_cpu_measurement_interval_exactly_60_seconds test needs to be implemented")
 
@@ -86,6 +102,11 @@ class TestSystemImpactBounds:
         GIVEN system impact measurement
         WHEN comparing against threshold
         THEN expect impact ratio to be ≤ 0.80 (80% of system capacity)
+        
+        NOTE: 80% threshold is arbitrary without:
+        - Analysis of system responsiveness requirements
+        - Consideration of other system processes
+        - Validation across different hardware configurations
         """
         raise NotImplementedError("test_system_impact_threshold_80_percent_maximum test needs to be implemented")
 
@@ -214,6 +235,8 @@ class TestSystemImpactBounds:
         GIVEN CPU usage monitoring during operations
         WHEN measuring monitoring overhead
         THEN expect <1% additional CPU usage for monitoring itself
+        
+        NOTE: <1% overhead threshold is arbitrary without performance analysis
         """
         raise NotImplementedError("test_cpu_usage_monitoring_performance_overhead_minimal test needs to be implemented")
 
@@ -222,6 +245,8 @@ class TestSystemImpactBounds:
         GIVEN system impact consistently exceeding 90% (emergency threshold)
         WHEN MediaProcessor detects excessive impact
         THEN expect emergency operation shutdown to protect system stability
+        
+        NOTE: 90% emergency threshold lacks justification and "system stability" undefined
         """
         raise NotImplementedError("test_system_impact_emergency_shutdown_on_excessive_usage test needs to be implemented")
 

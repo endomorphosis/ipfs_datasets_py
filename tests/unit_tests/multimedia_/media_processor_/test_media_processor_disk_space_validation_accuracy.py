@@ -52,6 +52,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN Content-Length header value 1000MB
         WHEN MediaProcessor calculates space prediction
         THEN expect prediction = 1000 × 1.5 + 100 = 1600MB
+        
+        NOTE: Formula assumes Content-Length represents final file size, but conversion may significantly change size
+        NOTE: No consideration for compression ratio differences between source and target formats
         """
         raise NotImplementedError("test_space_prediction_formula_uses_content_length_multiplier test needs to be implemented")
 
@@ -60,6 +63,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN space prediction calculation
         WHEN applying safety multiplier to content length
         THEN expect multiplier to be exactly 1.5 for conversion overhead
+        
+        NOTE: 1.5 multiplier lacks justification - needs empirical data on actual conversion overhead ratios
+        NOTE: Multiplier should vary based on conversion type (audio vs video, codec complexity, quality settings)
         """
         raise NotImplementedError("test_safety_multiplier_exactly_1_point_5 test needs to be implemented")
 
@@ -68,6 +74,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN space prediction calculation
         WHEN adding temporary file buffer
         THEN expect exactly 100MB to be added for temporary files
+        
+        NOTE: Fixed 100MB buffer may be insufficient for large files or excessive for small files
+        NOTE: Buffer size should scale with input file size or be based on actual temporary file usage patterns
         """
         raise NotImplementedError("test_temporary_file_buffer_exactly_100mb test needs to be implemented")
 
@@ -76,6 +85,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN HTTP response with Content-Length: 524288000
         WHEN MediaProcessor extracts content length
         THEN expect content_length = 524288000 bytes (500MB)
+        
+        NOTE: Content-Length header may be missing, incorrect, or represent compressed size
+        NOTE: Chunked transfer encoding and dynamic content may not provide reliable Content-Length
         """
         raise NotImplementedError("test_content_length_header_extraction_from_http_response test needs to be implemented")
 
@@ -132,6 +144,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN disk space validation accuracy measurement
         WHEN comparing against target
         THEN expect accuracy to equal exactly 1.0 (100%)
+        
+        NOTE: 100% accuracy target is unrealistic - some variance in prediction vs actual usage is inevitable
+        NOTE: Target should allow for acceptable margin of error while still ensuring safe operation
         """
         raise NotImplementedError("test_accuracy_target_exactly_100_percent test needs to be implemented")
 
@@ -140,6 +155,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN HTTP response without Content-Length header
         WHEN MediaProcessor predicts space requirements
         THEN expect conservative fallback estimate based on URL or file type
+        
+        NOTE: "Conservative fallback estimate" methodology not specified - needs clear calculation approach
+        NOTE: URL-based estimation accuracy and reliability questionable for unknown content sources
         """
         raise NotImplementedError("test_missing_content_length_header_handling test needs to be implemented")
 
@@ -148,6 +166,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN HTTP response with chunked transfer encoding
         WHEN MediaProcessor predicts space requirements
         THEN expect progressive space estimation based on received chunks
+        
+        NOTE: Progressive estimation methodology not specified - how to update predictions as chunks arrive
+        NOTE: Initial estimation without Content-Length may be highly inaccurate
         """
         raise NotImplementedError("test_chunked_transfer_encoding_space_estimation test needs to be implemented")
 
@@ -156,6 +177,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN compressed content download (gzip, deflate)
         WHEN MediaProcessor predicts decompressed space requirements
         THEN expect expansion factor to be applied to Content-Length
+        
+        NOTE: Compression ratio varies significantly by content type - fixed expansion factor may be inaccurate
+        NOTE: Detection of compressed content and appropriate expansion factors not specified
         """
         raise NotImplementedError("test_compressed_content_space_prediction_adjustment test needs to be implemented")
 
@@ -188,6 +212,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN multiple concurrent operations
         WHEN MediaProcessor validates disk space
         THEN expect space prediction to account for all concurrent operations
+        
+        NOTE: Coordination mechanism between concurrent operations not specified
+        NOTE: Race conditions in space validation when multiple operations start simultaneously need consideration
         """
         raise NotImplementedError("test_space_validation_considers_concurrent_operations test needs to be implemented")
 
@@ -220,6 +247,9 @@ class TestDiskSpaceValidationAccuracy:
         GIVEN different filesystem types (NTFS, ext4, APFS, etc.)
         WHEN MediaProcessor predicts space requirements
         THEN expect filesystem-specific overhead factors to be considered
+        
+        NOTE: Filesystem detection mechanism and overhead factors not specified
+        NOTE: Cross-platform compatibility and unknown filesystem handling unclear
         """
         raise NotImplementedError("test_filesystem_type_specific_overhead_considerations test needs to be implemented")
 

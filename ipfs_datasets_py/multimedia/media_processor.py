@@ -14,7 +14,7 @@ from .ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
 
 
 def make_media_processor(
-    default_output_dir: Optional[str] = None,
+    default_output_dir: Optional[str|Path] = None,
     enable_logging: bool = True,
     logger: logging.Logger = logging.getLogger(__name__),
     ytdlp: Optional[YtDlpWrapper] = None,
@@ -112,7 +112,7 @@ class MediaProcessor:
         
         # Check available capabilities
         capabilities = processor.get_capabilities()
-        if capabilities["supported_operations"]["download"]:
+        if capabilities["download"]:
             print("Video downloading is available")
         
         # Custom output directory and logging
@@ -130,7 +130,7 @@ class MediaProcessor:
     """
     
     def __init__(self, 
-                default_output_dir: Optional[str] = None,
+                default_output_dir: Optional[str|Path] = None,
                 enable_logging: bool = True,
                 logger: logging.Logger =  logging.getLogger(__name__),
                 ytdlp: Optional[YtDlpWrapper] = None,
@@ -145,7 +145,7 @@ class MediaProcessor:
         and configures the processor accordingly.
 
         Args:
-            default_output_dir (Optional[str], optional): Default directory path for output files.
+            default_output_dir (Optional[str|Path], optional): Default directory path for output files.
                 Can be relative or absolute path. If relative, it will be resolved relative
                 to the current working directory. If None, uses current working directory.
                 The directory will be created if it doesn't exist. Defaults to None.
@@ -317,7 +317,8 @@ class MediaProcessor:
                 "error": str(e)
             }
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    @classmethod
+    def get_capabilities(cls) -> Dict[str, Any]:
         """
         Get comprehensive information about available capabilities and supported operations.
 
@@ -332,35 +333,30 @@ class MediaProcessor:
 
         Returns:
             Dict[str, Any]: Comprehensive capabilities information with the following structure:
-            {
-                "ytdlp_available": bool,      # Whether yt-dlp backend is available
-                "ffmpeg_available": bool,     # Whether FFmpeg backend is available
-                "supported_operations": {
+                {
                     "download": bool,                    # Video downloading capability
                     "convert": bool,                     # Media conversion capability
-                    "download_and_convert": bool         # Complete workflow capability
                 }
-            }
 
         Examples:
-            >>> capabilities = processor.get_capabilities()
+            >>> processor_can = processor.get_capabilities()
             >>> 
             >>> # Check if downloading is supported
-            >>> if capabilities["supported_operations"]["download"]:
+            >>> if processor_can["download"]:
             ...     print("Video downloading is available")
             ... else:
             ...     print("yt-dlp is required for video downloading")
             >>> 
             >>> # Adapt UI based on capabilities
-            >>> if capabilities["ytdlp_available"] and capabilities["ffmpeg_available"]:
+            >>> if processor_can["download"] and processor_can["convert"]:
             ...     show_full_interface()
-            ... elif capabilities["ytdlp_available"]:
+            ... elif processor_can["download"]:
             ...     show_download_only_interface()
             ... else:
             ...     show_no_capabilities_message()
             >>> 
             >>> # Validate operation before attempting
-            >>> if not capabilities["supported_operations"]["convert"]:
+            >>> if not processor_can["convert"]:
             ...     raise RuntimeError("Conversion not supported - FFmpeg required")
 
         Note:
@@ -371,11 +367,7 @@ class MediaProcessor:
             - This method is synchronous and performs no external operations
         """
         return {
-            "ytdlp_available": YTDLP_AVAILABLE,
-            "ffmpeg_available": FFMPEG_AVAILABLE,
-            "supported_operations": {
-                "download": YTDLP_AVAILABLE,
-                "convert": FFMPEG_AVAILABLE,
-                "download_and_convert": YTDLP_AVAILABLE and FFMPEG_AVAILABLE
-            }
+            "download": YTDLP_AVAILABLE,
+            "convert": FFMPEG_AVAILABLE,
         }
+

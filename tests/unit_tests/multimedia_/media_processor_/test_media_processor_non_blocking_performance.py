@@ -66,6 +66,9 @@ class TestNonBlockingPerformance:
         GIVEN main thread blocking measurement
         WHEN comparing against threshold
         THEN expect total blocking time to be ≤ 10ms per method execution
+        
+        NOTE: 10ms threshold may be too strict for complex operations or slower systems
+        NOTE: Threshold should account for platform differences and system load conditions
         """
         raise NotImplementedError("test_blocking_time_threshold_10_milliseconds_maximum test needs to be implemented")
 
@@ -74,6 +77,9 @@ class TestNonBlockingPerformance:
         GIVEN file I/O operation in async method
         WHEN MediaProcessor performs file operations
         THEN expect aiofiles or equivalent async file I/O to be used
+        
+        NOTE: Testing for specific aiofiles implementation is overly prescriptive - should test non-blocking behavior
+        NOTE: Alternative async file I/O libraries may be equally valid
         """
         raise NotImplementedError("test_file_io_operations_use_async_aiofiles test needs to be implemented")
 
@@ -82,6 +88,9 @@ class TestNonBlockingPerformance:
         GIVEN network request in async method
         WHEN MediaProcessor makes HTTP requests
         THEN expect aiohttp or equivalent async HTTP client to be used
+        
+        NOTE: Testing for specific aiohttp implementation is overly prescriptive - should test non-blocking HTTP behavior
+        NOTE: Alternative async HTTP libraries (httpx, etc.) may be equally appropriate
         """
         raise NotImplementedError("test_network_requests_use_async_aiohttp test needs to be implemented")
 
@@ -114,6 +123,9 @@ class TestNonBlockingPerformance:
         GIVEN main thread execution monitoring
         WHEN detecting blocking periods
         THEN expect continuous blocking to be measured (not cumulative)
+        
+        NOTE: "Continuous blocking" definition ambiguous - unclear how to distinguish between continuous vs intermittent blocking
+        NOTE: Measurement methodology for detecting blocking periods not specified
         """
         raise NotImplementedError("test_continuous_blocking_period_detection test needs to be implemented")
 
@@ -122,6 +134,9 @@ class TestNonBlockingPerformance:
         GIVEN long-running async operation
         WHEN MediaProcessor processes data
         THEN expect control to be yielded to event loop at least every 100ms
+        
+        NOTE: 100ms yield frequency may be too frequent for performance-critical operations
+        NOTE: Yield frequency should be configurable based on operation type and system requirements
         """
         raise NotImplementedError("test_event_loop_yield_frequency_every_100ms test needs to be implemented")
 
@@ -130,6 +145,9 @@ class TestNonBlockingPerformance:
         GIVEN async method implementation
         WHEN MediaProcessor calls async functions
         THEN expect await keyword to be used for all async operations
+        
+        NOTE: Testing for specific await keyword usage is implementation detail - should test async behavior outcomes
+        NOTE: Some async patterns may use callbacks or other mechanisms instead of direct await
         """
         raise NotImplementedError("test_await_keyword_used_for_all_async_operations test needs to be implemented")
 
@@ -138,6 +156,9 @@ class TestNonBlockingPerformance:
         GIVEN method execution with blocking operation
         WHEN operation runs on main thread
         THEN expect blocking operation to be detected and measured
+        
+        NOTE: Blocking operation detection mechanism not specified - unclear how to identify blocking vs non-blocking operations
+        NOTE: Detection accuracy may vary with system load and threading implementation details
         """
         raise NotImplementedError("test_blocking_operation_detection_in_main_thread test needs to be implemented")
 
@@ -154,6 +175,9 @@ class TestNonBlockingPerformance:
         GIVEN multiple concurrent async method calls
         WHEN MediaProcessor handles concurrent execution
         THEN expect thread-safe implementation without race conditions
+        
+        NOTE: Thread safety verification methodology not specified for async operations - different concerns than traditional threading
+        NOTE: Async operations typically run in single thread with event loop - thread safety may not be the right concern
         """
         raise NotImplementedError("test_thread_safety_for_concurrent_async_calls test needs to be implemented")
 
@@ -194,6 +218,9 @@ class TestNonBlockingPerformance:
         GIVEN progress reporting in async method
         WHEN MediaProcessor reports progress
         THEN expect async-safe callback mechanisms to be used
+        
+        NOTE: "Async-safe" callback mechanisms not clearly defined - needs specification of what constitutes safe vs unsafe
+        NOTE: Callback frequency and performance impact on async operations need consideration
         """
         raise NotImplementedError("test_progress_callback_uses_async_safe_mechanisms test needs to be implemented")
 
@@ -218,6 +245,9 @@ class TestNonBlockingPerformance:
         GIVEN async method execution on different platforms
         WHEN MediaProcessor initializes async operations
         THEN expect compatibility with platform-specific event loop policies
+        
+        NOTE: Platform-specific compatibility requirements not specified - unclear which platforms and policies to support
+        NOTE: Compatibility verification methodology and failure handling not defined
         """
         raise NotImplementedError("test_event_loop_policy_compatibility_check test needs to be implemented")
 

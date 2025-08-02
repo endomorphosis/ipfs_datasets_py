@@ -194,8 +194,9 @@ class TestLLMOptimizerIntegration:
         assert isinstance(result.key_entities, list)
         assert isinstance(result.processing_metadata, dict)
         
-        # Verify performance bounds (should complete in reasonable time)
-        assert processing_time < 30.0  # Should complete within 30 seconds
+        # Verify performance bounds
+        TIME_LIMIT = 30.0
+        assert processing_time < TIME_LIMIT  # Should complete within 30 seconds
         
         # Verify resource usage indicators in metadata
         assert 'processing_time_seconds' in result.processing_metadata
@@ -321,40 +322,76 @@ class TestLLMOptimizerIntegration:
     #         assert result['avg_chunk_size'] > 0
     #         assert result['avg_chunk_size'] <= self.optimizer.max_chunk_size
 
+
+
+
+@pytest.fixture
+def decomposed_content():
+    """Fixture providing consistent test data for reproducibility testing."""
+    decomposed_content = {
+        'pages': [
+            {
+                'elements': [
+                    {
+                        'content': 'Consistent test content for reproducibility testing.',
+                        'type': 'text',
+                        'subtype': 'paragraph',
+                        'position': {'x': 100, 'y': 100},
+                        'confidence': 0.9
+                    }
+                ]
+            }
+        ]
+    }
+    return decomposed_content
+
+@pytest.fixture
+def document_metadata():
+    """Fixture providing consistent document metadata for reproducibility testing."""
+    document_metadata = {
+        'document_id': 'consistency_test', 
+        'title': 'Consistency Test'
+    }
+    return document_metadata
+
+
+class TestLLMOptimizerConsistency:
+    """Test LLMOptimizer consistency and reproducibility across multiple runs."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.optimizer = LLMOptimizer(
+            max_chunk_size=1024,
+            chunk_overlap=100,
+            min_chunk_size=50
+        )
+        
+        # Mock the models to avoid actual model loading
+        self.optimizer.embedding_model = Mock()
+        self.optimizer.embedding_model.encode.return_value = np.random.rand(384)
+        self.optimizer.tokenizer = Mock()
+        self.optimizer.tokenizer.encode.return_value = list(range(50))  # Mock token list
+
     @pytest.mark.asyncio
-    async def test_pipeline_consistency_across_runs(self):
-        """
-        GIVEN identical input across multiple runs
-        WHEN optimization pipeline is executed multiple times
-        THEN expect:
-            - Consistent results across runs
-            - Deterministic behavior where expected
-            - No random variations in core functionality
-        """
+    async def test_pipeline_consistency_document_id(self, decomposed_content, document_metadata):
+        """Test that document ID remains consistent across multiple runs."""
         # Given - Fixed input document
-        decomposed_content = {
-            'pages': [
-                {
-                    'elements': [
-                        {
-                            'content': 'Consistent test content for reproducibility testing.',
-                            'type': 'text',
-                            'subtype': 'paragraph',
-                            'position': {'x': 100, 'y': 100},
-                            'confidence': 0.9
-                        },
-                        {
-                            'content': 'Additional paragraph for comprehensive testing.',
-                            'type': 'text',
-                            'subtype': 'paragraph',
-                            'position': {'x': 100, 'y': 150},
-                            'confidence': 0.85
-                        }
-                    ]
-                }
-            ]
-        }
-        document_metadata = {'document_id': 'consistency_test', 'title': 'Consistency Test'}
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify document ID consistency
+        first_result = results[0]
+        for result in results[1:]:
+            assert result.document_id == first_result.document_id
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_title(self, decomposed_content, document_metadata):
+        """Test that title remains consistent across multiple runs."""
+        # Given - Fixed input document
         
         # When - Run multiple times
         results = []
@@ -362,27 +399,142 @@ class TestLLMOptimizerIntegration:
             result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
             results.append(result)
         
-        # Then - Verify consistency
+        # Then - Verify title consistency
         first_result = results[0]
-        
         for result in results[1:]:
-            # Core structure should be identical
-            assert result.document_id == first_result.document_id
             assert result.title == first_result.title
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_chunk_count(self, decomposed_content, document_metadata):
+        """Test that chunk count remains consistent across multiple runs."""
+        # Given - Fixed input document
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify chunk count consistency
+        first_result = results[0]
+        for result in results[1:]:
             assert len(result.chunks) == len(first_result.chunks)
-            
-            # Chunk content should be identical
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_chunk_content(self, decomposed_content, document_metadata):
+        """Test that chunk content remains consistent across multiple runs."""
+        # Given - Fixed input document
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify chunk content consistency
+        first_result = results[0]
+        for result in results[1:]:
             for i, (chunk1, chunk2) in enumerate(zip(first_result.chunks, result.chunks)):
                 assert chunk1.content == chunk2.content
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_chunk_ids(self, decomposed_content, document_metadata):
+        """Test that chunk IDs remain consistent across multiple runs."""
+        # Given - Fixed input document
+        
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify chunk ID consistency
+        first_result = results[0]
+        for result in results[1:]:
+            for i, (chunk1, chunk2) in enumerate(zip(first_result.chunks, result.chunks)):
                 assert chunk1.chunk_id == chunk2.chunk_id
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_token_counts(self, decomposed_content, document_metadata):
+        """Test that token counts remain consistent across multiple runs."""
+        # Given - Fixed input document
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify token count consistency
+        first_result = results[0]
+        for result in results[1:]:
+            for i, (chunk1, chunk2) in enumerate(zip(first_result.chunks, result.chunks)):
                 assert chunk1.token_count == chunk2.token_count
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_semantic_types(self, decomposed_content, document_metadata):
+        """Test that semantic types remain consistent across multiple runs."""
+        # Given - Fixed input document
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify semantic types consistency
+        first_result = results[0]
+        for result in results[1:]:
+            for i, (chunk1, chunk2) in enumerate(zip(first_result.chunks, result.chunks)):
                 assert chunk1.semantic_types == chunk2.semantic_types
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_source_pages(self, decomposed_content, document_metadata):
+        """Test that source pages remain consistent across multiple runs."""
+        # Given - Fixed input document
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify source page consistency
+        first_result = results[0]
+        for result in results[1:]:
+            for i, (chunk1, chunk2) in enumerate(zip(first_result.chunks, result.chunks)):
                 assert chunk1.source_page == chunk2.source_page
-                
-            # Summary should be identical (deterministic extraction)
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_summary(self, decomposed_content, document_metadata):
+        """Test that document summary remains consistent across multiple runs."""
+        # Given - Fixed input document
+
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify summary consistency
+        first_result = results[0]
+        for result in results[1:]:
             assert result.summary == first_result.summary
-            
-            # Entity extraction should be consistent
+
+    @pytest.mark.asyncio
+    async def test_pipeline_consistency_entity_count(self, decomposed_content, document_metadata):
+        """Test that entity count remains consistent across multiple runs."""
+        # Given - Fixed input document
+        
+        # When - Run multiple times
+        results = []
+        for i in range(3):
+            result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+            results.append(result)
+        
+        # Then - Verify entity count consistency
+        first_result = results[0]
+        for result in results[1:]:
             assert len(result.key_entities) == len(first_result.key_entities)
 
     def _create_test_document(self, pages: int, elements_per_page: int) -> dict:

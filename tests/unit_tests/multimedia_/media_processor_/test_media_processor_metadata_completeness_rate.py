@@ -47,6 +47,9 @@ class TestMetadataCompletenessRate:
         GIVEN successful operation result
         WHEN checking output_path metadata field
         THEN expect absolute file path as string type
+        
+        NOTE: Absolute path requirement may not be appropriate for all deployment environments (containers, relative paths)
+        NOTE: Path validation should account for different operating system path formats
         """
         raise NotImplementedError("test_output_path_field_is_absolute_file_path_string test needs to be implemented")
 
@@ -55,6 +58,9 @@ class TestMetadataCompletenessRate:
         GIVEN successful operation result
         WHEN checking title metadata field
         THEN expect video title or filename as string type (not empty)
+        
+        NOTE: Empty string validation may be too strict - some media files legitimately have no title metadata
+        NOTE: Fallback priority between video title and filename not clearly specified
         """
         raise NotImplementedError("test_title_field_is_video_title_or_filename_string test needs to be implemented")
 
@@ -79,6 +85,9 @@ class TestMetadataCompletenessRate:
         GIVEN successful operation result
         WHEN checking format metadata field
         THEN expect container format string (mp4, avi, mkv, webm, mov)
+        
+        NOTE: Limited format list may not cover all supported container types - should be extensible
+        NOTE: Format detection accuracy depends on reliable file format identification, not just extension
         """
         raise NotImplementedError("test_format_field_is_container_format_string test needs to be implemented")
 
@@ -135,6 +144,9 @@ class TestMetadataCompletenessRate:
         GIVEN metadata completeness measurement
         WHEN comparing against threshold
         THEN expect completeness rate to be ≥ 0.98
+        
+        NOTE: 98% threshold lacks justification - needs empirical data on achievable completeness rates
+        NOTE: Threshold should account for platform-specific metadata availability limitations
         """
         raise NotImplementedError("test_metadata_completeness_threshold_98_percent test needs to be implemented")
 
@@ -143,6 +155,9 @@ class TestMetadataCompletenessRate:
         GIVEN successful operation result
         WHEN determining metadata completeness
         THEN expect all 8 required fields to be present for "complete" classification
+        
+        NOTE: All-or-nothing completeness definition may be too strict - partial metadata can still be valuable
+        NOTE: Field importance weighting could provide more nuanced completeness measurement
         """
         raise NotImplementedError("test_complete_metadata_definition_requires_all_8_fields test needs to be implemented")
 
@@ -167,6 +182,9 @@ class TestMetadataCompletenessRate:
         GIVEN video without extractable title metadata
         WHEN MediaProcessor populates title field
         THEN expect filename to be used as fallback value
+        
+        NOTE: Filename fallback may include file extension and path components that should be cleaned
+        NOTE: Filename encoding and special character handling needs consideration for fallback values
         """
         raise NotImplementedError("test_title_fallback_to_filename_when_video_title_unavailable test needs to be implemented")
 
@@ -191,6 +209,9 @@ class TestMetadataCompletenessRate:
         GIVEN video file processing
         WHEN MediaProcessor extracts technical metadata
         THEN expect FFprobe to be used for duration, resolution, format details
+        
+        NOTE: Testing for specific FFprobe implementation is overly prescriptive - should test metadata accuracy instead
+        NOTE: Alternative metadata extraction tools may be equally valid or more appropriate for some formats
         """
         raise NotImplementedError("test_metadata_extraction_from_ffprobe_for_technical_details test needs to be implemented")
 
@@ -199,6 +220,9 @@ class TestMetadataCompletenessRate:
         GIVEN video file with incomplete source metadata
         WHEN MediaProcessor extracts metadata
         THEN expect graceful handling with reasonable default values
+        
+        NOTE: "Reasonable default values" criteria not specified - unclear what constitutes appropriate defaults
+        NOTE: Default value strategy should be consistent and well-documented for each metadata field
         """
         raise NotImplementedError("test_metadata_extraction_graceful_handling_of_missing_source_data test needs to be implemented")
 
@@ -207,6 +231,9 @@ class TestMetadataCompletenessRate:
         GIVEN conversion operation
         WHEN MediaProcessor populates conversion_result field
         THEN expect timing, quality metrics, and conversion parameters
+        
+        NOTE: Specific timing and quality metrics not defined - unclear what measurements are required
+        NOTE: Metric calculation methodology and accuracy requirements need specification
         """
         raise NotImplementedError("test_conversion_result_includes_timing_and_quality_metrics test needs to be implemented")
 
@@ -223,6 +250,9 @@ class TestMetadataCompletenessRate:
         GIVEN metadata extraction operation
         WHEN MediaProcessor extracts all required metadata fields
         THEN expect extraction to complete within 5 seconds
+        
+        NOTE: 5-second timeout may be insufficient for large files or slow network connections
+        NOTE: Performance target should scale with file size and connection speed
         """
         raise NotImplementedError("test_metadata_performance_extraction_under_5_seconds test needs to be implemented")
 
@@ -239,6 +269,9 @@ class TestMetadataCompletenessRate:
         GIVEN video with international characters in title
         WHEN MediaProcessor extracts title metadata
         THEN expect proper Unicode support without encoding issues
+        
+        NOTE: Unicode support verification method not specified - unclear how to test for "proper" support
+        NOTE: Specific encoding standards and character set coverage requirements need definition
         """
         raise NotImplementedError("test_metadata_unicode_support_for_international_content test needs to be implemented")
 

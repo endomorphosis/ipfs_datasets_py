@@ -61,6 +61,9 @@ class TestConversionDecisionAccuracy:
         GIVEN input file with .mp4 extension and output format .mp4
         WHEN MediaProcessor makes conversion decision
         THEN expect conversion to be skipped (containers match)
+        
+        NOTE: Test assumes file extension accurately reflects container format - may fail with misnamed files
+        NOTE: Decision logic should potentially verify actual container format rather than relying solely on extension
         """
         raise NotImplementedError("test_mp4_to_mp4_conversion_decision_skip test needs to be implemented")
 
@@ -101,6 +104,9 @@ class TestConversionDecisionAccuracy:
         GIVEN input file "video.mp4"
         WHEN MediaProcessor determines container format
         THEN expect container to be identified as "MP4" based on extension
+        
+        NOTE: Extension-based format detection is unreliable - files can be renamed or have incorrect extensions
+        NOTE: Should use file header/magic number detection for robust format identification
         """
         raise NotImplementedError("test_container_format_determined_by_file_extension test needs to be implemented")
 
@@ -157,6 +163,9 @@ class TestConversionDecisionAccuracy:
         GIVEN file extension ".MP4" (uppercase)
         WHEN MediaProcessor determines container format
         THEN expect container to be identified as "MP4" (case insensitive)
+        
+        NOTE: Case sensitivity behavior should be consistent across all platforms (Windows vs Unix filesystem differences)
+        NOTE: Mixed case extensions like ".Mp4" handling needs specification
         """
         raise NotImplementedError("test_case_insensitive_extension_handling test needs to be implemented")
 
@@ -173,6 +182,9 @@ class TestConversionDecisionAccuracy:
         GIVEN conversion decision accuracy measurement
         WHEN comparing against target
         THEN expect accuracy to equal exactly 1.0 (100%)
+        
+        NOTE: 100% accuracy may be unrealistic for edge cases like unknown extensions or corrupted files
+        NOTE: Target should account for legitimate ambiguous cases where conversion decision is subjective
         """
         raise NotImplementedError("test_decision_accuracy_target_100_percent test needs to be implemented")
 
@@ -205,6 +217,9 @@ class TestConversionDecisionAccuracy:
         GIVEN input file with unknown extension ".xyz"
         WHEN MediaProcessor makes conversion decision
         THEN expect conservative approach to perform conversion
+        
+        NOTE: "Conservative approach" policy needs clear definition - should specify fallback behavior
+        NOTE: Unknown extensions might indicate non-media files - needs file type validation
         """
         raise NotImplementedError("test_unknown_input_extension_handling test needs to be implemented")
 
@@ -221,6 +236,9 @@ class TestConversionDecisionAccuracy:
         GIVEN files with same container but different codecs
         WHEN MediaProcessor makes conversion decision
         THEN expect decision based on container format only
+        
+        NOTE: Ignoring codec differences may result in unnecessary conversions or quality loss
+        NOTE: Codec compatibility with target container should influence conversion decision
         """
         raise NotImplementedError("test_decision_logic_operates_on_container_not_codec test needs to be implemented")
 
@@ -229,6 +247,9 @@ class TestConversionDecisionAccuracy:
         GIVEN any conversion decision
         WHEN MediaProcessor makes decision
         THEN expect decision and reasoning to be logged for debugging
+        
+        NOTE: Logging format and detail level not specified - unclear what constitutes adequate "reasoning"
+        NOTE: Log level (debug, info, etc.) and performance impact of logging not defined
         """
         raise NotImplementedError("test_conversion_decision_logged_with_reasoning test needs to be implemented")
 
@@ -237,6 +258,9 @@ class TestConversionDecisionAccuracy:
         GIVEN conversion decision operation
         WHEN measuring decision time
         THEN expect decision to be made in <1ms (simple string comparison)
+        
+        NOTE: 1ms performance target may be too strict for complex decision logic or slow storage
+        NOTE: Performance measurement methodology needs specification (average, worst-case, etc.)
         """
         raise NotImplementedError("test_decision_performance_under_1ms_per_decision test needs to be implemented")
 

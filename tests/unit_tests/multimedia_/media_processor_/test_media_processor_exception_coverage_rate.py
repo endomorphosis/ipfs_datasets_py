@@ -49,6 +49,9 @@ class TestExceptionCoverageRate:
         GIVEN MediaProcessor method implementation
         WHEN checking exception handling
         THEN expect dedicated 'except URLError:' clause with specific error classification
+        
+        NOTE: Testing for specific exception handler implementation is overly prescriptive - should test error handling behavior
+        NOTE: Exception handling strategy may legitimately use broader catch blocks with runtime type checking
         """
         raise NotImplementedError("test_urlerror_has_dedicated_except_clause test needs to be implemented")
 
@@ -105,6 +108,9 @@ class TestExceptionCoverageRate:
         GIVEN MediaProcessor method implementation
         WHEN checking exception handling
         THEN expect dedicated 'except DiskSpaceError:' clause with specific error classification
+        
+        NOTE: DiskSpaceError may not be a standard Python exception - custom exception types need clear definition
+        NOTE: Disk space issues typically manifest as OSError with specific errno values
         """
         raise NotImplementedError("test_diskspaceerror_has_dedicated_except_clause test needs to be implemented")
 
@@ -177,6 +183,9 @@ class TestExceptionCoverageRate:
         GIVEN exception coverage measurement
         WHEN comparing against target
         THEN expect coverage to equal exactly 1.0 (100%)
+        
+        NOTE: 100% coverage target may be overly strict - some exceptions may be handled by generic handlers appropriately
+        NOTE: Coverage should focus on meaningful error handling rather than mechanical exception enumeration
         """
         raise NotImplementedError("test_exception_coverage_target_100_percent test needs to be implemented")
 
@@ -185,6 +194,9 @@ class TestExceptionCoverageRate:
         GIVEN 'except Exception:' clause in code
         WHEN calculating exception coverage
         THEN expect generic handlers to be excluded from coverage count
+        
+        NOTE: Generic exception handlers may be appropriate for unknown errors - excluding them from coverage may penalize good error handling
+        NOTE: Coverage metric should distinguish between catch-all handlers and missing specific handlers
         """
         raise NotImplementedError("test_generic_exception_handlers_not_counted_toward_coverage test needs to be implemented")
 
@@ -193,6 +205,9 @@ class TestExceptionCoverageRate:
         GIVEN specific exception handler (e.g., except URLError:)
         WHEN handler processes exception
         THEN expect appropriate error classification to be assigned
+        
+        NOTE: "Appropriate error classification" criteria not defined - unclear what constitutes correct classification
+        NOTE: Classification scheme and mapping from exception types to error categories need specification
         """
         raise NotImplementedError("test_each_exception_handler_includes_error_classification test needs to be implemented")
 
@@ -201,6 +216,9 @@ class TestExceptionCoverageRate:
         GIVEN MediaProcessor source code
         WHEN analyzing exception handling implementation
         THEN expect AST parsing or source inspection to identify except clauses
+        
+        NOTE: Source code inspection method is fragile and implementation-dependent - should test runtime behavior instead
+        NOTE: Dynamic exception handling and runtime-generated handlers would not be detected by static analysis
         """
         raise NotImplementedError("test_exception_handler_source_code_inspection_method test needs to be implemented")
 
@@ -209,6 +227,9 @@ class TestExceptionCoverageRate:
         GIVEN exception inheritance hierarchy (e.g., FileNotFoundError inherits from OSError)
         WHEN checking handler specificity
         THEN expect most specific exception type to be handled first
+        
+        NOTE: Handler ordering verification method not specified - static analysis may miss runtime handler selection
+        NOTE: Some scenarios may legitimately handle broader exception types first for efficiency or simplicity
         """
         raise NotImplementedError("test_exception_hierarchy_handling_specificity test needs to be implemented")
 
@@ -217,6 +238,9 @@ class TestExceptionCoverageRate:
         GIVEN any exception handler
         WHEN exception is caught and handled
         THEN expect handler to log exception with relevant context information
+        
+        NOTE: "Relevant context" definition subjective and varies by exception type and operation context
+        NOTE: Logging requirements should specify minimal context elements rather than vague "relevant context"
         """
         raise NotImplementedError("test_exception_handler_logging_includes_context test needs to be implemented")
 
@@ -257,6 +281,9 @@ class TestExceptionCoverageRate:
         GIVEN exception handling code in normal operation
         WHEN measuring performance impact
         THEN expect <1% overhead when no exceptions are raised
+        
+        NOTE: 1% overhead threshold may be too strict for complex exception handling logic
+        NOTE: Performance measurement should account for try/except block overhead vs inline error checking
         """
         raise NotImplementedError("test_exception_handling_performance_overhead_minimal test needs to be implemented")
 
@@ -265,6 +292,9 @@ class TestExceptionCoverageRate:
         GIVEN concurrent operations raising exceptions
         WHEN multiple threads execute exception handlers
         THEN expect thread-safe exception handling without race conditions
+        
+        NOTE: Thread safety verification methodology not specified - unclear how to test for race conditions in exception handling
+        NOTE: Exception handling thread safety depends on handler implementation details and shared resource access patterns
         """
         raise NotImplementedError("test_exception_handler_thread_safety_for_concurrent_operations test needs to be implemented")
 

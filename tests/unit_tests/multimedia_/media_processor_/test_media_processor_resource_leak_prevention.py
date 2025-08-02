@@ -34,7 +34,15 @@ MEMORY_BASELINE_TOLERANCE = 10  # MB
 
 
 class TestResourceLeakPrevention:
-    """Test resource leak prevention criteria for system stability."""
+    """Test resource leak prevention criteria for system stability.
+    
+    NOTE: Class has multiple vague requirements that need clarification:
+    1. Zero leak rate target is unrealistic without tolerance specification
+    2. 1000 operation minimum lacks statistical justification
+    3. 10MB memory baseline tolerance is arbitrary without workload analysis
+    4. System stability criteria undefined without specific metrics
+    5. Resource monitoring overhead impact not considered
+    """
 
     def test_ensure_docstring_quality(self):
         """
@@ -51,6 +59,10 @@ class TestResourceLeakPrevention:
         GIVEN Unix-like system resource monitoring
         WHEN MediaProcessor monitors file handles
         THEN expect lsof command to be used for file handle detection
+        
+        NOTE: Implementation-specific testing - should test functionality rather than specific tool usage
+        NOTE: lsof availability not guaranteed on all Unix systems or containers
+        NOTE: Performance impact of running lsof repeatedly not considered
         """
         raise NotImplementedError("test_file_handle_monitoring_uses_lsof_on_unix test needs to be implemented")
 
@@ -60,6 +72,10 @@ class TestResourceLeakPrevention:
         GIVEN Windows system resource monitoring
         WHEN MediaProcessor monitors file handles
         THEN expect handle.exe command to be used for file handle detection
+        
+        NOTE: Implementation-specific testing locks in dependency on external tool
+        NOTE: handle.exe not included with Windows by default and may not be available
+        NOTE: Alternative Windows APIs (WMI, Performance Counters) not considered
         """
         raise NotImplementedError("test_file_handle_monitoring_uses_handle_exe_on_windows test needs to be implemented")
 
@@ -68,6 +84,10 @@ class TestResourceLeakPrevention:
         GIVEN subprocess execution
         WHEN MediaProcessor monitors process handles
         THEN expect tracking of subprocess instances for proper termination
+        
+        NOTE: "Proper termination" criteria undefined - graceful shutdown vs force kill vs timeout handling
+        NOTE: Subprocess tracking mechanism unclear - PID tracking, handle references, or process objects?
+        NOTE: Orphaned process detection and cleanup strategy not specified
         """
         raise NotImplementedError("test_process_handle_monitoring_tracks_subprocess_instances test needs to be implemented")
 
@@ -77,6 +97,10 @@ class TestResourceLeakPrevention:
         GIVEN network resource monitoring
         WHEN MediaProcessor monitors network connections
         THEN expect netstat command to be used for unclosed socket detection
+        
+        NOTE: Implementation-specific testing constrains flexibility in monitoring approaches
+        NOTE: netstat output parsing complexity and reliability issues not addressed
+        NOTE: Alternative monitoring methods (ss command, /proc/net, APIs) not considered
         """
         raise NotImplementedError("test_network_connection_monitoring_uses_netstat test needs to be implemented")
 
@@ -86,6 +110,10 @@ class TestResourceLeakPrevention:
         GIVEN memory resource monitoring
         WHEN MediaProcessor monitors memory allocations
         THEN expect RSS memory measurement for leak detection
+        
+        NOTE: RSS measurement doesn't capture all memory types (shared memory, virtual memory)
+        NOTE: Implementation-specific testing locks in psutil dependency
+        NOTE: Memory measurement timing and frequency strategy not specified
         """
         raise NotImplementedError("test_memory_allocation_monitoring_uses_rss_measurement test needs to be implemented")
 
@@ -94,6 +122,10 @@ class TestResourceLeakPrevention:
         GIVEN temporary file resource monitoring
         WHEN MediaProcessor monitors temporary files
         THEN expect tracking of files in temporary directory for cleanup verification
+        
+        NOTE: "Temporary directory" scope unclear - system temp dir, application-specific, or user-defined?
+        NOTE: File tracking method undefined - inode tracking, filename patterns, or timestamp-based?
+        NOTE: Cleanup verification timing unclear - immediate, deferred, or on-demand cleanup?
         """
         raise NotImplementedError("test_temporary_file_monitoring_tracks_temp_directory_contents test needs to be implemented")
 
@@ -102,6 +134,10 @@ class TestResourceLeakPrevention:
         GIVEN resource leak monitoring
         WHEN MediaProcessor starts operation
         THEN expect resource snapshot to be taken before operation execution
+        
+        NOTE: Snapshot mechanism undefined - what resources to capture and how to store state?
+        NOTE: Performance impact of snapshot operations on throughput not considered
+        NOTE: Snapshot timing unclear - immediately before operation or at specific intervals?
         """
         raise NotImplementedError("test_resource_snapshot_before_each_operation test needs to be implemented")
 
@@ -110,6 +146,10 @@ class TestResourceLeakPrevention:
         GIVEN resource leak monitoring
         WHEN MediaProcessor completes operation
         THEN expect resource snapshot to be taken after operation completion
+        
+        NOTE: "Operation completion" timing ambiguous - after success, failure, or both scenarios?
+        NOTE: Snapshot consistency unclear - should account for cleanup delays or background processes?
+        NOTE: Resource state stabilization time not specified before taking snapshot
         """
         raise NotImplementedError("test_resource_snapshot_after_each_operation test needs to be implemented")
 
@@ -118,6 +158,10 @@ class TestResourceLeakPrevention:
         GIVEN before/after resource snapshots
         WHEN MediaProcessor analyzes resource usage
         THEN expect leak detection based on permanent resource count increase
+        
+        NOTE: "Permanent resource count increase" definition unclear - what timeframe constitutes permanent?
+        NOTE: False positive scenarios not addressed - legitimate resource accumulation vs actual leaks
+        NOTE: Resource count fluctuation tolerance not specified for noisy measurements
         """
         raise NotImplementedError("test_leak_detection_based_on_resource_count_increase test needs to be implemented")
 
@@ -150,6 +194,11 @@ class TestResourceLeakPrevention:
         GIVEN resource leak rate measurement
         WHEN comparing against target
         THEN expect leak rate to equal exactly 0.0 (zero tolerance)
+        
+        NOTE: Zero leak rate target is unrealistic without:
+        - Tolerance for measurement noise and system variability
+        - Consideration of external factors affecting resource counts
+        - Statistical significance testing for leak detection
         """
         raise NotImplementedError("test_leak_rate_target_exactly_zero test needs to be implemented")
 

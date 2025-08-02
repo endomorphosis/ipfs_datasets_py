@@ -6,11 +6,11 @@ Test data factory for generating LLMDocument instances and field dictionaries.
 Provides methods to create valid baseline data, invalid variations, and edge cases
 for comprehensive testing of the LLMDocument class validation logic.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 import time
 
-from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
     LLMChunkTestDataFactory
 )

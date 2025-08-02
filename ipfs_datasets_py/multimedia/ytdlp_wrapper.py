@@ -11,7 +11,7 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Literal
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,25 @@ except ImportError:
     YTDLP_AVAILABLE = False
     logger.warning("yt-dlp not available. Install with: pip install yt-dlp")
 
+
+def make_ytdlp_wrapper(
+    default_output_dir: Optional[str] = None,
+    enable_logging: bool = True,
+    default_quality: Literal['best', 'worst'] = "best",
+    logger: logging.Logger = logging.getLogger(__name__),
+    ) -> 'YtDlpWrapper':
+
+    resources = {
+        "default_output_dir": default_output_dir,
+        "enable_logging": enable_logging,
+        "default_quality": default_quality,
+        logger: logger
+    }
+
+    return YtDlpWrapper(**resources)
+
+def type_name(obj: Any) -> str:
+    return type(obj).__name__
 
 class YtDlpWrapper:
     """
@@ -69,6 +88,7 @@ class YtDlpWrapper:
         default_quality (str): Default quality setting for downloads
         downloads (Dict[str, Dict[str, Any]]): Registry tracking all download operations,
             keyed by unique download IDs containing status, timing, and result information
+        logger (logging.Logger): Logger instance for outputting messages
 
     Public Methods:
         download_video(url, output_path=None, quality=None, **kwargs) -> Dict[str, Any]:
@@ -161,7 +181,9 @@ class YtDlpWrapper:
     def __init__(self, 
                  default_output_dir: Optional[str] = None,
                  enable_logging: bool = True,
-                 default_quality: str = "best"):
+                 default_quality: Literal['best', 'worst'] = "best",
+                 logger: logging.Logger = logging.getLogger(__name__)
+                 ):
         """
         Initialize YT-DLP wrapper with configuration options and dependency validation.
 
@@ -182,8 +204,6 @@ class YtDlpWrapper:
                 not explicitly specified. Supported values include:
                 - 'best': Highest available quality
                 - 'worst': Lowest available quality  
-                - Resolution strings: '720p', '1080p', '480p'
-                - Custom format selectors: 'best[height<=720]'
                 Defaults to "best".
 
         Attributes initialized:
@@ -207,14 +227,14 @@ class YtDlpWrapper:
             >>> wrapper = YtDlpWrapper(
             ...     default_output_dir="/home/user/downloads",
             ...     enable_logging=False,
-            ...     default_quality="720p"
+            ...     default_quality="best"
             ... )
             
             >>> # Production configuration
             >>> wrapper = YtDlpWrapper(
             ...     default_output_dir="/var/media/downloads",
             ...     enable_logging=True,
-            ...     default_quality="best[height<=1080]"
+            ...     default_quality="best"
             ... )
 
         Notes:
@@ -223,14 +243,30 @@ class YtDlpWrapper:
             - Download tracking dictionary starts empty and accumulates data over time
             - All paths are converted to Path objects for cross-platform compatibility
         """
-        self.default_output_dir = Path(default_output_dir or tempfile.gettempdir())
-        self.enable_logging = enable_logging
-        self.default_quality = default_quality
-        self.downloads = {}  # Track active downloads
-        
         if not YTDLP_AVAILABLE:
             raise ImportError("yt-dlp is required but not installed. Install with: pip install yt-dlp")
-    
+        
+        if default_output_dir is not None and not isinstance(default_output_dir, str):
+            raise TypeError(f"default_output_dir must be a string, got {type_name(default_output_dir)}")
+
+        if not isinstance(default_quality, str):
+            raise TypeError(f"default_quality must be a string, got {type_name(default_quality)}")
+
+        if default_quality not in ['best', 'worst']:
+            raise ValueError(f"default_quality must be 'best' or 'worst', got {default_quality}")
+
+        if not isinstance(enable_logging, bool):
+            raise TypeError(f"enable_logging must be a boolean, got {type_name(enable_logging)}")
+
+        if logger is not None and not isinstance(logger, logging.Logger):
+            raise TypeError(f"logger must be a logging.Logger instance, got {type_name(logger)}")
+
+        self.default_output_dir: Path = Path(default_output_dir or tempfile.gettempdir())
+        self.enable_logging: bool = enable_logging
+        self.default_quality: Literal['best','worst'] = default_quality
+        self.logger: logging.Logger = logger
+        self.downloads = {}  # Track active downloads
+
     async def download_video(self, 
                            url: str,
                            output_path: Optional[str] = None,

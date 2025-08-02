@@ -18,6 +18,19 @@ from pathlib import Path
 from typing import Literal
 
 
+try:
+    from nltk import word_tokenize, sent_tokenize
+except ImportError:
+    raise ImportError(
+        "The 'nltk' package is required for this module. "
+        "Please install it using 'pip install nltk'."
+    )
+
+
+
+
+
+
 class FalsifiedCodeError(NotImplementedError):
     """Custom exception for falsified code."""
     pass
