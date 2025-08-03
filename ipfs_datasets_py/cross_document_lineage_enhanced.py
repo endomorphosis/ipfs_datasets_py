@@ -10,15 +10,11 @@ detailed lineage tracking across documents and systems with comprehensive
 analysis capabilities.
 """
 
-import os
-import uuid
 import time
 import json
 import logging
 import datetime
-from typing import Dict, List, Optional, Union, Any, Set, Tuple
 import networkx as nx
-import matplotlib
 import matplotlib.pyplot as plt
 from collections import defaultdict
 

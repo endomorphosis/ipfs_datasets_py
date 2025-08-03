@@ -197,7 +197,7 @@ Optimize hybrid queries that combine vector similarity and graph traversal.
 ### GraphRAG Query Optimizer
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter, QueryBudgetManager
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter, QueryBudgetManager
 
 # Create specialized components
 query_rewriter = QueryRewriter()
@@ -242,7 +242,7 @@ results, execution_info = optimizer.execute_query(processor, query, priority="hi
 For content-addressed graphs using IPLD (InterPlanetary Linked Data), specialized optimizations are applied:
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Create optimizer with IPLD-specific graph info
 ipld_optimizer = UnifiedGraphRAGQueryOptimizer(
@@ -284,7 +284,7 @@ results, info = ipld_optimizer.execute_query(ipld_processor, ipld_query)
 ### Performance Analysis and Recommendations
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Analyze query performance
 performance_analysis = optimizer.analyze_performance(recent_window_seconds=300.0)
@@ -302,7 +302,7 @@ for recommendation in performance_analysis["recommendations"]:
 ### Query Budget Management
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import QueryBudgetManager
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryBudgetManager
 
 # Create budget manager with custom budgets
 budget_manager = QueryBudgetManager(
@@ -343,7 +343,7 @@ if budget_manager.suggest_early_stopping(current_results, consumption_report["ov
 ### Query Rewriting
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import QueryRewriter
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryRewriter
 
 # Create query rewriter
 query_rewriter = QueryRewriter()
@@ -384,7 +384,7 @@ for optimization in analysis["optimizations"]:
 ### Specialized Optimizers for Different Graph Types
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Create a unified optimizer that detects graph type from query
 unified_optimizer = UnifiedGraphRAGQueryOptimizer()
@@ -425,7 +425,7 @@ print(f"IPLD using batch loading: {ipld_traversal.get('batch_loading', False)}")
 ### Query Type Detection
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import QueryTypeDetector
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryTypeDetector
 
 # Create query type detector
 detector = QueryTypeDetector()
@@ -453,7 +453,7 @@ elif query_type == "comparative":
 ### Hybrid Weighting
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import HybridWeightingOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import HybridWeightingOptimizer
 
 # Create hybrid weighting optimizer
 optimizer = HybridWeightingOptimizer()
@@ -619,7 +619,7 @@ optimal_plan = optimizer.select_optimal_plan(alternative_plans)
 ### Query Rewriting
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import QueryRewriter
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryRewriter
 
 # Create query rewriter with specific optimization capabilities
 rewriter = QueryRewriter(
@@ -943,7 +943,7 @@ IPFS Datasets Python provides comprehensive metrics collection and visualization
 The `QueryMetricsCollector` class provides detailed metrics collection for GraphRAG queries:
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
 # Initialize metrics collector
 metrics_collector = QueryMetricsCollector(
@@ -1007,7 +1007,7 @@ csv_data = metrics_collector.export_metrics_csv("query_metrics.csv")
 The `QueryVisualizer` class provides various visualization capabilities for analyzing query performance:
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import QueryVisualizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryVisualizer
 
 # Create visualizer with metrics collector
 visualizer = QueryVisualizer(metrics_collector)
@@ -1092,7 +1092,7 @@ visualizer.export_dashboard_html(
 The metrics collection and visualization capabilities can be integrated directly with the `UnifiedGraphRAGQueryOptimizer`:
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
     QueryMetricsCollector,
     QueryVisualizer

@@ -21,25 +21,22 @@ import torch
 import psutil
 from datasets import Dataset
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Import vector store modules
 try:
-    from ..vector_stores.qdrant import QdrantVectorStore
+    from ipfs_datasets_py.vector_stores.qdrant_store import QdrantVectorStore
 except ImportError:
     QdrantVectorStore = None
 
 try:
-    from ..vector_stores.elasticsearch import ElasticsearchVectorStore
+    from ipfs_datasets_py.vector_stores.elasticsearch_store import ElasticsearchVectorStore
 except ImportError:
     ElasticsearchVectorStore = None
 
 try:
-    from ..vector_stores.faiss import FaissVectorStore
+    from ipfs_datasets_py.vector_stores.faiss_store import FAISSVectorStore
 except ImportError:
-    FaissVectorStore = None
+    FAISSVectorStore = None
 
 
 @dataclass
@@ -92,7 +89,11 @@ class MemoryMonitor:
 class AdaptiveBatchProcessor:
     """Intelligent batch size optimization based on performance metrics and memory usage"""
     
-    def __init__(self, max_memory_percent: float = 80.0, min_batch_size: int = 1, max_batch_size: int = 512):
+    def __init__(self, 
+                 max_memory_percent: float = 80.0, 
+                 min_batch_size: int = 1, 
+                 max_batch_size: int = 512
+                ) -> None:
         self.max_memory_percent = max_memory_percent
         self.min_batch_size = min_batch_size
         self.max_batch_size = max_batch_size
@@ -203,9 +204,9 @@ class IPFSEmbeddings:
             except Exception as e:
                 self.logger.warning(f"Failed to initialize Elasticsearch: {e}")
         
-        if FaissVectorStore:
+        if FAISSVectorStore:
             try:
-                self.vector_stores['faiss'] = FaissVectorStore(self.resources, self.metadata)
+                self.vector_stores['faiss'] = FAISSVectorStore(self.resources, self.metadata)
                 self.logger.info("FAISS vector store initialized")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize FAISS: {e}")

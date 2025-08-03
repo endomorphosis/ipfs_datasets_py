@@ -16,11 +16,11 @@ from ipfs_datasets_py import (
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer
 )
-from ipfs_datasets_py.llm_graphrag import (
+from ipfs_datasets_py.llm.llm_graphrag import (
     GraphRAGLLMProcessor,
     ReasoningEnhancer
 )
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 
 class TestRAGQueryOptimizerGraphRAGIntegration(unittest.TestCase):
@@ -94,7 +94,7 @@ class TestRAGQueryOptimizerGraphRAGIntegration(unittest.TestCase):
         )
 
         # Create GraphRAG LLM processor with optimizer
-        with patch('ipfs_datasets_py.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
+        with patch('ipfs_datasets_py.llm.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
             processor = GraphRAGLLMProcessor(
                 query_optimizer=unified_optimizer
             )
@@ -137,7 +137,7 @@ class TestRAGQueryOptimizerGraphRAGIntegration(unittest.TestCase):
         )
 
         # Create GraphRAG LLM processor with optimizer
-        with patch('ipfs_datasets_py.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
+        with patch('ipfs_datasets_py.llm.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
             processor = GraphRAGLLMProcessor(
                 query_optimizer=unified_optimizer
             )
@@ -182,7 +182,7 @@ class TestRAGQueryOptimizerGraphRAGIntegration(unittest.TestCase):
         )
 
         # Create GraphRAG LLM processor with optimizer
-        with patch('ipfs_datasets_py.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
+        with patch('ipfs_datasets_py.llm.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
             processor = GraphRAGLLMProcessor(
                 query_optimizer=unified_optimizer
             )
@@ -212,7 +212,7 @@ class TestRAGQueryOptimizerGraphRAGIntegration(unittest.TestCase):
     def test_fallback_without_optimizer(self):
         """Test fallback behavior when no optimizer is available."""
         # Create ReasoningEnhancer without an optimizer
-        with patch('ipfs_datasets_py.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
+        with patch('ipfs_datasets_py.llm.llm_interface.LLMInterfaceFactory.create', return_value=self.mock_llm):
             processor = GraphRAGLLMProcessor()
             enhancer = ReasoningEnhancer(
                 llm_processor=processor

@@ -17,7 +17,6 @@ async def pdf_optimize_for_llm(
     chunk_strategy: str = "semantic",
     max_chunk_size: int = 4000,
     overlap_size: int = 200,
-    enable_summarization: bool = True,
     preserve_structure: bool = True,
     include_metadata: bool = True
 ) -> Dict[str, Any]:
@@ -39,7 +38,6 @@ async def pdf_optimize_for_llm(
         chunk_strategy: Chunking strategy ("semantic", "structural", "adaptive", "fixed")
         max_chunk_size: Maximum size per chunk in characters
         overlap_size: Overlap between chunks in characters
-        enable_summarization: Generate summaries for chunks and document
         preserve_structure: Maintain document structure in optimization
         include_metadata: Include document metadata in optimized content
         
@@ -59,36 +57,37 @@ async def pdf_optimize_for_llm(
     try:
         # Import LLM optimization components
         from ipfs_datasets_py.pdf_processing import LLMOptimizer
-        from ipfs_datasets_py.nlp import ChunkOptimizer, SummarizationEngine
-        from ipfs_datasets_py.monitoring import track_operation
+        from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer, make_chunk_optimizer
+        from ipfs_datasets_py.monitoring import monitor_context
         
         # Validate inputs
-        if isinstance(pdf_source, str):
-            from pathlib import Path
-            pdf_path = Path(pdf_source)
-            if not pdf_path.exists():
-                return {
+        match pdf_source:
+            case str() as pdf_path_str:
+                from pathlib import Path
+                pdf_path = Path(pdf_path_str)
+                if not pdf_path.exists():
+                    return {
                     "status": "error",
-                    "message": f"PDF file not found: {pdf_source}"
-                }
-            document_id = None
-        elif isinstance(pdf_source, dict):
-            if "document_id" in pdf_source:
-                document_id = pdf_source["document_id"]
-                pdf_path = None
-            elif "path" in pdf_source:
-                pdf_path = Path(pdf_source["path"])
+                    "message": f"PDF file not found: {pdf_path_str}"
+                    }
                 document_id = None
-            else:
+            case dict() as pdf_dict:
+                match pdf_dict:
+                    case {"document_id": document_id}:
+                        pdf_path = None
+                    case {"path": path}:
+                        pdf_path = Path(path)
+                        document_id = None
+                    case _:
+                        return {
+                            "status": "error",
+                            "message": "PDF source dict must contain 'document_id' or 'path'"
+                        }
+            case _:
                 return {
                     "status": "error",
-                    "message": "PDF source dict must contain 'document_id' or 'path'"
+                    "message": "PDF source must be file path string or data dict"
                 }
-        else:
-            return {
-                "status": "error",
-                "message": "PDF source must be file path string or data dict"
-            }
             
         # Validate parameters
         valid_llms = ["gpt-4", "gpt-3.5", "claude", "claude-3", "gemini", "llama", "mistral"]
@@ -126,7 +125,7 @@ async def pdf_optimize_for_llm(
         )
         
         # Track the optimization operation
-        with track_operation("pdf_optimize_for_llm"):
+        with monitor_context("pdf_optimize_for_llm"):
             # Get or process document content
             if document_id:
                 # Optimize already processed document
@@ -197,17 +196,6 @@ async def pdf_optimize_for_llm(
                 }
                 optimized_chunks.append(chunk_data)
             
-            # Generate document summary if requested
-            document_summary = ""
-            if enable_summarization:
-                summarizer = SummarizationEngine(target_llm=target_llm)
-                summary_result = await summarizer.summarize_document(
-                    content=optimization_result["optimized_content"],
-                    structure=document_content.get("structure", {}),
-                    max_length=500
-                )
-                document_summary = summary_result.get("summary", "")
-            
             # Analyze document structure
             structure_analysis = {
                 "total_pages": document_info.get("pages", 0),
@@ -253,7 +241,6 @@ async def pdf_optimize_for_llm(
                 "status": "success",
                 "document_info": document_info,
                 "optimized_chunks": optimized_chunks,
-                "document_summary": document_summary,
                 "structure_analysis": structure_analysis,
                 "optimization_metrics": optimization_metrics,
                 "llm_recommendations": llm_recommendations,
@@ -263,7 +250,6 @@ async def pdf_optimize_for_llm(
                     "chunk_strategy": chunk_strategy,
                     "max_chunk_size": max_chunk_size,
                     "overlap_size": overlap_size,
-                    "enable_summarization": enable_summarization,
                     "preserve_structure": preserve_structure,
                     "include_metadata": include_metadata
                 },

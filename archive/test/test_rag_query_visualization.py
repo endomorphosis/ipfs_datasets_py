@@ -24,7 +24,7 @@ VISUALIZATION_LIBS_AVAILABLE = False # Assuming not installed for this environme
 
 # Try to import the modules we need to test
 try:
-    from ipfs_datasets_py.rag_query_visualization import (
+    from ipfs_datasets_py.rag.rag_query_visualization import (
         QueryMetricsCollector, RAGQueryVisualizer, EnhancedQueryVisualizer,
         RAGQueryDashboard, create_integrated_monitoring_system
     )
@@ -539,7 +539,7 @@ class TestOptimizerLearningMetricsCollector(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         try:
-            from ipfs_datasets_py.rag_query_visualization import OptimizerLearningMetricsCollector
+            from ipfs_datasets_py.rag.rag_query_visualization import OptimizerLearningMetricsCollector
             self.metrics_collector = OptimizerLearningMetricsCollector()
 
             # Create temporary directory for visualization outputs
@@ -795,7 +795,7 @@ class TestRAGQueryDashboardLearningIntegration(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         try:
-            from ipfs_datasets_py.rag_query_visualization import (
+            from ipfs_datasets_py.rag.rag_query_visualization import (
                 QueryMetricsCollector, OptimizerLearningMetricsCollector,
                 RAGQueryDashboard, EnhancedQueryVisualizer
             )
@@ -978,7 +978,7 @@ def simulate_rag_optimizer_learning():
     print("Simulating RAG query optimizer learning process...")
 
     try:
-        from ipfs_datasets_py.rag_query_visualization import (
+        from ipfs_datasets_py.rag.rag_query_visualization import (
             QueryMetricsCollector, OptimizerLearningMetricsCollector,
             RAGQueryDashboard, EnhancedQueryVisualizer
         )

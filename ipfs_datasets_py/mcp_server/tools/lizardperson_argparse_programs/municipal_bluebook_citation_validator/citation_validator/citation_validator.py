@@ -7,7 +7,7 @@ from threading import RLock
 from typing import Any, Callable, Generator, Optional
 
 
-from types_ import Configs, DatabaseConnection, Logger
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import Configs, DatabaseConnection, Logger
 
 import duckdb
 error_db: duckdb.DuckDBPyConnection

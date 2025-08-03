@@ -1,6 +1,6 @@
 
 
-from types_ import DatabaseConnection
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import DatabaseConnection
 
 def check_geography(citation: dict, reference_db: DatabaseConnection) -> str | None:
     """Check: Is Garland really in Arkansas?"""

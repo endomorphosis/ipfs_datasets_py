@@ -26,15 +26,15 @@ import numpy as np
 # Defer imports for optional dependencies
 try:
     from multiaddr import Multiaddr
-# import py_libp2p # Commented out due to import issues
-# import py_libp2p.crypto.rsa as rsa # Commented out due to import issues
-# from py_libp2p.peer.peerinfo import PeerInfo # Commented out due to import issues
-# from py_libp2p.peer.id import ID as PeerID # Commented out due to import issues
-# from py_libp2p.crypto.keys import KeyPair # Commented out due to import issues
-# from py_libp2p.crypto.serialization import load_private_key, load_public_key # Commented out due to import issues
-# from py_libp2p.network.stream.net_stream_interface import INetStream # Commented out due to import issues
-# from py_libp2p.host.basic_host import BasicHost # Commented out due to import issues
-# from py_libp2p.host.defaults import get_default_network # Commented out due to import issues
+    # import py_libp2p # Commented out due to import issues
+    # import py_libp2p.crypto.rsa as rsa # Commented out due to import issues
+    # from py_libp2p.peer.peerinfo import PeerInfo # Commented out due to import issues
+    # from py_libp2p.peer.id import ID as PeerID # Commented out due to import issues
+    # from py_libp2p.crypto.keys import KeyPair # Commented out due to import issues
+    # from py_libp2p.crypto.serialization import load_private_key, load_public_key # Commented out due to import issues
+    # from py_libp2p.network.stream.net_stream_interface import INetStream # Commented out due to import issues
+    # from py_libp2p.host.basic_host import BasicHost # Commented out due to import issues
+    # from py_libp2p.host.defaults import get_default_network # Commented out due to import issues
     LIBP2P_AVAILABLE = False
 except ImportError:
     LIBP2P_AVAILABLE = False
@@ -59,7 +59,22 @@ except ImportError:
 
 
 class NodeRole(Enum):
-    """Role of the node in the distributed network."""
+    """Role of the node in the distributed network.
+
+    This enumeration defines the different roles a node can take in the distributed
+    dataset management system, determining its responsibilities and capabilities.
+
+    Attributes:
+        COORDINATOR (str): Coordinates dataset distribution and search operations.
+            Responsible for managing metadata, routing requests, and orchestrating
+            data distribution across the network.
+        WORKER (str): Stores and processes dataset fragments. Handles data storage,
+            retrieval, and basic processing operations for assigned dataset portions.
+        HYBRID (str): Combines both coordinator and worker capabilities. Can perform
+            coordination tasks while also storing and processing data fragments.
+        CLIENT (str): Read-only consumer that only accesses data without storing,
+            coordinating, or processing. Minimal network participation role.
+    """
     COORDINATOR = "coordinator"  # Coordinates dataset distribution and search
     WORKER = "worker"            # Stores and processes dataset fragments
     HYBRID = "hybrid"            # Both coordinator and worker roles
@@ -862,6 +877,56 @@ class DatasetShardManager:
 
         Returns:
             DatasetMetadata: The created dataset metadata
+
+
+        Create a new distributed dataset in the IPFS network.
+
+        This method initializes a new dataset with the specified parameters and registers it
+        in the distributed network. The dataset is assigned a unique identifier and stored
+        as metadata that can be shared across the libp2p network.
+
+            name (str): Human-readable name for the dataset. This should be descriptive
+                and unique within your organization or project context.
+            description (str): Detailed description of the dataset's purpose, content,
+                and intended use cases. This helps other users understand the dataset.
+            schema (Optional[Dict[str, Any]], optional): Schema definition for the dataset
+                specifying column names, data types, and validation rules. If None, the
+                schema will be inferred from the first data added. Defaults to None.
+            vector_dimensions (Optional[int], optional): Number of dimensions for vector
+                embeddings if this is a vector dataset (e.g., for ML embeddings or 
+                similarity search). Only required for vector-based datasets. Defaults to None.
+            format (str, optional): Storage format for the dataset. Supported formats
+                include 'parquet' (default), 'arrow', and other columnar formats.
+                Defaults to "parquet".
+            tags (Optional[List[str]], optional): List of tags for categorizing and
+                discovering the dataset. Tags help with organization and searchability
+                across the distributed network. Defaults to None.
+
+            DatasetMetadata: A metadata object containing the dataset's unique identifier,
+                configuration, and initial state. This object is used for all subsequent
+                operations on the dataset including adding data, querying, and sharing.
+
+        Raises:
+            ValueError: If the dataset name is invalid or already exists in the local registry.
+            NetworkError: If there's an issue communicating with the libp2p network during
+                metadata propagation.
+            StorageError: If the metadata cannot be persisted to local storage.
+
+        Example:
+            >>> dataset = kit.create_dataset(
+            ...     name="user_embeddings",
+            ...     description="User behavior embeddings for recommendation system",
+            ...     vector_dimensions=512,
+            ...     format="parquet",
+            ...     tags=["ml", "embeddings", "users"]
+            ... )
+            >>> print(f"Created dataset: {dataset.dataset_id}")
+
+        Note:
+            - The dataset is initially empty with 0 records and 0 shards
+            - The creating node becomes the coordinator for the dataset
+            - Dataset metadata is automatically saved and can be shared with other nodes
+            - The dataset ID is generated using timestamp and random components for uniqueness
         """
         dataset_id = f"dataset-{int(time.time())}-{random.randint(1000, 9999)}"
         dataset = DatasetMetadata(

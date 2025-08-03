@@ -16,11 +16,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 try:
     # Import the main components
-    from ipfs_datasets_py.rag_query_visualization import (
+    from ipfs_datasets_py.rag.rag_query_visualization import (
         RAGQueryDashboard, EnhancedQueryVisualizer, ENHANCED_VIS_AVAILABLE
     )
     from ipfs_datasets_py.enhanced_rag_visualization import EnhancedQueryAuditVisualizer
-    from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+    from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
     # Try to import audit components if available
     try:

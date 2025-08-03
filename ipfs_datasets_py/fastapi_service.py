@@ -28,7 +28,7 @@ import uvicorn
 
 # Import our modules
 try:
-    from .embeddings.core import IpfsEmbeddings
+    from .embeddings.core import IPFSEmbeddings
     from .embeddings.schema import EmbeddingRequest, EmbeddingResponse
     from .vector_stores import BaseVectorStore, QdrantVectorStore, FAISSVectorStore
     from .mcp_server.server import MCPServer
@@ -38,7 +38,7 @@ except ImportError:
     import sys
     import os
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from .embeddings.core import IpfsEmbeddings
+    from .embeddings.core import IPFSEmbeddings
     from .embeddings.schema import EmbeddingRequest, EmbeddingResponse
     from vector_stores import BaseVectorStore, QdrantVectorStore, FAISSVectorStore
     from mcp_server.server import MCPServer
@@ -145,7 +145,7 @@ async def lifespan(app: FastAPI):
     app.state.vector_stores = {}
     
     # Initialize embedding core
-    app.state.embedding_core = IpfsEmbeddings()
+    app.state.embedding_core = IPFSEmbeddings()
     
     logger.info("✅ FastAPI service initialized successfully")
     

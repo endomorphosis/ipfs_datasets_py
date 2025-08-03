@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Try to import the necessary modules
 try:
-    from ipfs_datasets_py.rag_query_visualization import OptimizerLearningMetricsCollector
+    from ipfs_datasets_py.rag.rag_query_visualization import OptimizerLearningMetricsCollector
     MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"Required modules not available: {e}")

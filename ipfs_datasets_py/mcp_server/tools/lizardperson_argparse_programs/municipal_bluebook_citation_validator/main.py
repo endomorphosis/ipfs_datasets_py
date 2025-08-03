@@ -3,31 +3,19 @@
 Bluebook Citation Validator - Main Implementation
 Based on the Second SAD architecture
 """
-import argparse
-import functools
 import logging
-import random
 import sys
 from pathlib import Path
-from queue import Queue
-import re
-from threading import RLock
-from typing import Any, Dict, Generator, List, Optional, Tuple, TypeVar, Union
-
-
-from configs import configs
-from types_ import DatabaseConnection
 
 
 logger = logging.getLogger(__name__)
 
 
-from _setup_databases_and_files import make_setup_database_and_files
-from stratified_sampler import make_stratified_sampler
-from citation_validator import make_citation_validator
-from results_analyzer import make_results_analyzer
-from generate_reports import generate_validation_report # TODO Turn into factory function
-from datetime import datetime
+from ._setup_databases_and_files import make_setup_database_and_files
+from .stratified_sampler import make_stratified_sampler
+from .citation_validator import make_citation_validator
+from .results_analyzer import make_results_analyzer
+from .generate_reports import generate_validation_report # TODO Turn into factory function
 
 
 def main() -> int:

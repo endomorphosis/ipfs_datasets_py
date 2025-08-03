@@ -3,8 +3,8 @@
 This module provides the abstract base class for vector store implementations,
 defining the common interface for vector storage and retrieval operations.
 """
-
 from abc import ABC, abstractmethod
+import asyncio
 from typing import List, Dict, Any, Optional, Tuple, Union
 import logging
 
@@ -234,7 +234,16 @@ class BaseVectorStore(ABC):
         """Context manager exit."""
         # Note: This is sync, but close() is async
         # Subclasses should override if they need proper async cleanup
-        pass
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.close())
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        return await self.close()
 
 
 class VectorStoreError(Exception):

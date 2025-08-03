@@ -81,14 +81,14 @@ def test_integration():
     
     # Test 9: Vector store tools
     try:
-        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.create_vector_store import create_vector_store
+        from ipfs_datasets_py.mcp_server.tools.bespoke_tools.create_vector_store import create_vector_store
         results.append("✅ 9. Vector store tools available")
     except Exception as e:
         results.append(f"❌ 9. Vector store tools import failed: {e}")
     
     # Test 10: Admin tools
     try:
-        from ipfs_datasets_py.mcp_server.tools.admin_tools.system_status import system_status
+        from ipfs_datasets_py.mcp_server.tools.bespoke_tools.system_status import system_status
         results.append("✅ 10. Admin tools available")
     except Exception as e:
         results.append(f"❌ 10. Admin tools import failed: {e}")

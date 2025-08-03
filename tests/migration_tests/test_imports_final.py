@@ -24,10 +24,10 @@ except Exception as e:
 # Test 2: Base tool import
 print("\n=== Test 2: BaseTool Import ===")
 try:
-    from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseTool
-    print("✅ BaseTool import successful")
+    from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseDevelopmentTool
+    print("✅ BaseDevelopmentTool import successful")
 except Exception as e:
-    print(f"❌ BaseTool import failed: {e}")
+    print(f"❌ BaseDevelopmentTool import failed: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

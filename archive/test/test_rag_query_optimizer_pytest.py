@@ -464,7 +464,7 @@ def test_json_serialization_with_numpy(metrics_collector, temp_metrics_dir):
         assert len(exported_data) > 0, "Should have exported metrics"
 
     except ImportError:
-        pytest.skip("NumPy not available")
+        raise ImportError("NumPy not available")
 
 # Performance testing
 @pytest.mark.parametrize("num_queries", [10, 50])

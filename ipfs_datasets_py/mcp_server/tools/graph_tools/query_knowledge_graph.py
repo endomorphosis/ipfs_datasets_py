@@ -36,7 +36,7 @@ async def query_knowledge_graph(
         logger.info(f"Querying knowledge graph {graph_id} with {query_type} query")
 
         # Import the graph processor
-        from ipfs_datasets_py.rag_query_optimizer import GraphRAGProcessor
+        from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGProcessor
 
         # Create a graph processor instance
         processor = GraphRAGProcessor(graph_id=graph_id)

@@ -16,9 +16,8 @@ from typing import Dict, Any, List
 # Ensure the parent directory is in the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.rag_query_optimizer import (
-    GraphRAGQueryOptimizer,
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer,
     UnifiedGraphRAGQueryOptimizer

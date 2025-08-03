@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
  
 
-from dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
 
 
 def load_documents_for_place(gnis: str, document_dir: Path) -> list[dict[str, Any]]:

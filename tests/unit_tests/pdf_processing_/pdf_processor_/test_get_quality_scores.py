@@ -1,0 +1,280 @@
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# File Path: ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py
+# Auto-generated on 2025-07-07 02:28:56"
+
+import pytest
+import os
+from unittest.mock import patch
+
+from tests._test_utils import (
+    has_good_callable_metadata,
+    raise_on_bad_callable_code_quality,
+    get_ast_tree,
+    BadDocumentationError,
+    BadSignatureError
+)
+
+home_dir = os.path.expanduser('~')
+file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py")
+md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md")
+
+# Make sure the input file and documentation file exist.
+assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+
+from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+
+# Check if each classes methods are accessible:
+assert PDFProcessor.process_pdf
+assert PDFProcessor._validate_and_analyze_pdf
+assert PDFProcessor._decompose_pdf
+assert PDFProcessor._extract_page_content
+assert PDFProcessor._create_ipld_structure
+assert PDFProcessor._process_ocr
+assert PDFProcessor._optimize_for_llm
+assert PDFProcessor._extract_entities
+assert PDFProcessor._create_embeddings
+assert PDFProcessor._integrate_with_graphrag
+assert PDFProcessor._analyze_cross_document_relationships
+assert PDFProcessor._setup_query_interface
+assert PDFProcessor._calculate_file_hash
+assert PDFProcessor._extract_native_text
+assert PDFProcessor._get_processing_time
+assert PDFProcessor._get_quality_scores
+
+
+# Check if the modules's imports are accessible:
+import logging
+import hashlib
+import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union
+from contextlib import nullcontext
+
+
+import pymupdf  # PyMuPDF
+import pdfplumber
+from PIL import Image
+
+
+from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.audit import AuditLogger
+from ipfs_datasets_py.monitoring import MonitoringSystem
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+from ipfs_datasets_py.monitoring import MonitoringConfig, MetricsConfig
+from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+
+
+
+class TestGetQualityScores:
+    """Test _get_quality_scores method - quality assessment utility."""
+
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        self.processor = PDFProcessor()
+        
+    def test_get_quality_scores_complete_assessment(self):
+        """
+        GIVEN processing statistics with quality metrics
+        WHEN _get_quality_scores generates assessment
+        THEN expect returned dict contains:
+            - text_extraction_quality: accuracy score (0.0-1.0)
+            - ocr_confidence: average OCR confidence (0.0-1.0)
+            - entity_extraction_confidence: precision score (0.0-1.0)
+            - overall_quality: weighted average (0.0-1.0)
+        """
+        # Mock processing stats with quality data
+        mock_stats = {
+            'text_extraction': {'total_chars': 1000, 'error_chars': 50},
+            'ocr_results': {'confidences': [0.95, 0.87, 0.92, 0.88]},
+            'entity_extraction': {'total_entities': 20, 'confident_entities': 18},
+            'processing_complete': True
+        }
+        self.processor.processing_stats = mock_stats
+        
+        # Test the method
+        quality_scores = self.processor._get_quality_scores()
+        
+        # Verify structure
+        assert isinstance(quality_scores, dict)
+        required_keys = ['text_extraction_quality', 'ocr_confidence', 
+                        'entity_extraction_confidence', 'overall_quality']
+        for key in required_keys:
+            assert key in quality_scores
+            
+        # Verify score ranges (0.0-1.0)
+        for key, score in quality_scores.items():
+            assert isinstance(score, float)
+            assert 0.0 <= score <= 1.0
+            
+        # Verify logical relationships
+        assert quality_scores['text_extraction_quality'] >= 0.9  # 95% accuracy
+        assert quality_scores['ocr_confidence'] >= 0.8  # Good OCR
+        assert quality_scores['entity_extraction_confidence'] >= 0.8  # 90% entities confident
+        assert quality_scores['overall_quality'] > 0.0
+
+    def test_get_quality_scores_invalid_score_ranges(self):
+        """
+        GIVEN quality calculations producing invalid scores
+        WHEN _get_quality_scores generates out-of-range scores
+        THEN expect ValueError to be raised
+        """
+        # Mock stats that would produce invalid calculations
+        with patch.object(self.processor, 'processing_stats', {
+            'text_extraction': {'total_chars': 0, 'error_chars': 50},  # More errors than total
+            'ocr_results': {'confidences': []},
+            'entity_extraction': {'total_entities': 0, 'confident_entities': 5}  # Invalid ratio
+        }):
+            with pytest.raises(ValueError, match="Quality scores must be between 0.0 and 1.0|Invalid quality calculation"):
+                self.processor._get_quality_scores()
+
+    def test_get_quality_scores_missing_statistics(self):
+        """
+        GIVEN required processing statistics not available
+        WHEN _get_quality_scores accesses missing data
+        THEN expect AttributeError to be raised
+        """
+        # Test with no processing_stats attribute
+        delattr(self.processor, 'processing_stats')
+        with pytest.raises(AttributeError, match="processing_stats|required.*statistics"):
+            self.processor._get_quality_scores()
+            
+        # Test with incomplete processing_stats
+        self.processor.processing_stats = {'incomplete': True}
+        with pytest.raises(AttributeError, match="text_extraction|ocr_results|entity_extraction"):
+            self.processor._get_quality_scores()
+
+    def test_get_quality_scores_division_by_zero(self):
+        """
+        GIVEN quality calculations involving division by zero
+        WHEN _get_quality_scores performs calculations
+        THEN expect ZeroDivisionError to be raised
+        """
+        # Mock stats with zero totals that would cause division by zero
+        mock_stats = {
+            'text_extraction': {'total_chars': 0, 'error_chars': 0},
+            'ocr_results': {'confidences': []},
+            'entity_extraction': {'total_entities': 0, 'confident_entities': 0}
+        }
+        self.processor.processing_stats = mock_stats
+        
+        with pytest.raises(ZeroDivisionError, match="division by zero|Cannot calculate.*zero"):
+            self.processor._get_quality_scores()
+
+    def test_get_quality_scores_quality_control_thresholds(self):
+        """
+        GIVEN quality scores for automated quality control
+        WHEN _get_quality_scores provides quality metrics
+        THEN expect:
+            - Scores enable quality-based filtering
+            - Threshold-based quality control supported
+            - Quality assessment guides processing decisions
+        """
+        # Test high quality scenario
+        high_quality_stats = {
+            'text_extraction': {'total_chars': 10000, 'error_chars': 10},
+            'ocr_results': {'confidences': [0.98, 0.96, 0.97, 0.95]},
+            'entity_extraction': {'total_entities': 50, 'confident_entities': 49}
+        }
+        self.processor.processing_stats = high_quality_stats
+        
+        quality_scores = self.processor._get_quality_scores()
+        
+        # High quality thresholds
+        assert quality_scores['overall_quality'] >= 0.9
+        assert quality_scores['text_extraction_quality'] >= 0.95
+        assert quality_scores['ocr_confidence'] >= 0.95
+        
+        # Test low quality scenario
+        low_quality_stats = {
+            'text_extraction': {'total_chars': 1000, 'error_chars': 400},
+            'ocr_results': {'confidences': [0.45, 0.50, 0.40, 0.35]},
+            'entity_extraction': {'total_entities': 20, 'confident_entities': 8}
+        }
+        self.processor.processing_stats = low_quality_stats
+        
+        quality_scores = self.processor._get_quality_scores()
+        
+        # Low quality thresholds
+        assert quality_scores['overall_quality'] < 0.7
+        assert quality_scores['text_extraction_quality'] < 0.7
+        assert quality_scores['ocr_confidence'] < 0.6
+
+    def test_get_quality_scores_placeholder_vs_production(self):
+        """
+        GIVEN current placeholder implementation
+        WHEN _get_quality_scores returns development values
+        THEN expect:
+            - Placeholder values for development purposes
+            - Production implementation would calculate actual metrics
+            - Quality scoring framework ready for implementation
+        """
+        # Test that method exists and returns proper structure
+        self.processor.processing_stats = {
+            'text_extraction': {'total_chars': 100, 'error_chars': 5},
+            'ocr_results': {'confidences': [0.8, 0.9]},
+            'entity_extraction': {'total_entities': 10, 'confident_entities': 8}
+        }
+        
+        quality_scores = self.processor._get_quality_scores()
+        
+        # Verify framework is in place
+        assert isinstance(quality_scores, dict)
+        assert len(quality_scores) >= 4  # At least the required metrics
+        
+        # All scores should be valid floats in range
+        for key, value in quality_scores.items():
+            assert isinstance(value, float)
+            assert 0.0 <= value <= 1.0
+            
+        # Framework supports extensibility
+        expected_keys = {'text_extraction_quality', 'ocr_confidence', 
+                        'entity_extraction_confidence', 'overall_quality'}
+        assert expected_keys.issubset(set(quality_scores.keys()))
+
+    def test_get_quality_scores_continuous_improvement_support(self):
+        """
+        GIVEN quality scores used for pipeline optimization
+        WHEN _get_quality_scores supports improvement efforts
+        THEN expect:
+            - Metrics enable pipeline optimization
+            - Quality trends support continuous improvement
+            - Scores identify processing bottlenecks and issues
+        """
+        # Simulate different processing scenarios for trend analysis
+        scenarios = [
+            # Scenario 1: Text extraction issues
+            {
+                'text_extraction': {'total_chars': 1000, 'error_chars': 200},
+                'ocr_results': {'confidences': [0.95, 0.96, 0.94]},
+                'entity_extraction': {'total_entities': 15, 'confident_entities': 14}
+            },
+            # Scenario 2: OCR quality issues
+            {
+                'text_extraction': {'total_chars': 1000, 'error_chars': 20},
+                'ocr_results': {'confidences': [0.45, 0.50, 0.40]},
+                'entity_extraction': {'total_entities': 15, 'confident_entities': 14}
+            },
+            # Scenario 3: Entity extraction issues
+            {
+                'text_extraction': {'total_chars': 1000, 'error_chars': 20},
+                'ocr_results': {'confidences': [0.95, 0.96, 0.94]},
+                'entity_extraction': {'total_entities': 15, 'confident_entities': 6}
+            }
+        ]
+        
+        results = []
+        for scenario in scenarios:
+            self.processor.processing_stats = scenario
+            quality_scores = self.processor._get_quality_scores()
+            results.append(quality_scores)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 
 # Import RAG query components
 try:
-    from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector, UnifiedGraphRAGQueryOptimizer
-    from ipfs_datasets_py.rag_query_visualization import (
+    from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector, UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.rag.rag_query_visualization import (
         RAGQueryDashboard,
         EnhancedQueryVisualizer,
         create_query_performance_heatmap

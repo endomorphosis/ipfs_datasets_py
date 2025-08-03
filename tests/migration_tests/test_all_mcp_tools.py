@@ -173,7 +173,7 @@ class TestVectorTools(unittest.TestCase):
         try:
             # Import the tool
             sys.path.append(str(project_root / "ipfs_datasets_py" / "mcp_server" / "tools" / "vector_tools"))
-            from create_vector_index import create_vector_index
+            from ipfs_datasets_py.mcp_server.tools.vector_tools import create_vector_index
 
             # Test data
             vectors = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]

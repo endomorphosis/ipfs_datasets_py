@@ -347,121 +347,24 @@ class BatchEmbeddingTool:
     async def execute(self, texts: List[str], **kwargs) -> Dict[str, Any]:
         return await generate_batch_embeddings(texts, **kwargs)
 
-class MultimodalEmbeddingTool(Tool):
-    """
-    Tool for generating multimodal embeddings (e.g., for text and images).
-    """
-    def __init__(self):
-        super().__init__(
-            name="generate_multimodal_embedding",
-            description="Generates a multimodal embedding for given text and/or image data.",
-            arguments=[
-                ToolArguments(name="text", type=str, description="Optional: Text data to embed.", optional=True),
-                ToolArguments(name="image_url", type=str, description="Optional: URL of an image to embed.", optional=True)
-            ]
-        )
 
-    async def execute(self, text: Optional[str] = None, image_url: Optional[str] = None) -> Dict[str, Any]:
-        if not text and not image_url:
-            raise ValueError("Either 'text' or 'image_url' must be provided.")
-        
-        text_info = f"text: {text}" if text else "no text"
-        image_info = f"image_url: {image_url}" if image_url else "no image"
-        print(f"Generating multimodal embedding for {text_info}, {image_info}")
-        # Simulate multimodal embedding
-        multimodal_embedding = [0.5, 0.6, 0.7, 0.8] # Example embedding
-        return {"multimodal_embedding": multimodal_embedding, "text": text, "image_url": image_url}
-
-class CreateEmbeddingsTool(Tool):
-    """
-    Enhanced tool for creating embeddings from input data using advanced pipeline.
-    Integrated from ipfs_embeddings_py for comprehensive embedding generation.
-    """
-    def __init__(self):
-        super().__init__(
-            name="create_embeddings_pipeline",
-            description="Create embeddings from input data using an advanced pipeline with multiple options for models, formats, and optimization.",
-            arguments=[
-                ToolArguments(name="input_path", type=str, description="Path to input data (file or directory)"),
-                ToolArguments(name="output_path", type=str, description="Path where embeddings will be saved"),
-                ToolArguments(name="model_name", type=str, description="Name of the embedding model to use", optional=True),
-                ToolArguments(name="batch_size", type=int, description="Batch size for processing", optional=True),
-                ToolArguments(name="chunk_size", type=int, description="Size of data chunks to process", optional=True),
-                ToolArguments(name="max_length", type=int, description="Maximum sequence length", optional=True),
-                ToolArguments(name="normalize", type=bool, description="Whether to normalize embeddings", optional=True),
-                ToolArguments(name="use_gpu", type=bool, description="Whether to use GPU acceleration", optional=True),
-                ToolArguments(name="num_workers", type=int, description="Number of worker processes", optional=True),
-                ToolArguments(name="output_format", type=str, description="Output format (parquet, hdf5, npz, etc.)", optional=True),
-                ToolArguments(name="compression", type=str, description="Compression method to use", optional=True),
-                ToolArguments(name="metadata", type=Dict[str, Any], description="Additional metadata to include", optional=True)
-            ]
-        )
-
-    async def execute(
-        self,
-        input_path: str,
-        output_path: str,
-        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
-        batch_size: int = 32,
-        chunk_size: Optional[int] = None,
-        max_length: Optional[int] = None,
-        normalize: bool = True,
-        use_gpu: bool = False,
-        num_workers: int = 1,
-        output_format: str = "parquet",
-        compression: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Create embeddings from input data using the create_embeddings pipeline.
-        """
-        try:
-            # Validate input path
-            if not os.path.exists(input_path):
-                return {
-                    "status": "error",
-                    "message": f"Input path does not exist: {input_path}"
-                }
-
-            # Create output directory if it doesn't exist
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-            # Prepare configuration
-            config = {
-                "input_path": input_path,
-                "output_path": output_path,
-                "model_name": model_name,
-                "batch_size": batch_size,
-                "chunk_size": chunk_size,
-                "max_length": max_length,
-                "normalize": normalize,
-                "use_gpu": use_gpu,
-                "num_workers": num_workers,
-                "output_format": output_format,
-                "compression": compression,
-                "metadata": metadata or {}
-            }
-
-            # For now, return a simulated success response
-            # In the full implementation, this would call the actual create_embeddings pipeline
-            result = {
-                "status": "success",
-                "message": "Embeddings creation pipeline configured successfully",
-                "config": config,
-                "output_path": output_path,
-                "estimated_processing_time": "TBD",
-                "notes": [
-                    "This is a placeholder implementation",
-                    "Full implementation requires ipfs_embeddings_py integration",
-                    "Will be completed in subsequent migration phases"
-                ]
-            }
-
-            return result
-
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Error in embeddings creation: {str(e)}",
-                "error_type": type(e).__name__
-            }
+# Tool registration functions for MCP server
+def get_available_tools():
+    """Return list of available embedding tools for MCP registration."""
+    return [
+        {
+            "name": "generate_embedding",
+            "description": "Generate a single embedding for text using the integrated IPFS embeddings core",
+            "function": generate_embedding
+        },
+        {
+            "name": "generate_batch_embeddings", 
+            "description": "Generate embeddings for multiple texts in batch with optimization",
+            "function": generate_batch_embeddings
+        },
+        {
+            "name": "generate_embeddings_from_file",
+            "description": "Generate embeddings from a text file with chunking and batch processing", 
+            "function": generate_embeddings_from_file
+        }
+    ]

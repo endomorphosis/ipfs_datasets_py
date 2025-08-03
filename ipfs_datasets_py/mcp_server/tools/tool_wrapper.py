@@ -84,8 +84,8 @@ class EnhancedBaseMCPTool(ABC):
         try:
             # Basic schema validation if available
             if hasattr(self, 'input_schema') and self.input_schema:
-                # You could add JSON schema validation here
-                pass
+                # # TODO add basic JSON schema validation here
+                pass 
             
             # Custom validation can be implemented by subclasses
             return parameters

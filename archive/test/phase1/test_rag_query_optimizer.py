@@ -21,7 +21,7 @@ from ipfs_datasets_py import (
     IPLDGraphRAGQueryOptimizer,
     UnifiedGraphRAGQueryOptimizer
 )
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 
 class TestGraphRAGQueryStats(unittest.TestCase):

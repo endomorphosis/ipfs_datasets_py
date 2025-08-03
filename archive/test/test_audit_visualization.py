@@ -574,12 +574,12 @@ class TestIntegratedVisualization(unittest.TestCase):
         """Set up test environment with both audit and RAG metrics."""
         # Try to import RAG visualization components
         try:
-            from ipfs_datasets_py.rag_query_visualization import (
+            from ipfs_datasets_py.rag.rag_query_visualization import (
                 QueryMetricsCollector,
                 create_integrated_monitoring_system,
                 generate_integrated_monitoring_dashboard
             )
-            from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryStats
+            from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryStats
             self.rag_components_available = True
         except ImportError:
             self.rag_components_available = False
@@ -715,7 +715,7 @@ class TestIntegratedVisualization(unittest.TestCase):
 
         try:
             # Import the necessary components
-            from ipfs_datasets_py.rag_query_visualization import EnhancedQueryVisualizer, RAGQueryDashboard
+            from ipfs_datasets_py.rag.rag_query_visualization import EnhancedQueryVisualizer, RAGQueryDashboard
 
             # Create output file path
             output_file = os.path.join(self.temp_dir, "security_correlation.png")

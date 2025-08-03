@@ -5,6 +5,7 @@ from typing import Any, Dict
 from mcp.server import FastMCP
 
 # Placeholder for ipfs_embeddings_py services
+# FIXME THIS IS A REAL MIGRATION FUCKER!!! 
 # In a real migration, these would be actual service instances
 # or a simplified ServiceFactory that provides them.
 class PlaceholderEmbeddingService:

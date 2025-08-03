@@ -199,7 +199,7 @@ Create combined visualizations showing both audit events and query performance:
 
 ```python
 from ipfs_datasets_py.audit.audit_visualization import create_query_audit_timeline
-from ipfs_datasets_py.rag_query_visualization import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_visualization import QueryMetricsCollector
 
 # Initialize metrics collectors
 query_metrics = QueryMetricsCollector()
@@ -224,7 +224,7 @@ create_query_audit_timeline(
 Generate interactive dashboards with both security and performance metrics:
 
 ```python
-from ipfs_datasets_py.rag_query_visualization import RAGQueryDashboard
+from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard
 
 # Create dashboard
 dashboard = RAGQueryDashboard(
@@ -403,8 +403,8 @@ Below is a simple example showing integration of audit logging, performance metr
 ```python
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditLevel, AuditCategory
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator, AuditVisualizer
-from ipfs_datasets_py.rag_query_visualization import QueryMetricsCollector, RAGQueryDashboard
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_visualization import QueryMetricsCollector, RAGQueryDashboard
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Initialize components
 audit_logger = AuditLogger.get_instance()
@@ -417,7 +417,7 @@ dashboard = RAGQueryDashboard(metrics_collector=query_metrics, audit_metrics=aud
 audit_logger.add_handler(audit_metrics.process_event)
 
 # Enable integration between query metrics and audit system
-from ipfs_datasets_py.rag_query_visualization import integrate_with_audit_system
+from ipfs_datasets_py.rag.rag_query_visualization import integrate_with_audit_system
 integrate_with_audit_system(
     query_metrics=query_metrics,
     audit_alert_manager=None,  # Optional alert manager
@@ -499,8 +499,8 @@ For production environments, we recommend using the `IntegratedMonitoringSystem`
 ```python
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditLevel, AuditCategory
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator, AuditVisualizer
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector, UnifiedGraphRAGQueryOptimizer
-from ipfs_datasets_py.rag_query_visualization import RAGQueryDashboard, EnhancedQueryVisualizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector, UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard, EnhancedQueryVisualizer
 
 class IntegratedMonitoringSystem:
     """

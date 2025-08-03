@@ -18,8 +18,8 @@ except ImportError:
     raise ImportError("pydantic is required for this module. Please install it using 'pip install pydantic'.")
 
 
-from utils.parse_arguments import parse_arguments
-from utils.load_mysql_config import load_mysql_config
+from .utils.parse_arguments import parse_arguments
+from .utils.load_mysql_config import load_mysql_config
 
 
 class _MySqlConfig(BaseModel):
@@ -48,24 +48,24 @@ class _Configs(BaseModel):
     insert_batch_size: PositiveInt = Field(default=5000)
     sample_size: PositiveInt = Field(default=385)
 
-    _mysql_configs: _MySqlConfig = Field(default_factory=None)
+    mysql_configs_internal: _MySqlConfig = Field(default_factory=None)
 
     @property
     def mysql_configs(self) -> dict:
         """Return MySQL configurations as a Pydantic model."""
         return {
-            "host": self._mysql_configs.host,
-            "port": self._mysql_configs.port,
-            "user": self._mysql_configs.user.get_secret_value(),
-            "password": self._mysql_configs.password.get_secret_value(),
-            "database": self._mysql_configs.database.get_secret_value()
+            "host": self.mysql_configs_internal.host,
+            "port": self.mysql_configs_internal.port,
+            "user": self.mysql_configs_internal.user.get_secret_value(),
+            "password": self.mysql_configs_internal.password.get_secret_value(),
+            "database": self.mysql_configs_internal.database.get_secret_value()
         }
 
     @mysql_configs.setter
     def mysql_configs(self, value: dict):
         """Set MySQL configurations from a dictionary."""
         try:
-            self._mysql_configs = _MySqlConfig(**value)
+            self.mysql_configs_internal = _MySqlConfig(**value)
         except ValidationError as e:
             raise ValueError(f"Invalid MySQL configuration: {e}")
 
@@ -84,18 +84,19 @@ class _Configs(BaseModel):
         except AttributeError:
             raise KeyError(f"Configuration key '{key}' not found.")
 
-# Parse command line arguments
-args: argparse.Namespace = parse_arguments()
+if __name__ == "__main__":
+    # Parse command line arguments
+    args: argparse.Namespace = parse_arguments()
 
-# Setup configs.
-configs = _Configs(
-    error_db_path=args.error_db_path,
-    citation_dir=args.citation_dir,
-    document_dir=args.document_dir,
-    output_dir=args.output_dir,
-    random_seed=_RANDOM_SEED,
-    sample_size=args.sample_size,
-)
+    # Setup configs.
+    configs = _Configs(
+        error_db_path=args.error_db_path,
+        citation_dir=args.citation_dir,
+        document_dir=args.document_dir,
+        output_dir=args.output_dir,
+        random_seed=_RANDOM_SEED,
+        sample_size=args.sample_size,
+    )
 
-mysql_configs=load_mysql_config(args.mysql_config)
+    mysql_configs=load_mysql_config(args.mysql_config)
 

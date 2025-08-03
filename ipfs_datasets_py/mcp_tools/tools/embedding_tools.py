@@ -1,7 +1,7 @@
 # src/mcp_server/tools/embedding_tools.py
 
 import logging
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any
 from ipfs_datasets_py.mcp_tools.tool_registry import ClaudeMCPTool
 from ipfs_datasets_py.mcp_tools.validators import validator
 

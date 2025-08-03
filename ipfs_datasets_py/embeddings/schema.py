@@ -16,21 +16,17 @@ from hashlib import sha256
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
-try:
-    from dataclasses_json import DataClassJsonMixin
-except ImportError:
-    DataClassJsonMixin = object
+# try:
+#     from dataclasses_json import DataClassJsonMixin
+# except ImportError:
+#     DataClassJsonMixin = object
+
+from pydantic import (
+    BaseModel, Field, ConfigDict, model_serializer,
+    SerializeAsAny
+)
 
 try:
-    from llama_index.core.bridge.pydantic import (
-        BaseModel,
-        Field,
-        GetJsonSchemaHandler,
-        SerializeAsAny,
-        JsonSchemaValue,
-        ConfigDict,
-        model_serializer,
-    )
     from llama_index.core.bridge.pydantic_core import CoreSchema
     from llama_index.core.instrumentation import DispatcherSpanMixin
     from llama_index.core.utils import SAMPLE_TEXT, truncate_text
@@ -40,8 +36,6 @@ except ImportError:
         from pydantic import BaseModel, Field, ConfigDict, model_serializer
         GetJsonSchemaHandler = Any
         SerializeAsAny = Any
-        JsonSchemaValue = Any
-        CoreSchema = Any
         DispatcherSpanMixin = object
         SAMPLE_TEXT = "This is a sample text."
         def truncate_text(text: str, length: int = 350) -> str:
@@ -54,8 +48,6 @@ except ImportError:
         model_serializer = lambda *args, **kwargs: lambda x: x
         GetJsonSchemaHandler = Any
         SerializeAsAny = Any
-        JsonSchemaValue = Any
-        CoreSchema = Any
         DispatcherSpanMixin = object
         SAMPLE_TEXT = "This is a sample text."
         def truncate_text(text: str, length: int = 350) -> str:

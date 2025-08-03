@@ -7,7 +7,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ipfs_datasets_py.mcp_server import start_server, IPFSDatasetsMCPServer
-from modelcontextprotocol.client import MCPClient
+try:
+    from modelcontextprotocol.client import MCPClient
+except ImportError:
+    # Use our mock for testing when the real package isn't available
+    from .mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
 
 
 async def test_mcp_server():

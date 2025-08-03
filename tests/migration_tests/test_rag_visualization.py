@@ -28,8 +28,8 @@ def main():
         logger.info("Importing required modules...")
 
         # Import query metrics components
-        from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
-        from ipfs_datasets_py.rag_query_visualization import EnhancedQueryVisualizer
+        from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
+        from ipfs_datasets_py.rag.rag_query_visualization import EnhancedQueryVisualizer
         logger.info("Successfully imported RAG query components")
 
         # Import audit components

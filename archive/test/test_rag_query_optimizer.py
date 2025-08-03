@@ -8,7 +8,7 @@ import tempfile
 import shutil
 
 # Modules to test
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     GraphRAGQueryStats,
     GraphRAGQueryOptimizer,
     QueryRewriter,
@@ -17,9 +17,9 @@ from ipfs_datasets_py.rag_query_optimizer import (
     QueryMetricsCollector,
     QueryVisualizer
 )
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor
 # Mock LLM Interface if needed for processor instantiation
-from ipfs_datasets_py.llm_interface import LLMInterface
+from ipfs_datasets_py.llm.llm_interface import LLMInterface
 
 # Mock classes if needed for stores (or import actual if stable)
 class MockVectorStore:
@@ -47,7 +47,7 @@ class MockLLMInterface(LLMInterface):
          Args:
              config: Optional LLM configuration
          """
-         from ipfs_datasets_py.llm_interface import LLMConfig
+         from ipfs_datasets_py.llm.llm_interface import LLMConfig
          super().__init__(config or LLMConfig())
 
      def generate(self, prompt: str, **kwargs) -> str:

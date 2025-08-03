@@ -5,11 +5,8 @@ Provides a class for working with files and directories in IPFS using UnixFS.
 This allows for efficient storage and retrieval of large files and directory
 structures in IPFS.
 """
-
 import os
-import io
-import tempfile
-from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, BinaryIO
+from typing import List
 
 # Check for dependencies
 try:
@@ -234,13 +231,13 @@ class UnixFSHandler:
 
         # Determine chunking strategy
         chunker_str = None
-        if chunker is None:
-            # Use default chunking
-            pass
-        elif isinstance(chunker, FixedSizeChunker):
-            chunker_str = f"size-{chunker.chunk_size}"
-        elif isinstance(chunker, RabinChunker):
-            chunker_str = f"rabin-{chunker.min_size}-{chunker.avg_size}-{chunker.max_size}"
+        match chunker:
+            case None: # Use default chunking for None
+                pass
+            case FixedSizeChunker():
+                chunker_str = f"size-{chunker.chunk_size}"
+            case RabinChunker():
+                chunker_str = f"rabin-{chunker.min_size}-{chunker.avg_size}-{chunker.max_size}"
 
         # Add the file to IPFS
         with open(file_path, 'rb') as f:

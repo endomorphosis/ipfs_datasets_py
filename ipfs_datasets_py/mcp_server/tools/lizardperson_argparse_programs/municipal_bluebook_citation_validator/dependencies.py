@@ -2,8 +2,9 @@ from dataclasses import dataclass
 import importlib
 import importlib.util
 from typing import TypeVar
+from types import ModuleType
 
-Dependency = TypeVar('Dependency', bound=importlib.util.module_from_spec)
+Dependency = TypeVar('Dependency', bound=ModuleType)
 
 _DEPENDENCIES_SET = {
     "bs4",  # beautifulsoup4
@@ -31,7 +32,8 @@ class _Dependencies:
         # Import dependencies dynamically and assign them to the Dependencies dataclass
         for dep in _DEPENDENCIES_SET:
             try:
-                dependencies = setattr(importlib.import_module(dep), dependencies)
+                module = importlib.import_module(dep)
+                setattr(self, dep, module)
             except ImportError as e:
                 raise ImportError(f"Failed to import '{dep}'. Please ensure it is installed.\n\n{e}") from e
 

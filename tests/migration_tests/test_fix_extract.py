@@ -8,7 +8,7 @@ import datetime
 import json
 
 sys.path.insert(0, '.')
-from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryStats
+from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryStats
 
 class TestRagQueryStats(unittest.TestCase):
 

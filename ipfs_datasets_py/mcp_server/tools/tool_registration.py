@@ -300,7 +300,7 @@ TOOL_MAPPINGS = {
                 "tags": ["rate_limiting", "statistics", "monitoring"]
             }
         }
-    }
+    },
     
     # Sparse Embedding Tools
     "sparse_embedding_tools": {
@@ -355,12 +355,13 @@ TOOL_MAPPINGS = {
                 "description": "Manage storage collections",
                 "tags": ["storage", "collection", "management"]
             },
-            "query_storage": {
-                "name": "query_storage_backend",
-                "category": "storage",
-                "description": "Query storage backend for data",
-                "tags": ["storage", "query", "search"]
-            }
+            # TODO query_storage breaks copilot agent mode. Figure out why
+            # "query_storage": {
+            #     "name": "query_storage_backend",
+            #     "category": "storage",
+            #     "description": "Query storage backend for data",
+            #     "tags": ["storage", "query", "search"]
+            # }
         }
     },
     

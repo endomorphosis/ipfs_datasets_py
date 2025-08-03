@@ -1,8 +1,8 @@
 from pathlib import Path
 
 
-from dependencies import dependencies
-from utils import load_sql_file
+from ..dependencies import dependencies
+from ..utils import load_sql_file
 
 
 def setup_error_database(error_db_path: Path, read_only: bool = False):  # -> DatabaseConnection  

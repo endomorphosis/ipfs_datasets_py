@@ -63,13 +63,13 @@ import logging
 from typing import Dict, List, Any, Optional, Union, Tuple, Callable, Set
 import numpy as np
 
-from ipfs_datasets_py.llm_graphrag import (
+from ipfs_datasets_py.llm.llm_graphrag import (
     ReasoningEnhancer, GraphRAGLLMProcessor, GraphRAGPerformanceMonitor
 )
-from ipfs_datasets_py.llm_semantic_validation import (
+from ipfs_datasets_py.llm.llm_semantic_validation import (
     SchemaValidator, SemanticAugmenter, SemanticValidator
 )
-from ipfs_datasets_py.llm_reasoning_tracer import (
+from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     ReasoningTrace, ReasoningNodeType # Removed ReasoningStep, TracingManager, StepType, ConfidenceLevel
 )
 from ipfs_datasets_py.knowledge_graph_extraction import (

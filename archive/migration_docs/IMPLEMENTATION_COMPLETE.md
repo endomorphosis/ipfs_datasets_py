@@ -122,7 +122,7 @@ ipfs_datasets_py/
 ## Dependencies Successfully Integrated
 
 ### Core Libraries
-- ✅ PyMuPDF (fitz) for PDF parsing
+- ✅ PyMuPDF (pymupdf) for PDF parsing
 - ✅ pdfplumber for text extraction
 - ✅ transformers for LLM integration
 - ✅ sentence-transformers for embeddings

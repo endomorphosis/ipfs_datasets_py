@@ -54,7 +54,7 @@ def test_audit_tools():
 def test_cli_tools():
     """Test CLI tools functionality."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.cli_tools.execute_command import execute_command
+        from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
         print("✅ CLI tools import successful")
 
         # Test execute_command with a safe command
@@ -75,7 +75,7 @@ def test_cli_tools():
 def test_function_tools():
     """Test function tools functionality."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.function_tools.execute_python_snippet import execute_python_snippet
+        from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import execute_python_snippet
         print("✅ Function tools import successful")
 
         # Test execute_python_snippet

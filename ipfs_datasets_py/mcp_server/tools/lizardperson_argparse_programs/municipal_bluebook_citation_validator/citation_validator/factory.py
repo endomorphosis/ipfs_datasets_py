@@ -9,7 +9,7 @@ from ._check_geography import check_geography
 from ._check_section import check_section
 from ._save_validation_errors import save_validation_errors
 
-from dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
 
 def make_citation_validator():
     

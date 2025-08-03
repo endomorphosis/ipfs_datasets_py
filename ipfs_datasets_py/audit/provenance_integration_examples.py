@@ -9,7 +9,7 @@ import os
 import json
 import datetime
 import logging
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, Callable
 
 from ipfs_datasets_py.audit.audit_logger import (
     AuditLogger, AuditEvent, AuditCategory, AuditLevel

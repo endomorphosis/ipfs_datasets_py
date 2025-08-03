@@ -1,108 +1,50 @@
-## Core dependencies
-orbitdb_kit_py
-ipfs_kit_py
-ipfs_model_manager_py
-ipfs_faiss_py
-ipfs_embeddings_py
-transformers
-numpy
-urllib3
-requests
-boto3
-ipfsspec
-duckdb
-datasets
-pyarrow
-fsspec
+# Core dependencies only - for initial testing
+# Use this to test if basic setup works, then add more dependencies gradually
 
-## IPFS Embeddings integration dependencies
-fastapi
-fastapi[standard]
-pydantic-settings
-pydantic>=2.0.0
-uvicorn
-pandas
-aiohttp
-elasticsearch
-nltk
-rank_bm25
-llama-index-embeddings-huggingface
-llama-index
-haystack
-pysbd
-optimum
-optimum[openvino]
-toml
-einops
-timm
+# Core Python packages
+numpy>=1.21.0,<2.0.0
+pandas>=1.5.0,<3.0.0
+requests>=2.25.0,<3.0.0
 
-## Authentication and security
-PyJWT
-passlib[bcrypt]
-python-multipart
+# Testing framework
+pytest>=7.3.1,<9.0.0
+pytest-cov>=4.1.0,<6.0.0
 
-## Performance monitoring
-psutil
+# Basic utilities
+tqdm>=4.60.0,<5.0.0
+pyyaml>=6.0.0,<7.0.0
 
-## Embeddings and ML dependencies
-faiss-cpu>=1.7.4
-sentence-transformers>=2.2.2
-torch>=2.0.0
-torchvision>=0.15.0
-scikit-learn>=1.3.0
-scipy>=1.11.0
-
-## Vector database dependencies  
-qdrant-client>=1.7.0
-elasticsearch>=8.11.0
-
-## Additional ML and processing
-tokenizers>=0.15.0
-huggingface-hub>=0.19.0
-tqdm>=4.65.0
-aiofiles>=23.2.1
-
-## Phase 1 dependencies
-# IPFS integration
-ipfshttpclient>=0.8.0a2
-
-# IPLD components
-multiformats>=0.2.1
-
-# Optional but recommended IPLD implementations
-ipld-car>=0.0.1
-ipld-dag-pb>=0.0.1
-
-# Web Archive integration
-archivenow>=2020.7.18.12.19.44
-ipwb>=0.2024.10.24.1853
-beautifulsoup4>=4.11.1
-warcio>=1.7.4
-matplotlib>=3.10.0
-jsonschema>=4.23.0
-networkx>=3.1
+# Development tools
+coverage>=7.0.0,<8.0.0
+mypy>=1.0.0,<2.0.0
+flake8>=6.0.0,<8.0.0
 
 # Data processing
-pyarrow>=10.0.0
-pandas>=1.5.0
-datasets>=2.10.0
+pyarrow>=15.0.0,<21.0.0
+jsonschema>=4.0.0,<5.0.0
+pydantic>=2.0.0,<3.0.0
 
-# P2P communication
-libp2p>=0.2.7  # Optional: for distributed dataset management
+# PDF processing
+networkx>=3.1
+pdfplumber>=0.11.7
+pytesseract>=0.3.13
+tiktoken>=0.6.0
+opencv-contrib-python-headless>=4.11.0.86 # NOTE THis library errors with "Clock skew detected"
 
-# Testing
-pytest>=7.3.1
-pytest-cov>=4.1.0
-pytest-asyncio>=0.21.0  # For testing async functions
+Flask>=3.1.1
+duckdb>=1.3.2
+pymupdf>=1.26.3
+yt-dlp>=2025.6.30
+surya-ocr>=0.14.6
+pillow>=10.4.0
+ffmpeg-python>=0.2.0
+openai>=1.97.1
+toml>=0.10.2
 
-# MCP Server dependencies
-mcp>=1.9.1  # Replace with actual MCP server package name NOTE This will also install pydantic
-jinja2
-pyyaml
-aiofile
-flake8
-# SymbolicAI integration dependencies
-symbolicai>=0.13.1
-beartype>=0.15.0
-pydantic>=2.0.0
+# For testing only
+Faker>=37.4.2
 
+# Add these one by one after basic setup works:
+# datasets>=2.10.0,<3.0.0
+# transformers>=4.0.0,<5.0.0
+# torch>=1.9.0,<3.0.0

@@ -422,6 +422,18 @@ class AuditLogger:
             return None
 
         # Create base event data
+        base_details = details or {}
+        
+        # Add any additional kwargs to details instead of root level
+        extra_kwargs = {k: v for k, v in kwargs.items() if k not in [
+            'event_id', 'timestamp', 'level', 'category', 'action',
+            'user', 'resource_id', 'resource_type', 'status', 'details',
+            'client_ip', 'session_id'
+        ]}
+        
+        if extra_kwargs:
+            base_details.update(extra_kwargs)
+        
         event_data = {
             'event_id': kwargs.get('event_id', str(uuid.uuid4())),
             'timestamp': kwargs.get('timestamp', datetime.datetime.utcnow().isoformat() + 'Z'),
@@ -432,15 +444,9 @@ class AuditLogger:
             'resource_id': resource_id,
             'resource_type': resource_type,
             'status': status,
-            'details': details or {},
+            'details': base_details,
             'client_ip': client_ip,
             'session_id': session_id,
-            # Add any additional fields from kwargs
-            **{k: v for k, v in kwargs.items() if k not in [
-                'event_id', 'timestamp', 'level', 'category', 'action',
-                'user', 'resource_id', 'resource_type', 'status', 'details',
-                'client_ip', 'session_id'
-            ]}
         }
 
         # Apply context

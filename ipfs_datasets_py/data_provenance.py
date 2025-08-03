@@ -32,7 +32,27 @@ import base64
 
 # Define provenance record types
 class ProvenanceRecordType(Enum):
-    """Types of records in the provenance tracking system."""
+    """Types of records in the provenance tracking system.
+
+    This enumeration defines the different types of operations and events that can be
+    tracked in a data provenance system. Each type represents a specific kind of
+    data processing or handling operation.
+
+    Attributes:
+        SOURCE: Represents the original data source or initial data ingestion point.
+        TRANSFORMATION: Represents data transformation operations such as cleaning,
+            normalization, or format conversion.
+        MERGE: Represents operations that combine multiple data sources or datasets
+            into a single dataset.
+        FILTER: Represents operations that filter or subset data based on specific
+            criteria or conditions.
+        EXPORT: Represents operations that export data to external formats or systems.
+        IMPORT: Represents operations that import data from external sources or formats.
+        QUERY: Represents data query operations or database lookups.
+        RESULT: Represents the outcome or result of a query, computation, or operation.
+        CHECKPOINT: Represents checkpoints or snapshots of data state for recovery
+            or versioning purposes.
+    """
     SOURCE = "source"                  # Original data source
     TRANSFORMATION = "transformation"  # Data transformation
     MERGE = "merge"                    # Merging multiple data sources
@@ -46,7 +66,26 @@ class ProvenanceRecordType(Enum):
 
 @dataclass
 class ProvenanceRecord:
-    """Base class for provenance records."""
+    """
+    Base class for provenance records.
+    
+    This class represents a fundamental unit of provenance information, tracking
+    the essential details of data operations and transformations within the system.
+    Each record captures metadata about what happened, when it happened, who or
+    what performed the operation, and how different data entities are related.
+    
+    Attributes:
+        id: Unique identifier for this provenance record
+        record_type: Type of provenance operation (source, transformation, etc.)
+        timestamp: When this record was created (Unix timestamp)
+        agent_id: Identifier of the agent (user, system, tool) that performed the operation
+        description: Human-readable description of what this record represents
+        metadata: Additional key-value metadata for extensibility
+        input_ids: List of data entity IDs that were inputs to this operation
+        output_ids: List of data entity IDs that were outputs from this operation
+        parameters: Operation-specific parameters and configuration
+        cid: Content identifier for IPFS/IPLD storage integration
+    """
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     record_type: ProvenanceRecordType = ProvenanceRecordType.TRANSFORMATION
     timestamp: float = field(default_factory=time.time)

@@ -288,7 +288,7 @@ from ipfs_datasets_py.pdf_processing import MultiEngineOCR
 ocr = MultiEngineOCR()
 
 # Extract text with quality-first strategy
-result = ocr.extract_with_fallback(
+result = ocr.extract_with_ocr(
     image_data=image_bytes,
     strategy='quality_first'  # Uses Surya → PaddleOCR → Tesseract → EasyOCR
 )
@@ -368,7 +368,7 @@ Combine vector search with knowledge graph traversal for enhanced retrieval.
 ### Setting Up GraphRAG
 
 ```python
-from ipfs_datasets_py.llm_graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGQueryEngine
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
 

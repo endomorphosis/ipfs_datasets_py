@@ -219,6 +219,7 @@ class IPLDStorage:
         else:
             # Local-only mode: calculate CID based on the data and links
             # This is a simple approximation; real IPFS CIDs are more complex
+            # TODO : Implement a proper IPFS CID generation based on IPLD specs
             hasher = hashlib.sha256()
             hasher.update(data)
 

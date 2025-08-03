@@ -6,13 +6,19 @@ migrated and adapted from ipfs_embeddings_py.
 
 import logging
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TypeAlias, TypeVar
 import asyncio
 import json
 import hashlib
 
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError
 from ..embeddings.schema import EmbeddingResult, SearchResult, VectorStoreConfig, VectorStoreType
+
+
+class MockQuandrantClient:
+    pass
+
+QdrantClientType = TypeVar('QdrantClient')  # Type hint for QdrantClient
 
 try:
     from qdrant_client import QdrantClient
@@ -80,14 +86,14 @@ class QdrantVectorStore(BaseVectorStore):
             "dot": Distance.DOT,
             "manhattan": Distance.MANHATTAN,
         }
-        
+
         # Legacy compatibility
         self.datasets = datasets if DATASETS_AVAILABLE else None
         self.chunk_cache = {}
         self.knn_index_hash = []
         self.datasets_hash = []
-    
-    def _create_client(self) -> QdrantClient:
+
+    def _create_client(self) -> QdrantClientType:
         """Create Qdrant client connection."""
         try:
             return QdrantClient(

@@ -17,26 +17,19 @@ Key features:
 The cross-document reasoning leverages the query optimization from rag_query_optimizer
 to efficiently traverse entity relationships and find relevant connections.
 """
-
-import os
-import json
-import time
 import logging
-from typing import Dict, List, Any, Optional, Union, Set, Tuple, Callable
+from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
 import numpy as np
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 import uuid
 
-from ipfs_datasets_py.llm_reasoning_tracer import (
+from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
-    ReasoningTrace
 )
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
-    QueryRewriter,
-    QueryBudgetManager
 )
 
 
@@ -546,6 +539,7 @@ class CrossDocumentReasoner:
             return InformationRelationType.UNCLEAR, 0.5
 
         # In a real implementation, this would use an LLM or more sophisticated analysis
+        # TODO: Implement actual relation determination logic
         # For now, use simple heuristics
 
         # 1. Check if the documents have high semantic similarity
@@ -740,8 +734,8 @@ class CrossDocumentReasoner:
 
 def example_usage():
     """Example usage of the cross-document reasoner."""
-    from ipfs_datasets_py.llm_reasoning_tracer import LLMReasoningTracer
-    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.llm.llm_reasoning_tracer import LLMReasoningTracer
+    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
     # Initialize components
     reasoning_tracer = LLMReasoningTracer()

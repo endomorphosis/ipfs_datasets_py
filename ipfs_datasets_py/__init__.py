@@ -115,23 +115,14 @@ try:
 except ImportError:
     HAVE_KNN = False
 
-try:
-    from .rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
-    HAVE_RAG_OPTIMIZER_MINIMAL = True
-except ImportError:
-    HAVE_RAG_OPTIMIZER_MINIMAL = False
+# RAG optimizer components
+from .rag.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
 
-try:
-    # Import advanced RAG optimizer components directly
-    from .rag_query_optimizer import (
-        QueryRewriter,
-        QueryBudgetManager,
-        UnifiedGraphRAGQueryOptimizer
-        # Removed VectorIndexPartitioner as it's not defined here
-    )
-    HAVE_RAG_OPTIMIZER_ADVANCED = True
-except ImportError:
-    HAVE_RAG_OPTIMIZER_ADVANCED = False
+from .rag.rag_query_optimizer import (
+    QueryRewriter,
+    QueryBudgetManager,
+    UnifiedGraphRAGQueryOptimizer
+)
 
 
 try:
@@ -141,20 +132,12 @@ except ImportError:
     HAVE_KG_EXTRACTION = False
 
 # LLM Integration Components
-try:
-    from .llm_interface import (
-        LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
-        LLMInterfaceFactory, GraphRAGPromptTemplates
-    )
-    HAVE_LLM_INTERFACE = True
-except ImportError:
-    HAVE_LLM_INTERFACE = False
+from .llm.llm_interface import (
+    LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
+    LLMInterfaceFactory, GraphRAGPromptTemplates
+)
 
-try:
-    from .llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
-    HAVE_LLM_GRAPHRAG = True
-except ImportError:
-    HAVE_LLM_GRAPHRAG = False
+from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
 
 try:
     from ipfs_datasets_py.graphrag_integration import enhance_dataset_with_llm
@@ -228,36 +211,9 @@ except ImportError:
 # Define base exports that should always be available
 __all__ = [
     # Original exports
-    # 'load_dataset', # Removed from here as it's handled by conditional import
     's3_kit',
-    'test_fio',
+    'test_fio', 
     'config',
-
-    # Dependencies availability flags
-    'HAVE_IPFS',
-    'HAVE_IPLD_CAR',
-    'HAVE_IPLD_DAG_PB',
-    'HAVE_ARROW',
-    'HAVE_HUGGINGFACE',
-    'HAVE_ARCHIVENOW',
-    'HAVE_IPWB',
-    'HAVE_IPLD',
-    'HAVE_DATASET_SERIALIZATION',
-    'HAVE_CAR_CONVERSION',
-    'HAVE_UNIXFS',
-    'HAVE_WEB_ARCHIVE',
-    'HAVE_VECTOR_TOOLS',
-    'HAVE_EMBEDDINGS',
-    'HAVE_VECTOR_STORES',
-    'HAVE_GRAPHRAG_PROCESSOR',
-    'HAVE_KNN',
-    'HAVE_RAG_OPTIMIZER_MINIMAL',
-    'HAVE_RAG_OPTIMIZER_ADVANCED',
-    'HAVE_KG_EXTRACTION',
-    'HAVE_LLM_INTERFACE',
-    'HAVE_LLM_GRAPHRAG',
-    'HAVE_GRAPHRAG_INTEGRATION',
-    'HAVE_AUDIT'
 ]
 
 # Conditionally add exports based on available components
@@ -324,18 +280,14 @@ if HAVE_GRAPHRAG_PROCESSOR:
 if HAVE_KNN:
     __all__.extend(['IPFSKnnIndex'])
 
-if HAVE_RAG_OPTIMIZER_MINIMAL:
-    __all__.extend([
-        'GraphRAGQueryOptimizer',
-        'GraphRAGQueryStats'
-    ])
-
-if HAVE_RAG_OPTIMIZER_ADVANCED:
-    __all__.extend([
-        'QueryRewriter',
-        'QueryBudgetManager',
-        'UnifiedGraphRAGQueryOptimizer'
-    ])
+# Always export RAG components  
+__all__.extend([
+    'GraphRAGQueryOptimizer',
+    'GraphRAGQueryStats',
+    'QueryRewriter',
+    'QueryBudgetManager', 
+    'UnifiedGraphRAGQueryOptimizer'
+])
 
 if HAVE_KG_EXTRACTION:
     __all__.extend([
@@ -345,21 +297,17 @@ if HAVE_KG_EXTRACTION:
         'Relationship'
     ])
 
-if HAVE_LLM_INTERFACE:
-    __all__.extend([
-        'LLMInterface',
-        'MockLLMInterface',
-        'LLMConfig',
-        'PromptTemplate',
-        'LLMInterfaceFactory',
-        'GraphRAGPromptTemplates'
-    ])
-
-if HAVE_LLM_GRAPHRAG:
-    __all__.extend([
-        'GraphRAGLLMProcessor',
-        'ReasoningEnhancer'
-    ])
+# Always export LLM components
+__all__.extend([
+    'LLMInterface',
+    'MockLLMInterface', 
+    'LLMConfig',
+    'PromptTemplate',
+    'LLMInterfaceFactory',
+    'GraphRAGPromptTemplates',
+    'GraphRAGLLMProcessor',
+    'ReasoningEnhancer'
+])
 
 if HAVE_GRAPHRAG_INTEGRATION:
     __all__.extend(['enhance_dataset_with_llm'])
@@ -386,3 +334,12 @@ if HAVE_PDF_PROCESSING:
         'QueryEngine', 
         'BatchProcessor'
     ])
+
+# Proper module aliasing for backward compatibility
+from . import llm
+from . import rag
+
+# Direct aliases without polluting sys.modules
+llm_interface = llm.llm_interface
+llm_graphrag = llm.llm_graphrag  
+rag_query_optimizer = rag.rag_query_optimizer

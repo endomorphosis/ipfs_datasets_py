@@ -7,8 +7,8 @@ from typing import Any, Callable
 
 
 
-from configs import configs, Configs
-from logger import mcp_logger
+from ..configs import configs, Configs
+from ..logger import mcp_logger
 from ._return_text_content import return_text_content
 from ._return_tool_call_results import return_tool_call_results, CallToolResultType
 

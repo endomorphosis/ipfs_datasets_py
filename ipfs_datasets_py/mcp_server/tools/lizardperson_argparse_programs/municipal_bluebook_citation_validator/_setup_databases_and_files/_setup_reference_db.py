@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 
-from dependencies import dependencies
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.dependencies import dependencies
 
 
 logger = logging.getLogger(__name__)

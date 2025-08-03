@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 
-from types_ import DatabaseConnection, Dependency
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import DatabaseConnection, Dependency
 
 
 

@@ -7,8 +7,12 @@ for embedding operations, migrated and adapted from ipfs_embeddings_py.
 import bisect
 import logging
 import re
-from typing import Dict, List, Optional, Tuple, Union, Iterator, AsyncIterator
+from typing import Callable, Dict, List, Optional, AsyncIterator, TypeAlias
 from abc import ABC, abstractmethod
+
+
+Tokenizer: TypeAlias = Callable[[str, Optional[Dict]]]
+
 
 from .schema import DocumentChunk, ChunkingStrategy, EmbeddingConfig
 
@@ -393,16 +397,17 @@ class Chunker:
     
     def _create_chunker(self) -> BaseChunker:
         """Create the appropriate chunker based on strategy."""
-        if self.chunking_strategy == "semantic":
-            return SemanticChunker(self.config)
-        elif self.chunking_strategy == "fixed":
-            return FixedSizeChunker(self.config)
-        elif self.chunking_strategy == "sentences":
-            return SentenceChunker(self.config)
-        elif self.chunking_strategy == "sliding_window":
-            return SlidingWindowChunker(self.config)
-        else:
-            raise ValueError(f"Unknown chunking strategy: {self.chunking_strategy}")
+        match self.chunking_strategy:
+            case "semantic":
+                return SemanticChunker(self.config)
+            case "fixed":
+                return FixedSizeChunker(self.config)
+            case "sentences":
+                return SentenceChunker(self.config)
+            case "sliding_window":
+                return SlidingWindowChunker(self.config)
+            case _:
+                raise ValueError(f"Unknown chunking strategy: {self.chunking_strategy}")
     
     def chunk_text(self, text: str, metadata: Optional[Dict] = None) -> List[DocumentChunk]:
         """Chunk text using the configured strategy."""
@@ -414,7 +419,7 @@ class Chunker:
             yield chunk
     
     # Legacy methods for backward compatibility
-    def chunk_semantically(self, text: str, tokenizer: Optional = None, **kwargs) -> List[DocumentChunk]:
+    def chunk_semantically(self, text: str, tokenizer: Optional[Tokenizer] = None, **kwargs) -> List[DocumentChunk]:
         """Legacy method for semantic chunking."""
         return self.chunk_text(text)
     

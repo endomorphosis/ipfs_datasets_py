@@ -68,7 +68,7 @@
       "status": "success",
       "result": {
         "status": "error",
-        "message": "cannot import name 'GraphRAGProcessor' from 'ipfs_datasets_py.rag_query_optimizer' (/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py)",
+        "message": "cannot import name 'GraphRAGProcessor' from 'ipfs_datasets_py.rag.rag_query_optimizer' (/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py)",
         "graph_id": "test",
         "query_type": "sparql"
       }

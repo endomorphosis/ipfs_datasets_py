@@ -354,3 +354,99 @@ async def configure_system(
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         }
+
+async def system_health() -> Dict[str, Any]:
+    """
+    Check system health status.
+    
+    Returns:
+        Dict containing system health information
+    """
+    try:
+        # Mock system health check - replace with actual health monitoring
+        health_metrics = {
+            "cpu_usage": 45.2,
+            "memory_usage": 67.8,
+            "disk_usage": 34.1,
+            "network_status": "healthy",
+            "service_status": {
+                "ipfs_node": "running",
+                "vector_store": "running",
+                "database": "running",
+                "api_server": "running"
+            },
+            "uptime": "5 days, 12 hours",
+            "last_backup": "2025-07-01T14:30:00Z"
+        }
+        
+        # Determine overall health
+        cpu_healthy = health_metrics["cpu_usage"] < 80
+        memory_healthy = health_metrics["memory_usage"] < 85
+        disk_healthy = health_metrics["disk_usage"] < 90
+        
+        overall_status = "healthy" if all([cpu_healthy, memory_healthy, disk_healthy]) else "warning"
+        
+        return {
+            "success": True,
+            "status": overall_status,
+            "metrics": health_metrics,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"System health check failed: {e}")
+        return {
+            "success": False,
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+async def system_status() -> Dict[str, Any]:
+    """
+    Get detailed system status information.
+    
+    Returns:
+        Dict containing system status details
+    """
+    try:
+        # Mock system status - replace with actual status monitoring
+        status_info = {
+            "system_info": {
+                "hostname": "ipfs-datasets-node",
+                "os": "Linux",
+                "version": "1.0.0",
+                "python_version": "3.11.0"
+            },
+            "services": {
+                "mcp_server": {"status": "running", "port": 8000, "pid": 12345},
+                "ipfs_daemon": {"status": "running", "port": 5001, "pid": 23456},
+                "vector_store": {"status": "running", "port": 6333, "pid": 34567}
+            },
+            "resources": {
+                "total_memory": "16GB",
+                "available_memory": "5.2GB",
+                "total_disk": "500GB",
+                "available_disk": "330GB",
+                "cpu_cores": 8
+            },
+            "network": {
+                "interfaces": ["eth0", "lo"],
+                "external_ip": "192.168.1.100",
+                "ipfs_peers": 42
+            }
+        }
+        
+        return {
+            "success": True,
+            "status_info": status_info,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"System status check failed: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }

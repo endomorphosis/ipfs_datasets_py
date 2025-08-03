@@ -41,7 +41,7 @@ This document summarizes the comprehensive implementation plan for processing PD
 ```python
 # Intelligent OCR selection based on content type
 class MultiEngineOCR:
-    def extract_with_fallback(self, image_data, strategy='quality_first'):
+    def extract_with_ocr(self, image_data, strategy='quality_first'):
         if strategy == 'quality_first':
             engine_order = ['surya', 'paddleocr', 'tesseract', 'easyocr']
         elif strategy == 'speed_first':

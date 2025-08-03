@@ -55,7 +55,7 @@ except ImportError:
 # Import related modules
 from ipfs_datasets_py.data_provenance import ProvenanceManager
 from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
-from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
+from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryVisualizer
 
 
 class ProvenanceDashboard:
@@ -1308,7 +1308,7 @@ def setup_provenance_dashboard(
     query_visualizer = None
     if query_metrics:
         try:
-            from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
+            from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryVisualizer
             query_visualizer = RAGQueryVisualizer(query_metrics)
         except ImportError:
             logging.warning("RAGQueryVisualizer not available")
