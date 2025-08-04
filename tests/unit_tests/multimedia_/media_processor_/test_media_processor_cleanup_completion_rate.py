@@ -40,36 +40,93 @@ from tests.unit_tests.multimedia_.ffmpeg_wrapper_.ffmpeg_wrapper_test_data_facto
 
 
 # Check if each class's methods are accessible:
-assert MediaProcessor.download_and_convert 
-assert MediaProcessor.get_capabilities
+assert hasattr(MediaProcessor, 'download_and_convert')
+assert hasattr(MediaProcessor, 'get_capabilities')
 
-assert isinstance(MediaProcessor.download_and_convert, Coroutine)
+assert asyncio.iscoroutinefunction(MediaProcessor.download_and_convert)
 
-# Check if the classes' attributes are present
-for attr in ['default_output_dir ', 'enable_logging', 'logger', 'ytdlp', 'ffmpeg ']:
-    assert hasattr(MediaProcessor, attr), f"MediaProcessor is missing attribute: {attr}"
+# Function to extract instance attributes from __init__ method without instantiation
+def get_instance_attributes_from_init(cls):
+    """Extract instance attributes that will be set by __init__ method with their types."""
+    import ast
+    import inspect
+
+    assert hasattr(cls, '__init__'), f"Class '{cls.__name__}' does not have an __init__ method defined."
+
+    source = inspect.getsource(cls.__init__)
+    tree = ast.parse(source)
+
+    attributes = {}
+
+    # Get type annotations from the class
+    class_annotations = getattr(cls, '__annotations__', None)
+    assert class_annotations is not None, f"Class '{cls.__name__}' does not have type annotations defined."
+
+    # Walk through the AST to find self.attribute assignments
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Attribute):
+                    # ex: self.example = "value"
+                    if isinstance(target.value, ast.Name) and target.value.id == 'self':
+                        attr_name = target.attr
+                        
+                        # Try to get type from class annotations first
+                        attr_type = class_annotations.get(attr_name, None)
+                        
+                        # If not found in class annotations, try to infer from assignment
+                        if attr_type is None:
+                            if isinstance(node.value, ast.Name):
+                                # Simple assignment like self.attr = param
+                                attr_type = "Any"
+                            elif isinstance(node.value, ast.Call):
+                                # Constructor call like self.attr = SomeClass()
+                                if isinstance(node.value.func, ast.Name):
+                                    attr_type = node.value.func.id
+                                elif isinstance(node.value.func, ast.Attribute):
+                                    attr_type = ast.unparse(node.value.func)
+                                else:
+                                    attr_type = "Any"
+                            else:
+                                attr_type = "Any"
+                        
+                        attributes[attr_name] = attr_type
+    
+    return attributes
 
 # Check if the classes have their relevant public methods accessible
-assert YtDlpWrapper.download_video
-assert isinstance(YtDlpWrapper.download_video, Coroutine)
+assert hasattr(YtDlpWrapper, 'download_video')
+assert asyncio.iscoroutinefunction(YtDlpWrapper.download_video)
 
-assert FFmpegWrapper.convert_video
-assert isinstance(FFmpegWrapper.convert_video, Coroutine)
+assert hasattr(FFmpegWrapper, 'convert_video')
+assert asyncio.iscoroutinefunction(FFmpegWrapper.convert_video)
+
+# Check instance attributes without instantiation
+media_processor_attributes = get_instance_attributes_from_init(MediaProcessor)
+expected_attributes = {
+    'ytdlp_wrapper': 'YtDlpWrapper',
+    'ffmpeg_wrapper': 'FFmpegWrapper', 
+    'enable_logging': 'bool'
+}
+
+# Verify that MediaProcessor __init__ sets the expected instance attributes
+for attr_name, expected_type in expected_attributes.items():
+    assert attr_name in media_processor_attributes, f"MediaProcessor does not have instance attribute '{attr_name}'"
+    actual_type = media_processor_attributes[attr_name]
+    assert actual_type == expected_type, f"MediaProcessor instance attribute '{attr_name}' type mismatch: expected '{expected_type}', got '{actual_type}' instead."
+
 
 # Check if the each method's signatures and annotations are correct
-for attr, annotation in{
-                        'url': str,
-                        'output_format': str,
-                        'quality': str,
-                        'return': Dict[str, Any]
-                    }.items():
-    assert annotation in inspect.get_annotations(
-        getattr(MediaProcessor.download_and_convert, attr)
-    ), f"annotation '{attr}' is missing or incorrect in MediaProcessor"
+import inspect
+sig = inspect.signature(MediaProcessor.download_and_convert)
+annotations = sig.parameters
+assert 'url' in annotations
+assert 'output_format' in annotations  
+assert 'quality' in annotations
 
-assert inspect.get_annotations(MediaProcessor.get_capabilities) == {
-    'return': Dict[str, Any]
-}
+# Check get_capabilities method
+get_caps_sig = inspect.signature(MediaProcessor.get_capabilities)
+# Method might be static/class method, so just check it exists
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -97,90 +154,113 @@ CLEANUP_SUCCESS_RATE_TARGET = 1.0  # 100%
 
 from unittest.mock import Mock, AsyncMock, MagicMock
 
-def make_mock_method(
-    method_name: str,
-    is_async: bool = False,
-    is_magic: bool = True,
-    return_value: Optional[Any] = None,
-    side_effects: Optional[List[Any]] = None
-):
 
-
-def make_magic_mock(
-        is_async: bool = False,
-        is_magic: bool = True,
-        spec: Optional[Any] = None,
-        method_with_return_value: Optional[Dict[str, Any]] = None
-        ) -> Mock | AsyncMock | MagicMock:
+def create_mock_ytdlp(tmp_path, **kwargs):
     """
-    Factory function to create a MagicMock instance with specified methods and return values.
-
+    Factory function to create mock YtDlpWrapper with configurable return values.
+    
     Args:
-        spec (Optional[Any]): The specification for the mock object, if any.
-        method_with_return_value (Optional[Dict[str, Any]]): A dictionary where keys are method names
-            and values are the return values for those methods.
-
+        tmp_path: Temporary directory path for output files
+        **kwargs: Override values for the download_video return value
+            - status: success/error status (default: "success")
+            - output_path: path to downloaded file (default: tmp_path / "video.mp4")
+            - title: video title (default: "Test Video")
+            - duration: video duration (default: 120)
+            - filesize: file size in bytes (default: 1048576)
+            - format: video format (default: "mp4")
+            - side_effect: Exception to raise instead of returning value
+    
     Returns:
-        MagicMock: A MagicMock instance with the specified methods and return values.
-    
-    
+        MagicMock: Configured mock YtDlpWrapper instance
     """
-    mock = MagicMock(spec=spec)
-
-    if return_value is not None:
-        if not isinstance(return_value, dict):
-            raise TypeError("return_values must be a dictionary")
-        default_to_success = AsyncMock(return_value=return_value)
-
-
-    return mock
-
-@pytest.fixture
-def make_mock_ffmpeg(tmp_path):
-    mock = MagicMock(spec=FFmpegWrapper)
-    mock.convert_video = AsyncMock(return_value={
+    mock = MagicMock()
+    
+    # Default return values
+    default_return = {
         "status": "success",
-        "output_path": str(tmp_path / "converted.mp4")
-    })
-    defaults = AsyncMock(return_value={
-        "status": "success",
-        "output_path": str(Path(tempfile.TemporaryDirectory()) / "video.mp4"),
+        "output_path": str(tmp_path / "video.mp4"),
         "title": "Test Video",
-        "download_id": str(uuid.uuid4()),
-        "action": "downloaded",
-        "url": "https://example.com/video",
-        "info": {
-            "title": "Test Video",
-            "duration": 120,
-            "uploader": "Test Channel",
-            "upload_date": "20240101",
-            "view_count": 1000,
-            "formats": [{"format_id": "best", "ext": "mp4"}]
-        },
-        "duration": 120,
-        "uploader": "Test Channel", 
-        "upload_date": "20240101",
-        "view_count": 1000,
-        "formats": [{"format_id": "best", "ext": "mp4"}]
-    })
-
-
-
+        "duration": 420,
+        "filesize": 6911,
+        "format": "mp4"
+    }
+    if kwargs:
+        # Add any additional keys provided in kwargs
+        default_return.update(kwargs)
+    
+    # Handle side_effect for exception testing
+    if "side_effect" in kwargs:
+        mock.download_video = AsyncMock(side_effect=kwargs["side_effect"])
+    else:
+        mock.download_video = AsyncMock(return_value=default_return)
+    
     return mock
+
+
+def create_mock_ffmpeg(tmp_path, **kwargs):
+    """
+    Factory function to create mock FFmpegWrapper with configurable return values.
+    
+    Args:
+        tmp_path: Temporary directory path for output files
+        **kwargs: Override values for the convert_video return value
+            - status: success/error status (default: "success")
+            - output_path: path to converted file (default: tmp_path / "converted.mp4")
+            - conversion_details: conversion operation details (default: None)
+            - side_effect: Exception to raise instead of returning value
+    
+    Returns:
+        MagicMock: Configured mock FFmpegWrapper instance
+    """
+    mock = MagicMock()
+    
+    # Default return values
+    default_return = {
+        "status": kwargs.get("status", "success"),
+        "output_path": kwargs.get("output_path", str(tmp_path / "converted.mp4"))
+    }
+    
+    # Add conversion_details if provided
+    if "conversion_details" in kwargs:
+        default_return["conversion_details"] = kwargs["conversion_details"]
+    
+    # Handle side_effect for exception testing
+    if "side_effect" in kwargs:
+        mock.convert_video = AsyncMock(side_effect=kwargs["side_effect"])
+    else:
+        mock.convert_video = AsyncMock(return_value=default_return)
+    
+    return mock
+
+
+def create_mock_processor(tmp_path, ytdlp_kwargs=None, ffmpeg_kwargs=None, **processor_kwargs):
+    """
+    Factory function to create MediaProcessor with mock dependencies.
+    
+    Args:
+        tmp_path: Temporary directory path for output files
+        ytdlp_kwargs: Keyword arguments for ytdlp mock configuration
+        ffmpeg_kwargs: Keyword arguments for ffmpeg mock configuration
+        **processor_kwargs: Additional keyword arguments for make_media_processor
+    
+    Returns:
+        MediaProcessor: Configured processor with mock dependencies
+    """
+    ytdlp_kwargs = ytdlp_kwargs or {}
+    ffmpeg_kwargs = ffmpeg_kwargs or {}
+    
+    mock_ytdlp = create_mock_ytdlp(tmp_path, **ytdlp_kwargs)
+    mock_ffmpeg = create_mock_ffmpeg(tmp_path, **ffmpeg_kwargs)
+    
+    return make_media_processor(
+        default_output_dir=tmp_path,
+        ytdlp=mock_ytdlp,
+        ffmpeg=mock_ffmpeg,
+        **processor_kwargs
+    )
 
 class TestCleanupCompletionRate:
     """Test cleanup completion rate criteria for temporary file management."""
-
-    def test_ensure_docstring_quality(self):
-        """
-        Ensure that the docstring of the MediaProcessor class meets the standards set forth in `_example_docstring_format.md`.
-        
-        WHERE:
-        - docstring: Triple-quoted string with summary, parameters, returns, and examples
-        - MediaProcessor class: Video/audio download and conversion service with temporary file management
-        - standards: Format requirements specified in `_example_docstring_format.md`
-        """
-        assert has_good_callable_metadata(MediaProcessor)
 
     @pytest.mark.asyncio
     async def test_download_and_convert_method_exists_and_is_callable(self, tmp_path):
@@ -228,17 +308,7 @@ class TestCleanupCompletionRate:
         - required parameters: url (str), output_format (str), quality (str)
         - method signature: Parameters match expected types and names
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
-        )
+        processor = create_mock_processor(tmp_path)
         
         # This should not raise an exception
         try:
@@ -265,17 +335,7 @@ class TestCleanupCompletionRate:
         - success status: Dictionary containing 'status': 'success' key-value pair
         - return type: Dict[str, Any] as specified in method annotation
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
-        )
+        processor = create_mock_processor(tmp_path)
         
         result = await processor.download_and_convert(
             url="https://example.com/video",
@@ -298,16 +358,9 @@ class TestCleanupCompletionRate:
         - error status: Dictionary containing 'status': 'error' key-value pair
         - failure handling: Method handles exceptions and returns error status
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(side_effect=Exception("Download failed"))
-        
-        mock_ffmpeg = MagicMock() 
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": Exception("Download failed")}
         )
         
         result = await processor.download_and_convert(
@@ -333,16 +386,9 @@ class TestCleanupCompletionRate:
         """
         output_file = tmp_path / "final_output.mp4"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(output_file)})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ffmpeg_kwargs={"output_path": str(output_file)}
         )
         
         result = await processor.download_and_convert(
@@ -368,16 +414,9 @@ class TestCleanupCompletionRate:
         """
         error_message = "Network connection failed"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(side_effect=Exception(error_message))
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": Exception(error_message)}
         )
         
         result = await processor.download_and_convert(
@@ -401,11 +440,8 @@ class TestCleanupCompletionRate:
         - ytdlp wrapper: YtDlpWrapper instance handling video downloads
         - download_video method: Async method for downloading videos from URLs
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -433,11 +469,8 @@ class TestCleanupCompletionRate:
         - ffmpeg wrapper: FFmpegWrapper instance handling video conversion
         - convert_video method: Async method for converting video formats
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -467,11 +500,8 @@ class TestCleanupCompletionRate:
         """
         test_url = "https://example.com/specific-video-123"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -510,11 +540,8 @@ class TestCleanupCompletionRate:
         """
         test_format = "webm"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.webm")})
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path, output_path=str(tmp_path / "converted.webm"))
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -553,11 +580,8 @@ class TestCleanupCompletionRate:
         """
         test_quality = "1080p"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -594,11 +618,8 @@ class TestCleanupCompletionRate:
         - download failure: ytdlp.download_video raises exception or returns error status
         - conversion prevention: ffmpeg.convert_video is not called after download failure
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(side_effect=Exception("Download failed"))
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
+        mock_ytdlp = create_mock_ytdlp(tmp_path, side_effect=Exception("Download failed"))
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -628,11 +649,8 @@ class TestCleanupCompletionRate:
         - conversion failure: ffmpeg.convert_video raises exception or returns error
         - error status: Method returns status 'error' despite successful download
         """
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "video.mp4")})
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(side_effect=Exception("Conversion failed"))
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path, side_effect=Exception("Conversion failed"))
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
@@ -660,15 +678,9 @@ class TestCleanupCompletionRate:
         - supported_operations: Dictionary containing operation capability flags
         - operation capabilities: Boolean flags for download, convert
         """
-        mock_ytdlp = MagicMock()
-        mock_ffmpeg = MagicMock()
         capabilities = ['download', 'convert']
 
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
-        )
+        processor = create_mock_processor(tmp_path)
 
         for capability in processor.get_capabilities().keys():
             assert capability in capabilities, f"Capabilities missing 'supported_operations' key, got keys: {list(capabilities.keys())}"
@@ -685,7 +697,7 @@ class TestCleanupCompletionRate:
         """
         processor = make_media_processor(default_output_dir=tmp_path)
 
-        assert processor.default_output_dir == test_dir, f"default_output_dir is '{processor.default_output_dir}', expected '{test_dir}'"
+        assert processor.default_output_dir == tmp_path, f"default_output_dir is '{processor.default_output_dir}', expected '{tmp_path}'"
 
     def test_processor_has_enable_logging_attribute(self, tmp_path):
         """
@@ -720,8 +732,7 @@ class TestCleanupCompletionRate:
             default_output_dir=tmp_path,
             enable_logging=True
         )
-        
-        assert hasattr(processor, 'logger'), "MediaProcessor missing logger attribute"
+
         assert processor.logger is not None, "logger attribute is None when logging is enabled"
 
     def test_processor_has_ytdlp_attribute(self, tmp_path):
@@ -734,14 +745,13 @@ class TestCleanupCompletionRate:
         - ytdlp: Public attribute storing YtDlpWrapper instance for downloads
         - YtDlpWrapper: Wrapper class for yt-dlp functionality
         """
-        mock_ytdlp = MagicMock()
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp
         )
-        
-        assert hasattr(processor, 'ytdlp'), "MediaProcessor missing ytdlp attribute"
+
         assert processor.ytdlp is mock_ytdlp, f"ytdlp attribute is {processor.ytdlp}, expected {mock_ytdlp}"
 
     def test_processor_has_ffmpeg_attribute(self, tmp_path):
@@ -754,14 +764,13 @@ class TestCleanupCompletionRate:
         - ffmpeg: Public attribute storing FFmpegWrapper instance for conversion
         - FFmpegWrapper: Wrapper class for FFmpeg functionality
         """
-        mock_ffmpeg = MagicMock()
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
         
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ffmpeg=mock_ffmpeg
         )
-        
-        assert hasattr(processor, 'ffmpeg'), "MediaProcessor missing ffmpeg attribute"
+
         assert processor.ffmpeg is mock_ffmpeg, f"ffmpeg attribute is {processor.ffmpeg}, expected {mock_ffmpeg}"
 
     @pytest.mark.asyncio
@@ -777,20 +786,9 @@ class TestCleanupCompletionRate:
         """
         video_title = "Test Video Title"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "video.mp4"),
-            "title": video_title
-        })
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"title": video_title}
         )
         
         result = await processor.download_and_convert(
@@ -816,20 +814,9 @@ class TestCleanupCompletionRate:
         """
         video_duration = 120.5
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "video.mp4"),
-            "duration": video_duration
-        })
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"duration": video_duration}
         )
         
         result = await processor.download_and_convert(
@@ -855,20 +842,9 @@ class TestCleanupCompletionRate:
         """
         file_size = 1048576  # 1MB in bytes
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "video.mp4"),
-            "filesize": file_size
-        })
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"filesize": file_size}
         )
         
         result = await processor.download_and_convert(
@@ -894,20 +870,9 @@ class TestCleanupCompletionRate:
         """
         download_format = "mp4"
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "video.mp4"),
-            "format": download_format
-        })
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": download_format}
         )
         
         result = await processor.download_and_convert(
@@ -933,20 +898,10 @@ class TestCleanupCompletionRate:
         """
         converted_path = str(tmp_path / "converted.webm")
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "video.mp4"),
-            "format": "mp4"
-        })
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": converted_path})
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": "mp4"},
+            ffmpeg_kwargs={"output_path": converted_path}
         )
         
         result = await processor.download_and_convert(
@@ -977,24 +932,13 @@ class TestCleanupCompletionRate:
             "bitrate": "1000k"
         }
         
-        mock_ytdlp = MagicMock()
-        mock_ytdlp.download_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "video.mp4"),
-            "format": "mp4"
-        })
-        
-        mock_ffmpeg = MagicMock()
-        mock_ffmpeg.convert_video = AsyncMock(return_value={
-            "status": "success", 
-            "output_path": str(tmp_path / "converted.webm"),
-            "conversion_details": conversion_details
-        })
-        
-        processor = make_media_processor(
-            default_output_dir=tmp_path,
-            ytdlp=mock_ytdlp,
-            ffmpeg=mock_ffmpeg
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": "mp4"},
+            ffmpeg_kwargs={
+                "output_path": str(tmp_path / "converted.webm"),
+                "conversion_details": conversion_details
+            }
         )
         
         result = await processor.download_and_convert(

@@ -97,7 +97,7 @@ class TestLLMChunkSemanticTypeClassification:
         # Given - multiple semantic types
         multi_types = "text,header"
         # When/Then - should raise ValidationError
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             _ = LLMChunkTestDataFactory.create_chunk_instance(semantic_types=multi_types)
 
     def test_invalid_semantic_types(self):
@@ -118,7 +118,7 @@ class TestLLMChunkSemanticTypeClassification:
         
         # When/Then - each should raise ValidationError
         for semantic_type in potentially_invalid_types:
-            with pytest.raises(ValidationError):
+            with pytest.raises(ValueError):
                 LLMChunkTestDataFactory.create_chunk_instance(semantic_types=semantic_type)
 
     def test_semantic_types_case_sensitivity_of_valid_types(self):
@@ -181,7 +181,7 @@ class TestLLMChunkSemanticTypeClassification:
         WHEN LLMChunk is instantiated
         THEN expect raise ValidationError
         """
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             _ = LLMChunkTestDataFactory.create_chunk_instance(semantic_types="")
 
 

@@ -967,6 +967,17 @@ class QueryEngine:
             - Results include complete entity information for both relationship participants
             - Missing entities are skipped with warning logs rather than causing failures
         """
+        # Input validation
+        if max_results <= 0:
+            raise ValueError("max_results must be positive")
+        
+        if filters is not None and not isinstance(filters, dict):
+            raise TypeError("filters must be a dictionary")
+        
+        # Check for corrupted data
+        if self.graphrag.knowledge_graphs is None:
+            raise RuntimeError("GraphRAG data is corrupted")
+        
         results = []
         
         # Get all relationships from all knowledge graphs
@@ -983,6 +994,9 @@ class QueryEngine:
                     r for r in all_relationships 
                     if r.source_entity_id == filters['entity_id'] or r.target_entity_id == filters['entity_id']
                 ]
+            if 'confidence' in filters:
+                min_confidence = filters['confidence']
+                all_relationships = [r for r in all_relationships if r.confidence >= min_confidence]
         
         # Score relationships by query relevance
         scored_relationships = []
@@ -996,6 +1010,10 @@ class QueryEngine:
             target_entity = self.graphrag.global_entities.get(relationship.target_entity_id)
             
             if not source_entity or not target_entity:
+                if not source_entity:
+                    logging.warning(f"Missing source entity {relationship.source_entity_id} for relationship {relationship.id}")
+                if not target_entity:
+                    logging.warning(f"Missing target entity {relationship.target_entity_id} for relationship {relationship.id}")
                 continue
             
             # Relationship type match

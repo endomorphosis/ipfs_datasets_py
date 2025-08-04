@@ -95,7 +95,7 @@ class TestFOLInput:
         ]
         
         for invalid_input in invalid_inputs:
-            with pytest.raises(ValidationError):
+            with pytest.raises(ValueError):
                 FOLInput(**invalid_input)
     
     def test_text_content_validation(self):
@@ -227,7 +227,7 @@ class TestFOLOutput:
         ]
         
         for invalid_output in invalid_outputs:
-            with pytest.raises(ValidationError):
+            with pytest.raises(ValueError):
                 FOLOutput(**invalid_output)
     
     def test_fol_formula_syntax_validation(self):
@@ -525,10 +525,10 @@ class TestHelperFunctions:
     
     def test_validate_fol_input_errors(self):
         """Test validate_fol_input with invalid data."""
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             validate_fol_input("", confidence_threshold=0.7)
         
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             validate_fol_input("All cats are animals", confidence_threshold=1.5)
     
     def test_create_fol_converter_variations(self):

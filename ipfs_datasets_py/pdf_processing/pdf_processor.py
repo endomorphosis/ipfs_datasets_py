@@ -825,10 +825,13 @@ class PDFProcessor:
             })
 
         # Check if we actually extracted any content
-        page_num = page_content.pop('page_number')
-        if not all(value for value in page_content.values()):
-            raise ValueError(f"No content extracted from page {page_num}")
-
+        page_num_value = page_content['page_number']
+        content_lists = [page_content['elements'], page_content['images'], 
+                        page_content['annotations'], page_content['text_blocks'], 
+                        page_content['drawings']]
+        if not any(content_list for content_list in content_lists):
+            self.logger.warning(f"No content extracted from page {page_num_value}")
+        
         return page_content
 
     def _get_processing_time(self, start_time: float):

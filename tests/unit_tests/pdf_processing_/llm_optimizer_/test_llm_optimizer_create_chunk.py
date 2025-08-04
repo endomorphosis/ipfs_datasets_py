@@ -422,7 +422,7 @@ class TestLLMOptimizerCreateChunk:
         
         # When/Then - test each empty content case
         for empty_content in empty_content_cases:
-            with pytest.raises((ValidationError)) as exc_info:
+            with pytest.raises((ValidationError, ValueError)) as exc_info:
                 await optimizer._create_chunk(empty_content, chunk_id, page_num, source_elements)
             
             # Verify error message is descriptive
@@ -757,7 +757,7 @@ class TestLLMOptimizerCreateChunk:
         
         content = "Test content for chunk ID formatting validation"
         page_num = 1
-        metadata = {"element_type": "paragraph"}
+        source_elements = ["paragraph"]  # Correct format - list of strings
         
         # Test cases for different chunk_id formats
         chunk_id_test_cases = [
@@ -794,7 +794,7 @@ class TestLLMOptimizerCreateChunk:
                 f"{content} {i+1}",  # Slightly different content
                 chunk_id, 
                 page_num, 
-                metadata.copy()
+                source_elements
             )
             created_chunks.append(chunk)
         
@@ -822,8 +822,8 @@ class TestLLMOptimizerCreateChunk:
         consistent_id = "chunk_consistency_test"
         consistent_content = "Consistent content for testing"
         
-        chunk1 = await optimizer._create_chunk(consistent_content, consistent_id, page_num, metadata.copy())
-        chunk2 = await optimizer._create_chunk(consistent_content, consistent_id, page_num, metadata.copy())
+        chunk1 = await optimizer._create_chunk(consistent_content, consistent_id, page_num, source_elements)
+        chunk2 = await optimizer._create_chunk(consistent_content, consistent_id, page_num, source_elements)
         
         assert chunk1.chunk_id == consistent_id, "First chunk should have correct ID"
         assert chunk2.chunk_id == consistent_id, "Second chunk should have correct ID"
@@ -845,7 +845,7 @@ class TestLLMOptimizerCreateChunk:
                     "Content for special character test",
                     special_id,
                     page_num,
-                    metadata.copy()
+                    source_elements
                 )
                 # If creation succeeds, verify ID is preserved
                 assert chunk.chunk_id == special_id, \
@@ -888,7 +888,7 @@ class TestLLMOptimizerCreateChunk:
                     f"Content for numeric ID {numeric_id}",
                     str(numeric_id),  # Convert to string as expected by interface
                     page_num,
-                    metadata.copy()
+                    ["paragraph"]
                 )
                 # Should work with string conversion
                 assert chunk.chunk_id == str(numeric_id), \
@@ -905,7 +905,7 @@ class TestLLMOptimizerCreateChunk:
                 "Content for very long ID test",
                 very_long_id,
                 page_num,
-                metadata.copy()
+                ["paragraph"]
             )
             # If long IDs are supported, verify preservation
             assert chunk.chunk_id == very_long_id, "Very long ID should be preserved if supported"
@@ -929,7 +929,7 @@ class TestLLMOptimizerCreateChunk:
                 "Content for empty ID test",
                 "",  # Empty string ID
                 page_num,
-                metadata.copy()
+                ["paragraph"]
             )
         
         # 11. Test None chunk_id (should be invalid)
@@ -938,7 +938,7 @@ class TestLLMOptimizerCreateChunk:
                 "Content for None ID test", 
                 None,  # None ID
                 page_num,
-                metadata.copy()
+                ["paragraph"]
             )
 
     @pytest.mark.asyncio
@@ -977,7 +977,8 @@ class TestLLMOptimizerCreateChunk:
         before_creation_iso = datetime.now().isoformat()
         
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, basic_metadata.copy())
+        source_elements = ["paragraph"]  # Correct format for _create_chunk
+        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
         
         # Record time after chunk creation
         after_creation = time.time()
@@ -1131,7 +1132,7 @@ class TestLLMOptimizerCreateChunk:
             "Different content for consistency test",
             "chunk_meta_002", 
             page_num,
-            basic_metadata.copy()
+            ["paragraph"]
         )
         
         # Both chunks should have similar enhancement patterns
@@ -1152,7 +1153,7 @@ class TestLLMOptimizerCreateChunk:
             "Content with minimal metadata",
             "chunk_meta_minimal",
             page_num,
-            minimal_metadata.copy()
+            ["paragraph"]
         )
         
         # Should still enhance metadata even with minimal input
@@ -1173,7 +1174,7 @@ class TestLLMOptimizerCreateChunk:
             "Content with extensive metadata",
             "chunk_meta_extensive",
             page_num,
-            extensive_metadata.copy()
+            ["paragraph"]
         )
         
         # All original extensive metadata should be preserved
@@ -1248,7 +1249,7 @@ class TestLLMOptimizerCreateChunk:
                         f"{content} {invalid_value}",  # Unique content
                         f"{chunk_id}_{invalid_value}",
                         page_num,
-                        metadata.copy()
+                        ["paragraph"]
                     )
                     
                     # Should handle invalid token count gracefully
@@ -1277,7 +1278,7 @@ class TestLLMOptimizerCreateChunk:
                     problematic_content,
                     f"chunk_problematic_{i+1:03d}",
                     page_num,
-                    metadata.copy()
+                    ["paragraph"]
                 )
                 
                 # Should handle problematic content gracefully
@@ -1300,7 +1301,7 @@ class TestLLMOptimizerCreateChunk:
                     "Content without tokenizer",
                     "chunk_no_tokenizer",
                     page_num,
-                    metadata.copy()
+                    ["paragraph"]
                 )
                 
                 # Should use fallback counting method
@@ -1320,7 +1321,7 @@ class TestLLMOptimizerCreateChunk:
             "Normal content for comparison",
             "chunk_normal",
             page_num,
-            metadata.copy()
+            ["paragraph"]
         )
         
         # Then simulate failure and recovery
@@ -1331,7 +1332,7 @@ class TestLLMOptimizerCreateChunk:
                     "Content after token counting failure",
                     "chunk_after_failure",
                     page_num,
-                    metadata.copy()
+                    ["paragraph"]
                 )
             except Exception as e:
                 pass

@@ -39,3 +39,4 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 pdf_processing_metrics.json
+.mypy_cache/

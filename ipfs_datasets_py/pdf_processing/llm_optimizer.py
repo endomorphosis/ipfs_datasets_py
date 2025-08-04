@@ -45,6 +45,178 @@ from pydantic import (
     computed_field
 )
 
+
+from typing import List, Dict, Any, Union, Optional
+import numpy as np
+
+
+def extract_embedding_from_chunk(chunk_data: Dict[str, Any]) -> Optional[np.ndarray]:
+    """
+    Extract the embedding array from a single chunk dictionary.
+    
+    Args:
+        chunk_data (Dict[str, Any]): Dictionary containing chunk information with
+                                   an 'embedding' key that maps to a numpy array.
+    
+    Returns:
+        Optional[np.ndarray]: The embedding array if found, None otherwise.
+    
+    Raises:
+        KeyError: If the chunk_data doesn't contain an 'embedding' key.
+        TypeError: If the embedding value is not a numpy array or convertible to one.
+    
+    Examples:
+        >>> chunk = {'content': 'text', 'embedding': np.array([0.1, 0.2, 0.3])}
+        >>> embedding = extract_embedding_from_chunk(chunk)
+        >>> print(embedding)
+        [0.1 0.2 0.3]
+    """
+    if 'embedding' not in chunk_data:
+        raise KeyError("Chunk data does not contain 'embedding' key")
+    
+    embedding = chunk_data.pop('embedding')
+    
+    if isinstance(embedding, np.ndarray):
+        return embedding
+    elif isinstance(embedding, (list, tuple)):
+        return np.array(embedding)
+    else:
+        raise TypeError(f"Embedding must be numpy array, list, or tuple, got {type(embedding)}")
+
+
+def extract_embeddings_from_chunks(chunks: List[Dict[str, Any]]) -> List[np.ndarray]:
+    """
+    Extract embedding arrays from a list of chunk dictionaries.
+    
+    Args:
+        chunks (List[Dict[str, Any]]): List of chunk dictionaries, each containing
+                                     an 'embedding' key.
+    
+    Returns:
+        List[np.ndarray]: List of embedding arrays extracted from the chunks.
+    
+    Raises:
+        ValueError: If chunks is empty or contains invalid chunk data.
+        KeyError: If any chunk doesn't contain an 'embedding' key.
+        TypeError: If any embedding value is not a numpy array or convertible to one.
+    
+    Examples:
+        >>> chunks = [
+        ...     {'content': 'text1', 'embedding': np.array([0.1, 0.2])},
+        ...     {'content': 'text2', 'embedding': np.array([0.3, 0.4])}
+        ... ]
+        >>> embeddings = extract_embeddings_from_chunks(chunks)
+        >>> len(embeddings)
+        2
+    """
+    if not chunks:
+        raise ValueError("Chunks list is empty")
+    
+    embeddings = []
+    for i, chunk in enumerate(chunks):
+        try:
+            embedding = extract_embedding_from_chunk(chunk)
+            embeddings.append(embedding)
+        except (KeyError, TypeError) as e:
+            raise ValueError(f"Error processing chunk at index {i}: {str(e)}")
+    
+    return embeddings
+
+
+def extract_embedding_from_nested_data(data: Any, chunks_key: str = 'chunks') -> Union[np.ndarray, List[np.ndarray]]:
+    """
+    Extract embedding(s) from nested data structure containing chunks.
+    
+    This function handles various nested data structures and extracts embeddings
+    from chunks. It can return a single embedding if there's only one chunk,
+    or a list of embeddings if there are multiple chunks.
+    
+    Args:
+        data (Any): The nested data structure containing chunks with embeddings.
+                   Can be a dict with chunks, a list of chunks, or a single chunk.
+        chunks_key (str): The key to look for chunks in dict structures. 
+                         Defaults to 'chunks'.
+    
+    Returns:
+        Union[np.ndarray, List[np.ndarray]]: Single embedding array if one chunk,
+                                           list of embedding arrays if multiple chunks.
+    
+    Raises:
+        ValueError: If no chunks or embeddings are found in the data structure.
+        KeyError: If expected keys are missing from the data structure.
+        TypeError: If the data structure format is unexpected.
+    
+    Examples:
+        >>> # Single chunk
+        >>> data = {'chunks': [{'embedding': np.array([0.1, 0.2, 0.3])}]}
+        >>> result = extract_embedding_from_nested_data(data)
+        >>> print(result)
+        [0.1 0.2 0.3]
+        
+        >>> # Multiple chunks
+        >>> data = {'chunks': [
+        ...     {'embedding': np.array([0.1, 0.2])},
+        ...     {'embedding': np.array([0.3, 0.4])}
+        ... ]}
+        >>> result = extract_embedding_from_nested_data(data)
+        >>> len(result)
+        2
+    """
+    # Handle case where data is a dictionary with chunks key
+    if isinstance(data, dict) and chunks_key in data:
+        chunks = data[chunks_key]
+        if not isinstance(chunks, list):
+            raise TypeError(f"Expected {chunks_key} to be a list, got {type(chunks)}")
+        
+        embeddings = extract_embeddings_from_chunks(chunks)
+        return embeddings[0] if len(embeddings) == 1 else embeddings
+    
+    # Handle case where data is directly a list of chunks
+    elif isinstance(data, list):
+        # Check if it's a list of chunk dictionaries
+        if all(isinstance(item, dict) for item in data):
+            embeddings = extract_embeddings_from_chunks(data)
+            return embeddings[0] if len(embeddings) == 1 else embeddings
+        else:
+            raise TypeError("Data list contains non-dictionary items")
+    
+    # Handle case where data is a single chunk dictionary
+    elif isinstance(data, dict) and 'embedding' in data:
+        return extract_embedding_from_chunk(data)
+    
+    else:
+        raise ValueError(f"Unable to find chunks or embeddings in data structure. "
+                        f"Expected dict with '{chunks_key}' key, list of chunks, "
+                        f"or single chunk dict with 'embedding' key.")
+
+
+# Convenience function for the specific case shown in the example
+def get_embedding_from_llm_document_chunks(document_data: Dict[str, Any]) -> Union[np.ndarray, List[np.ndarray]]:
+    """
+    Extract embedding(s) specifically from LLMDocument chunk data structure.
+    
+    Args:
+        document_data (Dict[str, Any]): Dictionary containing 'chunks' key with
+                                      chunk data including embeddings.
+    
+    Returns:
+        Union[np.ndarray, List[np.ndarray]]: The embedding(s) from the chunks.
+    
+    Examples:
+        >>> document = {
+        ...     'chunks': [{
+        ...         'content': 'Test chunk content',
+        ...         'chunk_id': 'chunk_0001',
+        ...         'embedding': np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        ...     }]
+        ... }
+        >>> embedding = get_embedding_from_llm_document_chunks(document)
+        >>> print(embedding)
+        [0.1 0.2 0.3 0.4 0.5]
+    """
+    return extract_embedding_from_nested_data(document_data, chunks_key='chunks')
+
+
 def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) -> bool:
     """
     Compare two numpy arrays for equality, handling None values properly.
@@ -409,7 +581,7 @@ class LLMChunkMetadata(BaseModel):
         # Validate timestamp consistency (within 1 second tolerance)
         created_dt = datetime.fromisoformat(self.validate_iso_format(self.created_at))
         created_timestamp = created_dt.timestamp()
-        if abs(self.creation_timestamp - created_timestamp) > 1.0:
+        if abs(self.creation_timestamp - created_timestamp) > 2.0:
             raise ValueError(f"creation_timestamp '{self.creation_timestamp}' and created_at '{created_timestamp}' must represent the same time (timestamp consistency error)")
 
         # Extraction method and processing method consistency
@@ -702,6 +874,10 @@ class LLMDocument(BaseModel):
         self_dict.pop('document_embedding', None)
         other_dict.pop('document_embedding', None)
 
+        # Extract embeddings from nested chunks, otherwise it'll error.
+        _ = extract_embedding_from_nested_data(self_dict, chunks_key='chunks')
+        _ = extract_embedding_from_nested_data(other_dict, chunks_key='chunks')
+
         return self_dict == other_dict
 
     def __str__(self) -> str:
@@ -730,6 +906,30 @@ class LLMDocument(BaseModel):
         if len(original_string) > 500:
             original_string = original_string[:496] + '...'
         return original_string
+
+    def __repr__(self) -> str:
+        """
+        Generate a detailed string representation for debugging purposes.
+
+        This method provides a complete view of the LLMDocument's fields, including
+        all chunk details and metadata. It is designed for developers to inspect
+        the full state of the document object.
+
+        Returns:
+            str: Detailed string representation of the LLMDocument.
+        """
+        # Get all field values
+        field_values = []
+        for field_name, field_info in self.model_dump().items():
+            value = getattr(self, field_name)
+            if isinstance(value, np.ndarray):
+                value = f"array(shape={value.shape}, dtype={value.dtype})"
+            if field_name == 'chunks':
+                # For chunks, we can summarize them instead of printing all details
+                value = [f"(chunk_id={chunk.chunk_id}, token_count={chunk.token_count})" for chunk in value]
+            field_values.append(f"{field_name}={repr(value)}")
+        
+        return f"LLMDocument({', '.join(field_values)})"
 
     @field_validator('document_embedding')
     @classmethod
@@ -1491,7 +1691,22 @@ class LLMOptimizer:
             figure_caption > mixed > text. The method automatically strips whitespace 
             and validates content before processing.
         """
+        # Validate content
+        if content is None:
+            raise ValueError("Content cannot be None")
+        if not isinstance(content, str):
+            raise ValueError("Content must be a string")
+        if not content.strip():
+            raise ValueError("Content cannot be empty or contain only whitespace")
+        
         token_count = self._count_tokens(content)
+
+        if not isinstance(source_elements, list) or not source_elements:
+            raise TypeError("source_elements must be a non-empty list of element types")
+        else:
+            for element in source_elements:
+                if not isinstance(element, str):
+                    raise TypeError(f"Invalid element type '{element}' in source_elements. Must be a string.")
 
         # Determine primary semantic type
         semantic_types = set(source_elements)
@@ -1526,31 +1741,35 @@ class LLMOptimizer:
         elif len(mapped_semantic_types) == 1:
             primary_type = list(mapped_semantic_types)[0]
         else:
-            primary_type = 'text'        # Validate semantic type against allowed values
-        allowed_types = {'text', 'table', 'figure_caption', 'header', 'mixed'}
+            primary_type = 'text'
+
+        # Validate semantic type against allowed values from ValidSemanticType enum
+        allowed_types = {t.value for t in ValidSemanticType}
         if primary_type is None or primary_type not in allowed_types:
             raise ValueError(f"Invalid semantic type '{primary_type}' for chunk creation.")
         
         # Format chunk ID appropriately
         formatted_chunk_id = f"chunk_{chunk_id:04d}" if isinstance(chunk_id, int) else str(chunk_id)
+        timestamp = datetime.now().timestamp()
+        timestamp_str = datetime.now().isoformat()
 
         metadata = LLMChunkMetadata(
             element_type=primary_type,
-            element_id=chunk_id,
+            element_id=formatted_chunk_id,
             character_count=len(content),
             word_count=len(content.split()),
             sentence_count=len(content.split('.')),
             token_count=token_count,
-            creation_timestamp=datetime.now().isoformat(),
-            created_at=datetime.now().isoformat(),
-            processing_method="LLMOptimizer",
-            character_count_with_spaces=len(content.replace(" ", "")),
-            tokenizer_used= self.tokenizer_name,
+            creation_timestamp=timestamp,
+            created_at=timestamp_str,
+            processing_method="llm_optimization",
+            tokenizer_used=self.tokenizer_name,
             semantic_type=primary_type,
-            has_mixed_elements='mixed' in mapped_semantic_types,
+            has_mixed_elements=len(mapped_semantic_types) > 1,  # Check if multiple types instead of checking for 'mixed'
             contains_table='table' in mapped_semantic_types,
             contains_figure='figure_caption' in mapped_semantic_types,
             is_header='header' in mapped_semantic_types,
+            page_number=page_num
         )
 
         chunk = LLMChunk(

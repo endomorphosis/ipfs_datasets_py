@@ -13,10 +13,10 @@ from pathlib import Path
 # import sys # Commented out old sys.path modifications
 # sys.path.append('/home/barberb/laion-embeddings-1/tests/test_mcp_tools') # Commented out old sys.path modifications
 # sys.path.append('/home/barberb/laion-embeddings-1') # Commented out old sys.path modifications
-from tests.conftest import ( # Updated import for conftest
-    mock_embedding_service, sample_embeddings, sample_metadata,
-    create_sample_file, TEST_MODEL_NAME, TEST_BATCH_SIZE
-)
+# from tests.conftest import ( # Updated import for conftest
+#     create_sample_file, TEST_MODEL_NAME, TEST_BATCH_SIZE
+# )
+TEST_MODEL_NAME = "test-model"  # Example model name for testing
 
 # Import the tools from their new locations
 from ipfs_datasets_py.mcp_tools.tools.embedding_tools import EmbeddingGenerationTool, BatchEmbeddingTool, MultimodalEmbeddingTool

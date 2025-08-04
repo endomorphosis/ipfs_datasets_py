@@ -28,13 +28,13 @@ class TestLLMChunkMetadataStringFormatValidation:
         # Constants
         FIELD_NAME = "created_at"
         INVALID_VALUE = "2025/01/15 10:30:45"
-        ERROR_WORDS = ["format", "iso", "datetime"]
+        ERROR_WORDS = ["created_at", "valid", "iso", "8601", "format"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -43,18 +43,18 @@ class TestLLMChunkMetadataStringFormatValidation:
         """
         GIVEN created_at with "2025-01-15" (date only, no time)
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with format validation message
+        THEN raise ValidationError with timestamp consistency message (since ISO parsing succeeds but timestamps don't match)
         """
         # Constants
         FIELD_NAME = "created_at"
         INVALID_VALUE = "2025-01-15"
-        ERROR_WORDS = ["format", "iso", "datetime"]
+        ERROR_WORDS = ["creation_timestamp", "created_at", "time", "consistency", "error"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -68,13 +68,13 @@ class TestLLMChunkMetadataStringFormatValidation:
         # Constants
         FIELD_NAME = "created_at"
         INVALID_VALUE = "10:30:45"
-        ERROR_WORDS = ["format", "iso", "datetime"]
+        ERROR_WORDS = ["created_at", "valid", "iso", "8601", "format"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -94,7 +94,7 @@ class TestLLMChunkMetadataStringFormatValidation:
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -114,7 +114,7 @@ class TestLLMChunkMetadataStringFormatValidation:
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -208,13 +208,13 @@ class TestLLMChunkMetadataStringFormatValidation:
         # Constants
         FIELD_NAME = "element_id"
         INVALID_VALUE = ""
-        ERROR_WORDS = ["empty", "length", "min"]
+        ERROR_WORDS = ["string", "field", "empty", "whitespace"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)

@@ -9,6 +9,8 @@ import shutil
 from pathlib import Path
 from typing import Dict, Any, Generator
 import json
+from unittest.mock import Mock
+
 
 # Test configuration
 TEST_CONFIG = {
@@ -225,3 +227,11 @@ def mock_pdf_processor_components():
         "ocr_engine": MockOCREngine(), 
         "graphrag_integrator": MockGraphRAGIntegrator()
     }
+
+@pytest.fixture
+def mock_embedding_service():
+    return Mock()
+
+@pytest.fixture
+def mock_vector_service():
+    return Mock()

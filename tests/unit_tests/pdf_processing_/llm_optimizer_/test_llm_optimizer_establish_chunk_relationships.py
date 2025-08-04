@@ -96,9 +96,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=10,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 content="Second chunk follows first",
@@ -106,9 +106,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=12,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 content="Third chunk completes sequence",
@@ -116,9 +116,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=14,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             )
         ]
         
@@ -159,9 +159,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=10,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 content="Second paragraph on page 1",
@@ -169,9 +169,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=12,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 content="Table on page 1",
@@ -181,7 +181,7 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 token_count=15,
                 semantic_types={"table"},
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 content="First paragraph on page 2",
@@ -189,9 +189,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=2,
                 source_elements=["paragraph"],
                 token_count=11,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             )
         ]
         
@@ -267,9 +267,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=10,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             )
         ]
         
@@ -306,9 +306,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=(i // 10) + 1,  # 10 chunks per page
                 source_elements=["paragraph"],
                 token_count=15,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             )
             large_chunk_list.append(chunk)
         
@@ -354,9 +354,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=10,
-            semantic_types={"text"},
+            semantic_types="text",
             relationships=[],
-            metadata={}
+            metadata=self.sample_metadata
         )
         
         # Test with chunk missing chunk_id attribute
@@ -366,9 +366,9 @@ class TestLLMOptimizerEstablishChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=10,
-            semantic_types={"text"},
+            semantic_types="text",
             relationships=[],
-            metadata={}
+            metadata=self.sample_metadata
         )
         
         # When/Then - test with malformed chunk

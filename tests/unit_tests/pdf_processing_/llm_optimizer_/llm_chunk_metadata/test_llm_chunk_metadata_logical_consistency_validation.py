@@ -40,7 +40,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, EXPECTED_WORDS) == True
@@ -64,7 +64,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, EXPECTED_WORDS) == True
@@ -90,7 +90,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, EXPECTED_WORDS) == True
@@ -115,7 +115,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert any(field in str(exc_info.value) for field in EXPECTED_FIELDS)
@@ -140,7 +140,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert any(field in str(exc_info.value) for field in EXPECTED_FIELDS)
@@ -165,7 +165,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert any(field in str(exc_info.value) for field in EXPECTED_FIELDS)
@@ -190,7 +190,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert any(field in str(exc_info.value) for field in EXPECTED_FIELDS)
@@ -214,7 +214,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, EXPECTED_WORDS) == True
@@ -238,7 +238,7 @@ class TestLLMChunkMetadataLogicalConsistencyValidation:
         )
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, EXPECTED_WORDS) == True

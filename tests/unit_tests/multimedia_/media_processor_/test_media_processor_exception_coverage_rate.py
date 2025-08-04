@@ -8,10 +8,15 @@ from unittest.mock import Mock, patch, MagicMock
 from urllib.error import URLError, HTTPError
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists('media_processor.py'), "media_processor.py does not exist at the specified directory."
-assert os.path.exists('media_processor_stubs.md'), "Documentation for media_processor.py does not exist at the specified directory."
+home_dir = os.path.expanduser('~')
+file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py")
+md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor_stubs.md")
 
-from media_processor import MediaProcessor
+# Import the MediaProcessor class and its class dependencies
+from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+
 
 from tests._test_utils import (
     has_good_callable_metadata,

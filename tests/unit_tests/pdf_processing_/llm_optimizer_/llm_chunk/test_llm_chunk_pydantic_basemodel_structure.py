@@ -213,15 +213,15 @@ class TestLLMChunkPydanticBaseModelStructure:
         from pydantic import ValidationError
         
         # Test invalid semantic_types
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMChunkTestDataFactory.create_chunk_instance(semantic_types=123)
         
         # Test negative source_page
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMChunkTestDataFactory.create_chunk_instance(source_page=-5)
         
         # Test negative token_count
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMChunkTestDataFactory.create_chunk_instance(token_count=-10)
 
     def test_default_values(self):

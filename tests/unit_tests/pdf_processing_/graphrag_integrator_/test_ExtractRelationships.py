@@ -66,10 +66,13 @@ try:
     import numpy as np
 
     from ipfs_datasets_py.ipld import IPLDStorage
-    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk, LLMChunkMetadata
 except ImportError as e:
     raise ImportError(f"Could into import the module's dependencies: {e}") 
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
+    LLMChunkMetadataTestDataFactory as MetadataFactory
+)
 
 
 
@@ -80,6 +83,11 @@ class TestExtractRelationships:
     def integrator(self):
         """Create a GraphRAGIntegrator instance for testing."""
         return GraphRAGIntegrator()
+
+    @property
+    def sample_metadata(self):
+        """Create sample metadata for LLMChunk objects."""
+        return LLMChunkMetadata(**MetadataFactory.create_valid_baseline_data())
 
     @pytest.fixture
     def sample_entities(self):
@@ -124,9 +132,9 @@ class TestExtractRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=12,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 chunk_id="chunk_2",
@@ -134,9 +142,9 @@ class TestExtractRelationships:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=8,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             ),
             LLMChunk(
                 chunk_id="chunk_3",
@@ -144,9 +152,9 @@ class TestExtractRelationships:
                 source_page=2,
                 source_elements=["paragraph"],
                 token_count=6,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             )
         ]
 
@@ -618,9 +626,9 @@ class TestExtractRelationships:
                 source_page=i+1,
                 source_elements=["paragraph"],
                 token_count=10,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={}
+                metadata=self.sample_metadata
             )
             large_chunk_set.append(chunk)
         

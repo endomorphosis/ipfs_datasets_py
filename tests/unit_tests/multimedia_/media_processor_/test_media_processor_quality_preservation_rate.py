@@ -3,15 +3,19 @@
 
 import pytest
 import os
-import numpy as np
 from unittest.mock import Mock, patch, MagicMock
-from skimage.metrics import structural_similarity
+
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists('media_processor.py'), "media_processor.py does not exist at the specified directory."
-assert os.path.exists('media_processor_stubs.md'), "Documentation for media_processor.py does not exist at the specified directory."
+home_dir = os.path.expanduser('~')
+file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py")
+md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor_stubs.md")
 
-from media_processor import MediaProcessor
+# Import the MediaProcessor class and its class dependencies
+from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -49,8 +53,7 @@ class TestQualityPreservationRate:
         except Exception as e:
             pytest.fail(f"Callable metadata in MediaProcessor does not meet standards: {e}")
 
-    @patch('cv2.VideoCapture')
-    def test_frame_sampling_at_10_percent_intervals(self, mock_video_capture):
+    def test_frame_sampling_at_10_percent_intervals(self):
         """
         GIVEN video conversion quality assessment
         WHEN MediaProcessor samples frames for SSIM calculation
@@ -85,8 +88,7 @@ class TestQualityPreservationRate:
         """
         raise NotImplementedError("test_frame_extraction_uses_video_duration_for_positioning test needs to be implemented")
 
-    @patch('skimage.metrics.structural_similarity')
-    def test_ssim_calculation_uses_scikit_image_function(self, mock_ssim):
+    def test_ssim_calculation_uses_scikit_image_function(self):
         """
         GIVEN frame quality comparison
         WHEN MediaProcessor calculates SSIM

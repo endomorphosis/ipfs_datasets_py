@@ -5,20 +5,14 @@
 
 import os
 import io
-import time
-import threading
-from abc import ABC
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
-import numpy as np
 from PIL import Image
 from pydantic import BaseModel
-
-import cv2
-import torch
-import pytesseract
 from surya.recognition.schema import BaseChar
+from typing import List
+
 
 # NOTE These are already in the surya module, but we redefine them here for clarity.
 class TextChar(BaseChar):

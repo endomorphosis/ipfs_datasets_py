@@ -160,7 +160,7 @@ class TestLLMChunkFieldValidation:
         invalid_pages = [-1, "page1", ["page"], None, {"page": 1}, set("page")]
         
         for page in invalid_pages:
-            with pytest.raises(ValidationError):
+            with pytest.raises(ValueError):
                 LLMChunkTestDataFactory.create_chunk_instance(source_page=page)
 
     def test_source_elements_field_validation(self):

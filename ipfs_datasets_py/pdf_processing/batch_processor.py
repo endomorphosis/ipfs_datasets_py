@@ -56,6 +56,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 
 import psutil
+from pydantic import (
+    BaseModel, 
+    PositiveInt
+)
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
@@ -1249,8 +1253,10 @@ class BatchProcessor:
         active_batches = []
         
         for batch_id, batch_status in self.active_batches.items():
+
             # Only include batches that are not complete
             total_finished = batch_status.completed_jobs + batch_status.failed_jobs
+
             if total_finished < batch_status.total_jobs:
                 batch_dict = asdict(batch_status)
                 batch_dict['resource_usage'] = self._get_resource_usage()
