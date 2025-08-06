@@ -58,8 +58,72 @@ from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
 
 
+
+import faker
+from typing import Generator
+
+def make_fake_names(n = 30):
+    """
+    Generate a list of fake names using Faker library.
+    
+    Args:
+        n (int): Number of names to generate (default: 30)
+    
+    Returns:
+        List[str]: List of fake names
+    """
+    fake = faker.Faker()
+    return [fake.name() for _ in range(n)]
+
+def make_fake_name_questions(n: int = 30) -> Generator[tuple[str, str], None, None]:
+    """
+    Generate a list of fake name-related questions using Faker library.
+    
+    Args:
+        n (int): Number of questions to generate (default: 30)
+    
+    Returns:
+        List[str]: List of fake name-related questions
+    """
+    fake_names = make_fake_names(n)
+    for name in fake_names:
+        yield name, f"Who is {name}?"
+
+
+def make_fake_companies(n: int = 30):
+    """
+    Generate a list of fake company names using Faker library.
+    
+    Args:
+        n (int): Number of company names to generate (default: 30)
+    
+    Returns:
+        List[str]: List of fake company names
+    """
+    fake = faker.Faker()
+    return [fake.company() for _ in range(n)]
+
+
+def make_fake_company_questions(n: int = 30) -> Generator[tuple[str, str], None, None]:
+    """
+    Generate a list of fake company-related questions using Faker library.
+    
+    Args:
+        n (int): Number of questions to generate (default: 30)
+    
+    Returns:
+        List[str]: List of fake company-related questions
+    """
+    fake_companies_1 = make_fake_companies(n)
+    fake_companies_2 = make_fake_companies(n)
+    for company1, company2 in zip(fake_companies_1, fake_companies_2):
+        yield company1, company2, f"{company1} and {company2} are competitors."
+
+
 class TestQueryEngineExtractEntityNamesFromQuery:
     """Test QueryEngine._extract_entity_names_from_query method for entity name detection."""
+
+    N = 30  # Number of test cases to generate
 
     def setup_method(self):
         """Setup QueryEngine instance for testing."""
@@ -73,19 +137,24 @@ class TestQueryEngineExtractEntityNamesFromQuery:
             embedding_model="sentence-transformers/all-MiniLM-L6-v2"
         )
 
-    def test_extract_entity_names_single_entity(self):
+    @pytest.mark.parametrize("name, query", [
+        (name, question) for name, question in make_fake_name_questions(n=N)
+    ])
+    def test_extract_entity_names_single_entity(self, name, query):
         """
         GIVEN a QueryEngine instance
-        AND query "Who is Bill Gates?"
+        AND query in the form "Who is {name}?"
         WHEN _extract_entity_names_from_query is called
         THEN expect:
-            - List containing ["Bill Gates"] returned
+            - List containing [name] returned
             - Capitalized word sequence properly identified
         """
-        query = "Who is Bill Gates?"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert result == ["Bill Gates"]
+        assert result == [name], f"Expected [{name}] but got {result} for query: {query}"
 
+    @pytest.mark.parametrize("name, query", [
+        (name, question) for name, question in make_fake_company_questions(n=N)
+    ])
     def test_extract_entity_names_multiple_entities(self):
         """
         GIVEN a QueryEngine instance
@@ -103,11 +172,10 @@ class TestQueryEngineExtractEntityNamesFromQuery:
     def test_extract_entity_names_multi_word_entities(self):
         """
         GIVEN a QueryEngine instance
-        AND query "path from John Smith to Mary Johnson"
+        AND query with multiple entities in it "path from John Smith to Mary Johnson"
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - List containing ["John Smith", "Mary Johnson"] returned
-            - Multi-word capitalized sequences captured correctly
         """
         query = "path from John Smith to Mary Johnson"
         result = self.query_engine._extract_entity_names_from_query(query)
@@ -120,7 +188,6 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Empty list returned
-            - No capitalized sequences meeting criteria
         """
         query = "what is artificial intelligence"
         result = self.query_engine._extract_entity_names_from_query(query)
@@ -257,7 +324,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         query1 = "Version 2.0 Software and Product 3M are items"
         result = self.query_engine._extract_entity_names_from_query(query1)
         # Test that the method handles numbers in entity names
-        # Specific behavior depends on implementation
+
         assert isinstance(result, list)
         assert "Version 2.0 Software" in result
         assert "Product 3M" in result
@@ -361,10 +428,9 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         # Create a long query with multiple entities
         entities = ["Microsoft", "Apple", "Google", "Amazon", "Facebook", "Tesla", "Netflix", "Adobe"]
         long_query = " ".join([f"The company {entity} has many employees and" for entity in entities] * 20)
-        
+
         result = self.query_engine._extract_entity_names_from_query(long_query)
-        # Should handle long queries without issues
-        assert isinstance(result, list)
+
         # Should find the entities
         for entity in entities:
             assert entity in result
@@ -397,17 +463,16 @@ class TestQueryEngineExtractEntityNamesFromQuery:
             - Method maintains 95% or higher accuracy.
             - Handles all entity formats (names, organizations, products) with consistent results
             - Consistent accuracy between different entity types
-        
         """
         faker.Faker.seed(420)  # For reproducibility
         faker_dict = {
-            "company": [faker.Faker().company() for _ in range(30)],
-            "address": [faker.Faker().address() for _ in range(30)],
-            "city": [faker.Faker().city() for _ in range(30)],
-            "country": [faker.Faker().country() for _ in range(30)],
-            "street_name": [faker.Faker().street_name() for _ in range(30)],
+            "company": make_fake_companies(n=self.N),
+            "address": [faker.Faker().address() for _ in range(self.N)],
+            "city": [faker.Faker().city() for _ in range(self.N)],
+            "country": [faker.Faker().country() for _ in range(self.N)],
+            "street_name": [faker.Faker().street_name() for _ in range(self.N)],
             "crypto_currency": [faker.Faker().cryptocurrency_name() for _ in range(30)],
-            "product": [faker.Faker().product_name() for _ in range(30)],
+            "product": [faker.Faker().random_company_product() for _ in range(30)],
         }
 
 

@@ -436,17 +436,15 @@ class BatchProcessor:
             raise ValueError("max_workers must be a positive integer")
         
         if not isinstance(max_memory_mb, int) or max_memory_mb < 512:
-            if max_memory_mb < 0:
-                raise ValueError("max_memory_mb must be positive")
-            else:
-                raise ValueError("max_memory_mb must be at least 512 MB")
-        
+            msg = "max_memory_mb must be positive" if max_memory_mb < 0 else "max_memory_mb must be at least 512 MB"
+            raise ValueError(msg)
+
         # Store configuration flags
-        self.enable_monitoring = enable_monitoring
-        self.enable_audit = enable_audit
+        self.enable_monitoring: bool = enable_monitoring
+        self.enable_audit: bool = enable_audit
         
-        self.max_workers = max_workers or min(mp.cpu_count(), 8)
-        self.max_memory_mb = max_memory_mb
+        self.max_workers: int = max_workers or min(mp.cpu_count(), 8)
+        self.max_memory_mb: int = max_memory_mb
         self.storage = storage or IPLDStorage()
         
         # Initialize monitoring and audit
@@ -462,14 +460,12 @@ class BatchProcessor:
                 )
                 # Create and configure monitoring system
                 self.monitoring = MonitoringSystem()
-                # In real usage, we would call initialize, but tests expect the instance itself
-                if hasattr(self.monitoring, 'initialize'):
-                    self.monitoring.initialize(config)
+                self.monitoring.initialize(config)
             except (ImportError, AttributeError, TypeError) as e:
                 raise ImportError(f"Monitoring dependencies not available: {e}")
         else:
             self.monitoring = None
-        
+
         # Processing components
         self.pdf_processor = PDFProcessor(storage=self.storage)
         self.llm_optimizer = LLMOptimizer()

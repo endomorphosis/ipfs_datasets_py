@@ -645,21 +645,21 @@ class GraphRAGIntegrator:
         """
         # Validate storage parameter
         if storage is not None and not isinstance(storage, IPLDStorage):
-            if not hasattr(storage, 'store') or not hasattr(storage, 'retrieve'):
-                raise TypeError("storage must be an instance of IPLDStorage")
-        
-        # Validate similarity_threshold parameter
-        if not isinstance(similarity_threshold, (int, float)):
-            raise TypeError("similarity_threshold must be a number")
-        if not (0.0 <= similarity_threshold <= 1.0):
-            raise ValueError("similarity_threshold must be between 0.0 and 1.0")
-        
-        # Validate entity_extraction_confidence parameter
-        if not isinstance(entity_extraction_confidence, (int, float)):
-            raise TypeError("entity_extraction_confidence must be a number")
-        if not (0.0 <= entity_extraction_confidence <= 1.0):
-            raise ValueError("entity_extraction_confidence must be between 0.0 and 1.0")
-        
+            for required_attr in ['store', 'retrieve']:
+                if not hasattr(storage, required_attr):
+                    raise TypeError(f"storage must implement '{required_attr}' method")
+
+        # Validate similarity_threshold and entity_extraction_confidence parameters
+        type_check_dict = {
+            "similarity_threshold": similarity_threshold, 
+            "entity_extraction_confidence": entity_extraction_confidence
+        }
+        for key, value in type_check_dict.items():
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"{key} must be a number")
+            if not (0.0 <= value <= 1.0):
+                raise ValueError(f"{key} must be between 0.0 and 1.0")
+
         self.storage = storage or IPLDStorage()
         self.similarity_threshold = similarity_threshold
         self.entity_extraction_confidence = entity_extraction_confidence
@@ -723,13 +723,13 @@ class GraphRAGIntegrator:
         if not isinstance(llm_document, LLMDocument):
             raise TypeError("llm_document must be an instance of LLMDocument")
         
-        if not hasattr(llm_document, 'document_id') or llm_document.document_id is None:
+        if llm_document.document_id is None:
             raise ValueError("document_id is required")
         
-        if not hasattr(llm_document, 'title') or llm_document.title is None:
+        if llm_document.title is None:
             raise ValueError("title is required")
         
-        if hasattr(llm_document, 'chunks') and llm_document.chunks is not None:
+        if llm_document.chunks is not None:
             for chunk in llm_document.chunks:
                 if not hasattr(chunk, 'chunk_id'):  # Basic check for LLMChunk-like object
                     raise TypeError("All chunks must be LLMChunk instances")
@@ -834,18 +834,25 @@ class GraphRAGIntegrator:
         for chunk in chunks:
             if not isinstance(chunk, LLMChunk):
                 raise TypeError(f"All chunks must be LLMChunk instances, got {type(chunk).__name__}")
+            if not hasattr(chunk, 'content') or not hasattr(chunk, 'chunk_id'):
+                raise AttributeError("LLMChunk must have 'content' and 'chunk_id' attributes")
 
         entity_mentions = {}  # Track entity mentions across chunks
         
         for chunk in chunks:
             # Extract entities from chunk content
-            chunk_entities = await self._extract_entities_from_text(
-                chunk.content, 
-                chunk.chunk_id
-            )
-            
+            try:
+                chunk_entities = await self._extract_entities_from_text(
+                    chunk.content, 
+                    chunk.chunk_id
+                )
+            except Exception as e:
+                logger.error(f"Failed to extract entities for chunk {chunk.chunk_id}: {e}")
+                raise RuntimeError(f"Entity extraction service for chunk {chunk.chunk_id}: {e}") from e
+
             for entity_data in chunk_entities:
                 # Handle case where entity_data might be a string instead of dict (from bad test setup)
+                # TODO Fucking fix this. We should NOT be modifying the implementation to handle badly written tests.
                 if isinstance(entity_data, str):
                     continue
                     
@@ -1229,32 +1236,22 @@ class GraphRAGIntegrator:
             relationships over generic ones. The relationship direction is implied by the order
             of entities (entity1 -> entity2).
         """
-        import re
+
         
         # Input validation - check for None first
-        if entity1 is None:
-            raise TypeError("Entity cannot be None")
-        if entity2 is None:
-            raise TypeError("Entity cannot be None")
-        if context is None:
-            raise TypeError("Context must be a string")
+        for entity in (entity1, entity2):
+            if entity is None:
+                raise TypeError("Entity cannot be None")
+            if not isinstance(entity, Entity):
+                raise TypeError("Expected Entity instance")
+            if not hasattr(entity, 'type'):
+                raise AttributeError("Entity must have a 'type' attribute")
+
         if not isinstance(context, str):
             raise TypeError("Context must be a string")
         if not context.strip():
             raise ValueError("Context cannot be empty")
-        
-        # Check if they are actual Entity instances
-        if not isinstance(entity1, Entity):
-            raise TypeError("Expected Entity instance")
-        if not isinstance(entity2, Entity):
-            raise TypeError("Expected Entity instance")
-        
-        # Validate entity attributes
-        if not hasattr(entity1, 'type'):
-            raise AttributeError("Entity must have a 'type' attribute")
-        if not hasattr(entity2, 'type'):
-            raise AttributeError("Entity must have a 'type' attribute")
-        
+
         context_lower = context.lower()
         
         # Helper function for flexible keyword matching (handles abbreviations and word boundaries)

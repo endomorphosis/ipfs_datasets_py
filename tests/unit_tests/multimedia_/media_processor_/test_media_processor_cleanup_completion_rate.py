@@ -262,89 +262,173 @@ def create_mock_processor(tmp_path, ytdlp_kwargs=None, ffmpeg_kwargs=None, **pro
 class TestCleanupCompletionRate:
     """Test cleanup completion rate criteria for temporary file management."""
 
+    DEFAULT_URL = "https://example.com/video"
+    DEFAULT_OUTPUT_FORMAT = "mp4"
+    DEFAULT_QUALITY = "720p"
+
     @pytest.mark.asyncio
-    async def test_download_and_convert_method_exists_and_is_callable(self, tmp_path):
+    async def test_download_and_convert_method_exists(self, tmp_path):
         """
         GIVEN MediaProcessor class
         WHEN accessing download_and_convert method
-        THEN method exists and is callable
-        
-        WHERE:
-        - download_and_convert: Public method for media processing with cleanup
-        - callable: Method can be invoked with proper parameters
+        THEN method exists
         """
         processor = make_media_processor(default_output_dir=tmp_path)
-        
         assert hasattr(processor, 'download_and_convert'), "MediaProcessor missing download_and_convert method"
+
+    @pytest.mark.asyncio
+    async def test_download_and_convert_method_is_callable(self, tmp_path):
+        """
+        GIVEN MediaProcessor class
+        WHEN accessing download_and_convert method
+        THEN method is callable
+        """
+        processor = make_media_processor(default_output_dir=tmp_path)
         assert callable(processor.download_and_convert), "download_and_convert is not callable"
+
+    @pytest.mark.asyncio
+    async def test_download_and_convert_method_is_async(self, tmp_path):
+        """
+        GIVEN MediaProcessor class
+        WHEN accessing download_and_convert method
+        THEN method is async function
+        """
+        processor = make_media_processor(default_output_dir=tmp_path)
         assert asyncio.iscoroutinefunction(processor.download_and_convert), "download_and_convert is not async"
 
     @pytest.mark.asyncio
-    async def test_get_capabilities_method_exists_and_returns_dict(self, tmp_path):
+    async def test_get_capabilities_method_exists(self, tmp_path):
         """
         GIVEN MediaProcessor class
-        WHEN calling get_capabilities method
-        THEN method returns dictionary with capability information
-        
-        WHERE:
-        - get_capabilities: Public method returning processor capabilities
-        - dictionary: Return type containing capability flags and information
+        WHEN accessing get_capabilities method
+        THEN method exists
         """
         processor = make_media_processor(default_output_dir=tmp_path)
-        
+        assert hasattr(processor, 'get_capabilities'), "MediaProcessor missing get_capabilities method"
+
+    @pytest.mark.asyncio
+    async def test_get_capabilities_method_returns_dict(self, tmp_path):
+        """
+        GIVEN MediaProcessor instance
+        WHEN calling get_capabilities method
+        THEN method returns dictionary type
+        """
+        processor = make_media_processor(default_output_dir=tmp_path)
         capabilities = processor.get_capabilities()
-        
         assert isinstance(capabilities, dict), f"get_capabilities returned {type(capabilities)}, expected dict"
+
+    @pytest.mark.asyncio
+    async def test_get_capabilities_returns_non_empty_dict(self, tmp_path):
+        """
+        GIVEN MediaProcessor instance
+        WHEN calling get_capabilities method
+        THEN method returns non-empty dictionary
+        """
+        processor = make_media_processor(default_output_dir=tmp_path)
+        capabilities = processor.get_capabilities()
         assert len(capabilities) > 0, "get_capabilities returned empty dictionary"
 
     @pytest.mark.asyncio
-    async def test_download_and_convert_accepts_required_parameters(self, tmp_path):
+    async def test_download_and_convert_accepts_url_parameter(self, tmp_path):
         """
         GIVEN MediaProcessor instance
-        WHEN calling download_and_convert with required parameters
-        THEN method accepts url, output_format, and quality parameters
-        
-        WHERE:
-        - required parameters: url (str), output_format (str), quality (str)
-        - method signature: Parameters match expected types and names
+        WHEN calling download_and_convert with url parameter
+        THEN method accepts url parameter without error
         """
         processor = create_mock_processor(tmp_path)
-        
-        # This should not raise an exception
+
         try:
-            result = await processor.download_and_convert(
-                url="https://example.com/video",
-                output_format="mp4", 
-                quality="720p"
+            await processor.download_and_convert(
+                url=self.DEFAULT_URL,
+                output_format=self.DEFAULT_OUTPUT_FORMAT, 
+                quality=self.DEFAULT_QUALITY
             )
-            method_accepts_parameters = True
-        except TypeError as e:
-            method_accepts_parameters = False
-            error_message = str(e)
-        
-        assert method_accepts_parameters, f"download_and_convert rejected required parameters: {error_message if 'error_message' in locals() else 'unknown error'}"
+            accepts_url = True
+        except TypeError:
+            accepts_url = False
+        assert accepts_url, "download_and_convert does not accept url parameter"
+
+    @pytest.mark.asyncio
+    async def test_download_and_convert_accepts_output_format_parameter(self, tmp_path):
+        """
+        GIVEN MediaProcessor instance
+        WHEN calling download_and_convert with output_format parameter
+        THEN method accepts output_format parameter without error
+        """
+        processor = create_mock_processor(tmp_path)
+        try:
+            await processor.download_and_convert(
+                url=self.DEFAULT_URL,
+                output_format=self.DEFAULT_OUTPUT_FORMAT, 
+                quality=self.DEFAULT_QUALITY
+            )
+            accepts_format = True
+        except TypeError:
+            accepts_format = False
+        assert accepts_format, "download_and_convert does not accept output_format parameter"
+
+    @pytest.mark.asyncio
+    async def test_download_and_convert_accepts_quality_parameter(self, tmp_path):
+        """
+        GIVEN MediaProcessor instance
+        WHEN calling download_and_convert with quality parameter
+        THEN method accepts quality parameter without error
+        """
+        processor = create_mock_processor(tmp_path)
+        try:
+            await processor.download_and_convert(
+                url=self.DEFAULT_URL,
+                output_format=self.DEFAULT_OUTPUT_FORMAT, 
+                quality=self.DEFAULT_QUALITY
+            )
+            accepts_quality = True
+        except TypeError:
+            accepts_quality = False
+        assert accepts_quality, "download_and_convert does not accept quality parameter"
 
     @pytest.mark.asyncio  
-    async def test_download_and_convert_returns_success_status_dict(self, tmp_path):
+    async def test_download_and_convert_returns_dict(self, tmp_path):
         """
         GIVEN successful download and convert operation
         WHEN download_and_convert completes successfully  
-        THEN returns dictionary with status 'success'
-        
-        WHERE:
-        - success status: Dictionary containing 'status': 'success' key-value pair
-        - return type: Dict[str, Any] as specified in method annotation
+        THEN returns dictionary type
         """
         processor = create_mock_processor(tmp_path)
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert isinstance(result, dict), f"download_and_convert returned {type(result)}, expected dict"
+
+    @pytest.mark.asyncio  
+    async def test_download_and_convert_returns_status_key(self, tmp_path):
+        """
+        GIVEN successful download and convert operation
+        WHEN download_and_convert completes successfully  
+        THEN result contains status key
+        """
+        processor = create_mock_processor(tmp_path)
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert "status" in result, f"Result missing 'status' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio  
+    async def test_download_and_convert_returns_success_status(self, tmp_path):
+        """
+        GIVEN successful download and convert operation
+        WHEN download_and_convert completes successfully  
+        THEN status value is 'success'
+        """
+        processor = create_mock_processor(tmp_path)
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["status"] == "success", f"Expected status 'success', got '{result['status']}'"
 
     @pytest.mark.asyncio
@@ -353,80 +437,130 @@ class TestCleanupCompletionRate:
         GIVEN failed download operation
         WHEN download_and_convert encounters error
         THEN returns dictionary with status 'error'
-        
-        WHERE:
-        - error status: Dictionary containing 'status': 'error' key-value pair
-        - failure handling: Method handles exceptions and returns error status
         """
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"side_effect": Exception("Download failed")}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
-        assert isinstance(result, dict), f"download_and_convert returned {type(result)}, expected dict"
-        assert "status" in result, f"Result missing 'status' key, got keys: {list(result.keys())}"
         assert result["status"] == "error", f"Expected status 'error', got '{result['status']}'"
 
     @pytest.mark.asyncio
-    async def test_successful_operation_includes_output_path(self, tmp_path):
+    async def test_successful_operation_includes_output_path_key(self, tmp_path):
         """
         GIVEN successful download and convert operation
         WHEN download_and_convert completes successfully
-        THEN result includes output_path key with file path
-        
-        WHERE:
-        - output_path: String path to final converted file
-        - successful operation: Both download and conversion complete without errors
+        THEN result includes output_path key
         """
         output_file = tmp_path / "final_output.mp4"
-        
         processor = create_mock_processor(
             tmp_path,
             ffmpeg_kwargs={"output_path": str(output_file)}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "output_path" in result, f"Result missing 'output_path' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_operation_output_path_is_string(self, tmp_path):
+        """
+        GIVEN successful download and convert operation
+        WHEN download_and_convert completes successfully
+        THEN output_path value is string type
+        """
+        output_file = tmp_path / "final_output.mp4"
+        processor = create_mock_processor(
+            tmp_path,
+            ffmpeg_kwargs={"output_path": str(output_file)}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["output_path"], str), f"output_path is {type(result['output_path'])}, expected str"
+
+    @pytest.mark.asyncio
+    async def test_successful_operation_output_path_is_not_empty(self, tmp_path):
+        """
+        GIVEN successful download and convert operation
+        WHEN download_and_convert completes successfully
+        THEN output_path value is not empty string
+        """
+        output_file = tmp_path / "final_output.mp4"
+        processor = create_mock_processor(
+            tmp_path,
+            ffmpeg_kwargs={"output_path": str(output_file)}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert len(result["output_path"]) > 0, "output_path is empty string"
 
     @pytest.mark.asyncio
-    async def test_error_result_includes_error_message(self, tmp_path):
+    async def test_error_result_includes_error_key(self, tmp_path):
         """
         GIVEN failed operation
         WHEN download_and_convert encounters error
-        THEN result includes error key with descriptive message
-        
-        WHERE:
-        - error message: String describing what went wrong
-        - error key: Dictionary key containing human-readable error description
+        THEN result includes error key
         """
         error_message = "Network connection failed"
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"side_effect": Exception(error_message)}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "error" in result, f"Error result missing 'error' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_error_result_error_is_string(self, tmp_path):
+        """
+        GIVEN failed operation
+        WHEN download_and_convert encounters error
+        THEN error value is string type
+        """
+        error_message = "Network connection failed"
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": Exception(error_message)}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["error"], str), f"error value is {type(result['error'])}, expected str"
+
+    @pytest.mark.asyncio
+    async def test_error_result_error_is_not_empty(self, tmp_path):
+        """
+        GIVEN failed operation
+        WHEN download_and_convert encounters error
+        THEN error message is not empty
+        """
+        error_message = "Network connection failed"
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": Exception(error_message)}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert len(result["error"]) > 0, "error message is empty string"
 
     @pytest.mark.asyncio
@@ -435,27 +569,40 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor with mock ytdlp wrapper
         WHEN download_and_convert is called
         THEN ytdlp wrapper download_video method is invoked
-        
-        WHERE:
-        - ytdlp wrapper: YtDlpWrapper instance handling video downloads
-        - download_video method: Async method for downloading videos from URLs
         """
         mock_ytdlp = create_mock_ytdlp(tmp_path)
         mock_ffmpeg = create_mock_ffmpeg(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
         await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert mock_ytdlp.download_video.called, "ytdlp.download_video was not called"
+
+    @pytest.mark.asyncio
+    async def test_ytdlp_wrapper_is_called_exactly_once(self, tmp_path):
+        """
+        GIVEN MediaProcessor with mock ytdlp wrapper
+        WHEN download_and_convert is called
+        THEN ytdlp wrapper download_video method is called exactly once
+        """
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert mock_ytdlp.download_video.call_count == 1, f"ytdlp.download_video called {mock_ytdlp.download_video.call_count} times, expected 1"
 
     @pytest.mark.asyncio
@@ -464,27 +611,40 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor with mock ffmpeg wrapper
         WHEN download_and_convert is called
         THEN ffmpeg wrapper convert_video method is invoked
-        
-        WHERE:
-        - ffmpeg wrapper: FFmpegWrapper instance handling video conversion
-        - convert_video method: Async method for converting video formats
         """
         mock_ytdlp = create_mock_ytdlp(tmp_path)
         mock_ffmpeg = create_mock_ffmpeg(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
         await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert mock_ffmpeg.convert_video.called, "ffmpeg.convert_video was not called"
+
+    @pytest.mark.asyncio
+    async def test_ffmpeg_wrapper_is_called_exactly_once(self, tmp_path):
+        """
+        GIVEN MediaProcessor with mock ffmpeg wrapper
+        WHEN download_and_convert is called
+        THEN ffmpeg wrapper convert_video method is called exactly once
+        """
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert mock_ffmpeg.convert_video.call_count == 1, f"ffmpeg.convert_video called {mock_ffmpeg.convert_video.call_count} times, expected 1"
 
     @pytest.mark.asyncio
@@ -493,39 +653,50 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor with mock ytdlp wrapper
         WHEN download_and_convert is called with specific URL
         THEN URL parameter is passed to ytdlp download_video method
-        
-        WHERE:
-        - URL parameter: String URL passed to download_and_convert method
-        - parameter passing: URL is forwarded to ytdlp wrapper without modification
         """
         test_url = "https://example.com/specific-video-123"
-        
         mock_ytdlp = create_mock_ytdlp(tmp_path)
         mock_ffmpeg = create_mock_ffmpeg(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
         await processor.download_and_convert(
             url=test_url,
-            output_format="mp4",
-            quality="720p"
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         call_args = mock_ytdlp.download_video.call_args
         assert call_args is not None, "ytdlp.download_video was not called with any arguments"
-        
-        # Check if URL was passed as positional or keyword argument
+
+    @pytest.mark.asyncio
+    async def test_url_parameter_passed_correctly_to_ytdlp(self, tmp_path):
+        """
+        GIVEN MediaProcessor with mock ytdlp wrapper
+        WHEN download_and_convert is called with specific URL
+        THEN URL is correctly passed in arguments to ytdlp
+        """
+        test_url = "https://example.com/specific-video-123"
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=test_url,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
+        call_args = mock_ytdlp.download_video.call_args
         url_passed = False
         if call_args[0] and test_url in call_args[0]:  # Positional args
             url_passed = True
         elif call_args[1] and call_args[1].get('url') == test_url:  # Keyword args
             url_passed = True
-        
-        assert url_passed, f"URL '{test_url}' was not passed to ytdlp.download_video. Call args: {call_args}"
+        assert url_passed, f"URL '{test_url}' was not passed to ytdlp.download_video"
 
     @pytest.mark.asyncio
     async def test_output_format_parameter_is_used_in_conversion(self, tmp_path):
@@ -533,39 +704,50 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor with mock ffmpeg wrapper
         WHEN download_and_convert is called with specific output_format
         THEN output_format parameter is used in ffmpeg conversion
-        
-        WHERE:
-        - output_format parameter: String format specification (e.g., 'mp4', 'avi')
-        - conversion usage: Format is passed to ffmpeg wrapper for conversion
         """
         test_format = "webm"
-        
         mock_ytdlp = create_mock_ytdlp(tmp_path)
         mock_ffmpeg = create_mock_ffmpeg(tmp_path, output_path=str(tmp_path / "converted.webm"))
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
         await processor.download_and_convert(
-            url="https://example.com/video",
+            url=self.DEFAULT_URL,
             output_format=test_format,
-            quality="720p"
+            quality=self.DEFAULT_QUALITY
         )
-        
         call_args = mock_ffmpeg.convert_video.call_args
         assert call_args is not None, "ffmpeg.convert_video was not called with any arguments"
-        
-        # Check if format was passed as positional or keyword argument
+
+    @pytest.mark.asyncio
+    async def test_output_format_parameter_passed_correctly_to_ffmpeg(self, tmp_path):
+        """
+        GIVEN MediaProcessor with mock ffmpeg wrapper
+        WHEN download_and_convert is called with specific output_format
+        THEN format is correctly passed in arguments to ffmpeg
+        """
+        test_format = "webm"
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path, output_path=str(tmp_path / "converted.webm"))
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=test_format,
+            quality=self.DEFAULT_QUALITY
+        )
+        call_args = mock_ffmpeg.convert_video.call_args
         format_passed = False
         if call_args[0] and test_format in str(call_args[0]):  # Positional args
             format_passed = True
         elif call_args[1] and test_format in str(call_args[1].values()):  # Keyword args
             format_passed = True
-        
-        assert format_passed, f"Format '{test_format}' was not passed to ffmpeg.convert_video. Call args: {call_args}"
+        assert format_passed, f"Format '{test_format}' was not passed to ffmpeg.convert_video"
 
     @pytest.mark.asyncio
     async def test_quality_parameter_is_used_in_download(self, tmp_path):
@@ -573,39 +755,71 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor with mock ytdlp wrapper
         WHEN download_and_convert is called with specific quality
         THEN quality parameter is used in ytdlp download
-        
-        WHERE:
-        - quality parameter: String quality specification (e.g., '720p', '1080p')
-        - download usage: Quality is passed to ytdlp wrapper for download
         """
         test_quality = "1080p"
-        
         mock_ytdlp = create_mock_ytdlp(tmp_path)
         mock_ffmpeg = create_mock_ffmpeg(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
         await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
             quality=test_quality
         )
-        
         call_args = mock_ytdlp.download_video.call_args
         assert call_args is not None, "ytdlp.download_video was not called with any arguments"
-        
-        # Check if quality was passed as positional or keyword argument
+
+    @pytest.mark.asyncio
+    async def test_quality_parameter_passed_correctly_to_ytdlp(self, tmp_path):
+        """
+        GIVEN MediaProcessor with mock ytdlp wrapper
+        WHEN download_and_convert is called with specific quality
+        THEN quality is correctly passed in arguments to ytdlp
+        """
+        test_quality = "1080p"
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=test_quality
+        )
+        call_args = mock_ytdlp.download_video.call_args
         quality_passed = False
         if call_args[0] and test_quality in str(call_args[0]):  # Positional args
             quality_passed = True
         elif call_args[1] and test_quality in str(call_args[1].values()):  # Keyword args
             quality_passed = True
-        
-        assert quality_passed, f"Quality '{test_quality}' was not passed to ytdlp.download_video. Call args: {call_args}"
+        assert quality_passed, f"Quality '{test_quality}' was not passed to ytdlp.download_video"
+
+    @pytest.mark.asyncio
+    async def test_download_failure_ytdlp_called(self, tmp_path):
+        """
+        GIVEN ytdlp download failure
+        WHEN download_and_convert encounters download error
+        THEN ytdlp download_video is called
+        """
+        mock_ytdlp = create_mock_ytdlp(tmp_path, side_effect=Exception("Download failed"))
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
+        assert mock_ytdlp.download_video.called, "ytdlp.download_video should have been called"
 
     @pytest.mark.asyncio
     async def test_download_failure_stops_conversion_attempt(self, tmp_path):
@@ -613,29 +827,83 @@ class TestCleanupCompletionRate:
         GIVEN ytdlp download failure
         WHEN download_and_convert encounters download error
         THEN ffmpeg conversion is not attempted
-        
-        WHERE:
-        - download failure: ytdlp.download_video raises exception or returns error status
-        - conversion prevention: ffmpeg.convert_video is not called after download failure
         """
         mock_ytdlp = create_mock_ytdlp(tmp_path, side_effect=Exception("Download failed"))
         mock_ffmpeg = create_mock_ffmpeg(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
-        result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
-        assert mock_ytdlp.download_video.called, "ytdlp.download_video should have been called"
         assert not mock_ffmpeg.convert_video.called, "ffmpeg.convert_video should not be called after download failure"
+
+    @pytest.mark.asyncio
+    async def test_download_failure_returns_error_status(self, tmp_path):
+        """
+        GIVEN ytdlp download failure
+        WHEN download_and_convert encounters download error
+        THEN returns error status
+        """
+        mock_ytdlp = create_mock_ytdlp(tmp_path, side_effect=Exception("Download failed"))
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path)
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["status"] == "error", f"Expected error status after download failure, got '{result['status']}'"
+
+    @pytest.mark.asyncio
+    async def test_conversion_failure_ytdlp_called(self, tmp_path):
+        """
+        GIVEN successful download but failed conversion
+        WHEN download_and_convert encounters conversion error
+        THEN ytdlp download_video is called
+        """
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path, side_effect=Exception("Conversion failed"))
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
+        assert mock_ytdlp.download_video.called, "ytdlp.download_video should have been called"
+
+    @pytest.mark.asyncio
+    async def test_conversion_failure_ffmpeg_called(self, tmp_path):
+        """
+        GIVEN successful download but failed conversion
+        WHEN download_and_convert encounters conversion error
+        THEN ffmpeg convert_video is called
+        """
+        mock_ytdlp = create_mock_ytdlp(tmp_path)
+        mock_ffmpeg = create_mock_ffmpeg(tmp_path, side_effect=Exception("Conversion failed"))
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            ytdlp=mock_ytdlp,
+            ffmpeg=mock_ffmpeg
+        )
+        await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
+        assert mock_ffmpeg.convert_video.called, "ffmpeg.convert_video should have been called"
 
     @pytest.mark.asyncio
     async def test_conversion_failure_returns_error_status(self, tmp_path):
@@ -643,29 +911,19 @@ class TestCleanupCompletionRate:
         GIVEN successful download but failed conversion
         WHEN download_and_convert encounters conversion error
         THEN returns error status with conversion failure details
-        
-        WHERE:
-        - successful download: ytdlp.download_video completes successfully
-        - conversion failure: ffmpeg.convert_video raises exception or returns error
-        - error status: Method returns status 'error' despite successful download
         """
         mock_ytdlp = create_mock_ytdlp(tmp_path)
         mock_ffmpeg = create_mock_ffmpeg(tmp_path, side_effect=Exception("Conversion failed"))
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp,
             ffmpeg=mock_ffmpeg
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
-        assert mock_ytdlp.download_video.called, "ytdlp.download_video should have been called"
-        assert mock_ffmpeg.convert_video.called, "ffmpeg.convert_video should have been called"
         assert result["status"] == "error", f"Expected error status after conversion failure, got '{result['status']}'"
 
     def test_get_capabilities_includes_supported_operations(self, tmp_path):
@@ -673,49 +931,56 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor instance
         WHEN get_capabilities is called
         THEN result includes supported_operations dictionary
-        
-        WHERE:
-        - supported_operations: Dictionary containing operation capability flags
-        - operation capabilities: Boolean flags for download, convert
         """
         capabilities = ['download', 'convert']
-
         processor = create_mock_processor(tmp_path)
-
-        for capability in processor.get_capabilities().keys():
-            assert capability in capabilities, f"Capabilities missing 'supported_operations' key, got keys: {list(capabilities.keys())}"
+        processor_capabilities = processor.get_capabilities()
+        for capability in processor_capabilities.keys():
+            assert capability in capabilities, f"Unexpected capability '{capability}' found"
 
     def test_processor_has_default_output_dir_attribute(self, tmp_path):
         """
         GIVEN MediaProcessor instance created with default_output_dir
         WHEN accessing default_output_dir attribute
         THEN attribute exists and contains the specified directory path
-        
-        WHERE:
-        - default_output_dir: Public attribute storing default output directory path
-        - directory path: String path to directory for output files
         """
         processor = make_media_processor(default_output_dir=tmp_path)
-
         assert processor.default_output_dir == tmp_path, f"default_output_dir is '{processor.default_output_dir}', expected '{tmp_path}'"
 
     def test_processor_has_enable_logging_attribute(self, tmp_path):
         """
         GIVEN MediaProcessor instance created with enable_logging flag
         WHEN accessing enable_logging attribute
-        THEN attribute exists and contains the specified boolean value
-        
-        WHERE:
-        - enable_logging: Public attribute storing logging configuration flag
-        - boolean value: True or False indicating if logging is enabled
+        THEN attribute exists
         """
         processor = make_media_processor(
             default_output_dir=tmp_path,
             enable_logging=True
         )
-        
         assert hasattr(processor, 'enable_logging'), "MediaProcessor missing enable_logging attribute"
+
+    def test_processor_enable_logging_is_boolean(self, tmp_path):
+        """
+        GIVEN MediaProcessor instance created with enable_logging flag
+        WHEN accessing enable_logging attribute
+        THEN attribute is boolean type
+        """
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            enable_logging=True
+        )
         assert isinstance(processor.enable_logging, bool), f"enable_logging is {type(processor.enable_logging)}, expected bool"
+
+    def test_processor_enable_logging_has_correct_value(self, tmp_path):
+        """
+        GIVEN MediaProcessor instance created with enable_logging=True
+        WHEN accessing enable_logging attribute
+        THEN attribute value is True
+        """
+        processor = make_media_processor(
+            default_output_dir=tmp_path,
+            enable_logging=True
+        )
         assert processor.enable_logging == True, f"enable_logging is {processor.enable_logging}, expected True"
 
     def test_processor_has_logger_attribute_when_logging_enabled(self, tmp_path):
@@ -723,16 +988,11 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor instance with logging enabled
         WHEN accessing logger attribute
         THEN attribute exists and is not None
-        
-        WHERE:
-        - logger: Public attribute storing logger instance for the processor
-        - logging enabled: enable_logging=True was passed to constructor
         """
         processor = make_media_processor(
             default_output_dir=tmp_path,
             enable_logging=True
         )
-
         assert processor.logger is not None, "logger attribute is None when logging is enabled"
 
     def test_processor_has_ytdlp_attribute(self, tmp_path):
@@ -740,18 +1000,12 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor instance
         WHEN accessing ytdlp attribute
         THEN attribute exists and contains YtDlpWrapper instance
-        
-        WHERE:
-        - ytdlp: Public attribute storing YtDlpWrapper instance for downloads
-        - YtDlpWrapper: Wrapper class for yt-dlp functionality
         """
         mock_ytdlp = create_mock_ytdlp(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ytdlp=mock_ytdlp
         )
-
         assert processor.ytdlp is mock_ytdlp, f"ytdlp attribute is {processor.ytdlp}, expected {mock_ytdlp}"
 
     def test_processor_has_ffmpeg_attribute(self, tmp_path):
@@ -759,18 +1013,12 @@ class TestCleanupCompletionRate:
         GIVEN MediaProcessor instance
         WHEN accessing ffmpeg attribute
         THEN attribute exists and contains FFmpegWrapper instance
-        
-        WHERE:
-        - ffmpeg: Public attribute storing FFmpegWrapper instance for conversion
-        - FFmpegWrapper: Wrapper class for FFmpeg functionality
         """
         mock_ffmpeg = create_mock_ffmpeg(tmp_path)
-        
         processor = make_media_processor(
             default_output_dir=tmp_path,
             ffmpeg=mock_ffmpeg
         )
-
         assert processor.ffmpeg is mock_ffmpeg, f"ffmpeg attribute is {processor.ffmpeg}, expected {mock_ffmpeg}"
 
     @pytest.mark.asyncio
@@ -778,27 +1026,56 @@ class TestCleanupCompletionRate:
         """
         GIVEN successful download_and_convert operation
         WHEN result is returned
-        THEN result contains title field with video title
-        
-        WHERE:
-        - title field: String containing the title of the processed video
-        - successful operation: download_and_convert returns status 'success'
+        THEN result contains title field
         """
         video_title = "Test Video Title"
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"title": video_title}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "title" in result, f"Result missing 'title' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_title_is_string(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN title field is string type
+        """
+        video_title = "Test Video Title"
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"title": video_title}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["title"], str), f"title is {type(result['title'])}, expected str"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_title_has_correct_value(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN title field has expected video title
+        """
+        video_title = "Test Video Title"
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"title": video_title}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["title"] == video_title, f"title is '{result['title']}', expected '{video_title}'"
 
     @pytest.mark.asyncio
@@ -806,27 +1083,56 @@ class TestCleanupCompletionRate:
         """
         GIVEN successful download_and_convert operation
         WHEN result is returned
-        THEN result contains duration field with video duration in seconds
-        
-        WHERE:
-        - duration field: Float containing video duration in seconds
-        - successful operation: download_and_convert returns status 'success'
+        THEN result contains duration field
         """
         video_duration = 120.5
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"duration": video_duration}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "duration" in result, f"Result missing 'duration' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_duration_is_numeric(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN duration field is numeric type
+        """
+        video_duration = 120.5
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"duration": video_duration}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["duration"], (int, float)), f"duration is {type(result['duration'])}, expected int or float"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_duration_has_correct_value(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN duration field has expected video duration
+        """
+        video_duration = 120.5
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"duration": video_duration}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["duration"] == video_duration, f"duration is {result['duration']}, expected {video_duration}"
 
     @pytest.mark.asyncio
@@ -834,27 +1140,56 @@ class TestCleanupCompletionRate:
         """
         GIVEN successful download_and_convert operation
         WHEN result is returned
-        THEN result contains filesize field with file size in bytes
-        
-        WHERE:
-        - filesize field: Integer containing file size in bytes
-        - successful operation: download_and_convert returns status 'success'
+        THEN result contains filesize field
         """
         file_size = 1048576  # 1MB in bytes
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"filesize": file_size}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
-            output_format="mp4",
-            quality="720p"
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "filesize" in result, f"Result missing 'filesize' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_filesize_is_integer(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN filesize field is integer type
+        """
+        file_size = 1048576  # 1MB in bytes
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"filesize": file_size}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["filesize"], int), f"filesize is {type(result['filesize'])}, expected int"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_filesize_has_correct_value(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN filesize field has expected file size
+        """
+        file_size = 1048576  # 1MB in bytes
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"filesize": file_size}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format=self.DEFAULT_OUTPUT_FORMAT,
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["filesize"] == file_size, f"filesize is {result['filesize']}, expected {file_size}"
 
     @pytest.mark.asyncio
@@ -862,27 +1197,56 @@ class TestCleanupCompletionRate:
         """
         GIVEN successful download_and_convert operation
         WHEN result is returned
-        THEN result contains format field with downloaded format
-        
-        WHERE:
-        - format field: String containing the format of the downloaded file
-        - successful operation: download_and_convert returns status 'success'
+        THEN result contains format field
         """
         download_format = "mp4"
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"format": download_format}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
+            url=self.DEFAULT_URL,
             output_format="webm",
-            quality="720p"
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "format" in result, f"Result missing 'format' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_format_is_string(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN format field is string type
+        """
+        download_format = "mp4"
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": download_format}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format="webm",
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["format"], str), f"format is {type(result['format'])}, expected str"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_format_has_correct_value(self, tmp_path):
+        """
+        GIVEN successful download_and_convert operation
+        WHEN result is returned
+        THEN format field has expected downloaded format
+        """
+        download_format = "mp4"
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": download_format}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format="webm",
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["format"] == download_format, f"format is '{result['format']}', expected '{download_format}'"
 
     @pytest.mark.asyncio
@@ -890,28 +1254,59 @@ class TestCleanupCompletionRate:
         """
         GIVEN successful download and conversion to different format
         WHEN result is returned
-        THEN result contains converted_path field with path to converted file
-        
-        WHERE:
-        - converted_path field: String path to file after format conversion
-        - conversion occurs: output_format differs from downloaded format
+        THEN result contains converted_path field
         """
         converted_path = str(tmp_path / "converted.webm")
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"format": "mp4"},
             ffmpeg_kwargs={"output_path": converted_path}
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
+            url=self.DEFAULT_URL,
             output_format="webm",
-            quality="720p"
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "converted_path" in result, f"Result missing 'converted_path' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_converted_path_is_string(self, tmp_path):
+        """
+        GIVEN successful download and conversion to different format
+        WHEN result is returned
+        THEN converted_path field is string type
+        """
+        converted_path = str(tmp_path / "converted.webm")
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": "mp4"},
+            ffmpeg_kwargs={"output_path": converted_path}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format="webm",
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["converted_path"], str), f"converted_path is {type(result['converted_path'])}, expected str"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_converted_path_has_correct_value(self, tmp_path):
+        """
+        GIVEN successful download and conversion to different format
+        WHEN result is returned
+        THEN converted_path field has expected converted file path
+        """
+        converted_path = str(tmp_path / "converted.webm")
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": "mp4"},
+            ffmpeg_kwargs={"output_path": converted_path}
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format="webm",
+            quality=self.DEFAULT_QUALITY
+        )
         assert result["converted_path"] == converted_path, f"converted_path is '{result['converted_path']}', expected '{converted_path}'"
 
     @pytest.mark.asyncio
@@ -919,11 +1314,7 @@ class TestCleanupCompletionRate:
         """
         GIVEN successful download and conversion
         WHEN result is returned
-        THEN result contains conversion_result field with conversion operation details
-        
-        WHERE:
-        - conversion_result field: Dictionary containing conversion operation details
-        - conversion operation: FFmpeg conversion process details and results
+        THEN result contains conversion_result field
         """
         conversion_details = {
             "input_format": "mp4",
@@ -931,7 +1322,6 @@ class TestCleanupCompletionRate:
             "duration": 120.0,
             "bitrate": "1000k"
         }
-        
         processor = create_mock_processor(
             tmp_path,
             ytdlp_kwargs={"format": "mp4"},
@@ -940,14 +1330,39 @@ class TestCleanupCompletionRate:
                 "conversion_details": conversion_details
             }
         )
-        
         result = await processor.download_and_convert(
-            url="https://example.com/video",
+            url=self.DEFAULT_URL,
             output_format="webm",
-            quality="720p"
+            quality=self.DEFAULT_QUALITY
         )
-        
         assert "conversion_result" in result, f"Result missing 'conversion_result' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_successful_result_conversion_result_is_dict(self, tmp_path):
+        """
+        GIVEN successful download and conversion
+        WHEN result is returned
+        THEN conversion_result field is dictionary type
+        """
+        conversion_details = {
+            "input_format": "mp4",
+            "output_format": "webm", 
+            "duration": 120.0,
+            "bitrate": "1000k"
+        }
+        processor = create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"format": "mp4"},
+            ffmpeg_kwargs={
+                "output_path": str(tmp_path / "converted.webm"),
+                "conversion_details": conversion_details
+            }
+        )
+        result = await processor.download_and_convert(
+            url=self.DEFAULT_URL,
+            output_format="webm",
+            quality=self.DEFAULT_QUALITY
+        )
         assert isinstance(result["conversion_result"], dict), f"conversion_result is {type(result['conversion_result'])}, expected dict"
 
 

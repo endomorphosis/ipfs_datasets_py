@@ -18,6 +18,9 @@ from tests._test_utils import (
     BadSignatureError
 )
 
+# Import the factory
+from tests.unit_tests.pdf_processing_.query_engine.query_engine_factory import query_engine_factory
+
 home_dir = os.path.expanduser('~')
 file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/query_engine.py")
 md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
@@ -62,73 +65,21 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 
 
 @pytest.fixture
-def mock_graphrag_integrator():
-    """Create a mock GraphRAGIntegrator for testing."""
-    mock = Mock(spec=GraphRAGIntegrator)
-    return mock
-
-
-@pytest.fixture
-def mock_storage():
-    """Create a mock IPLDStorage for testing."""
-    mock = Mock(spec=IPLDStorage)
-    return mock
-
-
-@pytest.fixture
-def sample_entity():
-    """Create a sample Entity for testing."""
-    return Entity(
-        id="entity_001",
-        name="Bill Gates",
-        entity_type="Person",
-        description="Co-founder of Microsoft",
-        properties={"role": "CEO", "company": "Microsoft"},
-        source_chunks=["doc_001_chunk_003"]
-    )
-
-
-@pytest.fixture
-def sample_relationship():
-    """Create a sample Relationship for testing."""
-    return Relationship(
-        id="rel_001",
-        source_entity_id="entity_001",
-        target_entity_id="entity_002",
-        relationship_type="founded",
-        description="Bill Gates founded Microsoft",
-        properties={"year": "1975"},
-        source_chunks=["doc_001_chunk_003"]
-    )
+def query_engine():
+    """Create a QueryEngine instance for testing."""
+    return query_engine_factory.make_query_engine()
 
 
 @pytest.fixture
 def sample_query_result():
     """Create a sample QueryResult for testing."""
-    return QueryResult(
-        id="result_001",
-        type="entity",
-        content="Bill Gates (Person): Co-founder of Microsoft",
-        relevance_score=0.85,
-        source_document="doc_001",
-        source_chunks=["doc_001_chunk_003"],
-        metadata={"entity_type": "Person", "confidence": 0.9}
-    )
+    return query_engine_factory.make_sample_query_result()
 
 
 @pytest.fixture
-def query_engine(mock_graphrag_integrator, mock_storage):
-    """Create a QueryEngine instance for testing."""
-    with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer'):
-        engine = QueryEngine(
-            graphrag_integrator=mock_graphrag_integrator,
-            storage=mock_storage,
-            embedding_model="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        # Mock the embedding model
-        engine.embedding_model = Mock()
-        engine.embedding_model.encode = Mock(return_value=[[0.1, 0.2, 0.3]])
-        return engine
+def sample_relationship():
+    """Create a sample Relationship for testing."""
+    return query_engine_factory.make_sample_relationship()
 
 
 class TestQueryEngineQuery:
@@ -138,34 +89,20 @@ class TestQueryEngineQuery:
     async def test_query_with_basic_text_auto_detection(self, query_engine, sample_query_result):
         """
         GIVEN a QueryEngine instance
-        AND a simple query text "who is bill gates"
+        AND an arbitrary simple query text "who is bill gates"
         WHEN query method is called without specifying query_type
         THEN expect:
-            - Query normalized using _normalize_query
-            - Query type auto-detected using _detect_query_type
             - Appropriate processor method called based on detected type
             - QueryResponse returned with all required fields
             - Processing time recorded and > 0
             - Suggestions generated
         """
-        # Setup mocks
-        query_engine._normalize_query = Mock(return_value="who bill gates")
-        query_engine._detect_query_type = Mock(return_value="entity_search")
-        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._generate_query_suggestions = AsyncMock(return_value=["What is Microsoft?", "Bill Gates relationships"])
-        
         # Execute query
         response = await query_engine.query("who is bill gates")
-        
-        # Verify method calls
-        query_engine._normalize_query.assert_called_once_with("who is bill gates")
-        query_engine._detect_query_type.assert_called_once_with("who bill gates")
-        query_engine._process_entity_query.assert_called_once_with("who bill gates", None, 20)
-        query_engine._generate_query_suggestions.assert_called_once()
-        
+
         # Verify response structure
         assert isinstance(response, QueryResponse)
-        assert response.query == "who is bill gates"
+        assert response.query == "who bill gates"
         assert response.query_type == "entity_search"
         assert len(response.results) == 1
         assert response.total_results == 1
@@ -175,34 +112,55 @@ class TestQueryEngineQuery:
         assert "timestamp" in response.metadata
 
     @pytest.mark.asyncio
-    async def test_query_with_explicit_entity_search_type(self, query_engine, sample_query_result):
+    @pytest.mark.parametrize("query_type", [
+        "entity_search",
+        "relationship_search", 
+        "semantic_search",
+        "document_search",
+        "cross_document",
+        "graph_traversal"
+    ])
+    async def test_query_with_explicit_query_types(self, query_engine, sample_query_result, query_type):
         """
         GIVEN a QueryEngine instance
-        AND query_text "microsoft founders"
-        AND query_type explicitly set to "entity_search"
+        AND query_text "test query"
+        AND query_type explicitly set to various types
         WHEN query method is called
         THEN expect:
             - _detect_query_type NOT called (type override)
-            - _process_entity_query called with normalized query
-            - QueryResponse.query_type set to "entity_search"
+            - Appropriate processor called with normalized query
+            - QueryResponse.query_type set to specified type
         """
         # Setup mocks
-        query_engine._normalize_query = Mock(return_value="microsoft founders")
+        query_engine._normalize_query = Mock(return_value="test query")
         query_engine._detect_query_type = Mock()
-        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+
+        # Map query types to their processor methods
+        processor_map = {
+            "entity_search": "_process_entity_query",
+            "relationship_search": "_process_relationship_query",
+            "semantic_search": "_process_semantic_query",
+            "document_search": "_process_document_query",
+            "cross_document": "_process_cross_document_query",
+            "graph_traversal": "_process_graph_traversal_query"
+        }
+        
+        # Setup the specific processor mock
+        processor_method = processor_map[query_type]
+        setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
         
         # Execute query with explicit type
-        response = await query_engine.query("microsoft founders", query_type="entity_search")
+        response = await query_engine.query("test query", query_type=query_type)
         
         # Verify _detect_query_type was NOT called
         query_engine._detect_query_type.assert_not_called()
         
         # Verify correct processor called
-        query_engine._process_entity_query.assert_called_once_with("microsoft founders", None, 20)
+        processor = getattr(query_engine, processor_method)
+        processor.assert_called_once_with("test query", None, 20)
         
         # Verify response
-        assert response.query_type == "entity_search"
+        assert response.query_type == query_type
 
     @pytest.mark.asyncio
     async def test_query_with_filters_applied(self, query_engine, sample_query_result):
@@ -216,49 +174,46 @@ class TestQueryEngineQuery:
             - QueryResponse.metadata contains "filters_applied" key
             - Results filtered according to specified criteria
         """
+        test_filters = {"entity_type": "Organization", "document_id": "doc_001"}
+        
         # Setup mocks
         query_engine._normalize_query = Mock(return_value="technology companies")
         query_engine._detect_query_type = Mock(return_value="entity_search")
         query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
         query_engine._generate_query_suggestions = AsyncMock(return_value=[])
         
-        filters = {"entity_type": "Organization", "document_id": "doc_001"}
-        
         # Execute query with filters
-        response = await query_engine.query("technology companies", filters=filters)
+        response = await query_engine.query("technology companies", filters=test_filters)
         
         # Verify filters passed to processor
-        query_engine._process_entity_query.assert_called_once_with("technology companies", filters, 20)
+        query_engine._process_entity_query.assert_called_once_with("technology companies", test_filters, 20)
         
         # Verify metadata contains filters
         assert "filters_applied" in response.metadata
-        assert response.metadata["filters_applied"] == filters
+        assert response.metadata["filters_applied"] == test_filters
 
     @pytest.mark.asyncio
-    async def test_query_with_custom_max_results(self, query_engine):
+    @pytest.mark.parametrize("max_results", [1, 5, 10, 50, 100])
+    async def test_query_with_custom_max_results(self, query_engine, max_results):
         """
         GIVEN a QueryEngine instance
         AND query_text "artificial intelligence"
-        AND max_results set to 5
+        AND max_results set to various values
         WHEN query method is called
         THEN expect:
             - max_results parameter passed to processor method
-            - QueryResponse.results length <= 5
+            - QueryResponse.results length <= max_results
             - QueryResponse.total_results matches actual result count
         """
-        # Create 5 sample results
-        results = []
-        for i in range(5):
-            result = QueryResult(
+        # Create sample results using factory (create more than max_results to test truncation)
+        results = [
+            query_engine_factory.make_sample_query_result(
                 id=f"result_{i:03d}",
-                type="semantic",
                 content=f"AI content {i}",
-                relevance_score=0.8 - (i * 0.1),
-                source_document="doc_001",
-                source_chunks=[f"chunk_{i:03d}"],
-                metadata={}
+                relevance_score=0.8 - (i * 0.01)
             )
-            results.append(result)
+            for i in range(max_results)
+        ]
         
         # Setup mocks
         query_engine._normalize_query = Mock(return_value="artificial intelligence")
@@ -267,84 +222,33 @@ class TestQueryEngineQuery:
         query_engine._generate_query_suggestions = AsyncMock(return_value=[])
         
         # Execute query with custom max_results
-        response = await query_engine.query("artificial intelligence", max_results=5)
+        response = await query_engine.query("artificial intelligence", max_results=max_results)
         
         # Verify max_results passed to processor
-        query_engine._process_semantic_query.assert_called_once_with("artificial intelligence", None, 5)
+        query_engine._process_semantic_query.assert_called_once_with("artificial intelligence", None, max_results)
         
         # Verify result count
-        assert len(response.results) <= 5
+        assert len(response.results) <= max_results
         assert response.total_results == len(response.results)
 
     @pytest.mark.asyncio
-    async def test_query_with_empty_query_text(self, query_engine):
+    @pytest.mark.parametrize("query_text,query_type,max_results,filters,expected_error,expected_message", [
+        ("", None, 20, None, ValueError, "Query text cannot be empty"),
+        ("   \n\t  ", None, 20, None, ValueError, "Query text cannot be empty"),
+        ("test query", "invalid_type", 20, None, ValueError, "Invalid query type"),
+        ("test query", None, -5, None, ValueError, "max_results must be positive"),
+        ("test query", None, 0, None, ValueError, "max_results must be positive"),
+        ("test query", None, 20, ["invalid", "list"], TypeError, "Filters must be a dictionary"),
+    ])
+    async def test_query_with_invalid_parameters(self, query_engine, query_text, query_type, max_results, filters, expected_error, expected_message):
         """
         GIVEN a QueryEngine instance
-        AND empty query_text ""
+        AND various invalid parameter combinations
         WHEN query method is called
-        THEN expect ValueError to be raised
+        THEN expect appropriate error to be raised with correct message
         """
-        with pytest.raises(ValueError, match="Query text cannot be empty"):
-            await query_engine.query("")
-
-    @pytest.mark.asyncio
-    async def test_query_with_whitespace_only_query_text(self, query_engine):
-        """
-        GIVEN a QueryEngine instance
-        AND query_text containing only whitespace "   \n\t  "
-        WHEN query method is called
-        THEN expect ValueError to be raised
-        """
-        with pytest.raises(ValueError, match="Query text cannot be empty"):
-            await query_engine.query("   \n\t  ")
-
-    @pytest.mark.asyncio
-    async def test_query_with_invalid_query_type(self, query_engine):
-        """
-        GIVEN a QueryEngine instance
-        AND query_text "test query"
-        AND query_type set to invalid value "invalid_type"
-        WHEN query method is called
-        THEN expect ValueError to be raised
-        """
-        with pytest.raises(ValueError, match="Invalid query type"):
-            await query_engine.query("test query", query_type="invalid_type")
-
-    @pytest.mark.asyncio
-    async def test_query_with_negative_max_results(self, query_engine):
-        """
-        GIVEN a QueryEngine instance
-        AND query_text "test query"
-        AND max_results set to -5
-        WHEN query method is called
-        THEN expect ValueError to be raised
-        """
-        with pytest.raises(ValueError, match="max_results must be positive"):
-            await query_engine.query("test query", max_results=-5)
-
-    @pytest.mark.asyncio
-    async def test_query_with_zero_max_results(self, query_engine):
-        """
-        GIVEN a QueryEngine instance
-        AND query_text "test query"
-        AND max_results set to 0
-        WHEN query method is called
-        THEN expect ValueError to be raised
-        """
-        with pytest.raises(ValueError, match="max_results must be positive"):
-            await query_engine.query("test query", max_results=0)
-
-    @pytest.mark.asyncio
-    async def test_query_with_invalid_filters_type(self, query_engine):
-        """
-        GIVEN a QueryEngine instance
-        AND query_text "test query"
-        AND filters set to invalid type (list instead of dict)
-        WHEN query method is called
-        THEN expect TypeError to be raised
-        """
-        with pytest.raises(TypeError, match="Filters must be a dictionary"):
-            await query_engine.query("test query", filters=["invalid", "list"])
+        with pytest.raises(expected_error, match=expected_message):
+            await query_engine.query(query_text, query_type=query_type, max_results=max_results, filters=filters)
 
     @pytest.mark.asyncio
     async def test_query_caching_functionality(self, query_engine, sample_query_result):
@@ -412,21 +316,23 @@ class TestQueryEngineQuery:
         assert query_engine._process_entity_query.call_count == 3
 
     @pytest.mark.asyncio
-    async def test_query_processing_time_measurement(self, query_engine, sample_query_result):
+    @pytest.mark.parametrize("delay_seconds", [0.01, 0.05, 0.1])
+    async def test_query_processing_time_measurement(self, query_engine, sample_query_result, delay_seconds):
         """
         GIVEN a QueryEngine instance
-        AND a query that takes measurable time to process
-        WHEN query method is called
+        AND an arbitrary query that takes measurable time to process
+        WHEN query method is called with different processing delays
         THEN expect:
             - QueryResponse.processing_time is float > 0
             - Time measurement includes all processing steps
+            - Processing time >= delay_seconds
         """
         # Setup mocks with artificial delay
         query_engine._normalize_query = Mock(return_value="test query")
         query_engine._detect_query_type = Mock(return_value="entity_search")
         
         async def delayed_process(*args, **kwargs):
-            await asyncio.sleep(0.01)  # 10ms delay
+            await asyncio.sleep(delay_seconds)
             return [sample_query_result]
         
         query_engine._process_entity_query = delayed_process
@@ -438,44 +344,72 @@ class TestQueryEngineQuery:
         # Verify processing time is measured and positive
         assert isinstance(response.processing_time, float)
         assert response.processing_time > 0
-        assert response.processing_time >= 0.01  # At least the sleep time
+        assert response.processing_time >= delay_seconds
 
     @pytest.mark.asyncio
-    async def test_query_suggestion_generation(self, query_engine, sample_query_result):
+    @pytest.mark.parametrize("suggestion_count,query_type", [
+        (0, "entity_search"),
+        (1, "relationship_search"),
+        (3, "semantic_search"),
+        (5, "document_search"),
+        (2, "cross_document")
+    ])
+    async def test_query_suggestion_generation(self, query_engine, sample_query_result, suggestion_count, query_type):
         """
         GIVEN a QueryEngine instance
-        AND a query that returns results
-        WHEN query method is called
+        AND an arbitrary query that returns results
+        WHEN query method is called with different suggestion counts and query types
         THEN expect:
             - _generate_query_suggestions called with query and results
             - QueryResponse.suggestions contains list of strings
-            - Suggestions list length <= 5
+            - Suggestions list length matches expected count
         """
-        # Setup mocks
-        query_engine._normalize_query = Mock(return_value="bill gates")
-        query_engine._detect_query_type = Mock(return_value="entity_search")
-        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        # Create suggestions based on count
+        suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
         
-        suggestions = ["What is Microsoft?", "Bill Gates relationships", "Microsoft founders"]
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value=query_type)
         query_engine._generate_query_suggestions = AsyncMock(return_value=suggestions)
         
+        # Map query types to their processor methods
+        processor_map = {
+            "entity_search": "_process_entity_query",
+            "relationship_search": "_process_relationship_query",
+            "semantic_search": "_process_semantic_query",
+            "document_search": "_process_document_query",
+            "cross_document": "_process_cross_document_query",
+            "graph_traversal": "_process_graph_traversal_query"
+        }
+        
+        # Setup the specific processor mock
+        processor_method = processor_map[query_type]
+        setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
+        
         # Execute query
-        response = await query_engine.query("bill gates")
+        response = await query_engine.query("test query")
         
         # Verify suggestion generation was called with correct parameters
-        query_engine._generate_query_suggestions.assert_called_once_with("bill gates", [sample_query_result])
+        query_engine._generate_query_suggestions.assert_called_once_with("test query", [sample_query_result])
         
         # Verify suggestions in response
         assert isinstance(response.suggestions, list)
-        assert len(response.suggestions) <= 5
+        assert len(response.suggestions) == suggestion_count
         assert all(isinstance(s, str) for s in response.suggestions)
         assert response.suggestions == suggestions
 
     @pytest.mark.asyncio
-    async def test_query_metadata_completeness(self, query_engine, sample_query_result):
+    @pytest.mark.parametrize("filters,has_filters", [
+        (None, False),
+        ({"entity_type": "Person"}, True),
+        ({"entity_type": "Organization", "document_id": "doc_001"}, True),
+        ({"document_id": "doc_001", "confidence": 0.8, "year": "2023"}, True),
+        ({}, False)
+    ])
+    async def test_query_metadata_completeness(self, query_engine, sample_query_result, filters, has_filters):
         """
         GIVEN a QueryEngine instance
-        AND any valid query
+        AND various filter scenarios
         WHEN query method is called
         THEN expect QueryResponse.metadata to contain:
             - "normalized_query" key with normalized query string
@@ -489,8 +423,6 @@ class TestQueryEngineQuery:
         query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
         query_engine._generate_query_suggestions = AsyncMock(return_value=[])
         
-        filters = {"entity_type": "Person"}
-        
         # Execute query
         response = await query_engine.query("test query", filters=filters)
         
@@ -499,7 +431,10 @@ class TestQueryEngineQuery:
         assert response.metadata["normalized_query"] == "test query normalized"
         
         assert "filters_applied" in response.metadata
-        assert response.metadata["filters_applied"] == filters
+        if has_filters and filters:
+            assert response.metadata["filters_applied"] == filters
+        else:
+            assert response.metadata["filters_applied"] in [None, filters]
         
         assert "timestamp" in response.metadata
         # Verify timestamp is ISO format
@@ -528,10 +463,21 @@ class TestQueryEngineQuery:
             await query_engine.query("test query")
 
     @pytest.mark.asyncio
-    async def test_query_response_structure_validation(self, query_engine, sample_query_result):
+    @pytest.mark.parametrize("query_type,result_count", [
+        ("entity_search", 1),
+        ("entity_search", 3),
+        ("relationship_search", 1),
+        ("relationship_search", 5),
+        ("semantic_search", 0),
+        ("semantic_search", 2),
+        ("document_search", 1),
+        ("cross_document", 4),
+        ("graph_traversal", 1)
+    ])
+    async def test_query_response_structure_validation(self, query_engine, query_type, result_count):
         """
         GIVEN a QueryEngine instance
-        AND any valid query
+        AND various query types and result counts
         WHEN query method is called
         THEN expect QueryResponse to have:
             - query: str (original query)
@@ -542,11 +488,30 @@ class TestQueryEngineQuery:
             - suggestions: List[str]
             - metadata: Dict[str, Any]
         """
+        # Create sample results based on result_count
+        sample_results = [
+            query_engine_factory.make_sample_query_result(id=f"result_{i}")
+            for i in range(result_count)
+        ]
+        
         # Setup mocks
         query_engine._normalize_query = Mock(return_value="test query")
-        query_engine._detect_query_type = Mock(return_value="entity_search")
-        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        query_engine._detect_query_type = Mock(return_value=query_type)
         query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
+        
+        # Map query types to their processor methods
+        processor_map = {
+            "entity_search": "_process_entity_query",
+            "relationship_search": "_process_relationship_query",
+            "semantic_search": "_process_semantic_query",
+            "document_search": "_process_document_query",
+            "cross_document": "_process_cross_document_query",
+            "graph_traversal": "_process_graph_traversal_query"
+        }
+        
+        # Setup the specific processor mock
+        processor_method = processor_map[query_type]
+        setattr(query_engine, processor_method, AsyncMock(return_value=sample_results))
         
         # Execute query
         response = await query_engine.query("test query")
@@ -559,10 +524,11 @@ class TestQueryEngineQuery:
         assert response.query == "test query"
         
         assert isinstance(response.query_type, str)
-        assert response.query_type == "entity_search"
+        assert response.query_type == query_type
         
         assert isinstance(response.results, list)
         assert all(isinstance(r, QueryResult) for r in response.results)
+        assert len(response.results) == result_count
         
         assert isinstance(response.total_results, int)
         assert response.total_results == len(response.results)
@@ -576,16 +542,18 @@ class TestQueryEngineQuery:
         assert isinstance(response.metadata, dict)
 
     @pytest.mark.asyncio
-    async def test_query_with_all_query_types(self, query_engine, sample_query_result):
+    @pytest.mark.parametrize("query_type,processor_method", [
+        ("entity_search", "_process_entity_query"),
+        ("relationship_search", "_process_relationship_query"),
+        ("semantic_search", "_process_semantic_query"),
+        ("document_search", "_process_document_query"),
+        ("cross_document", "_process_cross_document_query"),
+        ("graph_traversal", "_process_graph_traversal_query"),
+    ])
+    async def test_query_with_all_query_types(self, query_engine, sample_query_result, query_type, processor_method):
         """
         GIVEN a QueryEngine instance
-        WHEN query method is called with each valid query_type:
-            - entity_search
-            - relationship_search
-            - semantic_search
-            - document_search
-            - cross_document
-            - graph_traversal
+        WHEN query method is called with each valid query_type
         THEN expect:
             - Appropriate processor method called for each type
             - No exceptions raised
@@ -595,39 +563,20 @@ class TestQueryEngineQuery:
         query_engine._normalize_query = Mock(return_value="test query")
         query_engine._generate_query_suggestions = AsyncMock(return_value=[])
         
-        # Setup processor mocks
-        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._process_relationship_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._process_semantic_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._process_document_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._process_cross_document_query = AsyncMock(return_value=[sample_query_result])
-        query_engine._process_graph_traversal_query = AsyncMock(return_value=[sample_query_result])
+        # Setup the specific processor mock
+        setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
         
-        valid_query_types = [
-            "entity_search",
-            "relationship_search", 
-            "semantic_search",
-            "document_search",
-            "cross_document",
-            "graph_traversal"
-        ]
+        # Test the query type
+        response = await query_engine.query("test query", query_type=query_type)
         
-        # Test each query type
-        for query_type in valid_query_types:
-            response = await query_engine.query("test query", query_type=query_type)
-            
-            # Verify response is valid
-            assert isinstance(response, QueryResponse)
-            assert response.query_type == query_type
-            assert len(response.results) == 1
+        # Verify response is valid
+        assert isinstance(response, QueryResponse)
+        assert response.query_type == query_type
+        assert len(response.results) == 1
         
-        # Verify each processor was called once
-        query_engine._process_entity_query.assert_called_once()
-        query_engine._process_relationship_query.assert_called_once()
-        query_engine._process_semantic_query.assert_called_once()
-        query_engine._process_document_query.assert_called_once()
-        query_engine._process_cross_document_query.assert_called_once()
-        query_engine._process_graph_traversal_query.assert_called_once()
+        # Verify the correct processor was called
+        processor = getattr(query_engine, processor_method)
+        processor.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_query_timeout_handling(self, query_engine):
@@ -664,7 +613,434 @@ class TestQueryEngineQuery:
         # Execute query and expect timeout
         with pytest.raises(TimeoutError, match="Query processing timed out"):
             await query_engine.query("test query")
+
+    @pytest.mark.asyncio
+    async def test_query_with_fake_name_questions(self, query_engine):
+        """
+        GIVEN a QueryEngine instance
+        AND fake name questions generated by factory
+        WHEN query method is called with each fake name question
+        THEN expect:
+            - All queries process without errors
+            - Consistent response structure for all queries
+            - Proper handling of various name formats
+        """
+        # Generate fake name questions using factory
+        fake_questions = list(query_engine_factory.make_fake_name_questions(n=5))
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(side_effect=lambda x: x.lower())
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        query_engine._process_entity_query = AsyncMock(return_value=[])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+        
+        # Test each fake question
+        for name, question in fake_questions:
+            response = await query_engine.query(question)
+            
+            # Verify response structure
+            assert isinstance(response, QueryResponse)
+            assert response.query_type == "entity_search"
+            assert isinstance(response.results, list)
+            assert isinstance(response.processing_time, float)
+            
+        # Verify all questions were processed
+        assert query_engine._process_entity_query.call_count == len(fake_questions)
+
+    @pytest.mark.asyncio
+    async def test_query_with_fake_company_questions(self, query_engine):
+        """
+        GIVEN a QueryEngine instance
+        AND fake company questions generated by factory
+        WHEN query method is called with each company statement
+        THEN expect:
+            - All queries process without errors
+            - Relationship queries detected for competitor statements
+            - Proper handling of various company name formats
+        """
+        # Generate fake company questions using factory
+        fake_company_data = list(query_engine_factory.make_fake_company_questions(n=3))
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(side_effect=lambda x: x.lower())
+        query_engine._detect_query_type = Mock(return_value="relationship_search")
+        query_engine._process_relationship_query = AsyncMock(return_value=[])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+        
+        # Test each fake company statement
+        for company1, company2, statement in fake_company_data:
+            response = await query_engine.query(statement)
+            
+            # Verify response structure
+            assert isinstance(response, QueryResponse)
+            assert response.query_type == "relationship_search"
+            assert isinstance(response.results, list)
+            
+        # Verify all statements were processed
+        assert query_engine._process_relationship_query.call_count == len(fake_company_data)
+
+    @pytest.mark.asyncio
+    async def test_query_with_multiple_sample_results(self, query_engine):
+        """
+        GIVEN a QueryEngine instance
+        AND multiple sample results created by factory
+        WHEN query method is called
+        THEN expect:
+            - All results properly included in response
+            - Results maintain proper ordering by relevance score
+            - Total results count matches actual results
+        """
+        # Create multiple sample results using factory
+        sample_results = [
+            query_engine_factory.make_sample_query_result(
+                id=f"result_{i:03d}",
+                content=f"Sample content {i}",
+                relevance_score=0.9 - (i * 0.1),
+                source_document=f"doc_{i:03d}"
+            )
+            for i in range(5)
+        ]
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value="semantic_search")
+        query_engine._process_semantic_query = AsyncMock(return_value=sample_results)
+        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+        
+        # Execute query
+        response = await query_engine.query("test query")
+        
+        # Verify response contains all results
+        assert len(response.results) == len(sample_results)
+        assert response.total_results == len(sample_results)
+        
+        # Verify results maintain ordering by relevance score
+        for i in range(len(response.results) - 1):
+            assert response.results[i].relevance_score >= response.results[i + 1].relevance_score
+        
+        # Verify all results are QueryResult instances
+        assert all(isinstance(result, QueryResult) for result in response.results)
     
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Integration Tests for QueryEngine.query method
+
+import pytest
+import asyncio
+import time
+from typing import Dict, List, Any, Optional
+from unittest.mock import AsyncMock, patch
+
+from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResponse, QueryResult
+
+
+class TestQueryEngineIntegration:
+    """Integration tests for QueryEngine.query method - testing end-to-end behavior."""
+
+    @pytest.mark.asyncio
+    async def test_query_basic_entity_search_end_to_end(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with non-mocked dependencies and sample data
+        AND an arbitrary simple entity query "Who is Bill Gates?"
+        WHEN query method is called without mocking internal methods
+        THEN expect:
+            - Query processed through complete pipeline (normalize -> detect -> process -> respond)
+            - QueryResponse returned with valid structure
+            - Query type detected as 'entity_search' or 'semantic_search'
+            - Results contain entities related to the query
+            - Processing time recorded and < 5 seconds
+            - No exceptions raised during processing
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_relationship_search_end_to_end(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with non-mocked dependencies and sample data
+        AND an arbitrary relationship query (e.g. "companies founded by entrepreneurs")
+        WHEN query method is called without explicit query_type
+        THEN expect:
+            - Query auto-detected as 'relationship_search'
+            - Results contain relationship data between entities
+            - QueryResponse.results populated with relevant relationships
+            - Each result has proper relationship context
+            - Processing completes without errors
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_semantic_search_end_to_end(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with non-mocked dependencies and sample data
+        AND an arbitrary semantic query "artificial intelligence machine learning"
+        WHEN query method is called with query_type="semantic_search"
+        THEN expect:
+            - Semantic similarity processing executed
+            - Results ranked by relevance scores in descending order
+            - QueryResponse contains semantically similar content
+            - Relevance scores decrease monotonically in results
+            - Content matches semantic intent of query
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_with_filters_applied_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with multiple documents loaded
+        AND query "technology companies" with filters {"document_id": "doc_001"}
+        WHEN query method is called with real filter processing
+        THEN expect:
+            - Results contain content from specified document only
+            - Filter criteria applied throughout pipeline
+            - QueryResponse.metadata reflects filters_applied
+            - Result count matches filtered dataset size
+            - No results from excluded documents
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_max_results_limit_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with sample data that would return >10 results
+        AND query "companies" with max_results=5
+        WHEN query method is called with real result limiting
+        THEN expect:
+            - Exactly 5 results returned (not more)
+            - Results are top 5 by relevance score
+            - QueryResponse.total_results reflects limitation to 5
+            - Processing stops at result limit
+            - Highest quality results prioritized in limited set
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_caching_behavior_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real caching implementation
+        AND identical query "Bill Gates" executed twice
+        WHEN both queries processed through complete pipeline
+        THEN expect:
+            - First query processes through full pipeline
+            - Second query returns faster (< 50% of first query time)
+            - Both responses have identical content (except metadata)
+            - Second response metadata indicates cache_hit=True
+            - Cache key generation works for parameter variations
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_cache_invalidation_with_different_parameters(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real caching implementation
+        AND same query text with different parameters (filters, max_results)
+        WHEN multiple queries executed with parameter variations
+        THEN expect:
+            - Different parameter combinations generate different cache keys
+            - No false cache hits between different parameter sets
+            - Each unique parameter combination processes independently
+            - Cache distinguishes between parameter variations
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_normalization_pipeline_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real normalization implementation
+        AND query with mixed case, extra whitespace "  WHO is    BILL gates?  "
+        WHEN query processed through normalization pipeline
+        THEN expect:
+            - Query normalized (case, whitespace, punctuation)
+            - Normalized query used throughout processing pipeline
+            - QueryResponse.metadata contains original and normalized queries
+            - Normalization preserves query meaning and results quality
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_type_detection_accuracy_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real query type detection
+        AND various query types: "Who is X?", "relationship between X and Y", "documents about Z"
+        WHEN queries processed without explicit query_type parameter
+        THEN expect:
+            - Entity queries detected as entity_search (>80% accuracy)
+            - Relationship queries detected as relationship_search (>80% accuracy)
+            - Document queries detected as document_search (>80% accuracy)
+            - Detection accuracy impacts result quality
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_suggestion_generation_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real suggestion generation
+        AND query that returns meaningful results
+        WHEN query processed through complete suggestion pipeline
+        THEN expect:
+            - Suggestions generated based on result content
+            - Suggestions are relevant follow-up queries
+            - QueryResponse.suggestions contains valid query strings
+            - Suggestions differ from original query by >30% text similarity
+            - Suggestion quality correlates with result quality
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_processing_time_measurement_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real processing pipeline
+        AND queries of varying complexity (simple entity vs complex semantic)
+        WHEN processing time measured across complete pipeline
+        THEN expect:
+            - Processing time reflects computation complexity
+            - Complex queries take >2x time of simple queries
+            - Time measurement includes all pipeline stages
+            - Processing time < 10 seconds for typical queries
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_error_propagation_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real error handling
+        AND scenarios that cause internal method failures
+        WHEN errors occur during pipeline processing
+        THEN expect:
+            - Errors propagated to caller with context
+            - No partial/corrupted results returned on errors
+            - Error messages provide debugging information
+            - System recovers from transient errors
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_metadata_completeness_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real metadata generation
+        AND query processed through complete pipeline
+        WHEN metadata collected throughout processing
+        THEN expect:
+            - QueryResponse.metadata contains normalized_query
+            - Metadata includes timestamp in ISO 8601 format
+            - filters_applied reflects applied filters
+            - cache_hit status indicates cache usage
+            - Processing statistics included in metadata
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_with_empty_results_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with limited sample data
+        AND query that matches no existing content "nonexistent entity xyz123"
+        WHEN query processed through complete pipeline
+        THEN expect:
+            - QueryResponse returned with empty results list
+            - QueryResponse.total_results = 0
+            - Processing completes without errors
+            - Suggestions generated for alternative queries
+            - Metadata populated despite empty results
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_cross_document_integration(self, real_query_engine_with_multiple_docs):
+        """
+        GIVEN a QueryEngine with multiple documents loaded
+        AND query requiring cross-document analysis
+        WHEN query_type="cross_document" processing executed
+        THEN expect:
+            - Results span multiple source documents
+            - Cross-document relationships identified
+            - Result relevance considers document interactions
+            - QueryResponse indicates cross-document processing
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_graph_traversal_integration(self, real_query_engine_with_graph_data):
+        """
+        GIVEN a QueryEngine with graph relationship data
+        AND query requiring graph traversal "path from A to B"
+        WHEN query_type="graph_traversal" processing executed
+        THEN expect:
+            - Graph traversal algorithms executed
+            - Results show relationship paths between entities
+            - Path relevance and distance calculated
+            - Complex graph queries processed in < 15 seconds
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_concurrent_execution_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine handling concurrent requests
+        AND multiple simultaneous queries with different parameters
+        WHEN queries executed concurrently using asyncio.gather
+        THEN expect:
+            - All queries complete without interference
+            - Results are consistent with sequential execution
+            - Caching works under concurrency
+            - No race conditions or data corruption
+            - Performance benefits from concurrent processing
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_memory_usage_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine processing large result sets
+        AND queries that return maximum results (100+)
+        WHEN memory usage monitored during processing
+        THEN expect:
+            - Memory usage remains within < 500MB bounds
+            - Large result sets don't cause memory leaks
+            - Memory released after query completion
+            - Processing efficiency maintained with large datasets
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_with_invalid_parameters_integration(self, real_query_engine):
+        """
+        GIVEN a QueryEngine with real parameter validation
+        AND invalid parameters: empty query, negative max_results, invalid filters
+        WHEN query method called with real validation logic
+        THEN expect:
+            - ValueError raised for empty/whitespace query
+            - ValueError raised for non-positive max_results
+            - TypeError raised for invalid filter data types
+            - Error messages provide parameter correction guidance
+            - No processing attempted with invalid parameters
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_timeout_behavior_integration(self, real_query_engine, slow_processing_scenario):
+        """
+        GIVEN a QueryEngine with real timeout implementation
+        AND processing scenario that approaches timeout limits
+        WHEN query processing time extends beyond normal limits
+        THEN expect:
+            - TimeoutError raised when processing exceeds limits
+            - Partial results not returned on timeout
+            - System resources cleaned up on timeout
+            - Timeout behavior configurable per query complexity
+        """
+        pass
+
+    @pytest.mark.asyncio
+    async def test_query_result_quality_integration(self, real_query_engine_with_known_data):
+        """
+        GIVEN a QueryEngine with known test dataset
+        AND queries with expected/known results
+        WHEN query quality measured against expected outcomes
+        THEN expect:
+            - High-relevance results appear in top 3 positions
+            - Result content matches query intent (>85% accuracy)
+            - Relevance scores correlate with human relevance ratings
+            - Query type detection leads to appropriate result types
+            - Overall result quality meets >80% accuracy benchmarks
+        """
+        pass

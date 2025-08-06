@@ -598,8 +598,7 @@ class TestExtractPageContent:
         mock_page.annots.return_value = []
         mock_page.get_drawings.return_value = []
         
-        # This test would require document context to validate page count
-        # For now, we test that very large page numbers are handled
+        
         very_large_page_num = 99999
         
         # Should not raise error just for large page number

@@ -8,11 +8,10 @@ import asyncio
 import re
 import time
 import networkx as nx
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
-
 
 
 from tests._test_utils import (
@@ -79,6 +78,7 @@ from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chun
 )
 
 
+ENTITY_EXTRACTION_CONFIDENCE = 0.7  # Minimum confidence for entity extraction
 
 
 class TestExtractEntitiesFromChunks:
@@ -87,7 +87,7 @@ class TestExtractEntitiesFromChunks:
     @pytest.fixture
     def mock_integrator(self):
         """Create a mock GraphRAGIntegrator for testing."""
-        integrator = GraphRAGIntegrator(entity_extraction_confidence=0.7)
+        integrator = GraphRAGIntegrator(entity_extraction_confidence=ENTITY_EXTRACTION_CONFIDENCE)
         integrator._extract_entities_from_text = AsyncMock()
         return integrator
 
@@ -678,15 +678,10 @@ class TestExtractEntitiesFromChunks:
         THEN an AttributeError should be raised
         AND the error should indicate missing content
         """
-        from unittest.mock import MagicMock
         invalid_chunk = MagicMock(spec_set=LLMChunk)
         del invalid_chunk.content  # Remove content attribute
-        class InvalidChunk:
-            def __init__(self):
-                self.chunk_id = "invalid"
-                # Missing content attribute
-        
-        invalid_chunks = [InvalidChunk()]
+
+        invalid_chunks = [invalid_chunk]
         
         with pytest.raises(AttributeError) as exc_info:
             await mock_integrator._extract_entities_from_chunks(invalid_chunks)
@@ -701,12 +696,10 @@ class TestExtractEntitiesFromChunks:
         THEN an AttributeError should be raised
         AND the error should indicate missing chunk_id
         """
-        class InvalidChunk:
-            def __init__(self):
-                self.content = "Some content"
-                # Missing chunk_id attribute
-        
-        invalid_chunks = [InvalidChunk()]
+        invalid_chunk = MagicMock(spec_set=LLMChunk)
+        del invalid_chunk.chunk_id  # Remove content attribute
+
+        invalid_chunks = [invalid_chunk]
         
         with pytest.raises(AttributeError) as exc_info:
             await mock_integrator._extract_entities_from_chunks(invalid_chunks)
@@ -723,7 +716,7 @@ class TestExtractEntitiesFromChunks:
         """
         mock_integrator._extract_entities_from_text.side_effect = Exception("Entity extraction service failed")
         
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             await mock_integrator._extract_entities_from_chunks(sample_chunks)
         
         assert "Entity extraction service failed" in str(exc_info.value)
@@ -764,7 +757,7 @@ class TestExtractEntitiesFromChunks:
         
         mock_integrator._extract_entities_from_text.side_effect = mock_responses
         
-        import time
+
         start_time = time.time()
         result = await mock_integrator._extract_entities_from_chunks(large_chunks)
         end_time = time.time()

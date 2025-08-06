@@ -912,8 +912,7 @@ class ChunkOptimizer:
         return ""
 
     def _split_sentences(self, text: str) -> List[str]:
-        """
-        Split text into individual sentences using regex-based pattern matching.
+        """Split text into individual sentences using regex-based pattern matching.
 
     This method implements sentence boundary detection using regular expressions that
     identify terminal punctuation (. ! ? - marks that end complete thoughts) followed 
@@ -930,7 +929,7 @@ class ChunkOptimizer:
             Each sentence retains its terminal punctuation.
 
     Regex Pattern:
-        - (?<=[.!?])\s+ : Positive lookbehind for terminal punctuation followed by whitespace
+        - Positive lookbehind for terminal punctuation followed by whitespace
         - Splits after ., !, or ? when followed by spaces
         - Preserves the punctuation with the preceding sentence
 

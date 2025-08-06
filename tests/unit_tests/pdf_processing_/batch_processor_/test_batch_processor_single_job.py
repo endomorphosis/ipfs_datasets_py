@@ -76,7 +76,7 @@ class TestBatchProcessorSingleJob:
     """Test class for _process_single_job method in BatchProcessor."""
 
     @pytest.fixture
-    def processor(self):
+    def processor(self) -> BatchProcessor:
         """Create a BatchProcessor instance for testing."""
         with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
             processor = BatchProcessor(max_workers=4, max_memory_mb=2048)
@@ -183,7 +183,7 @@ class TestBatchProcessorSingleJob:
         )
         processor.graphrag_integrator.integrate_document.assert_called_once_with(mock_llm_document)
         
-        # Note: Results are managed by batch context, not added directly to global lists
+        # NOTE: Results are managed by batch context, not added directly to global lists
 
     @pytest.mark.asyncio
     async def test_process_single_job_pdf_processing_failure(self, processor, sample_job):
@@ -222,7 +222,7 @@ class TestBatchProcessorSingleJob:
         processor.llm_optimizer.optimize_for_llm.assert_not_called()
         processor.graphrag_integrator.integrate_document.assert_not_called()
         
-        # Note: Results are managed by batch context, not added directly to global lists
+        # NOTE: Results are managed by batch context, not added directly to global lists
 
     @pytest.mark.asyncio
     async def test_process_single_job_llm_optimization_failure(self, processor, sample_job):
@@ -453,7 +453,7 @@ class TestBatchProcessorSingleJob:
         result = await processor._process_single_job(sample_job, "worker_specialized_1")
         
         assert result.status == 'completed'
-        # Worker name should be used for logging/monitoring (implementation dependent)
+        # Worker name should be used for logging/monitoring
 
     @pytest.mark.asyncio
     async def test_process_single_job_audit_logging_integration(self, processor, sample_job):
@@ -474,11 +474,11 @@ class TestBatchProcessorSingleJob:
         result = await processor._process_single_job(sample_job, "worker_1")
         
         assert result.status == 'failed'
-        # Verify audit logging was called for the failure (implementation dependent)
-        if processor.audit_logger:
-            # The audit logger should be called but currently has wrong signature in implementation
-            # So we'll just verify the test doesn't crash with audit logger present
-            assert processor.audit_logger is not None
+        # Verify audit logging was called for the failure
+
+        # The audit logger should be called but currently has wrong signature in implementation
+        # So we'll just verify the test doesn't crash with audit logger present
+        assert processor.audit_logger is not None
 
 
 

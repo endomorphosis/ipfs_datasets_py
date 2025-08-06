@@ -232,14 +232,15 @@ class PDFProcessor:
             Audit logging captures all data access and security events for compliance.
             IPLD storage provides content deduplication and distributed storage capabilities.
         """
-        self.storage = storage or IPLDStorage()
-        self.audit_logger = None 
-        self.monitoring = None
+        self.storage: IPLDStorage = storage or IPLDStorage()
+        self.audit_logger: AuditLogger = None 
+        self.monitoring: MonitoringSystem = None
+        self.query_engine: QueryEngine = None
         self.pipeline_version: str = '2.0'
         self.integrator = GraphRAGIntegrator(storage=self.storage)
         self.ocr_engine = MultiEngineOCR()
         self.optimizer = LLMOptimizer()
-        self.logger = logger
+        self.logger: logging.Logger = logger
 
         if enable_audit:
             self.audit_logger = AuditLogger.get_instance()
@@ -252,23 +253,21 @@ class PDFProcessor:
             )
             self.monitoring = MonitoringSystem.initialize(config)
 
+        # Processing state
+        self.processing_stats: dict[str, float] = {
+            "start_time": None,
+            "end_time": None,
+        }
+
         # For testing purposes, allow dependency injection of mock objects
         if mock_dict is not None:
             for key, value in mock_dict.items():
                 try:
                     setattr(self, key, value)
                 except AttributeError:
-                    print(f"Warning: Mock attribute '{key}' not set in PDFProcessor")
-                except KeyError:
-                    print(f"Warning: Mock key '{key}' not found in mock_dict")
+                    raise AttributeError(f"Warning: Mock attribute '{key}' not set in PDFProcessor")
 
-        # Processing state
-        self.processing_stats = {
-            "start_time": None,
-            "end_time": None,
 
-        }
-        
     async def process_pdf(self, 
                          pdf_path: Union[str, Path], 
                          metadata: Optional[dict[str, Any]] = None) -> dict[str, Any]:
@@ -1481,12 +1480,9 @@ class PDFProcessor:
             - Results include relevance scoring and context-aware ranking.
         """
         self.logger.info("Stage 10: Setting up query interface")
-        
 
-        
         # Create query engine with the GraphRAG integrator
-        integrator = GraphRAGIntegrator(storage=self.storage)
-        query_engine = QueryEngine(integrator, storage=self.storage)
+        self.query_engine = QueryEngine(self.integrator, storage=self.storage)
         
         # The query engine is now ready to handle queries for this document
         self.logger.info("Query interface setup complete")
@@ -1634,7 +1630,7 @@ class PDFProcessor:
         try:
             # Text extraction quality based on content extraction success
             text_quality = 1.0
-            if hasattr(self, 'processing_stats') and self.processing_stats:
+            if self.processing_stats:
                 pages_processed = self.processing_stats.get('pages_processed', 0)
                 pages_with_text = self.processing_stats.get('pages_with_text', 0)
                 if pages_processed > 0:
@@ -1642,7 +1638,7 @@ class PDFProcessor:
             
             # OCR confidence from processing results
             ocr_confidence = 0.95  # Default confidence
-            if hasattr(self, 'ocr_results') and self.ocr_results:
+            if self.ocr_results:
                 confidence_scores = []
                 for page_results in self.ocr_results.values():
                     for result in page_results:
@@ -1653,7 +1649,7 @@ class PDFProcessor:
             
             # Entity extraction confidence from NER results
             entity_confidence = 0.95
-            if hasattr(self, 'entity_results') and self.entity_results:
+            if self.entity_results:
                 confidence_scores = []
                 for entity in self.entity_results:
                     if isinstance(entity, dict) and 'confidence' in entity:
@@ -1680,7 +1676,9 @@ class PDFProcessor:
                 'entity_extraction_confidence': round(entity_confidence, 3),
                 'overall_quality': round(overall_quality, 3)
             }
-            
+        except AttributeError as e:
+            self.logger.exception(f"Quality score calculation failed: {e}")
+            raise ValueError("Quality score calculation failed due to missing processing statistics") from e
         except Exception as e:
             self.logger.exception(f"Quality score calculation failed: {e}")
             raise RuntimeError("Quality score calculation failed") from e
