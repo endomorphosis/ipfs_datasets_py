@@ -5,7 +5,7 @@
 
 import pytest
 import os
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 
 home_dir = os.path.expanduser('~')

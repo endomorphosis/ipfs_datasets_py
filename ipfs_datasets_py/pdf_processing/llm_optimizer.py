@@ -1587,15 +1587,27 @@ class LLMOptimizer:
             current_chunk_content = ""
             source_elements = []
 
-            for element in page['elements']:
-                element_content = element['content'].strip()
+            elements = page['elements']
+            if not isinstance(elements, list):
+                raise TypeError(f"Expected 'elements' to be a list, got {type(elements).__name__}")
+
+            for element in elements:
+                element_content = element['content']
+                
+                if not isinstance(element_content, str):
+                    raise TypeError(f"Element content must be a string, got {type(element_content).__name__}")
+                else:
+                    element_content = element_content.strip()
                 if not element_content:
                     continue
                 
                 # Calculate tokens for current content + new element
                 potential_content = current_chunk_content + "\n" + element_content
-                token_count = self._count_tokens(potential_content)
-                
+                try:
+                    token_count = self._count_tokens(potential_content)
+                except Exception as e:
+                    raise ValueError(f"Token counting failed for content: {potential_content[:50]}...") from e
+
                 # Check if adding this element would exceed chunk size
                 if token_count > self.max_chunk_size and current_chunk_content:
                     # Create chunk with current content
@@ -1630,7 +1642,7 @@ class LLMOptimizer:
                 )
                 chunks.append(chunk)
                 chunk_id_counter += 1
-        
+
         # Establish relationships between chunks
         chunks = self._establish_chunk_relationships(chunks)
         
@@ -1692,14 +1704,26 @@ class LLMOptimizer:
             and validates content before processing.
         """
         # Validate content
-        if content is None:
-            raise ValueError("Content cannot be None")
         if not isinstance(content, str):
-            raise ValueError("Content must be a string")
+            raise TypeError("Content must be a string")
         if not content.strip():
             raise ValueError("Content cannot be empty or contain only whitespace")
         
-        token_count = self._count_tokens(content)
+        # Validate chunk_id
+        if not isinstance(chunk_id, int):
+            raise TypeError(f"chunk_id must be an integer, got {type(chunk_id).__name__}")
+        if chunk_id < 0:
+            raise ValueError(f"chunk_id must be a non-negative integer, got {chunk_id}")
+
+        try:
+            token_count = self._count_tokens(content)
+        except Exception as e: # Re-raise with more context
+            raise RuntimeError(f"Token counting failed for content: {content[:50]}...") from e
+
+        if not isinstance(token_count, int):
+            raise TypeError(f"Token count must be an integer, got {type(token_count).__name__}")
+        if token_count < 0:
+            raise ValueError(f"Token count must be non-negative, got {token_count}")
 
         if not isinstance(source_elements, list) or not source_elements:
             raise TypeError("source_elements must be a non-empty list of element types")
@@ -1716,10 +1740,16 @@ class LLMOptimizer:
             'paragraph': 'text',
             'text': 'text',
             'header': 'header',
+            'title': 'header',  # titles are also headers
             'table': 'table', 
             'figure_caption': 'figure_caption',
             'caption': 'figure_caption',
-            'figure': 'figure_caption'
+            'figure': 'figure_caption',
+            'list': 'list',
+            'footer': 'footer',
+            'reference': 'reference',
+            'equation': 'equation',
+            'code': 'code'
         }
         
         # Convert source elements to semantic types
@@ -1753,6 +1783,21 @@ class LLMOptimizer:
         timestamp = datetime.now().timestamp()
         timestamp_str = datetime.now().isoformat()
 
+        # Map ValidSemanticType values to LLMChunkMetadata allowed values
+        semantic_type_for_metadata = primary_type
+        if primary_type == 'figure_caption':
+            semantic_type_for_metadata = 'caption'
+        elif primary_type == 'mixed':
+            # For mixed content, use the dominant type or 'text' as fallback
+            if 'table' in mapped_semantic_types:
+                semantic_type_for_metadata = 'table'
+            elif 'header' in mapped_semantic_types:
+                semantic_type_for_metadata = 'header'
+            elif 'figure_caption' in mapped_semantic_types:
+                semantic_type_for_metadata = 'caption'
+            else:
+                semantic_type_for_metadata = 'text'
+
         metadata = LLMChunkMetadata(
             element_type=primary_type,
             element_id=formatted_chunk_id,
@@ -1764,7 +1809,7 @@ class LLMOptimizer:
             created_at=timestamp_str,
             processing_method="llm_optimization",
             tokenizer_used=self.tokenizer_name,
-            semantic_type=primary_type,
+            semantic_type=semantic_type_for_metadata,  # Use mapped value
             has_mixed_elements=len(mapped_semantic_types) > 1,  # Check if multiple types instead of checking for 'mixed'
             contains_table='table' in mapped_semantic_types,
             contains_figure='figure_caption' in mapped_semantic_types,
@@ -2456,7 +2501,7 @@ class LLMOptimizer:
                 # HuggingFace tokenizer
                 return len(self.tokenizer.tokenize(text))
         except Exception as e:
-            raise RuntimeError("Token counting failed") from e
+            raise RuntimeError(f"Token counting failed: {e}") from e
     
     def _get_chunk_overlap(self, content: str) -> str:
         """
@@ -2795,7 +2840,7 @@ class ChunkOptimizer:
         self.max_size = max_size
         self.overlap = overlap
         self.min_size = min_size
-    
+
     def optimize_chunk_boundaries(self, text: str, current_boundaries: list[int]) -> list[int]:
         """
         Analyze and optimize chunk boundary positions to respect natural language structure and semantic coherence.

@@ -95,7 +95,12 @@ class TestPDFProcessorInitialization:
         assert processor.monitoring is None
         assert processor.audit_logger is not None
         assert isinstance(processor.audit_logger, AuditLogger)
-        assert processor.processing_stats == {}
+        assert processor.processing_stats == {
+            "start_time": None,
+            "end_time": None,
+            "pages_processed": 0,
+            "entities_extracted": 0,
+        }
 
     def test_init_with_custom_storage(self):
         """
@@ -127,7 +132,6 @@ class TestPDFProcessorInitialization:
         processor = PDFProcessor(enable_monitoring=True)
         
         assert processor is not None
-        assert processor.monitoring is not None
         assert isinstance(processor.monitoring, MonitoringSystem)
 
     def test_init_with_monitoring_disabled(self):
@@ -158,7 +162,6 @@ class TestPDFProcessorInitialization:
         processor = PDFProcessor(enable_audit=True)
         
         assert processor is not None
-        assert processor.audit_logger is not None
         assert isinstance(processor.audit_logger, AuditLogger)
 
     def test_init_with_audit_disabled(self):
@@ -195,11 +198,15 @@ class TestPDFProcessorInitialization:
         
         assert processor is not None
         assert processor.storage is custom_storage
-        assert processor.monitoring is not None
         assert isinstance(processor.monitoring, MonitoringSystem)
-        assert processor.audit_logger is not None
         assert isinstance(processor.audit_logger, AuditLogger)
-        assert processor.processing_stats == {}
+        assert processor.processing_stats == {
+            "start_time": None,
+            "end_time": None,
+            "pages_processed": 0,
+            "entities_extracted": 0,
+        }
+
 
     def test_init_with_all_options_disabled(self):
         """
@@ -219,7 +226,13 @@ class TestPDFProcessorInitialization:
         assert isinstance(processor.storage, IPLDStorage)
         assert processor.monitoring is None
         assert processor.audit_logger is None
-        assert processor.processing_stats == {}
+        assert processor.processing_stats == {
+            "start_time": None,
+            "end_time": None,
+            "pages_processed": 0,
+            "entities_extracted": 0,
+        }
+
 
     def test_init_raises_import_error_when_monitoring_dependencies_missing(self):
         """

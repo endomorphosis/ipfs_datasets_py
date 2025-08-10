@@ -5,6 +5,7 @@
 
 import pytest
 import os
+from unittest.mock import Mock, patch, MagicMock
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -72,6 +73,23 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 class TestGetProcessingTime:
     """Test _get_processing_time method - performance metrics utility."""
 
+    def setup_method(self):
+        """
+        Setup method to initialize the PDFProcessor instance.
+        This will be run before each test method.
+        """
+        mock_dict = {
+            'storage': MagicMock(spec=IPLDStorage),
+            'audit_logger': MagicMock(spec=AuditLogger),
+            'monitoring': MagicMock(spec=MonitoringSystem),
+            'query_engine': MagicMock(spec=QueryEngine),
+            'logger': MagicMock(spec=logging.Logger),
+            'integrator': MagicMock(spec=GraphRAGIntegrator),
+            'ocr_engine': MagicMock(spec=MultiEngineOCR),
+            'optimizer': MagicMock(spec=LLMOptimizer)
+        }
+        self.processor = PDFProcessor(mock_dict=mock_dict)
+
     def test_get_processing_time_basic_calculation(self):
         """
         GIVEN processing statistics with start and end timestamps
@@ -82,17 +100,16 @@ class TestGetProcessingTime:
             - Performance metrics for monitoring and optimization
         """
         # GIVEN - Mock processor with processing stats containing timestamps
-        processor = PDFProcessor()
         start_time = 1234567890.123
         end_time = 1234567950.456
-        processor.processing_stats = {
+        self.processor.processing_stats = {
             'start_time': start_time,
             'end_time': end_time,
             'stages_completed': 10
         }
         
         # WHEN - Call _get_processing_time
-        processing_time = processor._get_processing_time()
+        processing_time = self.processor._get_processing_time(start_time)
         
         # THEN - Expect accurate time calculation
         expected_time = end_time - start_time  # 60.333 seconds
@@ -106,13 +123,14 @@ class TestGetProcessingTime:
         WHEN _get_processing_time accesses missing statistics
         THEN expect AttributeError to be raised
         """
+        start_time = 1234567890.123
         # GIVEN - Processor without processing_stats attribute
         processor = PDFProcessor()
         delattr(processor, 'processing_stats')
         
         # WHEN/THEN - Expect AttributeError when accessing missing stats
         with pytest.raises(AttributeError, match="processing_stats"):
-            processor._get_processing_time()
+            processor._get_processing_time(start_time)
 
     def test_get_processing_time_invalid_timestamps(self):
         """

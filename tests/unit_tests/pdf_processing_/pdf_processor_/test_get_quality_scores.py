@@ -77,7 +77,10 @@ class TestGetQualityScores:
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        self.processor = PDFProcessor()
+        self.processor = PDFProcessor(enable_monitoring=False, enable_audit=False)
+        # Initialize attributes that _get_quality_scores expects
+        self.processor.ocr_results = None
+        self.processor.entity_results = None
         
     def test_get_quality_scores_complete_assessment(self):
         """
@@ -89,17 +92,39 @@ class TestGetQualityScores:
             - entity_extraction_confidence: precision score (0.0-1.0)
             - overall_quality: weighted average (0.0-1.0)
         """
-        # Mock processing stats with quality data
-        mock_stats = {
-            'text_extraction': {'total_chars': 1000, 'error_chars': 50},
-            'ocr_results': {'confidences': [0.95, 0.87, 0.92, 0.88]},
-            'entity_extraction': {'total_entities': 20, 'confident_entities': 18},
-            'processing_complete': True
+        # Set up processing stats for the processor
+        self.processor.processing_stats = {
+            'pages_processed': 10,
+            'pages_with_text': 9,
+            'start_time': None,
+            'end_time': None,
+            'entities_extracted': 0
         }
-        self.processor.processing_stats = mock_stats
+        
+        # Set up OCR results with confidence scores
+        self.processor.ocr_results = {
+            'page_1': [
+                {'text': 'test text 1', 'confidence': 0.95},
+                {'text': 'test text 2', 'confidence': 0.87}
+            ],
+            'page_2': [
+                {'text': 'test text 3', 'confidence': 0.92},
+                {'text': 'test text 4', 'confidence': 0.88}
+            ]
+        }
+        
+        # Set up entity results with confidence scores
+        self.processor.entity_results = [
+            {'entity': 'Person1', 'confidence': 0.9},
+            {'entity': 'Organization1', 'confidence': 0.85},
+            {'entity': 'Location1', 'confidence': 0.95}
+        ]
+        
+        # Create a mock result parameter (required by the method signature)
+        mock_result = {'status': 'success', 'processing_metadata': {}}
         
         # Test the method
-        quality_scores = self.processor._get_quality_scores()
+        quality_scores = self.processor._get_quality_scores(mock_result)
         
         # Verify structure
         assert isinstance(quality_scores, dict)
@@ -114,9 +139,14 @@ class TestGetQualityScores:
             assert 0.0 <= score <= 1.0
             
         # Verify logical relationships
-        assert quality_scores['text_extraction_quality'] >= 0.9  # 95% accuracy
-        assert quality_scores['ocr_confidence'] >= 0.8  # Good OCR
-        assert quality_scores['entity_extraction_confidence'] >= 0.8  # 90% entities confident
+        # Text quality should be 9/10 = 0.9
+        assert abs(quality_scores['text_extraction_quality'] - 0.9) < 0.001
+        # OCR confidence should be average of [0.95, 0.87, 0.92, 0.88] = 0.905
+        expected_ocr = (0.95 + 0.87 + 0.92 + 0.88) / 4
+        assert abs(quality_scores['ocr_confidence'] - expected_ocr) < 0.001
+        # Entity confidence should be average of [0.9, 0.85, 0.95] = 0.9
+        expected_entity = (0.9 + 0.85 + 0.95) / 3
+        assert abs(quality_scores['entity_extraction_confidence'] - expected_entity) < 0.001
         assert quality_scores['overall_quality'] > 0.0
 
     def test_get_quality_scores_invalid_score_ranges(self):
@@ -177,14 +207,34 @@ class TestGetQualityScores:
             - Quality assessment guides processing decisions
         """
         # Test high quality scenario
-        high_quality_stats = {
-            'text_extraction': {'total_chars': 10000, 'error_chars': 10},
-            'ocr_results': {'confidences': [0.98, 0.96, 0.97, 0.95]},
-            'entity_extraction': {'total_entities': 50, 'confident_entities': 49}
+        self.processor.processing_stats = {
+            'pages_processed': 100,
+            'pages_with_text': 99,  # 99% success rate
+            'start_time': None,
+            'end_time': None,
+            'entities_extracted': 0
         }
-        self.processor.processing_stats = high_quality_stats
         
-        quality_scores = self.processor._get_quality_scores()
+        # High confidence OCR results
+        self.processor.ocr_results = {
+            'page_1': [
+                {'text': 'high quality text', 'confidence': 0.98},
+                {'text': 'more quality text', 'confidence': 0.96}
+            ],
+            'page_2': [
+                {'text': 'excellent text', 'confidence': 0.97},
+                {'text': 'perfect text', 'confidence': 0.95}
+            ]
+        }
+        
+        # High confidence entity results
+        self.processor.entity_results = [
+            {'entity': 'HighConfidenceEntity', 'confidence': 0.99},
+            {'entity': 'AnotherEntity', 'confidence': 0.97}
+        ]
+        
+        mock_result = {'status': 'success', 'processing_metadata': {}}
+        quality_scores = self.processor._get_quality_scores(mock_result)
         
         # High quality thresholds
         assert quality_scores['overall_quality'] >= 0.9
@@ -192,14 +242,33 @@ class TestGetQualityScores:
         assert quality_scores['ocr_confidence'] >= 0.95
         
         # Test low quality scenario
-        low_quality_stats = {
-            'text_extraction': {'total_chars': 1000, 'error_chars': 400},
-            'ocr_results': {'confidences': [0.45, 0.50, 0.40, 0.35]},
-            'entity_extraction': {'total_entities': 20, 'confident_entities': 8}
+        self.processor.processing_stats = {
+            'pages_processed': 100,
+            'pages_with_text': 60,  # 60% success rate
+            'start_time': None,
+            'end_time': None,
+            'entities_extracted': 0
         }
-        self.processor.processing_stats = low_quality_stats
         
-        quality_scores = self.processor._get_quality_scores()
+        # Low confidence OCR results
+        self.processor.ocr_results = {
+            'page_1': [
+                {'text': 'poor quality text', 'confidence': 0.45},
+                {'text': 'barely readable', 'confidence': 0.50}
+            ],
+            'page_2': [
+                {'text': 'low quality', 'confidence': 0.40},
+                {'text': 'hard to read', 'confidence': 0.35}
+            ]
+        }
+        
+        # Low confidence entity results
+        self.processor.entity_results = [
+            {'entity': 'UncertainEntity', 'confidence': 0.45},
+            {'entity': 'PoorEntity', 'confidence': 0.35}
+        ]
+        
+        quality_scores = self.processor._get_quality_scores(mock_result)
         
         # Low quality thresholds
         assert quality_scores['overall_quality'] < 0.7
@@ -217,12 +286,24 @@ class TestGetQualityScores:
         """
         # Test that method exists and returns proper structure
         self.processor.processing_stats = {
-            'text_extraction': {'total_chars': 100, 'error_chars': 5},
-            'ocr_results': {'confidences': [0.8, 0.9]},
-            'entity_extraction': {'total_entities': 10, 'confident_entities': 8}
+            'pages_processed': 10,
+            'pages_with_text': 8,
+            'start_time': None,
+            'end_time': None,
+            'entities_extracted': 0
         }
         
-        quality_scores = self.processor._get_quality_scores()
+        self.processor.ocr_results = {
+            'page_1': [{'text': 'test', 'confidence': 0.8}],
+            'page_2': [{'text': 'more text', 'confidence': 0.9}]
+        }
+        
+        self.processor.entity_results = [
+            {'entity': 'TestEntity', 'confidence': 0.8}
+        ]
+        
+        mock_result = {'status': 'success', 'processing_metadata': {}}
+        quality_scores = self.processor._get_quality_scores(mock_result)
         
         # Verify framework is in place
         assert isinstance(quality_scores, dict)
@@ -251,29 +332,75 @@ class TestGetQualityScores:
         scenarios = [
             # Scenario 1: Text extraction issues
             {
-                'text_extraction': {'total_chars': 1000, 'error_chars': 200},
-                'ocr_results': {'confidences': [0.95, 0.96, 0.94]},
-                'entity_extraction': {'total_entities': 15, 'confident_entities': 14}
+                'processing_stats': {
+                    'pages_processed': 100,
+                    'pages_with_text': 60,  # Poor text extraction
+                    'start_time': None,
+                    'end_time': None,
+                    'entities_extracted': 0
+                },
+                'ocr_results': {
+                    'page_1': [{'text': 'good ocr', 'confidence': 0.95}],
+                    'page_2': [{'text': 'excellent ocr', 'confidence': 0.96}]
+                },
+                'entity_results': [
+                    {'entity': 'GoodEntity', 'confidence': 0.94}
+                ]
             },
             # Scenario 2: OCR quality issues
             {
-                'text_extraction': {'total_chars': 1000, 'error_chars': 20},
-                'ocr_results': {'confidences': [0.45, 0.50, 0.40]},
-                'entity_extraction': {'total_entities': 15, 'confident_entities': 14}
+                'processing_stats': {
+                    'pages_processed': 100,
+                    'pages_with_text': 95,  # Good text extraction
+                    'start_time': None,
+                    'end_time': None,
+                    'entities_extracted': 0
+                },
+                'ocr_results': {
+                    'page_1': [{'text': 'poor ocr', 'confidence': 0.45}],
+                    'page_2': [{'text': 'bad ocr', 'confidence': 0.50}]
+                },
+                'entity_results': [
+                    {'entity': 'GoodEntity', 'confidence': 0.94}
+                ]
             },
             # Scenario 3: Entity extraction issues
             {
-                'text_extraction': {'total_chars': 1000, 'error_chars': 20},
-                'ocr_results': {'confidences': [0.95, 0.96, 0.94]},
-                'entity_extraction': {'total_entities': 15, 'confident_entities': 6}
+                'processing_stats': {
+                    'pages_processed': 100,
+                    'pages_with_text': 95,  # Good text extraction
+                    'start_time': None,
+                    'end_time': None,
+                    'entities_extracted': 0
+                },
+                'ocr_results': {
+                    'page_1': [{'text': 'good ocr', 'confidence': 0.95}],
+                    'page_2': [{'text': 'excellent ocr', 'confidence': 0.96}]
+                },
+                'entity_results': [
+                    {'entity': 'PoorEntity', 'confidence': 0.40}
+                ]
             }
         ]
         
         results = []
+        mock_result = {'status': 'success', 'processing_metadata': {}}
+        
         for scenario in scenarios:
-            self.processor.processing_stats = scenario
-            quality_scores = self.processor._get_quality_scores()
+            self.processor.processing_stats = scenario['processing_stats']
+            self.processor.ocr_results = scenario['ocr_results']
+            self.processor.entity_results = scenario['entity_results']
+            
+            quality_scores = self.processor._get_quality_scores(mock_result)
             results.append(quality_scores)
+        
+        # Verify that each scenario produces different quality profiles
+        # This enables identification of specific bottlenecks
+        assert len(results) == 3
+        for result in results:
+            assert isinstance(result, dict)
+            assert 'overall_quality' in result
+            assert 0.0 <= result['overall_quality'] <= 1.0
 
 
 if __name__ == "__main__":

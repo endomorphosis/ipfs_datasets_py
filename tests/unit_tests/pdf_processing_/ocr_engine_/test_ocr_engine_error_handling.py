@@ -364,29 +364,28 @@ class TestOCREngineErrorHandling:
             assert result['text'] == ""
             assert 'confidence' in result
 
-    def test_all_engines_handle_images_without_text(self):
+    def _create_not_text_image_data(self):
+        """Helper to create image with no text (just shapes/colors)."""
+        img = Image.new('RGB', (100, 50), color='white')
+        # Add some non-text elements (colored rectangles)
+        from PIL import ImageDraw
+        draw = ImageDraw.Draw(img)
+        draw.rectangle([10, 10, 30, 30], fill='red')
+        draw.ellipse([60, 15, 85, 35], fill='blue')
+        
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        return buf.getvalue()
+
+    def test_tesseract_handles_images_without_text(self):
         """
-        GIVEN any OCR engine
+        GIVEN TesseractOCR engine
         WHEN calling extract_text() with image containing no text
         THEN should return empty text with appropriate confidence
         AND should not raise exceptions
         """
-        def create_no_text_image_data():
-            """Helper to create image with no text (just shapes/colors)."""
-            img = Image.new('RGB', (100, 50), color='white')
-            # Add some non-text elements (colored rectangles)
-            from PIL import ImageDraw
-            draw = ImageDraw.Draw(img)
-            draw.rectangle([10, 10, 30, 30], fill='red')
-            draw.ellipse([60, 15, 85, 35], fill='blue')
-            
-            buf = io.BytesIO()
-            img.save(buf, format='PNG')
-            return buf.getvalue()
+        no_text_image_data = self._create_not_text_image_data()
         
-        no_text_image_data = create_no_text_image_data()
-        
-        # Test TesseractOCR
         with patch.object(TesseractOCR, '_initialize'):
             tesseract_engine = TesseractOCR()
             tesseract_engine.available = True
@@ -404,8 +403,16 @@ class TestOCREngineErrorHandling:
                 assert isinstance(result, dict)
                 assert result['text'] == ""
                 assert 'confidence' in result
+
+    def test_easyocr_handles_images_without_text(self):
+        """
+        GIVEN EasyOCR engine
+        WHEN calling extract_text() with image containing no text
+        THEN should return empty text with appropriate confidence
+        AND should not raise exceptions
+        """
+        no_text_image_data = self._create_not_text_image_data()
         
-        # Test EasyOCR
         with patch.object(EasyOCR, '_initialize'):
             easy_engine = EasyOCR()
             easy_engine.available = True
@@ -416,18 +423,49 @@ class TestOCREngineErrorHandling:
             assert isinstance(result, dict)
             assert result['text'] == ""
             assert 'confidence' in result
-        
-        from surya.recognition.schema import OCRResult
 
-        # Test SuryaOCR
+    def test_surya_handles_images_without_text(self):
+        """
+        GIVEN SuryaOCR engine
+        WHEN calling extract_text() with image containing no text
+        THEN should return empty text with appropriate confidence
+        AND should not raise exceptions
+        """
+        no_text_image_data = self._create_not_text_image_data()
+        
         with patch.object(SuryaOCR, '_initialize'):
             surya_engine = SuryaOCR()
             surya_engine.available = True
             surya_engine.detection_predictor = Mock()
-            surya_engine.recognition_predictor = Mock(spec=OCRResult)
+            surya_engine.recognition_predictor = Mock()
             surya_engine.recognition_predictor.return_value = ([], ["en"])  # No text lines found
             
             result = surya_engine.extract_text(no_text_image_data)
+            assert isinstance(result, dict)
+            assert result['text'] == ""
+            assert 'confidence' in result
+
+    def test_trocr_handles_images_without_text(self):
+        """
+        GIVEN TrOCREngine engine
+        WHEN calling extract_text() with image containing no text
+        THEN should return empty text with appropriate confidence
+        AND should not raise exceptions
+        """
+        no_text_image_data = self._create_not_text_image_data()
+        
+        with patch.object(TrOCREngine, '_initialize'):
+            trocr_engine = TrOCREngine()
+            trocr_engine.available = True
+            trocr_engine.processor = Mock()
+            trocr_engine.model = Mock()
+            
+            # Mock the processor and model to return no text
+            trocr_engine.processor.return_value = Mock(pixel_values=Mock())
+            trocr_engine.model.generate.return_value = Mock()
+            trocr_engine.processor.batch_decode.return_value = [""]
+            
+            result = trocr_engine.extract_text(no_text_image_data)
             assert isinstance(result, dict)
             assert result['text'] == ""
             assert 'confidence' in result

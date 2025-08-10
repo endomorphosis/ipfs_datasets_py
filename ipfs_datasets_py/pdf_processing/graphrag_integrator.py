@@ -21,6 +21,8 @@ from typing import Any, Dict, List, Optional
 import networkx as nx
 import numpy as np
 from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
+import openai
+
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
@@ -1211,13 +1213,14 @@ class GraphRAGIntegrator:
             context (str): The textual context containing information about the relationship
 
         Returns:
-            Optional[str]: The inferred relationship type, or None if no relationship can be determined.
-                          Possible return values include:
-                          - Person-Organization: 'leads', 'works_for', 'founded', 'associated_with'
-                          - Organization-Organization: 'acquired', 'partners_with', 'competes_with', 'related_to'
-                          - Person-Person: 'collaborates_with', 'manages', 'knows'
-                          - Location-based: 'located_in'
-                          - Default: 'related_to'
+            Optional[str]: The inferred relationship type, 
+                or None if no relationship can be determined.
+                Possible return values include:
+                - Person-Organization: 'leads', 'works_for', 'founded', 'associated_with'
+                - Organization-Organization: 'acquired', 'partners_with', 'competes_with', 'related_to'
+                - Person-Person: 'collaborates_with', 'manages', 'knows'
+                - Location-based: 'located_in'
+                - Default: 'related_to'
         Raises:
             TypeError: If entity1 or entity2 is None, or if context is not a string
             ValueError: If context is empty or whitespace-only
@@ -1236,8 +1239,6 @@ class GraphRAGIntegrator:
             relationships over generic ones. The relationship direction is implied by the order
             of entities (entity1 -> entity2).
         """
-
-        
         # Input validation - check for None first
         for entity in (entity1, entity2):
             if entity is None:
@@ -1947,4 +1948,17 @@ class GraphRAGIntegrator:
             'node_count': len(nodes_data),
             'edge_count': len(edges_data)
         }
+
+
+def make_graphrag_integrator(mock_dict: Optional[dict[str, Any]] = None) -> GraphRAGIntegrator:
+    """Factory function to create a GraphRAGIntegrator instance with default configuration."""
+    instance = GraphRAGIntegrator(
+        storage=IPLDStorage(),
+        entity_extraction_confidence=0.6,
+        similarity_threshold=0.8,
+    )
+    if isinstance(mock_dict, dict):
+        for key, value in mock_dict.items():
+            setattr(instance, key, value)
+    return instance
 

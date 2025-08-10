@@ -91,52 +91,88 @@ except ImportError as e:
 class TestOCREnginePerformance:
     """Test suite for performance characteristics and resource usage."""
 
-    def test_engine_initialization_time(self):
+    def test_tesseract_initialization_time(self):
         """
-        GIVEN each OCR engine class
+        GIVEN TesseractOCR engine class
         WHEN measuring initialization time
-        THEN should complete within reasonable time limits
-        AND should reflect expected complexity (neural vs traditional)
+        THEN should complete within 1 second (traditional OCR)
         """
-        import time
-        
-        # Test TesseractOCR (should be fast - traditional)
         with patch.object(TesseractOCR, '_initialize'):
             start_time = time.time()
             tesseract_engine = TesseractOCR()
             tesseract_init_time = time.time() - start_time
             
-            # Should initialize quickly (traditional OCR)
-            assert tesseract_init_time < 1.0  # Less than 1 second
-        
-        # Test EasyOCR (neural - may be slower)
+            assert tesseract_init_time < 1.0
+
+    def test_easyocr_initialization_time(self):
+        """
+        GIVEN EasyOCR engine class
+        WHEN measuring initialization time
+        THEN should complete within 5 seconds (neural network)
+        """
         with patch.object(EasyOCR, '_initialize'):
             start_time = time.time()
             easy_engine = EasyOCR()
             easy_init_time = time.time() - start_time
             
-            # Neural network initialization might take longer
-            assert easy_init_time < 5.0  # Less than 5 seconds for test
-        
-        # Test SuryaOCR (neural - may be slower)
+            assert easy_init_time < 5.0
+
+    def test_suryaocr_initialization_time(self):
+        """
+        GIVEN SuryaOCR engine class
+        WHEN measuring initialization time
+        THEN should complete within 5 seconds (neural network)
+        """
         with patch.object(SuryaOCR, '_initialize'):
             start_time = time.time()
             surya_engine = SuryaOCR()
             surya_init_time = time.time() - start_time
             
-            # Neural network initialization
-            assert surya_init_time < 5.0  # Less than 5 seconds for test
-        
-        # Test TrOCREngine (transformer - may be slowest)
+            assert surya_init_time < 5.0
+
+    def test_trocr_initialization_time(self):
+        """
+        GIVEN TrOCREngine class
+        WHEN measuring initialization time
+        THEN should complete within 10 seconds (transformer model)
+        """
         with patch.object(TrOCREngine, '_initialize'):
             start_time = time.time()
             trocr_engine = TrOCREngine()
             trocr_init_time = time.time() - start_time
             
-            # Transformer initialization
-            assert trocr_init_time < 10.0  # Less than 10 seconds for test
-        
-        # Verify expected order: Tesseract <= Others
+            assert trocr_init_time < 10.0
+
+    def test_initialization_time_ordering(self):
+        """
+        GIVEN all OCR engine classes
+        WHEN comparing initialization times
+        THEN TesseractOCR should be fastest (traditional vs neural)
+        """
+        # Measure TesseractOCR
+        with patch.object(TesseractOCR, '_initialize'):
+            start_time = time.time()
+            tesseract_engine = TesseractOCR()
+            tesseract_init_time = time.time() - start_time
+
+        # Measure EasyOCR
+        with patch.object(EasyOCR, '_initialize'):
+            start_time = time.time()
+            easy_engine = EasyOCR()
+            easy_init_time = time.time() - start_time
+
+        # Measure SuryaOCR
+        with patch.object(SuryaOCR, '_initialize'):
+            start_time = time.time()
+            surya_engine = SuryaOCR()
+            surya_init_time = time.time() - start_time
+
+        # Measure TrOCREngine
+        with patch.object(TrOCREngine, '_initialize'):
+            start_time = time.time()
+            trocr_engine = TrOCREngine()
+            trocr_init_time = time.time() - start_time
+
         assert tesseract_init_time <= max(easy_init_time, surya_init_time, trocr_init_time)
 
     def test_engine_processing_time_scaling(self):

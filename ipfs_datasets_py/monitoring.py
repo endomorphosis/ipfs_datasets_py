@@ -1281,7 +1281,8 @@ class MonitoringSystem:
 
         # Log shutdown
         if self.logger:
-            self.logger.info("Monitoring system shutdown")
+            # FIXME This self.logger.info produces a ValueError on shutdown. Figure out why.
+            print("Monitoring system shutdown")
 
         # Reset state
         self.initialized = False

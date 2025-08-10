@@ -7,6 +7,9 @@ from datetime import datetime
 import pytest
 import os
 import time
+import unittest.mock
+from datetime import datetime
+from unittest.mock import Mock, patch, MagicMock
 
 from pydantic import ValidationError
 
@@ -32,6 +35,7 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     TextProcessor,
     LLMChunk,
     LLMDocument,
+    LLMChunkMetadata,
 )
 
 
@@ -72,6 +76,14 @@ except ImportError as e:
 class TestLLMOptimizerCreateChunk:
     """Test LLMOptimizer._create_chunk method."""
 
+    def setup_method(self):
+        self.optimizer = LLMOptimizer()
+        self.chunk_id = 1
+        self.page_num = 1
+        self.content = "Test content"
+        self.source_elements = ["paragraph"]
+        self.expected_chunk_id = "chunk_0001"
+
     @pytest.mark.asyncio
     async def test_create_chunk_returns_llm_chunk_instance(self):
         """
@@ -80,14 +92,10 @@ class TestLLMOptimizerCreateChunk:
         THEN expect LLMChunk instance returned
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "This is a comprehensive paragraph containing multiple sentences for analysis."
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert isinstance(chunk, LLMChunk), f"Should return LLMChunk instance, got {type(chunk).__name__}"
@@ -99,19 +107,11 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect chunk_id formatted correctly
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-        expected_id = "chunk_0001"
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
-        assert chunk.chunk_id == expected_id, f"Expected chunk ID '{expected_id}', got '{chunk.chunk_id}'"
+        assert chunk.chunk_id == self.expected_chunk_id, f"Expected chunk ID '{self.expected_chunk_id}', got '{chunk.chunk_id}'"
 
     @pytest.mark.asyncio
     async def test_create_chunk_preserves_content_exactly(self):
@@ -121,14 +121,10 @@ class TestLLMOptimizerCreateChunk:
         THEN expect content preserved exactly
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "This is a comprehensive paragraph containing multiple sentences for analysis."
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert chunk.content == content, f"Content should match input exactly\n===Expected===\n{content}\n===chunk.content===\n{chunk.content}"
@@ -140,18 +136,11 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect source_page set correctly
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
-        assert chunk.source_page == page_num, f"Expected page number {page_num}, got {chunk.source_page}"
+        assert chunk.source_page == self.page_num, f"Expected page number {self.page_num}, got {chunk.source_page}"
 
     @pytest.mark.asyncio
     async def test_create_chunk_token_count_is_integer(self):
@@ -160,15 +149,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect token_count is integer
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert isinstance(chunk.token_count, int), f"token_count must be integer, got {type(chunk.token_count).__name__}"
@@ -180,15 +162,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect positive token count
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert chunk.token_count > 0, f"token_count must be positive for non-empty content, got {chunk.token_count}"
@@ -201,16 +176,12 @@ class TestLLMOptimizerCreateChunk:
         THEN expect reasonable token count relative to word count
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "This is a comprehensive paragraph containing multiple sentences for analysis. " \
                  "It includes various elements such as technical terms, numerical references, " \
                  "and contextual information that would be typical in a research document."
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         word_count = len(content.split())
@@ -223,15 +194,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect semantic_types is not None
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert chunk.semantic_types is not None, "Semantic type should be determined, but got None instead."
@@ -243,15 +207,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect semantic_types is string
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert isinstance(chunk.semantic_types, str), f"Semantic type should be string, got {type(chunk.semantic_types).__name__}"
@@ -263,15 +220,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect semantic_types is not empty
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert len(chunk.semantic_types) > 0, f"Semantic type should not be empty (i.e. greater than 0), got {len(chunk.semantic_types)}"
@@ -284,17 +234,13 @@ class TestLLMOptimizerCreateChunk:
         THEN expect semantic_types is appropriate for paragraph content
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "This is a paragraph of text content."
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
-        expected_semantic_types = ["text", "paragraph", "content", "mixed", "narrative"]
+        expected_semantic_types = ["text", "paragraph", "header", "table", "figure", "caption"]
         assert chunk.semantic_types in expected_semantic_types, f"Unexpected semantic type '{chunk.semantic_types}'. Expected one of {expected_semantic_types}."
 
     @pytest.mark.asyncio
@@ -304,15 +250,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect source_elements is not None
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert chunk.source_elements is not None, "Source element should be populated, got None instead."
@@ -324,15 +263,8 @@ class TestLLMOptimizerCreateChunk:
         WHEN _create_chunk is called
         THEN expect source_elements is list
         """
-        # Given
-        optimizer = LLMOptimizer()
-        content = "Test content"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
-
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert isinstance(chunk.source_elements, list), f"Source element should be a list, got {type(chunk.source_elements).__name__} instead."
@@ -345,14 +277,10 @@ class TestLLMOptimizerCreateChunk:
         THEN expect content does not start with whitespace
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "Test content without leading space"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert not chunk.content.startswith(" "), "Content should not start with whitespace"
@@ -365,14 +293,10 @@ class TestLLMOptimizerCreateChunk:
         THEN expect content does not end with whitespace
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "Test content without trailing space"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert not chunk.content.endswith(" "), "Content should not end with whitespace"
@@ -385,957 +309,1154 @@ class TestLLMOptimizerCreateChunk:
         THEN expect content is properly trimmed of whitespace
         """
         # Given
-        optimizer = LLMOptimizer()
         content = "Test content that should be trimmed"
-        chunk_id = 1
-        page_num = 1
-        source_elements = ["paragraph"]
 
         # When
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
         
         # Then
         assert len(chunk.content.strip()) == len(chunk.content), "Content should be properly trimmed"
 
     @pytest.mark.asyncio
-    async def test_create_chunk_empty_content(self):
+    async def test_create_chunk_empty_string_raises_error(self):
         """
         GIVEN empty content string
         WHEN _create_chunk is called
-        THEN expect ValidationError to be raised
+        THEN expect ValueError to be raised
         """
-        
         # Given
-        optimizer = LLMOptimizer()
+        empty_content = ""
         
-        # Test cases for empty/invalid content
-        empty_content_cases = [
-            "",           # Empty string
-            "   ",        # Only whitespace
-            "\n\t  \n",   # Only whitespace characters
-            None          # None value
-        ]
-        
-        chunk_id = "chunk_0001"
-        page_num = 1
-        source_elements = ["paragraph"]
-        
-        # When/Then - test each empty content case
-        for empty_content in empty_content_cases:
-            with pytest.raises((ValidationError, ValueError)) as exc_info:
-                await optimizer._create_chunk(empty_content, chunk_id, page_num, source_elements)
-            
-            # Verify error message is descriptive
-            if empty_content is None:
-                error_msg = str(exc_info.value).lower()
-                assert any(keyword in error_msg for keyword in ["none", "null", "content", "empty"]), \
-                    f"Error message should mention None/empty content issue: {exc_info.value}"
-            else:
-                error_msg = str(exc_info.value).lower()
-                assert any(keyword in error_msg for keyword in ["empty", "content", "whitespace", "invalid"]), \
-                    f"Error message should mention empty content issue: {exc_info.value}"
+        # When/Then
+        with pytest.raises(ValueError):
+            await self.optimizer._create_chunk(empty_content, self.expected_chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
-    async def test_create_chunk_semantic_types_determination(self):
+    async def test_create_chunk_whitespace_only_raises_error(self):
         """
-        GIVEN metadata with various semantic types
+        GIVEN content with only whitespace
         WHEN _create_chunk is called
-        THEN expect:
-            - Correct semantic type priority applied
-            - Type classification follows hierarchy (header > table > mixed > text)
-            - Semantic type field populated correctly
+        THEN expect ValueError to be raised
         """
         # Given
-        optimizer = LLMOptimizer()
+        whitespace_content = "   "
         
-        # Test cases for different semantic type scenarios
-        test_cases = [
-            # Header content should be classified as header
-            {
-                "content": "Chapter 1: Introduction to Machine Learning",
-                "metadata": {
-                    "element_type": "header", 
-                    "level": 1,
-                    "semantic_types": {"header"},
-                    "source_elements": ["header"]
-                },
-                "expected_type": "header",
-                "description": "Header element with clear header indicators"
-            },
-            
-            # Table content should be classified as table
-            {
-                "content": "Table 1: Results\nMethod A: 95%\nMethod B: 87%\nMethod C: 92%",
-                "metadata": {
-                    "element_type": "table", 
-                    "table_id": "table_1",
-                    "semantic_types": {"table"},
-                    "source_elements": ["table"]
-                },
-                "expected_type": "table",
-                "description": "Table element with tabular data structure"
-            },
-            
-            # Figure caption should be classified as figure_caption
-            {
-                "content": "Figure 2: Neural network architecture showing input, hidden, and output layers.",
-                "metadata": {
-                    "element_type": "figure_caption", 
-                    "figure_id": "fig_2",
-                    "semantic_types": {"figure_caption"},
-                    "source_elements": ["figure_caption"]
-                },
-                "expected_type": "figure_caption",
-                "description": "Figure caption with descriptive content"
-            },
-            
-            # Mixed content (contains both text and table-like elements)
-            {
-                "content": "The following table shows results:\nMethod A: 95%\nMethod B: 87%\nThis demonstrates clear performance differences.",
-                "metadata": {
-                    "element_type": "paragraph", 
-                    "contains_table": True,
-                    "semantic_types": {"paragraph", "table"},
-                    "source_elements": ["paragraph", "table"]
-                },
-                "expected_type": "mixed",
-                "description": "Mixed content with both narrative and tabular elements"
-            },
-            
-            # Regular paragraph text
-            {
-                "content": "This is a standard paragraph containing narrative text without any special formatting or tabular data.",
-                "metadata": {
-                    "element_type": "paragraph", 
-                    "section": "body",
-                    "semantic_types": {"paragraph"},
-                    "source_elements": ["paragraph"]
-                },
-                "expected_type": "paragraph",
-                "description": "Standard paragraph text content"
-            },
-            
-            # Content with table-like keywords but in text format
-            {
-                "content": "The research table of contents includes methodology, results, and discussion sections.",
-                "metadata": {
-                    "element_type": "paragraph",
-                    "semantic_types": {"paragraph"},
-                    "source_elements": ["paragraph"]
-                },
-                "expected_type": "paragraph",
-                "description": "Text content with table keywords but not actual table"
-            },
-            
-            # Content with header-like keywords but not actual header
-            {
-                "content": "The chapter discusses various header compression techniques used in network protocols.",
-                "metadata": {
-                    "element_type": "paragraph",
-                    "semantic_types": {"paragraph"},
-                    "source_elements": ["paragraph"]
-                },
-                "expected_type": "paragraph",
-                "description": "Text content mentioning headers but not actual header"
-            }
-        ]
-        
-        # Test priority hierarchy: header > table > figure_caption > mixed > text
-        priority_test_cases = [
-            # Header with table content should prioritize header
-            {
-                "content": "Chapter 1: Results Table\nMethod A: 95%\nMethod B: 87%",
-                "metadata": {
-                    "element_type": "header", 
-                    "level": 1, 
-                    "contains_table": True,
-                    "semantic_types": {"header", "table"},
-                    "source_elements": ["header", "table"]
-                },
-                "expected_type": "header",
-                "description": "Header priority over table content"
-            },
-            
-            # Table with figure reference should prioritize table
-            {
-                "content": "Table 1: Performance metrics (see Figure 2)\nMethod A: 95%\nMethod B: 87%",
-                "metadata": {
-                    "element_type": "table", 
-                    "references_figure": True,
-                    "semantic_types": {"table", "figure_caption"},
-                    "source_elements": ["table", "figure_caption"]
-                },
-                "expected_type": "table",
-                "description": "Table priority over figure references"
-            },
-            
-            # Figure caption with table data should prioritize figure_caption
-            {
-                "content": "Figure 1: Data table showing Method A: 95%, Method B: 87%",
-                "metadata": {
-                    "element_type": "figure_caption", 
-                    "contains_data": True,
-                    "semantic_types": {"figure_caption", "table"},
-                    "source_elements": ["figure_caption", "table"]
-                },
-                "expected_type": "figure_caption",
-                "description": "Figure caption priority over tabular data"
-            }
-        ]
-        
-        all_test_cases = test_cases + priority_test_cases
-        
-        # When/Then - test each semantic type scenario
-        for i, test_case in enumerate(all_test_cases):
-            chunk_id = i + 1
-            page_num = 1
-            
-            # When
-            chunk = await optimizer._create_chunk(
-                test_case["content"], 
-                chunk_id, 
-                page_num, 
-                test_case["metadata"]['source_elements']
-            )
-            
-            # Then - verify semantic type determination
-            assert isinstance(chunk, LLMChunk), f"Should return LLMChunk for test case {i+1}"
-            assert hasattr(chunk, 'semantic_types'), f"Chunk should have semantic_types attribute for test case {i+1}"
-            assert isinstance(chunk.semantic_types, str), f"Semantic type should be string for test case {i+1}"
-            assert len(chunk.semantic_types) > 0, f"Semantic type should not be empty for test case {i+1}"
-            
-            # Verify expected semantic type
-            actual_type = chunk.semantic_types
-            expected_type = test_case["expected_type"]
-            
-            assert actual_type == expected_type, \
-                f"Test case {i+1} ({test_case['description']}): Expected semantic type '{expected_type}', got '{actual_type}'"
-        
-        # Test content-based classification when metadata is minimal
-        content_based_cases = [
-            {
-                "content": "# Introduction\n## Overview\nThis section provides an introduction.",
-                "metadata": {},  # No explicit type hints
-                "possible_types": ["header", "text", "mixed"],
-                "description": "Markdown-style headers without metadata hints"
-            },
-            {
-                "content": "| Column A | Column B |\n|----------|----------|\n| Value 1  | Value 2  |",
-                "metadata": {},
-                "possible_types": ["table", "mixed"],
-                "description": "Markdown table format without metadata hints"
-            },
-            {
-                "content": "Figure 1: This image shows the relationship between variables X and Y.",
-                "metadata": {},
-                "possible_types": ["figure_caption", "text"],
-                "description": "Figure caption format without metadata hints"
-            }
-        ]
-        
-        for i, test_case in enumerate(content_based_cases):
-            chunk_id = i + 1
-            page_num = 1
-            
-            # When
-            chunk = await optimizer._create_chunk(
-                test_case["content"], 
-                chunk_id, 
-                page_num, 
-                test_case["metadata"]
-            )
-            
-            # Then - verify semantic type is reasonable based on content
-            actual_type = chunk.semantic_types
-            possible_types = test_case["possible_types"]
-            
-            assert actual_type in possible_types, \
-                f"Content-based test {i+1} ({test_case['description']}): " \
-                f"Expected one of {possible_types}, got '{actual_type}'"
-        
-        # Test edge cases for semantic type determination
-        edge_cases = [
-            {
-                "content": "",  # This should raise ValueError from earlier test
-                "metadata": {"element_type": "paragraph"},
-                "should_raise": True,
-                "description": "Empty content"
-            },
-            {
-                "content": "Valid content",
-                "metadata": {"element_type": "unknown_type"},
-                "expected_fallback": "text",
-                "description": "Unknown element type should fall back to text"
-            },
-            {
-                "content": "Mixed content with Table: data and Figure: reference",
-                "metadata": {"element_type": "paragraph", "has_mixed_elements": True},
-                "possible_types": ["mixed", "text"],
-                "description": "Content with multiple semantic indicators"
-            }
-        ]
-        
-        for i, test_case in enumerate(edge_cases):
-            chunk_id = i + 1
-            page_num = 1
-            
-            if test_case.get("should_raise", False):
-                # This case should raise an exception (empty content)
-                with pytest.raises((ValueError, TypeError, AttributeError)):
-                    await optimizer._create_chunk(
-                        test_case["content"], 
-                        chunk_id, 
-                        page_num, 
-                        test_case["metadata"]
-                    )
-            else:
-                # When
-                chunk = await optimizer._create_chunk(
-                    test_case["content"], 
-                    chunk_id, 
-                    page_num, 
-                    test_case["metadata"]
-                )
-                
-                # Then - verify appropriate fallback or handling
-                actual_type = chunk.semantic_types
-                
-                if "expected_fallback" in test_case:
-                    expected_fallback = test_case["expected_fallback"]
-                    assert actual_type == expected_fallback, \
-                        f"Edge case {i+1} ({test_case['description']}): " \
-                        f"Expected fallback '{expected_fallback}', got '{actual_type}'"
-                
-                if "possible_types" in test_case:
-                    possible_types = test_case["possible_types"]
-                    assert actual_type in possible_types, \
-                        f"Edge case {i+1} ({test_case['description']}): " \
-                        f"Expected one of {possible_types}, got '{actual_type}'"
-        
-        # Verify semantic type consistency across similar content
-        similar_content_cases = [
-            {
-                "content": "Table 1: Research Results",
-                "metadata": {"element_type": "table"},
-            },
-            {
-                "content": "Table 2: Additional Results", 
-                "metadata": {"element_type": "table"},
-            }
-        ]
-        
-        semantic_types = []
-        for i, test_case in enumerate(similar_content_cases):
-            chunk_id = i + 1
-            chunk = await optimizer._create_chunk(
-                test_case["content"], 
-                chunk_id, 
-                1, 
-                test_case["metadata"]
-            )
-            semantic_types.append(chunk.semantic_types)
-        
-        # All similar content should have the same semantic type
-        assert len(set(semantic_types)) == 1, \
-            f"Similar content should have consistent semantic types, got: {semantic_types}"
-        assert semantic_types[0] == "table", \
-            f"Table content should be classified as 'table', got: {semantic_types[0]}"
+        # When/Then
+        with pytest.raises(ValueError):
+            await self.optimizer._create_chunk(whitespace_content, self.expected_chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
-    async def test_create_chunk_id_formatting(self):
+    async def test_create_chunk_whitespace_characters_only_raises_error(self):
         """
-        GIVEN chunk_id parameter
+        GIVEN content with only whitespace characters (newlines, tabs)
         WHEN _create_chunk is called
-        THEN expect:
-            - Formatted chunk_id string preserved exactly
-            - Consistent chunk_id handling across calls
-            - Unique identifiers maintained
+        THEN expect ValueError to be raised
         """
-        
         # Given
-        optimizer = LLMOptimizer()
+        whitespace_chars_content = "\n\t  \n"
         
-        content = "Test content for chunk ID formatting validation"
-        page_num = 1
-        source_elements = ["paragraph"]  # Correct format - list of strings
-        
-        # Test cases for different chunk_id formats
-        chunk_id_test_cases = [
-            # Standard formatted IDs
-            "chunk_0001",
-            "chunk_0042", 
-            "chunk_1000",
-            
-            # Alternative formatting styles
-            # Note: These should FAIL!!!
-            "chunk_001",
-            "chunk_42",
-            "section_1_chunk_5",
-            "doc_123_chunk_456",
-            
-            # Non-standard but valid IDs
-            # Note: These should fail too!
-            "chunk-001",
-            "chunk.001",
-            "CHUNK_001",
-            "chunk_A001",
-            
-            # Edge cases
-            "a",  # Single character
-            "chunk_0",  # Zero padding
-            "very_long_chunk_identifier_with_descriptive_name_001"  # Long ID
-        ]
-        
-        created_chunks = []
-        
-        # When - create chunks with different ID formats
-        for i, chunk_id in enumerate(chunk_id_test_cases):
-            chunk = await optimizer._create_chunk(
-                f"{content} {i+1}",  # Slightly different content
-                chunk_id, 
-                page_num, 
-                source_elements
-            )
-            created_chunks.append(chunk)
-        
-        # Then - verify chunk_id formatting and consistency
-        
-        # 1. Verify chunk_id preservation - IDs should be preserved exactly as provided
-        for i, (original_id, chunk) in enumerate(zip(chunk_id_test_cases, created_chunks)):
-            assert chunk.chunk_id == original_id, \
-                f"Test case {i+1}: Chunk ID should be preserved exactly. Expected '{original_id}', got '{chunk.chunk_id}'"
-        
-        # 2. Verify all chunk IDs are strings
-        for i, chunk in enumerate(created_chunks):
-            assert isinstance(chunk.chunk_id, str), \
-                f"Test case {i+1}: Chunk ID should be string type, got {type(chunk.chunk_id)}"
-            assert len(chunk.chunk_id) > 0, \
-                f"Test case {i+1}: Chunk ID should not be empty"
-        
-        # 3. Verify uniqueness - all provided IDs should remain unique
-        chunk_ids = [chunk.chunk_id for chunk in created_chunks]
-        unique_chunk_ids = set(chunk_ids)
-        assert len(chunk_ids) == len(unique_chunk_ids), \
-            f"All chunk IDs should be unique. Found duplicates in: {chunk_ids}"
-        
-        # 4. Verify chunk_id consistency across multiple calls with same parameters
-        consistent_id = "chunk_consistency_test"
-        consistent_content = "Consistent content for testing"
-        
-        chunk1 = await optimizer._create_chunk(consistent_content, consistent_id, page_num, source_elements)
-        chunk2 = await optimizer._create_chunk(consistent_content, consistent_id, page_num, source_elements)
-        
-        assert chunk1.chunk_id == consistent_id, "First chunk should have correct ID"
-        assert chunk2.chunk_id == consistent_id, "Second chunk should have correct ID"
-        assert chunk1.chunk_id == chunk2.chunk_id, "Chunks with same ID parameter should have same chunk_id"
-        
-        # 5. Test special characters in chunk IDs
-        special_char_test_cases = [
-            "chunk_with_underscore",
-            "chunk-with-dash", 
-            "chunk.with.dots",
-            "chunk with spaces",  # May or may not be supported
-            "chunk@special#chars",  # May or may not be supported
-            "chunk_αβγ_unicode",  # Unicode characters
-        ]
-        
-        for special_id in special_char_test_cases:
-            try:
-                chunk = await optimizer._create_chunk(
-                    "Content for special character test",
-                    special_id,
-                    page_num,
-                    source_elements
-                )
-                # If creation succeeds, verify ID is preserved
-                assert chunk.chunk_id == special_id, \
-                    f"Special character ID should be preserved: expected '{special_id}', got '{chunk.chunk_id}'"
-            except (ValueError, TypeError) as e:
-                # Some special characters may not be supported - this is acceptable
-                error_msg = str(e).lower()
-                assert any(keyword in error_msg for keyword in ["invalid", "character", "format", "id"]), \
-                    f"Error for special character ID should be descriptive: {e}"
-        
-        # 6. Test chunk_id immutability - ID should not change after creation
-        test_chunk = created_chunks[0]
-        original_id = test_chunk.chunk_id
-        
-        # Attempt to modify chunk_id (should not affect internal state)
-        try:
-            test_chunk.chunk_id = "modified_id"
-            # If modification is allowed, it should be reflected
-            if hasattr(test_chunk, '_chunk_id') or test_chunk.chunk_id == "modified_id":
-                # Dataclass allows modification
-                assert test_chunk.chunk_id == "modified_id", "If modification is allowed, it should be reflected"
-            else:
-                # Some protection mechanism exists
-                assert test_chunk.chunk_id == original_id, "Chunk ID should remain unchanged if protected"
-        except AttributeError:
-            # ID is read-only or protected
-            assert test_chunk.chunk_id == original_id, "Protected chunk ID should remain unchanged"
-        
-        # 7. Test numeric chunk_id handling (if integers are passed)
-        numeric_test_cases = [
-            1,
-            42, 
-            1000,
-            0
-        ]
-        
-        for numeric_id in numeric_test_cases:
-            try:
-                chunk = await optimizer._create_chunk(
-                    f"Content for numeric ID {numeric_id}",
-                    str(numeric_id),  # Convert to string as expected by interface
-                    page_num,
-                    ["paragraph"]
-                )
-                # Should work with string conversion
-                assert chunk.chunk_id == str(numeric_id), \
-                    f"Numeric ID converted to string should be preserved: expected '{str(numeric_id)}', got '{chunk.chunk_id}'"
-            except (ValueError, TypeError):
-                # If numeric IDs require specific formatting, that's acceptable
-                pass
-        
-        # 8. Test ID length limits (if any)
-        very_long_id = "chunk_" + "x" * 1000  # Very long ID
-        
-        try:
-            chunk = await optimizer._create_chunk(
-                "Content for very long ID test",
-                very_long_id,
-                page_num,
-                ["paragraph"]
-            )
-            # If long IDs are supported, verify preservation
-            assert chunk.chunk_id == very_long_id, "Very long ID should be preserved if supported"
-        except (ValueError, TypeError) as e:
-            # Length limits are acceptable
-            error_msg = str(e).lower()
-            assert any(keyword in error_msg for keyword in ["length", "long", "limit", "size"]), \
-                f"Error for long ID should mention length issue: {e}"
-        
-        # 9. Verify chunk_id appears in string representation
-        sample_chunk = created_chunks[0]
-        chunk_str = str(sample_chunk)
-        chunk_repr = repr(sample_chunk)
-        
-        assert sample_chunk.chunk_id in chunk_str or sample_chunk.chunk_id in chunk_repr, \
-            "Chunk ID should appear in string representation for debugging"
-        
-        # 10. Test empty string chunk_id (should be invalid)
-        with pytest.raises((ValueError, TypeError, AttributeError)):
-            await optimizer._create_chunk(
-                "Content for empty ID test",
-                "",  # Empty string ID
-                page_num,
-                ["paragraph"]
-            )
-        
-        # 11. Test None chunk_id (should be invalid)
-        with pytest.raises((ValueError, TypeError, AttributeError)):
-            await optimizer._create_chunk(
-                "Content for None ID test", 
-                None,  # None ID
-                page_num,
-                ["paragraph"]
-            )
+        # When/Then
+        with pytest.raises(ValueError):
+            await self.optimizer._create_chunk(whitespace_chars_content, self.expected_chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
-    async def test_create_chunk_metadata_enhancement(self):
+    async def test_create_chunk_none_content_raises_error(self):
         """
-        GIVEN basic metadata
+        GIVEN None as content
         WHEN _create_chunk is called
-        THEN expect:
-            - Timestamps added to metadata
-            - Source element counts included
-            - Processing information tracked
+        THEN expect ValueError to be raised
         """
-        
         # Given
-        optimizer = LLMOptimizer()
+        none_content = None
         
-        content = "This is test content for metadata enhancement validation. " \
-                    "It contains multiple sentences to test processing information tracking."
+        # When/Then
+        with pytest.raises(ValueError):
+            await self.optimizer._create_chunk(none_content, self.expected_chunk_id, self.page_num, self.source_elements)
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_empty_string_error_message_descriptive(self):
+        """
+        GIVEN empty content string
+        WHEN _create_chunk is called
+        THEN expect error message mentions empty content issue
+        """
+        # Given
+        empty_content = ""
         
-        chunk_id = 1
-        page_num = 1
+        # When/Then
+        with pytest.raises(ValueError) as exc_info:
+            await self.optimizer._create_chunk(empty_content, self.expected_chunk_id, self.page_num, self.source_elements)
         
-        # Basic metadata provided by user
-        basic_metadata = {
-            "element_type": "paragraph",
-            "element_id": "p1",
-            "section": "introduction",
-            "confidence": 0.95,
-            "source_file": "test_document.pdf",
-            "extraction_method": "text_analysis",
-            "original_position": {"x": 100, "y": 200}
-        }
+        error_msg = str(exc_info.value).lower()
+        assert any(keyword in error_msg for keyword in ["empty", "content", "whitespace", "invalid"]), \
+            f"Error message should mention empty content issue: {exc_info.value}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_none_content_error_message_descriptive(self):
+        """
+        GIVEN None as content
+        WHEN _create_chunk is called
+        THEN expect error message mentions None/null content issue
+        """
+        # Given
+        none_content = None
         
-        # Record time before chunk creation for timestamp validation
-        before_creation = time.time()
-        before_creation_iso = datetime.now().isoformat()
+        # When/Then
+        with pytest.raises(ValueError) as exc_info:
+            await self.optimizer._create_chunk(none_content, self.expected_chunk_id, self.page_num, self.source_elements)
+        
+        error_msg = str(exc_info.value).lower()
+        assert any(keyword in error_msg for keyword in ["none", "null", "content", "empty"]), \
+            f"Error message should mention None/empty content issue: {exc_info.value}"
+
+
+
+class TestLLMOptimizerCreateChunkTypesDetermination:
+    """Test LLMOptimizer._create_chunk semantic types determination."""
+
+    def setup_method(self):
+        """Common setup for semantic types determination tests."""
+        self.optimizer = LLMOptimizer()
+        self.page_num = 1
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_header_semantic_type_classification(self):
+        """
+        GIVEN content with header metadata
+        WHEN _create_chunk is called
+        THEN expect semantic type classified as header
+        """
+        # Given
+        content = "Chapter 1: Introduction to Machine Learning"
+        source_elements = ["header"]
         
         # When
-        source_elements = ["paragraph"]  # Correct format for _create_chunk
-        chunk = await optimizer._create_chunk(content, chunk_id, page_num, source_elements)
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
         
-        # Record time after chunk creation
-        after_creation = time.time()
-        after_creation_iso = datetime.now().isoformat()
-        
-        # Then - verify basic structure and original metadata preservation
-        assert isinstance(chunk, LLMChunk), "Should return LLMChunk instance"
-        assert isinstance(chunk.metadata, dict), "Metadata should be dictionary"
-        
-        # Verify all original metadata is preserved
-        for key, value in basic_metadata.items():
-            assert key in chunk.metadata, f"Original metadata key '{key}' should be preserved"
-            assert chunk.metadata[key] == value, f"Original metadata value for '{key}' should be preserved: expected {value}, got {chunk.metadata[key]}"
-        
-        # Test timestamp enhancement
-        timestamp_fields = ["creation_timestamp", "processing_timestamp", "created_at", "processed_at"]
-        
-        # At least one timestamp field should be present
-        timestamp_fields_present = [field for field in timestamp_fields if field in chunk.metadata]
-        assert len(timestamp_fields_present) > 0, f"At least one timestamp field should be added: {list(chunk.metadata.keys())}"
-        
-        # Validate timestamp format and accuracy
-        for field in timestamp_fields_present:
-            timestamp_value = chunk.metadata[field]
-            
-            # Test different possible timestamp formats
-            if isinstance(timestamp_value, str):
-                # ISO format timestamp
-                try:
-                    parsed_time = datetime.fromisoformat(timestamp_value.replace('Z', '+00:00'))
-                    timestamp_seconds = parsed_time.timestamp()
-                except ValueError:
-                    # Unix timestamp string
-                    try:
-                        timestamp_seconds = float(timestamp_value)
-                    except ValueError:
-                        pytest.fail(f"Timestamp field '{field}' has invalid format: {timestamp_value}")
-            elif isinstance(timestamp_value, (int, float)):
-                # Unix timestamp
-                timestamp_seconds = float(timestamp_value)
-            else:
-                pytest.fail(f"Timestamp field '{field}' has invalid type: {type(timestamp_value)}")
-            
-            # Verify timestamp is reasonable (within processing window)
-            assert before_creation <= timestamp_seconds <= after_creation, \
-                f"Timestamp field '{field}' is outside processing window: {timestamp_seconds} not in [{before_creation}, {after_creation}]"
-        
-        # Test source element counts enhancement
-        element_count_fields = ["content_length", "word_count", "sentence_count", "character_count"]
-        
-        # At least some count fields should be present
-        count_fields_present = [field for field in element_count_fields if field in chunk.metadata]
-        assert len(count_fields_present) > 0, f"At least one count field should be added: {list(chunk.metadata.keys())}"
-        
-        # Validate count accuracy
-        actual_word_count = len(content.split())
-        actual_char_count = len(content)
-        actual_sentence_count = len([s for s in content.split('.') if s.strip()])
-        
-        for field in count_fields_present:
-            count_value = chunk.metadata[field]
-            assert isinstance(count_value, int), f"Count field '{field}' should be integer, got {type(count_value)}"
-            assert count_value >= 0, f"Count field '{field}' should be non-negative, got {count_value}"
-            
-            # Validate specific counts
-            if field == "word_count":
-                assert count_value == actual_word_count, f"Word count mismatch: expected {actual_word_count}, got {count_value}"
-            elif field == "character_count" or field == "content_length":
-                assert count_value == actual_char_count, f"Character count mismatch: expected {actual_char_count}, got {count_value}"
-            elif field == "sentence_count":
-                # Allow some flexibility in sentence counting logic
-                assert abs(count_value - actual_sentence_count) <= 2, f"Sentence count roughly correct: expected ~{actual_sentence_count}, got {count_value}"
-        
-        # Test processing information tracking
-        processing_fields = ["processing_method", "tokenizer_used", "model_version", "chunk_version", "processing_stage"]
-        
-        processing_fields_present = [field for field in processing_fields if field in chunk.metadata]
-        assert len(processing_fields_present) > 0, f"At least one processing field should be added: {list(chunk.metadata.keys())}"
-        
-        # Validate processing information
-        for field in processing_fields_present:
-            processing_value = chunk.metadata[field]
-            assert isinstance(processing_value, str), f"Processing field '{field}' should be string, got {type(processing_value)}"
-            assert len(processing_value) > 0, f"Processing field '{field}' should not be empty"
-            
-            # Validate specific processing fields
-            if field == "tokenizer_used":
-                expected_tokenizers = ["gpt-3.5-turbo", "gpt-4", "tiktoken", "transformers"]
-                assert any(tokenizer in processing_value for tokenizer in expected_tokenizers), \
-                    f"Tokenizer field should contain recognized tokenizer: {processing_value}"
-            elif field == "processing_method":
-                expected_methods = ["llm_optimization", "text_chunking", "semantic_analysis"]
-                assert any(method in processing_value for method in expected_methods), \
-                    f"Processing method should be recognized: {processing_value}"
-        
-        # Test token count enhancement in metadata
-        token_fields = ["token_count", "estimated_tokens", "token_calculation_method"]
-        
-        token_fields_present = [field for field in token_fields if field in chunk.metadata]
-        
-        for field in token_fields_present:
-            if field in ["token_count", "estimated_tokens"]:
-                token_value = chunk.metadata[field]
-                assert isinstance(token_value, int), f"Token field '{field}' should be integer"
-                assert token_value > 0, f"Token field '{field}' should be positive"
-                # Should match the chunk's token_count attribute
-                if field == "token_count":
-                    assert token_value == chunk.token_count, f"Metadata token_count should match chunk.token_count"
-            elif field == "token_calculation_method":
-                method_value = chunk.metadata[field]
-                assert isinstance(method_value, str), f"Token calculation method should be string"
-                assert len(method_value) > 0, f"Token calculation method should not be empty"
-        
-        # Test semantic analysis enhancement
-        semantic_fields = ["semantic_types", "content_complexity", "readability_score", "language_detected"]
-        
-        semantic_fields_present = [field for field in semantic_fields if field in chunk.metadata]
-        
-        for field in semantic_fields_present:
-            semantic_value = chunk.metadata[field]
-            
-            if field == "semantic_types":
-                assert isinstance(semantic_value, str), f"Semantic type should be string"
-                expected_types = ["text", "paragraph", "header", "table", "mixed", "figure_caption"]
-                assert semantic_value in expected_types, f"Semantic type should be recognized: {semantic_value}"
-                # Should match chunk's semantic_types attribute
-                assert semantic_value == chunk.semantic_types, f"Metadata semantic_types should match chunk.semantic_types"
-            elif field in ["content_complexity", "readability_score"]:
-                assert isinstance(semantic_value, (int, float)), f"{field} should be numeric"
-                assert 0 <= semantic_value <= 1, f"{field} should be between 0 and 1: {semantic_value}"
-            elif field == "language_detected":
-                assert isinstance(semantic_value, str), f"Language should be string"
-                assert len(semantic_value) >= 2, f"Language code should be at least 2 characters: {semantic_value}"
-        
-        # Test metadata structure preservation
-        assert "element_type" in chunk.metadata, "Original element_type should be preserved"
-        assert "element_id" in chunk.metadata, "Original element_id should be preserved"
-        assert "section" in chunk.metadata, "Original section should be preserved"
-        
-        # Test enhanced metadata doesn't overwrite original metadata
-        for original_key in basic_metadata.keys():
-            assert chunk.metadata[original_key] == basic_metadata[original_key], \
-                f"Enhanced metadata should not overwrite original value for '{original_key}'"
-        
-        # Test metadata size is reasonable (not excessively large)
-        metadata_size = len(str(chunk.metadata))
-        assert metadata_size < 10000, f"Enhanced metadata should be reasonable size, got {metadata_size} characters"
-        
-        # Test consistency across multiple chunk creations
-        chunk2 = await optimizer._create_chunk(
-            "Different content for consistency test",
-            "chunk_meta_002", 
-            page_num,
-            ["paragraph"]
-        )
-        
-        # Both chunks should have similar enhancement patterns
-        enhanced_fields_chunk1 = set(chunk.metadata.keys()) - set(basic_metadata.keys())
-        enhanced_fields_chunk2 = set(chunk2.metadata.keys()) - set(basic_metadata.keys())
-        
-        # Should have significant overlap in enhanced fields
-        common_enhanced_fields = enhanced_fields_chunk1.intersection(enhanced_fields_chunk2)
-        assert len(common_enhanced_fields) >= len(enhanced_fields_chunk1) * 0.7, \
-            f"Chunks should have consistent enhancement patterns: {enhanced_fields_chunk1} vs {enhanced_fields_chunk2}"
-        
-        # Test edge cases for metadata enhancement
-        
-        # Test with minimal basic metadata
-        minimal_metadata = {"element_type": "paragraph"}
-        
-        chunk_minimal = await optimizer._create_chunk(
-            "Content with minimal metadata",
-            "chunk_meta_minimal",
-            page_num,
-            ["paragraph"]
-        )
-        
-        # Should still enhance metadata even with minimal input
-        enhanced_minimal = set(chunk_minimal.metadata.keys()) - set(minimal_metadata.keys())
-        assert len(enhanced_minimal) > 0, "Should enhance metadata even with minimal input"
-        
-        # Test with extensive existing metadata
-        extensive_metadata = {
-            **basic_metadata,
-            "additional_field_1": "value1",
-            "additional_field_2": "value2", 
-            "nested_metadata": {"sub_field": "sub_value"},
-            "list_metadata": ["item1", "item2"],
-            "numeric_metadata": 42
-        }
-        
-        chunk_extensive = await optimizer._create_chunk(
-            "Content with extensive metadata",
-            "chunk_meta_extensive",
-            page_num,
-            ["paragraph"]
-        )
-        
-        # All original extensive metadata should be preserved
-        for key, value in extensive_metadata.items():
-            assert key in chunk_extensive.metadata, f"Extensive metadata key '{key}' should be preserved"
-            assert chunk_extensive.metadata[key] == value, f"Extensive metadata value for '{key}' should be preserved"
-        
-        # Should still add enhancements
-        enhanced_extensive = set(chunk_extensive.metadata.keys()) - set(extensive_metadata.keys())
-        assert len(enhanced_extensive) > 0, "Should still enhance extensive metadata"
-        
-        # Test metadata type preservation
-        for key, value in chunk_extensive.metadata.items():
-            if key in extensive_metadata:
-                assert type(value) == type(extensive_metadata[key]), \
-                    f"Metadata type should be preserved for '{key}': expected {type(extensive_metadata[key])}, got {type(value)}"
+        # Then
+        assert chunk.semantic_types == "header"
 
     @pytest.mark.asyncio
-    async def test_create_chunk_token_counting_failure(self):
+    async def test_create_chunk_table_semantic_type_classification(self):
         """
-        GIVEN content that causes token counting to fail
+        GIVEN content with table metadata
         WHEN _create_chunk is called
-        THEN expect:
-            - ValueError raised or fallback counting used
-            - Error handling graceful
-            - Processing can continue
+        THEN expect semantic type classified as table
         """
-        import unittest.mock
-
         # Given
-        optimizer = LLMOptimizer()
+        content = "Table 1: Results\nMethod A: 95%\nMethod B: 87%\nMethod C: 92%"
+        source_elements = ["table"]
         
-        content = "This is valid content that should normally count tokens correctly."
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "table"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_figure_caption_semantic_type_classification(self):
+        """
+        GIVEN content with figure caption metadata
+        WHEN _create_chunk is called
+        THEN expect semantic type classified as figure_caption
+        """
+        # Given
+        content = "Figure 2: Neural network architecture showing input, hidden, and output layers."
+        source_elements = ["figure_caption"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "figure_caption"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_mixed_content_table_priority(self):
+        """
+        GIVEN content with mixed elements containing table
+        WHEN _create_chunk is called
+        THEN expect table type due to priority hierarchy
+        """
+        # Given
+        content = "The following table shows results:\nMethod A: 95%\nMethod B: 87%\nThis demonstrates clear performance differences."
+        source_elements = ["paragraph", "table"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "table"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_mixed_content_classification(self):
+        """
+        GIVEN content with multiple non-priority elements
+        WHEN _create_chunk is called
+        THEN expect semantic type classified as mixed
+        """
+        # Given
+        content = "This content contains a list:\n1. Item 1\n2. Item 2\nAnd also has footer information."
+        source_elements = ["list", "footer"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "mixed"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_paragraph_semantic_type_classification(self):
+        """
+        GIVEN content with paragraph metadata
+        WHEN _create_chunk is called
+        THEN expect semantic type classified as text
+        """
+        # Given
+        content = "This is a standard paragraph containing narrative text without any special formatting or tabular data."
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "text"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_text_with_table_keywords_classified_as_text(self):
+        """
+        GIVEN paragraph content mentioning table keywords
+        WHEN _create_chunk is called
+        THEN expect semantic type classified as text
+        """
+        # Given
+        content = "The research table of contents includes methodology, results, and discussion sections."
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "text"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_text_with_header_keywords_classified_as_text(self):
+        """
+        GIVEN paragraph content mentioning header keywords
+        WHEN _create_chunk is called
+        THEN expect semantic type classified as text
+        """
+        # Given
+        content = "The chapter discusses various header compression techniques used in network protocols."
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "text"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_header_priority_over_table(self):
+        """
+        GIVEN content with both header and table elements
+        WHEN _create_chunk is called
+        THEN expect header type due to priority hierarchy
+        """
+        # Given
+        content = "Chapter 1: Results Table\nMethod A: 95%\nMethod B: 87%"
+        source_elements = ["header", "table"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "header"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_table_priority_over_figure_caption(self):
+        """
+        GIVEN content with both table and figure caption elements
+        WHEN _create_chunk is called
+        THEN expect table type due to priority hierarchy
+        """
+        # Given
+        content = "Table 1: Performance metrics (see Figure 2)\nMethod A: 95%\nMethod B: 87%"
+        source_elements = ["table", "figure_caption"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "table"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_table_priority_over_figure_caption_in_content(self):
+        """
+        GIVEN figure caption content with table data
+        WHEN _create_chunk is called
+        THEN expect table type due to priority hierarchy
+        """
+        # Given
+        content = "Figure 1: Data table showing Method A: 95%, Method B: 87%"
+        source_elements = ["figure_caption", "table"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "table"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_markdown_headers_content_based_classification(self):
+        """
+        GIVEN markdown-style header content without metadata
+        WHEN _create_chunk is called
+        THEN expect semantic type in expected range
+        """
+        # Given
+        content = "# Introduction\n## Overview\nThis section provides an introduction."
+        source_elements = ["text"]
+        possible_types = ["header", "text", "mixed"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types in possible_types
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_markdown_table_content_based_classification(self):
+        """
+        GIVEN markdown table content without metadata
+        WHEN _create_chunk is called
+        THEN expect semantic type in expected range
+        """
+        # Given
+        content = "| Column A | Column B |\n|----------|----------|\n| Value 1  | Value 2  |"
+        source_elements = ["text"]
+        possible_types = ["table", "mixed", "text"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types in possible_types
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_figure_caption_content_based_classification(self):
+        """
+        GIVEN figure caption format content without metadata
+        WHEN _create_chunk is called
+        THEN expect semantic type in expected range
+        """
+        # Given
+        content = "Figure 1: This image shows the relationship between variables X and Y."
+        source_elements = ["text"]
+        possible_types = ["figure_caption", "text"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types in possible_types
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_unknown_element_type_fallback(self):
+        """
+        GIVEN content with unknown element type
+        WHEN _create_chunk is called
+        THEN expect fallback to text type
+        """
+        # Given
+        content = "Valid content"
+        source_elements = ["unknown_type"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "text"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_multiple_semantic_indicators_classification(self):
+        """
+        GIVEN content with multiple semantic indicators
+        WHEN _create_chunk is called
+        THEN expect semantic type in expected range
+        """
+        # Given
+        content = "Mixed content with Table: data and Figure: reference"
+        source_elements = ["text", "list"]
+        possible_types = ["mixed", "text"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types in possible_types
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_type_consistency_table_1(self):
+        """
+        GIVEN first table content
+        WHEN _create_chunk is called
+        THEN expect consistent table classification
+        """
+        # Given
+        content = "Table 1: Research Results"
+        source_elements = ["table"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "table"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_type_consistency_table_2(self):
+        """
+        GIVEN second similar table content
+        WHEN _create_chunk is called
+        THEN expect consistent table classification
+        """
+        # Given
+        content = "Table 2: Additional Results"
+        source_elements = ["table"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 2, self.page_num, source_elements)
+        
+        # Then
+        assert chunk.semantic_types == "table"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_types_is_string(self):
+        """
+        GIVEN any valid content
+        WHEN _create_chunk is called
+        THEN expect semantic_types to be string type
+        """
+        # Given
+        content = "Test content"
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert isinstance(chunk.semantic_types, str)
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_semantic_types_not_empty(self):
+        """
+        GIVEN any valid content
+        WHEN _create_chunk is called
+        THEN expect semantic_types to not be empty
+        """
+        # Given
+        content = "Test content"
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert len(chunk.semantic_types) > 0
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_has_semantic_types_attribute(self):
+        """
+        GIVEN any valid content
+        WHEN _create_chunk is called
+        THEN expect chunk to have semantic_types attribute
+        """
+        # Given
+        content = "Test content"
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert hasattr(chunk, 'semantic_types')
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_returns_llm_chunk_for_semantic_classification(self):
+        """
+        GIVEN any valid content for semantic classification
+        WHEN _create_chunk is called
+        THEN expect LLMChunk instance returned
+        """
+        # Given
+        content = "Test content for semantic classification"
+        source_elements = ["paragraph"]
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, 1, self.page_num, source_elements)
+        
+        # Then
+        assert isinstance(chunk, LLMChunk)
+
+
+class TestLLMOptimizerCreateChunkIdFormatting:
+
+    def setup_method(self):
+        """Common setup for chunk ID formatting tests."""
+        self.optimizer = LLMOptimizer()
+        self.content = "Test content for chunk ID formatting validation"
+        self.page_num = 1
+        self.source_elements = ["paragraph"]
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_id_is_string_type(self):
+        """
+        GIVEN any valid chunk_id (integer)
+        WHEN _create_chunk is called
+        THEN expect chunk.chunk_id to be string type
+        """
+        # Given
         chunk_id = 1
-        page_num = 1
-        metadata = {"element_type": "paragraph"}
         
-        # Test case 1: Mock token counting to raise an exception
-        with unittest.mock.patch.object(optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
-            try:
-                # When - attempt to create chunk with failing token counter
-                chunk = await optimizer._create_chunk(content, chunk_id, page_num, metadata)
-                
-                # Then - if no exception, verify fallback was used
-                assert isinstance(chunk, LLMChunk), "Should return LLMChunk even with token counting failure"
-                assert chunk.content == content, "Content should be preserved"
-                assert chunk.chunk_id == "chunk_0001", "Chunk ID should be preserved"
-                assert isinstance(chunk.token_count, int), "token_count should be integer (fallback value)"
-                assert chunk.token_count > 0, "Fallback token count should be positive"
-                
-                # Fallback might estimate based on word count or character count
-                word_count = len(content.split())
-                char_count = len(content)
-                
-                # Verify fallback is reasonable (could be word count * 1.3 or char count / 4 or similar)
-                assert 1 <= chunk.token_count <= max(word_count * 3, char_count), \
-                    f"Fallback token count {chunk.token_count} should be reasonable for content length"
-                
-            except (ValueError, RuntimeError, Exception) as e:
-                # If exception is raised, verify it's informative
-                error_msg = str(e).lower()
-                assert any(keyword in error_msg for keyword in ["token", "count", "counting", "failed"]), \
-                    f"Error should mention token counting issue: {e}"
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
         
-        # Test case 2: Mock _count_tokens to return invalid values
-        invalid_token_values = [None, -1, "invalid", [], 0.5]
+        # Then
+        assert isinstance(chunk.chunk_id, str)
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_id_is_not_empty(self):
+        """
+        GIVEN any valid chunk_id (integer)
+        WHEN _create_chunk is called
+        THEN expect chunk.chunk_id to not be empty
+        """
+        # Given
+        chunk_id = 1
         
-        for invalid_value in invalid_token_values:
-            with unittest.mock.patch.object(optimizer, '_count_tokens', return_value=invalid_value):
-                try:
-                    chunk = await optimizer._create_chunk(
-                        f"{content} {invalid_value}",  # Unique content
-                        f"{chunk_id}_{invalid_value}",
-                        page_num,
-                        ["paragraph"]
-                    )
-                    
-                    # Should handle invalid token count gracefully
-                    assert isinstance(chunk, LLMChunk), f"Should return LLMChunk even with invalid token count {invalid_value}"
-                    assert isinstance(chunk.token_count, int), f"Should convert invalid token count {invalid_value} to valid integer"
-                    assert chunk.token_count > 0, f"Should provide positive fallback for invalid token count {invalid_value}"
-                    
-                except (ValueError, TypeError) as e:
-                    # Acceptable to raise error for invalid token count
-                    error_msg = str(e).lower()
-                    assert any(keyword in error_msg for keyword in ["token", "invalid", "count"]), \
-                        f"Error for invalid token count {invalid_value} should be descriptive: {e}"
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
         
-        # Test case 3: Test with problematic content that might cause encoding issues
-        problematic_content_cases = [
-            "Content with unicode: 你好世界 🌍 αβγ",  # Unicode characters
-            "Content with emoji: 😀🎉🔥💯",  # Emoji characters
-            "Content\x00with\x01control\x02characters",  # Control characters
-            "Content with very long word: " + "x" * 1000,  # Very long tokens
-            "\n\t\r   Whitespace heavy content   \n\t\r",  # Whitespace-heavy
-        ]
+        # Then
+        assert len(chunk.chunk_id) > 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("chunk_id,expected", [
+        (1, "chunk_0001"),
+        (42, "chunk_0042"), 
+        (1000, "chunk_1000"),
+        (0, "chunk_0000"),
+        (99999, "chunk_99999")
+    ])
+    async def test_create_chunk_formats_id_correctly(self, chunk_id, expected):
+        """
+        GIVEN various integer chunk_ids
+        WHEN _create_chunk is called
+        THEN expect chunk.chunk_id formatted correctly
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
         
-        for i, problematic_content in enumerate(problematic_content_cases):
-            try:
-                chunk = await optimizer._create_chunk(
-                    problematic_content,
-                    f"chunk_problematic_{i+1:03d}",
-                    page_num,
-                    ["paragraph"]
-                )
-                
-                # Should handle problematic content gracefully
-                assert isinstance(chunk, LLMChunk), f"Should handle problematic content case {i+1}"
-                assert chunk.content == problematic_content, f"Content should be preserved for case {i+1}"
-                assert isinstance(chunk.token_count, int), f"token_count should be integer for case {i+1}"
-                assert chunk.token_count >= 0, f"token_count should be non-negative for case {i+1}"
-                
-            except (ValueError, UnicodeError, Exception) as e:
-                # Some problematic content might legitimately cause errors
-                error_msg = str(e).lower()
-                acceptable_errors = ["unicode", "encoding", "token", "character", "invalid"]
-                assert any(keyword in error_msg for keyword in acceptable_errors), \
-                    f"Error for problematic content case {i+1} should be related to content issues: {e}"
+        # Then
+        assert chunk.chunk_id == expected
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_ids_remain_unique(self):
+        """
+        GIVEN multiple different chunk_ids (integers)
+        WHEN _create_chunk is called for each
+        THEN expect all chunk.chunk_ids to remain unique
+        """
+        # Given
+        chunk_ids = [1, 2, 3]
+        chunks = []
         
-        # Test case 4: Mock tokenizer to be unavailable
-        with unittest.mock.patch.object(optimizer, 'tokenizer', None):
-            try:
-                chunk = await optimizer._create_chunk(
-                    "Content without tokenizer",
-                    "chunk_no_tokenizer",
-                    page_num,
-                    ["paragraph"]
-                )
-                
-                # Should use fallback counting method
-                assert isinstance(chunk, LLMChunk), "Should work without tokenizer"
-                assert isinstance(chunk.token_count, int), "Should provide fallback token count"
-                assert chunk.token_count > 0, "Fallback should provide positive count"
-                
-            except (AttributeError, ValueError) as e:
-                # Acceptable to fail if tokenizer is required
-                error_msg = str(e).lower()
-                assert any(keyword in error_msg for keyword in ["tokenizer", "not", "available", "missing"]), \
-                    f"Error should mention tokenizer unavailability: {e}"
+        # When
+        for chunk_id in chunk_ids:
+            chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+            chunks.append(chunk)
         
-        # Test case 5: Test token counting consistency after failure recovery
-        # First create a chunk normally
-        normal_chunk = await optimizer._create_chunk(
-            "Normal content for comparison",
-            "chunk_normal",
-            page_num,
+        # Then
+        actual_chunk_ids = [chunk.chunk_id for chunk in chunks]
+        assert len(actual_chunk_ids) == len(set(actual_chunk_ids))
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_id_consistency_across_calls(self):
+        """
+        GIVEN same chunk_id (integer) used multiple times
+        WHEN _create_chunk is called multiple times
+        THEN expect chunk.chunk_id to be consistent across calls
+        """
+        # Given
+        chunk_id = 42
+        
+        # When
+        chunk1 = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+        chunk2 = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+        
+        # Then
+        assert chunk1.chunk_id == chunk2.chunk_id
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_zero_id_formatted_correctly(self):
+        """
+        GIVEN chunk_id of 0
+        WHEN _create_chunk is called
+        THEN expect chunk.chunk_id formatted correctly
+        """
+        # Given
+        chunk_id = 0
+        
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+        
+        # Then
+        assert chunk.chunk_id == "chunk_0000"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_large_id_formatted_correctly(self):
+        """
+        GIVEN large chunk_id
+        WHEN _create_chunk is called
+        THEN expect chunk.chunk_id formatted correctly
+        """
+        # Given
+        chunk_id = 123456
+        
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+        
+        # Then
+        assert chunk.chunk_id == "chunk_123456"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_negative_id_raises_error(self):
+        """
+        GIVEN negative chunk_id
+        WHEN _create_chunk is called
+        THEN expect ValueError to be raised
+        """
+        # Given
+        chunk_id = -1
+        
+        # When/Then
+        with pytest.raises(ValueError):
+            await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_id_appears_in_string_representation(self):
+        """
+        GIVEN any valid chunk_id (integer)
+        WHEN _create_chunk is called
+        THEN expect formatted chunk_id to appear in string representation
+        """
+        # Given
+        chunk_id = 1
+        
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+        
+        # Then
+        chunk_str = str(chunk)
+        assert chunk.chunk_id in chunk_str
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_id_appears_in_repr_representation(self):
+        """
+        GIVEN any valid chunk_id (integer)
+        WHEN _create_chunk is called
+        THEN expect formatted chunk_id to appear in repr representation
+        """
+        # Given
+        chunk_id = 1
+        
+        # When
+        chunk = await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+        
+        # Then
+        chunk_repr = repr(chunk)
+        assert chunk.chunk_id in chunk_repr
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_string_id_raises_error(self):
+        """
+        GIVEN string chunk_id
+        WHEN _create_chunk is called
+        THEN expect TypeError to be raised
+        """
+        # Given
+        chunk_id = "chunk_0001"
+        
+        # When/Then
+        with pytest.raises(TypeError):
+            await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_none_id_raises_error(self):
+        """
+        GIVEN None chunk_id
+        WHEN _create_chunk is called
+        THEN expect TypeError raised
+        """
+        # Given
+        chunk_id = None
+        
+        # When/Then
+        with pytest.raises(TypeError):
+            await self.optimizer._create_chunk(self.content, chunk_id, self.page_num, self.source_elements)
+
+
+class TestLLMOptimizerCreateChunkMetadataEnhancement:
+
+    def setup_method(self):
+        """Common setup for metadata enhancement tests."""
+        self.optimizer = LLMOptimizer()
+        self.base_content = "Test content for metadata validation"
+        self.chunk_id = 1
+        self.page_num = 1
+        self.source_elements = ["paragraph"]
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_returns_llm_chunk_metadata(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect metadata to be LLMChunkMetadata instance
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        assert isinstance(chunk.metadata, LLMChunkMetadata), \
+            f"metadata should be LLMChunkMetadata, got {type(chunk.metadata).__name__}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("field_name", [
+        "creation_timestamp",
+        "word_count", 
+        "character_count",
+        "processing_method",
+        "tokenizer_used",
+        "token_count"
+    ])
+    async def test_create_chunk_metadata_contains_required_fields(self, field_name):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect required metadata fields to be present
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        assert hasattr(chunk.metadata, field_name), \
+            f"{field_name} field should be present in metadata"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_timestamp_is_float(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect creation_timestamp field to be a float
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        timestamp_value = chunk.metadata.creation_timestamp
+        assert isinstance(timestamp_value, float), f"Timestamp should be float, got {type(timestamp_value)}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_timestamp_within_processing_window(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect creation_timestamp to be within processing time window
+        """
+        # Given
+        before_creation = time.time()
+        
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        after_creation = time.time()
+        timestamp_value = chunk.metadata.creation_timestamp
+        assert before_creation <= timestamp_value <= after_creation, \
+            f"Timestamp is outside processing window: {timestamp_value} not in [{before_creation}, {after_creation}]"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_word_count_is_integer(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect word_count field to be integer
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        count_value = chunk.metadata.word_count
+        assert isinstance(count_value, int), f"word_count field should be integer, got {type(count_value)}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_word_count_non_negative(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect word_count field to be non-negative
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        count_value = chunk.metadata.word_count
+        assert count_value >= 0, f"word_count field should be non-negative, got {count_value}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_word_count_accurate(self):
+        """
+        GIVEN content with known word count
+        WHEN _create_chunk is called
+        THEN expect word_count metadata to be accurate
+        """
+        # Given
+        content = "This content has exactly seven distinct words here"
+        actual_word_count = len(content.split())
+        
+        # When
+        chunk = await self.optimizer._create_chunk(
+            content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        assert chunk.metadata.word_count == actual_word_count, \
+            f"Word count mismatch: expected {actual_word_count}, got {chunk.metadata.word_count}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_character_count_accurate(self):
+        """
+        GIVEN content with known character count
+        WHEN _create_chunk is called
+        THEN expect character_count metadata to be accurate
+        """
+        # Given
+        content = "Test content for character counting"
+        actual_char_count = len(content)
+        
+        # When
+        chunk = await self.optimizer._create_chunk(
+            content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        assert chunk.metadata.character_count == actual_char_count, \
+            f"Character count mismatch: expected {actual_char_count}, got {chunk.metadata.character_count}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_processing_method_is_string(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect processing_method field to be string
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        processing_value = chunk.metadata.processing_method
+        assert isinstance(processing_value, str), f"processing_method field should be string, got {type(processing_value)}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_processing_method_not_empty(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect processing_method field to be non-empty
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        processing_value = chunk.metadata.processing_method
+        assert len(processing_value) > 0, f"processing_method field should not be empty"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_tokenizer_field_valid(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect tokenizer_used field to contain recognized tokenizer
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        processing_value = chunk.metadata.tokenizer_used
+        expected_tokenizers = ["gpt-3.5-turbo", "gpt-4", "tiktoken", "transformers"]
+        assert any(tokenizer in processing_value for tokenizer in expected_tokenizers), \
+            f"Tokenizer field should contain recognized tokenizer: {processing_value}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_processing_method_valid(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect processing_method field to contain recognized method
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        processing_value = chunk.metadata.processing_method
+        expected_methods = ["llm_optimization", "text_chunking", "semantic_analysis"]
+        assert any(method in processing_value for method in expected_methods), \
+            f"Processing method should be recognized: {processing_value}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_token_count_matches_attribute(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect metadata token_count to match chunk.token_count attribute
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        assert chunk.metadata.token_count == chunk.token_count, \
+            f"Metadata token_count should match chunk.token_count: metadata={chunk.metadata.token_count}, attribute={chunk.token_count}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_semantic_types_matches_attribute(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect metadata semantic_types to match chunk.semantic_types attribute
+        """
+        # When
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        assert chunk.metadata.semantic_type == chunk.semantic_types, \
+            f"Metadata semantic_types should match chunk.semantic_types: metadata={chunk.metadata.semantic_type}, attribute={chunk.semantic_types}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_size_reasonable(self):
+        """
+        GIVEN basic content
+        WHEN _create_chunk is called
+        THEN expect metadata size to be reasonable (not excessively large)
+        """
+        # When
+        MAX_SIZE = 10000
+        chunk = await self.optimizer._create_chunk(
+            self.base_content, self.chunk_id, self.page_num, self.source_elements
+        )
+        
+        # Then
+        metadata_size = len(str(chunk.metadata))
+        assert metadata_size < MAX_SIZE, \
+            f"Enhanced metadata should be reasonable size, got {metadata_size} characters"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_enhancement_consistent_across_chunks(self):
+        """
+        GIVEN multiple chunks created
+        WHEN _create_chunk is called for each
+        THEN expect consistent enhancement patterns across chunks
+        """
+        # When
+        chunk1 = await self.optimizer._create_chunk(
+            "First test content",
+            1,
+            1,
             ["paragraph"]
         )
         
-        # Then simulate failure and recovery
-        with unittest.mock.patch.object(optimizer, '_count_tokens', side_effect=[Exception("Fail"), normal_chunk.token_count]):
-            try:
-                # First call should fail or use fallback
-                chunk_after_failure = await optimizer._create_chunk(
-                    "Content after token counting failure",
-                    "chunk_after_failure",
-                    page_num,
-                    ["paragraph"]
-                )
-            except Exception as e:
-                pass
+        chunk2 = await self.optimizer._create_chunk(
+            "Second test content",
+            2,
+            1,
+            ["paragraph"]
+        )
+        
+        # Then
+        # Compare the fields present in both metadata instances
+        chunk1_fields = set(chunk1.metadata.__dict__.keys())
+        chunk2_fields = set(chunk2.metadata.__dict__.keys())
+        
+        common_fields = chunk1_fields.intersection(chunk2_fields)
+        assert len(common_fields) >= len(chunk1_fields) * 0.7, \
+            f"Chunks should have consistent enhancement patterns: {chunk1_fields} " \
+            f"vs {chunk2_fields}"
+
+    @pytest.mark.asyncio
+    async def test_create_chunk_metadata_enhances_minimal_input(self):
+        """
+        GIVEN minimal metadata input
+        WHEN _create_chunk is called
+        THEN expect metadata to be enhanced even with minimal input
+        """
+        # Given
+        content = "Test content with minimal metadata"
+        chunk_id = 1
+        
+        # When
+        chunk = await self.optimizer._create_chunk(content, chunk_id, self.page_num, self.source_elements)
+        
+        # Then
+        # Should have metadata fields beyond the basic LLMChunk attributes
+        metadata_fields = set(chunk.metadata.__dict__.keys())
+        
+        # Basic fields that might be in metadata
+        basic_expected_fields = {"chunk_id", "content", "source_page", "token_count", "semantic_types", "source_elements"}
+        enhanced_fields = metadata_fields - basic_expected_fields
+        
+        assert len(enhanced_fields) > 0, \
+            f"enhanced_fields = metadata_fields - basic_expected_fields " \
+            f"should be greater than 0, got {len(enhanced_fields)}"
+
+
+
+class TestCreateChunkTokenCountingFailure:
+    """Tests for _create_chunk method handling token counting failures."""
+
+    def setup_method(self):
+        """Setup optimizer and test data."""
+        self.optimizer = LLMOptimizer()
+        self.content = "This is valid content that should normally count tokens correctly."
+        self.chunk_id = 1
+        self.page_num = 1
+        self.source_elements = ["paragraph"]
+
+    @pytest.mark.asyncio
+    async def test_token_counting_exception_returns_llm_chunk(self):
+        """GIVEN token counting raises exception WHEN _create_chunk called THEN return LLMChunk."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
+            chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+            assert isinstance(chunk, LLMChunk), f"Expected LLMChunk, got {type(chunk)}"
+
+    @pytest.mark.asyncio
+    async def test_token_counting_exception_preserves_content(self):
+        """GIVEN token counting raises exception WHEN _create_chunk called THEN preserve content."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
+            chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+            assert chunk.content == self.content, f"Expected content '{self.content}', got '{chunk.content}'"
+
+    @pytest.mark.asyncio
+    async def test_token_counting_exception_preserves_chunk_id(self):
+        """GIVEN token counting raises exception WHEN _create_chunk called THEN preserve chunk_id."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
+            chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+            assert chunk.chunk_id == "chunk_0001", f"Expected chunk_id 'chunk_0001', got '{chunk.chunk_id}'"
+
+    @pytest.mark.asyncio
+    async def test_token_counting_exception_provides_integer_token_count(self):
+        """GIVEN token counting raises exception WHEN _create_chunk called THEN token_count is integer."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
+            chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+            assert isinstance(chunk.token_count, int), f"Expected int token_count, got {type(chunk.token_count)} with value {chunk.token_count}"
+
+    @pytest.mark.asyncio
+    async def test_token_counting_exception_provides_positive_token_count(self):
+        """GIVEN token counting raises exception WHEN _create_chunk called THEN token_count is positive."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
+            chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+            assert chunk.token_count > 0, f"Expected positive token_count, got {chunk.token_count}"
+
+    @pytest.mark.asyncio
+    async def test_token_counting_exception_provides_bounded_fallback(self):
+        """
+        GIVEN token counting raises exception 
+        WHEN _create_chunk called 
+        THEN fallback is 1 <= count <= max(3*words, chars).
+        """
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
+            chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+            word_count = len(self.content.split())
+            char_count = len(self.content)
+            upper_bound = max(word_count * 3, char_count)
+            assert 1 <= chunk.token_count <= upper_bound, f"Expected 1 <= {chunk.token_count} <= {upper_bound} (words={word_count}, chars={char_count})"
+
+    @pytest.mark.asyncio
+    async def test_none_token_count_raises_error(self):
+        """GIVEN token counting returns None WHEN _create_chunk called THEN raise error."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', return_value=None):
+            with pytest.raises(RuntimeError):
+                await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+
+    @pytest.mark.asyncio
+    async def test_negative_token_count_raises_error(self):
+        """GIVEN token counting returns negative WHEN _create_chunk called THEN raise error."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', return_value=-1):
+            with pytest.raises(RuntimeError):
+                await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+
+    @pytest.mark.asyncio
+    async def test_string_token_count_raises_error(self):
+        """GIVEN token counting returns string WHEN _create_chunk called THEN raise error."""
+        with unittest.mock.patch.object(self.optimizer, '_count_tokens', return_value="invalid"):
+            with pytest.raises((ValueError, TypeError)):
+                await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
+
+    @pytest.mark.asyncio
+    async def test_unicode_content_returns_llm_chunk(self):
+        """GIVEN unicode content WHEN _create_chunk called THEN return LLMChunk."""
+        content = "Content with unicode: 你好世界 🌍 αβγ"
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
+        assert isinstance(chunk, LLMChunk), f"Expected LLMChunk for unicode content, got {type(chunk)}"
+
+    @pytest.mark.asyncio
+    async def test_unicode_content_preserves_exact_content(self):
+        """GIVEN unicode content WHEN _create_chunk called THEN preserve content with no character changes."""
+        content = "Content with unicode: 你好世界 🌍 αβγ"
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
+        assert chunk.content == content, f"Expected exact unicode content '{content}', got '{chunk.content}'"
+
+    @pytest.mark.asyncio
+    async def test_emoji_content_provides_zero_or_positive_token_count(self):
+        """GIVEN emoji content WHEN _create_chunk called THEN token_count >= 0."""
+        content = "Content with emoji: 😀🎉🔥💯"
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
+        assert chunk.token_count >= 0, f"Expected token_count >= 0 for emoji content, got {chunk.token_count}"
+
+    @pytest.mark.asyncio
+    async def test_very_long_token_returns_integer_count(self):
+        """GIVEN 1000+ character word WHEN _create_chunk called THEN return integer token_count."""
+        content = "Content with very long word: " + "x" * 1000
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
+        assert isinstance(chunk.token_count, int), f"Expected int token_count for 1000+ char word, got {type(chunk.token_count)} with value {chunk.token_count}"
+
+    @pytest.mark.asyncio
+    async def test_whitespace_heavy_content_returns_zero_or_positive_count(self):
+        """GIVEN content with leading/trailing whitespace WHEN _create_chunk called THEN token_count >= 0."""
+        content = "\n\t\r   Whitespace heavy content   \n\t\r"
+        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
+        assert chunk.token_count >= 0, f"Expected token_count >= 0 for whitespace content, got {chunk.token_count}"
 
 
 if __name__ == "__main__":

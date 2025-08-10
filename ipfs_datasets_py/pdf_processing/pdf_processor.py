@@ -6,6 +6,7 @@ PDF Input → Decomposition → IPLD Structuring → OCR Processing →
 LLM Optimization → Entity Extraction → Vector Embedding → 
 IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 """
+from __future__ import annotations
 import logging
 import hashlib
 import datetime
@@ -31,7 +32,59 @@ from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
 
 
-logger = logging.getLogger(__name__)
+# def make_pdf_processor(mock_dict: Optional[dict[str, Any]] = None) -> 'PDFProcessor':
+#     """
+#     Factory function to create a PDFProcessor instance with optional mock dependencies.
+
+#     Args:
+#         mock_dict (Optional[dict[str, Any]], optional): Dictionary for dependency injection
+#             during testing. Allows replacement of components with mock objects.
+#             Defaults to None.
+
+#     Returns:
+#         PDFProcessor: Configured PDFProcessor instance with specified dependencies.
+#     """
+#     from unittest.mock import Mock, MagicMock
+#     (MonitoringConfig())
+#     resources = {
+#         'logger': logging.getLogger(__name__),
+#         'storage': IPLDStorage,
+#         'monitoring': MonitoringSystem.initialize,
+#         'audit_logger': AuditLogger.get_instance,
+#         'integrator': GraphRAGIntegrator,
+#         'ocr_engine': MultiEngineOCR,
+#         'optimizer': LLMOptimizer,
+#         'query_engine': QueryEngine
+#     }
+
+#     if mock_dict:
+#         for key, value in mock_dict.items():
+#             try:
+#                 resources[key] = value
+#             except KeyError:
+#                 raise KeyError(f"Mock key '{key}' not found in PDFProcessor dependencies")
+
+#     storage = resources['storage']()
+#     for resource in resources.values():
+#         match resources:
+#             case Mock() | MagicMock():
+#                 continue
+#             case GraphRAGIntegrator():
+#                 resource.__init__(storage=resources['storage'])
+#             case MonitoringSystem():
+#                 resource.initialize(config=MonitoringConfig())
+#             case AuditLogger():
+#                 resource.get_instance()
+
+#         if not isinstance(resources, (Mock, MagicMock)):
+#             if isinstance(resource, GraphRAGIntegrator):
+#                 resource.__init__(storage=resources['storage'])
+#             elif isinstance(resource, MonitoringSystem):
+#                 resource.__init__()
+
+
+#     return PDFProcessor(mock_dict=mock_dict)
+
 
 
 class PDFProcessor:
@@ -174,6 +227,7 @@ class PDFProcessor:
                  storage: Optional[IPLDStorage] = None,
                  enable_monitoring: bool = False,
                  enable_audit: bool = True,
+                 logger: logging.Logger = logging.getLogger(__name__),
                  mock_dict: Optional[dict[str, Any]] = None
                  ) -> None:
         """
@@ -232,40 +286,54 @@ class PDFProcessor:
             Audit logging captures all data access and security events for compliance.
             IPLD storage provides content deduplication and distributed storage capabilities.
         """
-        self.storage: IPLDStorage = storage or IPLDStorage()
+        self.storage: IPLDStorage = storage
         self.audit_logger: AuditLogger = None 
         self.monitoring: MonitoringSystem = None
         self.query_engine: QueryEngine = None
         self.pipeline_version: str = '2.0'
-        self.integrator = GraphRAGIntegrator(storage=self.storage)
-        self.ocr_engine = MultiEngineOCR()
-        self.optimizer = LLMOptimizer()
         self.logger: logging.Logger = logger
-
-        if enable_audit:
-            self.audit_logger = AuditLogger.get_instance()
-
-        if enable_monitoring:
-            config = MonitoringConfig()
-            config.metrics = MetricsConfig(
-                output_file="pdf_processing_metrics.json",
-                prometheus_export=True
-            )
-            self.monitoring = MonitoringSystem.initialize(config)
-
-        # Processing state
-        self.processing_stats: dict[str, float] = {
-            "start_time": None,
-            "end_time": None,
-        }
+        self.integrator: GraphRAGIntegrator = None
+        self.ocr_engine: MultiEngineOCR = None
+        self.optimizer: LLMOptimizer = None
 
         # For testing purposes, allow dependency injection of mock objects
-        if mock_dict is not None:
+        if isinstance(mock_dict, dict):
             for key, value in mock_dict.items():
                 try:
                     setattr(self, key, value)
                 except AttributeError:
                     raise AttributeError(f"Warning: Mock attribute '{key}' not set in PDFProcessor")
+
+        if enable_audit:
+            if self.audit_logger is None:
+                self.audit_logger = AuditLogger.get_instance()
+
+        if enable_monitoring:
+            if self.monitoring is None:
+                config = MonitoringConfig()
+                config.metrics = MetricsConfig(
+                    output_file="pdf_processing_metrics.json",
+                    prometheus_export=True
+                )
+                self.monitoring = MonitoringSystem.initialize(config)
+
+        # Processing state
+        self.processing_stats: dict[str, float] = {
+            "start_time": None,
+            "end_time": None,
+            "pages_processed": 0,
+            "entities_extracted": 0,
+        }
+
+        # Initialize real components if not provided in mock_dict
+        if self.storage is None:
+            self.storage = IPLDStorage()
+        if self.integrator is None:
+            self.integrator = GraphRAGIntegrator(storage=self.storage)
+        if self.ocr_engine is None:
+            self.ocr_engine = MultiEngineOCR()
+        if self.optimizer is None:
+            self.optimizer = LLMOptimizer()
 
 
     async def process_pdf(self, 
@@ -818,7 +886,7 @@ class PDFProcessor:
     
         for drawing in drawings:
             page_content['drawings'].append({
-                'bbox': drawing['rect'],
+                'bbox': drawing['bbox'],
                 'type': 'vector_drawing',
                 'items': len(drawing.get('items', []))
             })
@@ -833,7 +901,7 @@ class PDFProcessor:
         
         return page_content
 
-    def _get_processing_time(self, start_time: float):
+    def _get_processing_time(self, start_time: float) -> float:
         """
         Calculate total elapsed time for complete pipeline processing including all stages.
 
@@ -876,6 +944,10 @@ class PDFProcessor:
                 raise ValueError("Invalid processing time calculation: negative duration")
         else:
             raise ValueError("Processing start time is a negative value")
+
+        self.processing_stats['start_time'] = start_time
+        self.processing_stats['end_time'] = end_time
+        return total_time
 
     async def _create_ipld_structure(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """
@@ -1549,7 +1621,7 @@ class PDFProcessor:
         Raises:
             KeyError: If text blocks lack required 'content' field
             TypeError: If text_blocks is not a list or contains non-dictionary elements
-            AttributeError: If text block content is not string-compatible
+            ValueError: If text block content is not string-compatible
 
         Examples:
             >>> text_blocks = [
@@ -1567,10 +1639,30 @@ class PDFProcessor:
             Empty or whitespace-only blocks are filtered to improve text quality.
             Result suitable for further processing including LLM optimization and entity extraction.
         """
+        # Input validation: Check if text_blocks is a list
+        if not isinstance(text_blocks, list):
+            raise TypeError(f"Expected list, got {type(text_blocks).__name__}")
+        
         text_parts = []
         for block in text_blocks:
-            if block.get('content'):
-                text_parts.append(block['content'])
+            # Validate each block is a dictionary
+            if not isinstance(block, dict):
+                raise TypeError(f"Expected dict in text_blocks, got {type(block).__name__}")
+            
+            # Check if content field exists
+            if 'content' not in block:
+                raise KeyError("Text block missing required 'content' field")
+            
+            content = block['content']
+            
+            # Validate content is a string
+            if not isinstance(content, str):
+                raise ValueError(f"Text block content must be string, got {type(content).__name__}")
+            
+            # Filter out empty or whitespace-only content
+            if content.strip():
+                text_parts.append(content)
+                
         return "\n".join(text_parts)
     
     def _get_quality_scores(self, result: dict[str, Any]) -> dict[str, float]:

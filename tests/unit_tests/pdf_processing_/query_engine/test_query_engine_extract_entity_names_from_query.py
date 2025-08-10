@@ -138,7 +138,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         )
 
     @pytest.mark.parametrize("name, query", [
-        (name, question) for name, question in make_fake_name_questions(n=N)
+        (words[0], words[1]) for words in make_fake_name_questions(n=N)
     ])
     def test_extract_entity_names_single_entity(self, name, query):
         """
@@ -153,7 +153,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         assert result == [name], f"Expected [{name}] but got {result} for query: {query}"
 
     @pytest.mark.parametrize("name, query", [
-        (name, question) for name, question in make_fake_company_questions(n=N)
+        (words[0], words[1]) for words in make_fake_company_questions(n=N)
     ])
     def test_extract_entity_names_multiple_entities(self):
         """

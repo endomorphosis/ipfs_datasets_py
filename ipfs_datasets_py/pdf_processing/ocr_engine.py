@@ -499,7 +499,7 @@ class SuryaOCR(OCREngine):
             full_text = ""
             text_blocks = []
             confidences = []
-            
+
             for text_line in result.text_lines:
                 full_text += text_line.text + "\n"
                 text_blocks.append({
@@ -1324,6 +1324,12 @@ class MultiEngineOCR:
         - Comprehensive logging tracks engine performance and failure modes
         - Thread-safe for concurrent processing operations
     """
+
+    def __new__(cls):
+        """Ensure only one instance of MultiEngineOCR is created (singleton pattern)."""
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(MultiEngineOCR, cls).__new__(cls)
+        return cls.instance
     
     def __init__(self) -> None:
         """Initialize the OCR engine manager with all available OCR engines.

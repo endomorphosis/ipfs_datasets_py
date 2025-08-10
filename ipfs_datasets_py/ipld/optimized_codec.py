@@ -794,6 +794,7 @@ def calculate_cid_v1(data: bytes) -> str:
         CIDv1 string
     """
     # This is a simplified version; real CID calculation is more complex
+    # TODO: Implement full CIDv1 calculation with multiformats
     hasher = hashlib.sha256()
     hasher.update(data)
     digest = hasher.digest()

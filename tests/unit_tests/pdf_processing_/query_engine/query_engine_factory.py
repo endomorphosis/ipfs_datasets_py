@@ -10,7 +10,7 @@ from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator, KnowledgeGraph
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResult, Relationship
 
 RANDOM_SEED = 420
-faker.Faker.seed_instance(RANDOM_SEED)
+faker.Faker.seed_instance()
 
 
 class QueryEngineFactory:
