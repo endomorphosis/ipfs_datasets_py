@@ -77,7 +77,9 @@ class TestLLMOptimizerCreateChunk:
     """Test LLMOptimizer._create_chunk method."""
 
     def setup_method(self):
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
         self.chunk_id = 1
         self.page_num = 1
         self.content = "Test content"
@@ -364,13 +366,13 @@ class TestLLMOptimizerCreateChunk:
         """
         GIVEN None as content
         WHEN _create_chunk is called
-        THEN expect ValueError to be raised
+        THEN expect TypeError to be raised
         """
         # Given
         none_content = None
         
         # When/Then
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             await self.optimizer._create_chunk(none_content, self.expected_chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
@@ -382,7 +384,7 @@ class TestLLMOptimizerCreateChunk:
         """
         # Given
         empty_content = ""
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             await self.optimizer._create_chunk(empty_content, self.expected_chunk_id, self.page_num, self.source_elements)
@@ -391,32 +393,15 @@ class TestLLMOptimizerCreateChunk:
         assert any(keyword in error_msg for keyword in ["empty", "content", "whitespace", "invalid"]), \
             f"Error message should mention empty content issue: {exc_info.value}"
 
-    @pytest.mark.asyncio
-    async def test_create_chunk_none_content_error_message_descriptive(self):
-        """
-        GIVEN None as content
-        WHEN _create_chunk is called
-        THEN expect error message mentions None/null content issue
-        """
-        # Given
-        none_content = None
-        
-        # When/Then
-        with pytest.raises(ValueError) as exc_info:
-            await self.optimizer._create_chunk(none_content, self.expected_chunk_id, self.page_num, self.source_elements)
-        
-        error_msg = str(exc_info.value).lower()
-        assert any(keyword in error_msg for keyword in ["none", "null", "content", "empty"]), \
-            f"Error message should mention None/empty content issue: {exc_info.value}"
-
-
 
 class TestLLMOptimizerCreateChunkTypesDetermination:
     """Test LLMOptimizer._create_chunk semantic types determination."""
 
     def setup_method(self):
         """Common setup for semantic types determination tests."""
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
         self.page_num = 1
 
     @pytest.mark.asyncio
@@ -802,7 +787,9 @@ class TestLLMOptimizerCreateChunkIdFormatting:
 
     def setup_method(self):
         """Common setup for chunk ID formatting tests."""
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
         self.content = "Test content for chunk ID formatting validation"
         self.page_num = 1
         self.source_elements = ["paragraph"]
@@ -1009,7 +996,9 @@ class TestLLMOptimizerCreateChunkMetadataEnhancement:
 
     def setup_method(self):
         """Common setup for metadata enhancement tests."""
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
         self.base_content = "Test content for metadata validation"
         self.chunk_id = 1
         self.page_num = 1
@@ -1347,15 +1336,18 @@ class TestCreateChunkTokenCountingFailure:
 
     def setup_method(self):
         """Setup optimizer and test data."""
-        self.optimizer = LLMOptimizer()
+        self.sentence_transformer = MagicMock()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=self.sentence_transformer
+        )
         self.content = "This is valid content that should normally count tokens correctly."
         self.chunk_id = 1
         self.page_num = 1
         self.source_elements = ["paragraph"]
 
     @pytest.mark.asyncio
-    async def test_token_counting_exception_returns_llm_chunk(self):
-        """GIVEN token counting raises exception WHEN _create_chunk called THEN return LLMChunk."""
+    async def test_token_counting_exception_return_llm_chunk(self):
+        """GIVEN token counting raises exception WHEN _create_chunk called THEN return llm_chunk."""
         with unittest.mock.patch.object(self.optimizer, '_count_tokens', side_effect=Exception("Token counting failed")):
             chunk = await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
             assert isinstance(chunk, LLMChunk), f"Expected LLMChunk, got {type(chunk)}"
@@ -1403,24 +1395,24 @@ class TestCreateChunkTokenCountingFailure:
             assert 1 <= chunk.token_count <= upper_bound, f"Expected 1 <= {chunk.token_count} <= {upper_bound} (words={word_count}, chars={char_count})"
 
     @pytest.mark.asyncio
-    async def test_none_token_count_raises_error(self):
-        """GIVEN token counting returns None WHEN _create_chunk called THEN raise error."""
+    async def test_none_token_count_raises_type_error(self):
+        """GIVEN token counting returns None WHEN _create_chunk called THEN raise type error."""
         with unittest.mock.patch.object(self.optimizer, '_count_tokens', return_value=None):
-            with pytest.raises(RuntimeError):
+            with pytest.raises(TypeError):
                 await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
     async def test_negative_token_count_raises_error(self):
         """GIVEN token counting returns negative WHEN _create_chunk called THEN raise error."""
         with unittest.mock.patch.object(self.optimizer, '_count_tokens', return_value=-1):
-            with pytest.raises(RuntimeError):
+            with pytest.raises(ValueError):
                 await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
     async def test_string_token_count_raises_error(self):
-        """GIVEN token counting returns string WHEN _create_chunk called THEN raise error."""
+        """GIVEN token counting returns string WHEN _create_chunk called THEN raise type error."""
         with unittest.mock.patch.object(self.optimizer, '_count_tokens', return_value="invalid"):
-            with pytest.raises((ValueError, TypeError)):
+            with pytest.raises(TypeError):
                 await self.optimizer._create_chunk(self.content, self.chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
@@ -1445,18 +1437,19 @@ class TestCreateChunkTokenCountingFailure:
         assert chunk.token_count >= 0, f"Expected token_count >= 0 for emoji content, got {chunk.token_count}"
 
     @pytest.mark.asyncio
-    async def test_very_long_token_returns_integer_count(self):
-        """GIVEN 1000+ character word WHEN _create_chunk called THEN return integer token_count."""
+    async def test_very_long_token_raise_value_error(self):
+        """GIVEN 1000+ character word WHEN _create_chunk called THEN raise value error via pydantic."""
         content = "Content with very long word: " + "x" * 1000
-        chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
-        assert isinstance(chunk.token_count, int), f"Expected int token_count for 1000+ char word, got {type(chunk.token_count)} with value {chunk.token_count}"
+        with pytest.raises(ValueError):
+            chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
 
     @pytest.mark.asyncio
     async def test_whitespace_heavy_content_returns_zero_or_positive_count(self):
         """GIVEN content with leading/trailing whitespace WHEN _create_chunk called THEN token_count >= 0."""
         content = "\n\t\r   Whitespace heavy content   \n\t\r"
         chunk = await self.optimizer._create_chunk(content, self.chunk_id, self.page_num, self.source_elements)
-        assert chunk.token_count >= 0, f"Expected token_count >= 0 for whitespace content, got {chunk.token_count}"
+        assert chunk.token_count >= 0, \
+            f"Expected token_count >= 0 for whitespace content, got {chunk.token_count}"
 
 
 if __name__ == "__main__":

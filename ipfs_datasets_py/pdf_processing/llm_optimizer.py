@@ -1049,7 +1049,9 @@ class LLMOptimizer:
                  max_chunk_size: int = 2048,
                  chunk_overlap: int = 200,
                  min_chunk_size: int = 100,
-                 entity_classifications: list[str] = CLASSIFICATIONS,
+                 entity_classifications: set[str] = CLASSIFICATIONS,
+                 sentence_transformer: Optional[SentenceTransformer] = None,
+                 logger: logging.Logger = logger
                  ):
         """
         Initialize the LLM Optimizer with model configurations and processing parameters.
@@ -1074,6 +1076,11 @@ class LLMOptimizer:
             min_chunk_size (int, optional): Minimum number of tokens required for a valid chunk.
                 Chunks smaller than this will be merged with adjacent chunks. Must be positive.
                 Defaults to 100.
+            logger (logging.Logger): Logger instance for capturing debug and info messages.
+                Defaults to module-level logger.
+            entity_classifications (set[str]): List of entity classifications to use for
+                entity extraction and classification. Defaults to predefined CLASSIFICATIONS constant
+                based on Wikipedia categories.
 
         Attributes initialized:
             model_name (str): Stored sentence transformer model identifier.
@@ -1124,10 +1131,17 @@ class LLMOptimizer:
         self.api_key = os.environ.get("OPENAI_API_KEY")
         self.entity_classifications: set[str] = entity_classifications
 
+        self.logger = logger
+
         # Only initialize OpenAI client if API key is available
         self.openai_async_client = None
         if self.api_key:
             self.openai_async_client = openai.AsyncOpenAI(api_key=self.api_key)
+
+        # Allow sentence transformer to be passed in for testing or custom models
+        self.sentence_transformer_class: SentenceTransformer = sentence_transformer
+        if self.sentence_transformer_class is None:
+            self.sentence_transformer_class = SentenceTransformer
 
         # Initialize models
         self._initialize_models()
@@ -1178,8 +1192,8 @@ class LLMOptimizer:
         """
         try:
             # Initialize sentence transformer for embeddings
-            self.embedding_model = SentenceTransformer(self.model_name)
-            logger.info(f"Loaded embedding model: {self.model_name}")
+            self.embedding_model = self.sentence_transformer_class(self.model_name)
+            self.logger.info(f"Loaded embedding model: {self.model_name}")
         except Exception as e:
             raise RuntimeError(f"Could not load embedding model for LLMOptimizer: {self.model_name}: {e}") from e
 
@@ -1190,7 +1204,7 @@ class LLMOptimizer:
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
 
-            logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
+            self.logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
 
         except Exception as e:
             raise RuntimeError(
@@ -1204,9 +1218,9 @@ class LLMOptimizer:
             else:
                 # For testing or when API key is not available
                 self.openai_async_client = None
-                logger.warning("OpenAI API key not available, OpenAI client not initialized")
+                self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
         except Exception as e:
-            logger.warning(f"Could not initialize OpenAI client: {e}")
+            self.logger.warning(f"Could not initialize OpenAI client: {e}")
             self.openai_async_client = None
 
     async def optimize_for_llm(self, 
@@ -1524,7 +1538,7 @@ class LLMOptimizer:
 
         except Exception as e:
             msg = f"Summary generation failed with a {type(e).__name__}: {e}"
-            logger.error(msg)
+            self.logger.error(msg)
             return msg
     
     async def _create_optimal_chunks(self, structured_text: dict[str, Any]) -> list[LLMChunk]:
@@ -1587,26 +1601,45 @@ class LLMOptimizer:
             current_chunk_content = ""
             source_elements = []
 
+            if 'elements' not in page:
+                raise KeyError(f"Page {page_num} missing 'elements' key in structured text")
+
             elements = page['elements']
             if not isinstance(elements, list):
-                raise TypeError(f"Expected 'elements' to be a list, got {type(elements).__name__}")
+                raise TypeError(
+                    f"Expected 'elements' to be a list on page {page_num}, got {type(elements).__name__}"
+                )
 
             for element in elements:
+                if not isinstance(element, dict):
+                    raise TypeError(
+                        f"Expected each element to be a dict, got {type(element).__name__} on page {page_num}"
+                    )
+                if 'content' not in element:
+                    raise KeyError(
+                        f"Element on page {page_num} missing 'content' key, skipping."
+                    )
                 element_content = element['content']
                 
                 if not isinstance(element_content, str):
                     raise TypeError(f"Element content must be a string, got {type(element_content).__name__}")
-                else:
-                    element_content = element_content.strip()
+
+                element_content = element_content.strip()
                 if not element_content:
                     continue
-                
+
                 # Calculate tokens for current content + new element
                 potential_content = current_chunk_content + "\n" + element_content
                 try:
                     token_count = self._count_tokens(potential_content)
+                except AttributeError as e:
+                    # Re-raise as this means the tokenizer is not set up correctly
+                    raise 
                 except Exception as e:
-                    raise ValueError(f"Token counting failed for content: {potential_content[:50]}...") from e
+                    self.logger.warning(
+                        f"Token counting failed for content. Returning word count as fallback: {e}"
+                    )
+                    token_count = len(potential_content.split())
 
                 # Check if adding this element would exceed chunk size
                 if token_count > self.max_chunk_size and current_chunk_content:
@@ -1715,22 +1748,24 @@ class LLMOptimizer:
         if chunk_id < 0:
             raise ValueError(f"chunk_id must be a non-negative integer, got {chunk_id}")
 
-        try:
-            token_count = self._count_tokens(content)
-        except Exception as e: # Re-raise with more context
-            raise RuntimeError(f"Token counting failed for content: {content[:50]}...") from e
-
-        if not isinstance(token_count, int):
-            raise TypeError(f"Token count must be an integer, got {type(token_count).__name__}")
-        if token_count < 0:
-            raise ValueError(f"Token count must be non-negative, got {token_count}")
-
         if not isinstance(source_elements, list) or not source_elements:
             raise TypeError("source_elements must be a non-empty list of element types")
         else:
             for element in source_elements:
                 if not isinstance(element, str):
                     raise TypeError(f"Invalid element type '{element}' in source_elements. Must be a string.")
+
+        try:
+            token_count = self._count_tokens(content)
+        except AttributeError as e:
+            raise
+        except Exception as e:
+            token_count = len(content.split())  # Fallback to word count if token counting fails
+
+        if not isinstance(token_count, int):
+            raise TypeError(f"Expected token_count to be an integer, got {type(token_count).__name__}")
+        if token_count < 0:
+            raise ValueError(f"Token count cannot be negative, got {token_count}")
 
         # Determine primary semantic type
         semantic_types = set(source_elements)
@@ -1931,7 +1966,7 @@ class LLMOptimizer:
             >>> print(f"{len(successful)}/{len(chunks)} chunks embedded successfully")
         """
         if not self.embedding_model:
-            logger.warning("No embedding model available, skipping embedding generation")
+            self.logger.warning("No embedding model available, skipping embedding generation")
             return chunks
         
         # Prepare texts for embedding
@@ -1954,7 +1989,7 @@ class LLMOptimizer:
                     chunk.embedding = embedding
                     
             except Exception as e:
-                logger.error(f"Failed to generate embeddings for batch {i//batch_size + 1}: {e}")
+                self.logger.error(f"Failed to generate embeddings for batch {i//batch_size + 1}: {e}")
                 chunk.embedding = None
         
         return chunks
@@ -2453,7 +2488,7 @@ class LLMOptimizer:
             )
             return embedding
         except Exception as e:
-            logger.error(f"Failed to generate document embedding: {e}")
+            self.logger.error(f"Failed to generate document embedding: {e}")
             return None
     
     def _count_tokens(self, text: str) -> int:
@@ -2487,22 +2522,33 @@ class LLMOptimizer:
             >>> empty_count = optimizer._count_tokens("")
             >>> print(empty_count)  # 0
         """
+        if self.tokenizer is None:
+            raise AttributeError("No tokenizer available for token counting")
+
+        if not isinstance(text, str):
+            raise TypeError(f"text for tokenizer must be a string, got {type(text).__name__}")
+
         if not text:
             return 0
 
-        if self.tokenizer is None:
-            raise RuntimeError("No tokenizer available for token counting")
+        for attr in ['encode', 'tokenize']:
+            class_tokenizer = getattr(self.tokenizer, attr, None)
+            if class_tokenizer is not None:
+                break
 
-        try:
-            if hasattr(self.tokenizer, 'encode'):
-                # tiktoken or similar
-                return len(self.tokenizer.encode(text))
-            else:
-                # HuggingFace tokenizer
-                return len(self.tokenizer.tokenize(text))
-        except Exception as e:
-            raise RuntimeError(f"Token counting failed: {e}") from e
-    
+        tokenizer_list = [class_tokenizer, word_tokenize]
+        for tokenizer in tokenizer_list:
+            try:
+                return len(tokenizer(text))
+            except Exception as e:
+                self.logger.warning(
+                    f"Token counting failed with tokenizer {tokenizer.__name__}: {e}"
+                    "Trying next tokenizer."
+                )
+        else:
+            self.logger.warning("Tokenizer failed for all available methods. Returning length of text split as approximation.")
+            return len(text.split())
+
     def _get_chunk_overlap(self, content: str) -> str:
         """
         Extract overlap content from the end of a chunk to maintain context continuity between adjacent chunks.

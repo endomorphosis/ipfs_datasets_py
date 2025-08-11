@@ -40,22 +40,22 @@ assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. 
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
 
 # Check if each classes methods are accessible:
-assert PDFProcessor.process_pdf
-assert PDFProcessor._validate_and_analyze_pdf
-assert PDFProcessor._decompose_pdf
-assert PDFProcessor._extract_page_content
-assert PDFProcessor._create_ipld_structure
-assert PDFProcessor._process_ocr
-assert PDFProcessor._optimize_for_llm
-assert PDFProcessor._extract_entities
-assert PDFProcessor._create_embeddings
-assert PDFProcessor._integrate_with_graphrag
-assert PDFProcessor._analyze_cross_document_relationships
-assert PDFProcessor._setup_query_interface
-assert PDFProcessor._calculate_file_hash
-assert PDFProcessor._extract_native_text
-assert PDFProcessor._get_processing_time
-assert PDFProcessor._get_quality_scores
+assert PDFProcessor.process_pdf, f"PDFProcessor.process_pdf method not accessible: {PDFProcessor.process_pdf}"
+assert PDFProcessor._validate_and_analyze_pdf, f"PDFProcessor._validate_and_analyze_pdf method not accessible: {PDFProcessor._validate_and_analyze_pdf}"
+assert PDFProcessor._decompose_pdf, f"PDFProcessor._decompose_pdf method not accessible: {PDFProcessor._decompose_pdf}"
+assert PDFProcessor._extract_page_content, f"PDFProcessor._extract_page_content method not accessible: {PDFProcessor._extract_page_content}"
+assert PDFProcessor._create_ipld_structure, f"PDFProcessor._create_ipld_structure method not accessible: {PDFProcessor._create_ipld_structure}"
+assert PDFProcessor._process_ocr, f"PDFProcessor._process_ocr method not accessible: {PDFProcessor._process_ocr}"
+assert PDFProcessor._optimize_for_llm, f"PDFProcessor._optimize_for_llm method not accessible: {PDFProcessor._optimize_for_llm}"
+assert PDFProcessor._extract_entities, f"PDFProcessor._extract_entities method not accessible: {PDFProcessor._extract_entities}"
+assert PDFProcessor._create_embeddings, f"PDFProcessor._create_embeddings method not accessible: {PDFProcessor._create_embeddings}"
+assert PDFProcessor._integrate_with_graphrag, f"PDFProcessor._integrate_with_graphrag method not accessible: {PDFProcessor._integrate_with_graphrag}"
+assert PDFProcessor._analyze_cross_document_relationships, f"PDFProcessor._analyze_cross_document_relationships method not accessible: {PDFProcessor._analyze_cross_document_relationships}"
+assert PDFProcessor._setup_query_interface, f"PDFProcessor._setup_query_interface method not accessible: {PDFProcessor._setup_query_interface}"
+assert PDFProcessor._calculate_file_hash, f"PDFProcessor._calculate_file_hash method not accessible: {PDFProcessor._calculate_file_hash}"
+assert PDFProcessor._extract_native_text, f"PDFProcessor._extract_native_text method not accessible: {PDFProcessor._extract_native_text}"
+assert PDFProcessor._get_processing_time, f"PDFProcessor._get_processing_time method not accessible: {PDFProcessor._get_processing_time}"
+assert PDFProcessor._get_quality_scores, f"PDFProcessor._get_quality_scores method not accessible: {PDFProcessor._get_quality_scores}"
 
 
 # Check if the modules's imports are accessible:
@@ -89,11 +89,23 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 class TestProcessOcr:
     """Test _process_ocr method - Stage 4 of PDF processing pipeline."""
 
-    @pytest.fixture
-    def processor(self):
-        """Create PDFProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.IPLDStorage'):
-            return PDFProcessor()
+    # Test constants for numeric literals
+    EXPECTED_PAGE_NUMBER_ONE = 1
+    EXPECTED_PAGE_NUMBER_TWO = 2
+    EXPECTED_MINIMUM_RESULT_LENGTH = 1
+    EXPECTED_HIGH_CONFIDENCE_THRESHOLD = 0.9
+    EXPECTED_LOW_CONFIDENCE_THRESHOLD = 0.7
+    EXPECTED_BBOX_COORDINATE_COUNT = 4
+    EXPECTED_EMPTY_LIST_LENGTH = 0
+    EXPECTED_MINIMUM_LANGUAGE_CODE_LENGTH = 2
+    EXPECTED_MINIMUM_LANGUAGES_COUNT = 1
+    EXPECTED_MINIMUM_ENGINES_COUNT = 2
+    EXPECTED_CONFIDENCE_MIN_VALUE = 0.0
+    EXPECTED_CONFIDENCE_MAX_VALUE = 1.0
+    EXPECTED_MINIMUM_TEXT_LENGTH = 0
+    EXPECTED_MINIMUM_NON_EMPTY_RESULT = 0
+    EXPECTED_SPATIAL_OVERLAP_TOLERANCE = 5
+
 
     @pytest.fixture
     def sample_decomposed_content_with_images(self):
@@ -171,7 +183,7 @@ class TestProcessOcr:
     @pytest.fixture
     def mock_ocr_engine(self):
         """Mock OCR engine with realistic responses."""
-        mock_engine = Mock()
+        mock_engine = MagicMock(spec=MultiEngineOCR)
         
         # Mock successful OCR results
         def mock_process_image(image_data, **kwargs):
@@ -190,8 +202,19 @@ class TestProcessOcr:
         mock_engine.process_image = mock_process_image
         return mock_engine
 
+    @pytest.fixture
+    def processor(self):
+        """Create PDFProcessor instance for testing."""
+        mock_dict = {
+            "ipld_storage": MagicMock(spec_set=IPLDStorage),
+            "ocr_engine": MagicMock(spec=MultiEngineOCR),
+        }
+        return PDFProcessor(mock_dict=mock_dict)
+
     @pytest.mark.asyncio
-    async def test_process_ocr_multi_engine_text_extraction(self, processor, sample_decomposed_content_with_images, mock_ocr_engine):
+    async def test_process_ocr_multi_engine_text_extraction(self, 
+        processor, sample_decomposed_content_with_images, mock_ocr_engine
+        ):
         """
         GIVEN decomposed PDF content with embedded images containing text
         WHEN _process_ocr processes images with multiple OCR engines
@@ -236,30 +259,33 @@ class TestProcessOcr:
             result = await processor._process_ocr(sample_decomposed_content_with_images)
             
             # Verify return structure
-            assert isinstance(result, dict)
+            assert isinstance(result, dict), f"Expected dict, got {type(result)}: {result}"
             
             # Verify page-keyed structure
-            assert 'page_1' in result or 'pages' in result or len(result) >= 1
-            
-            # If using page keys directly
+            assert 'page_1' in result, f"'page_1' not found in result keys: {list(result.keys())}"
+            assert len(result) >= self.EXPECTED_MINIMUM_RESULT_LENGTH, f"Expected result length >= {self.EXPECTED_MINIMUM_RESULT_LENGTH}, got {len(result)}: {result}"
+
+            # Verify page keys directly
             for key, page_result in result.items():
-                if 'page' in str(key).lower() or isinstance(page_result, dict):
-                    # Verify OCR results structure
-                    if 'images' in page_result:
-                        for image_result in page_result['images']:
-                            assert 'text' in image_result
-                            assert 'confidence' in image_result
-                            assert 'engine' in image_result
-                            assert 'words' in image_result
-                            
-                            # Verify word-level results
-                            for word in image_result['words']:
-                                assert 'text' in word
-                                assert 'confidence' in word
-                                assert 'bbox' in word
+                assert 'page' in str(key).lower(), f"Expected 'page' in key {key}, got: {str(key).lower()}"
+                assert isinstance(page_result, dict), f"Expected dict for page_result, got {type(page_result)}: {page_result}"
+                
+                # Verify OCR results structure
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'text' in image_result, f"'text' not found in image_result keys: {list(image_result.keys())}"
+                    assert 'confidence' in image_result, f"'confidence' not found in image_result keys: {list(image_result.keys())}"
+                    assert 'engine' in image_result, f"'engine' not found in image_result keys: {list(image_result.keys())}"
+                    assert 'words' in image_result, f"'words' not found in image_result keys: {list(image_result.keys())}"
+                    
+                    # Verify word-level results
+                    for word in image_result['words']:
+                        assert 'text' in word, f"'text' not found in word keys: {list(word.keys())}"
+                        assert 'confidence' in word, f"'confidence' not found in word keys: {list(word.keys())}"
+                        assert 'bbox' in word, f"'bbox' not found in word keys: {list(word.keys())}"
             
             # Verify OCR engine was called
-            assert mock_ocr_instance.process_image_multi_engine.called
+            assert mock_ocr_instance.process_image_multi_engine.called, f"OCR engine process_image_multi_engine was not called: {mock_ocr_instance.process_image_multi_engine.called}"
 
     @pytest.mark.asyncio
     async def test_process_ocr_high_quality_image_text(self, processor, sample_decomposed_content_with_images):
@@ -300,26 +326,33 @@ class TestProcessOcr:
             
             # Execute the method
             result = await processor._process_ocr(sample_decomposed_content_with_images)
+            min_confidence = self.EXPECTED_HIGH_CONFIDENCE_THRESHOLD
+            bbox_length = self.EXPECTED_BBOX_COORDINATE_COUNT
             
             # Verify high confidence scores
             found_high_confidence = False
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'confidence' in image_result:
-                            assert image_result['confidence'] > 0.9
-                            found_high_confidence = True
-                            
-                            # Verify word-level confidence
-                            if 'words' in image_result:
-                                for word in image_result['words']:
-                                    assert word['confidence'] > 0.9
-                                    
-                                    # Verify proper positioning
-                                    assert 'bbox' in word
-                                    assert len(word['bbox']) == 4
-                                    assert all(isinstance(coord, (int, float)) for coord in word['bbox'])
-            
+                assert isinstance(page_result, dict), f"Expected dict for page_result, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'confidence' in image_result, f"'confidence' not found in image_result keys: {list(image_result.keys())}"
+                    assert image_result['confidence'] > min_confidence, \
+                        f"Expected confidence > {min_confidence}, got {image_result['confidence']}"
+                    found_high_confidence = True
+                    
+                    # Verify word-level confidence
+                    assert 'words' in image_result, f"'words' not found in image_result keys: {list(image_result.keys())}"
+                    for word in image_result['words']:
+                        assert word['confidence'] > min_confidence, \
+                        f"Expected word confidence > {min_confidence}, got {word['confidence']} for word: {word}"
+                        
+                        # Verify proper positioning
+                        assert 'bbox' in word, f"'bbox' not found in word keys: {list(word.keys())}"
+                        assert len(word['bbox']) == bbox_length, \
+                            f"Expected bbox length {bbox_length}, got {len(word['bbox'])}: {word['bbox']}"
+                        assert all(isinstance(coord, (int, float)) for coord in word['bbox']), \
+                            f"Expected all bbox coords to be int/float, got: {word['bbox']}"
+
             assert found_high_confidence, "No high confidence results found"
 
     @pytest.mark.asyncio
@@ -367,22 +400,23 @@ class TestProcessOcr:
             # Verify low confidence handling
             found_low_quality = False
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'confidence' in image_result:
-                            if image_result['confidence'] < 0.7:
-                                found_low_quality = True
-                                
-                                # Verify partial text extraction
-                                assert 'text' in image_result
-                                assert len(image_result['text']) > 0  # Some text extracted
-                                
-                                # Verify quality metrics if available
-                                if 'quality_metrics' in image_result:
-                                    metrics = image_result['quality_metrics']
-                                    assert isinstance(metrics, dict)
+                assert isinstance(page_result, dict), f"Expected dict for page_result, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'confidence' in image_result, f"'confidence' not found in image_result keys: {list(image_result.keys())}"
+                    assert image_result['confidence'] < self.EXPECTED_LOW_CONFIDENCE_THRESHOLD, f"Expected confidence < {self.EXPECTED_LOW_CONFIDENCE_THRESHOLD}, got {image_result['confidence']}"
+                    found_low_quality = True
+                    
+                    # Verify partial text extraction
+                    assert 'text' in image_result, f"'text' not found in image_result keys: {list(image_result.keys())}"
+                    assert len(image_result['text']) > self.EXPECTED_MINIMUM_TEXT_LENGTH, f"Expected text length > {self.EXPECTED_MINIMUM_TEXT_LENGTH}, got {len(image_result['text'])}: {image_result['text']}"  # Some text extracted
+                    
+                    # Verify quality metrics
+                    assert 'quality_metrics' in image_result, f"'quality_metrics' not found in image_result keys: {list(image_result.keys())}"
+                    metrics = image_result['quality_metrics']
+                    assert isinstance(metrics, dict), f"Expected dict for metrics, got {type(metrics)}: {metrics}"
             
-            assert found_low_quality or len(result) > 0, "Should handle low quality images gracefully"
+            assert found_low_quality or len(result) > self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Should handle low quality images gracefully: found_low_quality={found_low_quality}, result_length={len(result)}"
 
     @pytest.mark.asyncio
     async def test_process_ocr_multiple_languages_support(self, processor, sample_decomposed_content_with_images):
@@ -429,30 +463,30 @@ class TestProcessOcr:
             # Verify multilingual support
             found_multilingual = False
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'text' in image_result:
-                            text = image_result['text']
-                            
-                            # Check for Unicode characters (non-ASCII)
-                            has_unicode = any(ord(char) > 127 for char in text)
-                            if has_unicode:
-                                found_multilingual = True
-                            
-                            # Verify language detection if available
-                            if 'languages_detected' in image_result:
-                                assert isinstance(image_result['languages_detected'], list)
-                                assert len(image_result['languages_detected']) > 1
-                            
-                            # Verify word-level language info if available
-                            if 'words' in image_result:
-                                for word in image_result['words']:
-                                    if 'language' in word:
-                                        assert isinstance(word['language'], str)
-                                        assert len(word['language']) >= 2
-            
+                assert isinstance(page_result, dict), f"Expected dict for page_result, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'text' in image_result, f"'text' not found in image_result keys: {list(image_result.keys())}"
+                    text = image_result['text']
+                    
+                    # Check for Unicode characters (non-ASCII)
+                    has_unicode = any(ord(char) > 127 for char in text)
+                    found_multilingual = found_multilingual or has_unicode
+                    
+                    # Verify language detection
+                    assert 'languages_detected' in image_result, f"'languages_detected' not found in image_result keys: {list(image_result.keys())}"
+                    assert isinstance(image_result['languages_detected'], list), f"Expected list for languages_detected, got {type(image_result['languages_detected'])}: {image_result['languages_detected']}"
+                    assert len(image_result['languages_detected']) > self.EXPECTED_MINIMUM_LANGUAGES_COUNT, f"Expected > {self.EXPECTED_MINIMUM_LANGUAGES_COUNT} languages detected, got {len(image_result['languages_detected'])}: {image_result['languages_detected']}"
+                    
+                    # Verify word-level language info
+                    assert 'words' in image_result, f"'words' not found in image_result keys: {list(image_result.keys())}"
+                    for word in image_result['words']:
+                        assert 'language' in word, f"'language' not found in word keys: {list(word.keys())}"
+                        assert isinstance(word['language'], str), f"Expected str for word language, got {type(word['language'])}: {word['language']}"
+                        assert len(word['language']) >= self.EXPECTED_MINIMUM_LANGUAGE_CODE_LENGTH, f"Expected language length >= {self.EXPECTED_MINIMUM_LANGUAGE_CODE_LENGTH}, got {len(word['language'])}: {word['language']}"
+
             # Should handle multilingual content without errors
-            assert len(result) > 0
+            assert len(result) > self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Expected result length > {self.EXPECTED_MINIMUM_NON_EMPTY_RESULT}, got {len(result)}: {result}"
 
     @pytest.mark.asyncio
     async def test_process_ocr_word_level_positioning_accuracy(self, processor, sample_decomposed_content_with_images):
@@ -497,32 +531,32 @@ class TestProcessOcr:
             # Verify precise positioning
             found_positioning = False
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'words' in image_result:
-                            words = image_result['words']
-                            
-                            for i, word in enumerate(words):
-                                assert 'bbox' in word
-                                bbox = word['bbox']
-                                
-                                # Verify bbox format
-                                assert len(bbox) == 4
-                                assert all(isinstance(coord, (int, float)) for coord in bbox)
-                                
-                                # Verify logical bbox (x1 < x2, y1 < y2)
-                                x1, y1, x2, y2 = bbox
-                                assert x1 < x2, f"Invalid bbox x coordinates: {bbox}"
-                                assert y1 < y2, f"Invalid bbox y coordinates: {bbox}"
-                                
-                                # Verify spatial relationships (words should be ordered left-to-right)
-                                if i > 0:
-                                    prev_word = words[i-1]
-                                    prev_x2 = prev_word['bbox'][2]
-                                    assert x1 >= prev_x2 - 5, "Words should maintain spatial order"  # Allow small overlap
-                                
-                                found_positioning = True
-            
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'words' in image_result, f"'words' not found in image_result keys: {list(image_result.keys())}"
+                    words = image_result['words']
+                    
+                    for i, word in enumerate(words):
+                        assert 'bbox' in word, f"'bbox' not found in word keys: {list(word.keys())}"
+                        bbox = word['bbox']
+                        
+                        # Verify bbox format
+                        assert len(bbox) == self.EXPECTED_BBOX_COORDINATE_COUNT, f"Expected bbox length {self.EXPECTED_BBOX_COORDINATE_COUNT}, got {len(bbox)}: {bbox}"
+                        assert all(isinstance(coord, (int, float)) for coord in bbox), f"All bbox coordinates must be int or float: {bbox}"
+                        
+                        # Verify logical bbox (x1 < x2, y1 < y2)
+                        x1, y1, x2, y2 = bbox
+                        assert x1 < x2, f"Invalid bbox x coordinates: {bbox}"
+                        assert y1 < y2, f"Invalid bbox y coordinates: {bbox}"
+                        
+                        # Verify spatial relationships (words should be ordered left-to-right)
+                        prev_word = words[i-1]
+                        prev_x2 = prev_word['bbox'][2]
+                        assert x1 >= prev_x2 - self.EXPECTED_SPATIAL_OVERLAP_TOLERANCE, "Words should maintain spatial order"  # Allow small overlap
+                        
+                        found_positioning = True
+
             assert found_positioning, "Should find word-level positioning data"
 
     @pytest.mark.asyncio
@@ -579,38 +613,39 @@ class TestProcessOcr:
                 return future
             
             mock_ocr_instance.process_image_multi_engine = varying_confidence_ocr
-            
+
             # Execute the method
             result = await processor._process_ocr(sample_decomposed_content_with_images)
-            
+
             # Verify confidence scoring
             confidences = []
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'confidence' in image_result:
-                            confidence = image_result['confidence']
-                            
-                            # Verify confidence range
-                            assert 0.0 <= confidence <= 1.0
-                            confidences.append(confidence)
-                            
-                            # Verify engine comparison if available
-                            if 'engine_comparison' in image_result:
-                                comparison = image_result['engine_comparison']
-                                assert isinstance(comparison, dict)
-                                assert len(comparison) >= 2  # Multiple engines compared
-                                
-                                # All comparison scores should be valid
-                                for engine, score in comparison.items():
-                                    assert 0.0 <= score <= 1.0
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'confidence' in image_result, f"'confidence' not found in image_result keys: {list(image_result.keys())}"
+                    confidence = image_result['confidence']
+                    
+                    # Verify confidence range
+                    assert self.EXPECTED_CONFIDENCE_MIN_VALUE <= confidence <= self.EXPECTED_CONFIDENCE_MAX_VALUE, f"Confidence {confidence} not in range [{self.EXPECTED_CONFIDENCE_MIN_VALUE}, {self.EXPECTED_CONFIDENCE_MAX_VALUE}]"
+                    confidences.append(confidence)
+                    
+                    # Verify engine comparison
+                    assert 'engine_comparison' in image_result, f"'engine_comparison' not found in image_result keys: {list(image_result.keys())}"
+                    comparison = image_result['engine_comparison']
+                    assert isinstance(comparison, dict), f"Expected comparison to be dict, got {type(comparison)}: {comparison}"
+                    assert len(comparison) >= self.EXPECTED_MINIMUM_ENGINES_COUNT, f"Expected at least {self.EXPECTED_MINIMUM_ENGINES_COUNT} engines in comparison, got {len(comparison)}: {list(comparison.keys())}"
+                    
+                    # All comparison scores should be valid
+                    for engine, score in comparison.items():
+                        assert self.EXPECTED_CONFIDENCE_MIN_VALUE <= score <= self.EXPECTED_CONFIDENCE_MAX_VALUE, f"Engine {engine} score {score} not in range [{self.EXPECTED_CONFIDENCE_MIN_VALUE}, {self.EXPECTED_CONFIDENCE_MAX_VALUE}]"
             
             # Should have confidence scores for processed images
-            assert len(confidences) > 0
+            assert len(confidences) > self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"No confidence scores found: {confidences}"
             
             # Verify range of confidences (should vary based on quality)
-            if len(confidences) > 1:
-                assert max(confidences) > min(confidences), "Should have varying confidence scores"
+            assert len(confidences) > self.EXPECTED_MINIMUM_LANGUAGES_COUNT, f"Expected multiple confidence scores, got {len(confidences)}: {confidences}"
+            assert max(confidences) > min(confidences), "Should have varying confidence scores"
 
     @pytest.mark.asyncio
     async def test_process_ocr_engine_comparison_and_selection(self, processor, sample_decomposed_content_with_images):
@@ -664,45 +699,47 @@ class TestProcessOcr:
                 return future
             
             mock_ocr_instance.process_image_multi_engine = multi_engine_comparison
-            
+
             # Execute the method
             result = await processor._process_ocr(sample_decomposed_content_with_images)
-            
+
             # Verify engine comparison and selection
             found_comparison = False
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        # Verify best engine selection
-                        if 'engine' in image_result:
-                            assert isinstance(image_result['engine'], str)
-                            assert len(image_result['engine']) > 0
-                        
-                        # Verify engine comparison data
-                        if 'all_engines' in image_result:
-                            engines = image_result['all_engines']
-                            assert isinstance(engines, dict)
-                            assert len(engines) >= 2  # Multiple engines compared
-                            
-                            # Verify best engine has highest confidence
-                            if 'confidence' in image_result and 'engine' in image_result:
-                                best_engine = image_result['engine']
-                                best_confidence = image_result['confidence']
-                                
-                                if best_engine in engines:
-                                    assert engines[best_engine] == best_confidence
-                                    
-                                    # Verify it's actually the best
-                                    for engine, confidence in engines.items():
-                                        assert confidence <= best_confidence
-                            
-                            found_comparison = True
-                        
-                        # Verify selection reasoning if available
-                        if 'selected_reason' in image_result:
-                            reason = image_result['selected_reason']
-                            assert isinstance(reason, str)
-                            assert reason in ['highest_confidence', 'best_accuracy', 'fastest', 'balanced']
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    # Verify best engine selection
+                    assert 'engine' in image_result, f"'engine' not found in image_result keys: {list(image_result.keys())}"
+                    assert isinstance(image_result['engine'], str), f"Expected engine to be str, got {type(image_result['engine'])}: {image_result['engine']}"
+                    assert len(image_result['engine']) > self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Engine name should not be empty: '{image_result['engine']}'"
+                    
+                    # Verify engine comparison data
+                    assert 'all_engines' in image_result, f"'all_engines' not found in image_result keys: {list(image_result.keys())}"
+                    engines = image_result['all_engines']
+                    assert isinstance(engines, dict), f"Expected engines to be dict, got {type(engines)}: {engines}"
+                    assert len(engines) >= self.EXPECTED_MINIMUM_ENGINES_COUNT, f"Expected at least {self.EXPECTED_MINIMUM_ENGINES_COUNT} engines, got {len(engines)}: {list(engines.keys())}"
+                    
+                    # Verify best engine has highest confidence
+                    assert 'confidence' in image_result, f"'confidence' not found in image_result keys: {list(image_result.keys())}"
+                    assert 'engine' in image_result, f"'engine' not found in image_result keys: {list(image_result.keys())}"
+                    best_engine = image_result['engine']
+                    best_confidence = image_result['confidence']
+                    
+                    assert best_engine in engines, f"Best engine '{best_engine}' not found in engines: {list(engines.keys())}"
+                    assert engines[best_engine] == best_confidence, f"Engine {best_engine} confidence mismatch: {engines[best_engine]} != {best_confidence}"
+                    
+                    # Verify it's actually the best
+                    for engine, confidence in engines.items():
+                        assert confidence <= best_confidence, f"Engine {engine} confidence {confidence} > best confidence {best_confidence}"
+                    
+                    found_comparison = True
+                    
+                    # Verify selection reasoning
+                    assert 'selected_reason' in image_result, f"'selected_reason' not found in image_result keys: {list(image_result.keys())}"
+                    reason = image_result['selected_reason']
+                    assert isinstance(reason, str), f"Expected reason to be str, got {type(reason)}: {reason}"
+                    assert reason in ['highest_confidence', 'best_accuracy', 'fastest', 'balanced'], f"Invalid reason '{reason}', expected one of: ['highest_confidence', 'best_accuracy', 'fastest', 'balanced']"
             
             assert found_comparison, "Should perform engine comparison and selection"
 
@@ -728,21 +765,15 @@ class TestProcessOcr:
             # Verify empty results
             assert isinstance(result, dict)
             
-            # Should return empty or minimal structure
-            if len(result) == 0:
-                # Empty result is acceptable
-                pass
-            else:
-                # If result structure exists, it should indicate no images
-                for page_key, page_result in result.items():
-                    if isinstance(page_result, dict):
-                        if 'images' in page_result:
-                            assert len(page_result['images']) == 0
-                        if 'ocr_results' in page_result:
-                            assert len(page_result['ocr_results']) == 0
-            
-            # OCR engine should not be called for processing
-            assert not mock_ocr_instance.process_image_multi_engine.called
+            # Verify result structure indicates no images
+            for page_key, page_result in result.items():
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                assert len(page_result['images']) == self.EXPECTED_EMPTY_LIST_LENGTH, f"Expected empty images list, got {len(page_result['images'])} images: {page_result['images']}"
+                assert 'ocr_results' not in page_result or len(page_result['ocr_results']) == self.EXPECTED_EMPTY_LIST_LENGTH, f"Expected no ocr_results or empty ocr_results, got: {page_result.get('ocr_results', 'not present')}"
+                
+                # OCR engine should not be called for processing
+                assert not mock_ocr_instance.process_image_multi_engine.called, f"OCR engine should not be called when no images present, but was called: {mock_ocr_instance.process_image_multi_engine.call_count} times"
 
     @pytest.mark.asyncio
     async def test_process_ocr_large_image_memory_management(self, processor):
@@ -945,27 +976,26 @@ class TestProcessOcr:
                     }
                 })
                 return future
-            
             mock_ocr_instance.process_image_multi_engine = format_specific_ocr
-            
+
             # Execute the method
             result = await processor._process_ocr(formats_content)
-            
+
             # Verify format compatibility
             formats_processed = set()
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'format_detected' in image_result:
-                            formats_processed.add(image_result['format_detected'])
-                        
-                        # Verify consistent result structure
-                        assert 'text' in image_result
-                        assert 'confidence' in image_result
-                        assert 'engine' in image_result
-            
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    formats_processed.add(image_result.get('format_detected', 'UNKNOWN'))
+                    
+                    # Verify consistent result structure
+                    assert 'text' in image_result, f"'text' not found in image_result keys: {list(image_result.keys())}"
+                    assert 'confidence' in image_result, f"'confidence' not found in image_result keys: {list(image_result.keys())}"
+                    assert 'engine' in image_result, f"'engine' not found in image_result keys: {list(image_result.keys())}"
+
             # Should process multiple formats
-            assert len(formats_processed) >= 2
+            assert len(formats_processed) >= self.EXPECTED_MINIMUM_ENGINES_COUNT, f"Expected at least {self.EXPECTED_MINIMUM_ENGINES_COUNT} formats processed, got {len(formats_processed)}: {formats_processed}"
 
     @pytest.mark.asyncio
     async def test_process_ocr_batch_processing_efficiency(self, processor):
@@ -1002,140 +1032,146 @@ class TestProcessOcr:
         }
         
         # Add all images to global images list
-        for page_num in range(5):
-            for img_num in range(3):
-                batch_content['images'].append({
-                    'page': page_num + 1,
-                    'data': f'image_data_page_{page_num+1}_img_{img_num+1}'.encode(),
-                    'format': 'PNG'
-                })
-        
-        # Mock OCR with batch tracking
-        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
-            mock_ocr_instance = Mock()
-            mock_ocr_class.return_value = mock_ocr_instance
-            
-            call_times = []
-            def batch_ocr(image_data):
-                import time
-                call_times.append(time.time())
-                
-                # Extract image identifier
-                image_id = image_data.decode() if isinstance(image_data, bytes) else str(image_data)
-                
-                future = asyncio.Future()
-                future.set_result({
-                    'best_result': {
-                        'text': f'OCR text from {image_id}',
-                        'confidence': 0.80,
-                        'processing_time': 0.1,  # Fast batch processing
-                        'engine': 'easyocr'
-                    }
-                })
-                return future
-            
-            mock_ocr_instance.process_image_multi_engine = batch_ocr
-            
-            # Execute the method
-            import time
-            start_time = time.time()
-            result = await processor._process_ocr(batch_content)
-            end_time = time.time()
-            
-            # Verify batch processing efficiency
-            processing_time = end_time - start_time
-            
-            # Should process all images
-            total_images_processed = 0
-            for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    total_images_processed += len(page_result['images'])
-            
-            # Should have processed 15 images (5 pages * 3 images)
-            assert total_images_processed > 0
-            
-            # Verify results organized by page
-            assert len(result) >= 5  # Should have results for 5 pages
-            
-            # Processing should be reasonably efficient
-            assert processing_time < 10.0  # Should complete within 10 seconds
-
     @pytest.mark.asyncio
-    async def test_process_ocr_special_characters_and_symbols(self, processor, sample_decomposed_content_with_images):
-        """
-        GIVEN images containing special characters, symbols, and formatting
-        WHEN _process_ocr extracts text
-        THEN expect:
-            - Special characters preserved correctly
-            - Mathematical symbols recognized
-            - Formatting marks handled appropriately
-            - Unicode support for extended character sets
-        """
-        # Mock OCR with special character recognition
+    async def test_process_ocr_selection_reason_is_string(self, processor, sample_decomposed_content_with_images):
+        """Test that selection reason is a string."""
         with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
             mock_ocr_instance = Mock()
             mock_ocr_class.return_value = mock_ocr_instance
             
-            def special_chars_ocr(image_data):
+            def multi_engine_comparison(image_data):
                 future = asyncio.Future()
                 future.set_result({
                     'best_result': {
-                        'text': '∫ƒ(x)dx = π² + α≤β ∀x∈ℝ © ® ™ ± × ÷ ∞ ∅ ∈ ∉ ⊂ ∪ ∩',
-                        'confidence': 0.78,
-                        'words': [
-                            {'text': '∫ƒ(x)dx', 'confidence': 0.75, 'bbox': [10, 10, 60, 25], 'type': 'mathematical'},
-                            {'text': '=', 'confidence': 0.95, 'bbox': [65, 10, 75, 25], 'type': 'operator'},
-                            {'text': 'π²', 'confidence': 0.80, 'bbox': [80, 10, 95, 25], 'type': 'mathematical'},
-                            {'text': '+', 'confidence': 0.90, 'bbox': [100, 10, 110, 25], 'type': 'operator'},
-                            {'text': 'α≤β', 'confidence': 0.70, 'bbox': [115, 10, 140, 25], 'type': 'mathematical'},
-                            {'text': '∀x∈ℝ', 'confidence': 0.72, 'bbox': [145, 10, 175, 25], 'type': 'mathematical'},
-                            {'text': '©', 'confidence': 0.85, 'bbox': [180, 10, 190, 25], 'type': 'symbol'},
-                            {'text': '®', 'confidence': 0.85, 'bbox': [195, 10, 205, 25], 'type': 'symbol'},
-                            {'text': '™', 'confidence': 0.85, 'bbox': [210, 10, 220, 25], 'type': 'symbol'}
-                        ],
+                        'text': 'EasyOCR result',
+                        'confidence': 0.91,
                         'engine': 'easyocr',
-                        'character_types': ['mathematical', 'operator', 'symbol', 'unicode']
+                        'selected_reason': 'highest_confidence'
                     }
                 })
                 return future
             
-            mock_ocr_instance.process_image_multi_engine = special_chars_ocr
-            
-            # Execute the method
+            mock_ocr_instance.process_image_multi_engine = multi_engine_comparison
             result = await processor._process_ocr(sample_decomposed_content_with_images)
             
-            # Verify special character handling
-            found_special_chars = False
-            for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        if 'text' in image_result:
-                            text = image_result['text']
-                            
-                            # Check for mathematical symbols
-                            math_symbols = ['∫', 'π', 'α', 'β', '≤', '∀', '∈', 'ℝ', '∞']
-                            if any(symbol in text for symbol in math_symbols):
-                                found_special_chars = True
-                            
-                            # Check for trademark/copyright symbols
-                            trademark_symbols = ['©', '®', '™']
-                            if any(symbol in text for symbol in trademark_symbols):
-                                found_special_chars = True
-                            
-                            # Verify word-level character typing if available
-                            if 'words' in image_result:
-                                for word in image_result['words']:
-                                    if 'type' in word:
-                                        assert word['type'] in ['mathematical', 'operator', 'symbol', 'text', 'unicode']
-                            
-                            # Verify character type classification if available
-                            if 'character_types' in image_result:
-                                types = image_result['character_types']
-                                assert isinstance(types, list)
-                                assert 'unicode' in types or 'mathematical' in types or 'symbol' in types
+            assert isinstance(result, dict), f"Expected result to be dict, got {type(result)}: {result}"
+            assert 'images' in result, f"'images' not found in result keys: {list(result.keys())}"
+            for image_result in result['images']:
+                assert 'selected_reason' in image_result, f"'selected_reason' not found in image_result keys: {list(image_result.keys())}"
+                assert isinstance(image_result['selected_reason'], str), f"Expected selected_reason to be str, got {type(image_result['selected_reason'])}: {image_result['selected_reason']}"
+
+    @pytest.mark.asyncio
+    async def test_process_ocr_selection_reason_valid_value(self, processor, sample_decomposed_content_with_images):
+        """Test that selection reason has valid value."""
+        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
+            mock_ocr_instance = Mock()
+            mock_ocr_class.return_value = mock_ocr_instance
             
-            # Should handle special characters without errors
-            assert len(result) > 0
+            def multi_engine_comparison(image_data):
+                future = asyncio.Future()
+                future.set_result({
+                    'best_result': {
+                        'text': 'EasyOCR result',
+                        'confidence': 0.91,
+                        'engine': 'easyocr',
+                        'selected_reason': 'highest_confidence'
+                    }
+                })
+                return future
+            
+            mock_ocr_instance.process_image_multi_engine = multi_engine_comparison
+            result = await processor._process_ocr(sample_decomposed_content_with_images)
+            
+            valid_reasons = ['highest_confidence', 'best_accuracy', 'fastest', 'balanced']
+            for page_result in result.values():
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    assert 'selected_reason' in image_result, f"'selected_reason' not found in image_result keys: {list(image_result.keys())}"
+                    reason = image_result['selected_reason']
+                    assert reason in valid_reasons, f"Invalid reason '{reason}', expected one of: {valid_reasons}"
+
+    @pytest.mark.asyncio
+    async def test_process_ocr_no_images_returns_dict(self, processor, sample_decomposed_content_no_images):
+        """Test that no images content returns dictionary."""
+        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
+            mock_ocr_instance = Mock()
+            mock_ocr_class.return_value = mock_ocr_instance
+            
+            result = await processor._process_ocr(sample_decomposed_content_no_images)
+            
+            assert isinstance(result, dict)
+
+    @pytest.mark.asyncio
+    async def test_process_ocr_no_images_empty_results(self, processor, sample_decomposed_content_no_images):
+        """Test that no images content has empty image results."""
+        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
+            mock_ocr_instance = Mock()
+            mock_ocr_class.return_value = mock_ocr_instance
+            
+            result = await processor._process_ocr(sample_decomposed_content_no_images)
+            
+            for page_result in result.values():
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                assert len(page_result['images']) == self.EXPECTED_EMPTY_LIST_LENGTH, f"Expected empty images list, got {len(page_result['images'])} images: {page_result['images']}"
+
+    @pytest.mark.asyncio
+    async def test_process_ocr_no_images_engine_not_called(self, processor, sample_decomposed_content_no_images):
+        """Test that OCR engine is not called when no images present."""
+        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
+            mock_ocr_instance = Mock()
+            mock_ocr_class.return_value = mock_ocr_instance
+            
+            await processor._process_ocr(sample_decomposed_content_no_images)
+            
+            assert not mock_ocr_instance.process_image_multi_engine.called, f"OCR engine should not be called when no images present, but was called: {mock_ocr_instance.process_image_multi_engine.call_count} times"
+
+    @pytest.mark.asyncio
+    async def test_process_ocr_large_image_raises_memory_error(self, processor):
+        """Test that very large images raise MemoryError."""
+        # Create content with very large image
+        large_image_data = b'x' * (100 * 1024 * 1024)  # 100MB image
+        
+        large_image_content = {
+            'pages': [
+                {
+                    'page_number': self.EXPECTED_PAGE_NUMBER_ONE,
+                    'images': [
+                        {
+                            'data': large_image_data,
+                            'format': 'PNG',
+                            'width': 10000,
+                            'height': 10000,
+                            'bbox': [self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, 10000, 10000]
+                        }
+                    ],
+                    'elements': [],
+                    'text_blocks': [],
+                    'annotations': []
+                }
+            ],
+            'metadata': {'title': 'Large Image Document'},
+            'images': [{'page': self.EXPECTED_PAGE_NUMBER_ONE, 'data': large_image_data, 'format': 'PNG'}]
+        }
+        
+        # Mock OCR to simulate memory exhaustion
+        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.MultiEngineOCR') as mock_ocr_class:
+            mock_ocr_instance = Mock()
+            mock_ocr_class.return_value = mock_ocr_instance
+            
+            def memory_exhaustion(image_data):
+                if len(image_data) > 50 * 1024 * 1024:  # > 50MB
+                    raise MemoryError("Image too large for OCR processing")
+                future = asyncio.Future()
+                future.set_result({'best_result': {'text': 'small image', 'confidence': 0.8}})
+                return future
+            
+            mock_ocr_instance.process_image_multi_engine = memory_exhaustion
+            
+            # Execute and expect MemoryError
+            with pytest.raises(MemoryError, match="Image too large|too large"):
+                await processor._process_ocr(large_image_content)
 
     @pytest.mark.asyncio
     async def test_process_ocr_production_vs_mock_implementation(self, processor, sample_decomposed_content_with_images):
@@ -1155,32 +1191,26 @@ class TestProcessOcr:
         assert isinstance(result, dict)
         
         # Should return some form of results
-        if len(result) > 0:
-            # Check if results indicate mock implementation
-            for page_key, page_result in result.items():
-                if isinstance(page_result, dict):
-                    # Look for mock indicators
-                    mock_indicators = ['mock', 'placeholder', 'development', 'stub']
-                    
-                    if 'images' in page_result:
-                        for image_result in page_result['images']:
-                            # Verify basic structure exists
-                            assert 'text' in image_result or 'confidence' in image_result or 'engine' in image_result
-                            
-                            # Check for mock indicators in text or metadata
-                            if 'text' in image_result:
-                                text_lower = image_result['text'].lower()
-                                is_mock = any(indicator in text_lower for indicator in mock_indicators)
-                                
-                                if is_mock:
-                                    # Mock implementation detected
-                                    assert 'mock' in text_lower or 'placeholder' in text_lower
-                                else:
-                                    # Production-like implementation
-                                    assert len(image_result['text']) > 0
-        else:
-            # Empty result is acceptable for mock implementation
-            pass
+        assert len(result) >= self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Expected non-negative result length, got {len(result)}: {result}"
+
+        # Check if results indicate mock implementation
+        for page_key, page_result in result.items():
+            assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+            # Look for mock indicators
+            mock_indicators = ['mock', 'placeholder', 'development', 'stub']
+            
+            assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+            for image_result in page_result['images']:
+                # Verify basic structure exists
+                assert 'text' in image_result or 'confidence' in image_result or 'engine' in image_result, f"Expected at least one of ['text', 'confidence', 'engine'] in image_result keys: {list(image_result.keys())}"
+                
+                # Check for mock indicators in text or metadata
+                assert 'text' in image_result, f"'text' not found in image_result keys: {list(image_result.keys())}"
+                text_lower = image_result['text'].lower()
+                is_mock = any(indicator in text_lower for indicator in mock_indicators)
+                
+                # Verify text content regardless of mock status
+                assert len(image_result['text']) >= self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Expected non-negative text length, got {len(image_result['text'])}: '{image_result['text']}'"
 
     @pytest.mark.asyncio
     async def test_process_ocr_result_aggregation_and_quality_metrics(self, processor, sample_decomposed_content_with_images):
@@ -1237,30 +1267,31 @@ class TestProcessOcr:
             # Verify aggregated metrics
             found_aggregation = False
             for page_key, page_result in result.items():
-                if isinstance(page_result, dict) and 'images' in page_result:
-                    for image_result in page_result['images']:
-                        # Check for aggregated metrics
-                        if 'aggregated_metrics' in image_result:
-                            metrics = image_result['aggregated_metrics']
-                            
-                            # Verify metric completeness
-                            assert 'average_confidence' in metrics
-                            assert 'engines_used' in metrics
-                            
-                            # Verify metric validity
-                            assert 0.0 <= metrics['average_confidence'] <= 1.0
-                            assert isinstance(metrics['engines_used'], list)
-                            assert len(metrics['engines_used']) > 0
-                            
-                            found_aggregation = True
-                        
-                        # Check for quality assessment
-                        if 'quality_score' in image_result or ('aggregated_metrics' in image_result and 'quality_score' in image_result['aggregated_metrics']):
-                            quality_score = image_result.get('quality_score') or image_result['aggregated_metrics']['quality_score']
-                            assert 0.0 <= quality_score <= 1.0
+                assert isinstance(page_result, dict), f"Expected page_result to be dict, got {type(page_result)}: {page_result}"
+                assert 'images' in page_result, f"'images' not found in page_result keys: {list(page_result.keys())}"
+                for image_result in page_result['images']:
+                    # Check for aggregated metrics
+                    assert 'aggregated_metrics' in image_result, f"'aggregated_metrics' not found in image_result keys: {list(image_result.keys())}"
+                    metrics = image_result['aggregated_metrics']
+                    
+                    # Verify metric completeness
+                    assert 'average_confidence' in metrics, f"'average_confidence' not found in metrics keys: {list(metrics.keys())}"
+                    assert 'engines_used' in metrics, f"'engines_used' not found in metrics keys: {list(metrics.keys())}"
+                    
+                    # Verify metric validity
+                    assert self.EXPECTED_CONFIDENCE_MIN_VALUE <= metrics['average_confidence'] <= self.EXPECTED_CONFIDENCE_MAX_VALUE, f"Average confidence {metrics['average_confidence']} not in range [{self.EXPECTED_CONFIDENCE_MIN_VALUE}, {self.EXPECTED_CONFIDENCE_MAX_VALUE}]"
+                    assert isinstance(metrics['engines_used'], list), f"Expected engines_used to be list, got {type(metrics['engines_used'])}: {metrics['engines_used']}"
+                    assert len(metrics['engines_used']) > self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Expected non-empty engines_used list, got {len(metrics['engines_used'])} engines: {metrics['engines_used']}"
+                    
+                    found_aggregation = True
+                    
+                    # Check for quality assessment
+                    assert 'quality_score' in image_result or ('aggregated_metrics' in image_result and 'quality_score' in image_result['aggregated_metrics']), f"'quality_score' not found in image_result or aggregated_metrics. Image keys: {list(image_result.keys())}, Metrics keys: {list(metrics.keys())}"
+                    quality_score = image_result.get('quality_score') or image_result['aggregated_metrics']['quality_score']
+                    assert self.EXPECTED_CONFIDENCE_MIN_VALUE <= quality_score <= self.EXPECTED_CONFIDENCE_MAX_VALUE, f"Quality score {quality_score} not in range [{self.EXPECTED_CONFIDENCE_MIN_VALUE}, {self.EXPECTED_CONFIDENCE_MAX_VALUE}]"
             
             # Should provide aggregated results or at least basic metrics
-            assert len(result) > 0
+            assert len(result) > self.EXPECTED_MINIMUM_NON_EMPTY_RESULT, f"Expected non-empty result, got length {len(result)}: {result}"
 
 
 

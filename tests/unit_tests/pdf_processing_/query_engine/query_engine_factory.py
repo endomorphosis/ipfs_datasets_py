@@ -10,8 +10,12 @@ from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator, KnowledgeGraph
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResult, Relationship
 
 RANDOM_SEED = 420
-faker.Faker.seed_instance()
 
+def faker_instance() -> faker.Faker:
+    """Create a Faker instance with a fixed seed for reproducibility."""
+    fake = faker.Faker()
+    fake.seed(RANDOM_SEED)
+    return fake
 
 class QueryEngineFactory:
     """Factory class for creating test objects and mock instances for QueryEngine testing."""
@@ -220,7 +224,7 @@ class QueryEngineFactory:
         Returns:
             list[str]: List of fake names
         """
-        fake = faker.Faker()
+        fake = faker_instance()
         return [fake.name() for _ in range(n)]
 
     def make_fake_name_questions(self, n: int = 30) -> Generator[tuple[str, str], None, None]:
@@ -248,7 +252,7 @@ class QueryEngineFactory:
         Returns:
             list[str]: List of fake company names
         """
-        fake = faker.Faker()
+        fake = faker_instance()
         return [fake.company() for _ in range(n)]
 
     def make_fake_company_questions(self, n: int = 30) -> Generator[tuple[str, str, str], None, None]:

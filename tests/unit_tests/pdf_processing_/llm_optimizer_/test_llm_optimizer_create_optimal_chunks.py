@@ -6,6 +6,7 @@
 from datetime import datetime
 import pytest
 import os
+from unittest.mock import MagicMock
 
 import os
 import pytest
@@ -76,7 +77,9 @@ class TestLLMOptimizerCreateOptimalChunksValidInput:
     """Test LLMOptimizer._create_optimal_chunks method."""
 
     def setup_method(self):
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock(),
+        )
 
     @property
     def valid_structured_text(self):
@@ -270,6 +273,7 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         MIN_CHUNK_SIZE = 20
         CHUNK_OVERLAP = 10  # Example overlap size
         self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock(),
             max_chunk_size=MAX_CHUNK_SIZE, 
             chunk_overlap=MIN_CHUNK_SIZE, 
             min_chunk_size=CHUNK_OVERLAP
@@ -548,6 +552,7 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
         MIN_CHUNK_SIZE = 30
         CHUNK_OVERLAP = 20  # Example overlap size
         self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock(),
             max_chunk_size=MAX_CHUNK_SIZE, 
             chunk_overlap=CHUNK_OVERLAP, 
             min_chunk_size=MIN_CHUNK_SIZE
@@ -876,7 +881,9 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
 class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
 
     def setup_method(self):
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock(),
+        )
 
     @property
     def structured_text(self):
@@ -1092,10 +1099,13 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
             assert not chunk.content.endswith(" "), "chunk.content should not end with whitespace"
 
 
+
 class TestLLMOptimizerCreateOptimalChunksEdgeCases:
 
     def setup_method(self):
-        self.optimizer = LLMOptimizer()
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock(),
+        )
 
     def _get_empty_structured_text(self):
         """Helper method to get empty structured text."""
