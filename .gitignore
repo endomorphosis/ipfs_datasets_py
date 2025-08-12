@@ -40,3 +40,4 @@ coverage.xml
 .pytest_cache/
 pdf_processing_metrics.json
 .mypy_cache/
+_log_probs_test.py

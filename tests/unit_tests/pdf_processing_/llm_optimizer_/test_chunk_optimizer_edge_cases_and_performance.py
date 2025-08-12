@@ -73,74 +73,149 @@ except ImportError as e:
 
 
 
-class TestChunkOptimizerEdgeCasesAndPerformance:
+class TestChunkOptimizerVeryLargeText:
     """Test ChunkOptimizer with edge cases and performance considerations."""
 
-    def test_very_large_text_processing(self):
+    CACHED_OPTIMIZED = None
+
+    def setup_method(self):
+        """
+        Setup method to initialize the ChunkOptimizer instance.
+        This method is called before each test method.
+        """
+        self.large_text = "This is a test sentence. " * 5000  # ~125KB
+        self.current_boundaries = [50000, 100000]
+        self.optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
+
+    def test_very_large_text_processing_returns_list(self):
         """
         GIVEN very large text input (>100KB)
         WHEN optimize_chunk_boundaries is called
-        THEN expect:
-            - Method completes within reasonable time
-            - Memory usage remains manageable
-            - Correct boundary optimization performed
+        THEN expect method returns a list
+        """
+        # Given/when
+        optimized = self.optimizer.optimize_chunk_boundaries(self.large_text, self.current_boundaries)
+
+        # Then
+        assert isinstance(optimized, list)
+
+    def test_very_large_text_processing_preserves_boundary_count(self):
+        """
+        GIVEN very large text input (>100KB)
+        WHEN optimize_chunk_boundaries is called
+        THEN expect same number of boundaries as input
         """
         # Given - large text (>100KB)
         large_text = "This is a test sentence. " * 5000  # ~125KB
         current_boundaries = [50000, 100000]
-        optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
-        
+
         # When
-        import time
+        optimized = self.optimizer.optimize_chunk_boundaries(large_text, current_boundaries)
+        
+        # Then
+        assert len(optimized) == len(current_boundaries)
+
+    def test_very_large_text_processing_completes_within_time_limit(self):
+        """
+        GIVEN very large text input (>100KB)
+        WHEN optimize_chunk_boundaries is called
+        THEN expect method completes within reasonable time
+        """
+        # Given - large text (>100KB)
+        large_text = "This is a test sentence. " * 5000  # ~125KB
+        current_boundaries = [50000, 100000]
+        expected_max_time = 5.0
+
+        # When
         start_time = time.time()
-        optimized = optimizer.optimize_chunk_boundaries(large_text, current_boundaries)
+        optimized = self.optimizer.optimize_chunk_boundaries(large_text, current_boundaries)
         end_time = time.time()
         
         # Then
-        assert isinstance(optimized, list)
-        assert len(optimized) == len(current_boundaries)
-        assert (end_time - start_time) < 5.0  # Should complete within 5 seconds
+        assert (end_time - start_time) < expected_max_time
 
-    def test_unicode_and_special_characters(self):
+class TestChunkOptimizerSpecialCharacters:
+
+    def setup_method(self):
+        """
+        Setup method to initialize test data for special character tests.
+        This method is called before each test method.
+        """
+        self.text = "Hello 世界! This is a test 🌍. Ñice tëxt with áccents. Мультиязычный текст здесь."
+        self.current_boundaries = [20, 40]
+        self.optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
+
+    def test_unicode_text_returns_list(self):
         """
         GIVEN text with Unicode characters, emojis, and special formatting
         WHEN optimize_chunk_boundaries is called
-        THEN expect:
-            - Unicode text handled correctly
-            - Boundary detection works with non-ASCII characters
-            - No encoding errors or character corruption
+        THEN expect method returns a list
         """
-        # Given
-        text = "Hello 世界! This is a test 🌍. Ñice tëxt with áccents. Мультиязычный текст здесь."
-        current_boundaries = [20, 40]
-        optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
-        
         # When
-        optimized = optimizer.optimize_chunk_boundaries(text, current_boundaries)
+        optimized = self.optimizer.optimize_chunk_boundaries(self.text, self.current_boundaries)
         
         # Then
-        assert isinstance(optimized, list)
-        assert len(optimized) == len(current_boundaries)
-        for boundary in optimized:
-            assert isinstance(boundary, int)
-            assert 0 <= boundary <= len(text)
+        assert isinstance(optimized, list), f"Expected list but got {type(optimized)}"
 
-    def test_malformed_text_input(self):
+    def test_unicode_text_preserves_boundary_count(self):
         """
-        GIVEN malformed text input (None, non-string types)
+        GIVEN text with Unicode characters, emojis, and special formatting
         WHEN optimize_chunk_boundaries is called
-        THEN expect appropriate error handling and type validation
+        THEN expect same number of boundaries as input
+        """
+        # When
+        optimized = self.optimizer.optimize_chunk_boundaries(self.text, self.current_boundaries)
+        
+        # Then
+        assert len(optimized) == len(self.current_boundaries), f"Expected {len(self.current_boundaries)} boundaries but got {len(optimized)}"
+
+    def test_unicode_text_boundary_types(self):
+        """
+        GIVEN text with Unicode characters, emojis, and special formatting
+        WHEN optimize_chunk_boundaries is called
+        THEN expect all boundaries are integers
+        """
+        # When
+        optimized = self.optimizer.optimize_chunk_boundaries(self.text, self.current_boundaries)
+        
+        # Then
+        for boundary in optimized:
+            assert isinstance(boundary, int), f"Expected boundary to be int but got {type(boundary)} for value {boundary}"
+
+    def test_unicode_text_boundary_ranges(self):
+        """
+        GIVEN text with Unicode characters, emojis, and special formatting
+        WHEN optimize_chunk_boundaries is called
+        THEN expect all boundaries are greater than or equal to 0 and less than or equal to text length.
+        """
+        # When
+        optimized = self.optimizer.optimize_chunk_boundaries(self.text, self.current_boundaries)
+        
+        # Then
+        for boundary in optimized:
+            assert 0 <= boundary <= len(self.text), f"Boundary {boundary} is out of range [0, {len(self.text)}]"
+
+class TestChunkOptimizerMalformedText:
+
+    @pytest.mark.parametrize("malformed_text", [
+        None, 12345, 6.4,
+        [], {}, set(), True,
+        object(), lambda x: x,
+    ])
+    def test_malformed_text_input(self, malformed_text):
+        """
+        GIVEN malformed text input (None, non-string types, etc.)
+        WHEN optimize_chunk_boundaries is called
+        THEN expect TypeError.
         """
         # Given
         optimizer = ChunkOptimizer(max_size=1024, overlap=100, min_size=50)
         
-        # When/Then - None text
-        with pytest.raises((TypeError, AttributeError)):
-            optimizer.optimize_chunk_boundaries(None, [10, 20])
-        
-        # When/Then - Non-string text
-        with pytest.raises((TypeError, AttributeError)):
-            optimizer.optimize_chunk_boundaries(12345, [10, 20])
+        # When/Then
+        with pytest.raises(TypeError):
+            optimizer.optimize_chunk_boundaries(malformed_text, [10, 20])
+
+class TestChunkOptimizerBoundaryOptimizationConsistency:
 
     def test_boundary_optimization_consistency(self):
         """

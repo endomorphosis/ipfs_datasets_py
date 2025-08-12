@@ -10,13 +10,15 @@ Optimizes extracted content for LLM consumption by:
 """
 import asyncio
 import logging
-from typing import Any, Optional, Annotated
+from typing import Any, Optional, Annotated, Callable
 import re
 from enum import StrEnum
 import os
+from types import ModuleType
+import math
 
 
-import tiktoken
+import tiktoken as tiktoken_module
 from transformers import AutoTokenizer
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -34,6 +36,7 @@ from ipfs_datasets_py.utils.text_processing import TextProcessor
 from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
 logger = logging.getLogger(__name__)
+logger.level = logging.DEBUG
 
 from pydantic import (
     AfterValidator as AV,
@@ -42,7 +45,9 @@ from pydantic import (
     field_validator,
     NonNegativeInt,
     ValidationError,
-    computed_field
+    computed_field,
+    PositiveFloat,
+    NonNegativeFloat
 )
 
 
@@ -53,18 +58,18 @@ import numpy as np
 def extract_embedding_from_chunk(chunk_data: Dict[str, Any]) -> Optional[np.ndarray]:
     """
     Extract the embedding array from a single chunk dictionary.
-    
+
     Args:
         chunk_data (Dict[str, Any]): Dictionary containing chunk information with
                                    an 'embedding' key that maps to a numpy array.
-    
+
     Returns:
         Optional[np.ndarray]: The embedding array if found, None otherwise.
-    
+
     Raises:
         KeyError: If the chunk_data doesn't contain an 'embedding' key.
         TypeError: If the embedding value is not a numpy array or convertible to one.
-    
+
     Examples:
         >>> chunk = {'content': 'text', 'embedding': np.array([0.1, 0.2, 0.3])}
         >>> embedding = extract_embedding_from_chunk(chunk)
@@ -295,51 +300,276 @@ class Classification(StrEnum):
     pass
 
 # NOTE: From https://huggingface.co/datasets/KnutJaegersberg/wikipedia_categories, 7/25/2025
-CLASSIFICATIONS = {
-    "Science and technology",
-    "Engineering",
-    "Industry",
-    "Language",
-    "Government",
-    "Education",
-    "Nature",
-    "Mass media",
-    "People",
-    "Military",
-    "Energy",
-    "Knowledge",
-    "Life",
-    "Organizations",
-    "History",
-    "Concepts",
-    "Philosophy",
-    "Food and drink",
-    "Humanities",
-    "World",
-    "Geography",
-    "Law",
-    "Business",
-    "Events",
-    "Entertainment",
-    "Culture",
-    "Religion",
-    "Ethics",
-    "Sports",
-    "Music",
+WIKIPEDIA_CLASSIFICATIONS = {
     "Academic Disciplines",
-    "Politics",
+    "Business",
+    "Concepts",
+    "Culture",
     "Economy",
-    "Society",
+    "Education",
+    "Energy",
+    "Engineering",
+    "Entertainment",
+    "Ethics",
+    "Events",
+    "Food and drink",
+    "Geography",
+    "Government",
+    "Health",
+    "History",
+    "Humanities",
+    "Industry",
+    "Knowledge",
+    "Language",
+    "Law",
+    "Life",
+    "Mass media",
     "Mathematics",
+    "Military",
+    "Music",
+    "Nature",
+    "Organizations",
+    "People",
+    "Philosophy",
     "Policy",
-    "Health"
+    "Politics",
+    "Religion",
+    "Science and technology",
+    "Society",
+    "Sports",
+    "World"
+}
+
+# TODO Write these examples.
+WIKIPEDIA_EXAMPLES: dict[str, str] = {
+    "Academic Disciplines": "",
+    "Business": "",
+    "Concepts": "",
+    "Culture": "",
+    "Economy": "",
+    "Education": "",
+    "Energy": "",
+    "Engineering": "",
+    "Entertainment": "",
+    "Ethics": "",
+    "Events": "",
+    "Food and drink": "",
+    "Geography": "",
+    "Government": "",
+    "Health": "",
+    "History": "",
+    "Humanities": "",
+    "Industry": "",
+    "Knowledge": "",
+    "Language": "",
+    "Law": "",
+    "Life": "",
+    "Mass media": "",
+    "Mathematics": "",
+    "Military": "",
+    "Music": "",
+    "Nature": "",
+    "Organizations": "",
+    "People": "",
+    "Philosophy": "",
+    "Policy": "",
+    "Politics": "",
+    "Religion": "",
+    "Science and technology": "",
+    "Society": "",
+    "Sports": "",
+    "World": ""
 }
 
 class ClassificationResult(BaseModel):
     """Result of entity classification."""
     entity: str
     category: str
-    confidence: float
+    confidence: NonNegativeFloat = Field(le=1.0)
+
+
+async def _classify_with_openai_llm(
+        prompt: str, 
+        system_prompt: str, 
+        client: openai.AsyncOpenAI, 
+        num_categories: int, 
+        model: str = "gpt-4.1-2025-04-14",
+        log_threshold: float = 0.05,
+        timeout: float = 30.0,
+    ) -> list[tuple[str, float]] | list:
+
+    temperature = 0.0 
+    logprobs = True
+    max_tokens = 1  # We only want the next token, not a full response
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
+    print(f"_classify_with_openai_llm using model: {model}")
+    try:
+        response = await client.chat.completions.create(
+            logprobs=logprobs, 
+            top_logprobs=num_categories, 
+            model=model, 
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            timeout=timeout
+        )
+    except openai.APITimeoutError as e:
+        logger.error(f"Timeout while waiting for OpenAI response: {e}")
+        raise asyncio.TimeoutError(f"Timeout while waiting for OpenAI response: {e}") from e
+    except openai.OpenAIError as e:
+        logger.error(f"OpenAI API error during classification: {e}")
+        raise ConnectionError(f"OpenAI API error during classification: {e}") from e
+    except Exception as e:
+        raise e
+
+    # Filter out probabilities that are below the threshold.
+    filtered_token_prob_tuples: list[tuple[str, float]] = [
+        (top_logprob.token, top_logprob.logprob)
+        for top_logprob in response.choices[0].logprobs.content[0].top_logprobs
+        if top_logprob.logprob > log_threshold
+    ]
+    print(f"_classify_with_openai_llm filtered token probabilities: {filtered_token_prob_tuples}")
+    return filtered_token_prob_tuples
+
+async def _classify_with_transformers_llm(): 
+    pass
+
+async def classify_with_llm(
+    *,
+    text: str, 
+    classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
+    client: Any,
+    model: str = "gpt-4.1-2025-04-14",
+    retries: Optional[int] = 3,
+    timeout = 30.0,  # seconds
+    threshold: float = 0.05, # i.e. statistical significance threshold
+    logger: logging.Logger = logger,
+    llm_func: Callable = _classify_with_openai_llm
+    ) -> list[ClassificationResult] | list:
+    """
+    Classify text into predefined categories using OpenAI's LLM.
+
+    This function uses a transformer-based LLM to classify an arbitrary 
+    English-language text into one or more arbitrary categories from a predefined set.
+
+    Args:
+        text (str): The text to classify.
+        classifications (set[str]): Set of predefined categories to classify the text into.
+        client (openai.AsyncOpenAI): OpenAI client instance for making API calls.
+        model (str): The OpenAI model to use for classification. Defaults to "gpt-4o".
+        retries (Optional[int]): Number of retries to refine classification. Defaults to 3.
+        threshold (float): Probability threshold for including a classification. 
+            Defaults to 0.05 (e.g. the statistical definition of an outlier)
+        logger (logging.Logger): Logger instance for logging messages. Defaults to the module logger.
+    
+    Returns:
+        list[ClassificationResult] | list: List of ClassificationResult objects if classifications found.
+            ClassificationResult is a pydantic base model with the following fields:
+            - entity (str): The original text entity.
+            - category (str): The category assigned to the entity.
+            - confidence (float): Confidence score of the classification (0.0-1.0).
+            If no classifications are found, returns an empty list.
+    """
+    winnowed_categories: set[str] = classifications
+    log_threshold = threshold if threshold <= 0 else math.log(threshold) # Turn the threshold into a logprob
+
+    print("Winnowed categories:", winnowed_categories)
+    system_prompt = "You are a helpful assistant that classifies text into predefined categories."
+    prompt_template = """
+# Instructions:
+- Classify the text into one of the following categories: {categories}.
+- Return only the name of the category, with no additional formatting or commentary.
+- Your response must be one of the {num_categories} categories.
+
+# Text
+{text}
+"""
+    for attempt in range(retries):
+        num_categories = len(winnowed_categories)
+        prompt = prompt_template.format(
+            categories=', '.join(list(winnowed_categories)),
+            num_categories=num_categories,
+            text=text,
+        )
+        try:
+            print(f"Attempt {attempt} with prompt:\n{prompt}")
+            filtered_token_prob_tuples = await asyncio.wait_for(
+                llm_func(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    client=client,
+                    model=model,
+                    num_categories=num_categories,
+                    timeout=timeout,
+                    log_threshold=log_threshold,
+                ),
+                timeout
+            )
+            print(f"Filtered token probabilities: {filtered_token_prob_tuples}")
+            logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
+
+        except ConnectionError as e:
+            print(f"Connection error on attempt {attempt}: {e}")
+            raise e
+        except asyncio.TimeoutError as e:
+            if attempt == retries-1:
+                print(f"Timeout exceeded after {retries} attempts: {e}")
+                raise e
+            print(f"Timeout on attempt {attempt}, retrying...: {e}")
+            continue
+        except Exception as e:
+            if attempt == retries-1:
+                print(f"Max retries exceeded after {retries} attempts: {e}")
+                raise RuntimeError(f"Unexpected {type(e).__name__} calling API: {e}")
+            print(f"Unexpected error on attempt {attempt}: {e}")
+            continue
+
+        if not filtered_token_prob_tuples:
+            logger.warning(f"No classifications above threshold {threshold} for text: {text}")
+            return []
+
+        new_cats = set()
+        potential_outputs = set()
+
+        for cat in winnowed_categories:
+            # If token string begins a classification string, add that classification to the set.
+            # ex: "Tech" would match "Technology"
+            for token, log_prob in filtered_token_prob_tuples:
+                if cat.lower().startswith(token.lower()):
+                    new_cats.add(cat)
+                    potential_outputs.add(
+                        (cat, log_prob)
+                    )
+
+        match len(new_cats):
+            case 0:
+                logger.warning(f"No matching categories found for text: {text}")
+                return []
+            case 1:
+                # If we only have one category, return it as a single result
+                cat_log_prob_tuple = potential_outputs.pop()
+                category, log_prob = cat_log_prob_tuple
+                return [ClassificationResult(entity=text, category=category, confidence=math.exp(log_prob))]
+            case _:
+                if attempt == retries-1:
+                    return sorted(
+                        [
+                            ClassificationResult(
+                                entity=text, 
+                                category=cat, 
+                                confidence=math.exp(log_prob)
+                            ) 
+                            for cat, log_prob in potential_outputs
+                        ],
+                        key =lambda x: x.confidence
+                    )
+                else:
+                    winnowed_categories = new_cats
+    else:
+        # If we reach here, we have exhausted all retries without a single classification
+        logger.warning(f"No classifications found after {retries} retries for text: {text}")
+        return []
+
 
 
 #!/usr/bin/env python3
@@ -365,6 +595,10 @@ from pydantic import (
 
 
 # ISO 8601 datetime regex pattern
+    # Modified from a JS regex from: 
+    # https://stackoverflow.com/questions/12756159/regex-and-iso8601-formatted-datetime
+    # NOTE: This pattern is designed to match a wide range of ISO 8601 datetime formats,
+    # but it can't include all possible variations. It's apparently an open problem in regex.
 ISO_DATETIME_PATTERN = r'^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$'
 
 # Compiled regex for better performance
@@ -1045,12 +1279,19 @@ class LLMOptimizer:
     
     def __init__(self, 
                  model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+                 llm_name: str = "gpt-4o-2024-08-06",
                  tokenizer_name: str = "gpt-3.5-turbo",
                  max_chunk_size: int = 2048,
                  chunk_overlap: int = 200,
                  min_chunk_size: int = 100,
-                 entity_classifications: set[str] = CLASSIFICATIONS,
-                 sentence_transformer: Optional[SentenceTransformer] = None,
+                 entity_classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
+                 api_key: Optional[str] = os.environ.get("OPENAI_API_KEY"),
+                 async_openai: openai.AsyncOpenAI = openai.AsyncOpenAI,
+                 sentence_transformer: SentenceTransformer = SentenceTransformer,
+                 text_processor: TextProcessor = TextProcessor,
+                 auto_tokenizer: AutoTokenizer = AutoTokenizer,
+                 chunk_optimizer: ChunkOptimizer = ChunkOptimizer,
+                 tiktoken: ModuleType = tiktoken_module,
                  logger: logging.Logger = logger
                  ):
         """
@@ -1079,7 +1320,7 @@ class LLMOptimizer:
             logger (logging.Logger): Logger instance for capturing debug and info messages.
                 Defaults to module-level logger.
             entity_classifications (set[str]): List of entity classifications to use for
-                entity extraction and classification. Defaults to predefined CLASSIFICATIONS constant
+                entity extraction and classification. Defaults to predefined WIKIPEDIA_CLASSIFICATIONS constant
                 based on Wikipedia categories.
 
         Attributes initialized:
@@ -1124,31 +1365,30 @@ class LLMOptimizer:
             the optimizer will use fallback methods with reduced functionality.
         """
         self.model_name: str = model_name
+        self.llm_name: str = llm_name
         self.tokenizer_name: str = tokenizer_name
         self.max_chunk_size: int = max_chunk_size
         self.chunk_overlap: int = chunk_overlap
         self.min_chunk_size: int = min_chunk_size
-        self.api_key = os.environ.get("OPENAI_API_KEY")
         self.entity_classifications: set[str] = entity_classifications
+        self.api_key: Optional[str] = api_key
 
-        self.logger = logger
+        self.tokenizer: Callable = None  # Will be set during model initialization
 
-        # Only initialize OpenAI client if API key is available
-        self.openai_async_client = None
-        if self.api_key:
-            self.openai_async_client = openai.AsyncOpenAI(api_key=self.api_key)
+        self.logger: logging.Logger = logger
+        self.openai_async_client: openai.AsyncOpenAI = async_openai
+        self.SentenceTransformer: SentenceTransformer = sentence_transformer
+        self.text_processor: TextProcessor = text_processor
+        self.chunk_optimizer: ChunkOptimizer = chunk_optimizer
+        self.tiktoken: ModuleType = tiktoken
+        self.AutoTokenizer: AutoTokenizer = auto_tokenizer
 
-        # Allow sentence transformer to be passed in for testing or custom models
-        self.sentence_transformer_class: SentenceTransformer = sentence_transformer
-        if self.sentence_transformer_class is None:
-            self.sentence_transformer_class = SentenceTransformer
-
-        # Initialize models
+        # Initialize external dependencies
         self._initialize_models()
 
         # Text processing utilities
-        self.text_processor = TextProcessor()
-        self.chunk_optimizer = ChunkOptimizer(
+        self.text_processor()
+        self.chunk_optimizer(
             max_size=max_chunk_size,
             overlap=chunk_overlap,
             min_size=min_chunk_size
@@ -1192,7 +1432,7 @@ class LLMOptimizer:
         """
         try:
             # Initialize sentence transformer for embeddings
-            self.embedding_model = self.sentence_transformer_class(self.model_name)
+            self.embedding_model = self.SentenceTransformer(self.model_name)
             self.logger.info(f"Loaded embedding model: {self.model_name}")
         except Exception as e:
             raise RuntimeError(f"Could not load embedding model for LLMOptimizer: {self.model_name}: {e}") from e
@@ -1200,9 +1440,9 @@ class LLMOptimizer:
             # Initialize tokenizer for token counting
         try:
             if "gpt" in self.tokenizer_name.lower():
-                self.tokenizer = tiktoken.encoding_for_model(self.tokenizer_name)
+                self.tokenizer = self.tiktoken.encoding_for_model(self.tokenizer_name)
             else:
-                self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
+                self.tokenizer = self.AutoTokenizer.from_pretrained(self.tokenizer_name)
 
             self.logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
 
@@ -1214,7 +1454,7 @@ class LLMOptimizer:
         try:
             # Only initialize OpenAI client if we have an API key
             if self.api_key:
-                self.openai_async_client = openai.AsyncOpenAI(api_key=self.api_key)
+                self.openai_async_client(api_key=self.api_key)
             else:
                 # For testing or when API key is not available
                 self.openai_async_client = None
@@ -1502,6 +1742,8 @@ class LLMOptimizer:
             
             if not full_text.strip():
                 raise ValueError("No valid text content found in structured_text")
+
+            self.logger.debug(f"full_text: {full_text[:500]}...")  # Print first 500 chars for debugging
             
             # Basic extractive summarization (can be enhanced with LLM)
             sentences = self.text_processor.split_sentences(full_text)
@@ -1538,7 +1780,7 @@ class LLMOptimizer:
 
         except Exception as e:
             msg = f"Summary generation failed with a {type(e).__name__}: {e}"
-            self.logger.error(msg)
+            self.logger.exception(msg)
             return msg
     
     async def _create_optimal_chunks(self, structured_text: dict[str, Any]) -> list[LLMChunk]:
@@ -1912,23 +2154,28 @@ class LLMOptimizer:
         for i, chunk in enumerate(chunks):
             relationships = []
             
-            # Adjacent chunks (sequential relationship)
-            if i > 0:
-                relationships.append(chunks[i-1].chunk_id)
-            if i < len(chunks) - 1:
-                relationships.append(chunks[i+1].chunk_id)
+            try:
+                # Adjacent chunks (sequential relationship)
+                if i > 0:
+                    relationships.append(chunks[i-1].chunk_id)
+                if i < len(chunks) - 1:
+                    relationships.append(chunks[i+1].chunk_id)
             
-            # Same page chunks
-            same_page_chunks = [
-                c.chunk_id for c in chunks 
-                if c.source_page == chunk.source_page and c.chunk_id != chunk.chunk_id
-            ]
-            relationships.extend(same_page_chunks)
-            
+                # Same page chunks
+                same_page_chunks = [
+                    c.chunk_id for c in chunks 
+                    if c.source_page == chunk.source_page and c.chunk_id != chunk.chunk_id
+                ]
+                relationships.extend(same_page_chunks)
+            except (AttributeError, TypeError) as e:
+                raise TypeError(
+                    f"Invalid chunk structure: {e}. Ensure all chunks have valid chunk_id and source_page."
+                )
+
             chunk.relationships = list(set(relationships))
-        
+
         return chunks
-    
+
     async def _generate_embeddings(self, chunks: list[LLMChunk]) -> list[LLMChunk]:
         """
         Generate vector embeddings for all chunks using the configured sentence transformer model.
@@ -1990,7 +2237,8 @@ class LLMOptimizer:
                     
             except Exception as e:
                 self.logger.error(f"Failed to generate embeddings for batch {i//batch_size + 1}: {e}")
-                chunk.embedding = None
+                for chunk in batch_chunks:
+                    chunk.embedding = None
         
         return chunks
 
@@ -1999,7 +2247,7 @@ class LLMOptimizer:
         sentence: str, 
         *,
         openai_client: Any, 
-        classifications: set[str] = CLASSIFICATIONS,
+        classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
         retries: int = 3,
         timeout: int = 30
     ) -> ClassificationResult:
@@ -2027,7 +2275,7 @@ class LLMOptimizer:
                 - Each classification should be a non-empty string
                 - Classifications should be mutually exclusive when possible
 
-                Defaults to the predefined CLASSIFICATIONS set based on Wikipedia categories.
+                Defaults to the predefined WIKIPEDIA_CLASSIFICATIONS set based on Wikipedia categories.
                 These categories are:
                 - "Science and technology", "Engineering", "Industry", "Language",
                 - "Government", "Education", "Nature", "Mass media", "People",
@@ -2082,8 +2330,9 @@ class LLMOptimizer:
             >>> print(result)
             'Business'
         """
-        import math
-        
+        # Base log threshold for statistical significance (ln(0.05) ≈ -2.996)
+        LOG_THRESHOLD = math.log(0.05)
+
         # Input validation
         if not isinstance(sentence, str):
             raise TypeError("sentence must be a string")
@@ -2093,89 +2342,127 @@ class LLMOptimizer:
             raise ValueError("sentence must not exceed 512 characters")
         if sentence != sentence.strip():
             raise ValueError("sentence must not have leading or trailing whitespace")
-        
+
         if openai_client is None:
             raise ValueError("openai client is not set")
-        
+
         if not isinstance(classifications, set):
             raise TypeError("classifications must be a set")
         if not classifications:
             raise ValueError("categories is empty")
-        
-        # Base log threshold for statistical significance (ln(0.05) ≈ -2.996)
-        LOG_THRESHOLD = math.log(0.05)
-        
-        for attempt in range(retries + 1):
-            try:
-                # Create prompt with classifications
-                categories_list = list(classifications)
-                categories_str = ", ".join(categories_list)
-                prompt = f"Classify the following text into one of these categories: {categories_str}\n\nText: {sentence}\n\nCategory:"
-                
-                # Make OpenAI API call with timeout
-                response = await asyncio.wait_for(
-                    openai_client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=[
-                            {"role": "system", "content": "You are a text classifier. Respond with only the category name."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.0,
-                        max_tokens=50,
-                        logprobs=True,
-                        top_logprobs=20
-                    ),
-                    timeout=timeout
-                )
-                
-                # Parse response
-                if not response.choices:
-                    raise RuntimeError("response parsing fails: no choices in response")
-                
-                choice = response.choices[0]
-                if not choice.message.content:
-                    raise RuntimeError("response parsing fails: no content in response")
-                
-                category = choice.message.content.strip()
-                
-                # Extract confidence from log probabilities
-                confidence = 0.0
-                if choice.logprobs and choice.logprobs.content:
-                    content_logprobs = choice.logprobs.content[0]
-                    if content_logprobs.top_logprobs:
-                        # Find the log probability for the chosen category
-                        for logprob_item in content_logprobs.top_logprobs:
-                            if logprob_item.token.strip() == category:
-                                if logprob_item.logprob >= LOG_THRESHOLD:
-                                    confidence = math.exp(logprob_item.logprob)
-                                break
-                
-                # Check if confidence is below threshold
-                if confidence == 0.0 or math.log(confidence) < LOG_THRESHOLD:
-                    category = "unclassified"
-                    confidence = 0.0
-                
-                # Ensure category is in valid classifications or is "unclassified"
-                if category not in classifications and category != "unclassified":
-                    category = "unclassified"
-                    confidence = 0.0
-                
+        for cat in classifications:
+            if not isinstance(cat, str):
+                raise TypeError(f"'{cat}' in classifications. Must be string, got {type(cat).__name__}")
+            if not cat.strip():
+                raise ValueError("A classification category cannot be an empty/whitespace only string")
+
+        classification_results = await classify_with_llm(
+            text=sentence,
+            client=openai_client,
+            classifications=classifications,
+            model=self.llm_name,
+            retries=retries,
+            timeout=timeout,
+            threshold=LOG_THRESHOLD,
+            logger=self.logger,
+            llm_func=_classify_with_openai_llm
+        )
+        print(f"classification_results:\n{classification_results}")
+
+        match len(classification_results):
+            case 0: # No classifications returned, return unclassified.
                 return ClassificationResult(
                     entity=sentence,
-                    category=category,
-                    confidence=confidence
+                    category="unclassified",
+                    confidence=0.0
                 )
+            case 1:
+                return classification_results[0]
+            case _:
+                # If multiple results, return the one with highest confidence
+                classification_results.sort(key=lambda x: x.confidence, reverse=True)
+                return classification_results[0]
+
+
+#         sys_prompt = "You are a helpful assistant that classifies text into predefined categories."
+
+#         for attempt in range(retries + 1):
+#             try:
+#                 # Create prompt with classifications
+#                 categories_list = list(classifications)
+#                 categories_str = ", ".join(categories_list)
+#                 prompt = f"""
+# # Instructions
+# Classify the following text into one of these categories: {categories_str}
+
+# # Text
+# {sentence}
+
+# # Category:"""
+#                 # Make OpenAI API call with timeout
+#                 response = await asyncio.wait_for(
+#                     openai_client.chat.completions.create(
+#                         model="gpt-3.5-turbo",
+#                         messages=[
+#                             {"role": "system", "content": sys_prompt},
+#                             {"role": "user", "content": prompt}
+#                         ],
+#                         temperature=0.0,
+#                         max_tokens=50,
+#                         logprobs=True,
+#                         top_logprobs=20
+#                     ),
+#                     timeout=timeout
+#                 )
                 
-            except asyncio.TimeoutError:
-                if attempt == retries:
-                    raise
-                continue
-            except Exception as e:
-                if attempt == retries:
-                    raise RuntimeError(f"max retries exceeded: {str(e)}")
-                continue
-        
-        raise RuntimeError("max retries exceeded")
+#                 # Parse response
+#                 if not response.choices:
+#                     raise RuntimeError("response parsing fails: no choices in response")
+                
+#                 choice = response.choices[0]
+#                 if not choice.message.content:
+#                     raise RuntimeError("response parsing fails: no content in response")
+                
+#                 category = choice.message.content.strip()
+                
+#                 # Extract confidence from log probabilities
+#                 confidence = 0.0
+#                 if choice.logprobs and choice.logprobs.content:
+#                     content_logprobs = choice.logprobs.content[0]
+#                     if content_logprobs.top_logprobs:
+#                         # Find the log probability for the chosen category
+#                         for logprob_item in content_logprobs.top_logprobs:
+#                             if logprob_item.token.strip() == category:
+#                                 if logprob_item.logprob >= LOG_THRESHOLD:
+#                                     confidence = math.exp(logprob_item.logprob)
+#                                 break
+
+#                 # Check if confidence is below threshold
+#                 if confidence == 0.0 or math.log(confidence) < LOG_THRESHOLD:
+#                     category = "unclassified"
+
+#                 # Ensure category is in valid classifications or is "unclassified"
+#                 if category not in classifications and category != "unclassified":
+#                     category = "unclassified"
+#                     confidence = 0.0
+
+#                 return ClassificationResult(
+#                     entity=sentence,
+#                     category=category,
+#                     confidence=confidence
+#                 )
+                
+#             except asyncio.TimeoutError:
+#                 if attempt == retries:
+#                     raise
+#                 continue
+#             except Exception as e:
+#                 if attempt == retries:
+#                     raise RuntimeError(f"max retries exceeded: {str(e)}")
+#                 continue
+
+#         else:
+#             raise RuntimeError("max retries exceeded")
 
 
     async def _extract_key_entities(self, 

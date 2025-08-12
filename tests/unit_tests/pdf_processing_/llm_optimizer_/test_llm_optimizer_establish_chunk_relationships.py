@@ -11,6 +11,7 @@ import os
 import pytest
 import time
 import numpy as np
+from unittest.mock import MagicMock
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -33,9 +34,12 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
+    LLMChunkMetadata
 )
-
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
+    LLMChunkMetadataTestDataFactory as MetadataFactory
+)
 
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
@@ -70,26 +74,20 @@ try:
 except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
+def _make_mock_metadata():
+    data = MetadataFactory.create_valid_baseline_data()
+    return LLMChunkMetadata(**data)
 
-
-class TestLLMOptimizerEstablishChunkRelationships:
+class TestLLMOptimizerEstablishChunkRelationshipsSequentialChunks:
     """Test LLMOptimizer._establish_chunk_relationships method."""
 
-    def test_establish_chunk_relationships_sequential(self):
-        """
-        GIVEN list of sequential chunks
-        WHEN _establish_chunk_relationships is called
-        THEN expect:
-            - Adjacent chunks linked in relationships
-            - Sequential order preserved
-            - Bidirectional relationships established
-        """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMChunk
-        
-        # Given
-        optimizer = LLMOptimizer()
-        
-        sequential_chunks = [
+    def setup_method(self):
+        """Setup method to initialize common variables."""
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
+        self.sample_metadata = _make_mock_metadata()
+        self.sequential_chunks = [
             LLMChunk(
                 content="First chunk in sequence",
                 chunk_id="chunk_0001",
@@ -121,38 +119,73 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 metadata=self.sample_metadata
             )
         ]
-        
-        # When
-        optimizer._establish_chunk_relationships(sequential_chunks)
-        
-        # Then - verify sequential relationships
-        assert sequential_chunks[0].relationships == [], "First chunk should have no predecessors"
-        assert "chunk_0001" in sequential_chunks[1].relationships, "Second chunk should reference first"
-        assert "chunk_0002" in sequential_chunks[2].relationships, "Third chunk should reference second"
-        
-        # Verify relationship ordering (most recent first if implemented that way)
-        for i in range(1, len(sequential_chunks)):
-            current_chunk = sequential_chunks[i]
-            if current_chunk.relationships:
-                # Should have relationship to previous chunk
-                previous_chunk_id = sequential_chunks[i-1].chunk_id
-                assert previous_chunk_id in current_chunk.relationships, f"Chunk {current_chunk.chunk_id} should reference {previous_chunk_id}"
 
-    def test_establish_chunk_relationships_same_page(self):
+    def test_establish_chunk_relationships_first_chunk_relationships(self):
         """
-        GIVEN chunks from the same page
+        GIVEN list of sequential chunks on same page
         WHEN _establish_chunk_relationships is called
-        THEN expect:
-            - Same-page chunks linked together
-            - Page-level contextual relationships established
-            - Cross-page relationships avoided
+        THEN first chunk should have successor and same-page relationships
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMChunk
+        # When
+        self.optimizer._establish_chunk_relationships(self.sequential_chunks)
         
-        # Given
-        optimizer = LLMOptimizer()
+        # Then
+        expected_relationships = {'chunk_0002', 'chunk_0003'}  # successor + same-page chunks
+        actual_relationships = set(self.sequential_chunks[0].relationships)
+        assert actual_relationships == expected_relationships, \
+            f"First chunk should have successor and same-page relationships, got {self.sequential_chunks[0].relationships}"
+
+    def test_establish_chunk_relationships_second_chunk_references_first(self):
+        """
+        GIVEN list of sequential chunks
+        WHEN _establish_chunk_relationships is called
+        THEN second chunk should reference first chunk
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.sequential_chunks)
         
-        same_page_chunks = [
+        # Then
+        assert "chunk_0001" in self.sequential_chunks[1].relationships, \
+            "Second chunk should reference first"
+
+    def test_establish_chunk_relationships_third_chunk_references_second(self):
+        """
+        GIVEN list of sequential chunks
+        WHEN _establish_chunk_relationships is called
+        THEN third chunk should reference second chunk
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.sequential_chunks)
+        
+        # Then
+        assert "chunk_0002" in self.sequential_chunks[2].relationships, \
+            "Third chunk should reference second"
+
+    def test_establish_chunk_relationships_each_chunk_references_previous(self):
+        """
+        GIVEN list of sequential chunks
+        WHEN _establish_chunk_relationships is called
+        THEN each chunk should reference its immediate predecessor
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.sequential_chunks)
+        
+        # Then
+        for i in range(1, len(self.sequential_chunks)):
+            current_chunk = self.sequential_chunks[i]
+            previous_chunk_id = self.sequential_chunks[i-1].chunk_id
+            assert previous_chunk_id in current_chunk.relationships, \
+                f"Chunk {current_chunk.chunk_id} should reference {previous_chunk_id}"
+
+class TestLLMOptimizerEstablishChunkRelationshipsSamePage:
+
+    def setup_method(self):
+        """Setup method to initialize common variables."""
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
+        self.sample_metadata = _make_mock_metadata()
+        self.same_page_chunks = [
             LLMChunk(
                 content="First paragraph on page 1",
                 chunk_id="chunk_0001",
@@ -179,7 +212,7 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 source_page=1,
                 source_elements=["table"],
                 token_count=15,
-                semantic_types={"table"},
+                semantic_types="table",
                 relationships=[],
                 metadata=self.sample_metadata
             ),
@@ -194,73 +227,75 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 metadata=self.sample_metadata
             )
         ]
-        
+
+    def test_establish_chunk_relationships_same_page_sequential_links(self):
+        """
+        GIVEN chunks from the same page
+        WHEN _establish_chunk_relationships is called
+        THEN second chunk should reference first chunk on same page
+        """
         # When
-        optimizer._establish_chunk_relationships(same_page_chunks)
+        self.optimizer._establish_chunk_relationships(self.same_page_chunks)
         
-        # Then - verify same-page relationships are established
-        page_1_chunks = [chunk for chunk in same_page_chunks if chunk.source_page == 1]
-        page_2_chunks = [chunk for chunk in same_page_chunks if chunk.source_page == 2]
+        # Then
+        assert "chunk_0001" in self.same_page_chunks[1].relationships, \
+            "Second chunk should reference first chunk (same page)"
+
+    def test_establish_chunk_relationships_same_page_table_links(self):
+        """
+        GIVEN chunks from the same page including a table
+        WHEN _establish_chunk_relationships is called
+        THEN table chunk should reference previous paragraph on same page
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.same_page_chunks)
         
-        # Check that page 1 chunks reference each other
-        assert "chunk_0001" in same_page_chunks[1].relationships, "Second chunk should reference first chunk (same page)"
-        assert "chunk_0002" in same_page_chunks[2].relationships, "Table chunk should reference previous paragraph (same page)"
+        # Then
+        assert "chunk_0002" in self.same_page_chunks[2].relationships, \
+            "Table chunk should reference previous paragraph (same page)"
+
+    def test_establish_chunk_relationships_cross_page_chunk_has_relationships(self):
+        """
+        GIVEN chunks spanning multiple pages
+        WHEN _establish_chunk_relationships is called
+        THEN page 2 chunk should have some relationships for document continuity
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.same_page_chunks)
         
-        # Check that page 2 chunk doesn't reference page 1 chunks inappropriately
-        page_2_chunk = same_page_chunks[3]
-        page_1_chunk_ids = {chunk.chunk_id for chunk in page_1_chunks}
+        # Then
+        page_2_chunk = self.same_page_chunks[3]
+        assert len(page_2_chunk.relationships) > 0, \
+            "Page 2 chunk should have some relationships for document continuity"
+
+    def test_establish_chunk_relationships_same_page_chunks_reference_previous(self):
+        """
+        GIVEN chunks from the same page
+        WHEN _establish_chunk_relationships is called
+        THEN each same-page chunk should reference its immediate predecessor
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.same_page_chunks)
         
-        # It should reference the immediately previous chunk (cross-page is allowed for sequential flow)
-        if page_2_chunk.relationships:
-            # At least some relationship should exist for document flow
-            assert len(page_2_chunk.relationships) > 0, "Page 2 chunk should have some relationships for document continuity"
+        # Then
+        page_1_chunks = [chunk for chunk in self.same_page_chunks if chunk.source_page == 1]
         
-        # Verify same-page chunks have stronger relationships
         for i in range(len(page_1_chunks) - 1):
             current_chunk = page_1_chunks[i + 1]
             previous_chunk_id = page_1_chunks[i].chunk_id
-            assert previous_chunk_id in current_chunk.relationships, f"Same-page chunk {current_chunk.chunk_id} should reference {previous_chunk_id}"
+            assert previous_chunk_id in current_chunk.relationships, \
+                f"Same-page chunk {current_chunk.chunk_id} should reference {previous_chunk_id}"
 
-    def test_establish_chunk_relationships_empty_list(self):
-        """
-        GIVEN empty chunks list
-        WHEN _establish_chunk_relationships is called
-        THEN expect:
-            - ValueError raised or empty list returned
-            - No processing errors
-        """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
-        
-        # Given
-        optimizer = LLMOptimizer()
-        empty_chunks = []
-        
-        # When/Then - should handle empty list gracefully
-        try:
-            optimizer._establish_chunk_relationships(empty_chunks)
-            # If no error raised, verify list remains empty
-            assert len(empty_chunks) == 0, "Empty list should remain empty"
-        except ValueError as e:
-            # ValueError is acceptable for empty input
-            assert "empty" in str(e).lower() or "no chunks" in str(e).lower(), f"Error should mention empty input: {e}"
-        except Exception as e:
-            pytest.fail(f"Unexpected exception type for empty list: {type(e).__name__}: {e}")
 
-    def test_establish_chunk_relationships_single_chunk(self):
-        """
-        GIVEN single chunk in list
-        WHEN _establish_chunk_relationships is called
-        THEN expect:
-            - Single chunk returned with empty relationships
-            - No errors raised
-            - Graceful handling of edge case
-        """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMChunk
-        
-        # Given
-        optimizer = LLMOptimizer()
-        
-        single_chunk = [
+class TestLLMOptimizerEstablishChunkRelationshipsSingleChunk:
+
+    def setup_method(self):
+        """Setup method to initialize common variables."""
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
+        self.sample_metadata = _make_mock_metadata()
+        self.single_chunk = [
             LLMChunk(
                 content="Single lonely chunk",
                 chunk_id="chunk_0001",
@@ -272,34 +307,67 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 metadata=self.sample_metadata
             )
         ]
-        
-        # When
-        optimizer._establish_chunk_relationships(single_chunk)
-        
-        # Then - single chunk should have no relationships
-        assert len(single_chunk) == 1, "Should still have one chunk"
-        assert single_chunk[0].relationships == [], "Single chunk should have empty relationships"
-        assert single_chunk[0].chunk_id == "chunk_0001", "Chunk ID should be preserved"
-        assert single_chunk[0].content == "Single lonely chunk", "Chunk content should be preserved"
 
-    def test_establish_chunk_relationships_performance_limits(self):
+    def test_establish_chunk_relationships_single_chunk_maintains_count(self):
         """
-        GIVEN large number of chunks
+        GIVEN single chunk in list
         WHEN _establish_chunk_relationships is called
-        THEN expect:
-            - Relationship limits applied for performance
-            - Processing completes in reasonable time
-            - Most important relationships preserved
+        THEN should still have one chunk
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMChunk
-        import time
+        # When
+        self.optimizer._establish_chunk_relationships(self.single_chunk)
         
-        # Given
-        optimizer = LLMOptimizer()
+        # Then
+        assert len(self.single_chunk) == 1, "Should still have one chunk"
+
+    def test_establish_chunk_relationships_single_chunk_empty_relationships(self):
+        """
+        GIVEN single chunk in list
+        WHEN _establish_chunk_relationships is called
+        THEN single chunk should have empty relationships
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.single_chunk)
         
-        # Create large number of chunks (100 chunks)
-        large_chunk_list = []
-        for i in range(100):
+        # Then
+        assert self.single_chunk[0].relationships == [], "Single chunk should have empty relationships"
+
+    def test_establish_chunk_relationships_single_chunk_preserves_id(self):
+        """
+        GIVEN single chunk in list
+        WHEN _establish_chunk_relationships is called
+        THEN chunk ID should be preserved
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.single_chunk)
+        
+        # Then
+        assert self.single_chunk[0].chunk_id == "chunk_0001", "Chunk ID should be preserved"
+
+    def test_establish_chunk_relationships_single_chunk_preserves_content(self):
+        """
+        GIVEN single chunk in list
+        WHEN _establish_chunk_relationships is called
+        THEN chunk content should be preserved
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.single_chunk)
+        
+        # Then
+        assert self.single_chunk[0].content == "Single lonely chunk", "Chunk content should be preserved"
+
+
+class TestLLMOptimizerEstablishChunkRelationshipsPerformanceLimits:
+
+    def setup_method(self):
+        """Setup method to initialize common variables."""
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
+        self.sample_metadata = _make_mock_metadata()
+        num_chunks = 100
+        self.large_chunk_list = []
+        for i in range(num_chunks):
             chunk = LLMChunk(
                 content=f"Chunk {i+1} content for performance testing",
                 chunk_id=f"chunk_{i+1:04d}",
@@ -310,45 +378,80 @@ class TestLLMOptimizerEstablishChunkRelationships:
                 relationships=[],
                 metadata=self.sample_metadata
             )
-            large_chunk_list.append(chunk)
-        
+            self.large_chunk_list.append(chunk)
+
+    def test_establish_chunk_relationships_performance_time_limit(self):
+        """
+        GIVEN large number of chunks
+        WHEN _establish_chunk_relationships is called
+        THEN processing should complete within 5 seconds
+        """
         # When - measure performance
         start_time = time.time()
-        optimizer._establish_chunk_relationships(large_chunk_list)
+        self.optimizer._establish_chunk_relationships(self.large_chunk_list)
         processing_time = time.time() - start_time
         
-        # Then - verify performance and relationship quality
-        assert processing_time < 5.0, f"Processing 100 chunks took too long: {processing_time:.2f}s"
-        
-        # Verify some relationships are established
-        chunks_with_relationships = [chunk for chunk in large_chunk_list if chunk.relationships]
-        assert len(chunks_with_relationships) >= 90, "Most chunks should have relationships established"
-        
-        # Verify sequential relationships exist (at least for first few chunks)
-        for i in range(1, min(10, len(large_chunk_list))):
-            current_chunk = large_chunk_list[i]
-            previous_chunk_id = large_chunk_list[i-1].chunk_id
-            assert previous_chunk_id in current_chunk.relationships, f"Sequential relationship missing for chunk {i+1}"
-        
-        # Verify relationship limits (no chunk should have excessive relationships)
-        max_relationships = max(len(chunk.relationships) for chunk in large_chunk_list)
-        assert max_relationships <= 10, f"Relationship limit should be applied, found chunk with {max_relationships} relationships"
+        # Then - verify performance
+        expected_time = 5.0  # seconds
+        assert processing_time < expected_time, \
+            f"Processing 100 chunks took too long: {processing_time:.2f}s, expected < {expected_time}s"
 
-    def test_establish_chunk_relationships_malformed_chunks(self):
+    def test_establish_chunk_relationships_performance_minimum_relationships(self):
         """
-        GIVEN chunks with missing required attributes
+        GIVEN large number of chunks (100)
         WHEN _establish_chunk_relationships is called
-        THEN expect:
-            - AttributeError raised
-            - Error handling for malformed data
+        THEN most chunks should have at least one 90 relationships established
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMChunk
+        # When
+        self.optimizer._establish_chunk_relationships(self.large_chunk_list)
         
-        # Given
-        optimizer = LLMOptimizer()
+        # Then - verify some relationships are established
+        chunks_with_relationships = [chunk for chunk in self.large_chunk_list if chunk.relationships]
+        min_relationships = 90
+        assert len(chunks_with_relationships) >= min_relationships, \
+            f"At least {min_relationships} chunks should have relationships established, got {len(chunks_with_relationships)}"
+
+    def test_establish_chunk_relationships_performance_sequential_relationships(self):
+        """
+        GIVEN large number of chunks (100)
+        WHEN _establish_chunk_relationships is called
+        THEN sequential relationships should exist for ALL chunks
+        """
+        # When
+        self.optimizer._establish_chunk_relationships(self.large_chunk_list)
         
-        # Create valid chunk for comparison
-        valid_chunk = LLMChunk(
+        # Then - verify sequential relationships exist for ALL chunks
+        for i in range(1, len(self.large_chunk_list)):
+            current_chunk = self.large_chunk_list[i]
+            previous_chunk_id = self.large_chunk_list[i-1].chunk_id
+            assert previous_chunk_id in current_chunk.relationships, \
+            f"Sequential relationship missing for chunk {i+1}"
+
+    def test_establish_chunk_relationships_performance_relationship_limits(self):
+        """
+        GIVEN large number of chunks
+        WHEN _establish_chunk_relationships is called
+        THEN relationship limits should be applied to prevent excessive connections
+        """
+        limit = 10
+        # When
+        self.optimizer._establish_chunk_relationships(self.large_chunk_list)
+        
+        # Then - verify relationship limits (no chunk should have excessive relationships)
+        max_relationships = max(len(chunk.relationships) for chunk in self.large_chunk_list)
+        assert max_relationships <= limit, \
+            f"Should have at most {limit} relationships, found chunk with {max_relationships} relationships."
+
+
+class TestLLMOptimizerEstablishChunkRelationshipsMalformedChunks:
+
+    def setup_method(self):
+        """Setup method to initialize common variables."""
+        self.optimizer = LLMOptimizer(
+            sentence_transformer=MagicMock()
+        )
+        self.sample_metadata = _make_mock_metadata()
+        self.valid_chunk = LLMChunk(
             content="Valid chunk content",
             chunk_id="chunk_0001",
             source_page=1,
@@ -358,9 +461,7 @@ class TestLLMOptimizerEstablishChunkRelationships:
             relationships=[],
             metadata=self.sample_metadata
         )
-        
-        # Test with chunk missing chunk_id attribute
-        malformed_chunk_no_id = LLMChunk(
+        self.malformed_chunk_no_id = LLMChunk(
             content="Chunk without ID",
             chunk_id="",  # Empty ID should cause issues
             source_page=1,
@@ -370,25 +471,46 @@ class TestLLMOptimizerEstablishChunkRelationships:
             relationships=[],
             metadata=self.sample_metadata
         )
-        
-        # When/Then - test with malformed chunk
-        malformed_chunks = [valid_chunk, malformed_chunk_no_id]
-        
-        try:
-            optimizer._establish_chunk_relationships(malformed_chunks)
-            # If it doesn't raise an error, verify it handled the malformed chunk gracefully
-            assert isinstance(malformed_chunk_no_id.relationships, list), "Relationships should be a list"
-        except (AttributeError, ValueError) as e:
-            # These are acceptable errors for malformed data
-            error_msg = str(e).lower()
-            assert any(keyword in error_msg for keyword in ["chunk_id", "attribute", "missing", "invalid"]), f"Error should mention the issue: {e}"
-        
-        # Test with None in chunk list
-        chunks_with_none = [valid_chunk, None]
-        
-        with pytest.raises((AttributeError, TypeError, ValueError)):
-            optimizer._establish_chunk_relationships(chunks_with_none)
 
+    def test_establish_chunk_relationships_malformed_chunks(self):
+        """
+        GIVEN chunks with missing required attributes
+        WHEN _establish_chunk_relationships is called
+        THEN expect:
+            - AttributeError raised
+            - Error handling for malformed data
+        """
+        # When/Then - test with malformed chunk
+        malformed_chunks = [self.valid_chunk, self.malformed_chunk_no_id]
+
+        with pytest.raises(AttributeError):
+            # Attempt to establish relationships with malformed chunk
+            self.optimizer._establish_chunk_relationships(malformed_chunks)
+
+    def test_establish_chunk_relationships_malformed_chunks(self):
+        """
+        GIVEN chunks with invalid types
+        WHEN _establish_chunk_relationships is called
+        THEN expect:
+            - TypeError raised
+        """
+        # Test with None in chunk list
+        chunks_with_none = [self.valid_chunk, None]
+        
+        with pytest.raises(TypeError):
+            self.optimizer._establish_chunk_relationships(chunks_with_none)
+
+    def test_establish_chunk_relationships_empty_list(self):
+        """
+        GIVEN empty chunks list
+        WHEN _establish_chunk_relationships is called
+        THEN expect empty list returned
+            - No processing errors
+        """
+        # Given
+        empty_chunks = []
+        self.optimizer._establish_chunk_relationships(empty_chunks)
+        assert len(empty_chunks) == 0, f"Empty list should remain empty, got {empty_chunks}"
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

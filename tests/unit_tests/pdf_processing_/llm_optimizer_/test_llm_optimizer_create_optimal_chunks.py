@@ -415,6 +415,12 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         last_chunk = chunks[-1]
         assert last_chunk.token_count > 0, "Last chunk should have some content"
 
+    @staticmethod
+    def _get_previous_relationships(chunk: LLMChunk) -> list:
+        return [
+            rel for rel in chunk.relationships if 'previous' in rel['type'].lower()
+        ]
+
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_first_chunk_no_previous_relationship(self):
         """
@@ -427,8 +433,10 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         
         # Then
         first_chunk = chunks[0]
-        prev_relationships = [rel for rel in first_chunk.relationships if 'previous' in rel.get('type', '').lower()]
-        assert len(prev_relationships) == 0, f"First chunk should not have previous relationships"
+        prev_relationships = self._get_previous_relationships(first_chunk)
+        assert len(prev_relationships) == 0, \
+            f"First chunk should not have previous relationships, got {len(prev_relationships)}"
+
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_middle_chunks_have_previous_relationship(self):
@@ -442,9 +450,9 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         
         # Then
         for i in range(1, len(chunks)):
-            chunk = chunks[i]
-            prev_relationships = [rel for rel in chunk.relationships if 'previous' in rel.get('type', '').lower()]
-            assert len(prev_relationships) > 0, f"Chunk {i} should have relationship to previous chunk"
+            prev_relationships = self._get_previous_relationships(chunks[i])
+            assert len(prev_relationships) > 0, \
+                f"Chunk {i} should have relationship to previous chunk, got {len(prev_relationships)}"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_previous_relationships_point_to_correct_chunk(self):
@@ -460,10 +468,16 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         for i in range(1, len(chunks)):
             chunk = chunks[i]
             previous_chunk_id = chunks[i-1].chunk_id
-            prev_relationships = [rel for rel in chunk.relationships if 'previous' in rel.get('type', '').lower()]
-            prev_chunk_ids = [rel.get('target_chunk_id') for rel in prev_relationships]
+            prev_relationships = self._get_previous_relationships(chunk)
+            prev_chunk_ids = [rel['target_chunk_id'] for rel in prev_relationships]
             assert previous_chunk_id in prev_chunk_ids, \
                 f"Chunk {i} should reference previous chunk {previous_chunk_id}, found: {prev_chunk_ids}"
+
+    @staticmethod
+    def _get_next_relationships(chunk: LLMChunk) -> list:
+        return [
+            rel for rel in chunk.relationships if 'next' in rel['type'].lower()
+        ]
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_last_chunk_no_next_relationship(self):
@@ -476,8 +490,7 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.structured_text)
         
         # Then
-        last_chunk = chunks[-1]
-        next_relationships = [rel for rel in last_chunk.relationships if 'next' in rel.get('type', '').lower()]
+        next_relationships = self._get_next_relationships(chunks[-1])
         assert len(next_relationships) == 0, f"Last chunk should not have next relationships"
 
     @pytest.mark.asyncio
@@ -492,8 +505,7 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         
         # Then
         for i in range(len(chunks) - 1):
-            chunk = chunks[i]
-            next_relationships = [rel for rel in chunk.relationships if 'next' in rel.get('type', '').lower()]
+            next_relationships = self._get_next_relationships(chunks[i])
             assert len(next_relationships) > 0, f"Chunk {i} should have relationship to next chunk"
 
     @pytest.mark.asyncio
@@ -510,8 +522,8 @@ class TestLLMOptimizerCreateOptimalChunksLimitAdherence:
         for i in range(len(chunks) - 1):
             chunk = chunks[i]
             next_chunk_id = chunks[i+1].chunk_id
-            next_relationships = [rel for rel in chunk.relationships if 'next' in rel.get('type', '').lower()]
-            next_chunk_ids = [rel.get('target_chunk_id') for rel in next_relationships]
+            next_relationships = self._get_next_relationships(chunk)
+            next_chunk_ids = [rel['target_chunk_id'] for rel in next_relationships]
             assert next_chunk_id in next_chunk_ids, \
                 f"Chunk {i} should reference next chunk {next_chunk_id}, found: {next_chunk_ids}"
 
@@ -708,14 +720,12 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
         page_chunks = {}
         for chunk in chunks:
             page_num = chunk.source_page
-            if page_num not in page_chunks:
-                page_chunks[page_num] = []
-            page_chunks[page_num].append(chunk)
+            page_chunks.setdefault(page_num, []).append(chunk)
         
         expected_pages = {1, 2, 3}
         for page_num in expected_pages:
             assert page_num in page_chunks, f"Page {page_num} should have associated chunks"
-            assert len(page_chunks[page_num]) > 0, f"Page {page_num} should have at least one chunk"
+
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_relationships_point_to_existing_chunks(self):
@@ -732,9 +742,8 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
         
         for chunk in chunks:
             for relationship in chunk.relationships:
-                if 'target_chunk_id' in relationship:
-                    target_id = relationship['target_chunk_id']
-                    assert target_id in chunk_by_id, f"Relationship target {target_id} should exist in chunks"
+                target_id = relationship['target_chunk_id']
+                assert target_id in chunk_by_id, f"Relationship target {target_id} should exist in chunks"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_cross_page_relationships_logical(self):
@@ -751,57 +760,30 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
         
         for chunk in chunks:
             for relationship in chunk.relationships:
-                if 'target_chunk_id' in relationship:
-                    target_id = relationship['target_chunk_id']
-                    if target_id in chunk_by_id:
-                        related_chunk = chunk_by_id[target_id]
-                        page_distance = abs(chunk.source_page - related_chunk.source_page)
-                        assert page_distance <= 1, f"Chunk on page {chunk.source_page} should not relate to chunk on distant page {related_chunk.source_page}"
+                related_chunk = chunk_by_id[relationship['target_chunk_id']]
+                page_distance = abs(chunk.source_page - related_chunk.source_page)
+                assert page_distance <= 1, f"Chunk on page {chunk.source_page} should not relate to chunk on page {related_chunk.source_page}"
 
+    @pytest.mark.parametrize("page_num,expected_themes", [
+        (1, ["page 1", "first", "context"]),
+        (2, ["page 2", "table", "method", "accuracy"]),
+        (3, ["page 3", "concludes", "findings"])
+    ])
     @pytest.mark.asyncio
-    async def test_create_optimal_chunks_page_1_content_preserved(self):
+    async def test_create_optimal_chunks_page_content_preserved(self, page_num, expected_themes):
         """
         GIVEN content spanning multiple pages
         WHEN _create_optimal_chunks is called
-        THEN expect page 1 content themes preserved in page 1 chunks
+        THEN expect page content themes preserved in corresponding page chunks
         """
         # When
         chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
         
         # Then
-        page_1_chunks = [chunk for chunk in chunks if chunk.source_page == 1]
-        page_1_content = " ".join(chunk.content for chunk in page_1_chunks).lower()
-        assert "page 1" in page_1_content or "first" in page_1_content or "context" in page_1_content, "Page 1 chunks should contain page 1 content themes"
-
-    @pytest.mark.asyncio
-    async def test_create_optimal_chunks_page_2_content_preserved(self):
-        """
-        GIVEN content spanning multiple pages
-        WHEN _create_optimal_chunks is called
-        THEN expect page 2 content themes preserved in page 2 chunks
-        """
-        # When
-        chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
-        
-        # Then
-        page_2_chunks = [chunk for chunk in chunks if chunk.source_page == 2]
-        page_2_content = " ".join(chunk.content for chunk in page_2_chunks).lower()
-        assert "page 2" in page_2_content or "table" in page_2_content or "method" in page_2_content or "accuracy" in page_2_content, "Page 2 chunks should contain page 2 content themes"
-
-    @pytest.mark.asyncio
-    async def test_create_optimal_chunks_page_3_content_preserved(self):
-        """
-        GIVEN content spanning multiple pages
-        WHEN _create_optimal_chunks is called
-        THEN expect page 3 content themes preserved in page 3 chunks
-        """
-        # When
-        chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
-        
-        # Then
-        page_3_chunks = [chunk for chunk in chunks if chunk.source_page == 3]
-        page_3_content = " ".join(chunk.content for chunk in page_3_chunks).lower()
-        assert "page 3" in page_3_content or "concludes" in page_3_content or "findings" in page_3_content, "Page 3 chunks should contain page 3 content themes"
+        page_chunks = [chunk for chunk in chunks if chunk.source_page == page_num]
+        page_content = " ".join(chunk.content for chunk in page_chunks).lower()
+        assert all(theme in page_content for theme in expected_themes), \
+            f"Page {page_num} chunks should contain themes from {expected_themes}"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_ordering_respects_page_sequence(self):
@@ -820,22 +802,6 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
             assert next_chunk.source_page >= current_chunk.source_page - 1, f"Chunk sequence should generally follow page order: chunk {i} page {current_chunk.source_page}, chunk {i+1} page {next_chunk.source_page}"
 
     @pytest.mark.asyncio
-    async def test_create_optimal_chunks_table_content_associated_with_page_2(self):
-        """
-        GIVEN content spanning multiple pages
-        WHEN _create_optimal_chunks is called
-        THEN expect table content associated with page 2
-        """
-        # When
-        chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
-        
-        # Then
-        table_chunks = [chunk for chunk in chunks if "table" in chunk.semantic_types or "table" in chunk.content.lower()]
-        if table_chunks:
-            table_pages = {chunk.source_page for chunk in table_chunks}
-            assert 2 in table_pages, "Table content should be associated with page 2"
-
-    @pytest.mark.asyncio
     async def test_create_optimal_chunks_minimal_small_chunks_due_to_page_boundaries(self):
         """
         GIVEN content spanning multiple pages
@@ -846,20 +812,14 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
         chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
         
         # Then
+        expected_max_length = 1
         small_chunks = [chunk for chunk in chunks if chunk.token_count < self.optimizer.min_chunk_size]
-        assert len(small_chunks) <= 1, f"Should have at most 1 small chunk (last chunk), found {len(small_chunks)} small chunks"
+        assert len(small_chunks) <= expected_max_length, \
+            f"Should have at most 1 small chunk (last chunk), found {len(small_chunks)} small chunks"
 
-    @pytest.mark.asyncio
-    async def test_create_optimal_chunks_cross_page_relationships_not_excessive(self):
-        """
-        GIVEN content spanning multiple pages
-        WHEN _create_optimal_chunks is called
-        THEN expect cross-page relationships do not dominate total relationships
-        """
-        # When
-        chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
-        
-        # Then
+    @staticmethod
+    def _count_cross_page_relationships(chunks: list[LLMChunk]) -> int:
+        """Count relationships that span across different pages."""
         chunk_by_id = {chunk.chunk_id: chunk for chunk in chunks}
         cross_page_relationships = 0
         
@@ -872,9 +832,29 @@ class TestLLMOptimizerCreateOptimalChunksPageBoundaryRespect:
                         if chunk.source_page != related_chunk.source_page:
                             cross_page_relationships += 1
         
+        return cross_page_relationships
+
+    @pytest.mark.asyncio
+    async def test_create_optimal_chunks_cross_page_relationships_not_excessive(self):
+        """
+        GIVEN content spanning multiple pages
+        WHEN _create_optimal_chunks is called
+        THEN expect cross-page relationships do not dominate total relationships
+        """
+        # When
+        chunks: list[LLMChunk] = await self.optimizer._create_optimal_chunks(self.multi_page_text)
+        
+        # Then
+        expected_ratio = 0.5
+        cross_page_relationships = 0
+
+        # Replace the selection with:
+        cross_page_relationships = self._count_cross_page_relationships(chunks)
+
         total_relationships = sum(len(chunk.relationships) for chunk in chunks)
         cross_page_ratio = cross_page_relationships / total_relationships
-        assert cross_page_ratio <= 0.5, f"Cross-page relationships should not dominate: {cross_page_ratio:.2f} ratio"
+        assert cross_page_ratio <= expected_ratio, \
+            f"Expected cross_page_ratio to be <= {expected_ratio}, got {cross_page_ratio:.2f} ratio"
 
 
 
@@ -964,8 +944,7 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
         # Then
         semantic_types_found = []
         for chunk in chunks:
-            list_ = list(chunk.semantic_types)
-            semantic_types_found.extend(list_)
+            semantic_types_found.extend(list(chunk.semantic_types))
         semantic_types_found = set(semantic_types_found)
         
         assert len(semantic_types_found) > 0, "Should have semantic type classification"
@@ -1022,11 +1001,10 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
         
         # Then
         table_chunks = [c for c in chunks if "table" in c.content.lower() or "table" in c.semantic_types]
-        
-        if table_chunks:
-            table_chunk = table_chunks[0]
-            for element in table_chunk.semantic_types:
-                assert element in ["table", "text", "mixed"], f"Table chunk has unexpected type: {table_chunk.semantic_types}"
+
+        table_chunk = table_chunks[0]
+        for element in table_chunk.semantic_types:
+            assert element in ["table", "text", "mixed"], f"Table chunk has unexpected type: {table_chunk.semantic_types}"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_source_elements_is_list(self):

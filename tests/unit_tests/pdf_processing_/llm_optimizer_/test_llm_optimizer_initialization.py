@@ -75,85 +75,171 @@ except ImportError as e:
 class TestLLMOptimizerInitialization:
     """Test LLMOptimizer initialization and configuration validation."""
 
-    def test_init_with_default_parameters(self):
+    @pytest.mark.parametrize("attribute_name", [
+        "model_name",
+        "tokenizer_name", 
+        "max_chunk_size",
+        "chunk_overlap",
+        "min_chunk_size",
+        "embedding_model",
+        "tokenizer",
+        "text_processor",
+        "chunk_optimizer"
+    ])
+    def test_init_has_required_attributes(self, attribute_name):
         """
         GIVEN default initialization parameters
         WHEN LLMOptimizer is initialized without arguments
-        THEN expect:
-            - Instance created successfully
-            - Default model_name set to "sentence-transformers/all-MiniLM-L6-v2"
-            - Default tokenizer_name set to "gpt-3.5-turbo"
-            - Default max_chunk_size set to 2048
-            - Default chunk_overlap set to 200
-            - Default min_chunk_size set to 100
-            - All attributes properly initialized
+        THEN expect all required attributes to be present
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
-        
-        # When - create optimizer with default parameters
         optimizer = LLMOptimizer()
-        
-        # Then - verify default parameters
-        assert hasattr(optimizer, 'model_name'), "Optimizer should have model_name attribute"
-        assert hasattr(optimizer, 'tokenizer_name'), "Optimizer should have tokenizer_name attribute"
-        assert hasattr(optimizer, 'max_chunk_size'), "Optimizer should have max_chunk_size attribute"
-        assert hasattr(optimizer, 'chunk_overlap'), "Optimizer should have chunk_overlap attribute"
-        assert hasattr(optimizer, 'min_chunk_size'), "Optimizer should have min_chunk_size attribute"
-        
-        # Verify default values
-        assert optimizer.model_name == "sentence-transformers/all-MiniLM-L6-v2", "Default model_name incorrect"
-        assert optimizer.tokenizer_name == "gpt-3.5-turbo", "Default tokenizer_name incorrect"
-        assert optimizer.max_chunk_size == 2048, "Default max_chunk_size incorrect"
-        assert optimizer.chunk_overlap == 200, "Default chunk_overlap incorrect"
-        assert optimizer.min_chunk_size == 100, "Default min_chunk_size incorrect"
-        
-        # Verify additional attributes are initialized
-        assert hasattr(optimizer, 'embedding_model'), "Optimizer should have embedding_model attribute"
-        assert hasattr(optimizer, 'tokenizer'), "Optimizer should have tokenizer attribute"
-        assert hasattr(optimizer, 'text_processor'), "Optimizer should have text_processor attribute"
-        assert hasattr(optimizer, 'chunk_optimizer'), "Optimizer should have chunk_optimizer attribute"
+        assert hasattr(optimizer, attribute_name), f"Optimizer should have {attribute_name} attribute"
+
+    @pytest.mark.parametrize("attribute_name,expected_value", [
+        ("model_name", "sentence-transformers/all-MiniLM-L6-v2"),
+        ("tokenizer_name", "gpt-3.5-turbo"),
+        ("max_chunk_size", 2048),
+        ("chunk_overlap", 200),
+        ("min_chunk_size", 100)
+    ])
+    def test_init_default_parameter_values(self, attribute_name, expected_value):
+        """
+        GIVEN default initialization parameters
+        WHEN LLMOptimizer is initialized without arguments
+        THEN expect default parameter values to be set correctly
+        """
+        optimizer = LLMOptimizer()
+        actual_value = getattr(optimizer, attribute_name)
+        assert actual_value == expected_value, \
+            f"Default {attribute_name} should be {expected_value}, got {actual_value}"
+
+    def test_init_creates_instance_successfully(self):
+        """
+        GIVEN default initialization parameters
+        WHEN LLMOptimizer is initialized without arguments
+        THEN expect instance to be created successfully
+        """
+        optimizer = LLMOptimizer()
+        assert isinstance(optimizer, LLMOptimizer), "Should create LLMOptimizer instance successfully"
 
 class TestLLMOptimizerGenerateDocumentSummary:
 
+    def setup_method(self):
+        """Setup LLMOptimizer instance for each test method."""
+        self.optimizer = LLMOptimizer()
+        self.empty_structured_text = {}
+        self.empty_pages_text = {"pages": []}
+        self.no_content_text = {
+            "pages": [
+                {"page_number": 1, "elements": []},
+                {"page_number": 2, "elements": []}
+            ]
+        }
+
     @pytest.mark.asyncio
-    async def test_generate_document_summary_empty_content(self):
+    async def test_generate_document_summary_completely_empty_content(self):
         """
-        GIVEN structured_text with no extractable text
+        GIVEN completely empty structured_text
         WHEN _generate_document_summary is called
-        THEN expect:
-            - Summary generation message indicating failure
-            - No processing errors
+        THEN expect summary generation failure message
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
-        
         # Given
-        optimizer = LLMOptimizer()
-        
-        # Test completely empty structured text
         empty_structured_text = {}
         
-        # When/Then - should handle empty content gracefully
-
-        summary = await optimizer._generate_document_summary(empty_structured_text)
+        # When
+        summary = await self.optimizer._generate_document_summary(empty_structured_text)
+        
+        # Then
         assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
+
+    @pytest.mark.asyncio
+    async def test_generate_document_summary_completely_empty_content_shows_keyerror(self):
+        """
+        GIVEN completely empty structured_text
+        WHEN _generate_document_summary is called
+        THEN expect keyerror indication in response
+        """
+        # Given
+        empty_structured_text = {}
+        
+        # When
+        summary = await self.optimizer._generate_document_summary(empty_structured_text)
+        
+        # Then
         assert "keyerror" in summary.lower(), "Should indicate the error is due to missing keys"
 
-        # Test structured text with empty pages
+    @pytest.mark.asyncio
+    async def test_generate_document_summary_empty_pages_list(self):
+        """
+        GIVEN structured_text with empty pages list
+        WHEN _generate_document_summary is called
+        THEN expect summary generation failure message
+        """
+        # Given
         empty_pages_text = {"pages": []}
         
-        summary = await optimizer._generate_document_summary(empty_pages_text)
+        # When
+        summary = await self.optimizer._generate_document_summary(empty_pages_text)
+        
+        # Then
         assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
+
+    @pytest.mark.asyncio
+    async def test_generate_document_summary_empty_pages_list_shows_valueerror(self):
+        """
+        GIVEN structured_text with empty pages list
+        WHEN _generate_document_summary is called
+        THEN expect valueerror indication in response
+        """
+        # Given
+        empty_pages_text = {"pages": []}
+        
+        # When
+        summary = await self.optimizer._generate_document_summary(empty_pages_text)
+        
+        # Then
         assert "valueerror" in summary.lower(), f"Should indicate the error is due to finding no valid text, got {summary}"
 
-        # Test structured text with pages but no text content
+    @pytest.mark.asyncio
+    async def test_generate_document_summary_pages_with_no_content_elements(self):
+        """
+        GIVEN structured_text with pages containing no content elements
+        WHEN _generate_document_summary is called
+        THEN expect summary generation failure message
+        """
+        # Given
         no_content_text = {
             "pages": [
                 {"page_number": 1, "elements": []},
                 {"page_number": 2, "elements": []}
             ]
         }
-        summary = await optimizer._generate_document_summary(no_content_text)
+        
+        # When
+        summary = await self.optimizer._generate_document_summary(no_content_text)
+        
+        # Then
         assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
+
+    @pytest.mark.asyncio
+    async def test_generate_document_summary_pages_with_no_content_elements_shows_keyerror(self):
+        """
+        GIVEN structured_text with pages containing no content elements
+        WHEN _generate_document_summary is called
+        THEN expect keyerror indication in response
+        """
+        # Given
+        no_content_text = {
+            "pages": [
+                {"page_number": 1, "elements": []},
+                {"page_number": 2, "elements": []}
+            ]
+        }
+        
+        # When
+        summary = await self.optimizer._generate_document_summary(no_content_text)
+        
+        # Then
         assert "keyerror" in summary.lower(), f"Should indicate the error is due to missing keys, got {summary}"
 
     @pytest.mark.asyncio
@@ -163,11 +249,6 @@ class TestLLMOptimizerGenerateDocumentSummary:
         WHEN _generate_document_summary is called
         THEN expect error message to be returned
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
-        
-        # Given
-        optimizer = LLMOptimizer()
-        
         # Test structured text missing pages key
         missing_pages_text = {
             "document_metadata": {"title": "Test Document"},
@@ -175,7 +256,7 @@ class TestLLMOptimizerGenerateDocumentSummary:
         }
         
         # When
-        result = await optimizer._generate_document_summary(missing_pages_text)
+        result = await self.optimizer._generate_document_summary(missing_pages_text)
         
         # Then - should return error message instead of raising exception
         assert isinstance(result, str), "Result should be string type"
@@ -193,8 +274,7 @@ class TestLLMOptimizerGenerateDocumentSummary:
             - Important keywords included
             - Keyword frequency analysis working
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
-        
+
         # Given
         optimizer = LLMOptimizer()
         
@@ -270,8 +350,7 @@ class TestLLMOptimizerGenerateDocumentSummary:
             - Positional importance considered
             - Sentence coherence maintained
         """
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
-        
+
         # Given
         optimizer = LLMOptimizer()
         
