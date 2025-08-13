@@ -56,8 +56,7 @@ class TestPlatformSupportCoverage:
         except Exception as e:
             pytest.fail(f"Callable metadata in MediaProcessor does not meet standards: {e}")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_youtube_metadata_extraction_success(self, mock_extract):
+    def test_youtube_metadata_extraction_success(self):
         """
         GIVEN YouTube URL "https://www.youtube.com/watch?v=BaW_jenozKc"
         WHEN MediaProcessor extracts metadata with 30-second timeout
@@ -69,8 +68,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_youtube_metadata_extraction_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_vimeo_metadata_extraction_success(self, mock_extract):
+    def test_vimeo_metadata_extraction_success(self):
         """
         GIVEN Vimeo URL "https://vimeo.com/148751763"
         WHEN MediaProcessor extracts metadata with 30-second timeout
@@ -82,8 +80,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_vimeo_metadata_extraction_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_dailymotion_metadata_extraction_success(self, mock_extract):
+    def test_dailymotion_metadata_extraction_success(self):
         """
         GIVEN Dailymotion URL with public test video
         WHEN MediaProcessor extracts metadata with 30-second timeout
@@ -95,8 +92,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_dailymotion_metadata_extraction_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_archive_org_metadata_extraction_success(self, mock_extract):
+    def test_archive_org_metadata_extraction_success(self):
         """
         GIVEN Archive.org URL "https://archive.org/details/BigBuckBunny_124"
         WHEN MediaProcessor extracts metadata with 30-second timeout
@@ -108,8 +104,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_archive_org_metadata_extraction_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_peertube_metadata_extraction_success(self, mock_extract):
+    def test_peertube_metadata_extraction_success(self):
         """
         GIVEN PeerTube URL from framatube.org instance
         WHEN MediaProcessor extracts metadata with 30-second timeout
@@ -121,8 +116,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_peertube_metadata_extraction_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_facebook_mock_response_success(self, mock_extract):
+    def test_facebook_mock_response_success(self):
         """
         GIVEN mocked Facebook video metadata response
         WHEN MediaProcessor processes Facebook URL
@@ -134,8 +128,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_facebook_mock_response_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_instagram_mock_response_success(self, mock_extract):
+    def test_instagram_mock_response_success(self):
         """
         GIVEN mocked Instagram video metadata response
         WHEN MediaProcessor processes Instagram URL
@@ -147,8 +140,7 @@ class TestPlatformSupportCoverage:
         """
         raise NotImplementedError("test_instagram_mock_response_success test needs to be implemented")
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_twitter_mock_response_success(self, mock_extract):
+    def test_twitter_mock_response_success(self):
         """
         GIVEN mocked Twitter/X video metadata response
         WHEN MediaProcessor processes Twitter URL

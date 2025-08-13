@@ -336,7 +336,7 @@ class TestLLMDocumentEmbeddingHandling:
         
         assert document.document_embedding[0] != modified_number, f"document_embedding[0] should remain unchanged after input was modified to '{modified_number}', got {document.document_embedding[0]}"
 
-    @pytest.mark.parametrize("test_array,test_id", [
+    @pytest.mark.parametrize("test_array", [
         np.array([10, 20, 30, 40, 50], dtype=np.int32),
     ])
     def test_document_embedding_first_element_unchanged_after_int_modification(self, test_array):

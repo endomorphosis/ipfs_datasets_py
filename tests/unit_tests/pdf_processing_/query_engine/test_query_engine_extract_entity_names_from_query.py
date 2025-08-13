@@ -106,13 +106,14 @@ def make_fake_companies(n: int = 30):
 
 def make_fake_company_questions(n: int = 30) -> Generator[tuple[str, str], None, None]:
     """
-    Generate a list of fake company-related questions using Faker library.
+    Generate fake company-related statements using Faker library.
     
     Args:
-        n (int): Number of questions to generate (default: 30)
+        n (int): Number of company pairs to generate (default: 30)
     
-    Returns:
-        List[str]: List of fake company-related questions
+    Yields:
+        tuple[str, str, str]: Tuple containing (company1, company2, statement)
+            where statement is "{company1} and {company2} are competitors."
     """
     fake_companies_1 = make_fake_companies(n)
     fake_companies_2 = make_fake_companies(n)
@@ -152,10 +153,10 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         result = self.query_engine._extract_entity_names_from_query(query)
         assert result == [name], f"Expected [{name}] but got {result} for query: {query}"
 
-    @pytest.mark.parametrize("name, query", [
-        (words[0], words[1]) for words in make_fake_company_questions(n=N)
+    @pytest.mark.parametrize("name1,name2,query", [
+        (words[0], words[1], words[2]) for words in make_fake_company_questions(n=N)
     ])
-    def test_extract_entity_names_multiple_entities(self):
+    def test_extract_entity_names_multiple_entities(self, name1, name2, query):
         """
         GIVEN a QueryEngine instance
         AND query "Microsoft and Apple are competitors"
@@ -165,101 +166,215 @@ class TestQueryEngineExtractEntityNamesFromQuery:
             - Both capitalized entities identified
             - Order of appearance preserved
         """
-        query = "Microsoft and Apple are competitors"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert result == ["Microsoft", "Apple"]
+        assert result == [name1, name2]
 
-    def test_extract_entity_names_multi_word_entities(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("path from John Smith to Mary Johnson", ["John Smith", "Mary Johnson"]),
+        ("connection between Alice Brown and Bob Wilson", ["Alice Brown", "Bob Wilson"]),
+        ("relationship from Emma Davis to David Miller", ["Emma Davis", "David Miller"]),
+        ("link between Sarah Thompson and Michael Anderson", ["Sarah Thompson", "Michael Anderson"]),
+        ("route from Jennifer Garcia to Robert Martinez", ["Jennifer Garcia", "Robert Martinez"]),
+        ("bridge from Lisa Rodriguez to James Taylor", ["Lisa Rodriguez", "James Taylor"]),
+        ("path between Anna Williams and Christopher Lee", ["Anna Williams", "Christopher Lee"]),
+        ("connection from Michelle White to Daniel Harris", ["Michelle White", "Daniel Harris"]),
+    ])
+    def test_extract_entity_names_multi_word_entities(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query with multiple entities in it "path from John Smith to Mary Johnson"
+        AND query with multiple multi-word entities
         WHEN _extract_entity_names_from_query is called
         THEN expect:
-            - List containing ["John Smith", "Mary Johnson"] returned
+            - List containing all expected multi-word entities returned
+            - Multi-word names properly captured as single entities
         """
-        query = "path from John Smith to Mary Johnson"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert result == ["John Smith", "Mary Johnson"]
+        assert result == expected_entities
 
-    def test_extract_entity_names_no_entities_found(self):
+    @pytest.mark.parametrize("query", [
+        "what is artificial intelligence",
+        "how does machine learning work",
+        "explain deep learning concepts",
+        "what are neural networks",
+        "describe natural language processing",
+        "how to implement algorithms",
+        "what is data science",
+        "explain computer vision techniques",
+        "how does reinforcement learning work",
+        "what are decision trees"
+    ])
+    def test_extract_entity_names_no_entities_found(self, query):
         """
         GIVEN a QueryEngine instance
-        AND query "what is artificial intelligence"
+        AND query with no capitalized entity names
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Empty list returned
         """
-        query = "what is artificial intelligence"
         result = self.query_engine._extract_entity_names_from_query(query)
         assert result == []
 
-    def test_extract_entity_names_minimum_word_length_requirement(self):
+    @pytest.mark.parametrize("query, expected_excluded", [
+        ("Who is Al or Bo Smith?", ["Al"]),
+        ("Meet Jo and Tom Anderson", ["Jo"]),
+        ("See Ed or Mary Johnson", ["Ed"]),
+        ("Find Li and John Williams", ["Li"]),
+        ("Call Mo or Sarah Davis", ["Mo"]),
+        ("Ask Xi and Mike Thompson", ["Xi"]),
+        ("Tell Bo and Lisa Garcia", ["Bo"]),
+        ("Show Ty and Anna Martinez", ["Ty"]),
+    ])
+    def test_extract_entity_names_minimum_word_length_requirement_excluded(self, query, expected_excluded):
         """
         GIVEN a QueryEngine instance
-        AND query "Who is Al or Bo Smith?"
+        AND query with short names (< 3 characters)
         WHEN _extract_entity_names_from_query is called
         THEN expect:
-            - Only words with >= 3 characters per word considered
-            - "Al" excluded due to length
-            - "Bo Smith" not excluded because the combined length is >= 3
+            - Short names excluded due to length requirement
         """
-        query = "Who is Al or Bo Smith?"
         result = self.query_engine._extract_entity_names_from_query(query)
-        # Based on docstring requirement of minimum 3 characters per word
-        assert "Al" not in result
-        # Bo Smith should *not* excluded
-        # as "Bo Smith" has more than 3 characters in total.
-        assert "Bo Smith" in result
+        
+        for excluded in expected_excluded:
+            assert excluded not in result, f"Expected {excluded} to be excluded from {result}"
 
-    def test_extract_entity_names_sequence_breaking_on_lowercase(self):
+    @pytest.mark.parametrize("query, expected_included", [
+        ("Who is Al or Bo Smith?", ["Bo Smith"]),
+        ("Meet Jo and Tom Anderson", ["Tom Anderson"]),
+        ("See Ed or Mary Johnson", ["Mary Johnson"]),
+        ("Find Li and John Williams", ["John Williams"]),
+        ("Call Mo or Sarah Davis", ["Sarah Davis"]),
+        ("Ask Xi and Mike Thompson", ["Mike Thompson"]),
+        ("Tell Bo and Lisa Garcia", ["Lisa Garcia"]),
+        ("Show Ty and Anna Martinez", ["Anna Martinez"]),
+    ])
+    def test_extract_entity_names_minimum_word_length_requirement_included(self, query, expected_included):
         """
         GIVEN a QueryEngine instance
-        AND query "John Smith and jane Doe"
+        AND query with longer entity names
+        WHEN _extract_entity_names_from_query is called
+        THEN expect:
+            - Longer entity names included because combined length meets requirement
+        """
+        result = self.query_engine._extract_entity_names_from_query(query)
+        
+        for included in expected_included:
+            assert included in result, f"Expected {included} to be included in {result}"
+
+    @pytest.mark.parametrize("query, expected_included", [
+        ("John Smith and jane Doe", ["John Smith"]),
+        ("Mary Johnson and bob Wilson", ["Mary Johnson"]),
+        ("Alice Brown and charlie Davis", ["Alice Brown"]),
+        ("David Miller and sarah Taylor", ["David Miller"]),
+        ("Emma Wilson and mike Johnson", ["Emma Wilson"]),
+        ("Lisa Garcia and tom Anderson", ["Lisa Garcia"]),
+        ("Robert Thompson and anna Martinez", ["Robert Thompson"]),
+        ("Jennifer Lee and james White", ["Jennifer Lee"]),
+    ])
+    def test_extract_entity_names_sequence_breaking_on_lowercase_included(self, query, expected_included):
+        """
+        GIVEN a QueryEngine instance
+        AND query with mixed capitalization patterns
+        WHEN _extract_entity_names_from_query is called
+        THEN expect:
+            - Properly capitalized sequences captured
+        """
+        result = self.query_engine._extract_entity_names_from_query(query)
+        
+        for entity in expected_included:
+            assert entity in result, f"Expected {entity} to be found in {result}"
+
+    @pytest.mark.parametrize("query, expected_excluded", [
+        ("John Smith and jane Doe", ["jane Doe"]),
+        ("Mary Johnson and bob Wilson", ["bob Wilson"]),
+        ("Alice Brown and charlie Davis", ["charlie Davis"]),
+        ("David Miller and sarah Taylor", ["sarah Taylor"]),
+        ("Emma Wilson and mike Johnson", ["mike Johnson"]),
+        ("Lisa Garcia and tom Anderson", ["tom Anderson"]),
+        ("Robert Thompson and anna Martinez", ["anna Martinez"]),
+        ("Jennifer Lee and james White", ["james White"]),
+    ])
+    def test_extract_entity_names_sequence_breaking_on_lowercase_excluded(self, query, expected_excluded):
+        """
+        GIVEN a QueryEngine instance
+        AND query with mixed capitalization patterns
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Sequence stops at first non-capitalized word
-            - "John Smith" captured
-            - "jane Doe" sequence broken at "jane" (not capitalized)
+            - Sequences broken at lowercase words not captured
         """
-        query = "John Smith and jane Doe"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert "John Smith" in result
-        # "jane Doe" should not be captured as "jane" is not capitalized
-        assert "jane Doe" not in result
-        # "Doe" might be captured separately if it starts a new capitalized sequence
         
-    def test_extract_entity_names_mixed_with_articles(self):
+        for entity in expected_excluded:
+            assert entity not in result, f"Did not expect {entity} to be found in {result}"
+        
+    @pytest.mark.parametrize("query, expected_included", [
+        ("The Microsoft Corporation and The Apple Company", ["Microsoft Corporation", "Apple Company"]),
+        ("A Google Inc and An Amazon Corp", ["Google Inc", "Amazon Corp"]),
+        ("The Tesla Motors and The Netflix Inc", ["Tesla Motors", "Netflix Inc"]),
+        ("An Oracle Database and A Facebook Platform", ["Oracle Database", "Facebook Platform"]),
+        ("The IBM Corporation and An Intel Processor", ["IBM Corporation", "Intel Processor"]),
+    ])
+    def test_extract_entity_names_articles_entity_inclusion(self, query, expected_included):
         """
         GIVEN a QueryEngine instance
-        AND query "The Microsoft Corporation and The Apple Company"
+        AND query with articles ("The", "A", "An") before entity names
         WHEN _extract_entity_names_from_query is called
         THEN expect:
-            - "The" is *not* considered as part of entity name if capitalized
-            - "Microsoft Corporation" and "Apple Company" extracted
+            - Entity names without articles extracted correctly
+        """
+        result = self.query_engine._extract_entity_names_from_query(query)
+        
+        # Check that expected entities are included
+        for entity in expected_included:
+            assert entity in result, f"Expected {entity} to be found in {result}"
+
+    @pytest.mark.parametrize("query, expected_excluded", [
+        ("The Microsoft Corporation and The Apple Company", ["The", "the"]),
+        ("A Google Inc and An Amazon Corp", ["A", "An", "a", "an"]),
+        ("The Tesla Motors and The Netflix Inc", ["The", "the"]),
+        ("An Oracle Database and A Facebook Platform", ["An", "A", "an", "a"]),
+        ("The IBM Corporation and An Intel Processor", ["The", "An", "the", "an"]),
+    ])
+    def test_extract_entity_names_articles_exclusion(self, query, expected_excluded):
+        """
+        GIVEN a QueryEngine instance
+        AND query with articles ("The", "A", "An") before entity names
+        WHEN _extract_entity_names_from_query is called
+        THEN expect:
+            - Articles are *not* considered as part of entity name if capitalized
             - Articles *not* included in capitalized sequences
         NOTE: This is a limitation of NLTK method. Might be improved with other libraries.
         """
-        query = "The Microsoft Corporation and The Apple Company"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert "the" not in result  # "The" should not be included
-        assert "Microsoft Corporation" in result
-        assert "Apple Company" in result
+        
+        # Check that articles are excluded
+        for article in expected_excluded:
+            assert article not in result, f"Did not expect article '{article}' to be found in {result}"
 
-    def test_extract_entity_names_punctuation_handling(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("Microsoft's CEO, John Smith, founded something", ["Microsoft", "John Smith"]),
+        ("Apple's product, iPhone 12, is popular", ["Apple", "iPhone 12"]),
+        ("Google's search engine, powered by AI, dominates", ["Google", "AI"]),
+        ("Amazon's founder, Jeff Bezos, stepped down", ["Amazon", "Jeff Bezos"]),
+        ("Tesla's CEO, Elon Musk, tweeted today", ["Tesla", "Elon Musk"]),
+        ("Netflix's series, Stranger Things, is trending", ["Netflix", "Stranger Things"]),
+        ("Facebook's platform, Instagram, was acquired", ["Facebook", "Instagram"]),
+        ("Oracle's database, MySQL, is open source", ["Oracle", "MySQL"]),
+    ])
+    def test_extract_entity_names_punctuation_handling(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query "Microsoft's CEO, John Smith, founded something"
+        AND query with punctuation around entity names
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Punctuation doesn't break entity detection
-            - "Microsoft" and "John Smith" extracted
-            - Commas and apostrophes handled appropriately
+            - Expected entities extracted correctly
+            - Commas, apostrophes, and other punctuation handled appropriately
         """
-        query = "Microsoft's CEO, John Smith, founded something"
         result = self.query_engine._extract_entity_names_from_query(query)
-        # Should extract entities despite punctuation
-        assert any("Microsoft" in entity for entity in result)
-        assert "John Smith" in result
+        for expected_entity in expected_entities:
+            assert any(expected_entity in entity for entity in result), \
+                f"Expected {expected_entity} to be found in {result}"
 
     def test_extract_entity_names_empty_string_input(self):
         """
@@ -283,59 +398,86 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         with pytest.raises(ValueError):
             self.query_engine._extract_entity_names_from_query(query)
 
-    def test_extract_entity_names_non_string_input(self):
+    @pytest.mark.parametrize("invalid_input", [
+        123,
+        [1, 2, 3],
+        {"key": "value"},
+        None,
+        42.5,
+        True,
+        set([1, 2, 3])
+    ])
+    def test_extract_entity_names_non_string_input(self, invalid_input):
         """
         GIVEN a QueryEngine instance
-        AND non-string input (int, list, dict, None)
+        AND non-string input (int, list, dict, None, float, bool, set)
         WHEN _extract_entity_names_from_query is called
         THEN expect TypeError to be raised
         """
-        test_inputs = [123, [1, 2, 3], {"key": "value"}, None]
-        for invalid_input in test_inputs:
-            with pytest.raises(TypeError):
-                self.query_engine._extract_entity_names_from_query(invalid_input)
+        with pytest.raises(TypeError):
+            self.query_engine._extract_entity_names_from_query(invalid_input)
 
-    def test_extract_entity_names_acronyms_and_abbreviations(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("IBM and NASA are organizations", ["IBM", "NASA"]),
+        ("FBI and CIA work together", ["FBI", "CIA"]),
+        ("NATO and EU are alliances", ["NATO", "EU"]),
+        ("MIT and UCLA are universities", ["MIT", "UCLA"]),
+        ("BMW and BMW Group compete", ["BMW", "BMW Group"]),
+        ("AT&T and T-Mobile are carriers", ["AT&T", "T-Mobile"]),
+        ("USA and UK signed treaty", ["USA", "UK"]),
+        ("CNN and BBC report news", ["CNN", "BBC"]),
+    ])
+    def test_extract_entity_names_acronyms_and_abbreviations(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query "IBM and NASA are organizations"
+        AND query with acronyms and abbreviations
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Acronyms like "IBM" and "NASA" identified as entities
             - All-caps words treated as capitalized sequences
         """
-        query = "IBM and NASA are organizations"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert "IBM" in result
-        assert "NASA" in result
+        for entity in expected_entities:
+            assert entity in result, f"Expected {entity} to be found in {result}"
 
-    def test_extract_entity_names_numbers_in_entity_names(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("Version 2.0 Software and Product 3M are items", ["Version 2.0 Software", "Product 3M"]),
+        ("Death Race 2000 is a great movie to watch during the 2020 Olympics.", ["Death Race 2000", "2020 Olympics"]),
+        ("iPhone 12 and Samsung Galaxy S21 are smartphones", ["iPhone 12", "Samsung Galaxy S21"]),
+        ("Windows 10 and Office 365 are Microsoft products", ["Windows 10", "Office 365", "Microsoft"]),
+    ])
+    def test_extract_entity_names_numbers_in_entity_names_included(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND the queries
-         - "Version 2.0 Software and Product 3M are items"
-         - "Death Race 2000 is a great movie to watch during the 2020 Olympics."
-         - "What is 42?"
+        AND queries with numbers in entity names that should be included
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Numbers within entity names handled appropriately
-            - Entity sequences with numbers considered or excluded based on criteria
+            - Entity sequences with numbers properly extracted
         """
-        query1 = "Version 2.0 Software and Product 3M are items"
-        result = self.query_engine._extract_entity_names_from_query(query1)
-        # Test that the method handles numbers in entity names
+        result = self.query_engine._extract_entity_names_from_query(query)
 
-        assert isinstance(result, list)
-        assert "Version 2.0 Software" in result
-        assert "Product 3M" in result
-        query2 = "Death Race 2000 is a great movie to watch during the 2020 Olympics."
-        result = self.query_engine._extract_entity_names_from_query(query2)
-        assert "Death Race 2000" in result
-        assert "2020 Olympics" in result
-        query3 = "What is 42?"
-        result = self.query_engine._extract_entity_names_from_query(query3)
-        # Should not extract "42" as an entity
-        assert "42" not in result
+        for expected_entity in expected_entities:
+            assert expected_entity in result, f"Expected {expected_entity} to be found in {result}"
+
+    @pytest.mark.parametrize("query, excluded_entities", [
+        ("What is 42?", ["42"]),
+        ("The year 1984 was significant", ["1984"]),
+    ])
+    def test_extract_entity_names_standalone_numbers_excluded(self, query, excluded_entities):
+        """
+        GIVEN a QueryEngine instance
+        AND queries with standalone numbers that should be excluded
+        WHEN _extract_entity_names_from_query is called
+        THEN expect:
+            - Standalone numbers not treated as entities
+            - Pure numeric sequences excluded from results
+        """
+        result = self.query_engine._extract_entity_names_from_query(query)
+        
+        for excluded_entity in excluded_entities:
+            assert excluded_entity not in result, \
+                f"Did not expect {excluded_entity} to be found in {result}"
 
     def test_extract_entity_names_special_characters_in_names(self):
         """
@@ -352,68 +494,88 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         assert isinstance(result, list)
         # Entities with special characters should be captured
 
-    def test_extract_entity_names_consecutive_entities(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("Microsoft Apple Google Amazon compete", ["Microsoft", "Apple", "Google", "Amazon"]),
+        ("Tesla Netflix Adobe Oracle systems", ["Tesla", "Netflix", "Adobe", "Oracle"]),
+        ("Facebook Twitter LinkedIn Instagram platforms", ["Facebook", "Twitter", "LinkedIn", "Instagram"]),
+        ("Intel AMD Nvidia Qualcomm processors", ["Intel", "AMD", "Nvidia", "Qualcomm"]),
+        ("IBM Cisco VMware Salesforce enterprises", ["IBM", "Cisco", "VMware", "Salesforce"]),
+    ])
+    def test_extract_entity_names_consecutive_entities(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query "Microsoft Apple Google Amazon compete"
+        AND query with consecutive single-word entities
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Consecutive single-word entities identified separately
             - Each capitalized word treated as separate entity
         """
-        query = "Microsoft Apple Google Amazon compete"
         result = self.query_engine._extract_entity_names_from_query(query)
-        expected_entities = ["Microsoft", "Apple", "Google", "Amazon"]
         for entity in expected_entities:
             assert entity in result
 
-    def test_extract_entity_names_title_case_vs_sentence_case(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("Technology companies Include Microsoft And Apple", ["Technology", "Include Microsoft And Apple"]),
+        ("Business Leaders Like Steve Jobs And Bill Gates", ["Business Leaders Like Steve Jobs And Bill Gates"]),
+        ("Software Companies Such As Oracle And Adobe", ["Software Companies Such As Oracle And Adobe"]),
+        ("Tech Giants Include Amazon And Facebook", ["Tech Giants Include Amazon And Facebook"]),
+        ("Major Corporations Like IBM And Intel", ["Major Corporations Like IBM And Intel"]),
+    ])
+    def test_extract_entity_names_title_case_vs_sentence_case(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query "Technology companies Include Microsoft And Apple"
+        AND query with title case words
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Title case words properly identified
-            - "Technology", "Include Microsoft And Apple" as separate sequences
+            - Consecutive capitalized sequences captured
             - Sentence case vs title case distinguished
         """
-        query = "Technology companies Include Microsoft And Apple"
         result = self.query_engine._extract_entity_names_from_query(query)
-        # Should identify capitalized sequences
-        assert "Technology" in result
-        # Should capture consecutive capitalized words
-        assert any("Microsoft" in entity and "Apple" in entity for entity in result) or ("Microsoft" in result and "Apple" in result)
+        # Should identify at least one of the expected entities
+        assert any(expected in result for expected in expected_entities), \
+            f"Expected one of {expected_entities} to be found in {result}"
 
-    def test_extract_entity_names_unicode_characters(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("Café Münchën and Naïve Technologies", ["Café Münchën", "Naïve Technologies"]),
+        ("Björk and Søren Kierkegaard", ["Björk", "Søren Kierkegaard"]),
+        ("Zürich Insurance and München Re", ["Zürich Insurance", "München Re"]),
+        ("François Mitterrand and José María Aznar", ["François Mitterrand", "José María Aznar"]),
+        ("Łódź University and Kraków Institute", ["Łódź University", "Kraków Institute"]),
+    ])
+    def test_extract_entity_names_unicode_characters(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query "Café Münchën and Naïve Technologies"
+        AND query with unicode characters in entity names
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Unicode characters in entity names handled correctly
             - Capitalized unicode letters recognized
-            - ["Café Münchën", "Naïve Technologies"] extracted
+            - All expected entities extracted
         """
-        query = "Café Münchën and Naïve Technologies"
         result = self.query_engine._extract_entity_names_from_query(query)
-        assert "Café Münchën" in result
-        assert "Naïve Technologies" in result
+        for expected_entity in expected_entities:
+            assert expected_entity in result, f"Expected {expected_entity} to be found in {result}"
 
-    def test_extract_entity_names_hyphenated_names(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("Mary-Jane Watson and Jean-Claude Van Damme", ["Mary-Jane Watson", "Jean-Claude Van Damme"]),
+        ("Anne-Marie Johnson works with Jean-Luc Picard", ["Anne-Marie Johnson", "Jean-Luc Picard"]),
+        ("Smith-Jones Corporation and Brown-Williams LLC", ["Smith-Jones Corporation", "Brown-Williams LLC"]),
+        ("X-Ray Technology and Y-Axis Solutions", ["X-Ray Technology", "Y-Axis Solutions"]),
+    ])
+    def test_extract_entity_names_hyphenated_names(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
-        AND query "Mary-Jane Watson and Jean-Claude Van Damme"
+        AND query with hyphenated entity names
         WHEN _extract_entity_names_from_query is called
         THEN expect:
             - Hyphenated entity names captured as single entities
             - Hyphens don't break entity sequence detection
             - Complete hyphenated names preserved
         """
-        query = "Mary-Jane Watson and Jean-Claude Van Damme"
         result = self.query_engine._extract_entity_names_from_query(query)
-        # Should preserve hyphenated names
-        assert any("Mary-Jane" in entity for entity in result)
-        assert any("Jean-Claude" in entity for entity in result)
+        for expected_entity in expected_entities:
+            assert expected_entity in result, f"Expected {expected_entity} to be found in {result}"
 
     def test_extract_entity_names_very_long_query(self):
         """
@@ -448,10 +610,8 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         query = "iPhone and MacBook are Apple products"
         result = self.query_engine._extract_entity_names_from_query(query)
         # Should preserve original capitalization
-        if "iPhone" in result:
-            assert "iPhone" in result  # Not "Iphone" or "IPHONE"
-        if "MacBook" in result:
-            assert "MacBook" in result  # Not "Macbook" or "MACBOOK"
+        assert "iPhone" in result  # Not "Iphone" or "IPHONE"
+        assert "MacBook" in result  # Not "Macbook" or "MACBOOK"
         assert "Apple" in result
 
     def test_extract_entity_names_accuracy_stress_test(self):

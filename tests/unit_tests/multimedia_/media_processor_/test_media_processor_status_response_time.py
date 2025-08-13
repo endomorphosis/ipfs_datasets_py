@@ -25,22 +25,68 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-# Test data constants
-STATUS_RESPONSE_TIME_THRESHOLD = 5  # milliseconds
-STATUS_DICT_CREATION_OPERATIONS = [
-    "dict_instantiation", "field_assignment", "validation", "serialization"
-]
+# Test data constants based on defined behavioral specifications
+STATUS_RESPONSE_TIME_THRESHOLD = 5  # milliseconds - maximum acceptable response time
+MEMORY_PRESSURE_LOW = 40  # percent - minimum memory utilization for testing
+MEMORY_PRESSURE_HIGH = 85  # percent - maximum memory utilization for testing
+EXTENDED_OPERATION_DURATION = 2 * 60 * 60  # seconds - 2 hours minimum for extended testing
+SUSTAINED_LOAD_DURATION = 5 * 60  # seconds - 5 minutes minimum for sustained load
+SUSTAINED_LOAD_CAPACITY = 80  # percent - capacity level for sustained load testing
+CONCURRENT_REQUEST_COUNT = 10  # simultaneous requests for thread safety testing
+BATCH_REQUEST_MIN = 5  # minimum requests in a batch operation
+BATCH_REQUEST_MAX = 50  # maximum requests in a batch operation
+BATCH_SUBMISSION_WINDOW = 100  # milliseconds - time window for batch request submission
+PERFORMANCE_DEGRADATION_THRESHOLD = 20  # percent - maximum acceptable performance decrease
+TIMING_VARIANCE_THRESHOLD = 15  # percent - maximum acceptable standard deviation
+MEASUREMENT_SAMPLES = 100  # minimum samples for statistical analysis
+TIMING_PRECISION_REQUIRED = 100  # microseconds - measurement granularity requirement
+CACHE_PERFORMANCE_IMPROVEMENT = 50  # percent - minimum improvement for cached requests
+THROUGHPUT_IMPROVEMENT_THRESHOLD = 25  # percent - minimum batch processing improvement
+BASELINE_MEASUREMENT_DURATION = 30  # seconds - idle period for baseline establishment
+COMPLEX_DATA_COMPUTATION_THRESHOLD = 1  # millisecond - threshold for expensive field classification
+CACHE_HIT_RATE_THRESHOLD = 90  # percent - L1 cache hit rate for memory access optimization
+RESPONSE_TIME_STABILITY_VARIANCE = 10  # percent - maximum variation during extended operation
+CONCURRENT_OPERATION_INTERFERENCE_THRESHOLD = 5  # percent - maximum impact on other operations
+ERROR_HANDLING_TIME_THRESHOLD = 5  # milliseconds - maximum time for error processing
 
 
 class TestStatusResponseTime:
-    """Test status response time criteria for status reporting.
+    """
+    Behavioral test suite for MediaProcessor status response time requirements.
     
-    NOTE: Class has multiple vague requirements that need clarification:
-    1. 5ms threshold is arbitrary without hardware baseline context
-    2. "Timing budget" concept undefined across multiple test methods  
-    3. "Minimal" CPU/memory usage lacks quantitative thresholds
-    4. Thread safety requirements not specified with concurrency levels
-    5. Cache locality optimization benefits not quantified
+    This test suite validates that the MediaProcessor meets stringent performance
+    requirements for status generation operations. The tests focus on observable
+    behavioral outcomes rather than implementation details, ensuring that status
+    requests complete within defined time thresholds under various operational
+    conditions.
+    
+    The performance requirements are designed for modern desktop hardware
+    (2000+ PassMark CPU score, 20+ GB/s memory bandwidth) and ensure that
+    status generation remains responsive even under adverse conditions such as
+    high memory pressure, concurrent operations, and extended runtime periods.
+    
+    Key Behavioral Requirements Validated:
+    - Status responses complete within STATUS_RESPONSE_TIME_THRESHOLD under normal conditions
+    - Performance remains stable during EXTENDED_OPERATION_DURATION operation periods
+    - Concurrent access up to CONCURRENT_REQUEST_COUNT simultaneous requests maintains thread safety
+    - Memory pressure (MEMORY_PRESSURE_LOW-MEMORY_PRESSURE_HIGH% utilization) doesn't degrade performance >PERFORMANCE_DEGRADATION_THRESHOLD%
+    - Batch operations achieve THROUGHPUT_IMPROVEMENT_THRESHOLD%+ throughput improvement over individual requests
+    - Cached responses complete CACHE_PERFORMANCE_IMPROVEMENT%+ faster than initial requests
+    - Response time variance remains <TIMING_VARIANCE_THRESHOLD% across MEASUREMENT_SAMPLES+ measurement samples
+    - System provides actionable feedback when performance thresholds are exceeded
+    
+    Test Environment Assumptions:
+    - Hardware meets minimum performance baselines (i5-8400 equivalent)
+    - System memory bandwidth >20 GB/s
+    - Storage subsystem capable of sustained I/O operations
+    - Operating system with proper scheduling and resource management
+    
+    Measurement Methodology:
+    - Timing precision: TIMING_PRECISION_REQUIRED minimum resolution
+    - Baseline establishment: BASELINE_MEASUREMENT_DURATION idle measurement period
+    - Statistical validation: Minimum MEASUREMENT_SAMPLES per performance test
+    - Variance analysis: Standard deviation calculations for consistency validation
+    - Resource monitoring: CPU, memory, and I/O impact measurement during operations
     """
 
     def test_ensure_docstring_quality(self):
@@ -52,217 +98,141 @@ class TestStatusResponseTime:
         except Exception as e:
             pytest.fail(f"Callable metadata in MediaProcessor does not meet standards: {e}")
 
-    @patch('time.perf_counter')
-    def test_status_timing_measurement_uses_perf_counter(self, mock_timer):
+    def test_status_response_time_meets_5ms_threshold(self):
         """
-        GIVEN status dictionary generation
-        WHEN MediaProcessor measures status response time
-        THEN expect time.perf_counter() to be used for high-precision timing
-        
-        NOTE: Implementation-specific testing constrains timing mechanism flexibility
-        NOTE: perf_counter availability and precision varies across platforms
-        NOTE: Mock doesn't validate actual timing accuracy or proper counter usage patterns
+        GIVEN status dictionary generation request
+        WHEN measuring response time from request to completion
+        THEN expect response time ≤ STATUS_RESPONSE_TIME_THRESHOLD under normal operating conditions
         """
-        raise NotImplementedError("test_status_timing_measurement_uses_perf_counter test needs to be implemented")
+        raise NotImplementedError("test_status_response_time_meets_5ms_threshold test needs to be implemented")
 
-    def test_status_timing_measurement_from_completion_to_return(self):
+    def test_status_response_time_unaffected_by_concurrent_io_operations(self):
         """
-        GIVEN operation completion
-        WHEN measuring status response time
-        THEN expect timing from operation completion to return statement execution
-        
-        NOTE: "Operation completion" point ambiguous - success callback, cleanup finish, or return preparation?
-        NOTE: "Return statement execution" unclear - function return or status object creation completion?
-        NOTE: Timing measurement boundaries vague and may not capture relevant performance bottlenecks
+        GIVEN active file I/O and network operations
+        WHEN generating status dictionary
+        THEN expect response time ≤ STATUS_RESPONSE_TIME_THRESHOLD regardless of I/O activity state
         """
-        raise NotImplementedError("test_status_timing_measurement_from_completion_to_return test needs to be implemented")
+        raise NotImplementedError("test_status_response_time_unaffected_by_concurrent_io_operations test needs to be implemented")
 
-    def test_status_response_time_threshold_5_milliseconds(self):
+    def test_status_response_time_unaffected_by_external_tool_state(self):
         """
-        GIVEN status dictionary generation
-        WHEN measuring generation time
-        THEN expect time to be ≤ 5ms
-        
-        NOTE: 5ms threshold is arbitrary without:
-        - Hardware baseline specification
-        - Measurement under load conditions
-        - Comparison with industry standards
+        GIVEN external tools (FFmpeg, yt-dlp) in various execution states
+        WHEN generating status dictionary
+        THEN expect response time ≤ STATUS_RESPONSE_TIME_THRESHOLD regardless of external tool activity
         """
-        raise NotImplementedError("test_status_response_time_threshold_5_milliseconds test needs to be implemented")
+        raise NotImplementedError("test_status_response_time_unaffected_by_external_tool_state test needs to be implemented")
 
-    def test_status_timing_excludes_io_operations(self):
+    def test_status_generation_provides_actionable_performance_feedback(self):
         """
-        GIVEN status dictionary generation
-        WHEN measuring generation time
-        THEN expect timing to exclude I/O operations (file reads, network calls)
+        GIVEN status generation exceeding STATUS_RESPONSE_TIME_THRESHOLD
+        WHEN performance issues occur
+        THEN expect system to provide actionable feedback identifying bottlenecks
         """
-        raise NotImplementedError("test_status_timing_excludes_io_operations test needs to be implemented")
+        raise NotImplementedError("test_status_generation_provides_actionable_performance_feedback test needs to be implemented")
 
-    def test_status_timing_excludes_external_tool_execution(self):
+    def test_status_generation_maintains_performance_under_memory_pressure(self):
         """
-        GIVEN status dictionary generation
-        WHEN measuring generation time
-        THEN expect timing to exclude external tool execution (FFmpeg, yt-dlp)
+        GIVEN system memory utilization between MEMORY_PRESSURE_LOW-MEMORY_PRESSURE_HIGH%
+        WHEN generating status dictionary
+        THEN expect performance degradation ≤ PERFORMANCE_DEGRADATION_THRESHOLD% compared to low-memory baseline
         """
-        raise NotImplementedError("test_status_timing_excludes_external_tool_execution test needs to be implemented")
+        raise NotImplementedError("test_status_generation_maintains_performance_under_memory_pressure test needs to be implemented")
 
-    def test_status_dict_instantiation_performance(self):
+    def test_status_generation_does_not_interfere_with_concurrent_operations(self):
         """
-        GIVEN status dictionary creation
-        WHEN MediaProcessor instantiates new dictionary
-        THEN expect instantiation to complete within timing budget
-        
-        NOTE: "Timing budget" concept undefined - needs specific threshold
+        GIVEN concurrent system operations running
+        WHEN generating status dictionary
+        THEN expect <CONCURRENT_OPERATION_INTERFERENCE_THRESHOLD% performance impact on other system operations
         """
-        raise NotImplementedError("test_status_dict_instantiation_performance test needs to be implemented")
+        raise NotImplementedError("test_status_generation_does_not_interfere_with_concurrent_operations test needs to be implemented")
 
-    def test_status_field_assignment_performance(self):
+    def test_status_generation_thread_safety_with_concurrent_requests(self):
         """
-        GIVEN status dictionary population
-        WHEN MediaProcessor assigns values to dictionary fields
-        THEN expect field assignments to complete within timing budget
+        GIVEN up to CONCURRENT_REQUEST_COUNT concurrent status generation requests
+        WHEN processing simultaneous requests
+        THEN expect identical results to sequential processing without data corruption
         """
-        raise NotImplementedError("test_status_field_assignment_performance test needs to be implemented")
+        raise NotImplementedError("test_status_generation_thread_safety_with_concurrent_requests test needs to be implemented")
 
-    def test_status_validation_performance(self):
+    def test_status_response_time_measurement_reliability(self):
         """
-        GIVEN status dictionary validation
-        WHEN MediaProcessor validates field types and values
-        THEN expect validation to complete within timing budget
+        GIVEN MEASUREMENT_SAMPLES+ status generation measurements
+        WHEN analyzing timing precision and consistency
+        THEN expect measurement variance ≤ TIMING_VARIANCE_THRESHOLD% and TIMING_PRECISION_REQUIRED precision capability
         """
-        raise NotImplementedError("test_status_validation_performance test needs to be implemented")
+        raise NotImplementedError("test_status_response_time_measurement_reliability test needs to be implemented")
 
-    def test_status_serialization_performance_if_applicable(self):
+    def test_status_generation_performance_consistent_with_complex_data(self):
         """
-        GIVEN status dictionary serialization (if performed)
-        WHEN MediaProcessor serializes status to JSON/other format
-        THEN expect serialization to complete within timing budget
+        GIVEN operations with varying data complexity (>COMPLEX_DATA_COMPUTATION_THRESHOLD computation fields)
+        WHEN generating status for different operation types
+        THEN expect consistent response times regardless of available data complexity
         """
-        raise NotImplementedError("test_status_serialization_performance_if_applicable test needs to be implemented")
+        raise NotImplementedError("test_status_generation_performance_consistent_with_complex_data test needs to be implemented")
 
-    def test_status_generation_memory_efficiency(self):
+    def test_repeated_status_requests_demonstrate_caching_behavior(self):
         """
-        GIVEN status dictionary generation
-        WHEN MediaProcessor creates status object
-        THEN expect minimal memory allocation for status creation
-        
-        NOTE: "Minimal memory allocation" lacks quantitative threshold
+        GIVEN repeated status requests for identical operations
+        WHEN measuring subsequent request response times
+        THEN expect ≥CACHE_PERFORMANCE_IMPROVEMENT% faster completion compared to initial requests
         """
-        raise NotImplementedError("test_status_generation_memory_efficiency test needs to be implemented")
+        raise NotImplementedError("test_repeated_status_requests_demonstrate_caching_behavior test needs to be implemented")
 
-    def test_status_generation_cpu_efficiency(self):
+    def test_status_generation_maintains_performance_during_extended_operation(self):
         """
-        GIVEN status dictionary generation
-        WHEN MediaProcessor creates status object
-        THEN expect minimal CPU usage for status creation
-        
-        NOTE: "Minimal CPU usage" lacks quantitative measurement criteria
+        GIVEN continuous operation for EXTENDED_OPERATION_DURATION
+        WHEN monitoring response time consistency
+        THEN expect <RESPONSE_TIME_STABILITY_VARIANCE% variance in response times throughout extended period
         """
-        raise NotImplementedError("test_status_generation_cpu_efficiency test needs to be implemented")
+        raise NotImplementedError("test_status_generation_maintains_performance_during_extended_operation test needs to be implemented")
 
-    def test_status_generation_thread_safety(self):
+    def test_status_generation_performance_consistency_across_hardware_configurations(self):
         """
-        GIVEN concurrent status dictionary generation
-        WHEN multiple threads create status objects simultaneously
-        THEN expect thread-safe generation without race conditions
+        GIVEN different hardware configurations (low/mid/high-end)
+        WHEN measuring response times across configurations
+        THEN expect proportional performance scaling maintaining relative thresholds
         """
-        raise NotImplementedError("test_status_generation_thread_safety test needs to be implemented")
+        raise NotImplementedError("test_status_generation_performance_consistency_across_hardware_configurations test needs to be implemented")
 
-    def test_status_timing_precision_sufficient_for_5ms_measurement(self):
+    def test_batch_status_processing_achieves_throughput_improvement(self):
         """
-        GIVEN status response time measurement
-        WHEN using time.perf_counter() precision
-        THEN expect timer precision to be sufficient for accurate 5ms measurement
+        GIVEN BATCH_REQUEST_MIN-BATCH_REQUEST_MAX simultaneous status requests submitted within BATCH_SUBMISSION_WINDOW
+        WHEN processing as batch vs individual requests
+        THEN expect ≥THROUGHPUT_IMPROVEMENT_THRESHOLD% reduction in total processing time for batch operations
         """
-        raise NotImplementedError("test_status_timing_precision_sufficient_for_5ms_measurement test needs to be implemented")
+        raise NotImplementedError("test_batch_status_processing_achieves_throughput_improvement test needs to be implemented")
 
-    def test_status_generation_avoids_expensive_string_operations(self):
+    def test_status_generation_error_handling_maintains_performance(self):
         """
-        GIVEN status dictionary generation
-        WHEN MediaProcessor creates status fields
-        THEN expect minimal string concatenation, formatting, or regex operations
+        GIVEN error conditions (invalid inputs, insufficient resources, timeouts)
+        WHEN handling errors during status generation
+        THEN expect error processing time ≤ ERROR_HANDLING_TIME_THRESHOLD without impacting subsequent requests
         """
-        raise NotImplementedError("test_status_generation_avoids_expensive_string_operations test needs to be implemented")
+        raise NotImplementedError("test_status_generation_error_handling_maintains_performance test needs to be implemented")
 
-    def test_status_generation_pre_computed_values_when_possible(self):
+    def test_status_generation_maintains_performance_under_sustained_load(self):
         """
-        GIVEN status dictionary generation
-        WHEN MediaProcessor populates status fields
-        THEN expect pre-computed values to be used when available
+        GIVEN continuous status generation at SUSTAINED_LOAD_CAPACITY%+ capacity for SUSTAINED_LOAD_DURATION+
+        WHEN monitoring response time stability
+        THEN expect ≤PERFORMANCE_DEGRADATION_THRESHOLD% performance degradation compared to initial measurements
         """
-        raise NotImplementedError("test_status_generation_pre_computed_values_when_possible test needs to be implemented")
+        raise NotImplementedError("test_status_generation_maintains_performance_under_sustained_load test needs to be implemented")
 
-    def test_status_generation_lazy_evaluation_for_optional_fields(self):
+    def test_status_response_time_consistency_across_operation_types(self):
         """
-        GIVEN status dictionary with optional fields
-        WHEN MediaProcessor generates status
-        THEN expect lazy evaluation for expensive optional field calculations
+        GIVEN different operation types (download, convert, combined workflows)
+        WHEN measuring status response times
+        THEN expect ≤STATUS_RESPONSE_TIME_THRESHOLD response time regardless of underlying operation complexity
         """
-        raise NotImplementedError("test_status_generation_lazy_evaluation_for_optional_fields test needs to be implemented")
+        raise NotImplementedError("test_status_response_time_consistency_across_operation_types test needs to be implemented")
 
-    def test_status_generation_caching_for_repeated_requests(self):
+    def test_status_generation_provides_performance_feedback_when_degraded(self):
         """
-        GIVEN repeated requests for same operation status
-        WHEN MediaProcessor generates status multiple times
-        THEN expect caching to improve subsequent response times
+        GIVEN performance degradation exceeding defined thresholds
+        WHEN status generation experiences slowdowns
+        THEN expect actionable feedback identifying performance bottlenecks for debugging
         """
-        raise NotImplementedError("test_status_generation_caching_for_repeated_requests test needs to be implemented")
-
-    def test_status_generation_object_reuse_pattern(self):
-        """
-        GIVEN multiple status dictionary generations
-        WHEN MediaProcessor creates status objects
-        THEN expect object reuse patterns to minimize allocation overhead
-        """
-        raise NotImplementedError("test_status_generation_object_reuse_pattern test needs to be implemented")
-
-    def test_status_generation_field_ordering_optimization(self):
-        """
-        GIVEN status dictionary field population
-        WHEN MediaProcessor assigns field values
-        THEN expect field ordering to optimize for cache locality
-        """
-        raise NotImplementedError("test_status_generation_field_ordering_optimization test needs to be implemented")
-
-    def test_status_generation_batch_processing_for_multiple_operations(self):
-        """
-        GIVEN multiple operations requiring status generation
-        WHEN MediaProcessor generates status for batch
-        THEN expect batch processing optimizations for improved throughput
-        """
-        raise NotImplementedError("test_status_generation_batch_processing_for_multiple_operations test needs to be implemented")
-
-    def test_status_generation_error_handling_performance(self):
-        """
-        GIVEN status generation with error conditions
-        WHEN MediaProcessor handles errors during status creation
-        THEN expect error handling to not significantly impact timing
-        """
-        raise NotImplementedError("test_status_generation_error_handling_performance test needs to be implemented")
-
-    def test_status_generation_gc_impact_minimization(self):
-        """
-        GIVEN status dictionary generation
-        WHEN MediaProcessor creates status objects
-        THEN expect minimal garbage collection impact on timing
-        """
-        raise NotImplementedError("test_status_generation_gc_impact_minimization test needs to be implemented")
-
-    def test_status_response_time_measurement_across_operation_types(self):
-        """
-        GIVEN different operation types (download, convert, combined)
-        WHEN measuring status response time
-        THEN expect consistent 5ms timing regardless of operation complexity
-        """
-        raise NotImplementedError("test_status_response_time_measurement_across_operation_types test needs to be implemented")
-
-    def test_status_generation_profiling_instrumentation(self):
-        """
-        GIVEN status generation performance monitoring
-        WHEN MediaProcessor creates status objects
-        THEN expect profiling instrumentation to identify bottlenecks
-        """
-        raise NotImplementedError("test_status_generation_profiling_instrumentation test needs to be implemented")
+        raise NotImplementedError("test_status_generation_provides_performance_feedback_when_degraded test needs to be implemented")
 
 
 if __name__ == "__main__":

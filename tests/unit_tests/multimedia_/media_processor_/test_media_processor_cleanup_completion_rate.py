@@ -1033,7 +1033,8 @@ class TestCleanupCompletionRate:
             default_output_dir=tmp_path,
             ffmpeg=mock_ffmpeg
         )
-        assert processor.ffmpeg is mock_ffmpeg, f"ffmpeg attribute is {processor.ffmpeg}, expected {mock_ffmpeg}"
+        assert processor.ffmpeg is mock_ffmpeg, \
+        f"ffmpeg attribute is {processor.ffmpeg}, expected {mock_ffmpeg}"
 
     @pytest.mark.asyncio
     async def test_successful_result_contains_title_field(self, tmp_path):
@@ -1128,7 +1129,8 @@ class TestCleanupCompletionRate:
             output_format=self.DEFAULT_OUTPUT_FORMAT,
             quality=self.DEFAULT_QUALITY
         )
-        assert isinstance(result["duration"], (int, float)), f"duration is {type(result['duration'])}, expected int or float"
+        assert isinstance(result["duration"], (int, float)), \
+            f"duration is {type(result['duration'])}, expected int or float"
 
     @pytest.mark.asyncio
     async def test_successful_result_duration_has_correct_value(self, tmp_path):

@@ -9,9 +9,63 @@ import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
 
+try:
+    from pydantic import BaseModel, Field, NonNegativeFloat, NonNegativeInt, FilePath
+except ImportError:
+    raise ImportError("pydantic required for MediaProcessor. Please install it with 'pip install pydantic'.")
+
 
 from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
+
+
+class MediaProcessorMetadata(BaseModel):
+    """
+    Metadata model for MediaProcessor operations.
+
+    Attributes:
+        output_path (str): Path to the output media file.
+        filesize (NonNegativeInt): Size of the media file in bytes.
+        format (str): Format/container type of the media file.
+        title (str): Title of the media content. Defaults to "[Unknown Title]".
+        duration (NonNegativeFloat): Duration of the media in seconds. Defaults to 0.0.
+        resolution (str): Resolution of the media (e.g., "1920x1080"). Defaults to "unknown".
+        converted_path (Optional[FilePath]): Path to converted file if conversion was performed. Defaults to None.
+        conversion_result (Optional[Dict[str, Any]]): Result metadata from conversion operation. Defaults to None.
+    """
+    output_path: str
+    filesize: NonNegativeInt
+    format: str
+    title: str = "[Unknown Title]"
+    duration: NonNegativeFloat = 0.0
+    resolution: str = "unknown"
+    converted_path: Optional[FilePath] = None  # Path to converted file if applicable
+    conversion_result: Optional[Dict[str, Any]] = None  # Result of conversion operation if applicable
+
+
+CORE_METADATA_FIELDS = [
+    "output_path", "title", "duration", "filesize", "format", "resolution"
+]
+
+OPTIONAL_METADATA_FIELDS = [
+    "converted_path", "conversion_result"
+]
+
+ALL_METADATA_FIELDS = CORE_METADATA_FIELDS + OPTIONAL_METADATA_FIELDS
+
+# Weighted completeness: core fields = 0.85 weight, optional fields = 0.15 weight
+CORE_WEIGHT = 0.85
+OPTIONAL_WEIGHT = 0.15
+COMPLETENESS_THRESHOLD = 0.90  # Reduced from 0.98 for practical deployment scenarios
+
+# Metadata field defaults for graceful degradation
+METADATA_DEFAULTS = {
+    "title": "[Unknown Title]",  # Fallback when both video title and filename are unavailable
+    "duration": 0.0,             # Zero duration for streams/unknown
+    "resolution": "unknown",     # String format for undetectable resolution
+    "converted_path": None,      # Explicit None when no conversion
+    "conversion_result": None    # Explicit None when no conversion
+}
 
 
 

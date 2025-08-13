@@ -87,19 +87,10 @@ class TestLLMOptimizerOptimizeForLlm:
         self.optimizer.tokenizer = Mock()
         self.optimizer.tokenizer.encode.return_value = list(range(50))
 
-    @pytest.mark.asyncio
-    async def test_optimize_for_llm_complete_pipeline(self):
-        """
-        GIVEN valid decomposed_content and document_metadata
-        WHEN optimize_for_llm is called
-        THEN expect:
-            - Complete processing pipeline executed
-            - LLMDocument returned with all required fields
-            - No errors or exceptions raised
-            - Processing metadata populated
-        """
-        # Given
-        decomposed_content = {
+    @property
+    def decomposed_content(self):
+        """Mock decomposed content for testing."""
+        return {
             'pages': [
                 {
                     'elements': [
@@ -125,39 +116,241 @@ class TestLLMOptimizerOptimizeForLlm:
                 'title': 'ML Basics'
             }
         }
-        
-        document_metadata = {
+
+    @property
+    def document_metadata(self):
+        """Mock document metadata for testing."""
+        return {
             'document_id': 'test_doc_001',
             'title': 'Machine Learning Basics',
             'author': 'Test Author'
         }
-        
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_returns_llm_document(self):
+        """
+        GIVEN valid decomposed_content and document_metadata
+        WHEN optimize_for_llm is called
+        THEN expect LLMDocument instance returned
+        """
+
         # When
-        result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
         # Then
         assert isinstance(result, LLMDocument)
-        assert result.document_id == document_metadata['document_id']
-        assert result.title == document_metadata['title']
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_preserves_document_id(self):
+        """
+        GIVEN valid decomposed_content and document_metadata with document_id
+        WHEN optimize_for_llm is called
+        THEN expect document_id preserved in result
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
-        # Verify chunks
+        # Then
+        assert result.document_id == self.document_metadata['document_id']
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_preserves_title(self):
+        """
+        GIVEN valid decomposed_content and document_metadata with title
+        WHEN optimize_for_llm is called
+        THEN expect title preserved in result
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert result.title == self.document_metadata['title']
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_chunks_list(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect chunks returned as list
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert isinstance(result.chunks, list)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_non_empty_chunks(self):
+        """
+        GIVEN valid decomposed_content with content
+        WHEN optimize_for_llm is called
+        THEN expect at least one chunk created
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert len(result.chunks) > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunks_are_llm_chunk_instances(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect all chunks to be LLMChunk instances
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         for chunk in result.chunks:
             assert isinstance(chunk, LLMChunk)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunks_have_content(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect all chunks to have non-empty content
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        for chunk in result.chunks:
             assert len(chunk.content) > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunks_have_token_count(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect all chunks to have positive token count
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        for chunk in result.chunks:
             assert chunk.token_count > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_summary_string(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect summary returned as string
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
-        # Verify other components
+        # Then
         assert isinstance(result.summary, str)
-        assert len(result.summary) > 0
-        assert isinstance(result.key_entities, list)
-        assert isinstance(result.processing_metadata, dict)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_non_empty_summary(self):
+        """
+        GIVEN valid decomposed_content with content
+        WHEN optimize_for_llm is called
+        THEN expect non-empty summary
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
-        # Verify processing metadata
+        # Then
+        assert len(result.summary) > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_key_entities_list(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect key_entities returned as list
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert isinstance(result.key_entities, list)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_processing_metadata_dict(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect processing_metadata returned as dict
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert isinstance(result.processing_metadata, dict)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_includes_processing_time_metadata(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect processing_time_seconds in processing_metadata
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert 'processing_time_seconds' in result.processing_metadata
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_includes_chunk_count_metadata(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect chunk_count in processing_metadata
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert 'chunk_count' in result.processing_metadata
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_includes_token_count_metadata(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect token_count in processing_metadata
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert 'token_count' in result.processing_metadata
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunk_count_metadata_matches_actual_chunks(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect chunk_count metadata to match actual chunk count
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert result.processing_metadata['chunk_count'] == len(result.chunks)
 
     @pytest.mark.asyncio
