@@ -752,7 +752,7 @@ class TestQueryEngineIntegration:
             - Processing time recorded and < 5 seconds
             - No exceptions raised during processing
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_relationship_search_end_to_end(self, real_query_engine):
@@ -767,7 +767,7 @@ class TestQueryEngineIntegration:
             - Each result has proper relationship context
             - Processing completes without errors
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_semantic_search_end_to_end(self, real_query_engine):
@@ -782,7 +782,7 @@ class TestQueryEngineIntegration:
             - Relevance scores decrease monotonically in results
             - Content matches semantic intent of query
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_with_filters_applied_integration(self, real_query_engine):
@@ -797,7 +797,7 @@ class TestQueryEngineIntegration:
             - Result count matches filtered dataset size
             - No results from excluded documents
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_max_results_limit_integration(self, real_query_engine):
@@ -812,7 +812,7 @@ class TestQueryEngineIntegration:
             - Processing stops at result limit
             - Highest quality results prioritized in limited set
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_caching_behavior_integration(self, real_query_engine):
@@ -827,7 +827,7 @@ class TestQueryEngineIntegration:
             - Second response metadata indicates cache_hit=True
             - Cache key generation works for parameter variations
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_cache_invalidation_with_different_parameters(self, real_query_engine):
@@ -841,7 +841,7 @@ class TestQueryEngineIntegration:
             - Each unique parameter combination processes independently
             - Cache distinguishes between parameter variations
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_normalization_pipeline_integration(self, real_query_engine):
@@ -855,7 +855,7 @@ class TestQueryEngineIntegration:
             - QueryResponse.metadata contains original and normalized queries
             - Normalization preserves query meaning and results quality
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_type_detection_accuracy_integration(self, real_query_engine):
@@ -869,7 +869,7 @@ class TestQueryEngineIntegration:
             - Document queries detected as document_search (>80% accuracy)
             - Detection accuracy impacts result quality
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_suggestion_generation_integration(self, real_query_engine):
@@ -884,7 +884,7 @@ class TestQueryEngineIntegration:
             - Suggestions differ from original query by >30% text similarity
             - Suggestion quality correlates with result quality
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_processing_time_measurement_integration(self, real_query_engine):
@@ -898,7 +898,7 @@ class TestQueryEngineIntegration:
             - Time measurement includes all pipeline stages
             - Processing time < 10 seconds for typical queries
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_error_propagation_integration(self, real_query_engine):
@@ -912,7 +912,7 @@ class TestQueryEngineIntegration:
             - Error messages provide debugging information
             - System recovers from transient errors
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_metadata_completeness_integration(self, real_query_engine):
@@ -927,7 +927,7 @@ class TestQueryEngineIntegration:
             - cache_hit status indicates cache usage
             - Processing statistics included in metadata
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_with_empty_results_integration(self, real_query_engine):
@@ -942,7 +942,7 @@ class TestQueryEngineIntegration:
             - Suggestions generated for alternative queries
             - Metadata populated despite empty results
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_cross_document_integration(self, real_query_engine_with_multiple_docs):
@@ -956,7 +956,7 @@ class TestQueryEngineIntegration:
             - Result relevance considers document interactions
             - QueryResponse indicates cross-document processing
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_graph_traversal_integration(self, real_query_engine_with_graph_data):
@@ -970,7 +970,7 @@ class TestQueryEngineIntegration:
             - Path relevance and distance calculated
             - Complex graph queries processed in < 15 seconds
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_concurrent_execution_integration(self, real_query_engine):
@@ -985,7 +985,7 @@ class TestQueryEngineIntegration:
             - No race conditions or data corruption
             - Performance benefits from concurrent processing
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_memory_usage_integration(self, real_query_engine):
@@ -999,7 +999,7 @@ class TestQueryEngineIntegration:
             - Memory released after query completion
             - Processing efficiency maintained with large datasets
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_with_invalid_parameters_integration(self, real_query_engine):
@@ -1014,7 +1014,7 @@ class TestQueryEngineIntegration:
             - Error messages provide parameter correction guidance
             - No processing attempted with invalid parameters
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_timeout_behavior_integration(self, real_query_engine, slow_processing_scenario):
@@ -1028,7 +1028,7 @@ class TestQueryEngineIntegration:
             - System resources cleaned up on timeout
             - Timeout behavior configurable per query complexity
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")
 
     @pytest.mark.asyncio
     async def test_query_result_quality_integration(self, real_query_engine_with_known_data):
@@ -1043,4 +1043,4 @@ class TestQueryEngineIntegration:
             - Query type detection leads to appropriate result types
             - Overall result quality meets >80% accuracy benchmarks
         """
-        pass
+        raise NotImplementedError("this test has not been written yet.")

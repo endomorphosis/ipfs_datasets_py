@@ -12,7 +12,7 @@ This module includes:
 """
 
 from .core import (
-    EmbeddingCore,
+    EmbeddingCore, 
     generate_embeddings,
     create_embedding_instance,
     get_available_models

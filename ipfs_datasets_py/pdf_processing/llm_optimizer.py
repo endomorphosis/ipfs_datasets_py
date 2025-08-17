@@ -1278,6 +1278,7 @@ class LLMOptimizer:
     async def optimize_for_llm(self, 
                               decomposed_content: dict[str, Any],
                               document_metadata: dict[str, Any],
+                              timeout: int = 30
                               ) -> LLMDocument:
         """
         Transform decomposed PDF content into an LLM-optimized document with semantic structure.
@@ -1327,40 +1328,43 @@ class LLMOptimizer:
             ...     print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
             >>> print(f"Document summary: {llm_doc.summary[:100]}...")
         """
-        timeout = 30 # seconds
-        import asyncio
-
         async with asyncio.timeout(timeout):
         
             print("Starting LLM optimization process")
             
             # Extract text content with structure preservation
-            structured_text = await self._extract_structured_text(decomposed_content)
+            structured_text: dict[str, Any] = await self._extract_structured_text(decomposed_content)
 
             print("Extracted structured text content with preserved document structure")
-            
+
             # Generate document summary
-            document_summary = await self._generate_document_summary(structured_text)
+            document_summary: str = await self._generate_document_summary(structured_text)
 
             print("Generated document summary")
             
             # Create optimal chunks
-            chunks = await self._create_optimal_chunks(structured_text)
+            try:
+                chunks: list[LLMChunk] = await self._create_optimal_chunks(structured_text)
+            except Exception as e:
+                self.logger.error(f"Error creating optimal chunks: {e}")
+                chunks = []
 
             print(f"Created {len(chunks)} initial chunks")
 
             # Generate embeddings
-            chunks_with_embeddings = await self._generate_embeddings(chunks)
+            chunks_with_embeddings: list[LLMChunk] = await self._generate_embeddings(chunks)
 
             print("Generated embeddings for all chunks")
 
             # Extract key entities
-            key_entities = await self._extract_key_entities(structured_text)
+            key_entities: list[dict[str, Any]] = await self._extract_key_entities(structured_text)
 
             print(f"Extracted {len(key_entities)} key entities from document")
 
             # Create document-level embedding
-            document_embedding = await self._generate_document_embedding(document_summary, structured_text)
+            document_embedding: np.ndarray | None = await self._generate_document_embedding(
+                document_summary, structured_text
+            )
 
             print("Generated document-level embedding")
 
@@ -1595,7 +1599,10 @@ class LLMOptimizer:
             self.logger.exception(msg)
             return msg
     
-    async def _create_optimal_chunks(self, structured_text: dict[str, Any]) -> list[LLMChunk]:
+    async def _create_optimal_chunks(self, 
+                                     structured_text: dict[str, Any],
+                                     strict_validation: bool = False
+                                     ) -> list[LLMChunk]:
         """
         Create semantically coherent text chunks optimized for LLM processing with intelligent boundary detection.
 
@@ -1647,6 +1654,7 @@ class LLMOptimizer:
         """
         chunks = []
         chunk_id_counter = 0
+        strict = strict_validation
         
         for page in structured_text['pages']:
             page_num = page['page_number']
@@ -1660,21 +1668,21 @@ class LLMOptimizer:
 
             elements = page['elements']
             if not isinstance(elements, list):
-                raise TypeError(
-                    f"Expected 'elements' to be a list on page {page_num}, got {type(elements).__name__}"
-                )
+                raise TypeError(f"Expected 'elements' to be a list on page {page_num}, got {type(elements).__name__}")
 
             for element in elements:
                 if not isinstance(element, dict):
                     raise TypeError(
                         f"Expected each element to be a dict, got {type(element).__name__} on page {page_num}"
                     )
+
                 if 'content' not in element:
                     raise KeyError(
                         f"Element on page {page_num} missing 'content' key, skipping."
                     )
+
                 element_content = element['content']
-                
+
                 if not isinstance(element_content, str):
                     raise TypeError(f"Element content must be a string, got {type(element_content).__name__}")
 
@@ -2142,10 +2150,11 @@ class LLMOptimizer:
             >>> print(result)
             'Business'
         """
-        # Base log threshold for statistical significance (ln(0.05) ≈ -2.996)
-        LOG_THRESHOLD = math.log(0.05)
+        # Base threshold for statistical significance (ln(0.05) ≈ -2.996)
+        PROB_THRESHOLD = 0.05
 
         # Input validation
+            # Sentence
         if not isinstance(sentence, str):
             raise TypeError("sentence must be a string")
         if not sentence or not sentence.strip():
@@ -2155,9 +2164,11 @@ class LLMOptimizer:
         if sentence != sentence.strip():
             raise ValueError("sentence must not have leading or trailing whitespace")
 
+        # OpenAI client
         if openai_client is None:
             raise ValueError("openai client is not set")
 
+        # Classifications
         if not isinstance(classifications, set):
             raise TypeError("classifications must be a set")
         if not classifications:
@@ -2175,7 +2186,7 @@ class LLMOptimizer:
             model=self.llm_name,
             retries=retries,
             timeout=timeout,
-            threshold=LOG_THRESHOLD,
+            threshold=PROB_THRESHOLD,
             logger=self.logger,
         )
         print(f"classification_results:\n{classification_results}")

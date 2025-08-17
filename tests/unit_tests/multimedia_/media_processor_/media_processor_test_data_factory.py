@@ -25,7 +25,7 @@ def create_mock_ytdlp(tmp_path, **kwargs):
     Returns:
         MagicMock: Configured mock YtDlpWrapper instance
     """
-    mock = MagicMock()
+    mock = MagicMock(spec=YtDlpWrapper)
     
     # Default return values
     default_return = {
@@ -61,7 +61,7 @@ def create_mock_ffmpeg(tmp_path, **kwargs):
     Returns:
         MagicMock: Configured mock FFmpegWrapper instance
     """
-    mock = MagicMock()
+    mock = MagicMock(spec=FFmpegWrapper)
     
     # Default return values
     default_return = {

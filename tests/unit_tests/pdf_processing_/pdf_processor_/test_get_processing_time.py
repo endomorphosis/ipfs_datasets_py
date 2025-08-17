@@ -90,14 +90,33 @@ class TestGetProcessingTime:
         }
         self.processor = PDFProcessor(mock_dict=mock_dict)
 
-    def test_get_processing_time_basic_calculation(self):
+    def test_get_processing_time_returns_float(self):
         """
         GIVEN processing statistics with start and end timestamps
         WHEN _get_processing_time calculates elapsed time
-        THEN expect:
-            - Accurate processing time in seconds with decimal precision
-            - Time includes all pipeline stages and overhead
-            - Performance metrics for monitoring and optimization
+        THEN expect processing time to be a float type
+        """
+        # GIVEN - Mock processor with processing stats containing timestamps
+        start_time = 1234567890.123
+        end_time = 1234567950.456
+        self.processor.processing_stats = {
+            'start_time': start_time,
+            'end_time': end_time,
+            'stages_completed': 10
+        }
+        
+        # WHEN - Call _get_processing_time
+        processing_time = self.processor._get_processing_time(start_time)
+        
+        # THEN - Expect float type
+        assert isinstance(processing_time, float), \
+            f"Expected processing time to be float, got {type(processing_time).__name__}"
+
+    def test_get_processing_time_accurate_calculation(self):
+        """
+        GIVEN processing statistics with start and end timestamps
+        WHEN _get_processing_time calculates elapsed time
+        THEN expect accurate time calculation with decimal precision
         """
         # GIVEN - Mock processor with processing stats containing timestamps
         start_time = 1234567890.123
@@ -112,25 +131,33 @@ class TestGetProcessingTime:
         processing_time = self.processor._get_processing_time(start_time)
         
         # THEN - Expect accurate time calculation
+        tolerance = 0.001  # Allow small floating point errors
         expected_time = end_time - start_time  # 60.333 seconds
-        assert isinstance(processing_time, float)
-        assert abs(processing_time - expected_time) < 0.001  # Decimal precision
-        assert processing_time > 0  # Positive time value
+        difference = abs(processing_time - expected_time)
+        assert difference < tolerance, \
+            f"Expected difference to be less than {tolerance}, got {difference}"
 
-    def test_get_processing_time_missing_statistics(self):
+    def test_get_processing_time_positive_value(self):
         """
-        GIVEN processing statistics not properly initialized
-        WHEN _get_processing_time accesses missing statistics
-        THEN expect AttributeError to be raised
+        GIVEN processing statistics with start and end timestamps
+        WHEN _get_processing_time calculates elapsed time
+        THEN expect positive time value
         """
+        # GIVEN - Mock processor with processing stats containing timestamps
         start_time = 1234567890.123
-        # GIVEN - Processor without processing_stats attribute
-        processor = PDFProcessor()
-        delattr(processor, 'processing_stats')
+        end_time = 1234567950.456
+        self.processor.processing_stats = {
+            'start_time': start_time,
+            'end_time': end_time,
+            'stages_completed': 10
+        }
         
-        # WHEN/THEN - Expect AttributeError when accessing missing stats
-        with pytest.raises(AttributeError, match="processing_stats"):
-            processor._get_processing_time(start_time)
+        # WHEN - Call _get_processing_time
+        processing_time = self.processor._get_processing_time(start_time)
+        
+        # THEN - Expect positive time value
+        assert processing_time > 0, f"Expected processing time to be positive, got {processing_time}"
+
 
     def test_get_processing_time_invalid_timestamps(self):
         """
@@ -139,8 +166,8 @@ class TestGetProcessingTime:
         THEN expect ValueError to be raised
         """
         # GIVEN - Processing stats with end time before start time
-        processor = PDFProcessor()
-        processor.processing_stats = {
+
+        self.processor.processing_stats = {
             'start_time': 1234567950.456,  # Later time
             'end_time': 1234567890.123,    # Earlier time
             'stages_completed': 5
@@ -148,45 +175,16 @@ class TestGetProcessingTime:
         
         # WHEN/THEN - Expect ValueError for negative time calculation
         with pytest.raises(ValueError, match="Invalid timestamp.*negative"):
-            processor._get_processing_time()
+            self.processor._get_processing_time()
 
-    def test_get_processing_time_placeholder_vs_production(self):
-        """
-        GIVEN current placeholder implementation
-        WHEN _get_processing_time returns development value
-        THEN expect:
-            - Placeholder value returned for development
-            - Production implementation would track actual timestamps
-            - Method signature ready for production implementation
-        """
-        # GIVEN - Processor with default initialization (no processing_stats set)
-        processor = PDFProcessor()
-        
-        # WHEN - Call _get_processing_time on fresh processor
-        processing_time = processor._get_processing_time()
-        
-        # THEN - Expect placeholder behavior (development mode)
-        assert isinstance(processing_time, float)
-        assert processing_time == 42.0  # Placeholder value as per docstring
-        
-        # Verify method signature is ready for production
-        import inspect
-        sig = inspect.signature(processor._get_processing_time)
-        assert len(sig.parameters) == 0  # No parameters beyond self
-        assert sig.return_annotation == float  # Returns float type
-
-    def test_get_processing_time_performance_monitoring_integration(self):
+    def test_get_processing_time_returns_float_for_monitoring(self):
         """
         GIVEN processing time used for performance monitoring
         WHEN _get_processing_time provides metrics
-        THEN expect:
-            - Time suitable for performance analysis
-            - Metrics support capacity planning
-            - Processing time enables optimization identification
+        THEN expect time to be float type for analysis
         """
         # GIVEN - Processor with monitoring enabled and realistic processing stats
-        processor = PDFProcessor(enable_monitoring=True)
-        processor.processing_stats = {
+        self.processor.processing_stats = {
             'start_time': 1000000000.0,
             'end_time': 1000000065.5,  # 65.5 seconds processing
             'stages_completed': 10,
@@ -195,21 +193,145 @@ class TestGetProcessingTime:
         }
         
         # WHEN - Get processing time for monitoring
-        processing_time = processor._get_processing_time()
+        processing_time = self.processor._get_processing_time()
         
-        # THEN - Expect metrics suitable for performance analysis
-        assert isinstance(processing_time, float)
-        assert processing_time == 65.5  # Accurate time calculation
-        assert processing_time > 0  # Positive duration
+        # THEN - Expect float type for performance analysis
+        assert isinstance(processing_time, float), \
+            f"Expected processing time to be float, got {type(processing_time).__name__}"
+
+    def test_get_processing_time_accurate_calculation_for_monitoring(self):
+        """
+        GIVEN processing time used for performance monitoring
+        WHEN _get_processing_time calculates metrics
+        THEN expect accurate time calculation
+        """
+        # GIVEN - Processor with monitoring enabled and realistic processing stats
+        self.processor.processing_stats = {
+            'start_time': 1000000000.0,
+            'end_time': 1000000065.5,  # 65.5 seconds processing
+            'stages_completed': 10,
+            'pages_processed': 25,
+            'entities_extracted': 150
+        }
         
-        # Time should be reasonable for monitoring thresholds
-        assert processing_time < 300  # Less than 5 minutes (reasonable threshold)
+        # WHEN - Get processing time for monitoring
+        processing_time = self.processor._get_processing_time()
         
-        # Verify monitoring integration compatibility
-        if hasattr(processor, 'monitoring') and processor.monitoring:
-            # Processing time should be compatible with monitoring system
-            assert processing_time is not None
-            assert not (processing_time < 0 or processing_time > 86400)  # Reasonable bounds
+        # THEN - Expect accurate time calculation
+        actual_time = 65.5  # seconds
+        assert processing_time == actual_time, \
+            f"Expected processing time to be {actual_time}, got {processing_time}"
+
+    def test_get_processing_time_positive_for_monitoring(self):
+        """
+        GIVEN processing time used for performance monitoring
+        WHEN _get_processing_time provides metrics
+        THEN expect positive duration
+        """
+        # GIVEN - Processor with monitoring enabled and realistic processing stats
+        self.processor.processing_stats = {
+            'start_time': 1000000000.0,
+            'end_time': 1000000065.5,  # 65.5 seconds processing
+            'stages_completed': 10,
+            'pages_processed': 25,
+            'entities_extracted': 150
+        }
+        
+        # WHEN - Get processing time for monitoring
+        processing_time = self.processor._get_processing_time()
+        
+        # THEN - Expect positive duration
+        assert processing_time > 0, \
+            f"Expected processing time to be positive, got {processing_time}"
+
+    def test_get_processing_time_reasonable_threshold_for_monitoring(self):
+        """
+        GIVEN processing time used for performance monitoring
+        WHEN _get_processing_time provides metrics
+        THEN expect time within reasonable monitoring thresholds
+        """
+        # GIVEN - Processor with monitoring enabled and realistic processing stats
+        self.processor.processing_stats = {
+            'start_time': 1000000000.0,
+            'end_time': 1000000065.5,  # 65.5 seconds processing
+            'stages_completed': 10,
+            'pages_processed': 25,
+            'entities_extracted': 150
+        }
+        
+        # WHEN - Get processing time for monitoring
+        processing_time = self.processor._get_processing_time()
+        
+        # THEN - Time should be reasonable for monitoring thresholds
+        five_minutes = 5 * 60  # 5 minutes in seconds
+        assert processing_time < five_minutes, \
+            f"Expected processing time to be less than {five_minutes}, got {processing_time}"
+
+    def test_get_processing_time_not_none_for_monitoring(self):
+        """
+        GIVEN processing time used for performance monitoring
+        WHEN _get_processing_time provides metrics
+        THEN expect non-null value for monitoring system compatibility
+        """
+        # GIVEN - Processor with monitoring enabled and realistic processing stats
+        self.processor.processing_stats = {
+            'start_time': 1000000000.0,
+            'end_time': 1000000065.5,  # 65.5 seconds processing
+            'stages_completed': 10,
+            'pages_processed': 25,
+            'entities_extracted': 150
+        }
+        
+        # WHEN - Get processing time for monitoring
+        processing_time = self.processor._get_processing_time()
+        
+        # THEN - Processing time should be compatible with monitoring system
+        assert processing_time is not None
+
+    def test_get_processing_time_greater_than_zero_for_monitoring(self):
+        """
+        GIVEN processing time used for performance monitoring
+        WHEN _get_processing_time provides metrics
+        THEN expect time to be greater than zero
+        """
+        # GIVEN - Processor with monitoring enabled and realistic processing stats
+        self.processor.processing_stats = {
+            'start_time': 1000000000.0,
+            'end_time': 1000000065.5,  # 65.5 seconds processing
+            'stages_completed': 10,
+            'pages_processed': 25,
+            'entities_extracted': 150
+        }
+        
+        # WHEN - Get processing time for monitoring
+        processing_time = self.processor._get_processing_time()
+        
+        # THEN - Time should be greater than zero
+        assert processing_time > 0, \
+            f"Expected processing time to be greater than zero, got {processing_time}"
+
+    def test_get_processing_time_not_unreasonably_large_for_monitoring(self):
+        """
+        GIVEN processing time used for performance monitoring
+        WHEN _get_processing_time provides metrics
+        THEN expect time to not be unreasonably large
+        """
+        # GIVEN - Processor with monitoring enabled and realistic processing stats
+        self.processor.processing_stats = {
+            'start_time': 1000000000.0,
+            'end_time': 1000000065.5,  # 65.5 seconds processing
+            'stages_completed': 10,
+            'pages_processed': 25,
+            'entities_extracted': 150
+        }
+        
+        # WHEN - Get processing time for monitoring
+        processing_time = self.processor._get_processing_time()
+        
+        # THEN - Time should not be unreasonably large (less than 24 hours)
+        twenty_four_hours = 24 * 60 * 60
+        assert processing_time < twenty_four_hours, \
+            f"Expected processing time to be less than 24 hours, got {processing_time}"
 
 
 

@@ -64,7 +64,7 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 
 
 @pytest.fixture
-def mock_graphrag(self) -> Mock:
+def mock_graphrag() -> Mock:
     """Create mock GraphRAG integrator with test data."""
     mock = Mock(spec=GraphRAGIntegrator)
     
@@ -106,12 +106,12 @@ def mock_graphrag(self) -> Mock:
     return mock
 
 @pytest.fixture
-def mock_storage(self):
+def mock_storage():
     """Create mock IPLD storage."""
     return Mock(spec=IPLDStorage)
 
 @pytest.fixture
-def query_engine(self, mock_graphrag, mock_storage) -> QueryEngine:
+def query_engine(mock_graphrag, mock_storage) -> QueryEngine:
     """Create QueryEngine instance with mocked dependencies."""
     with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer'):
         engine = QueryEngine(

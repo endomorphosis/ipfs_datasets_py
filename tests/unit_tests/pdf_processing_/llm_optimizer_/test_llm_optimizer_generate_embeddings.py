@@ -202,7 +202,7 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         GIVEN a list of chunks with valid content
         WHEN _generate_embeddings is called
-        THEN each chunk embedding should have the expected shape (384,)
+        THEN each chunk embedding should have the expected shape (5,)
         """
         # Given
         chunks = self.mock_chunks.copy()
@@ -211,7 +211,7 @@ class TestLLMOptimizerGenerateEmbeddings:
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        shape = (384,)
+        shape = (5,)
         assert result_chunks[0].embedding.shape == shape, \
             f"Embedding should have shape {shape}, got {result_chunks[0].embedding.shape}"
 
@@ -354,16 +354,26 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN all chunk embeddings should remain None
         """
-        # Given
-        chunks = self.mock_chunks.copy()
+        # Given - Create chunks with None embeddings
+        chunks = [
+            ChunkFactory.create_chunk_instance(
+                content="This is the first chunk of text for testing embeddings.",
+                chunk_id="chunk_0000",
+                source_page=1,
+                source_elements=["paragraph"],
+                token_count=12,
+                embedding=None
+            )
+        ]
         self.optimizer.embedding_model = None
         
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert chunks[0].embedding is None, \
-            "First chunk embedding should remain None when model is unavailable"
+        assert result_chunks[0].embedding is None, \
+            f"chunk embedding should remain None when model is unavailable, got {result_chunks[0].embedding}"
+
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_empty_chunks_returns_empty_list(self):

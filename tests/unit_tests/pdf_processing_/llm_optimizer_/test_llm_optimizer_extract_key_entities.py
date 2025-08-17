@@ -235,7 +235,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'Date patterns' in sentence:
@@ -268,14 +268,45 @@ class TestLLMOptimizerExtractKeyEntities:
         assert any('Organization patterns' in e['text'] for e in org_entities)
 
     @pytest.mark.asyncio
-    async def test_extract_key_entities_confidence_scoring(self):
+    async def test_extract_key_entities_confidence_scores_in_valid_range(self):
         """
-        GIVEN various entity patterns with different match strength
+        GIVEN various entity patterns
         WHEN _extract_key_entities is called
-        THEN expect:
-            - Confidence scores between 0.0 and 1.0
-            - Higher confidence for stronger pattern matches
-            - Reasonable score distribution
+        THEN expect all confidence scores between 0.0 and 1.0
+        """
+        # Given
+        structured_text = {
+            'pages': [
+                {
+                    'full_text': 'Strong patterns: john.smith@university.edu, 12/25/2024, NASA. Weak patterns: something@something, 99/99/9999, ABC.'
+                }
+            ]
+        }
+
+        def mock_classify_entity(sentence, **kwargs):
+            if 'university.edu' in sentence:
+                return ClassificationResult(entity=sentence, category='Education', confidence=0.9)
+            elif 'NASA' in sentence:
+                return ClassificationResult(entity=sentence, category='Science and technology', confidence=0.85)
+            else:
+                return ClassificationResult(entity=sentence, category='unclassified', confidence=0.5)
+        
+        # Patch the entity classification method
+        with patch.object(self.optimizer, '_get_entity_classification', side_effect=mock_classify_entity):
+            # When
+            entities = await self.optimizer._extract_key_entities(structured_text)
+        
+        # Then
+        for entity in entities:
+            assert 0.0 <= entity['confidence'] <= 1.0, \
+                f"Confidence score out of range: {entity['confidence']} for entity {entity['text']}"
+
+    @pytest.mark.asyncio
+    async def test_extract_key_entities_returns_entities(self):
+        """
+        GIVEN various entity patterns
+        WHEN _extract_key_entities is called
+        THEN expect at least one entity returned
         """
         # Given
         structured_text = {
@@ -287,7 +318,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification method
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'university.edu' in sentence:
@@ -303,16 +334,45 @@ class TestLLMOptimizerExtractKeyEntities:
             entities = await self.optimizer._extract_key_entities(structured_text)
         
         # Then
-        assert len(entities) > 0
+        assert len(entities) > 0, \
+            "Expected at least one entity to be extracted, but got none."
+
+    @pytest.mark.asyncio
+    async def test_extract_key_entities_strong_patterns_have_high_confidence(self):
+        """
+        GIVEN strong entity patterns like university emails
+        WHEN _extract_key_entities is called
+        THEN expect high confidence scores for strong patterns
+        """
+        # Given
+        structured_text = {
+            'pages': [
+                {
+                    'full_text': 'Strong patterns: john.smith@university.edu, 12/25/2024, NASA.'
+                }
+            ]
+        }
         
-        # All confidence scores should be in valid range
-        for entity in entities:
-            assert 0.0 <= entity['confidence'] <= 1.0
+        # Mock the entity classification method
+
         
-        # Strong email pattern should have higher confidence than weak ones
-        email_entities = [e for e in entities if 'email' in e['type']]
-        strong_email = next((e for e in email_entities if 'university.edu' in e['text']), None)
-        assert strong_email['confidence'] > 0.5
+        def mock_classify_entity(sentence, **kwargs):
+            if 'university.edu' in sentence:
+                return ClassificationResult(entity=sentence, category='Education', confidence=0.9)
+            else:
+                return ClassificationResult(entity=sentence, category='unclassified', confidence=0.5)
+        
+        # Patch the entity classification method
+        with patch.object(self.optimizer, '_get_entity_classification', side_effect=mock_classify_entity):
+            # When
+            entities = await self.optimizer._extract_key_entities(structured_text)
+        
+        # Then
+        education_entities = [e for e in entities if e['type'] == 'Education']
+        assert len(education_entities) > 0
+        for entity in education_entities:
+            if 'university.edu' in entity['text']:
+                assert entity['confidence'] > 0.5
 
     @pytest.mark.asyncio
     async def test_extract_key_entities_result_limiting(self):
@@ -334,7 +394,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification method
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'Corporation' in sentence:
@@ -383,7 +443,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification method
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'josé@universidad' in sentence or 'müller@universität' in sentence:

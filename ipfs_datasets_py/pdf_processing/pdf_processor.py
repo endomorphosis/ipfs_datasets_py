@@ -751,13 +751,17 @@ class PDFProcessor:
         if not isinstance(page_num, int):
             raise TypeError(f"Page number must be an integer, got {type(page_num).__name__}")
 
-        if page_num < 0 or page_num >= page.parent.page_count:
-            raise ValueError(f"Invalid page number: {page_num}")
-        elif page_num == 0:
-            page_num += 1
+        if page_num < 0:
+            raise ValueError(f"Page number cannot be negative: {page_num}")
+        
+        if page_num >= page.parent.page_count:
+            raise ValueError(f"Page number {page_num} exceeds document page count {page.parent.page_count}")
+
+        # Convert to one-based page numbering for output
+        display_page_num = page_num + 1
 
         page_content = {
-            'page_number': page_num,
+            'page_number': display_page_num,
             'elements': [],
             'images': [],
             'annotations': [],
@@ -769,7 +773,7 @@ class PDFProcessor:
         try:
             text_dict = page.get_text('dict')
         except Exception as e:
-            self.logger.error(f"Failed to extract text from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract text from page {display_page_num}: {e}")
             text_dict = {"blocks": []}
 
         for block in text_dict["blocks"]:
@@ -804,7 +808,7 @@ class PDFProcessor:
         try:
             image_list = page.get_images()
         except Exception as e:
-            self.logger.error(f"Failed to extract images from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract images from page {display_page_num}: {e}")
             image_list = []
 
         for img_index, img in enumerate(image_list):
@@ -816,6 +820,13 @@ class PDFProcessor:
                 if pix.n - pix.alpha < 4:  # GRAY or RGB
                     img_data = pix.tobytes("png")
                     
+                    # Get actual image position on page
+                    try:
+                        img_rects = page.get_image_rects(xref)
+                        bbox = list(img_rects[0]) if img_rects else [0, 0, pix.width, pix.height]
+                    except:
+                        bbox = [0, 0, pix.width, pix.height]  # Fallback
+                    
                     page_content['images'].append({
                         'image_index': img_index,
                         'xref': xref,
@@ -824,7 +835,7 @@ class PDFProcessor:
                         'height': pix.height,
                         'colorspace': pix.colorspace.name if pix.colorspace else 'unknown',
                         'ext': 'png',  # Default format
-                        'bbox': [0, 0, pix.width, pix.height]  # Default bbox
+                        'bbox': bbox
                     })
                     
                     # Add as structured element
@@ -842,6 +853,9 @@ class PDFProcessor:
                     })
                 pix = None  # Free memory
 
+            except (MemoryError, RuntimeError):
+                # Re-raise critical errors
+                raise
             except Exception as e:
                 self.logger.warning(f"Failed to extract image {img_index}: {e}")
         
@@ -849,7 +863,7 @@ class PDFProcessor:
         try:
             page_annots = [annot for annot in page.annots()]
         except Exception as e:
-            self.logger.error(f"Failed to extract annotations from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract annotations from page {display_page_num}: {e}")
             page_annots = []
 
         for annot in page_annots:
@@ -857,11 +871,15 @@ class PDFProcessor:
                 'type': annot.type[1],  # Annotation type name
                 'content': annot.info.get("content", ""),
                 'author': annot.info.get("title", ""),
-                'page': page_num,
-                'bbox': list(annot.rect)
+                'page': display_page_num,
+                'bbox': list(annot.rect),
+                'creation_date': annot.info.get("creationDate", ""),
+                'modification_date': annot.info.get("modDate", ""),
+                'colors': annot.colors if hasattr(annot, 'colors') else None,
             }
+
             page_content['annotations'].append(annot_dict)
-            
+
             # Add as structured element if has content
             if annot_dict['content']:
                 page_content['elements'].append({
@@ -881,13 +899,13 @@ class PDFProcessor:
         try:
             drawings = page.get_drawings()
         except Exception as e:
-            self.logger.error(f"Failed to extract drawings from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract drawings from page {display_page_num}: {e}")
             drawings = []
     
         for drawing in drawings:
             page_content['drawings'].append({
                 'bbox': drawing['bbox'],
-                'type': 'vector_drawing',
+                'type': drawing.get('type', 'vector_drawing'),
                 'items': len(drawing.get('items', []))
             })
 

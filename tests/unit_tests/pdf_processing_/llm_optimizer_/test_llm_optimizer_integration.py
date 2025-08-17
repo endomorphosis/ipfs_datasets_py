@@ -269,6 +269,26 @@ def decomposed_content():
     }
     return decomposed_content
 
+
+@pytest.fixture
+def invalid_decomposed_content():
+    """Fixture providing invalid decomposed content missing required 'pages' key."""
+    return {
+        'invalid_key': [
+            {
+                'elements': [
+                    {
+                        'content': 'Test content',
+                        'type': 'text',
+                        'subtype': 'paragraph',
+                        'position': {'x': 0, 'y': 0},
+                        'confidence': 0.9
+                    }
+                ]
+            }
+        ]
+    }
+
 @pytest.fixture
 def document_metadata():
     """Fixture providing consistent document metadata for reproducibility testing."""

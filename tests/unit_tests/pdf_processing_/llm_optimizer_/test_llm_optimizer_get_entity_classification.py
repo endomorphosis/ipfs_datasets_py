@@ -116,7 +116,7 @@ except ImportError as e:
 
 
 def _make_mock_openai_client():
-    mock_openai_client = MagicMock()
+    mock_openai_client = MagicMock(spec=openai.AsyncOpenAI)
     mock_openai_client.chat = MagicMock()
     mock_openai_client.chat.completions = MagicMock()
     mock_openai_client.chat.completions.create = AsyncMock()

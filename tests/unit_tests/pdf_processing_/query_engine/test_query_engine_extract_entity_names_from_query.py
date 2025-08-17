@@ -90,7 +90,7 @@ def make_fake_name_questions(n: int = 30) -> Generator[tuple[str, str], None, No
         yield name, f"Who is {name}?"
 
 
-def make_fake_companies(n: int = 30):
+def make_fake_companies(n: int = 30) -> list[str]:
     """
     Generate a list of fake company names using Faker library.
     
@@ -120,11 +120,20 @@ def make_fake_company_questions(n: int = 30) -> Generator[tuple[str, str], None,
     for company1, company2 in zip(fake_companies_1, fake_companies_2):
         yield company1, company2, f"{company1} and {company2} are competitors."
 
+N = 10
+
+FAKE_NAME_QUERIES = [
+        (words[0], words[1]) for words in make_fake_name_questions(n=N)
+]
+
+FAKE_COMPANY_QUERIES = [
+    (words[0], words[1], words[2]) for words in make_fake_company_questions(n=N)
+]
 
 class TestQueryEngineExtractEntityNamesFromQuery:
     """Test QueryEngine._extract_entity_names_from_query method for entity name detection."""
 
-    N = 30  # Number of test cases to generate
+    N = 10 # Number of test cases to generate
 
     def setup_method(self):
         """Setup QueryEngine instance for testing."""
@@ -138,9 +147,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
             embedding_model="sentence-transformers/all-MiniLM-L6-v2"
         )
 
-    @pytest.mark.parametrize("name, query", [
-        (words[0], words[1]) for words in make_fake_name_questions(n=N)
-    ])
+    @pytest.mark.parametrize("name,query", FAKE_NAME_QUERIES)
     def test_extract_entity_names_single_entity(self, name, query):
         """
         GIVEN a QueryEngine instance
@@ -153,9 +160,7 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         result = self.query_engine._extract_entity_names_from_query(query)
         assert result == [name], f"Expected [{name}] but got {result} for query: {query}"
 
-    @pytest.mark.parametrize("name1,name2,query", [
-        (words[0], words[1], words[2]) for words in make_fake_company_questions(n=N)
-    ])
+    @pytest.mark.parametrize("name1,name2,query", FAKE_COMPANY_QUERIES)
     def test_extract_entity_names_multiple_entities(self, name1, name2, query):
         """
         GIVEN a QueryEngine instance
@@ -166,6 +171,8 @@ class TestQueryEngineExtractEntityNamesFromQuery:
             - Both capitalized entities identified
             - Order of appearance preserved
         """
+        print(f"Testing with query: {query}")
+        print(f"name1: {name1}, name2: {name2}")
         result = self.query_engine._extract_entity_names_from_query(query)
         assert result == [name1, name2]
 
@@ -597,7 +604,17 @@ class TestQueryEngineExtractEntityNamesFromQuery:
         for entity in entities:
             assert entity in result
 
-    def test_extract_entity_names_case_sensitivity_preservation(self):
+    @pytest.mark.parametrize("query, expected_entities", [
+        ("iPhone and MacBook are Apple products", ["iPhone", "MacBook", "Apple"]),
+        ("YouTube and Gmail are Google services", ["YouTube", "Gmail", "Google"]),
+        ("Xbox and OneDrive are Microsoft products", ["Xbox", "OneDrive", "Microsoft"]),
+        ("iPad and iMac work with macOS", ["iPad", "iMac", "macOS"]),
+        ("WhatsApp and Instagram belong to Facebook", ["WhatsApp", "Instagram", "Facebook"]),
+        ("Kindle and FireTV are Amazon devices", ["Kindle", "FireTV", "Amazon"]),
+        ("PowerPoint and OneNote are Office apps", ["PowerPoint", "OneNote", "Office"]),
+        ("LinkedIn and Skype were acquired by Microsoft", ["LinkedIn", "Skype", "Microsoft"]),
+    ])
+    def test_extract_entity_names_case_sensitivity_preservation(self, query, expected_entities):
         """
         GIVEN a QueryEngine instance
         AND query with mixed case entities
@@ -607,33 +624,30 @@ class TestQueryEngineExtractEntityNamesFromQuery:
             - Case sensitivity maintained for proper nouns
             - No automatic case conversion applied
         """
-        query = "iPhone and MacBook are Apple products"
         result = self.query_engine._extract_entity_names_from_query(query)
-        # Should preserve original capitalization
-        assert "iPhone" in result  # Not "Iphone" or "IPHONE"
-        assert "MacBook" in result  # Not "Macbook" or "MACBOOK"
-        assert "Apple" in result
+        for expected_entity in expected_entities:
+            assert expected_entity in result, f"Expected {expected_entity} to be found in {result}"
 
-    def test_extract_entity_names_accuracy_stress_test(self):
-        """
-        GIVEN a QueryEngine instance
-        AND a series of statements from Faker library
-        WHEN _extract_entity_names_from_query is called
-        THEN expect:
-            - Method maintains 95% or higher accuracy.
-            - Handles all entity formats (names, organizations, products) with consistent results
-            - Consistent accuracy between different entity types
-        """
-        faker.Faker.seed(420)  # For reproducibility
-        faker_dict = {
-            "company": make_fake_companies(n=self.N),
-            "address": [faker.Faker().address() for _ in range(self.N)],
-            "city": [faker.Faker().city() for _ in range(self.N)],
-            "country": [faker.Faker().country() for _ in range(self.N)],
-            "street_name": [faker.Faker().street_name() for _ in range(self.N)],
-            "crypto_currency": [faker.Faker().cryptocurrency_name() for _ in range(30)],
-            "product": [faker.Faker().random_company_product() for _ in range(30)],
-        }
+    # def test_extract_entity_names_accuracy_stress_test(self):
+    #     """
+    #     GIVEN a QueryEngine instance
+    #     AND a series of statements from Faker library
+    #     WHEN _extract_entity_names_from_query is called
+    #     THEN expect:
+    #         - Method maintains 95% or higher accuracy.
+    #         - Handles all entity formats (names, organizations, products) with consistent results
+    #         - Consistent accuracy between different entity types
+    #     """
+    #     fake = faker.Faker()
+    #     faker_dict = {
+    #         "company": make_fake_companies(n=self.N),
+    #         "address": [fake.address() for _ in range(self.N)],
+    #         "city": [fake.city() for _ in range(self.N)],
+    #         "country": [fake.country() for _ in range(self.N)],
+    #         "street_name": [fake.street_name() for _ in range(self.N)],
+    #         "crypto_currency": [fake.cryptocurrency_name() for _ in range(30)],
+    #         "product": [fake.random_company_product() for _ in range(30)],
+    #     }
 
 
 

@@ -35,6 +35,9 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 logger = logging.getLogger(__name__)
 
 
+
+
+
 # Ensure required NLTK data is available
 CORPORA = ['punkt', 'averaged_perceptron_tagger_eng', 'maxent_ne_chunker_tab', 'words']
 for corpus in CORPORA:
@@ -1955,7 +1958,7 @@ class QueryEngine:
         
         return results[:max_results]
     
-    def _extract_entity_names_from_query(self, query: str, min_chars: int = 3) -> List[str]:
+    def _extract_entity_names_from_query(self, query: str, min_chars: int = 2) -> List[str]:
         """
         Extract potential entity names from query text using NLTK NER and POS tagging.
 
@@ -2065,29 +2068,41 @@ class QueryEngine:
         # Also find proper nouns that might not be caught by NER
         proper_nouns = []
         current_noun_phrase = []
-        
+
+        def _join_and_add(current_noun_phrase, entity_names, proper_nouns):
+            if current_noun_phrase and len(current_noun_phrase) >= 1:
+                noun_phrase = ' '.join(current_noun_phrase)
+                print(f"Found proper noun phrase: {noun_phrase}")
+                # Only add if not already found by NER and meets criteria
+                if (noun_phrase not in entity_names and 
+                    len(noun_phrase) >= 3 and
+                    not self._is_question_word(noun_phrase)):
+                    proper_nouns.append(noun_phrase)
+
         for word, pos in pos_tags:
+            # If & is in the word, and it immediately follows an upper case letter,
+            # treat it as a potential proper noun phrase. ex AT&T, Johnson & Johnson
+            if word == '&' and current_noun_phrase:
+                # Check if previous word ended with uppercase letter
+                if current_noun_phrase and current_noun_phrase[-1][-1].isupper():
+                    current_noun_phrase.append(word)
+                else:
+                    # Finish current phrase if it exists
+                    _join_and_add(current_noun_phrase, entity_names, proper_nouns)
+                    current_noun_phrase = []
+            elif word == '&' and not current_noun_phrase:
+                # Skip standalone & symbols
+                continue
+
             if pos in ['NNP', 'NNPS']:  # Proper nouns
                 current_noun_phrase.append(word)
             else:
-                if current_noun_phrase and len(current_noun_phrase) >= 1:
-                    noun_phrase = ' '.join(current_noun_phrase)
-                    print(f"Found proper noun phrase: {noun_phrase}")
-                    # Only add if not already found by NER and meets criteria
-                    if (noun_phrase not in entity_names and 
-                        len(noun_phrase) >= 3 and
-                        not self._is_question_word(noun_phrase)):
-                        proper_nouns.append(noun_phrase)
+                _join_and_add(current_noun_phrase, entity_names, proper_nouns)
                 current_noun_phrase = []
-        
+
         # Don't forget the last noun phrase
-        if current_noun_phrase and len(current_noun_phrase) >= 1:
-            noun_phrase = ' '.join(current_noun_phrase)
-            if (noun_phrase not in entity_names and 
-                len(noun_phrase) >= 3 and
-                not self._is_question_word(noun_phrase)):
-                proper_nouns.append(noun_phrase)
-        
+        _join_and_add(current_noun_phrase, entity_names, proper_nouns)
+
         # Combine NER results with proper noun detection
         all_entities = entity_names + proper_nouns
         
@@ -2114,6 +2129,23 @@ class QueryEngine:
             if not self._is_question_word(entity) and len(entity.strip()) >= min_chars:
                 print(f"{entity} is a valid entity")
                 filtered_entities.append(entity)
+
+        # Strip off any leading stop-characters if it starts with 'a' or 'an', remove it
+        final_entities = []
+        for entity in filtered_entities:
+            entity: str
+
+            # Remove leading articles
+            for idx, char in [(2, 'a '), (3, 'an ')]:
+                if entity.lower().startswith(char):
+                    entity = entity[idx:].strip()
+
+            # Only add if it still meets minimum length requirement after article removal
+            if len(entity) >= min_chars:
+                final_entities.append(entity)
+        filtered_entities = final_entities
+
+
 
         end_time = time.time()
         print(f"Entity extraction took {end_time - start_time:.2f} seconds")

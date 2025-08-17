@@ -78,12 +78,14 @@ class QueryEngineFactory:
             MagicMock: Configured mock GraphRAGIntegrator instance
         """
         mock = MagicMock(spec=GraphRAGIntegrator)
+        mock.global_entities = MagicMock
         mock.knowledge_graphs = self.make_mock_knowledge_graph()
-        
-        # Configure mock with any provided kwargs
-        for attr_name, attr_value in kwargs.items():
-            setattr(mock, attr_name, attr_value)
-            
+
+        if kwargs:
+            # Configure mock with any provided kwargs
+            for attr_name, attr_value in kwargs.items():
+                setattr(mock, attr_name, attr_value)
+
         return mock
 
     def make_mock_ipld_storage(self) -> MagicMock:

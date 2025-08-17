@@ -944,7 +944,7 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
         # Then
         semantic_types_found = []
         for chunk in chunks:
-            semantic_types_found.extend(list(chunk.semantic_types))
+            semantic_types_found.append(chunk.semantic_types)
         semantic_types_found = set(semantic_types_found)
         
         assert len(semantic_types_found) > 0, "Should have semantic type classification"
@@ -963,7 +963,7 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
         # Then
         semantic_types_found = []
         for chunk in chunks:
-            semantic_types_found.extend(list(chunk.semantic_types))
+            semantic_types_found.append(chunk.semantic_types)
         semantic_types_found = set(semantic_types_found)
 
         assert all(st in expected_types for st in semantic_types_found), \
@@ -985,9 +985,8 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
         ]
 
         header_chunk = header_chunks[0]
-        for element in header_chunk.semantic_types:
-            assert element in ["header", "text", "mixed"], \
-                f"Header chunk has unexpected type: {header_chunk.semantic_types}"
+        assert header_chunk.semantic_types in ["header", "text", "mixed"], \
+            f"Header chunk has unexpected type: {header_chunk.semantic_types}"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_table_content_has_appropriate_semantic_type(self):
@@ -1003,8 +1002,8 @@ class TestLLMOptimizerCreateOptimalChunksSemanticGrouping:
         table_chunks = [c for c in chunks if "table" in c.content.lower() or "table" in c.semantic_types]
 
         table_chunk = table_chunks[0]
-        for element in table_chunk.semantic_types:
-            assert element in ["table", "text", "mixed"], f"Table chunk has unexpected type: {table_chunk.semantic_types}"
+        assert table_chunk.semantic_types in ["table", "text", "mixed"], \
+            f"Table chunk has unexpected type: {table_chunk.semantic_types}"
 
     @pytest.mark.asyncio
     async def test_create_optimal_chunks_source_elements_is_list(self):
