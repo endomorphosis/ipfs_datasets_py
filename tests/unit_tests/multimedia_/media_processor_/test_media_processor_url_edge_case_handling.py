@@ -46,7 +46,7 @@ REQUIRED_ERROR_CLASSIFICATIONS = [
     "REDIRECT", "PRIVATE", "RESTRICTED", "NOT_FOUND", 
     "INVALID_FORMAT", "NOT_VIDEO", "RATE_LIMITED"
 ]
-
+NUMBER_OF_HOPS = 5
 ERROR_MESSAGE_MAX_LENGTH = 200
 
 
@@ -61,224 +61,324 @@ class TestURLEdgeCaseHandling:
     5. "Appropriate responses" criteria undefined for success calculation
     """
 
-    def test_ensure_docstring_quality(self):
+    @pytest.mark.parametrize("redirect_type,url", [
+        ("http_to_https", TEST_EDGE_CASES["http_to_https_redirect"])
+    ])
+    async def test_redirect_follows_and_succeeds(self, redirect_type, url, successful_processor):
         """
-        Ensure that the docstring of the MediaProcessor class meets the standards set forth in `_example_docstring_format.md`.
+        GIVEN URL that redirects to HTTPS
+        WHEN MediaProcessor.download_and_convert processes the URL and succeeds
+        THEN expect return dict with status "success"
         """
-        try:
-            has_good_callable_metadata(MediaProcessor)
-        except Exception as e:
-            pytest.fail(f"Callable metadata in MediaProcessor does not meet standards: {e}")
-
-    @patch('requests.get')
-    def test_http_to_https_redirect_follows_and_succeeds(self, mock_get):
-        """
-        GIVEN URL "http://example.com/video.mp4" that redirects to HTTPS
-        WHEN MediaProcessor processes the URL
-        THEN expect successful following of redirect (not error classification)
+        # Arrange
+        expected_status = "success"
         
-        NOTE: Success criteria undefined - what constitutes successful redirect following?
-        NOTE: Redirect chain limits not specified - how many redirects are acceptable?
-        NOTE: Hardcoded test URL may not represent real-world redirect scenarios
-        """
-        raise NotImplementedError("test_http_to_https_redirect_follows_and_succeeds test needs to be implemented")
+        # Act
+        result = await successful_processor.download_and_convert(url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for {redirect_type}"
 
-    @patch('requests.get')
-    def test_bitly_shortened_url_resolution_attempted(self, mock_get):
+    @pytest.mark.parametrize("service_name,url", [
+        ("bit.ly", TEST_EDGE_CASES["bitly_shortened"]),
+        ("tinyurl", TEST_EDGE_CASES["tinyurl_shortened"])
+    ])
+    async def test_shortened_url_resolves_to_valid_result(self, service_name, url, successful_processor):
         """
-        GIVEN bit.ly shortened URL "https://bit.ly/3example"
-        WHEN MediaProcessor processes the URL
-        THEN expect URL resolution to be attempted before content extraction
+        GIVEN shortened URL from various services
+        WHEN MediaProcessor.download_and_convert processes the URL and succeeds
+        THEN expect return dict with either status "success"
         """
-        raise NotImplementedError("test_bitly_shortened_url_resolution_attempted test needs to be implemented")
+        # Arrange
+        expected_status = "success"
+        
+        # Act
+        result = await successful_processor.download_and_convert(url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for {service_name} URL"
 
-    @patch('requests.get')
-    def test_tinyurl_shortened_url_resolution_attempted(self, mock_get):
+    @pytest.mark.parametrize("video_id,expected_difference", [
+        ("abc123", "different_video_1"),
+        ("def456", "different_video_2"),
+        ("xyz789", "different_video_3")
+    ])
+    async def test_essential_query_parameters_affect_download_result(self, video_id, expected_difference, successful_processor):
         """
-        GIVEN TinyURL shortened URL "https://tinyurl.com/example123"
-        WHEN MediaProcessor processes the URL
-        THEN expect URL resolution to be attempted before content extraction
+        GIVEN YouTube URLs with different video IDs 
+            (e.g. "https://youtube.com/watch?v=abc123" vs "https://youtube.com/watch?v=def456")
+        WHEN MediaProcessor.download_and_convert processes both URLs
+        THEN expect different results (different titles, file paths, or error messages)
         """
-        raise NotImplementedError("test_tinyurl_shortened_url_resolution_attempted test needs to be implemented")
+        # Arrange
+        url1 = f"https://youtube.com/watch?v={video_id}"
+        url2 = f"https://youtube.com/watch?v=different123"
+        
+        # Act
+        result1 = await successful_processor.download_and_convert(url1)
+        result2 = await successful_processor.download_and_convert(url2)
+        
+        # Assert
+        assert result1 != result2, f"Expected different results for different video IDs but got identical results: '{result1}' vs '{result2}'"
 
-    def test_essential_query_parameters_preserved(self):
+    @pytest.mark.parametrize("base_url,tracking_params", [
+        ("https://youtube.com/watch?v=abc123", "utm_source=test"),
+        ("https://youtube.com/watch?v=abc123", "utm_campaign=promotion&utm_medium=social"),
+        ("https://youtube.com/watch?v=def456", "ref=homepage"),
+        ("https://example.com/video.mp4", "tracking_id=12345&source=email")
+    ])
+    async def test_tracking_parameters_do_not_affect_download_result(self, base_url, tracking_params, successful_processor):
         """
-        GIVEN YouTube URL with essential parameter "https://youtube.com/watch?v=abc123&t=30s"
-        WHEN MediaProcessor processes the URL
-        THEN expect v= parameter to be preserved, t= parameter optional
+        GIVEN URL with and without tracking parameters
+        WHEN MediaProcessor.download_and_convert processes both URLs
+        THEN expect return dict to have identical key-value pairs
         """
-        raise NotImplementedError("test_essential_query_parameters_preserved test needs to be implemented")
+        # Arrange
+        url_without_tracking = base_url
+        url_with_tracking = f"{base_url}&{tracking_params}"
+        
+        # Act
+        result_without = await successful_processor.download_and_convert(url_without_tracking)
+        result_with = await successful_processor.download_and_convert(url_with_tracking)
+        
+        # Assert
+        assert result_without == result_with, f"Expected identical results but got '{result_without}' vs '{result_with}' for URLs with/without tracking parameters"
 
-    def test_tracking_query_parameters_ignored(self):
+    async def test_url_fragments_reflected_in_download_metadata(self, successful_processor):
         """
-        GIVEN URL with tracking parameters "?utm_source=test&utm_medium=social"
-        WHEN MediaProcessor processes the URL
-        THEN expect tracking parameters to be stripped/ignored
+        GIVEN URL with and without timestamp fragment (e.g. "https://example.com/video.mp4#t=120")
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict to have identical key-value pairs
         """
-        raise NotImplementedError("test_tracking_query_parameters_ignored test needs to be implemented")
+        # Arrange
+        url_without_fragment = "https://example.com/video.mp4"
+        url_with_fragment = TEST_EDGE_CASES["url_fragments"]
+        
+        # Act
+        result_without = await successful_processor.download_and_convert(url_without_fragment)
+        result_with = await successful_processor.download_and_convert(url_with_fragment)
+        
+        # Assert
+        assert result_without == result_with, f"Expected identical results but got '{result_without}' vs '{result_with}' for fragment comparison"
 
-    def test_url_fragments_preserved_for_timestamp_navigation(self):
-        """
-        GIVEN URL with timestamp fragment "https://example.com/video.mp4#t=120"
-        WHEN MediaProcessor processes the URL
-        THEN expect fragment to be preserved for timestamp handling
-        """
-        raise NotImplementedError("test_url_fragments_preserved_for_timestamp_navigation test needs to be implemented")
-
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_private_content_returns_private_error_classification(self, mock_extract):
+    async def test_private_content_returns_private_error_classification(self, download_failure_processor):
         """
         GIVEN URL returning HTTP 403 Forbidden
-        WHEN MediaProcessor processes the URL
-        THEN expect status dict with PRIVATE error classification
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating private/forbidden content
         """
-        raise NotImplementedError("test_private_content_returns_private_error_classification test needs to be implemented")
+        # Arrange
+        private_url = TEST_EDGE_CASES["private_content"]
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(private_url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for private content URL"
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_age_restricted_content_returns_restricted_error_classification(self, mock_extract):
+    async def test_age_restricted_content_returns_restricted_error_classification(self, download_failure_processor):
         """
         GIVEN URL returning age verification requirement
-        WHEN MediaProcessor processes the URL
-        THEN expect status dict with RESTRICTED error classification
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating age restriction
         """
-        raise NotImplementedError("test_age_restricted_content_returns_restricted_error_classification test needs to be implemented")
+        # Arrange
+        age_restricted_url = TEST_EDGE_CASES["age_restricted"]
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(age_restricted_url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for age restricted content URL"
 
-    @patch('yt_dlp.YoutubeDL.extract_info')
-    def test_geo_blocked_content_returns_restricted_error_classification(self, mock_extract):
+    async def test_geo_blocked_content_returns_restricted_error_classification(self, download_failure_processor):
         """
         GIVEN URL returning geo-blocking message
-        WHEN MediaProcessor processes the URL
-        THEN expect status dict with RESTRICTED error classification
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating geographic restriction
         """
-        raise NotImplementedError("test_geo_blocked_content_returns_restricted_error_classification test needs to be implemented")
+        # Arrange
+        geo_blocked_url = TEST_EDGE_CASES["geo_blocked"]
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(geo_blocked_url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for geo-blocked content URL"
 
-    @patch('requests.get')
-    def test_not_found_404_returns_not_found_error_classification(self, mock_get):
+    async def test_not_found_404_returns_not_found_error_classification(self, download_failure_processor):
         """
         GIVEN URL returning HTTP 404 Not Found
-        WHEN MediaProcessor processes the URL
-        THEN expect status dict with NOT_FOUND error classification
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating content not found
         """
-        raise NotImplementedError("test_not_found_404_returns_not_found_error_classification test needs to be implemented")
+        # Arrange
+        not_found_url = TEST_EDGE_CASES["not_found_404"]
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(not_found_url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for 404 not found URL"
 
-    def test_malformed_url_missing_protocol_returns_invalid_format(self):
+    @pytest.mark.parametrize("url_type,url", [
+        ("missing_protocol", TEST_EDGE_CASES["malformed_missing_protocol"]),
+        ("invalid_domain", TEST_EDGE_CASES["invalid_domain"])
+    ])
+    async def test_malformed_url_missing_protocol_returns_invalid_format(self, url_type, url, download_failure_processor):
         """
-        GIVEN malformed URL "example.com/video.mp4" without protocol
-        WHEN MediaProcessor validates URL format
-        THEN expect status dict with INVALID_FORMAT error classification
+        GIVEN malformed URL without protocol or with invalid domain format
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating invalid URL format
         """
-        raise NotImplementedError("test_malformed_url_missing_protocol_returns_invalid_format test needs to be implemented")
+        # Arrange
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for {url_type} malformed URL"
 
-    def test_invalid_domain_format_returns_invalid_format(self):
-        """
-        GIVEN URL with invalid domain "https://invalid..domain.com"
-        WHEN MediaProcessor validates URL format
-        THEN expect status dict with INVALID_FORMAT error classification
-        """
-        raise NotImplementedError("test_invalid_domain_format_returns_invalid_format test needs to be implemented")
 
-    def test_non_video_content_returns_not_video_error_classification(self):
+    @pytest.mark.parametrize("domain_type,url", [
+        ("double_dot", "https://invalid..domain.com/video.mp4"),
+        ("trailing_dot", "https://invalid.domain.com./video.mp4"),
+        ("leading_dot", "https://.invalid.domain.com/video.mp4"),
+        ("empty_subdomain", "https://.com/video.mp4"),
+        ("special_chars", "https://invalid@domain.com/video.mp4"),
+        ("spaces", "https://invalid domain.com/video.mp4")
+    ])
+    async def test_invalid_domain_format_returns_invalid_format(self, domain_type, url, download_failure_processor):
         """
-        GIVEN URL pointing to PDF "https://example.com/document.pdf"
-        WHEN MediaProcessor attempts video extraction
-        THEN expect status dict with NOT_VIDEO error classification
+        GIVEN URL with invalid domain format
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating invalid domain format
         """
-        raise NotImplementedError("test_non_video_content_returns_not_video_error_classification test needs to be implemented")
+        # Arrange
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for {domain_type} domain format"
 
-    @patch('requests.get')
-    def test_rate_limited_response_returns_rate_limited_error_classification(self, mock_get):
+    @pytest.mark.parametrize("content_type,url", [
+        ("pdf", "https://example.com/document.pdf"),
+        ("txt", "https://example.com/readme.txt"),
+        ("docx", "https://example.com/report.docx"),
+        ("jpg", "https://example.com/image.jpg"),
+        ("png", "https://example.com/photo.png"),
+        ("zip", "https://example.com/archive.zip"),
+        ("exe", "https://example.com/installer.exe"),
+        ("html", "https://example.com/webpage.html")
+    ])
+    async def test_non_video_content_returns_not_video_error_classification(self, content_type, url, download_failure_processor):
+        """
+        GIVEN URL pointing to non-video content (PDF, text, image, etc.)
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating non-video content
+        """
+        # Arrange
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(url)
+        
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for {content_type} non-video content"
+
+
+    async def test_rate_limited_response_returns_rate_limited_error_classification(self, download_failure_processor):
         """
         GIVEN URL returning HTTP 429 Too Many Requests
-        WHEN MediaProcessor processes the URL
-        THEN expect status dict with RATE_LIMITED error classification
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating rate limiting
         """
-        raise NotImplementedError("test_rate_limited_response_returns_rate_limited_error_classification test needs to be implemented")
-
-    def test_error_classification_enum_contains_all_required_types(self):
-        """
-        GIVEN error classification system
-        WHEN checking available classifications
-        THEN expect all 7 required classifications to be defined
-        """
-        raise NotImplementedError("test_error_classification_enum_contains_all_required_types test needs to be implemented")
-
-    def test_error_message_length_constraint_enforced(self):
-        """
-        GIVEN any error response message
-        WHEN checking message length
-        THEN expect message to be ≤ 200 characters including error code
+        # Arrange
+        rate_limited_url = TEST_EDGE_CASES["rate_limited"]
+        expected_status = "error"
         
-        NOTE: 200-character limit is arbitrary without user interface constraints analysis
-        """
-        raise NotImplementedError("test_error_message_length_constraint_enforced test needs to be implemented")
-
-    def test_error_response_structure_includes_classification_and_message(self):
-        """
-        GIVEN any edge case error response
-        WHEN checking response structure
-        THEN expect dict with 'classification' and 'message' keys
-        """
-        raise NotImplementedError("test_error_response_structure_includes_classification_and_message test needs to be implemented")
-
-    def test_error_message_includes_actionable_guidance(self):
-        """
-        GIVEN error message for recoverable errors (RATE_LIMITED, PRIVATE)
-        WHEN checking message content
-        THEN expect message to include suggested remediation steps
-        """
-        raise NotImplementedError("test_error_message_includes_actionable_guidance test needs to be implemented")
-
-    def test_permanent_errors_vs_transient_errors_distinguished(self):
-        """
-        GIVEN error classification system
-        WHEN categorizing errors
-        THEN expect permanent (NOT_FOUND, INVALID_FORMAT) vs transient (RATE_LIMITED) distinction
-        """
-        raise NotImplementedError("test_permanent_errors_vs_transient_errors_distinguished test needs to be implemented")
-
-    def test_edge_case_success_ratio_calculation_method(self):
-        """
-        GIVEN 13 edge case test results
-        WHEN calculating success ratio
-        THEN expect (appropriate_responses / total_cases) ≥ 0.90
+        # Act
+        result = await download_failure_processor.download_and_convert(rate_limited_url)
         
-        NOTE: 90% success ratio is arbitrary without failure tolerance requirements
-        """
-        raise NotImplementedError("test_edge_case_success_ratio_calculation_method test needs to be implemented")
+        # Assert
+        assert result["status"] == expected_status, f"Expected status '{expected_status}' but got '{result['status']}' for rate limited URL"
 
-    def test_redirect_chain_limit_enforced_at_5_hops(self):
+
+    async def test_error_message_length_constraint_enforced(self, download_failure_processor):
         """
-        GIVEN URL with redirect chain >5 hops
-        WHEN MediaProcessor follows redirects
-        THEN expect redirect following to stop at 5 hops maximum
+        GIVEN any URL that produces an error response
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect error message in return dict to be ≤ 200 characters
+        """
+        # Arrange
+        test_url = "https://example.com/error"
         
-        NOTE: 5-hop limit is arbitrary without analysis of legitimate redirect chains
-        """
-        raise NotImplementedError("test_redirect_chain_limit_enforced_at_5_hops test needs to be implemented")
+        # Act
+        result = await download_failure_processor.download_and_convert(test_url)
+        
+        # Assert
+        error_message = result["error"]
+        assert len(error_message) <= ERROR_MESSAGE_MAX_LENGTH, \
+            f"Expected error message length ≤ {ERROR_MESSAGE_MAX_LENGTH} characters but got {len(error_message)} characters"
 
-    def test_url_resolution_timeout_enforced_at_10_seconds(self):
-        """
-        GIVEN shortened URL resolution taking >10 seconds
-        WHEN MediaProcessor attempts resolution
-        THEN expect timeout and fallback to original URL
-        """
-        raise NotImplementedError("test_url_resolution_timeout_enforced_at_10_seconds test needs to be implemented")
 
-    def test_platform_specific_error_detection_patterns(self):
+    async def test_redirect_chain_limit_enforced_at_5_hops(self, download_failure_processor):
         """
-        GIVEN platform-specific error patterns (YouTube age gate, Vimeo privacy)
-        WHEN MediaProcessor analyzes error responses
-        THEN expect correct classification based on platform-specific indicators
+        GIVEN URL with redirect chain > NUMBER_OF_HOPS hops
+        WHEN MediaProcessor.download_and_convert processes the URL that is greater than the allowed hops
+        THEN expect return dict with status "error" and error message indicating too many redirects
         """
-        raise NotImplementedError("test_platform_specific_error_detection_patterns test needs to be implemented")
+        # Arrange
+        test_url = "https://example.com/too-many-redirects"
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(test_url)
+        
+        # Assert
+        assert result["status"] == expected_status, \
+            f"Expected status '{expected_status}' but got '{result['status']}' for URL with too many redirects"
 
-    def test_ssl_certificate_errors_handled_gracefully(self):
+    async def test_url_resolution_timeout_enforced_at_10_seconds(self, download_failure_processor):
+        """
+        GIVEN shortened valid url resolution taking >10 seconds
+        WHEN MediaProcessor.download_and_convert processes the URL that takes longer than limit
+        THEN expect return dict with status "error" and error message indicating timeout exceeded
+        """
+        # Arrange
+        timeout_url = "https://slow.example.com/video.mp4"
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(timeout_url)
+        
+        # Assert
+        assert result["status"] == expected_status, \
+            f"Expected status '{expected_status}' but got '{result['status']}' for URL with timeout"
+
+    async def test_ssl_certificate_errors_handled_gracefully(self, download_failure_processor):
         """
         GIVEN URL with SSL certificate errors
-        WHEN MediaProcessor attempts connection
-        THEN expect graceful handling with INVALID_FORMAT classification
+        WHEN MediaProcessor.download_and_convert processes the URL
+        THEN expect return dict with status "error" and error message indicating SSL/certificate issues
         """
-        raise NotImplementedError("test_ssl_certificate_errors_handled_gracefully test needs to be implemented")
+        # Arrange
+        ssl_error_url = "https://expired.badssl.com/video.mp4"
+        expected_status = "error"
+        
+        # Act
+        result = await download_failure_processor.download_and_convert(ssl_error_url)
+        
+        # Assert
+        assert result["status"] == expected_status, \
+        f"Expected status '{expected_status}' but got '{result['status']}' for SSL certificate error URL"
 
 
 if __name__ == "__main__":

@@ -246,8 +246,11 @@ class YtDlpWrapper:
         if not YTDLP_AVAILABLE:
             raise ImportError("yt-dlp is required but not installed. Install with: pip install yt-dlp")
         
-        if default_output_dir is not None and not isinstance(default_output_dir, str):
-            raise TypeError(f"default_output_dir must be a string, got {type_name(default_output_dir)}")
+        if default_output_dir is not None:
+            if not isinstance(default_output_dir, (Path, str)):
+                raise TypeError(f"default_output_dir must be a string or Path, got {type_name(default_output_dir)}")
+        else:
+            default_output_dir = tempfile.gettempdir()
 
         if not isinstance(default_quality, str):
             raise TypeError(f"default_quality must be a string, got {type_name(default_quality)}")
@@ -261,7 +264,7 @@ class YtDlpWrapper:
         if logger is not None and not isinstance(logger, logging.Logger):
             raise TypeError(f"logger must be a logging.Logger instance, got {type_name(logger)}")
 
-        self.default_output_dir: Path = Path(default_output_dir or tempfile.gettempdir())
+        self.default_output_dir: Path = Path(default_output_dir)
         self.enable_logging: bool = enable_logging
         self.default_quality: Literal['best','worst'] = default_quality
         self.logger: logging.Logger = logger

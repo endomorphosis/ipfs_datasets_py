@@ -194,18 +194,49 @@ class TestQueryEngineQuery:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("max_results", [1, 5, 10, 50, 100])
-    async def test_query_with_custom_max_results(self, query_engine, max_results):
+    async def test_query_max_results_parameter_passed_to_processor(self, query_engine, max_results):
+        """
+        GIVEN a QueryEngine instance
+        AND query_text "artificial intelligence"
+        AND max_results set to various values
+        WHEN query method is called
+        THEN expect max_results parameter passed to processor method
+        """
+        # Create sample results using factory
+        results = [
+            query_engine_factory.make_sample_query_result(
+                id=f"result_{i:03d}",
+                content=f"AI content {i}",
+                relevance_score=0.8 - (i * 0.01)
+            )
+            for i in range(max_results)
+        ]
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="artificial intelligence")
+        query_engine._detect_query_type = Mock(return_value="semantic_search")
+        query_engine._process_semantic_query = AsyncMock(return_value=results)
+        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+        
+        # Execute query with custom max_results
+        await query_engine.query("artificial intelligence", max_results=max_results)
+        
+        # Verify max_results passed to processor
+        query_engine._process_semantic_query.assert_called_once_with("artificial intelligence", None, max_results)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("max_results", [1, 5, 10, 50, 100])
+    async def test_query_response_respects_max_results_limit(self, query_engine, max_results):
         """
         GIVEN a QueryEngine instance
         AND query_text "artificial intelligence"
         AND max_results set to various values
         WHEN query method is called
         THEN expect:
-            - max_results parameter passed to processor method
             - QueryResponse.results length <= max_results
             - QueryResponse.total_results matches actual result count
         """
-        # Create sample results using factory (create more than max_results to test truncation)
+        # Create sample results using factory
         results = [
             query_engine_factory.make_sample_query_result(
                 id=f"result_{i:03d}",
@@ -224,12 +255,8 @@ class TestQueryEngineQuery:
         # Execute query with custom max_results
         response = await query_engine.query("artificial intelligence", max_results=max_results)
         
-        # Verify max_results passed to processor
-        query_engine._process_semantic_query.assert_called_once_with("artificial intelligence", None, max_results)
-        
-        # Verify result count
-        assert len(response.results) <= max_results
-        assert response.total_results == len(response.results)
+        # Verify result count constraints
+        assert len(response.results) <= max_results and response.total_results == len(response.results)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("query_text,query_type,max_results,filters,expected_error,expected_message", [
@@ -251,15 +278,12 @@ class TestQueryEngineQuery:
             await query_engine.query(query_text, query_type=query_type, max_results=max_results, filters=filters)
 
     @pytest.mark.asyncio
-    async def test_query_caching_functionality(self, query_engine, sample_query_result):
+    async def test_query_caching_processor_called_once(self, query_engine, sample_query_result):
         """
         GIVEN a QueryEngine instance
         AND identical query executed twice
         WHEN query method is called both times
-        THEN expect:
-            - First call processes normally and caches result
-            - Second call returns cached result without reprocessing
-            - Both responses identical except possibly processing_time
+        THEN expect processor method called only once (cached on second call)
         """
         # Setup mocks
         query_engine._normalize_query = Mock(return_value="bill gates")
@@ -267,23 +291,128 @@ class TestQueryEngineQuery:
         query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
         query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
         
-        # First query call
-        response1 = await query_engine.query("bill gates")
+        # Execute identical queries
+        await query_engine.query("bill gates")
+        await query_engine.query("bill gates")
         
-        # Second identical query call
+        # Verify processor only called once due to caching
+        call_count = query_engine._process_entity_query.call_count
+        assert call_count == 1, \
+            f"Expected processor to be called once, but was called {call_count} times"
+
+    @pytest.mark.asyncio
+    async def test_query_caching_identical_query_text(self, query_engine, sample_query_result):
+        """
+        GIVEN a QueryEngine instance
+        AND identical query executed twice
+        WHEN query method is called both times
+        THEN expect both responses have identical query text
+        """
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="bill gates")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
+        
+        # Execute identical queries
+        response1 = await query_engine.query("bill gates")
         response2 = await query_engine.query("bill gates")
         
-        # Verify processor only called once (due to caching)
-        assert query_engine._process_entity_query.call_count == 1
+        # Verify query text is identical
+        assert response1.query == response2.query, \
+            f"Expected identical query text, but got '{response1.query}' and '{response2.query}'"
+
+    @pytest.mark.asyncio
+    async def test_query_caching_identical_query_type(self, query_engine, sample_query_result):
+        """
+        GIVEN a QueryEngine instance
+        AND identical query executed twice
+        WHEN query method is called both times
+        THEN expect both responses have identical query type
+        """
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="bill gates")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
         
-        # Verify responses are essentially identical
-        assert response1.query == response2.query
-        assert response1.query_type == response2.query_type
-        assert len(response1.results) == len(response2.results)
-        assert response1.total_results == response2.total_results
+        # Execute identical queries
+        response1 = await query_engine.query("bill gates")
+        response2 = await query_engine.query("bill gates")
+        
+        # Verify query type is identical
+        assert response1.query_type == response2.query_type, \
+            f"Expected identical query type, but got '{response1.query_type}' and '{response2.query_type}'"
+
+    @pytest.mark.asyncio
+    async def test_query_caching_identical_result_count(self, query_engine, sample_query_result):
+        """
+        GIVEN a QueryEngine instance
+        AND identical query executed twice
+        WHEN query method is called both times
+        THEN expect both responses have identical result count
+        """
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="bill gates")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
+        
+        # Execute identical queries
+        response1 = await query_engine.query("bill gates")
+        response2 = await query_engine.query("bill gates")
+        
+        # Verify result count is identical
+        result_count1 = len(response1.results)
+        result_count2 = len(response2.results)
+        assert result_count1 == result_count2, \
+            f"Expected identical result count, but got {result_count1} and {result_count2}"
+
+    @pytest.mark.asyncio
+    async def test_query_caching_identical_total_results(self, query_engine, sample_query_result):
+        """
+        GIVEN a QueryEngine instance
+        AND identical query executed twice
+        WHEN query method is called both times
+        THEN expect both responses have identical total results count
+        """
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="bill gates")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
+        
+        # Execute identical queries
+        response1 = await query_engine.query("bill gates")
+        response2 = await query_engine.query("bill gates")
+        
+        # Verify total results count is identical
+        assert response1.total_results == response2.total_results, \
+            f"Expected identical total results count, but got {response1.total_results} and {response2.total_results}"
+
+    @pytest.mark.asyncio
+    async def test_query_caching_cache_hit_metadata(self, query_engine, sample_query_result):
+        """
+        GIVEN a QueryEngine instance
+        AND identical query executed twice
+        WHEN query method is called both times
+        THEN expect second response metadata indicates cache hit
+        """
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="bill gates")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
+        query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
+        
+        # Execute identical queries
+        await query_engine.query("bill gates")
+        response2 = await query_engine.query("bill gates")
         
         # Verify cache hit indicated in second response
-        assert response2.metadata.get("cache_hit") is True
+        cache_hit = response2.metadata.get("cache_hit")
+        assert cache_hit is True, \
+            f"Expected cache hit to be True in second response metadata, but got {cache_hit}"
+
 
     @pytest.mark.asyncio
     async def test_query_cache_key_generation(self, query_engine, sample_query_result):
@@ -317,15 +446,12 @@ class TestQueryEngineQuery:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("delay_seconds", [0.01, 0.05, 0.1])
-    async def test_query_processing_time_measurement(self, query_engine, sample_query_result, delay_seconds):
+    async def test_query_processing_time_measurement_is_float(self, query_engine, sample_query_result, delay_seconds):
         """
         GIVEN a QueryEngine instance
         AND an arbitrary query that takes measurable time to process
         WHEN query method is called with different processing delays
-        THEN expect:
-            - QueryResponse.processing_time is float > 0
-            - Time measurement includes all processing steps
-            - Processing time >= delay_seconds
+        THEN expect QueryResponse.processing_time is float type
         """
         # Setup mocks with artificial delay
         query_engine._normalize_query = Mock(return_value="test query")
@@ -341,10 +467,67 @@ class TestQueryEngineQuery:
         # Execute query
         response = await query_engine.query("test query")
         
-        # Verify processing time is measured and positive
-        assert isinstance(response.processing_time, float)
-        assert response.processing_time > 0
-        assert response.processing_time >= delay_seconds
+        # Verify processing time is float type
+        assert isinstance(response.processing_time, float), \
+            f"Expected processing_time to be float, but got {type(response.processing_time)} with value {response.processing_time}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("delay_seconds", [0.01, 0.05, 0.1])
+    async def test_query_processing_time_measurement_is_positive(self, query_engine, sample_query_result, delay_seconds):
+        """
+        GIVEN a QueryEngine instance
+        AND an arbitrary query that takes measurable time to process
+        WHEN query method is called with different processing delays
+        THEN expect QueryResponse.processing_time is greater than 0
+        """
+        # Setup mocks with artificial delay
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        
+        async def delayed_process(*args, **kwargs):
+            await asyncio.sleep(delay_seconds)
+            return [sample_query_result]
+        
+        query_engine._process_entity_query = delayed_process
+        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+        
+        # Execute query
+        response = await query_engine.query("test query")
+        
+        # Verify processing time is positive
+        assert response.processing_time > 0, \
+            f"Expected processing_time to be > 0, but got {response.processing_time}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("delay_seconds", [0.01, 0.05, 0.1])
+    async def test_query_processing_time_measurement_includes_delay(self, query_engine, sample_query_result, delay_seconds):
+        """
+        GIVEN a QueryEngine instance
+        AND an arbitrary query that takes measurable time to process
+        WHEN query method is called with different processing delays
+        THEN expect QueryResponse.processing_time is at least the delay duration
+        """
+        # Setup mocks with artificial delay
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value="entity_search")
+        
+        async def delayed_process(*args, **kwargs):
+            await asyncio.sleep(delay_seconds)
+            return [sample_query_result]
+        
+        query_engine._process_entity_query = delayed_process
+        query_engine._generate_query_suggestions = AsyncMock(return_value=[])
+        
+        # Execute query
+        response = await query_engine.query("test query")
+        
+        # Verify processing time includes the delay
+        assert response.processing_time >= delay_seconds, \
+            f"Expected processing_time >= {delay_seconds}, but got {response.processing_time}"
+
+
+
+class TestQuerySuggestionGeneration:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("suggestion_count,query_type", [
@@ -354,15 +537,12 @@ class TestQueryEngineQuery:
         (5, "document_search"),
         (2, "cross_document")
     ])
-    async def test_query_suggestion_generation(self, query_engine, sample_query_result, suggestion_count, query_type):
+    async def test_query_suggestion_response_is_list(self, query_engine, sample_query_result, suggestion_count, query_type):
         """
         GIVEN a QueryEngine instance
         AND an arbitrary query that returns results
         WHEN query method is called with different suggestion counts and query types
-        THEN expect:
-            - _generate_query_suggestions called with query and results
-            - QueryResponse.suggestions contains list of strings
-            - Suggestions list length matches expected count
+        THEN expect QueryResponse.suggestions is a list
         """
         # Create suggestions based on count
         suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
@@ -389,14 +569,140 @@ class TestQueryEngineQuery:
         # Execute query
         response = await query_engine.query("test query")
         
-        # Verify suggestion generation was called with correct parameters
-        query_engine._generate_query_suggestions.assert_called_once_with("test query", [sample_query_result])
-        
-        # Verify suggestions in response
+        # Verify suggestions in response is list
         assert isinstance(response.suggestions, list)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("suggestion_count,query_type", [
+        (0, "entity_search"),
+        (1, "relationship_search"),
+        (3, "semantic_search"),
+        (5, "document_search"),
+        (2, "cross_document")
+    ])
+    async def test_query_suggestion_response_count_matches(self, query_engine, sample_query_result, suggestion_count, query_type):
+        """
+        GIVEN a QueryEngine instance
+        AND an arbitrary query that returns results
+        WHEN query method is called with different suggestion counts and query types
+        THEN expect suggestions list length matches expected count
+        """
+        # Create suggestions based on count
+        suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value=query_type)
+        query_engine._generate_query_suggestions = AsyncMock(return_value=suggestions)
+        
+        # Map query types to their processor methods
+        processor_map = {
+            "entity_search": "_process_entity_query",
+            "relationship_search": "_process_relationship_query",
+            "semantic_search": "_process_semantic_query",
+            "document_search": "_process_document_query",
+            "cross_document": "_process_cross_document_query",
+            "graph_traversal": "_process_graph_traversal_query"
+        }
+        
+        # Setup the specific processor mock
+        processor_method = processor_map[query_type]
+        setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
+        
+        # Execute query
+        response = await query_engine.query("test query")
+        
+        # Verify suggestions count
         assert len(response.suggestions) == suggestion_count
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("suggestion_count,query_type", [
+        (0, "entity_search"),
+        (1, "relationship_search"),
+        (3, "semantic_search"),
+        (5, "document_search"),
+        (2, "cross_document")
+    ])
+    async def test_query_suggestion_response_contains_strings(self, query_engine, sample_query_result, suggestion_count, query_type):
+        """
+        GIVEN a QueryEngine instance
+        AND an arbitrary query that returns results
+        WHEN query method is called with different suggestion counts and query types
+        THEN expect all suggestions are strings
+        """
+        # Create suggestions based on count
+        suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value=query_type)
+        query_engine._generate_query_suggestions = AsyncMock(return_value=suggestions)
+        
+        # Map query types to their processor methods
+        processor_map = {
+            "entity_search": "_process_entity_query",
+            "relationship_search": "_process_relationship_query",
+            "semantic_search": "_process_semantic_query",
+            "document_search": "_process_document_query",
+            "cross_document": "_process_cross_document_query",
+            "graph_traversal": "_process_graph_traversal_query"
+        }
+        
+        # Setup the specific processor mock
+        processor_method = processor_map[query_type]
+        setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
+        
+        # Execute query
+        response = await query_engine.query("test query")
+        
+        # Verify all suggestions are strings
         assert all(isinstance(s, str) for s in response.suggestions)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("suggestion_count,query_type", [
+        (0, "entity_search"),
+        (1, "relationship_search"),
+        (3, "semantic_search"),
+        (5, "document_search"),
+        (2, "cross_document")
+    ])
+    async def test_query_suggestion_response_content_matches(self, query_engine, sample_query_result, suggestion_count, query_type):
+        """
+        GIVEN a QueryEngine instance
+        AND an arbitrary query that returns results
+        WHEN query method is called with different suggestion counts and query types
+        THEN expect response suggestions match generated suggestions
+        """
+        # Create suggestions based on count
+        suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
+        
+        # Setup mocks
+        query_engine._normalize_query = Mock(return_value="test query")
+        query_engine._detect_query_type = Mock(return_value=query_type)
+        query_engine._generate_query_suggestions = AsyncMock(return_value=suggestions)
+        
+        # Map query types to their processor methods
+        processor_map = {
+            "entity_search": "_process_entity_query",
+            "relationship_search": "_process_relationship_query",
+            "semantic_search": "_process_semantic_query",
+            "document_search": "_process_document_query",
+            "cross_document": "_process_cross_document_query",
+            "graph_traversal": "_process_graph_traversal_query"
+        }
+        
+        # Setup the specific processor mock
+        processor_method = processor_map[query_type]
+        setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
+        
+        # Execute query
+        response = await query_engine.query("test query")
+        
+        # Verify suggestions content matches
         assert response.suggestions == suggestions
+
+
+class TestQueryMetadataCompleteness:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("filters,has_filters", [

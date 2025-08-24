@@ -208,21 +208,26 @@ class MediaProcessor:
             enable_logging (bool, optional): Enable detailed logging for debugging and monitoring.
                 When True, logs initialization status, backend availability, operation progress,
                 and error details to the configured logger. Defaults to True.
+            logger (logging.Logger, optional): Logger instance for logging messages.
+                If None, uses the default logger. Defaults to logging.getLogger(__name__).
+            ytdlp (Optional[YtDlpWrapper], optional): Pre-initialized YtDlpWrapper instance.
+            ffmpeg (Optional[FFmpegWrapper], optional): Pre-initialized FFmpegWrapper instance.
 
-        Attributes initialized:
+        Attributes set:
             default_output_dir (Path): Resolved absolute path for default output directory.
                 Created from provided path or current working directory if None.
             enable_logging (bool): Flag indicating whether detailed logging is enabled.
             ytdlp (Optional[YtDlpWrapper]): yt-dlp wrapper instance for video downloading.
-                Initialized only if yt-dlp is available, otherwise None.
+                Set only if YtDlpWrapper instance is provided, otherwise None.
             ffmpeg (Optional[FFmpegWrapper]): FFmpeg wrapper instance for media conversion.
-                Initialized only if FFmpeg is available, otherwise None.
+                Set only if FFmpegWrapper instance is provided is available, otherwise None.
 
         Raises:
             OSError: If the default_output_dir cannot be created due to permission issues
                 or invalid path specifications.
             ImportError: If required dependencies for wrapper initialization are missing
                 beyond the expected optional dependencies.
+            RuntimeError: If neither yt-dlp nor FFmpeg is provided in arguments.
 
         Examples:
             >>> # Basic initialization with defaults
@@ -239,10 +244,6 @@ class MediaProcessor:
             ...     default_output_dir="./downloads",
             ...     enable_logging=True
             ... )
-
-        Note:
-            The initialization process logs the availability status of backend libraries
-            (yt-dlp and FFmpeg) when logging is enabled.
         """
         if default_output_dir is None:
             default_output_dir = Path.cwd()
@@ -378,6 +379,7 @@ class MediaProcessor:
             if downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}"):
                 convert_path = str(Path(downloaded_file).with_suffix(f".{output_format}"))
                 convert_result = await self.ffmpeg.convert_video(downloaded_file, convert_path)
+                print(f"convert_result: {convert_result}")
                 
                 status = convert_result.get("status")
                 match status:
@@ -385,7 +387,11 @@ class MediaProcessor:
                         download_result["converted_path"] = convert_path
                         download_result["conversion_result"] = convert_result
                     case "error":
-                        pass
+                        # Conversion failure should result in overall error status
+                        return {
+                            "status": "error",
+                            "error": f"Conversion failed: {convert_result.get('error', 'Unknown conversion error')}"
+                        }
                     case _:
                         raise ValueError(f"Unexpected conversion status: '{status}'")
             

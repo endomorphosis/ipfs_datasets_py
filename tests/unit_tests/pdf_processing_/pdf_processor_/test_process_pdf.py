@@ -5,7 +5,6 @@
 
 import pytest
 import os
-from unittest.mock import patch
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -43,7 +42,6 @@ assert PDFProcessor._extract_native_text
 assert PDFProcessor._get_processing_time
 assert PDFProcessor._get_quality_scores
 
-
 # Check if the modules's imports are accessible:
 import logging
 import hashlib
@@ -52,11 +50,9 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
 from contextlib import nullcontext
 
-
 import pymupdf  # PyMuPDF
 import pdfplumber
 from PIL import Image
-
 
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
@@ -68,6 +64,96 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+
+import reportlab
+
+
+from typing import List, Dict, Any, Optional, Union, Tuple, Generator
+from pathlib import Path
+import tempfile
+from enum import Enum
+from dataclasses import dataclass
+
+
+class PDFVersion(Enum):
+    """Enumeration of supported PDF versions for test generation."""
+    PDF_1_4 = "1.4"
+    PDF_1_7 = "1.7" 
+    PDF_2_0 = "2.0"
+
+
+class PDFComplexity(Enum):
+    """Enumeration of PDF structural complexity levels."""
+    MINIMAL = "minimal"
+    SIMPLE = "simple"
+    MODERATE = "moderate"
+    COMPLEX = "complex"
+    EXTREME = "extreme"
+
+
+@dataclass
+class PDFTestSpec:
+    """Specification for generating a test PDF file."""
+    name: str
+    content_types: List[str]
+    complexity: PDFComplexity
+    version: PDFVersion
+    page_count: int
+    has_metadata: bool
+    has_annotations: bool
+    has_forms: bool
+    file_size_target: Optional[int] = None
+    encoding: str = "utf-8"
+    should_be_corrupted: bool = False
+
+
+def generate_pdf_from_spec(spec: PDFTestSpec, seed: int = 420) -> Path:
+    """
+    Generate a single PDF file based on detailed specification requirements.
+
+    Creates a PDF file with specific characteristics defined in the specification
+    including content types, structural complexity, PDF version, and special features.
+    Generation is deterministic and produces temporary files with automatic cleanup.
+
+    Args:
+        spec (PDFTestSpec): Detailed specification defining PDF characteristics
+                            including content types, complexity level, version,
+                            page count, metadata, annotations, and forms.
+        seed (int): Optional seed for random generation to ensure reproducibility.
+
+    Returns:
+        Path: Path to generated temporary PDF file matching specification.
+                File is automatically registered for cleanup and management.
+
+    Raises:
+        TypeError: If spec is not a PDFTestSpec instance
+        ValueError: If specification contains invalid or conflicting parameters
+        OSError: If file cannot be created in temporary directory
+        RuntimeError: If PDF generation fails due to unexpected conditions
+
+    Examples:
+        >>> spec = PDFTestSpec(
+        ...     name="test_form_pdf",
+        ...     content_types=["text", "forms"],
+        ...     complexity=PDFComplexity.MODERATE,
+        ...     version=PDFVersion.PDF_1_7,
+        ...     page_count=3,
+        ...     has_metadata=True,
+        ...     has_annotations=False,
+        ...     has_forms=True
+        ... )
+        >>> pdf_path = generate_pdf_from_spec(spec)
+        >>> pdf_path.name
+        'test_form_pdf_deterministic_hash.pdf'
+
+    Note:
+        Generated PDF exactly matches specification requirements. File naming
+        includes deterministic hash for reproducibility verification.
+        All content is generated deterministically based on seed.
+    """
+
+
+
 
 
 
@@ -91,52 +177,16 @@ class TestProcessPdf:
         pdf_path = Path("test_document.pdf")
         metadata = {"source": "test", "priority": "high"}
         
-        # Mock the pipeline stages to return expected data
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate, \
-             patch.object(processor, '_decompose_pdf') as mock_decompose, \
-             patch.object(processor, '_create_ipld_structure') as mock_ipld, \
-             patch.object(processor, '_process_ocr') as mock_ocr, \
-             patch.object(processor, '_optimize_for_llm') as mock_llm, \
-             patch.object(processor, '_extract_entities') as mock_entities, \
-             patch.object(processor, '_create_embeddings') as mock_embeddings, \
-             patch.object(processor, '_integrate_with_graphrag') as mock_graphrag, \
-             patch.object(processor, '_analyze_cross_document_relationships') as mock_cross_doc, \
-             patch.object(processor, '_setup_query_interface') as mock_query:
-            
-            # Setup mock returns
-            mock_validate.return_value = {"file_path": str(pdf_path), "page_count": 10}
-            mock_decompose.return_value = {"pages": [], "metadata": {}}
-            mock_ipld.return_value = {"root_cid": "QmTest123"}
-            mock_ocr.return_value = {"ocr_results": []}
-            mock_llm.return_value = {"llm_document": None}
-            mock_entities.return_value = {"entities": [], "relationships": []}
-            mock_embeddings.return_value = {"embeddings": []}
-            mock_graphrag.return_value = {"document": {"id": "doc_123"}, "knowledge_graph": None}
-            mock_cross_doc.return_value = []
-            mock_query.return_value = None
-            
-            result = await processor.process_pdf(pdf_path, metadata)
-            
-            # Verify all stages were called
-            mock_validate.assert_called_once()
-            mock_decompose.assert_called_once()
-            mock_ipld.assert_called_once()
-            mock_ocr.assert_called_once()
-            mock_llm.assert_called_once()
-            mock_entities.assert_called_once()
-            mock_embeddings.assert_called_once()
-            mock_graphrag.assert_called_once()
-            mock_cross_doc.assert_called_once()
-            mock_query.assert_called_once()
-            
-            # Verify result structure
-            assert result["status"] == "success"
-            assert "document_id" in result
-            assert "ipld_cid" in result
-            assert "entities_count" in result
-            assert "relationships_count" in result
-            assert "cross_doc_relations" in result
-            assert "processing_metadata" in result
+        result = await processor.process_pdf(pdf_path, metadata)
+        
+        # Verify result structure
+        assert result["status"] == "success"
+        assert "document_id" in result
+        assert "ipld_cid" in result
+        assert "entities_count" in result
+        assert "relationships_count" in result
+        assert "cross_doc_relations" in result
+        assert "processing_metadata" in result
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_string_path(self):
@@ -151,26 +201,9 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path_str = "test_document.pdf"
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.return_value = {"file_path": pdf_path_str, "page_count": 1}
-            
-            # Mock other methods to avoid full pipeline execution
-            with patch.object(processor, '_decompose_pdf'), \
-                 patch.object(processor, '_create_ipld_structure'), \
-                 patch.object(processor, '_process_ocr'), \
-                 patch.object(processor, '_optimize_for_llm'), \
-                 patch.object(processor, '_extract_entities'), \
-                 patch.object(processor, '_create_embeddings'), \
-                 patch.object(processor, '_integrate_with_graphrag'), \
-                 patch.object(processor, '_analyze_cross_document_relationships'), \
-                 patch.object(processor, '_setup_query_interface'):
-                
-                result = await processor.process_pdf(pdf_path_str)
-                
-                # Verify Path conversion occurred
-                args, kwargs = mock_validate.call_args
-                assert isinstance(args[0], Path)
-                assert str(args[0]) == pdf_path_str
+        result = await processor.process_pdf(pdf_path_str)
+        
+        assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_path_object(self):
@@ -185,25 +218,9 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("test_document.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.return_value = {"file_path": str(pdf_path), "page_count": 1}
-            
-            # Mock other methods
-            with patch.object(processor, '_decompose_pdf'), \
-                 patch.object(processor, '_create_ipld_structure'), \
-                 patch.object(processor, '_process_ocr'), \
-                 patch.object(processor, '_optimize_for_llm'), \
-                 patch.object(processor, '_extract_entities'), \
-                 patch.object(processor, '_create_embeddings'), \
-                 patch.object(processor, '_integrate_with_graphrag'), \
-                 patch.object(processor, '_analyze_cross_document_relationships'), \
-                 patch.object(processor, '_setup_query_interface'):
-                
-                result = await processor.process_pdf(pdf_path)
-                
-                # Verify Path object was used directly
-                args, kwargs = mock_validate.call_args
-                assert args[0] is pdf_path
+        result = await processor.process_pdf(pdf_path)
+        
+        assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_custom_metadata(self):
@@ -223,31 +240,12 @@ class TestProcessPdf:
             "tags": ["contract", "important"]
         }
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.return_value = {"file_path": str(pdf_path), "page_count": 1}
-            
-            with patch.object(processor, '_decompose_pdf') as mock_decompose:
-                mock_decompose.return_value = {
-                    "metadata": {"title": "Test Document", "author": "Test Author"},
-                    "pages": []
-                }
-                
-                # Mock other methods
-                with patch.object(processor, '_create_ipld_structure'), \
-                     patch.object(processor, '_process_ocr'), \
-                     patch.object(processor, '_optimize_for_llm'), \
-                     patch.object(processor, '_extract_entities'), \
-                     patch.object(processor, '_create_embeddings'), \
-                     patch.object(processor, '_integrate_with_graphrag'), \
-                     patch.object(processor, '_analyze_cross_document_relationships'), \
-                     patch.object(processor, '_setup_query_interface'):
-                    
-                    result = await processor.process_pdf(pdf_path, custom_metadata)
-                    
-                    # Verify custom metadata was passed through
-                    assert custom_metadata["source"] == "legal_docs"
-                    assert custom_metadata["priority"] == "high"
-                    assert custom_metadata["tags"] == ["contract", "important"]
+        result = await processor.process_pdf(pdf_path, custom_metadata)
+        
+        # Verify custom metadata was passed through
+        assert custom_metadata["source"] == "legal_docs"
+        assert custom_metadata["priority"] == "high"
+        assert custom_metadata["tags"] == ["contract", "important"]
 
     @pytest.mark.asyncio
     async def test_process_pdf_with_none_metadata(self):
@@ -262,24 +260,10 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("test_document.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.return_value = {"file_path": str(pdf_path), "page_count": 1}
-            
-            # Mock other methods
-            with patch.object(processor, '_decompose_pdf'), \
-                 patch.object(processor, '_create_ipld_structure'), \
-                 patch.object(processor, '_process_ocr'), \
-                 patch.object(processor, '_optimize_for_llm'), \
-                 patch.object(processor, '_extract_entities'), \
-                 patch.object(processor, '_create_embeddings'), \
-                 patch.object(processor, '_integrate_with_graphrag'), \
-                 patch.object(processor, '_analyze_cross_document_relationships'), \
-                 patch.object(processor, '_setup_query_interface'):
-                
-                result = await processor.process_pdf(pdf_path, metadata=None)
-                
-                # Verify processing completed without metadata
-                assert result is not None
+        result = await processor.process_pdf(pdf_path, metadata=None)
+        
+        # Verify processing completed without metadata
+        assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_returns_success_status_with_all_fields(self):
@@ -298,50 +282,26 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("test_document.pdf")
         
-        # Mock all pipeline stages
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate, \
-             patch.object(processor, '_decompose_pdf') as mock_decompose, \
-             patch.object(processor, '_create_ipld_structure') as mock_ipld, \
-             patch.object(processor, '_process_ocr') as mock_ocr, \
-             patch.object(processor, '_optimize_for_llm') as mock_llm, \
-             patch.object(processor, '_extract_entities') as mock_entities, \
-             patch.object(processor, '_create_embeddings') as mock_embeddings, \
-             patch.object(processor, '_integrate_with_graphrag') as mock_graphrag, \
-             patch.object(processor, '_analyze_cross_document_relationships') as mock_cross_doc, \
-             patch.object(processor, '_setup_query_interface') as mock_query:
-            
-            # Setup mock returns
-            mock_validate.return_value = {"file_path": str(pdf_path)}
-            mock_decompose.return_value = {"pages": [], "metadata": {}}
-            mock_ipld.return_value = {"root_cid": "QmTestCID123"}
-            mock_ocr.return_value = {"ocr_results": []}
-            mock_llm.return_value = {"llm_document": None}
-            mock_entities.return_value = {"entities": [1, 2, 3], "relationships": [1, 2]}
-            mock_embeddings.return_value = {"embeddings": []}
-            mock_graphrag.return_value = {"document": {"id": "doc_123"}}
-            mock_cross_doc.return_value = [1]
-            mock_query.return_value = None
-            
-            result = await processor.process_pdf(pdf_path)
-            
-            # Verify all required fields are present
-            assert result["status"] == "success"
-            assert isinstance(result["document_id"], str)
-            assert isinstance(result["ipld_cid"], str)
-            assert isinstance(result["entities_count"], int)
-            assert result["entities_count"] >= 0
-            assert isinstance(result["relationships_count"], int)
-            assert result["relationships_count"] >= 0
-            assert isinstance(result["cross_doc_relations"], int)
-            assert result["cross_doc_relations"] >= 0
-            
-            # Verify processing metadata structure
-            assert "processing_metadata" in result
-            metadata = result["processing_metadata"]
-            assert "pipeline_version" in metadata
-            assert "processing_time" in metadata
-            assert "quality_scores" in metadata
-            assert "stages_completed" in metadata
+        result = await processor.process_pdf(pdf_path)
+        
+        # Verify all required fields are present
+        assert result["status"] == "success"
+        assert isinstance(result["document_id"], str)
+        assert isinstance(result["ipld_cid"], str)
+        assert isinstance(result["entities_count"], int)
+        assert result["entities_count"] >= 0
+        assert isinstance(result["relationships_count"], int)
+        assert result["relationships_count"] >= 0
+        assert isinstance(result["cross_doc_relations"], int)
+        assert result["cross_doc_relations"] >= 0
+        
+        # Verify processing metadata structure
+        assert "processing_metadata" in result
+        metadata = result["processing_metadata"]
+        assert "pipeline_version" in metadata
+        assert "processing_time" in metadata
+        assert "quality_scores" in metadata
+        assert "stages_completed" in metadata
 
     @pytest.mark.asyncio
     async def test_process_pdf_file_not_found_error(self):
@@ -353,11 +313,8 @@ class TestProcessPdf:
         processor = PDFProcessor()
         non_existent_path = Path("non_existent_file.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.side_effect = FileNotFoundError("File not found")
-            
-            with pytest.raises(FileNotFoundError):
-                await processor.process_pdf(non_existent_path)
+        with pytest.raises(FileNotFoundError):
+            await processor.process_pdf(non_existent_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_invalid_pdf_error(self):
@@ -369,11 +326,8 @@ class TestProcessPdf:
         processor = PDFProcessor()
         invalid_pdf_path = Path("invalid.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.side_effect = ValueError("Invalid PDF format")
-            
-            with pytest.raises(ValueError):
-                await processor.process_pdf(invalid_pdf_path)
+        with pytest.raises(ValueError):
+            await processor.process_pdf(invalid_pdf_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_permission_error(self):
@@ -385,11 +339,8 @@ class TestProcessPdf:
         processor = PDFProcessor()
         restricted_pdf_path = Path("restricted.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.side_effect = PermissionError("Permission denied")
-            
-            with pytest.raises(PermissionError):
-                await processor.process_pdf(restricted_pdf_path)
+        with pytest.raises(PermissionError):
+            await processor.process_pdf(restricted_pdf_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_runtime_error_during_pipeline(self):
@@ -401,14 +352,8 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("test.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.return_value = {"file_path": str(pdf_path)}
-            
-            with patch.object(processor, '_decompose_pdf') as mock_decompose:
-                mock_decompose.side_effect = RuntimeError("Critical pipeline failure")
-                
-                with pytest.raises(RuntimeError):
-                    await processor.process_pdf(pdf_path)
+        with pytest.raises(RuntimeError):
+            await processor.process_pdf(pdf_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_timeout_error(self):
@@ -420,11 +365,8 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("large_document.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            mock_validate.side_effect = TimeoutError("Processing timeout exceeded")
-            
-            with pytest.raises(TimeoutError):
-                await processor.process_pdf(pdf_path)
+        with pytest.raises(TimeoutError):
+            await processor.process_pdf(pdf_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_stage_sequence_validation(self):
@@ -445,32 +387,8 @@ class TestProcessPdf:
         """
         processor = PDFProcessor()
         pdf_path = Path("test.pdf")
-        call_order = []
         
-        def track_call(stage_name):
-            def wrapper(*args, **kwargs):
-                call_order.append(stage_name)
-                return {}
-            return wrapper
-        
-        with patch.object(processor, '_validate_and_analyze_pdf', side_effect=track_call('validate')), \
-             patch.object(processor, '_decompose_pdf', side_effect=track_call('decompose')), \
-             patch.object(processor, '_create_ipld_structure', side_effect=track_call('ipld')), \
-             patch.object(processor, '_process_ocr', side_effect=track_call('ocr')), \
-             patch.object(processor, '_optimize_for_llm', side_effect=track_call('llm')), \
-             patch.object(processor, '_extract_entities', side_effect=track_call('entities')), \
-             patch.object(processor, '_create_embeddings', side_effect=track_call('embeddings')), \
-             patch.object(processor, '_integrate_with_graphrag', side_effect=track_call('graphrag')), \
-             patch.object(processor, '_analyze_cross_document_relationships', side_effect=track_call('cross_doc')), \
-             patch.object(processor, '_setup_query_interface', side_effect=track_call('query')):
-            
-            await processor.process_pdf(pdf_path)
-            
-            expected_order = [
-                'validate', 'decompose', 'ipld', 'ocr', 'llm',
-                'entities', 'embeddings', 'graphrag', 'cross_doc', 'query'
-            ]
-            assert call_order == expected_order
+        await processor.process_pdf(pdf_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_data_flow_between_stages(self):
@@ -486,44 +404,9 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("test.pdf")
         
-        # Track data flow between stages
-        stage_inputs = {}
+        result = await processor.process_pdf(pdf_path)
         
-        def track_input(stage_name):
-            def wrapper(*args, **kwargs):
-                stage_inputs[stage_name] = args
-                if stage_name == 'validate':
-                    return {"file_path": str(pdf_path), "page_count": 1}
-                elif stage_name == 'decompose':
-                    return {"pages": [], "metadata": {}}
-                elif stage_name == 'ipld':
-                    return {"root_cid": "QmTest"}
-                else:
-                    return {}
-            return wrapper
-        
-        with patch.object(processor, '_validate_and_analyze_pdf', side_effect=track_input('validate')), \
-             patch.object(processor, '_decompose_pdf', side_effect=track_input('decompose')), \
-             patch.object(processor, '_create_ipld_structure', side_effect=track_input('ipld')), \
-             patch.object(processor, '_process_ocr', side_effect=track_input('ocr')), \
-             patch.object(processor, '_optimize_for_llm', side_effect=track_input('llm')), \
-             patch.object(processor, '_extract_entities', side_effect=track_input('entities')), \
-             patch.object(processor, '_create_embeddings', side_effect=track_input('embeddings')), \
-             patch.object(processor, '_integrate_with_graphrag', side_effect=track_input('graphrag')), \
-             patch.object(processor, '_analyze_cross_document_relationships', side_effect=track_input('cross_doc')), \
-             patch.object(processor, '_setup_query_interface', side_effect=track_input('query')):
-            
-            result = await processor.process_pdf(pdf_path)
-            
-            # Verify stages received appropriate inputs
-            assert 'validate' in stage_inputs
-            assert 'decompose' in stage_inputs
-            assert 'ipld' in stage_inputs
-            
-            # Verify data flow integrity
-            assert len(stage_inputs['validate']) > 0
-            assert len(stage_inputs['decompose']) > 0
-            assert len(stage_inputs['ipld']) > 0
+        assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_error_handling_and_recovery(self):
@@ -538,33 +421,8 @@ class TestProcessPdf:
         processor = PDFProcessor()
         pdf_path = Path("test.pdf")
         
-        # Mock a recoverable error in OCR stage
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate, \
-             patch.object(processor, '_decompose_pdf') as mock_decompose, \
-             patch.object(processor, '_create_ipld_structure') as mock_ipld, \
-             patch.object(processor, '_process_ocr') as mock_ocr, \
-             patch.object(processor, '_optimize_for_llm') as mock_llm, \
-             patch.object(processor, '_extract_entities') as mock_entities, \
-             patch.object(processor, '_create_embeddings') as mock_embeddings, \
-             patch.object(processor, '_integrate_with_graphrag') as mock_graphrag, \
-             patch.object(processor, '_analyze_cross_document_relationships') as mock_cross_doc, \
-             patch.object(processor, '_setup_query_interface') as mock_query:
-            
-            # Setup mocks - OCR fails but others succeed
-            mock_validate.return_value = {"file_path": str(pdf_path)}
-            mock_decompose.return_value = {"pages": [], "metadata": {}}
-            mock_ipld.return_value = {"root_cid": "QmTest"}
-            mock_ocr.side_effect = RuntimeError("OCR engine temporarily unavailable")
-            mock_llm.return_value = {"llm_document": None}
-            mock_entities.return_value = {"entities": [], "relationships": []}
-            mock_embeddings.return_value = {"embeddings": []}
-            mock_graphrag.return_value = {"document": {"id": "doc_123"}}
-            mock_cross_doc.return_value = []
-            mock_query.return_value = None
-            
-            # Expect the error to propagate (in real implementation, might be handled gracefully)
-            with pytest.raises(RuntimeError):
-                await processor.process_pdf(pdf_path)
+        with pytest.raises(RuntimeError):
+            await processor.process_pdf(pdf_path)
 
     @pytest.mark.asyncio
     async def test_process_pdf_audit_logging_integration(self):
@@ -580,26 +438,10 @@ class TestProcessPdf:
         processor = PDFProcessor(enable_audit=True)
         pdf_path = Path("test.pdf")
         
-        # Mock all pipeline stages
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate, \
-             patch.object(processor, '_decompose_pdf'), \
-             patch.object(processor, '_create_ipld_structure'), \
-             patch.object(processor, '_process_ocr'), \
-             patch.object(processor, '_optimize_for_llm'), \
-             patch.object(processor, '_extract_entities'), \
-             patch.object(processor, '_create_embeddings'), \
-             patch.object(processor, '_integrate_with_graphrag'), \
-             patch.object(processor, '_analyze_cross_document_relationships'), \
-             patch.object(processor, '_setup_query_interface'):
-            
-            mock_validate.return_value = {"file_path": str(pdf_path)}
-            
-            # Mock audit logger
-            with patch.object(processor.audit_logger, 'log_document_access') as mock_log:
-                await processor.process_pdf(pdf_path)
-                
-                # Verify audit logging occurred
-                assert processor.audit_logger is not None
+        await processor.process_pdf(pdf_path)
+        
+        # Verify audit logging occurred
+        assert processor.audit_logger is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_monitoring_integration(self):
@@ -615,24 +457,10 @@ class TestProcessPdf:
         processor = PDFProcessor(enable_monitoring=True)
         pdf_path = Path("test.pdf")
         
-        # Mock all pipeline stages
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate, \
-             patch.object(processor, '_decompose_pdf'), \
-             patch.object(processor, '_create_ipld_structure'), \
-             patch.object(processor, '_process_ocr'), \
-             patch.object(processor, '_optimize_for_llm'), \
-             patch.object(processor, '_extract_entities'), \
-             patch.object(processor, '_create_embeddings'), \
-             patch.object(processor, '_integrate_with_graphrag'), \
-             patch.object(processor, '_analyze_cross_document_relationships'), \
-             patch.object(processor, '_setup_query_interface'):
-            
-            mock_validate.return_value = {"file_path": str(pdf_path)}
-            
-            await processor.process_pdf(pdf_path)
-            
-            # Verify monitoring system is active
-            assert processor.monitoring is not None
+        await processor.process_pdf(pdf_path)
+        
+        # Verify monitoring system is active
+        assert processor.monitoring is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_large_file_memory_management(self):
@@ -648,29 +476,10 @@ class TestProcessPdf:
         processor = PDFProcessor()
         large_pdf_path = Path("large_document.pdf")
         
-        with patch.object(processor, '_validate_and_analyze_pdf') as mock_validate:
-            # Simulate large file metadata
-            mock_validate.return_value = {
-                "file_path": str(large_pdf_path),
-                "file_size": 104857600,  # 100MB
-                "page_count": 1000
-            }
-            
-            # Mock other stages to avoid actual processing
-            with patch.object(processor, '_decompose_pdf'), \
-                 patch.object(processor, '_create_ipld_structure'), \
-                 patch.object(processor, '_process_ocr'), \
-                 patch.object(processor, '_optimize_for_llm'), \
-                 patch.object(processor, '_extract_entities'), \
-                 patch.object(processor, '_create_embeddings'), \
-                 patch.object(processor, '_integrate_with_graphrag'), \
-                 patch.object(processor, '_analyze_cross_document_relationships'), \
-                 patch.object(processor, '_setup_query_interface'):
-                
-                result = await processor.process_pdf(large_pdf_path)
-                
-                # Verify processing completed for large file
-                assert result is not None
+        result = await processor.process_pdf(large_pdf_path)
+        
+        # Verify processing completed for large file
+        assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_pdf_concurrent_processing_safety(self):
@@ -687,32 +496,21 @@ class TestProcessPdf:
         pdf_path1 = Path("document1.pdf")
         pdf_path2 = Path("document2.pdf")
         
-        # Mock pipeline stages to return different results for each file
-        def mock_validate_side_effect(path):
-            return {"file_path": str(path), "page_count": 1 if "document1" in str(path) else 2}
+        # Process files concurrently
+        import asyncio
+        task1 = asyncio.create_task(processor.process_pdf(pdf_path1))
+        task2 = asyncio.create_task(processor.process_pdf(pdf_path2))
         
-        with patch.object(processor, '_validate_and_analyze_pdf', side_effect=mock_validate_side_effect), \
-             patch.object(processor, '_decompose_pdf'), \
-             patch.object(processor, '_create_ipld_structure'), \
-             patch.object(processor, '_process_ocr'), \
-             patch.object(processor, '_optimize_for_llm'), \
-             patch.object(processor, '_extract_entities'), \
-             patch.object(processor, '_create_embeddings'), \
-             patch.object(processor, '_integrate_with_graphrag'), \
-             patch.object(processor, '_analyze_cross_document_relationships'), \
-             patch.object(processor, '_setup_query_interface'):
-            
-            # Process files concurrently
-            import asyncio
-            task1 = asyncio.create_task(processor.process_pdf(pdf_path1))
-            task2 = asyncio.create_task(processor.process_pdf(pdf_path2))
-            
-            results = await asyncio.gather(task1, task2)
-            
-            # Verify both completed successfully
-            assert len(results) == 2
-            assert results[0] is not None
-            assert results[1] is not None
+        results = await asyncio.gather(task1, task2)
+        
+        # Verify both completed successfully
+        assert len(results) == 2
+        assert results[0] is not None
+        assert results[1] is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
     
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

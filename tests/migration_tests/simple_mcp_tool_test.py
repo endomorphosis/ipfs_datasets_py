@@ -111,7 +111,7 @@ async def test_tool_execution(category, tool_name, func):
         print(f"      Result type: {type(result)}")
 
         if isinstance(result, dict) and 'status' in result:
-            print(f"      Status: {result.get('status')}")
+            print(f"      Status: {result['status']}")
 
         return True, result
 

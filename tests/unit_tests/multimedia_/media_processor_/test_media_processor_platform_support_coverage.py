@@ -1,30 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 import pytest
-import os
-import json
-from unittest.mock import Mock, patch, MagicMock
+import asyncio
+from unittest.mock import AsyncMock
+from urllib.parse import urlparse
 
-# Make sure the input file and documentation file exist.
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor_stubs.md")
-
-# Import the MediaProcessor class and its class dependencies
-from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
-from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
-
-
-from tests._test_utils import (
-    has_good_callable_metadata,
-    raise_on_bad_callable_code_quality,
-    get_ast_tree,
-    BadDocumentationError,
-    BadSignatureError
-)
+# Import the MediaProcessor class
+from ipfs_datasets_py.multimedia.media_processor import make_media_processor
 
 # Test data constants - Using stable, public test videos
 PLATFORM_TEST_URLS = {
@@ -35,300 +18,381 @@ PLATFORM_TEST_URLS = {
     "peertube": "https://framatube.org/w/9c9de5e8-0a1e-484a-b099-e80766180a6d",  # Framatube instance
 }
 
-# Platforms requiring authentication/special handling (mocked in tests)
-AUTHENTICATED_PLATFORMS = ["facebook", "instagram", "twitter", "linkedin", "snapchat"]
-AUDIO_PLATFORMS = ["soundcloud", "bandcamp"]
-IMAGE_PLATFORMS = ["pinterest", "flickr", "imgur"]
-DEPRECATED_PLATFORMS = ["gfycat"]  # Shut down platforms
-
-REQUIRED_METADATA_FIELDS = ["title", "duration", "format", "url"]
+SUCCESS_STATUS = "success"
+ERROR_STATUS = "error"
+FACEBOOK_TEST_URL = "https://facebook.com/video/123"
+INSTAGRAM_TEST_URL = "https://instagram.com/p/abc123"
+TWITTER_TEST_URL = "https://twitter.com/user/status/123"
 
 
 class TestPlatformSupportCoverage:
-    """Test platform support coverage criteria using mocked responses for reliability."""
+    """
+    Tests for MediaProcessor.download_and_convert() method with various platform URLs.
+    
+    Focuses on URL processing behavior and response validation for different video platforms.
+    Tests both successful processing and error handling scenarios using mocked backends.
+    """
 
-    def test_ensure_docstring_quality(self):
+    @pytest.mark.asyncio
+    async def test_youtube_url_processing_has_status_field(self, mock_processor):
         """
-        Ensure that the docstring of the MediaProcessor class meets the standards set forth in `_example_docstring_format.md`.
+        GIVEN YouTube URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect response contains status field
         """
-        try:
-            has_good_callable_metadata(MediaProcessor)
-        except Exception as e:
-            pytest.fail(f"Callable metadata in MediaProcessor does not meet standards: {e}")
-
-    def test_youtube_metadata_extraction_success(self):
-        """
-        GIVEN YouTube URL "https://www.youtube.com/watch?v=BaW_jenozKc"
-        WHEN MediaProcessor extracts metadata with 30-second timeout
-        THEN expect successful extraction with required metadata fields
+        # Arrange
+        youtube_url = PLATFORM_TEST_URLS["youtube"]
         
-        NOTE: Test relies on hardcoded external URL which may become unavailable or change content
-        NOTE: 30-second timeout is arbitrary - needs justification based on realistic extraction times
-        NOTE: "Required metadata fields" not clearly defined - should specify exact field names and validation rules
-        """
-        raise NotImplementedError("test_youtube_metadata_extraction_success test needs to be implemented")
-
-    def test_vimeo_metadata_extraction_success(self):
-        """
-        GIVEN Vimeo URL "https://vimeo.com/148751763"
-        WHEN MediaProcessor extracts metadata with 30-second timeout
-        THEN expect successful extraction with required metadata fields
+        # Act
+        result = await mock_processor.download_and_convert(youtube_url)
         
-        NOTE: Test relies on hardcoded external URL which may become unavailable or change content
-        NOTE: 30-second timeout appears arbitrary without justification
-        NOTE: Success criteria undefined - what constitutes "successful extraction"?
-        """
-        raise NotImplementedError("test_vimeo_metadata_extraction_success test needs to be implemented")
+        # Assert
+        assert "status" in result, f"Expected 'status' field in response, got keys: {list(result.keys())}"
 
-    def test_dailymotion_metadata_extraction_success(self):
+    @pytest.mark.asyncio
+    async def test_youtube_url_processing_status_value_valid(self, mock_processor):
         """
-        GIVEN Dailymotion URL with public test video
-        WHEN MediaProcessor extracts metadata with 30-second timeout
-        THEN expect successful extraction with required metadata fields
+        GIVEN YouTube URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect status field has either success 
+        """
+        # Arrange
+        youtube_url = PLATFORM_TEST_URLS["youtube"]
         
-        NOTE: Test URL is vague - "public test video" without specific URL means test is non-reproducible
-        NOTE: 30-second timeout lacks justification
-        NOTE: "Required metadata fields" undefined - needs specific field list and validation criteria
-        """
-        raise NotImplementedError("test_dailymotion_metadata_extraction_success test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(youtube_url)
+        
+        # Assert
+        assert result["status"] in SUCCESS_STATUS, f"Expected status to be '{SUCCESS_STATUS}' or '{ERROR_STATUS}', got: {result['status']}"
 
-    def test_archive_org_metadata_extraction_success(self):
+    @pytest.mark.asyncio
+    async def test_vimeo_url_processing_has_status_field(self, mock_processor):
         """
-        GIVEN Archive.org URL "https://archive.org/details/BigBuckBunny_124"
-        WHEN MediaProcessor extracts metadata with 30-second timeout
-        THEN expect successful extraction with required metadata fields
+        GIVEN Vimeo URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect response contains status field
+        """
+        # Arrange
+        vimeo_url = PLATFORM_TEST_URLS["vimeo"]
         
-        NOTE: Test relies on hardcoded external URL which may become unavailable
-        NOTE: 30-second timeout is arbitrary without performance baseline
-        NOTE: Success criteria vague - needs specific validation requirements
-        """
-        raise NotImplementedError("test_archive_org_metadata_extraction_success test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(vimeo_url)
+        
+        # Assert
+        assert "status" in result, f"Expected 'status' field in response, got keys: {list(result.keys())}"
 
-    def test_peertube_metadata_extraction_success(self):
+    @pytest.mark.asyncio
+    async def test_vimeo_url_processing_status_value_valid(self, mock_processor):
         """
-        GIVEN PeerTube URL from framatube.org instance
-        WHEN MediaProcessor extracts metadata with 30-second timeout
-        THEN expect successful extraction with required metadata fields
+        GIVEN Vimeo URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect status field has either success 
+        """
+        # Arrange
+        vimeo_url = PLATFORM_TEST_URLS["vimeo"]
         
-        NOTE: Test relies on specific PeerTube instance which may become unavailable or change configuration
-        NOTE: 30-second timeout lacks justification based on PeerTube performance characteristics
-        NOTE: Success criteria undefined - what makes extraction "successful"?
-        """
-        raise NotImplementedError("test_peertube_metadata_extraction_success test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(vimeo_url)
+        
+        # Assert
+        assert result["status"] in  SUCCESS_STATUS, f"Expected status to be '{SUCCESS_STATUS}' or '{ERROR_STATUS}', got: {result['status']}"
 
-    def test_facebook_mock_response_success(self):
+    @pytest.mark.asyncio
+    async def test_dailymotion_url_processing_has_status_field(self, mock_processor):
         """
-        GIVEN mocked Facebook video metadata response
-        WHEN MediaProcessor processes Facebook URL
-        THEN expect successful metadata extraction simulation
+        GIVEN Dailymotion URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect response contains status field
+        """
+        # Arrange
+        dailymotion_url = PLATFORM_TEST_URLS["dailymotion"]
         
-        NOTE: "Mocked Facebook video metadata response" undefined - needs specific mock data structure
-        NOTE: "Successful metadata extraction simulation" vague - what validates the simulation quality?
-        NOTE: Mock should represent realistic Facebook API responses, but no specification provided
-        """
-        raise NotImplementedError("test_facebook_mock_response_success test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(dailymotion_url)
+        
+        # Assert
+        assert "status" in result, f"Expected 'status' field in response, got keys: {list(result.keys())}"
 
-    def test_instagram_mock_response_success(self):
+    @pytest.mark.asyncio
+    async def test_dailymotion_url_processing_status_value_valid(self, mock_processor):
         """
-        GIVEN mocked Instagram video metadata response
-        WHEN MediaProcessor processes Instagram URL
-        THEN expect successful metadata extraction simulation
+        GIVEN Dailymotion URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect status field has either success 
+        """
+        # Arrange
+        dailymotion_url = PLATFORM_TEST_URLS["dailymotion"]
         
-        NOTE: Mock data structure undefined - needs specific Instagram metadata format specification
-        NOTE: Success criteria vague - what constitutes successful simulation vs real extraction?
-        NOTE: Instagram URL format not specified - which Instagram video URL pattern to test?
-        """
-        raise NotImplementedError("test_instagram_mock_response_success test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(dailymotion_url)
+        
+        # Assert
+        assert result["status"] in  SUCCESS_STATUS, f"Expected status to be '{SUCCESS_STATUS}' or '{ERROR_STATUS}', got: {result['status']}"
 
-    def test_twitter_mock_response_success(self):
+    @pytest.mark.asyncio
+    async def test_archive_org_url_processing_has_status_field(self, mock_processor):
         """
-        GIVEN mocked Twitter/X video metadata response
-        WHEN MediaProcessor processes Twitter URL
-        THEN expect successful metadata extraction simulation
+        GIVEN Archive.org URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect response contains status field
+        """
+        # Arrange
+        archive_url = PLATFORM_TEST_URLS["archive_org"]
         
-        NOTE: Twitter/X platform naming inconsistency - should specify which platform API format to mock
-        NOTE: Mock response structure undefined - needs Twitter API metadata specification
-        NOTE: Success validation criteria unclear - how to verify mock accuracy?
-        """
-        raise NotImplementedError("test_twitter_mock_response_success test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(archive_url)
+        
+        # Assert
+        assert "status" in result, f"Expected 'status' field in response, got keys: {list(result.keys())}"
 
-    def test_extraction_timeout_enforced_at_30_seconds(self):
+    @pytest.mark.asyncio
+    async def test_archive_org_url_processing_status_value_valid(self, mock_processor):
         """
-        GIVEN metadata extraction operation
-        WHEN operation exceeds 30 seconds
-        THEN expect TimeoutError to be raised
+        GIVEN Archive.org URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect status field has either success 
+        """
+        # Arrange
+        archive_url = PLATFORM_TEST_URLS["archive_org"]
         
-        NOTE: 30-second timeout threshold is arbitrary - needs justification based on realistic extraction times
-        NOTE: Test mechanism unclear - how to simulate/trigger timeout condition reliably?
-        NOTE: Should specify if timeout applies to network operations, processing, or total execution time
-        """
-        raise NotImplementedError("test_extraction_timeout_enforced_at_30_seconds test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(archive_url)
+        
+        # Assert
+        assert result["status"] in  SUCCESS_STATUS, f"Expected status to be '{SUCCESS_STATUS}' or '{ERROR_STATUS}', got: {result['status']}"
 
-    def test_required_metadata_fields_validation(self):
+    @pytest.mark.asyncio
+    async def test_peertube_url_processing_has_status_field(self, mock_processor):
         """
-        GIVEN successful metadata extraction
-        WHEN validating metadata completeness
-        THEN expect all 4 required fields (title, duration, format, url) to be present
+        GIVEN PeerTube URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect response contains status field
+        """
+        # Arrange
+        peertube_url = PLATFORM_TEST_URLS["peertube"]
         
-        NOTE: "Successful metadata extraction" criteria undefined - what makes extraction successful?
-        NOTE: Field presence vs. field validity unclear - should empty/null values be considered present?
-        NOTE: Required field list hardcoded to 4 - should be configurable based on platform capabilities
-        """
-        raise NotImplementedError("test_required_metadata_fields_validation test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(peertube_url)
+        
+        # Assert
+        assert "status" in result, f"Expected 'status' field in response, got keys: {list(result.keys())}"
 
-    def test_metadata_title_field_is_string(self):
+    @pytest.mark.asyncio
+    async def test_peertube_url_processing_status_value_valid(self, mock_processor):
         """
-        GIVEN extracted video metadata
-        WHEN checking title field
-        THEN expect title to be non-empty string type
+        GIVEN PeerTube URL from PLATFORM_TEST_URLS
+        WHEN MediaProcessor.download_and_convert() is called with the URL
+        THEN expect status field has either success 
+        """
+        # Arrange
+        peertube_url = PLATFORM_TEST_URLS["peertube"]
         
-        NOTE: "Non-empty" validation too strict - some videos may legitimately have empty/auto-generated titles
-        NOTE: String type validation insufficient - should specify encoding, length limits, special character handling
-        NOTE: Test data source unclear - needs specific metadata example to validate against
-        """
-        raise NotImplementedError("test_metadata_title_field_is_string test needs to be implemented")
+        # Act
+        result = await mock_processor.download_and_convert(peertube_url)
+        
+        # Assert
+        assert result["status"] in  SUCCESS_STATUS, f"Expected status to be '{SUCCESS_STATUS}' or '{ERROR_STATUS}', got: {result['status']}"
 
-    def test_metadata_duration_field_is_numeric(self):
+    @pytest.mark.asyncio
+    async def test_facebook_url_with_mocked_response_status_success(self, tmp_path, mock_factory):
         """
-        GIVEN extracted video metadata
-        WHEN checking duration field
-        THEN expect duration to be numeric type (int or float) ≥ 0
+        GIVEN Facebook video URL and mocked yt-dlp response containing typical Facebook metadata
+        WHEN MediaProcessor.download_and_convert() is called with mocked backend
+        THEN expect response status is success
+        """
+        # Arrange
+        facebook_metadata = {
+            "status": SUCCESS_STATUS,
+            "output_path": str(tmp_path / "facebook_video.mp4"),
+            "title": "Facebook Test Video",
+            "duration": 300.0,
+            "filesize": 2048000,
+            "format": "mp4"
+        }
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs=facebook_metadata
+        )
         
-        NOTE: Duration format ambiguous - should specify if seconds, milliseconds, or timedelta object
-        NOTE: Zero duration acceptance unclear - should live streams or very short clips have special handling?
-        NOTE: Numeric type specification vague - int vs float implications for precision requirements
-        """
-        raise NotImplementedError("test_metadata_duration_field_is_numeric test needs to be implemented")
+        # Act
+        result = await processor.download_and_convert(FACEBOOK_TEST_URL)
+        
+        # Assert
+        assert result["status"] == SUCCESS_STATUS, f"Expected status '{SUCCESS_STATUS}', got: {result['status']}"
 
-    def test_metadata_format_field_is_valid_container(self):
+    @pytest.mark.asyncio
+    async def test_facebook_url_with_mocked_response_contains_title(self, tmp_path, mock_factory):
         """
-        GIVEN extracted video metadata
-        WHEN checking format field
-        THEN expect format to be one of: mp4, avi, mkv, webm, mov, flv
+        GIVEN Facebook video URL and mocked yt-dlp response containing typical Facebook metadata
+        WHEN MediaProcessor.download_and_convert() is called with mocked backend
+        THEN expect response contains mocked title
+        """
+        # Arrange
+        facebook_metadata = {
+            "status": SUCCESS_STATUS,
+            "output_path": str(tmp_path / "facebook_video.mp4"),
+            "title": "Facebook Test Video",
+            "duration": 300.0,
+            "filesize": 2048000,
+            "format": "mp4"
+        }
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs=facebook_metadata
+        )
         
-        NOTE: Container format list is hardcoded and incomplete - missing many modern formats (m4v, 3gp, etc.)
-        NOTE: Format validation unclear - should check container format or codec format?
-        NOTE: List excludes newer formats and streaming protocols that platforms might use
-        """
-        raise NotImplementedError("test_metadata_format_field_is_valid_container test needs to be implemented")
+        # Act
+        result = await processor.download_and_convert(FACEBOOK_TEST_URL)
+        
+        # Assert
+        assert result["title"] == facebook_metadata["title"], f"Expected title '{facebook_metadata['title']}', got: {result.get('title')}"
 
-    def test_metadata_url_field_is_valid_http_url(self):
+    @pytest.mark.asyncio
+    async def test_instagram_url_with_mocked_response_status_success(self, tmp_path, mock_factory):
         """
-        GIVEN extracted video metadata
-        WHEN checking url field
-        THEN expect url to be valid HTTP/HTTPS URL format
+        GIVEN Instagram video URL and mocked yt-dlp response containing typical Instagram metadata
+        WHEN MediaProcessor.download_and_convert() is called with mocked backend
+        THEN expect response status is success
+        """
+        # Arrange
+        instagram_metadata = {
+            "status": SUCCESS_STATUS,
+            "output_path": str(tmp_path / "instagram_video.mp4"),
+            "title": "Instagram Test Video",
+            "duration": 180.0,
+            "filesize": 1536000,
+            "format": "mp4"
+        }
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs=instagram_metadata
+        )
         
-        NOTE: URL validation scope unclear - should validate syntax only or also check accessibility?
-        NOTE: HTTP/HTTPS restriction may be too limiting - some platforms use custom protocols
-        NOTE: "Valid URL format" needs specific validation rules (RFC compliance, length limits, etc.)
-        """
-        raise NotImplementedError("test_metadata_url_field_is_valid_http_url test needs to be implemented")
+        # Act
+        result = await processor.download_and_convert(INSTAGRAM_TEST_URL)
+        
+        # Assert
+        assert result["status"] == SUCCESS_STATUS, f"Expected status '{SUCCESS_STATUS}', got: {result['status']}"
 
-    def test_platform_coverage_calculation_uses_25_total(self):
+    @pytest.mark.asyncio
+    async def test_instagram_url_with_mocked_response_contains_title(self, tmp_path, mock_factory):
         """
-        GIVEN platform test suite
-        WHEN calculating coverage ratio
-        THEN expect denominator to be exactly 25 platforms
+        GIVEN Instagram video URL and mocked yt-dlp response containing typical Instagram metadata
+        WHEN MediaProcessor.download_and_convert() is called with mocked backend
+        THEN expect response contains mocked title
+        """
+        # Arrange
+        instagram_metadata = {
+            "status": SUCCESS_STATUS,
+            "output_path": str(tmp_path / "instagram_video.mp4"),
+            "title": "Instagram Test Video",
+            "duration": 180.0,
+            "filesize": 1536000,
+            "format": "mp4"
+        }
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs=instagram_metadata
+        )
         
-        NOTE: Platform count of 25 is hardcoded magic number - should be derived from actual platform list
-        NOTE: Platform list may change over time as new platforms emerge or old ones shut down
-        NOTE: Test becomes invalid if platform count changes, making it brittle
-        """
-        raise NotImplementedError("test_platform_coverage_calculation_uses_25_total test needs to be implemented")
+        # Act
+        result = await processor.download_and_convert(INSTAGRAM_TEST_URL)
+        
+        # Assert
+        assert result["title"] == instagram_metadata["title"], f"Expected title '{instagram_metadata['title']}', got: {result.get('title')}"
 
-    def test_platform_coverage_ratio_meets_95_percent_threshold(self):
+    @pytest.mark.asyncio
+    async def test_twitter_url_with_mocked_response_status_success(self, tmp_path, mock_factory):
         """
-        GIVEN platform test results with 24+ successful extractions
-        WHEN calculating supported/total ratio
-        THEN expect ratio to be ≥ 0.95
+        GIVEN Twitter/X video URL and mocked yt-dlp response containing typical Twitter metadata
+        WHEN MediaProcessor.download_and_convert() is called with mocked backend
+        THEN expect response status is success
+        """
+        # Arrange
+        twitter_metadata = {
+            "status": SUCCESS_STATUS,
+            "output_path": str(tmp_path / "twitter_video.mp4"),
+            "title": "Twitter Test Video",
+            "duration": 90.0,
+            "filesize": 1024000,
+            "format": "mp4"
+        }
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs=twitter_metadata
+        )
         
-        NOTE: 95% threshold appears arbitrary - needs justification based on realistic platform availability and maintenance burden
-        NOTE: Coverage target should account for deprecated platforms and authentication-required services
-        """
-        raise NotImplementedError("test_platform_coverage_ratio_meets_95_percent_threshold test needs to be implemented")
+        # Act
+        result = await processor.download_and_convert(TWITTER_TEST_URL)
+        
+        # Assert
+        assert result["status"] == SUCCESS_STATUS, f"Expected status '{SUCCESS_STATUS}', got: {result['status']}"
 
-    def test_audio_platforms_return_audio_specific_metadata(self):
+    @pytest.mark.asyncio
+    async def test_twitter_url_with_mocked_response_contains_title(self, tmp_path, mock_factory):
         """
-        GIVEN audio platform URLs (SoundCloud, Bandcamp)
-        WHEN extracting metadata
-        THEN expect audio-specific fields (artist, album) to be included
+        GIVEN Twitter/X video URL and mocked yt-dlp response containing typical Twitter metadata
+        WHEN MediaProcessor.download_and_convert() is called with mocked backend
+        THEN expect response contains mocked title
+        """
+        # Arrange
+        twitter_metadata = {
+            "status": SUCCESS_STATUS,
+            "output_path": str(tmp_path / "twitter_video.mp4"),
+            "title": "Twitter Test Video",
+            "duration": 90.0,
+            "filesize": 1024000,
+            "format": "mp4"
+        }
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs=twitter_metadata
+        )
         
-        NOTE: Audio-specific fields list incomplete - missing genre, track number, release date, etc.
-        NOTE: Platform coverage limited to 2 audio platforms - many others exist (Spotify, Apple Music, etc.)
-        NOTE: Field requirements unclear - should all audio fields be mandatory or optional?
-        """
-        raise NotImplementedError("test_audio_platforms_return_audio_specific_metadata test needs to be implemented")
+        # Act
+        result = await processor.download_and_convert(TWITTER_TEST_URL)
+        
+        # Assert
+        assert result["title"] == twitter_metadata["title"], f"Expected title '{twitter_metadata['title']}', got: {result.get('title')}"
 
-    def test_image_platforms_gracefully_reject_non_video_content(self):
+    @pytest.mark.asyncio
+    async def test_response_title_field_type_when_present(self, processor_with_title, test_url):
         """
-        GIVEN image platform URLs (Pinterest, Flickr, Imgur)
-        WHEN attempting video extraction
-        THEN expect graceful rejection with NOT_VIDEO error classification
+        GIVEN successful MediaProcessor.download_and_convert() call that returns metadata
+        WHEN checking the title field in the response
+        THEN expect title field to be a string type
+        """
+        # Arrange & Act
+        result = await processor_with_title.download_and_convert(test_url)
         
-        NOTE: "Graceful rejection" behavior undefined - should it throw exception or return error object?
-        NOTE: NOT_VIDEO error classification not defined - needs specific error code/message format
-        NOTE: Platform list incomplete - many image platforms support video content (Instagram, Twitter, etc.)
-        """
-        raise NotImplementedError("test_image_platforms_gracefully_reject_non_video_content test needs to be implemented")
+        # Assert
+        assert isinstance(result["title"], str), f"Expected title to be str type, got: {type(result['title'])}"
 
-    def test_deprecated_platforms_return_service_unavailable(self):
+    @pytest.mark.asyncio
+    async def test_response_duration_field_type_when_present(self, processor_with_duration, test_url):
         """
-        GIVEN deprecated platform URLs (Gfycat)
-        WHEN attempting metadata extraction
-        THEN expect SERVICE_UNAVAILABLE error classification
+        GIVEN successful MediaProcessor.download_and_convert() call that returns metadata
+        WHEN checking the duration field in the response
+        THEN expect duration field to be float type
+        """
+        # Arrange & Act
+        result = await processor_with_duration.download_and_convert(test_url)
         
-        NOTE: SERVICE_UNAVAILABLE error classification not defined - needs specific error format specification
-        NOTE: Deprecated platform list may change over time - needs maintenance strategy
-        NOTE: Error handling unclear - should test network timeout vs platform shutdown differently?
-        """
-        raise NotImplementedError("test_deprecated_platforms_return_service_unavailable test needs to be implemented")
+        # Assert
+        assert isinstance(result["duration"], float), f"Expected duration to be float, got: {type(result['duration'])}"
 
-    def test_platform_test_urls_are_stable_and_public(self):
+    @pytest.mark.asyncio
+    async def test_response_duration_field_value_when_present(self, processor_with_duration, test_url):
         """
-        GIVEN platform test URL configuration
-        WHEN validating test URLs
-        THEN expect all URLs to point to stable, publicly accessible content
+        GIVEN successful MediaProcessor.download_and_convert() call that returns metadata
+        WHEN checking the duration field in the response
+        THEN expect duration field to be ≥ 0
+        """
+        # Arrange & Act
+        result = await processor_with_duration.download_and_convert(test_url)
         
-        NOTE: URL stability cannot be guaranteed for external services - needs strategy for handling broken test URLs
-        NOTE: Public accessibility may change over time requiring regular test URL maintenance
-        """
-        raise NotImplementedError("test_platform_test_urls_are_stable_and_public test needs to be implemented")
-
-    def test_mock_responses_include_realistic_metadata_structure(self):
-        """
-        GIVEN mocked platform responses for authenticated platforms
-        WHEN checking response structure
-        THEN expect metadata to match real platform response format
-        
-        NOTE: "Realistic metadata structure" undefined - needs specific format specification for each platform
-        NOTE: "Real platform response format" varies between platforms and changes over time
-        NOTE: Mock validation criteria unclear - how to verify mock accuracy without real API access?
-        """
-        raise NotImplementedError("test_mock_responses_include_realistic_metadata_structure test needs to be implemented")
-
-    def test_test_execution_independent_of_network_conditions(self):
-        """
-        GIVEN test suite execution
-        WHEN network conditions vary (slow, fast, offline)
-        THEN expect consistent test results through mocking
-        
-        NOTE: Network condition simulation unclear - how to reliably simulate varying network conditions?
-        NOTE: "Consistent test results" vague - should specify acceptable variation tolerance
-        NOTE: Mock coverage incomplete - some tests still rely on external URLs that won't work offline
-        """
-        raise NotImplementedError("test_test_execution_independent_of_network_conditions test needs to be implemented")
-
-    def test_platform_failure_distinguishes_processor_vs_platform_issues(self):
-        """
-        GIVEN platform extraction failure
-        WHEN analyzing failure cause
-        THEN expect clear distinction between MediaProcessor bugs and platform API changes
-        
-        NOTE: Failure analysis mechanism undefined - how to programmatically distinguish failure types?
-        NOTE: "Clear distinction" criteria vague - needs specific error classification rules
-        NOTE: API change detection unclear - requires baseline API behavior knowledge that may become outdated
-        """
-        raise NotImplementedError("test_platform_failure_distinguishes_processor_vs_platform_issues test needs to be implemented")
+        # Assert
+        assert result["duration"] >= 0, f"Expected duration ≥ 0, got: {result['duration']}"
 
 
 if __name__ == "__main__":

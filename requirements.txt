@@ -45,6 +45,9 @@ toml>=0.10.2
 
 # For testing only
 Faker>=37.4.2
+reportlab>=4.4.3
+pyfakefs
+moviepy
 
 # Add these one by one after basic setup works:
 # datasets>=2.10.0,<3.0.0

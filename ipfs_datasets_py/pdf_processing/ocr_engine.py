@@ -1522,7 +1522,7 @@ class MultiEngineOCR:
             except Exception as e:
                 logger.warning(f"OCR engine {engine_name} failed: {e}")
                 continue
-        
+
         # If no engine met the threshold, return the best result
         if results:
             best_result = max(results, key=lambda x: x.get('confidence', 0))
