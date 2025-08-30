@@ -104,8 +104,18 @@ class TestConcurrentOperationScaling:
         expected_second_status = "success"
         
         # Mock the ytdlp wrapper to fail on first URL but succeed on second
-        with patch.object(processor.ytdlp_wrapper, 'download_video') as mock_download:
-            mock_download.side_effect = [Exception("Download failed"), None]
+        with patch.object(processor.ytdlp, 'download_video') as mock_download:
+            mock_download.side_effect = [
+                Exception("Download failed"), 
+                {
+                    "status": "success",
+                    "output_path": str(tmp_path / "success_video.mp4"),
+                    "title": "Success Video",
+                    "duration": 120,
+                    "filesize": 1048576,
+                    "format": "mp4"
+                }
+            ]
             
             # Act
             first_result = await processor.download_and_convert(failing_url)

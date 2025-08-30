@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, AsyncMock
 from pathlib import Path
 from typing import Dict, Any
 
-from ipfs_datasets_py.multimedia.media_processor import make_media_processor
+from ipfs_datasets_py.multimedia.media_processor import make_media_processor, MediaProcessor
 
 
 class TestImplementationDetailError(Exception):
@@ -148,13 +148,26 @@ class MockFactory:
         """
         mock = MagicMock()
         
+        # Handle None tmp_path case
+        if tmp_path is None:
+            base_path = "/tmp"
+        else:
+            base_path = str(tmp_path)
+        
+        # If format is specified and output_path is not, make them match
+        format_ext = kwargs.get("format", "mp4")
+        if "output_path" not in kwargs:
+            output_path = f"{base_path}/video.{format_ext}"
+        else:
+            output_path = kwargs["output_path"]
+        
         default_return = {
             "status": "success",
-            "output_path": str(tmp_path / "video.mp4"),
+            "output_path": output_path,
             "title": "Test Video",
             "duration": 420,
             "filesize": 6911,
-            "format": "mp4"
+            "format": format_ext
         }
         
         if kwargs:
@@ -181,9 +194,15 @@ class MockFactory:
         """
         mock = MagicMock()
         
+        # Handle None tmp_path case
+        if tmp_path is None:
+            base_path = "/tmp"
+        else:
+            base_path = str(tmp_path)
+        
         default_return = {
             "status": kwargs.get("status", "success"),
-            "output_path": kwargs.get("output_path", str(tmp_path / "converted.mp4"))
+            "output_path": kwargs.get("output_path", f"{base_path}/converted.mp4")
         }
         
         if "conversion_details" in kwargs:
@@ -297,6 +316,49 @@ def successful_processor(tmp_path):
         tmp_path,
         ffmpeg_kwargs={"output_path": str(output_file)}
     )
+
+
+@pytest.fixture
+def url_aware_processor(tmp_path):
+    """Create a processor that returns different results based on URL."""
+    def create_url_specific_response(url):
+        # Extract video ID from URL to create unique responses
+        if "v=" in url:
+            video_id = url.split("v=")[1].split("&")[0]
+            return {
+                "status": "success",
+                "output_path": str(tmp_path / f"video_{video_id}.mp4"),
+                "title": f"Test Video {video_id}",
+                "duration": hash(video_id) % 1000 + 100,  # Unique duration based on video_id
+                "filesize": hash(video_id) % 50000 + 10000,  # Unique filesize based on video_id
+                "format": "mp4",
+                "converted_path": None,
+                "conversion_result": None
+            }
+        else:
+            # Default response for non-YouTube URLs
+            return {
+                "status": "success",
+                "output_path": str(tmp_path / "video.mp4"),
+                "title": "Test Video",
+                "duration": 420,
+                "filesize": 6911,
+                "format": "mp4",
+                "converted_path": None,
+                "conversion_result": None
+            }
+    
+    # Create YtDLP mock with URL-specific side effect
+    mock_ytdlp = MagicMock()
+    mock_ytdlp.download_video = AsyncMock(side_effect=lambda url, **kwargs: create_url_specific_response(url))
+    
+    # Create FFmpeg mock
+    mock_ffmpeg = MagicMock()
+    mock_ffmpeg.convert_video = AsyncMock(return_value={"status": "success", "output_path": str(tmp_path / "converted.mp4")})
+    
+    # Create MediaProcessor with the URL-aware mocks
+    processor = MediaProcessor(ytdlp=mock_ytdlp, ffmpeg=mock_ffmpeg, default_output_dir=str(tmp_path))
+    return processor
 
 
 @pytest.fixture
@@ -498,7 +560,10 @@ def different_format_processor(mock_factory, tmp_path):
     output_format = "mp4"
     processor = mock_factory.create_mock_processor(
         tmp_path,
-        ytdlp_kwargs={"format": input_format},
+        ytdlp_kwargs={
+            "format": input_format,
+            "output_path": str(tmp_path / f"video.{input_format}")
+        },
         ffmpeg_kwargs={"output_path": str(tmp_path / f"converted.{output_format}")}
     )
     return processor, input_format, output_format
@@ -509,9 +574,14 @@ def equivalent_format_processor(mock_factory, tmp_path):
     """Create a processor for testing equivalent format conversions."""
     input_format = "m4v"
     output_format = "mp4"
+    # For equivalent formats, mock the downloaded file to have the output format extension
+    # so no conversion is triggered
     processor = mock_factory.create_mock_processor(
         tmp_path,
-        ytdlp_kwargs={"format": input_format}
+        ytdlp_kwargs={
+            "format": input_format,
+            "output_path": str(tmp_path / f"video.{output_format}")  # Use output format extension
+        }
     )
     return processor, input_format, output_format
 
@@ -523,7 +593,10 @@ def unknown_format_processor(mock_factory, tmp_path):
     standard_format = "mp4"
     processor = mock_factory.create_mock_processor(
         tmp_path,
-        ytdlp_kwargs={"format": unknown_format},
+        ytdlp_kwargs={
+            "format": unknown_format,
+            "output_path": str(tmp_path / f"video.{unknown_format}")
+        },
         ffmpeg_kwargs={"output_path": str(tmp_path / f"converted.{standard_format}")}
     )
     return processor, unknown_format, standard_format
@@ -547,7 +620,10 @@ def conversion_accuracy_processor(mock_factory, tmp_path):
     """Create a processor configured for accuracy testing."""
     return mock_factory.create_mock_processor(
         tmp_path,
-        ytdlp_kwargs={"format": "avi"},
+        ytdlp_kwargs={
+            "format": "avi",
+            "output_path": str(tmp_path / "video.avi")
+        },
         ffmpeg_kwargs={"output_path": str(tmp_path / "converted.mp4")}
     )
 

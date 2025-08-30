@@ -155,7 +155,7 @@ class TestResourceLeakPrevention:
         assert len(new_children) == 0, f"Found {len(new_children)} child processes not terminated: {list(new_children)}"
 
     @pytest.mark.asyncio 
-    async def test_when_download_and_convert_called_then_performance_overhead_minimal(self, successful_processor, test_url):
+    async def test_when_download_and_convert_called_then_performance_overhead_minimal(self, tmp_path, mock_factory, successful_processor, test_url):
         """
         GIVEN successful MediaProcessor instance and valid URL
         WHEN download_and_convert is called with resource monitoring enabled
@@ -163,7 +163,7 @@ class TestResourceLeakPrevention:
             PERFORMANCE_OVERHEAD_THRESHOLD % of execution time
         """
         # Arrange - Create processor without monitoring for baseline
-        baseline_processor = make_media_processor(enable_logging=False)
+        baseline_processor = mock_factory.create_mock_processor(tmp_path, enable_logging=False)
         
         # Act - Measure baseline performance
         baseline_start = time.perf_counter()

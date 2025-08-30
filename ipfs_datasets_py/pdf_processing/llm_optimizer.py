@@ -37,8 +37,8 @@ from ipfs_datasets_py.utils.text_processing import TextProcessor
 from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
 
-logger = logging.getLogger(__name__)
-logger.level = logging.DEBUG
+module_logger = logging.getLogger(__name__)
+module_logger.level = logging.DEBUG
 
 from pydantic import (
     AfterValidator as AV,
@@ -255,7 +255,7 @@ def _numpy_ndarrays_are_equal(x: Optional[np.ndarray], y: Optional[np.ndarray]) 
         # Check if all elements are equal (within floating point tolerance)
         return np.allclose(x, y, equal_nan=True)
     except Exception as e:
-        logger.error(f"Unexpected error comparing numpy arrays: {e}")
+        module_logger.error(f"Unexpected error comparing numpy arrays: {e}")
         return False
 
 # def _turn_str_into_list_of_str(s: Any) -> list[str]:
@@ -418,7 +418,12 @@ ISO_DATETIME_REGEX = re.compile(ISO_DATETIME_PATTERN)
 
 UNREALISTIC_TOKEN_WORD_RATIO = 10.0
 
+EMBEDDING_PATTERN = r'embedding=array\([^)]*(?:\([^)]*\)[^)]*)*\)'
 
+EMBEDDING_REGEX = re.compile(EMBEDDING_PATTERN)
+
+
+SEMAPHORE = asyncio.Semaphore(4)
 
 
 class LLMChunkMetadata(BaseModel):
@@ -740,7 +745,7 @@ class LLMChunk(BaseModel):
     semantic_types: ValidSemanticType
     metadata: LLMChunkMetadata
     relationships: list[str] = Field(default_factory=list)
-    embedding: Optional[np.ndarray] = None
+    embedding: Optional[np.ndarray] = Field(default=None, repr=False)
 
     class Config:
         arbitrary_types_allowed = True
@@ -792,10 +797,10 @@ class LLMChunk(BaseModel):
         """
         original_string = super().__str__()
         if self.embedding is not None and 'embedding' in original_string:
-            # Remove the embedding field from the string representation
-            original_string = re.sub(r'embedding=array\([^)]*\)', 'embedding=<omitted>)', original_string) 
+            original_string = re.sub(r'embedding=array\([^]]*\][^)]*\)', 'embedding=<omitted>', original_string, flags=re.DOTALL)
+            #original_string = re.sub(EMBEDDING_REGEX, 'embedding=<omitted>', original_string)
         return original_string
-    
+
     @field_validator('semantic_types')
     def validate_semantic_types(cls, v: str) -> str:
         """
@@ -944,9 +949,14 @@ class LLMDocument(BaseModel):
         ])
         original_string = re.sub(r'chunks=\[.*\]', f'chunks=[{chunk_str_list}]', original_string)
 
-        if 'document_embedding' in original_string:
-            # Remove the document_embedding field from the string representation
-            original_string = re.sub(r'document_embedding=array\([^)]*\)', 'document_embedding=<omitted>)', original_string) 
+        # Replace embedding arrays in string representation to avoid clutter
+        if 'embedding' in original_string:
+            original_string = re.sub(
+            EMBEDDING_REGEX, 
+            'embedding=<omitted>', 
+            original_string,
+            flags=re.DOTALL
+            )
         
         # If the chunk is still too long, truncate to 499 characters.
         if len(original_string) > 500:
@@ -1104,7 +1114,7 @@ class LLMOptimizer:
                  auto_tokenizer: AutoTokenizer = AutoTokenizer,
                  chunk_optimizer: ChunkOptimizer = ChunkOptimizer,
                  tiktoken: ModuleType = tiktoken_module,
-                 logger: logging.Logger = logger
+                 logger: logging.Logger = logging.getLogger(__name__)
                  ):
         """
         Initialize the LLM Optimizer with model configurations and processing parameters.
@@ -1187,7 +1197,7 @@ class LLMOptimizer:
 
         self.tokenizer: Callable = None  # Will be set during model initialization
 
-        self.logger: logging.Logger = logger
+        self.logger: logging.Logger = logger or module_logger
         self.openai_async_client: openai.AsyncOpenAI = async_openai
         self.SentenceTransformer: SentenceTransformer = sentence_transformer
         self.text_processor: TextProcessor = text_processor
@@ -1330,17 +1340,18 @@ class LLMOptimizer:
         """
         async with asyncio.timeout(timeout):
         
-            print("Starting LLM optimization process")
+            self.logger.info("Starting LLM optimization process")
             
             # Extract text content with structure preservation
             structured_text: dict[str, Any] = await self._extract_structured_text(decomposed_content)
-
-            print("Extracted structured text content with preserved document structure")
+            self.logger.info("Extracted structured text content with preserved document structure")
+            self.logger.debug(f"structured_text: {structured_text}")
 
             # Generate document summary
             document_summary: str = await self._generate_document_summary(structured_text)
 
-            print("Generated document summary")
+            self.logger.info("Generated document summary")
+            self.logger.debug(f"document_summary: {document_summary}")
             
             # Create optimal chunks
             try:
@@ -1349,24 +1360,27 @@ class LLMOptimizer:
                 self.logger.error(f"Error creating optimal chunks: {e}")
                 chunks = []
 
-            print(f"Created {len(chunks)} initial chunks")
+            self.logger.info(f"Created {len(chunks)} initial chunks")
 
             # Generate embeddings
             chunks_with_embeddings: list[LLMChunk] = await self._generate_embeddings(chunks)
 
-            print("Generated embeddings for all chunks")
+            self.logger.info("Generated embeddings for all chunks")
+            self.logger.debug(f"chunks_with_embeddings: {chunks_with_embeddings}")
 
             # Extract key entities
-            key_entities: list[dict[str, Any]] = await self._extract_key_entities(structured_text)
+            # NOTE We use a global semaphore to limit concurrency.
+            async with SEMAPHORE:
+                key_entities: list[dict[str, Any]] = await self._extract_key_entities(structured_text)
 
-            print(f"Extracted {len(key_entities)} key entities from document")
+            self.logger.info(f"Extracted {len(key_entities)} key entities from document")
 
             # Create document-level embedding
             document_embedding: np.ndarray | None = await self._generate_document_embedding(
                 document_summary, structured_text
             )
 
-            print("Generated document-level embedding")
+            self.logger.info("Generated document-level embedding")
 
             # Build LLM document
             llm_document = LLMDocument(
@@ -1385,7 +1399,7 @@ class LLMOptimizer:
                 ).model_dump()
             )
             
-            print(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
+            self.logger.info(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
             return llm_document
 
         raise TimeoutError(f"LLM optimization process timed out after '{timeout}' seconds")
@@ -1563,7 +1577,7 @@ class LLMOptimizer:
             
             # Basic extractive summarization (can be enhanced with LLM)
             sentences = self.text_processor.split_sentences(full_text)
-            print(f"sentences:\n{sentences}")
+            self.logger.debug(f"sentences:\n{sentences}")
             
             # Score sentences by position and keyword frequency
             scored_sentences = []
@@ -1588,9 +1602,9 @@ class LLMOptimizer:
             
             # Select top sentences for summary
             scored_sentences.sort(key=lambda x: x[1], reverse=True)
-            print(f"scored sentences:\n{scored_sentences}")
+            self.logger.debug(f"scored sentences:\n{scored_sentences}")
             summary_sentences = [sent[0] for sent in scored_sentences[:5]]
-            print(f"summary sentences:\n{summary_sentences}")
+            self.logger.debug(f"summary sentences:\n{summary_sentences}")
 
             return ".".join(summary_sentences)
 
@@ -1598,7 +1612,7 @@ class LLMOptimizer:
             msg = f"Summary generation failed with a {type(e).__name__}: {e}"
             self.logger.exception(msg)
             return msg
-    
+
     async def _create_optimal_chunks(self, 
                                      structured_text: dict[str, Any],
                                      strict_validation: bool = False
@@ -2179,17 +2193,20 @@ class LLMOptimizer:
             if not cat.strip():
                 raise ValueError("A classification category cannot be an empty/whitespace only string")
 
+        # Switch to a smaller/cheaper model for debugging.
+        llm_name = "gpt-4.1-nano-2025-04-14" if self.logger.level == logging.DEBUG else self.llm_name
+
         classification_results = await classify_with_llm(
             text=sentence,
             client=openai_client,
             classifications=classifications,
-            model=self.llm_name,
+            model=llm_name,
             retries=retries,
             timeout=timeout,
             threshold=PROB_THRESHOLD,
             logger=self.logger,
         )
-        print(f"classification_results:\n{classification_results}")
+        self.logger.debug(f"classification_results:\n{classification_results}")
 
         match len(classification_results):
             case 0: # No classifications returned, return unclassified.
@@ -2885,7 +2902,7 @@ class TextProcessor:
             >>> print(keywords)  # ['brief', 'example'] (excludes stop words)
         """
         if not isinstance(top_k, int) or top_k <= 0:
-            print(f"Invalid top_k value: {top_k}. Using default value of 20.")
+            self.logger.warning(f"Invalid top_k value: {top_k}. Using default value of 20.")
             top_k = 20
 
         if not isinstance(text, str):

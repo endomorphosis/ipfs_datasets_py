@@ -5,6 +5,7 @@ This module provides a unified interface for processing multimedia content
 using various backends like FFmpeg and yt-dlp.
 """
 from __future__ import annotations
+import asyncio
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -374,9 +375,15 @@ class MediaProcessor:
             if download_result.get("status") != "success":
                 return download_result
             
+            # Initialize conversion fields to None (may be overridden if conversion occurs)
+            download_result["converted_path"] = None
+            download_result["conversion_result"] = None
+            
             # If format conversion is needed and FFmpeg is available
             downloaded_file = download_result.get("output_path")
-            if downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}"):
+            conversion_needed = downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}")
+            
+            if conversion_needed:
                 convert_path = str(Path(downloaded_file).with_suffix(f".{output_format}"))
                 convert_result = await self.ffmpeg.convert_video(downloaded_file, convert_path)
                 print(f"convert_result: {convert_result}")

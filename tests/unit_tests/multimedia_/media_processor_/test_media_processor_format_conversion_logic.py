@@ -140,7 +140,7 @@ class TestConversionDecisionAccuracy:
         
         result = await processor.download_and_convert("test_url", output_format=format_type)
         
-        assert "converted_path" not in result, f"Expected no conversion for same format {format_type} but found converted_path"
+        assert result["converted_path"] is None, f"Expected no conversion for same format {format_type}, converted_path should be None but got {result.get('converted_path')}"
 
     async def test_different_format_pairs_trigger_convert_decision(self, different_format_processor):
         """
@@ -165,7 +165,7 @@ class TestConversionDecisionAccuracy:
         
         result = await processor.download_and_convert("test_url", output_format=output_format)
         
-        assert "converted_path" not in result, f"Expected no conversion for equivalent formats {input_format} to {output_format} but found converted_path"
+        assert result["converted_path"] is None, f"Expected no conversion for equivalent formats {input_format} to {output_format}, converted_path should be None but got {result.get('converted_path')}"
 
     async def test_unknown_extensions_trigger_conservative_conversion(self, unknown_format_processor):
         """

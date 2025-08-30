@@ -79,14 +79,6 @@ Public Methods:
         Remove old download tracking data based on configurable age thresholds
         to prevent memory accumulation.
 
-Private Methods:
-    _download_with_ytdlp(url, ydl_opts, extract_only) -> Dict[str, Any]:
-        Execute synchronous yt-dlp operations in thread pool context
-        with comprehensive error handling and result formatting.
-    _download_playlist_with_ytdlp(url, ydl_opts) -> Dict[str, Any]:
-        Execute synchronous playlist downloads with progress tracking
-        and item-level error handling.
-
 Usage Examples:
     # Basic video download
     wrapper = YtDlpWrapper(default_output_dir="/downloads")
@@ -215,111 +207,6 @@ Notes:
 * **Method:** True
 * **Class:** YtDlpWrapper
 
-## _download_playlist_with_ytdlp
-
-```python
-def _download_playlist_with_ytdlp(self, url: str, ydl_opts: Dict) -> Dict[str, Any]:
-    """
-    Execute playlist download operations in synchronous context for thread pool execution.
-
-This private method handles yt-dlp playlist operations synchronously, enabling
-the async download_playlist method to execute it in a thread pool without blocking
-the event loop. It provides standardized error handling and return formatting
-for playlist-specific operations.
-
-Args:
-    url (str): Playlist URL to process with yt-dlp
-    ydl_opts (Dict): Complete yt-dlp options dictionary including output templates,
-        playlist limits, progress hooks, and format selection
-
-Returns:
-    Dict[str, Any]: Standardized result dictionary containing:
-        For successful downloads:
-        - status (str): 'success'
-        - action (str): 'playlist_downloaded'
-        - playlist_url (str): Original playlist URL
-        
-        For errors:
-        - status (str): 'error'
-        - error (str): Detailed error message
-        - playlist_url (str): Original playlist URL
-
-Examples:
-    >>> # This method is called internally by download_playlist
-    >>> # Direct usage not recommended
-    >>> opts = {'outtmpl': '/tmp/%(playlist)s/%(title)s.%(ext)s', 'playlistend': 10}
-    >>> result = wrapper._download_playlist_with_ytdlp("https://youtube.com/playlist?list=example", opts)
-    >>> print(result['status'])  # 'success' or 'error'
-
-Notes:
-    - Supports concurrent playlist item downloads
-    - Individual item failures are handled by yt-dlp's ignoreerrors option
-    - Return format is consistent regardless of outcome
-    - All exceptions are caught and converted to error dictionaries
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** YtDlpWrapper
-
-## _download_with_ytdlp
-
-```python
-def _download_with_ytdlp(self, url: str, ydl_opts: Dict, extract_only: bool) -> Dict[str, Any]:
-    """
-    Execute yt-dlp download operations in synchronous context for thread pool execution.
-
-This private method handles the actual yt-dlp operations in a synchronous context,
-allowing the async download_video method to execute it in a thread pool without
-blocking the event loop. It provides comprehensive error handling specific to
-yt-dlp exceptions and standardizes return formats.
-
-Args:
-    url (str): Video URL to process with yt-dlp
-    ydl_opts (Dict): Complete yt-dlp options dictionary including format selection,
-        output templates, post-processors, and hooks
-    extract_only (bool): Whether to only extract information without downloading files
-
-Returns:
-    Dict[str, Any]: Standardized result dictionary containing:
-        For successful info extraction:
-        - status (str): 'success'
-        - action (str): 'info_extracted'
-        - info (Dict): Complete yt-dlp info dictionary
-        - title (str): Video title
-        - duration (int): Duration in seconds
-        - uploader (str): Channel/uploader name
-        - upload_date (str): Upload date string
-        - view_count (int): View count
-        - formats (List[Dict]): Available formats list
-        
-        For successful download:
-        - status (str): 'success'
-        - action (str): 'downloaded'
-        - url (str): Original URL
-        - output_path (str): Output template path
-        - info (Any): yt-dlp download result
-        
-        For errors:
-        - status (str): 'error'
-        - error (str): Detailed error message
-        - url (str): Original URL
-
-Examples:
-    >>> # This method is called internally by download_video
-    >>> # Direct usage not recommended
-    >>> opts = {'format': 'best', 'outtmpl': '/tmp/%(title)s.%(ext)s'}
-    >>> result = wrapper._download_with_ytdlp("https://youtube.com/watch?v=example", opts, False)
-    >>> print(result['status'])  # 'success' or 'error'
-
-Notes:
-    - Concurrent execution
-    - All exceptions are caught and converted to error dictionaries
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** YtDlpWrapper
 
 ## batch_download
 
@@ -752,7 +639,7 @@ Notes:
 ## download_with_semaphore
 
 ```python
-async def download_with_semaphore(url):
+async def _download_with_semaphore(url):
 ```
 * **Async:** True
 * **Method:** False

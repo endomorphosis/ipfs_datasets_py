@@ -52,14 +52,17 @@ class TestConversionSpeedEfficiency:
     """
 
     @pytest.mark.asyncio
-    async def test_video_duration_extracted_with_required_precision(self):
+    async def test_video_duration_extracted_with_required_precision(self, tmp_path, mock_factory):
         """
         GIVEN video file with known duration
         WHEN MediaProcessor download_and_convert extracts duration metadata  
         THEN expect duration accuracy within CONVERSION_TIMING_PRECISION and returned as float seconds
         """
         # Arrange
-        processor = make_media_processor()
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"duration": 120.5}
+        )
         
         # Act
         result = await processor.download_and_convert("https://example.com/video")

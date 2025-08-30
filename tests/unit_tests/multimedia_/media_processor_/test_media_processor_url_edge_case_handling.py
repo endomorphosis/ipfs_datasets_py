@@ -103,7 +103,7 @@ class TestURLEdgeCaseHandling:
         ("def456", "different_video_2"),
         ("xyz789", "different_video_3")
     ])
-    async def test_essential_query_parameters_affect_download_result(self, video_id, expected_difference, successful_processor):
+    async def test_essential_query_parameters_affect_download_result(self, video_id, expected_difference, url_aware_processor):
         """
         GIVEN YouTube URLs with different video IDs 
             (e.g. "https://youtube.com/watch?v=abc123" vs "https://youtube.com/watch?v=def456")
@@ -115,8 +115,8 @@ class TestURLEdgeCaseHandling:
         url2 = f"https://youtube.com/watch?v=different123"
         
         # Act
-        result1 = await successful_processor.download_and_convert(url1)
-        result2 = await successful_processor.download_and_convert(url2)
+        result1 = await url_aware_processor.download_and_convert(url1)
+        result2 = await url_aware_processor.download_and_convert(url2)
         
         # Assert
         assert result1 != result2, f"Expected different results for different video IDs but got identical results: '{result1}' vs '{result2}'"

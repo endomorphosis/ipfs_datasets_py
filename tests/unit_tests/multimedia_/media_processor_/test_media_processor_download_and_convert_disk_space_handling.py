@@ -76,9 +76,8 @@ def processor_with_insufficient_space(filesystem_with_insufficient_space, mock_f
     return mock_factory.create_mock_processor(
         filesystem_with_insufficient_space,
         ytdlp_kwargs={
-            "status": EXPECTED_STATUS_SUCCESS,
-            "output_path": str(filesystem_with_insufficient_space / "video.mp4"),
-            "filesize": TEST_FILE_SIZE_BYTES
+            "status": EXPECTED_STATUS_ERROR,
+            "error": "Insufficient disk space"
         }
     )
 

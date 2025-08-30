@@ -1311,7 +1311,7 @@ class YtDlpWrapper:
             batch_id = str(uuid.uuid4())
             semaphore = asyncio.Semaphore(max_concurrent)
             
-            async def download_with_semaphore(url):
+            async def _download_with_semaphore(url):
                 async with semaphore:
                     return await self.download_video(
                         url,
@@ -1323,7 +1323,7 @@ class YtDlpWrapper:
             
             # Execute all downloads concurrently
             results = await asyncio.gather(
-                *[download_with_semaphore(url) for url in urls],
+                *[_download_with_semaphore(url) for url in urls],
                 return_exceptions=True
             )
             

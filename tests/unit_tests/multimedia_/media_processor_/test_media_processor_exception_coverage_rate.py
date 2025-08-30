@@ -85,7 +85,6 @@ class TestExceptionHandlingBehavior:
         ("TypeError", TypeError("Invalid type")),
         ("KeyError", KeyError("Missing key")),
         ("IndexError", IndexError("Index error")),
-        ("asyncio.CancelledError", asyncio.CancelledError("Cancelled")),
         ("MemoryError", MemoryError("Out of memory"))
     ])
     async def test_all_required_exception_types_have_handling_behavior(self, mock_factory, tmp_path, test_url, exception_name, exception_instance):

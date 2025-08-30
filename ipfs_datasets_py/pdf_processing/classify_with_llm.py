@@ -89,6 +89,8 @@ async def _classify_with_openai_llm(
             temperature=temperature,
             timeout=timeout
         )
+    except openai.RateLimitError as e:
+        raise RuntimeError(f"Rate limit exceeded: {e}") from e
     except openai.APITimeoutError as e:
         raise asyncio.TimeoutError(f"Timeout while waiting for OpenAI response: {e}") from e
     except openai.OpenAIError as e:
@@ -127,7 +129,7 @@ async def _classify_with_transformers_llm(
     )
 
 
-_SEMAPHORE = asyncio.Semaphore(10)  # Limit concurrency to prevent rate-limit overruns
+_SEMAPHORE = asyncio.Semaphore(3)  # Limit concurrency to prevent rate-limit overruns
 
 # async def classify_with_llm(
 #     *,
@@ -321,7 +323,7 @@ async def classify_with_llm(
     text: str, 
     classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
     client: Any,
-    model: str = "gpt-4.1-2025-04-14",
+    model: str = "gpt-4.1-nano-2025-04-14", # "gpt-4.1-2025-04-14",
     retries: Optional[int] = 3,
     timeout = 30.0,  # seconds
     threshold: float = 0.05, # i.e. statistical significance threshold
@@ -352,7 +354,6 @@ async def classify_with_llm(
             - confidence (float): Confidence score of the classification (0.0-1.0).
             If no classifications are found, returns an empty list.
     """
-    loop = asyncio.get_event_loop()
     winnowed_categories: set[str] = classifications
     if threshold <= 0 or threshold >= 1:
         raise ValueError(f"Threshold must be a positive float between 0 and 1, got {threshold}.")
@@ -378,94 +379,100 @@ async def classify_with_llm(
 # Text
 {text}
 """
-    
-    # Fix: Use retries + 1 to ensure at least one attempt even when retries=0
+    # FIXME: Use retries + 1 to ensure at least one attempt even when retries=0
     max_attempts = retries + 1
     
-    for attempt in range(max_attempts):
-        num_categories = len(winnowed_categories)
-        if num_categories <= 0:
-            raise ValueError(f"Invalid number of categories: {num_categories}. Must be a positive integer.")
+    async with _SEMAPHORE:
+        for attempt in range(max_attempts):
+            num_categories = len(winnowed_categories)
+            if num_categories <= 0:
+                raise ValueError(f"Invalid number of categories: {num_categories}. Must be a positive integer.")
 
-        num_categories = min(num_categories, 20)  # Limit to 20 categories for OpenAI API
+            num_categories = min(num_categories, 20)  # Limit to 20 categories for OpenAI API
 
-        try:
-            filtered_token_prob_tuples = await llm_func(
-                prompt=prompt_template.format(
-                    categories=', '.join(list(winnowed_categories)),
+            try:
+                filtered_token_prob_tuples = await llm_func(
+                    prompt=prompt_template.format(
+                        categories=', '.join(list(winnowed_categories)),
+                        num_categories=num_categories,
+                        text=text,
+                    ),
+                    system_prompt=system_prompt,
+                    client=client,
                     num_categories=num_categories,
-                    text=text,
-                ),
-                system_prompt=system_prompt,
-                client=client,
-                num_categories=num_categories,
-                model=model,
-                timeout=timeout,
-                log_threshold=log_threshold,
-            ) 
+                    model=model,
+                    timeout=timeout,
+                    log_threshold=log_threshold,
+                ) 
 
-            print(f"Filtered token probabilities: {filtered_token_prob_tuples}")
-            logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
+                print(f"Filtered token probabilities: {filtered_token_prob_tuples}")
+                logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
 
-        except ConnectionError as e:
-            print(f"Connection error on attempt {attempt}: {e}")
-            raise e
-        except asyncio.TimeoutError as e:
-            if attempt == max_attempts - 1:
-                print(f"Timeout exceeded after {max_attempts} attempts: {e}")
+            except ConnectionError as e:
+                print(f"Connection error on attempt {attempt}: {e}")
                 raise e
-            print(f"Timeout on attempt {attempt}, retrying...: {e}")
-            continue
-        except Exception as e:
-            if attempt == max_attempts - 1:
-                print(f"Max retries exceeded after {max_attempts} attempts: {e}")
-                raise RuntimeError(f"Unexpected {type(e).__name__} calling API: {e}")
-            print(f"Unexpected error on attempt {attempt}: {e}")
-            continue
-
-        if not filtered_token_prob_tuples:
-            logger.warning(f"No classifications above threshold {threshold} for text: {text}")
-            return []
-
-        new_cats = set()
-        potential_outputs = set()
-
-        for cat in winnowed_categories:
-            # If token string begins a classification string, add that classification to the set.
-            # ex: "Tech" would match "Technology"
-            for token, log_prob in filtered_token_prob_tuples:
-                if cat.lower().startswith(token.lower()):
-                    if log_prob >= log_threshold:
-                        new_cats.add(cat)
-                        potential_outputs.add((cat, log_prob))
-
-        match len(new_cats):
-            case 0:
-                logger.warning(f"No matching categories found for text: {text}")
-                return []
-            case 1:
-                # If we only have one category, return it as a single result
-                cat_log_prob_tuple = potential_outputs.pop()
-                category, log_prob = cat_log_prob_tuple
-                return [ClassificationResult(entity=text, category=category, confidence=math.exp(log_prob))]
-            case _:
-                # Return multiple results if we've exhausted all attempts
+            except asyncio.TimeoutError as e:
                 if attempt == max_attempts - 1:
-                    return sorted(
-                        [
-                            ClassificationResult(
-                                entity=text, 
-                                category=cat, 
-                                confidence=math.exp(log_prob)
-                            ) 
-                            for cat, log_prob in potential_outputs
-                            if log_prob >= log_threshold
-                        ],
-                        key=lambda x: x.confidence
-                    )
-                else:
-                    winnowed_categories = new_cats
-                    continue
+                    print(f"Timeout exceeded after {max_attempts} attempts: {e}")
+                    raise e
+                print(f"Timeout on attempt {attempt}, retrying...: {e}")
+                continue
+            except Exception as e:
+                if "RateLimitError" in str(e):
+                    # Throttle and try again
+                    print("Got rate limit error. Throttling and trying again.")
+                    max_attempts += 1
+                    asyncio.sleep(1)
+
+                if attempt == max_attempts - 1:
+                    print(f"Max retries exceeded after {max_attempts} attempts: {e}")
+                    raise RuntimeError(f"Unexpected {type(e).__name__} calling API: {e}")
+                print(f"Unexpected error on attempt {attempt}: {e}")
+                continue
+
+            if not filtered_token_prob_tuples:
+                logger.warning(f"No classifications above threshold {threshold} for text: {text}")
+                return []
+
+            new_cats = set()
+            potential_outputs = set()
+
+            for cat in winnowed_categories:
+                # If token string begins a classification string, add that classification to the set.
+                # ex: "Tech" would match "Technology"
+                for token, log_prob in filtered_token_prob_tuples:
+                    if cat.lower().startswith(token.lower()):
+                        if log_prob >= log_threshold:
+                            new_cats.add(cat)
+                            potential_outputs.add((cat, log_prob))
+
+            match len(new_cats):
+                case 0:
+                    logger.warning(f"No matching categories found for text: {text}")
+                    return []
+                case 1:
+                    # If we only have one category, return it as a single result
+                    cat_log_prob_tuple = potential_outputs.pop()
+                    category, log_prob = cat_log_prob_tuple
+                    return [ClassificationResult(entity=text, category=category, confidence=math.exp(log_prob))]
+                case _:
+                    # Return multiple results if we've exhausted all attempts
+                    if attempt == max_attempts - 1:
+                        return sorted(
+                            [
+                                ClassificationResult(
+                                    entity=text, 
+                                    category=cat, 
+                                    confidence=math.exp(log_prob)
+                                ) 
+                                for cat, log_prob in potential_outputs
+                                if log_prob >= log_threshold
+                            ],
+                            key=lambda x: x.confidence
+                        )
+                    else:
+                        winnowed_categories = new_cats
+                        continue
     
     # This should never be reached due to the loop structure, but keeping for safety
     logger.warning(f"No classifications found after {max_attempts} attempts for text: {text}")

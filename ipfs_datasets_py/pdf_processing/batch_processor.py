@@ -352,7 +352,10 @@ class BatchProcessor:
                  max_memory_mb: int = 4096,
                  storage: Optional[IPLDStorage] = None,
                  enable_monitoring: bool = False,
-                 enable_audit: bool = True
+                 enable_audit: bool = True,
+                 pdf_processor: Optional['PDFProcessor'] = None,
+                 llm_optimizer: Optional['LLMOptimizer'] = None,
+                 graphrag_integrator: Optional['GraphRAGIntegrator'] = None
                  ) -> None:
         """
         Initialize the BatchProcessor with configuration for concurrent PDF processing operations.
@@ -378,6 +381,15 @@ class BatchProcessor:
             enable_audit (bool, optional): Enable audit logging for compliance and debugging.
                 Defaults to True. Tracks all batch operations, job status changes, and errors
                 for regulatory compliance and troubleshooting.
+            pdf_processor (Optional[PDFProcessor], optional): Pre-configured PDF processor instance.
+                Defaults to None. If provided, uses the given instance instead of creating new one.
+                Useful for testing and custom configurations.
+            llm_optimizer (Optional[LLMOptimizer], optional): Pre-configured LLM optimizer instance.
+                Defaults to None. If provided, uses the given instance instead of creating new one.
+                Useful for testing and custom configurations.
+            graphrag_integrator (Optional[GraphRAGIntegrator], optional): Pre-configured GraphRAG integrator instance.
+                Defaults to None. If provided, uses the given instance instead of creating new one.
+                Useful for testing and custom configurations.
 
         Attributes initialized:
             max_workers (int): Maximum number of concurrent worker threads for processing.
@@ -466,10 +478,10 @@ class BatchProcessor:
         else:
             self.monitoring = None
 
-        # Processing components
-        self.pdf_processor = PDFProcessor(storage=self.storage)
-        self.llm_optimizer = LLMOptimizer()
-        self.graphrag_integrator = GraphRAGIntegrator(storage=self.storage)
+        # Processing components - use injected dependencies if provided, otherwise create new instances
+        self.pdf_processor = pdf_processor or PDFProcessor(storage=self.storage)
+        self.llm_optimizer = llm_optimizer or LLMOptimizer()
+        self.graphrag_integrator = graphrag_integrator or GraphRAGIntegrator(storage=self.storage)
         
         # Job management
         self.job_queue: Queue = Queue()

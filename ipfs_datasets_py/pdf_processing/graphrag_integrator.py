@@ -26,12 +26,12 @@ import openai
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
-from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+from ipfs_datasets_py.pdf_processing.llm_optimizer import (
+    LLMDocument, LLMChunk,
+    WIKIPEDIA_CLASSIFICATIONS
+)
 
-
-logger = logging.getLogger(__name__)
-
-
+module_logger = logging.getLogger(__name__)
 
 
 def get_continuous_chunks(text, label):
@@ -99,7 +99,7 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         - Works with properly formatted natural language queries
     """
     start_time = time.time()
-    print("Extracting entities from query:", query)
+    module_logger.info(f"Extracting entities from query: {query}")
 
     # Input validation
     if not isinstance(query, str):
@@ -114,14 +114,14 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
     
     # Named Entity Recognition
     entities = ne_chunk(pos_tags, binary=False)
-    print(f"NER tree: {entities}")
+    module_logger.debug(f"NER tree: {entities}")
 
     # Extract entities from NER tree
     entity_names = []
     
     # Convert tree to IOB tags for easier processing
     iob_tags = tree2conlltags(entities)
-    print(f"IOB tags: {iob_tags}")
+    module_logger.debug(f"IOB tags: {iob_tags}")
     
     current_entity = []
     current_label = None
@@ -130,17 +130,17 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         if ner.startswith('B-'):  # Beginning of entity
             # Save previous entity if exists
             if current_entity:
-                print(f"Beginning entity: {current_entity} with label {current_label}")
+                module_logger.debug(f"Beginning entity: {current_entity} with label {current_label}")
                 entity_names.append(' '.join(current_entity))
             # Start new entity
             current_entity = [word]
             current_label = ner[2:]
         elif ner.startswith('I-') and current_entity:  # Inside entity
-            print(f"Inside entity: {current_entity} with label {current_label}")
+            module_logger.debug(f"Inside entity: {current_entity} with label {current_label}")
             current_entity.append(word)
         else:  # Outside entity
             # Save previous entity if exists
-            print(f"Outside entity: {current_entity} with label {current_label}")
+            module_logger.debug(f"Outside entity: {current_entity} with label {current_label}")
             if current_entity:
                 entity_names.append(' '.join(current_entity))
             current_entity = []
@@ -150,7 +150,7 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
     if current_entity:
         entity_names.append(' '.join(current_entity))
     
-    print(f"Found entities from NER: {entity_names}")
+    module_logger.debug(f"Found entities from NER: {entity_names}")
 
     # Also find proper nouns that might not be caught by NER
     proper_nouns = []
@@ -158,18 +158,19 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
 
     for word, pos in pos_tags:
         if pos in ['NNP', 'NNPS']:  # Proper nouns
+            module_logger.debug(f"word is {pos}: {word}")
             current_noun_phrase.append(word)
         else:
             if current_noun_phrase and len(current_noun_phrase) >= 1:
                 noun_phrase = ' '.join(current_noun_phrase)
-                print(f"Found proper noun phrase: {noun_phrase}")
+                module_logger.debug(f"Found proper noun phrase: {noun_phrase}")
                 # Only add if not already found by NER and meets criteria
                 if (noun_phrase not in entity_names and 
                     len(noun_phrase) >= min_chars and
                     not _is_question_word(noun_phrase)):
                     proper_nouns.append(noun_phrase)
             current_noun_phrase = []
-    
+
     # Don't forget the last noun phrase
     if current_noun_phrase and len(current_noun_phrase) >= 1:
         noun_phrase = ' '.join(current_noun_phrase)
@@ -200,17 +201,17 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
     # Filter out obvious non-entities
     filtered_entities = []
     for entity in unique_entities:
-        print(entity)
+        module_logger.debug(entity)
         if not _is_question_word(entity) and len(entity.strip()) >= min_chars:
-            print(f"{entity} is a valid entity")
+            module_logger.debug(f"{entity} is a valid entity")
             filtered_entities.append(entity)
 
-    print(f"filtered_entities:\n{filtered_entities}")
+    module_logger.debug(f"filtered_entities:\n{filtered_entities}")
 
     # Check if numbers are in the query
     has_numbers = any(char.isdigit() for char in query)
     if has_numbers:
-        print("has_numbers is True")
+        module_logger.debug("has_numbers is True")
         # Consider numbers as part of potential entities IF
         # - They precede or follow a stand-alone proper noun (e.g. 'Death Race 2000', '2020 Olympics')
         # - They are preceded by a determiner (e.g. 'the 19th century', 'The 1970s')
@@ -222,20 +223,20 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         for entity in filtered_entities:
             # Check immediately before and after the entity in the query for a number
             entity_start = query.find(entity)
-            print(f"Checking entity: {entity} at position {entity_start}")
+            module_logger.debug(f"Checking entity: {entity} at position {entity_start}")
             if entity_start != -1:
                 # Check for numbers before the entity
                 before_text = query[:entity_start].strip()
-                print(f"Check before entity: {before_text}")
+                module_logger.debug(f"Check before entity: {before_text}")
                 if before_text and before_text[-1].isdigit():
                     # Find the full number before the entity
                     words_before = before_text.split()
-                    print(f"words_before: {words_before}")
+                    module_logger.debug(f"words_before: {words_before}")
                     if words_before:
                         last_word = words_before[-1]
                         if any(char.isdigit() for char in last_word):
                             number_entity = f"{last_word} {entity}"
-                            print(f"Found number before entity: {number_entity}")
+                            module_logger.debug(f"Found number before entity: {number_entity}")
                             if number_entity not in filtered_entities:
                                 filtered_entities.append(number_entity)
 
@@ -246,13 +247,13 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
                 if after_text and after_text[0].isdigit():
                     # Find the full number after the entity
                     words_after = after_text.split()
-                    print(f"Check after entity: {before_text}")
+                    module_logger.debug(f"Check after entity: {before_text}")
                     if words_after:
                         first_word = words_after[0]
-                        print(f"first_word: {first_word}")
+                        module_logger.debug(f"first_word: {first_word}")
                         if any(char.isdigit() for char in first_word):
                             number_entity = f"{entity} {first_word}"
-                            print(f"Found number after entity: {number_entity}")
+                            module_logger.debug(f"Found number after entity: {number_entity}")
                             if number_entity not in filtered_entities:
                                 filtered_entities.append(number_entity)
         
@@ -265,8 +266,8 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
 
 
     end_time = time.time()
-    print(f"Entity extraction took {end_time - start_time:.2f} seconds")
-    print(f"filtered_entities on return:\n{filtered_entities}")
+    module_logger.debug(f"Entity extraction completed in {end_time - start_time:.2f} seconds")
+    module_logger.debug(f"filtered_entities on return:\n{filtered_entities}")
     return filtered_entities
 
 def _is_question_word(word: str) -> bool:
@@ -574,10 +575,12 @@ class GraphRAGIntegrator:
         - IPLD storage provides content-addressable persistence for knowledge graphs
         - NetworkX integration enables advanced graph analysis and algorithms
     """
-    def __init__(self, 
-                 storage: Optional[IPLDStorage] = None,
+    def __init__(self,
                  similarity_threshold: float = 0.8,
-                 entity_extraction_confidence: float = 0.6) -> None:
+                 entity_extraction_confidence: float = 0.6,
+                 logger: logging.Logger = logging.getLogger(__name__),
+                 storage: Optional[IPLDStorage] = None,
+                 ) -> None:
         """
         This class integrates Knowledge Graphs with Retrieval-Augmented Generation (RAG)
         for enhanced document processing and analysis capabilities.
@@ -658,23 +661,30 @@ class GraphRAGIntegrator:
         }
         for key, value in type_check_dict.items():
             if not isinstance(value, (int, float)):
-                raise TypeError(f"{key} must be a number")
+                raise TypeError(f"{key} must be an int or float, got {type(value).__name__}")
             if not (0.0 <= value <= 1.0):
-                raise ValueError(f"{key} must be between 0.0 and 1.0")
+                raise ValueError(f"{key} must be between 0.0 and 1.0, got {value}")
 
+        self.logger = logger or module_logger
         self.storage = storage or IPLDStorage()
+
         self.similarity_threshold = similarity_threshold
         self.entity_extraction_confidence = entity_extraction_confidence
-        
+
+        for attr, type_ in [("storage", IPLDStorage), ("logger", logging.Logger)]:
+            attr = getattr(self, attr)
+            if not isinstance(attr, type_):
+                raise TypeError(f"{attr} must be an instance of {type_.__name__}, got {type(attr).__name__}")
+
         # Graph storage
         self.knowledge_graphs: Dict[str, KnowledgeGraph] = {}
         self.global_entities: Dict[str, Entity] = {}
         self.cross_document_relationships: List[CrossDocumentRelationship] = []
-        
+
         # NetworkX graphs for analysis
         self.document_graphs: Dict[str, nx.DiGraph] = {}
         self.global_graph = nx.DiGraph()
-        
+
     async def integrate_document(self, llm_document: LLMDocument) -> KnowledgeGraph:
         """
         Integrate an LLM-optimized document into the GraphRAG system.
@@ -740,23 +750,23 @@ class GraphRAGIntegrator:
         existing_graphs = [kg for kg in self.knowledge_graphs.values() 
                           if kg.document_id == llm_document.document_id]
         if existing_graphs:
-            logger.warning(f"Document {llm_document.document_id} already exists in knowledge graphs. "
+            self.logger.warning(f"Document {llm_document.document_id} already exists in knowledge graphs. "
                           f"Overwriting existing knowledge graph.")
         
-        logger.info(f"Starting GraphRAG integration for document: {llm_document.document_id}")
+        self.logger.info(f"Starting GraphRAG integration for document: {llm_document.document_id}")
         
         # Extract entities from chunks
         entities = await self._extract_entities_from_chunks(llm_document.chunks)
-        
+
         # Extract relationships
         relationships = await self._extract_relationships(entities, llm_document.chunks)
-        
+
         # Create deterministic graph ID based on document content
         # TODO Replace with IPFS CID generation.
         document_content = "".join(chunk.content.strip() for chunk in llm_document.chunks)
- 
+
         graph_id_hash = hashlib.md5(document_content.encode()).hexdigest()[:8]
-        
+
         # Create knowledge graph
         knowledge_graph = KnowledgeGraph(
             graph_id=f"kg_{llm_document.document_id}_{graph_id_hash}",
@@ -775,25 +785,26 @@ class GraphRAGIntegrator:
             },
             creation_timestamp=datetime.now().isoformat() + 'Z'
         )
-        
+        self.logger.debug(f"knowledge_graph: {knowledge_graph}")
+
         # Store in IPLD
         ipld_cid = await self._store_knowledge_graph_ipld(knowledge_graph)
         knowledge_graph.ipld_cid = ipld_cid
-        
+
         # Update internal storage
         self.knowledge_graphs[knowledge_graph.graph_id] = knowledge_graph
-        
+
         # Create NetworkX representation
         nx_graph = await self._create_networkx_graph(knowledge_graph)
         self.document_graphs[llm_document.document_id] = nx_graph
-        
+
         # Merge with global graph
         await self._merge_into_global_graph(knowledge_graph)
-        
+
         # Discover cross-document relationships
         await self._discover_cross_document_relationships(knowledge_graph)
-        
-        logger.info(f"GraphRAG integration complete: {len(entities)} entities, {len(relationships)} relationships")
+
+        self.logger.info(f"GraphRAG integration complete: {len(entities)} entities, {len(relationships)} relationships")
         return knowledge_graph
     
     async def _extract_entities_from_chunks(self, chunks: List[LLMChunk]) -> List[Entity]:
@@ -849,15 +860,16 @@ class GraphRAGIntegrator:
                     chunk.chunk_id
                 )
             except Exception as e:
-                logger.error(f"Failed to extract entities for chunk {chunk.chunk_id}: {e}")
+                self.logger.error(f"Failed to extract entities for chunk {chunk.chunk_id}: {e}")
                 raise RuntimeError(f"Entity extraction service for chunk {chunk.chunk_id}: {e}") from e
+            else:
+                self.logger.debug(f"chunk_entities: {chunk_entities}")
 
             for entity_data in chunk_entities:
-                # Handle case where entity_data might be a string instead of dict (from bad test setup)
-                # TODO Fucking fix this. We should NOT be modifying the implementation to handle badly written tests.
-                if isinstance(entity_data, str):
-                    continue
-                    
+
+                assert isinstance(entity_data, dict), \
+                    f"expected entity_data to be dict, got {type(entity_data).__name__} instead"
+
                 entity_key = (entity_data['name'].lower(), entity_data['type'])
                 
                 if entity_key in entity_mentions:
@@ -898,7 +910,7 @@ class GraphRAGIntegrator:
             if entity.confidence >= self.entity_extraction_confidence
         ]
         
-        logger.info(f"Extracted {len(filtered_entities)} entities from {len(chunks)} chunks")
+        self.logger.info(f"Extracted {len(filtered_entities)} entities from {len(chunks)} chunks")
         return filtered_entities
     
     async def _extract_entities_from_text(self, text: str, chunk_id: str) -> List[Dict[str, Any]]:
@@ -947,10 +959,10 @@ class GraphRAGIntegrator:
         entities = []
 
         results = _extract_entity_names_from_query(text)
-        print(f"results:\n{results}")
+        self.logger.debug(f"results:\n{results}")
         for result in results:
             output = get_continuous_chunks(result, 'GPE')
-            print(f"output:\n{output}")
+            self.logger.debug(f"output:\n{output}")
 
         # Named Entity Recognition patterns (can be enhanced with NLP models)
         # TODO Replace with NLTK or other NLP library for better accuracy.
@@ -996,7 +1008,7 @@ class GraphRAGIntegrator:
         
         # Sort by start position and remove overlaps (prefer longer matches)
         all_matches.sort(key=lambda x: (x['start'], -(x['end'] - x['start'])))
-        print(f"all_matches:\n{all_matches}")
+        self.logger.debug(f"all_matches:\n{all_matches}")
 
         # Remove overlapping matches
         non_overlapping = []
@@ -1010,7 +1022,7 @@ class GraphRAGIntegrator:
             
             if not overlaps:
                 non_overlapping.append(match)
-        print(f"non_overlapping:\n{non_overlapping}")
+        self.logger.debug(f"non_overlapping:\n{non_overlapping}")
 
         # Convert to entity format
         for match in non_overlapping:
@@ -1119,7 +1131,7 @@ class GraphRAGIntegrator:
         )
         relationships.extend(cross_chunk_relationships)
         
-        logger.info(f"Extracted {len(relationships)} relationships")
+        self.logger.info(f"Extracted {len(relationships)} relationships")
         return relationships
     
     async def _extract_chunk_relationships(self, 
@@ -1602,7 +1614,7 @@ class GraphRAGIntegrator:
                         new_relationships.append(cross_rel)
         
         self.cross_document_relationships.extend(new_relationships)
-        logger.info(f"Discovered {len(new_relationships)} cross-document relationships")
+        self.logger.info(f"Discovered {len(new_relationships)} cross-document relationships")
     
     async def _find_similar_entities(self, entity: Entity) -> List[Entity]:
         """Find entities similar to the given entity across all documents in the graph.
@@ -1714,11 +1726,11 @@ class GraphRAGIntegrator:
             'document_id': knowledge_graph.document_id,
             'entities': [asdict(entity) for entity in knowledge_graph.entities],
             'relationships': [asdict(rel) for rel in knowledge_graph.relationships],
-            'chunks': [asdict(chunk) for chunk in knowledge_graph.chunks],
+            'chunks': [chunk.model_dump() for chunk in knowledge_graph.chunks],
             'metadata': knowledge_graph.metadata,
             'creation_timestamp': knowledge_graph.creation_timestamp
         }
-        
+
         # Remove numpy arrays from entities for JSON serialization
         for entity_data in kg_data['entities']:
             if 'embedding' in entity_data and entity_data['embedding'] is not None:
@@ -1728,16 +1740,22 @@ class GraphRAGIntegrator:
         for chunk_data in kg_data['chunks']:
             if 'embedding' in chunk_data and chunk_data['embedding'] is not None:
                 chunk_data['embedding'] = chunk_data['embedding'].tolist()
-        
+
+        assert isinstance(self.storage, IPLDStorage), \
+            f"Storage backend must be IPLDStorage, got {type(self.storage).__name__}"
+
         try:
             # Store in IPLD
-            cid = await self.storage.store_json(kg_data)
-            logger.info(f"Stored knowledge graph in IPLD: {cid}")
+            cid = self.storage.store_json(kg_data)
+            self.logger.info(f"Stored knowledge graph in IPLD: {cid}")
             return cid
         except Exception as e:
-            logger.error(f"Failed to store knowledge graph in IPLD: {e}")
+            if self.logger.level == logging.DEBUG:
+                self.logger.exception(f"Failed to store knowledge graph in IPLD: {e}")
+            else:
+                self.logger.error(f"Failed to store knowledge graph in IPLD: {e}")
             return ""
-    
+
     async def query_graph(self, 
                          query: str, 
                          graph_id: Optional[str] = None,
@@ -1780,21 +1798,23 @@ class GraphRAGIntegrator:
             ...     print(f"- {entity['name']} ({entity['type']})")
         """
         # Input validation
-        if query is None:
-            raise TypeError("Query parameter cannot be None")
-        
-        if not isinstance(query, str):
-            raise TypeError("Query parameter must be a string")
-        
-        if not isinstance(max_results, int):
-            raise TypeError("max_results parameter must be an integer")
-        
+        type_dict = {
+            query: str,
+            max_results: int
+        }
+        for key, (type_, func) in type_dict.items():
+            if not isinstance(key, type_):
+                raise TypeError(f"{key} parameter must be of type {type_.__name__}, got {type(key).__name__}")
+
+        if not query.strip():
+            raise ValueError("query must be a non-empty string.")
+
         if max_results <= 0:
             raise ValueError("max_results must be greater than 0")
-        
+
         if graph_id and graph_id not in self.knowledge_graphs:
             raise KeyError(f"Knowledge graph '{graph_id}' not found")
-        
+
         if graph_id and graph_id in self.knowledge_graphs:
             kg = self.knowledge_graphs[graph_id]
             entities = kg.entities
@@ -1854,7 +1874,7 @@ class GraphRAGIntegrator:
             'entities': [asdict(entity) for entity in top_entities],
             'relationships': [asdict(rel) for rel in related_relationships],
             'total_matches': len(matching_entities),
-            'timestamp': datetime.utcnow().isoformat() + 'Z'
+            'timestamp': datetime.now().isoformat()
         }
     
     async def get_entity_neighborhood(self, 

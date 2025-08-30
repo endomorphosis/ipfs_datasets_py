@@ -46,8 +46,15 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
 
 import pytest
 from datetime import datetime
+import multiprocessing
+from unittest.mock import Mock, patch
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob, BatchJobResult, BatchStatus, BatchProcessor
+)
+from ipfs_datasets_py.ipld.storage import IPLDStorage
+from .conftest import (
+    DEFAULT_MAX_WORKERS, DEFAULT_MAX_MEMORY_MB, MIN_MEMORY_MB, MIN_WORKERS,
+    MAX_WORKERS_CUSTOM, MAX_WORKERS_HIGH, MAX_MEMORY_CUSTOM
 )
 
 
@@ -73,337 +80,299 @@ assert BatchProcessor.export_batch_results
 import logging
 logger = logging.getLogger(__name__)
 
+
+
+
+
+
 class TestBatchProcessorInitialization:
     """Test class for BatchProcessor initialization and configuration."""
 
-    def test_init_with_default_parameters(self):
+    @pytest.fixture
+    def mock_dependencies(self):
+        """Create mock dependencies for BatchProcessor."""
+        return {
+            'storage': Mock(),
+            'pdf_processor': Mock(),
+            'llm_optimizer': Mock(),
+            'graphrag_integrator': Mock()
+        }
+
+    @pytest.fixture
+    def default_processor(self, mock_dependencies):
+        """Create BatchProcessor with default parameters."""
+        return BatchProcessor(**mock_dependencies)
+
+    def test_init_default_max_workers(self, default_processor):
         """
         GIVEN no specific configuration parameters
         WHEN BatchProcessor is initialized with defaults
-        THEN it should:
-         - Set max_workers to min(cpu_count(), 8) 
-         - Set max_memory_mb to 4096
-         - Create a new IPLDStorage instance
-         - Set enable_monitoring to False
-         - Set enable_audit to True
-         - Initialize all required processing components
-         - Set up empty job tracking structures
-         - Initialize threading primitives properly
+        THEN it should set max_workers to min(cpu_count(), 8)
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage') as mock_storage_class:
-            mock_storage = Mock(spec=IPLDStorage)
-            mock_storage_class.return_value = mock_storage
-            
-            processor = BatchProcessor()
-            
-            expected_workers = min(multiprocessing.cpu_count(), 8)
-            assert processor.max_workers == expected_workers
-            assert processor.max_memory_mb == 4096
-            assert processor.storage == mock_storage
-            assert processor.enable_monitoring is False
-            assert processor.enable_audit is True
-            
-            # Check that processing components are initialized
-            assert hasattr(processor, 'pdf_processor')
-            assert hasattr(processor, 'llm_optimizer') 
-            assert hasattr(processor, 'graphrag_integrator')
-            
-            # Check job tracking structures
-            assert isinstance(processor.job_queue, Queue)
-            assert isinstance(processor.batch_jobs, dict)
-            assert isinstance(processor.active_batches, dict)
-            assert isinstance(processor.workers, list)
-            assert isinstance(processor.processing_stats, dict)
-            
-            # Check threading primitives
-            assert isinstance(processor.stop_event, threading.Event)
-            assert processor.is_processing is False
-            assert processor.worker_pool is None
+        expected_workers = min(multiprocessing.cpu_count(), 8)
+        assert default_processor.max_workers == expected_workers
 
-    def test_init_with_custom_max_workers(self):
+    def test_init_default_max_memory_mb(self, default_processor):
+        """
+        GIVEN no specific configuration parameters
+        WHEN BatchProcessor is initialized with defaults
+        THEN it should set max_memory_mb to 4096
+        """
+        assert default_processor.max_memory_mb == DEFAULT_MAX_MEMORY_MB * 2
+
+    def test_init_default_storage_instance(self, default_processor, mock_dependencies):
+        """
+        GIVEN no specific configuration parameters
+        WHEN BatchProcessor is initialized with defaults
+        THEN it should use the provided storage instance
+        """
+        assert default_processor.storage == mock_dependencies['storage']
+
+    def test_init_default_enable_monitoring(self, default_processor):
+        """
+        GIVEN no specific configuration parameters
+        WHEN BatchProcessor is initialized with defaults
+        THEN it should set enable_monitoring to False
+        """
+        assert default_processor.enable_monitoring is False
+
+    def test_init_default_enable_audit(self, default_processor):
+        """
+        GIVEN no specific configuration parameters
+        WHEN BatchProcessor is initialized with defaults
+        THEN it should set enable_audit to True
+        """
+        assert default_processor.enable_audit is True
+
+    def test_init_default_is_processing(self, default_processor):
+        """
+        GIVEN no specific configuration parameters
+        WHEN BatchProcessor is initialized with defaults
+        THEN it should initialize ready for processing operations
+        """
+        assert default_processor.is_processing is False
+
+    @pytest.fixture
+    def custom_workers_processor(self, mock_dependencies):
+        """Create BatchProcessor with custom max_workers."""
+        return BatchProcessor(
+            max_workers=MAX_WORKERS_CUSTOM,
+            **mock_dependencies
+        )
+
+    def test_init_custom_max_workers(self, custom_workers_processor):
         """
         GIVEN a custom max_workers value of 12
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Set max_workers to the specified value
-         - Configure worker pool accordingly
-         - Validate that workers count is reasonable
-         - Initialize other parameters to defaults
+        THEN it should set max_workers to the specified value
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_workers=12)
-            
-            assert processor.max_workers == 12
-            assert processor.max_memory_mb == 4096  # Default should remain
+        assert custom_workers_processor.max_workers == MAX_WORKERS_CUSTOM
 
-    def test_init_with_custom_memory_limit(self):
+    def test_init_custom_workers_other_defaults(self, custom_workers_processor):
+        """
+        GIVEN a custom max_workers value of 12
+        WHEN BatchProcessor is initialized
+        THEN it should initialize other parameters to defaults
+        """
+        assert custom_workers_processor.max_memory_mb == DEFAULT_MAX_MEMORY_MB * 2
+
+    @pytest.fixture
+    def custom_memory_processor(self, mock_dependencies, mock_batch_processor_dependencies):
+        """Create BatchProcessor with custom memory limit."""
+        with mock_batch_processor_dependencies():
+            return BatchProcessor(max_memory_mb=MAX_MEMORY_CUSTOM)
+
+    def test_init_custom_memory_limit(self, custom_memory_processor):
         """
         GIVEN a custom max_memory_mb value of 8192
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Set max_memory_mb to the specified value
-         - Use this limit for memory throttling decisions
-         - Initialize other parameters to defaults
+        THEN it should set max_memory_mb to the specified value
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_memory_mb=8192)
-            
-            assert processor.max_memory_mb == 8192
-            assert processor.max_workers == min(multiprocessing.cpu_count(), 8)  # Default
+        assert custom_memory_processor.max_memory_mb == MAX_MEMORY_CUSTOM
 
-    def test_init_with_custom_storage_instance(self):
+    def test_init_custom_memory_other_defaults(self, custom_memory_processor):
+        """
+        GIVEN a custom max_memory_mb value of 8192
+        WHEN BatchProcessor is initialized
+        THEN it should initialize other parameters to defaults
+        """
+        expected_workers = min(multiprocessing.cpu_count(), 8)
+        assert custom_memory_processor.max_workers == expected_workers
+
+    def test_init_custom_storage_instance(self):
         """
         GIVEN a pre-configured IPLDStorage instance
         WHEN BatchProcessor is initialized with this storage
-        THEN it should:
-         - Use the provided storage instance instead of creating new one
-         - Not modify the storage configuration
-         - Share the storage with all processing components
-         - Maintain storage reference for all operations
+        THEN it should use the provided storage instance instead of creating new one
         """
         custom_storage = Mock(spec=IPLDStorage)
-        
         processor = BatchProcessor(storage=custom_storage)
-        
         assert processor.storage is custom_storage
-        # Verify storage is passed to components that need it
-        # (This would require checking component initialization)
 
-    def test_init_with_monitoring_enabled(self):
-        """
-        GIVEN enable_monitoring set to True
-        WHEN BatchProcessor is initialized
-        THEN it should:
-         - Create and configure monitoring system
-         - Initialize performance metrics collection
-         - Set up monitoring context for operations
-         - Enable detailed performance logging
-        """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
+    @pytest.fixture
+    def monitoring_enabled_processor(self, mock_batch_processor_dependencies):
+        """Create BatchProcessor with monitoring enabled."""
+        with mock_batch_processor_dependencies():
             with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem') as mock_monitoring:
                 mock_monitor = Mock()
                 mock_monitoring.return_value = mock_monitor
-                
                 processor = BatchProcessor(enable_monitoring=True)
-                
-                assert processor.monitoring == mock_monitor
-                mock_monitoring.assert_called_once()
+                return processor, mock_monitor
 
-    def test_init_with_monitoring_disabled(self):
+    def test_init_monitoring_enabled_creates_system(self, monitoring_enabled_processor):
+        """
+        GIVEN enable_monitoring set to True
+        WHEN BatchProcessor is initialized
+        THEN it should create and configure monitoring system
+        """
+        processor, mock_monitor = monitoring_enabled_processor
+        assert processor.monitoring == mock_monitor
+
+    def test_init_monitoring_disabled(self, mock_batch_processor_dependencies):
         """
         GIVEN enable_monitoring set to False
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Set monitoring attribute to None
-         - Skip monitoring system initialization
-         - Reduce overhead by disabling performance tracking
-         - Function normally without monitoring capabilities
+        THEN it should set monitoring attribute to None
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
+        with mock_batch_processor_dependencies():
             processor = BatchProcessor(enable_monitoring=False)
-            
             assert processor.monitoring is None
 
-    def test_init_with_audit_enabled(self):
+    def test_init_audit_enabled_creates_logger(self, mock_batch_processor_dependencies):
         """
         GIVEN enable_audit set to True (default)
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Create and configure audit logging system
-         - Initialize compliance tracking capabilities
-         - Set up audit trails for all operations
-         - Enable detailed operation logging
+        THEN it should create and configure audit logging system
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
+        with mock_batch_processor_dependencies():
             with patch('ipfs_datasets_py.pdf_processing.batch_processor.AuditLogger') as mock_audit:
                 mock_auditor = Mock()
                 mock_audit.return_value = mock_auditor
-                
                 processor = BatchProcessor(enable_audit=True)
-                
                 assert processor.audit_logger == mock_auditor
-                mock_audit.assert_called_once()
 
-    def test_init_with_audit_disabled(self):
+    def test_init_audit_disabled(self, mock_batch_processor_dependencies):
         """
         GIVEN enable_audit set to False
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Set audit_logger attribute to None
-         - Skip audit logging system initialization
-         - Reduce overhead by disabling audit trails
-         - Function without compliance tracking
+        THEN it should set audit_logger attribute to None
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
+        with mock_batch_processor_dependencies():
             processor = BatchProcessor(enable_audit=False)
-            
             assert processor.audit_logger is None
 
-    def test_init_with_invalid_max_workers_zero(self):
+    def test_init_invalid_max_workers_zero_raises_error(self):
         """
         GIVEN max_workers parameter set to 0
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Raise ValueError with descriptive message
-         - Indicate minimum workers requirement
-         - Not create processor instance
+        THEN it should raise ValueError
         """
         with pytest.raises(ValueError) as exc_info:
             BatchProcessor(max_workers=0)
-        
-        assert "max_workers" in str(exc_info.value).lower()
-        assert "1" in str(exc_info.value) or "positive" in str(exc_info.value).lower()
 
-    def test_init_with_invalid_max_workers_negative(self):
+    def test_init_invalid_max_workers_zero_mentions_minimum(self):
+        """
+        GIVEN max_workers parameter set to 0
+        WHEN BatchProcessor is initialized
+        THEN it should indicate minimum workers requirement
+        """
+        with pytest.raises(ValueError) as exc_info:
+            BatchProcessor(max_workers=0)
+        error_msg = str(exc_info.value)
+        assert "max_workers must be positive" in error_msg
+
+    def test_init_invalid_max_workers_negative_raises_error(self):
         """
         GIVEN max_workers parameter set to -5
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Raise ValueError with descriptive message
-         - Indicate workers must be positive
-         - Not create processor instance
+        THEN it should raise ValueError with descriptive message
         """
         with pytest.raises(ValueError) as exc_info:
             BatchProcessor(max_workers=-5)
-        
         assert "max_workers" in str(exc_info.value).lower()
-        assert "positive" in str(exc_info.value).lower() or "greater" in str(exc_info.value).lower()
 
-    def test_init_with_invalid_memory_limit_too_low(self):
+    def test_init_invalid_max_workers_negative_mentions_positive(self):
+        """
+        GIVEN max_workers parameter set to -5
+        WHEN BatchProcessor is initialized
+        THEN it should indicate workers must be positive
+        """
+        with pytest.raises(ValueError) as exc_info:
+            BatchProcessor(max_workers=-5)
+        error_msg = str(exc_info.value).lower()
+        assert "workers must be positive" in error_msg
+
+    def test_init_invalid_memory_limit_too_low_raises_error(self):
         """
         GIVEN max_memory_mb parameter set to 256 (below minimum of 512)
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Raise ValueError indicating insufficient memory
-         - Specify minimum memory requirement
-         - Not create processor instance
+        THEN it should raise ValueError indicating insufficient memory
         """
         with pytest.raises(ValueError) as exc_info:
             BatchProcessor(max_memory_mb=256)
-        
         assert "memory" in str(exc_info.value).lower()
-        assert "512" in str(exc_info.value) or "minimum" in str(exc_info.value).lower()
 
-    def test_init_with_invalid_memory_limit_negative(self):
+    def test_init_invalid_memory_limit_too_low_mentions_minimum(self):
+        """
+        GIVEN max_memory_mb parameter set to 256 (below minimum of 512)
+        WHEN BatchProcessor is initialized
+        THEN it should specify minimum memory requirement
+        """
+        with pytest.raises(ValueError) as exc_info:
+            BatchProcessor(max_memory_mb=256)
+        error_msg = str(exc_info.value)
+        assert "512" in error_msg or "minimum" in error_msg.lower()
+
+    def test_init_invalid_memory_limit_negative_raises_error(self):
         """
         GIVEN max_memory_mb parameter set to -1000
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Raise ValueError for negative memory limit
-         - Indicate memory must be positive
-         - Not create processor instance
+        THEN it should raise ValueError for negative memory limit
         """
         with pytest.raises(ValueError) as exc_info:
             BatchProcessor(max_memory_mb=-1000)
-        
         assert "memory" in str(exc_info.value).lower()
-        assert "positive" in str(exc_info.value).lower() or "negative" in str(exc_info.value).lower()
 
-    def test_init_processing_components_initialization(self):
+    def test_init_invalid_memory_limit_negative_mentions_positive(self):
         """
-        GIVEN valid initialization parameters
+        GIVEN max_memory_mb parameter set to -1000
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Create PDFProcessor instance with proper configuration
-         - Create LLMOptimizer instance with shared storage
-         - Create GraphRAGIntegrator instance with shared storage
-         - Ensure all components share the same storage instance
-         - Configure components for batch processing workflow
+        THEN it should indicate memory must be positive
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage') as mock_storage_class:
-            with patch('ipfs_datasets_py.pdf_processing.batch_processor.PDFProcessor') as mock_pdf:
-                with patch('ipfs_datasets_py.pdf_processing.batch_processor.LLMOptimizer') as mock_llm:
-                    with patch('ipfs_datasets_py.pdf_processing.batch_processor.GraphRAGIntegrator') as mock_graphrag:
-                        mock_storage = Mock(spec=IPLDStorage)
-                        mock_storage_class.return_value = mock_storage
-                        
-                        processor = BatchProcessor()
-                        
-                        # Verify components were created
-                        mock_pdf.assert_called_once()
-                        mock_llm.assert_called_once()
-                        mock_graphrag.assert_called_once()
-                        
-                        # Verify storage sharing (would depend on actual component signatures)
-                        assert processor.pdf_processor is not None
-                        assert processor.llm_optimizer is not None
-                        assert processor.graphrag_integrator is not None
+        with pytest.raises(ValueError) as exc_info:
+            BatchProcessor(max_memory_mb=-1000)
+        error_msg = str(exc_info.value).lower()
+        assert "positive" in error_msg or "negative" in error_msg
 
-    def test_init_processing_statistics_initialization(self):
+    def test_init_monitoring_import_error_raises(self, mock_batch_processor_dependencies):
         """
-        GIVEN initialization of BatchProcessor
-        WHEN the processing_stats dictionary is created
-        THEN it should:
-         - Initialize with all required statistical counters
-         - Set counters to appropriate starting values
-         - Include timing, success rate, and resource tracking fields
-         - Be ready for accumulating processing metrics
-        """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor()
-            
-            stats = processor.processing_stats
-            assert isinstance(stats, dict)
-            
-            # Check for expected statistical fields
-            expected_fields = [
-                'total_processed', 'total_failed', 'total_processing_time',
-                'peak_memory_usage', 'batches_created', 'start_time'
-            ]
-            for field in expected_fields:
-                assert field in stats, f"Missing expected field: {field}"
-            
-            # Check initial values are appropriate
-            assert stats['total_processed'] == 0
-            assert stats['total_failed'] == 0
-            assert stats['total_processing_time'] == 0.0
-            assert stats['batches_created'] == 0
-
-    def test_init_with_monitoring_import_error(self):
-        """
-        GIVEN enable_monitoring set to True
-        AND monitoring dependencies are not available
+        GIVEN enable_monitoring set to True and missing monitoring dependencies
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Raise ImportError with descriptive message
-         - Indicate missing monitoring dependencies
-         - Suggest how to install required packages
-         - Not create processor instance
+        THEN it should raise ImportError with descriptive message
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem', side_effect=ImportError("Missing monitoring deps")):
+        with mock_batch_processor_dependencies():
+            with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem', 
+                      side_effect=ImportError("Missing monitoring deps")):
                 with pytest.raises(ImportError) as exc_info:
                     BatchProcessor(enable_monitoring=True)
-                
                 assert "monitoring" in str(exc_info.value).lower()
 
-    def test_init_storage_initialization_failure(self):
+    def test_init_storage_initialization_failure_raises(self):
         """
         GIVEN storage initialization that fails
         WHEN BatchProcessor is initialized
-        THEN it should:
-         - Raise RuntimeError with storage-specific error details
-         - Indicate storage initialization failure
-         - Not create processor instance
-         - Preserve original storage error information
+        THEN it should raise RuntimeError with storage-specific error details
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage', side_effect=RuntimeError("Storage init failed")):
+        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage', 
+                  side_effect=RuntimeError("Storage init failed")):
             with pytest.raises(RuntimeError) as exc_info:
                 BatchProcessor()
-            
-            assert "storage" in str(exc_info.value).lower() or "init failed" in str(exc_info.value).lower()
+            error_msg = str(exc_info.value).lower()
+            assert "storage" in error_msg or "init failed" in error_msg
 
-    def test_init_all_components_with_full_configuration(self):
-        """
-        GIVEN all optional parameters specified with valid values
-        WHEN BatchProcessor is initialized with complete configuration
-        THEN it should:
-         - Configure all components according to specifications
-         - Enable both monitoring and audit systems
-         - Use custom storage, memory limits, and worker counts
-         - Create fully functional processor ready for batch operations
-         - Initialize all tracking and management structures
-        """
+    @pytest.fixture
+    def fully_configured_processor(self, mock_batch_processor_dependencies):
+        """Create BatchProcessor with full configuration."""
         custom_storage = Mock(spec=IPLDStorage)
         
         with patch('ipfs_datasets_py.pdf_processing.batch_processor.MonitoringSystem') as mock_monitoring:
@@ -414,21 +383,85 @@ class TestBatchProcessorInitialization:
                 mock_audit.return_value = mock_auditor
                 
                 processor = BatchProcessor(
-                    max_workers=16,
-                    max_memory_mb=8192,
+                    max_workers=MAX_WORKERS_HIGH,
+                    max_memory_mb=MAX_MEMORY_CUSTOM,
                     storage=custom_storage,
                     enable_monitoring=True,
                     enable_audit=True
                 )
-                
-                assert processor.max_workers == 16
-                assert processor.max_memory_mb == 8192
-                assert processor.storage is custom_storage
-                assert processor.monitoring == mock_monitor
-                assert processor.audit_logger == mock_auditor
-                assert processor.is_processing is False
-                assert len(processor.workers) == 0
-                assert processor.worker_pool is None
+                return processor, custom_storage, mock_monitor, mock_auditor
+
+    def test_init_full_config_max_workers(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should configure max_workers according to specifications
+        """
+        processor, _, _, _ = fully_configured_processor
+        assert processor.max_workers == MAX_WORKERS_HIGH
+
+    def test_init_full_config_max_memory(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should configure max_memory_mb according to specifications
+        """
+        processor, _, _, _ = fully_configured_processor
+        assert processor.max_memory_mb == MAX_MEMORY_CUSTOM
+
+    def test_init_full_config_storage(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should use custom storage
+        """
+        processor, custom_storage, _, _ = fully_configured_processor
+        assert processor.storage is custom_storage
+
+    def test_init_full_config_monitoring(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should enable monitoring system
+        """
+        processor, _, mock_monitor, _ = fully_configured_processor
+        assert processor.monitoring == mock_monitor
+
+    def test_init_full_config_audit(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should enable audit system
+        """
+        processor, _, _, mock_auditor = fully_configured_processor
+        assert processor.audit_logger == mock_auditor
+
+    def test_init_full_config_is_processing(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should create fully functional processor ready for batch operations
+        """
+        processor, _, _, _ = fully_configured_processor
+        assert processor.is_processing is False
+
+    def test_init_full_config_empty_workers_list(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should initialize all tracking structures
+        """
+        processor, _, _, _ = fully_configured_processor
+        assert len(processor.workers) == 0
+
+    def test_init_full_config_null_worker_pool(self, fully_configured_processor):
+        """
+        GIVEN all optional parameters specified with valid values
+        WHEN BatchProcessor is initialized with complete configuration
+        THEN it should initialize management structures
+        """
+        processor, _, _, _ = fully_configured_processor
+        assert processor.worker_pool is None
 
 
 

@@ -54,7 +54,11 @@ except ImportError:
     HAVE_IPLD_CAR = False
 
 
+from ipfs_datasets_py.ipld.dag_pb import create_dag_node
+
+
 T = TypeVar('T')
+
 
 class IPLDSchema:
     """A schema for validating IPLD data structures."""
@@ -144,6 +148,7 @@ class IPLDStorage:
         self.ipfs_api = ipfs_api
 
         # Initialize IPFS client if available
+        
         self.ipfs_client = None
         if ipfshttpclient:
             try:
@@ -213,7 +218,7 @@ class IPLDStorage:
             else:
                 # Complex case: create a DAG node with links
                 # This requires DAG-PB format
-                from ipfs_datasets_py.ipld.dag_pb import create_dag_node
+
 
                 # Create a DAG node with the data and links
                 node_data = create_dag_node(data, links)
