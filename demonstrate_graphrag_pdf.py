@@ -291,8 +291,42 @@ async def main():
         cleanup_pdf = True
         
         if not pdf_path:
-            print(f"❌ Cannot create sample PDF - please provide a PDF file")
-            return False
+            print(f"⚠️ Cannot create sample PDF without reportlab dependency")
+            print(f"🔄 Creating sample text file for basic pipeline testing...")
+            
+            # Create a simple text file as fallback
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp_file:
+                tmp_file.write("""
+GraphRAG: Enhanced Knowledge Discovery in Scientific Literature
+
+Dr. Alice Johnson (Stanford University)
+Prof. Bob Smith (Massachusetts Institute of Technology) 
+Dr. Carol Lee (Carnegie Mellon University)
+
+Abstract:
+This paper presents GraphRAG, a novel approach for enhanced knowledge discovery
+in scientific literature using graph-based retrieval augmented generation.
+GraphRAG combines entity extraction, relationship discovery, and semantic
+querying to enable more effective information retrieval from research papers.
+
+Keywords: GraphRAG, knowledge discovery, entity extraction, semantic search
+
+1. Introduction
+Knowledge discovery in scientific literature has become increasingly challenging
+due to the exponential growth of published research. Traditional search methods
+often fail to capture complex relationships between concepts across documents.
+
+2. Methodology
+Our approach uses advanced natural language processing techniques to extract
+entities and relationships from text, constructing a comprehensive knowledge
+graph that enables sophisticated querying capabilities.
+
+3. Results
+Initial testing shows significant improvements in information retrieval
+accuracy and user satisfaction compared to baseline methods.
+                """)
+                pdf_path = tmp_file.name
+                print(f"📄 Created sample text file: {Path(pdf_path).name}")
     
     if not os.path.exists(pdf_path):
         print(f"❌ PDF file not found: {pdf_path}")

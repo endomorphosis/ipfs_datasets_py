@@ -118,11 +118,19 @@ except ImportError:
 # RAG optimizer components
 from .rag.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
 
-from .rag.rag_query_optimizer import (
-    QueryRewriter,
-    QueryBudgetManager,
-    UnifiedGraphRAGQueryOptimizer
-)
+try:
+    from .rag.rag_query_optimizer import (
+        QueryRewriter,
+        QueryBudgetManager,
+        UnifiedGraphRAGQueryOptimizer
+    )
+except ImportError as e:
+    import warnings
+    warnings.warn(f"Advanced RAG query optimizer unavailable due to missing dependencies: {e}")
+    # Provide minimal fallbacks
+    QueryRewriter = None
+    QueryBudgetManager = None
+    UnifiedGraphRAGQueryOptimizer = None
 
 
 try:
@@ -132,12 +140,33 @@ except ImportError:
     HAVE_KG_EXTRACTION = False
 
 # LLM Integration Components
-from .llm.llm_interface import (
-    LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
-    LLMInterfaceFactory, GraphRAGPromptTemplates
-)
+try:
+    from .llm.llm_interface import (
+        LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
+        LLMInterfaceFactory, GraphRAGPromptTemplates
+    )
+    HAVE_LLM_INTERFACE = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"LLM interface unavailable due to missing dependencies: {e}")
+    HAVE_LLM_INTERFACE = False
+    # Provide minimal fallbacks
+    LLMInterface = None
+    MockLLMInterface = None
+    LLMConfig = None
+    PromptTemplate = None
+    LLMInterfaceFactory = None
+    GraphRAGPromptTemplates = None
 
-from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+try:
+    from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+    HAVE_LLM_GRAPHRAG = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"GraphRAG LLM processor unavailable due to missing dependencies: {e}")
+    HAVE_LLM_GRAPHRAG = False
+    GraphRAGLLMProcessor = None
+    ReasoningEnhancer = None
 
 try:
     from ipfs_datasets_py.graphrag_integration import enhance_dataset_with_llm
@@ -207,6 +236,13 @@ try:
     HAVE_PDF_PROCESSING = True
 except ImportError:
     HAVE_PDF_PROCESSING = False
+    # Provide fallbacks
+    PDFProcessor = None
+    MultiEngineOCR = None
+    LLMOptimizer = None
+    GraphRAGIntegrator = None
+    QueryEngine = None
+    BatchProcessor = None
 
 # Define base exports that should always be available
 __all__ = [
@@ -340,6 +376,17 @@ from . import llm
 from . import rag
 
 # Direct aliases without polluting sys.modules
-llm_interface = llm.llm_interface
-llm_graphrag = llm.llm_graphrag  
-rag_query_optimizer = rag.rag_query_optimizer
+try:
+    llm_interface = llm.llm_interface
+except AttributeError:
+    llm_interface = None
+
+try:
+    llm_graphrag = llm.llm_graphrag
+except AttributeError:
+    llm_graphrag = None
+
+try:
+    rag_query_optimizer = rag.rag_query_optimizer
+except AttributeError:
+    rag_query_optimizer = None
