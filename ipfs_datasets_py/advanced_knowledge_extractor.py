@@ -184,6 +184,27 @@ class AdvancedKnowledgeExtractor:
             multi_pass=True
         )
     
+    def extract_entities(self, text: str) -> List[Dict[str, Any]]:
+        """
+        Extract entities from text - simple interface for testing
+        
+        Args:
+            text: Input text to process
+            
+        Returns:
+            List of entities with type, name, and confidence
+        """
+        kg = self.extract_enhanced_knowledge_graph(text)
+        return [
+            {
+                'name': entity.name,
+                'type': entity.entity_type,
+                'confidence': entity.confidence,
+                'context': entity.context
+            }
+            for entity in kg.entities
+        ]
+    
     def extract_enhanced_knowledge_graph(
         self,
         text: str,

@@ -449,9 +449,11 @@ class EnhancedMultiModalProcessor:
     def _extract_semantic_text(self, soup) -> str:
         """Extract text with semantic understanding of HTML structure"""
         
-        # Remove unwanted elements
-        for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
-            element.decompose()
+        # Remove unwanted elements completely (including their content)
+        unwanted_tags = ['script', 'style', 'nav', 'footer', 'header', 'aside', 'noscript']
+        for tag_name in unwanted_tags:
+            for element in soup.find_all(tag_name):
+                element.decompose()
         
         # Extract content in semantic order
         content_parts = []
@@ -666,6 +668,90 @@ class EnhancedMultiModalProcessor:
         
         return processed_content
     
+    def assess_content_quality(self, processed_content: ProcessedContent) -> ProcessedContent:
+        """Public interface for content quality assessment"""
+        return self._assess_content_quality(processed_content)
+    
+    def extract_from_pdf(self, pdf_content: bytes, file_path: str = "") -> str:
+        """
+        Extract text from PDF content
+        
+        Args:
+            pdf_content: PDF file content as bytes
+            file_path: Optional file path for metadata
+            
+        Returns:
+            Extracted text content
+        """
+        try:
+            # Try PyMuPDF first
+            if HAS_PDF:
+                return self._extract_pdf_pymupdf(pdf_content)
+            else:
+                # Fallback text extraction
+                return f"PDF content extraction not available - missing dependencies. File: {file_path}"
+        except Exception as e:
+            logger.warning(f"PDF extraction failed: {e}")
+            return f"PDF extraction failed: {str(e)}"
+    
+    def process_media_batch(self, media_assets: List[ContentAsset]) -> List[ProcessedContent]:
+        """
+        Process multiple media assets in batch
+        
+        Args:
+            media_assets: List of media content assets
+            
+        Returns:
+            List of processed content results
+        """
+        results = []
+        for asset in media_assets:
+            try:
+                result = self._process_media_enhanced(asset)
+                results.append(result)
+            except Exception as e:
+                logger.error(f"Failed to process media asset {asset.url}: {e}")
+                # Create error result
+                error_result = ProcessedContent(
+                    content_id=asset.content_id,
+                    content_type="media",
+                    source_url=asset.url,
+                    text_content=f"Media processing failed: {str(e)}",
+                    confidence_score=0.0,
+                    metadata={'error': str(e), 'asset_type': asset.asset_type}
+                )
+                results.append(error_result)
+        return results
+    
+    def process_html_content(self, html_content: str, url: str = "") -> ProcessedContent:
+        """
+        Process HTML content - simple interface for testing
+        
+        Args:
+            html_content: HTML content as string
+            url: Optional URL for metadata
+            
+        Returns:
+            Processed content result
+        """
+        # Create a mock ContentAsset for processing with the correct constructor
+        asset = ContentAsset(
+            url=url or "test://html",
+            content_type="html",
+            mime_type="text/html",
+            size_bytes=len(html_content.encode('utf-8')),
+            metadata={'test_mode': True}
+        )
+        
+        # Add the content directly to the asset
+        asset.content = html_content
+        
+        return self._process_html_enhanced(asset)
+    
+    def _process_html(self, html_asset: ContentAsset) -> ProcessedContent:
+        """Alias for _process_html_enhanced for backward compatibility"""
+        return self._process_html_enhanced(html_asset)
+    
     def _calculate_text_quality(self, text: str) -> ContentQualityMetrics:
         """Calculate comprehensive text quality metrics"""
         
@@ -785,6 +871,9 @@ class EnhancedMultiModalProcessor:
         # This would integrate with the actual content storage system
         if hasattr(asset, 'content') and asset.content:
             return asset.content
+        elif hasattr(asset, 'content_preview') and asset.content_preview:
+            # Support for test data that uses content_preview
+            return asset.content_preview
         else:
             # Placeholder for reading from file system or URL
             return f"Content for {asset.url}"

@@ -447,6 +447,45 @@ class WebsiteGraphRAGProcessor:
         """Get default configuration"""
         return WebsiteProcessingConfig()
     
+    def validate_config(self, config: Optional[WebsiteProcessingConfig] = None) -> bool:
+        """
+        Validate configuration for processing
+        
+        Args:
+            config: Configuration to validate (uses self.config if None)
+            
+        Returns:
+            True if configuration is valid
+            
+        Raises:
+            ValueError: If configuration is invalid
+        """
+        config = config or self.config
+        
+        # Validate archive services
+        supported_services = self.get_supported_archive_services()
+        for service in config.archive_services or []:
+            if service not in supported_services:
+                raise ValueError(f"Unsupported archive service: {service}. Supported: {supported_services}")
+        
+        # Validate depth
+        if config.crawl_depth < 1 or config.crawl_depth > 10:
+            raise ValueError(f"Crawl depth must be between 1 and 10, got: {config.crawl_depth}")
+        
+        # Validate file size limits
+        if config.max_file_size_mb < 1 or config.max_file_size_mb > 1000:
+            raise ValueError(f"Max file size must be between 1MB and 1000MB, got: {config.max_file_size_mb}")
+        
+        # Validate parallel processing limits
+        if config.max_parallel_processing < 1 or config.max_parallel_processing > 20:
+            raise ValueError(f"Max parallel processing must be between 1 and 20, got: {config.max_parallel_processing}")
+        
+        return True
+    
+    def create_default_config(self) -> WebsiteProcessingConfig:
+        """Create default configuration - alias for get_default_config"""
+        return self.get_default_config()
+    
     async def process_multiple_websites(
         self, 
         urls: List[str],

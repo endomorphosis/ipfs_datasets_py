@@ -27,7 +27,7 @@ import uuid
 import json
 import requests
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Set, Optional, Tuple
+from typing import Dict, List, Any, Set, Optional, Tuple, Union
 from collections import defaultdict
 
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
@@ -132,6 +132,31 @@ class Relationship:
     confidence: float = 1.0
     source_text: Optional[str] = None
     bidirectional: bool = False
+
+    def __post_init__(self):
+        """Handle flexible constructor patterns"""
+        # If relationship_id is actually an Entity (wrong calling pattern), fix it
+        if isinstance(self.relationship_id, Entity):
+            # This means the call was Relationship(source, target, type)
+            source_entity = self.relationship_id
+            target_entity = self.relationship_type
+            relationship_type = self.source_entity
+            
+            # Fix the fields
+            self.relationship_id = str(uuid.uuid4())
+            self.source_entity = source_entity
+            self.target_entity = target_entity
+            self.relationship_type = relationship_type
+
+    @classmethod
+    def create(cls, source: Entity, target: Entity, relationship_type: str, **kwargs) -> 'Relationship':
+        """Create relationship with intuitive parameter order"""
+        return cls(
+            source_entity=source,
+            target_entity=target,
+            relationship_type=relationship_type,
+            **kwargs
+        )
 
     @property
     def source_id(self) -> Optional[str]:
@@ -246,8 +271,8 @@ class KnowledgeGraph:
 
     def add_entity(
         self,
-        entity_type: str,
-        name: str,
+        entity_type_or_entity: Union[str, Entity],
+        name: Optional[str] = None,
         properties: Optional[Dict[str, Any]] = None,
         entity_id: str = None,
         confidence: float = 1.0,
@@ -256,8 +281,8 @@ class KnowledgeGraph:
         """Add an entity to the knowledge graph.
 
         Args:
-            entity_type (str): Type of the entity
-            name (str): Name of the entity
+            entity_type_or_entity: Either entity type string OR Entity object
+            name (str): Name of the entity (required if first arg is string)
             properties (Dict, optional): Additional properties
             entity_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
@@ -266,42 +291,50 @@ class KnowledgeGraph:
         Returns:
             Entity: The added entity
         """
-        # Create entity
-        entity = Entity(
-            entity_id=entity_id,
-            entity_type=entity_type,
-            name=name,
-            properties=properties,
-            confidence=confidence,
-            source_text=source_text
-        )
+        # Handle both calling patterns
+        if isinstance(entity_type_or_entity, Entity):
+            # Called with Entity object: add_entity(entity)
+            entity = entity_type_or_entity
+        else:
+            # Called with parameters: add_entity(entity_type, name, ...)
+            if name is None:
+                raise ValueError("name parameter is required when first argument is entity_type string")
+            
+            entity = Entity(
+                entity_id=entity_id,
+                entity_type=entity_type_or_entity,
+                name=name,
+                properties=properties,
+                confidence=confidence,
+                source_text=source_text
+            )
 
         # Add to graph
         self.entities[entity.entity_id] = entity
 
         # Update indexes
-        self.entity_types[entity_type].add(entity.entity_id)
-        self.entity_names[name].add(entity.entity_id)
+        self.entity_types[entity.entity_type].add(entity.entity_id)
+        self.entity_names[entity.name].add(entity.entity_id)
 
         return entity
 
     def add_relationship(
         self,
-        relationship_type: str,
-        source: Entity,
-        target: Entity,
+        relationship_type_or_relationship: Union[str, 'Relationship'],
+        source: Optional[Entity] = None,
+        target: Optional[Entity] = None,
         properties: Optional[Dict[str, Any]] = None,
         relationship_id: str = None,
         confidence: float = 1.0,
         source_text: str = None,
         bidirectional: bool = False
-    ) -> Relationship:
+    ) -> 'Relationship':
         """Add a relationship to the knowledge graph.
 
         Args:
-            relationship_type (str): Type of the relationship
-            source (Entity): Source entity
-            target (Entity): Target entity
+            relationship_type_or_relationship: Either relationship type string OR Relationship object
+            source (Entity): Source entity (required if first arg is string)
+            target (Entity): Target entity (required if first arg is string)
             properties (Dict, optional): Additional properties
             relationship_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
@@ -311,25 +344,33 @@ class KnowledgeGraph:
         Returns:
             Relationship: The added relationship
         """
-        # Create relationship
-        relationship = Relationship(
-            relationship_id=relationship_id,
-            relationship_type=relationship_type,
-            source_entity=source,
-            target_entity=target,
-            properties=properties,
-            confidence=confidence,
-            source_text=source_text,
-            bidirectional=bidirectional
-        )
+        # Handle both calling patterns
+        if isinstance(relationship_type_or_relationship, Relationship):
+            # Called with Relationship object: add_relationship(relationship)
+            relationship = relationship_type_or_relationship
+        else:
+            # Called with parameters: add_relationship(relationship_type, source, target, ...)
+            if source is None or target is None:
+                raise ValueError("source and target parameters are required when first argument is relationship_type string")
+            
+            relationship = Relationship(
+                relationship_id=relationship_id,
+                relationship_type=relationship_type_or_relationship,
+                source_entity=source,
+                target_entity=target,
+                properties=properties,
+                confidence=confidence,
+                source_text=source_text,
+                bidirectional=bidirectional
+            )
 
         # Add to graph
         self.relationships[relationship.relationship_id] = relationship
 
         # Update indexes
-        self.relationship_types[relationship_type].add(relationship.relationship_id)
-        self.entity_relationships[source.entity_id].add(relationship.relationship_id)
-        self.entity_relationships[target.entity_id].add(relationship.relationship_id)
+        self.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
+        self.entity_relationships[relationship.source_entity.entity_id].add(relationship.relationship_id)
+        self.entity_relationships[relationship.target_entity.entity_id].add(relationship.relationship_id)
 
         return relationship
 
