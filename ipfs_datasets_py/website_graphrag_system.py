@@ -132,6 +132,13 @@ class WebsiteGraphRAGSystem:
                 'image': []
             }
             
+            # Initialize empty indexes if no processed content
+            if not self.processed_content or not hasattr(self.processed_content, 'processed_items'):
+                self._content_by_url = {}
+                self._text_items = []
+                logger.info("No processed content available - initialized empty search indexes")
+                return
+            
             # Index content by type
             for item in self.processed_content.processed_items:
                 content_type = item.content_type
@@ -157,7 +164,10 @@ class WebsiteGraphRAGSystem:
             
         except Exception as e:
             logger.error(f"Failed to initialize search indexes: {e}")
-            raise
+            # Initialize empty indexes to prevent further errors
+            self._content_by_type = {'html': [], 'pdf': [], 'audio': [], 'video': [], 'image': []}
+            self._content_by_url = {}
+            self._text_items = []
     
     def query(
         self,
