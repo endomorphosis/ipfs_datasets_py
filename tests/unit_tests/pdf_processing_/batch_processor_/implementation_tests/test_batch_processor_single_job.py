@@ -76,29 +76,29 @@ class TestBatchProcessorSingleJob:
     """Test class for _process_single_job method in BatchProcessor."""
 
     @pytest.fixture
-    def processor(self) -> BatchProcessor:
+    def processor(self, mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphrag_integrator) -> BatchProcessor:
         """Create a BatchProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_workers=4, max_memory_mb=2048)
-            # Mock the processing components
-            processor.pdf_processor = AsyncMock()
-            processor.llm_optimizer = AsyncMock()
-            processor.graphrag_integrator = AsyncMock()
-            processor.storage = AsyncMock()
-            
-            # Initialize the batch_results structure that is used by the method
-            processor.batch_results = {}
-            processor.processing_stats = {
-                'total_processed': 0,
-                'total_failed': 0,
-                'total_processing_time': 0.0,
-                'peak_memory_usage': 0.0,
-                'average_throughput': 0.0,
-                'batches_created': 0,
-                'start_time': datetime.now().isoformat()
-            }
-            processor.audit_logger = None
-            return processor
+        processor = BatchProcessor(
+            max_workers=4, 
+            max_memory_mb=2048,
+            storage=mock_storage,
+            pdf_processor=mock_pdf_processor,
+            llm_optimizer=mock_llm_optimizer,
+            graphrag_integrator=mock_graphrag_integrator,
+            enable_audit=False
+        )
+        # Initialize the batch_results structure that is used by the method
+        processor.batch_results = {}
+        processor.processing_stats = {
+            'total_processed': 0,
+            'total_failed': 0,
+            'total_processing_time': 0.0,
+            'peak_memory_usage': 0.0,
+            'average_throughput': 0.0,
+            'batches_created': 0,
+            'start_time': datetime.now().isoformat()
+        }
+        return processor
 
     @pytest.fixture
     def sample_job(self):

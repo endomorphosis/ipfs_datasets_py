@@ -53,19 +53,43 @@ def mock_storage():
 @pytest.fixture  
 def mock_pdf_processor():
     """Create a mock PDF processor for testing."""
-    return MagicMock(spec_set=PDFProcessor)
+    from unittest.mock import AsyncMock
+    mock = MagicMock(spec_set=PDFProcessor)
+    # Configure process_pdf to return a proper async result
+    mock.process_pdf = AsyncMock(return_value={
+        'status': 'success',
+        'decomposed_content': {'text': 'test content', 'metadata': {}},
+        'metadata': {'pages': 1}
+    })
+    return mock
 
 
 @pytest.fixture
 def mock_llm_optimizer():
     """Create a mock LLM optimizer for testing."""
-    return MagicMock(spec_set=LLMOptimizer)
+    from unittest.mock import AsyncMock
+    mock = MagicMock(spec_set=LLMOptimizer) 
+    # Create a mock LLMDocument-like object
+    mock_llm_document = MagicMock()
+    mock_llm_document.document_id = 'doc_123'
+    mock.optimize_for_llm = AsyncMock(return_value=mock_llm_document)
+    return mock
 
 
 @pytest.fixture
 def mock_graphrag_integrator():
-    """Create a mock GraphRAG integrator for testing.""" 
-    return MagicMock(spec_set=GraphRAGIntegrator)
+    """Create a mock GraphRAG integrator for testing."""
+    from unittest.mock import AsyncMock
+    mock = MagicMock(spec_set=GraphRAGIntegrator)
+    # Create a mock KnowledgeGraph-like object
+    mock_knowledge_graph = MagicMock()
+    mock_knowledge_graph.graph_id = 'kg_456'
+    mock_knowledge_graph.ipld_cid = 'Qm789'
+    mock_knowledge_graph.entities = []
+    mock_knowledge_graph.relationships = []
+    mock_knowledge_graph.chunks = []
+    mock.integrate_document = AsyncMock(return_value=mock_knowledge_graph)
+    return mock
 
 @pytest.fixture
 def successful_processing_results():
@@ -143,7 +167,8 @@ def processor(mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphra
         storage=mock_storage,
         pdf_processor=mock_pdf_processor,
         llm_optimizer=mock_llm_optimizer,
-        graphrag_integrator=mock_graphrag_integrator
+        graphrag_integrator=mock_graphrag_integrator,
+        enable_audit=False  # Disable audit logging to avoid mock issues
     )
     
     return processor
@@ -167,7 +192,8 @@ def processor_with_custom_config(mock_storage, mock_pdf_processor, mock_llm_opti
             'storage': mock_storage,
             'pdf_processor': mock_pdf_processor,
             'llm_optimizer': mock_llm_optimizer,
-            'graphrag_integrator': mock_graphrag_integrator
+            'graphrag_integrator': mock_graphrag_integrator,
+            'enable_audit': False  # Disable audit logging by default
         }
         # Override with provided kwargs
         config.update(kwargs)

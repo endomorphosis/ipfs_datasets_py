@@ -22,7 +22,9 @@ import networkx as nx
 import numpy as np
 from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
 import openai
+import ipfs_multiformats
 
+get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
@@ -762,10 +764,9 @@ class GraphRAGIntegrator:
         relationships = await self._extract_relationships(entities, llm_document.chunks)
 
         # Create deterministic graph ID based on document content
-        # TODO Replace with IPFS CID generation.
         document_content = "".join(chunk.content.strip() for chunk in llm_document.chunks)
 
-        graph_id_hash = hashlib.md5(document_content.encode()).hexdigest()[:8]
+        graph_id_hash = get_cid(document_content)
 
         # Create knowledge graph
         knowledge_graph = KnowledgeGraph(
@@ -1208,9 +1209,9 @@ class GraphRAGIntegrator:
                             }
                         )
                         relationships.append(relationship)
-        
+
         return relationships
-    
+
     def _infer_relationship_type(self, entity1: Entity, entity2: Entity, context: str) -> Optional[str]:
         """
         Infer the relationship type between two entities based on contextual information.
@@ -1280,11 +1281,11 @@ class GraphRAGIntegrator:
                     if re.search(pattern, text.lower()):
                         return True
             return False
-        
+
         # Check for location-based relationships first (higher priority for specific patterns)
         if contains_keyword(context_lower, ['located in', 'based in', 'headquarters']):
             return 'located_in'
-        
+
         # Person-Organization relationships
         if entity1.type == 'person' and entity2.type == 'organization':
             # Leadership relationships (highest priority)
@@ -1336,7 +1337,7 @@ class GraphRAGIntegrator:
         elif 'location' in [entity1.type, entity2.type]:
             # Don't override specific location patterns already handled above
             # This is for cases where we have location entities but no specific location keywords
-            return 'related_to'  # Changed from 'located_in' to match test expectation
+            return 'related_to'
         
         # Default relationship for all other cases
         return 'related_to'
@@ -1762,13 +1763,15 @@ class GraphRAGIntegrator:
                          max_results: int = 10) -> Dict[str, Any]:
         """Query the knowledge graph using natural language to retrieve relevant entities and relationships.
 
-        This method performs a keyword-based search across the knowledge graph(s) to find entities
-        that match the given query. It searches entity names, types, and descriptions, scoring
-        matches based on relevance. Related relationships are also retrieved for the matching entities.
+        This method performs intelligent search across the knowledge graph(s) to find entities
+        that match the given query. It uses both keyword-based matching and entity extraction
+        to identify relevant entities and their relationships. The search algorithm scores
+        matches based on name similarity, type matching, and description relevance.
 
         Args:
             query (str): Natural language query string to search for in the knowledge graph.
                 The search is case-insensitive and matches against entity names, types, and descriptions.
+                Can include entity names like "John Smith" or concepts like "artificial intelligence companies".
             graph_id (Optional[str], optional): Specific knowledge graph identifier to query.
                 If None, searches across the global merged graph containing all entities and relationships.
                 Defaults to None.
@@ -1777,32 +1780,40 @@ class GraphRAGIntegrator:
 
         Returns:
             Dict[str, Any]: A dictionary containing query results with the following structure:
-                - 'query' (str): The original query string
-                - 'entities' (List[Dict]): List of matching entities serialized as dictionaries,
-                    ordered by relevance score (highest first)
-                - 'relationships' (List[Dict]): List of relationships connected to the matching entities,
-                    serialized as dictionaries
-                - 'total_matches' (int): Total number of entities that matched the query before limiting
-                - 'timestamp' (str): ISO format timestamp of when the query was executed
+            - 'query' (str): The original query string
+            - 'entities' (List[Dict]): List of matching entities serialized as dictionaries,
+                ordered by relevance score (highest first)
+            - 'relationships' (List[Dict]): List of relationships connected to the matching entities,
+                serialized as dictionaries
+            - 'total_matches' (int): Total number of entities that matched the query before limiting
+            - 'extracted_entities' (List[str]): Entity names extracted from the query using NLP
+            - 'timestamp' (str): ISO format timestamp of when the query was executed
 
         Raises:
-            TypeError: If query is None or not a string, or if max_results is not
-                an integer greater than 0.
+            TypeError: If query is not a string or max_results is not an integer.
+            ValueError: If query is empty/whitespace-only or max_results is less than or equal to 0.
             KeyError: If graph_id is provided but does not exist in the knowledge graphs.
-            ValueError: If max_results is less than or equal to 0.
 
         Example:
-            >>> results = await integrator.query_graph("financial transactions", max_results=5)
+            >>> results = await integrator.query_graph("companies founded by John Smith", max_results=5)
             >>> print(f"Found {results['total_matches']} matches")
+            >>> print(f"Extracted entities: {results['extracted_entities']}")
             >>> for entity in results['entities']:
-            ...     print(f"- {entity['name']} ({entity['type']})")
+            ...     print(f"- {entity['name']} ({entity['type']}) - Score: {entity.get('_score', 0)}")
+
+        Note:
+            - Uses NLP-based entity extraction to identify potential entity names in the query
+            - Scoring system: exact name matches (score +3), entity name in query (+2), 
+              type matches (+1), description matches (+1)
+            - Related relationships are automatically included for all matching entities
+            - Empty queries return empty results rather than all entities
         """
         # Input validation
         type_dict = {
             query: str,
             max_results: int
         }
-        for key, (type_, func) in type_dict.items():
+        for key, type_ in type_dict.items():
             if not isinstance(key, type_):
                 raise TypeError(f"{key} parameter must be of type {type_.__name__}, got {type(key).__name__}")
 
@@ -1884,36 +1895,54 @@ class GraphRAGIntegrator:
 
         This method extracts a subgraph centered around a given entity, including all nodes
         and edges within the specified depth from the center entity. The method performs
-        breadth-first traversal to collect neighboring nodes at each depth level.
+        breadth-first traversal to collect neighboring nodes at each depth level, considering
+        both incoming and outgoing relationships.
 
         Args:
             entity_id (str): The unique identifier of the center entity to analyze.
+            Must be a valid entity ID that exists in the global entity registry.
             depth (int, optional): The maximum depth to traverse from the center entity.
-                Defaults to 2. A depth of 1 includes only direct neighbors, depth of 2
-                includes neighbors of neighbors, etc.
+            Defaults to 2. Must be a non-negative integer where:
+            - depth=0: Only the center entity
+            - depth=1: Center entity and direct neighbors
+            - depth=2: Center entity, direct neighbors, and their neighbors
+            - etc.
 
         Returns:
             Dict[str, Any]: A dictionary containing the neighborhood analysis results:
-                - center_entity_id (str): The ID of the center entity
-                - depth (int): The depth used for traversal
-                - nodes (List[Dict]): List of node data dictionaries, each containing
-                    node attributes plus an 'id' field
-                - edges (List[Dict]): List of edge data dictionaries, each containing
-                    edge attributes plus 'source' and 'target' fields
-                - node_count (int): Total number of nodes in the subgraph
-                - edge_count (int): Total number of edges in the subgraph
-                If the entity is not found, returns:
-                - error (str): Error message indicating the issue
+            Success case:
+            - 'center_entity_id' (str): The ID of the center entity
+            - 'depth' (int): The depth used for traversal
+            - 'nodes' (List[Dict]): List of node data dictionaries, each containing
+                all node attributes plus an 'id' field
+            - 'edges' (List[Dict]): List of edge data dictionaries, each containing
+                all edge attributes plus 'source' and 'target' fields
+            - 'node_count' (int): Total number of nodes in the subgraph
+            - 'edge_count' (int): Total number of edges in the subgraph
+            
+            Error cases:
+            - {'error': 'Entity not found'}: If entity_id is not in global_entities
+            - {'error': 'Entity not in graph'}: If entity_id is not in global_graph
 
         Raises:
-            TypeError: If entity_id is not a string or depth is not a non-negative integer.
+            TypeError: If entity_id is not a string or depth is not an integer.
             ValueError: If entity_id is empty or depth is negative.
 
+        Examples:
+            >>> neighborhood = await integrator.get_entity_neighborhood("entity_123", depth=1)
+            >>> print(f"Found {neighborhood['node_count']} nodes and {neighborhood['edge_count']} edges")
+            
+            >>> # Get deeper neighborhood
+            >>> deep_neighborhood = await integrator.get_entity_neighborhood("entity_123", depth=3)
+            >>> print(f"3-depth neighborhood has {deep_neighborhood['node_count']} nodes")
+
         Note:
-            - The method considers both incoming and outgoing edges (predecessors and successors)
+            - Uses the global graph (self.global_graph) for comprehensive analysis
+            - Considers both incoming (predecessors) and outgoing (successors) edges
             - The returned subgraph includes all nodes within the specified depth, not just
-                those at exactly that depth
-            - All data is converted to serializable format for easy JSON export
+              those at exactly that depth
+            - All data is converted to serializable format for JSON compatibility
+            - Performance scales with graph size and depth - use smaller depths for large graphs
         """
         if not isinstance(entity_id, str):
             raise TypeError("entity_id must be a string.")

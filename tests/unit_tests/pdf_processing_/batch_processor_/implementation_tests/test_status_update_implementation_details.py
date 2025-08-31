@@ -73,18 +73,24 @@ class TestBatchProcessorStatusUpdateImplementationDetails:
     """Test class for batch status update implementation details."""
 
     @pytest.fixture
-    def processor(self):
+    def processor(self, mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphrag_integrator):
         """Create a BatchProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_workers=4)
-            processor._get_resource_usage = Mock(return_value={
-                'memory_mb': 1024.0,
-                'memory_percent': 25.0,
-                'cpu_percent': 15.0,
-                'active_workers': 4,
-                'queue_size': 10
-            })
-            return processor
+        processor = BatchProcessor(
+            max_workers=4,
+            storage=mock_storage,
+            pdf_processor=mock_pdf_processor,
+            llm_optimizer=mock_llm_optimizer,
+            graphrag_integrator=mock_graphrag_integrator,
+            enable_audit=False
+        )
+        processor._get_resource_usage = Mock(return_value={
+            'memory_mb': 1024.0,
+            'memory_percent': 25.0,
+            'cpu_percent': 15.0,
+            'active_workers': 4,
+            'queue_size': 10
+        })
+        return processor
 
     def test_update_batch_status_successful_job(self, processor):
         """

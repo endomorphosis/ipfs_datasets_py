@@ -97,8 +97,21 @@ class TestBatchProcessorStatusManagement:
 
 
 
+    @pytest.fixture
+    def processor_with_mocked_resources(self, processor):
+        """Create a processor with mocked resource usage."""
+        from unittest.mock import MagicMock
+        processor._get_resource_usage = MagicMock(return_value={
+            'memory_mb': 1024.0,
+            'cpu_percent': 25.5,
+            'active_workers': 4,
+            'queue_size': 10,
+            'peak_memory_mb': 1200.0
+        })
+        return processor
+
     @pytest.mark.asyncio
-    async def test_get_batch_status_existing_batch(self, processor, sample_batch_status):
+    async def test_get_batch_status_existing_batch(self, processor_with_mocked_resources, sample_batch_status):
         """
         GIVEN an active batch in the processor
         WHEN get_batch_status is called with valid batch_id
@@ -108,6 +121,7 @@ class TestBatchProcessorStatusManagement:
          - Provide all BatchStatus fields
          - Return real-time resource metrics
         """
+        processor = processor_with_mocked_resources
         batch_id = "batch_test_123"
         processor.active_batches[batch_id] = sample_batch_status
         
@@ -139,7 +153,7 @@ class TestBatchProcessorStatusManagement:
         assert status is None
 
     @pytest.mark.asyncio
-    async def test_get_batch_status_resource_usage_integration(self, processor, sample_batch_status):
+    async def test_get_batch_status_resource_usage_integration(self, processor_with_mocked_resources, sample_batch_status):
         """
         GIVEN an active batch
         WHEN get_batch_status is called
@@ -148,6 +162,7 @@ class TestBatchProcessorStatusManagement:
          - Include fresh resource data in response
          - Handle resource monitoring failures gracefully
         """
+        processor = processor_with_mocked_resources
         batch_id = "batch_resource_test"
         processor.active_batches[batch_id] = sample_batch_status
         

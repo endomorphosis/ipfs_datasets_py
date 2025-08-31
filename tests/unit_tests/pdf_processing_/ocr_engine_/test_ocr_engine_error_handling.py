@@ -424,12 +424,11 @@ class TestOCREngineErrorHandling:
             assert result['text'] == ""
             assert 'confidence' in result
 
-    def test_surya_handles_images_without_text(self):
+    def test_surya_handles_images_without_text_returns_dict(self):
         """
         GIVEN SuryaOCR engine
         WHEN calling extract_text() with image containing no text
-        THEN should return empty text with appropriate confidence
-        AND should not raise exceptions
+        THEN should return a dictionary result
         """
         no_text_image_data = self._create_not_text_image_data()
         
@@ -438,12 +437,64 @@ class TestOCREngineErrorHandling:
             surya_engine.available = True
             surya_engine.detection_predictor = Mock()
             surya_engine.recognition_predictor = Mock()
-            surya_engine.recognition_predictor.return_value = ([], ["en"])  # No text lines found
+            
+            # Mock Surya result structure with no text lines
+            mock_result = Mock()
+            mock_result.text_lines = []  # No text lines found
+            
+            surya_engine.recognition_predictor.return_value = [mock_result]
             
             result = surya_engine.extract_text(no_text_image_data)
-            assert isinstance(result, dict)
-            assert result['text'] == ""
-            assert 'confidence' in result
+            assert isinstance(result, dict), \
+                f"Expected dict result, got {type(result)}"
+
+    def test_surya_handles_images_without_text_returns_empty_text(self):
+        """
+        GIVEN SuryaOCR engine
+        WHEN calling extract_text() with image containing no text
+        THEN should return empty text
+        """
+        no_text_image_data = self._create_not_text_image_data()
+        
+        with patch.object(SuryaOCR, '_initialize'):
+            surya_engine = SuryaOCR()
+            surya_engine.available = True
+            surya_engine.detection_predictor = Mock()
+            surya_engine.recognition_predictor = Mock()
+            
+            # Mock Surya result structure with no text lines
+            mock_result = Mock()
+            mock_result.text_lines = []  # No text lines found
+            
+            surya_engine.recognition_predictor.return_value = [mock_result]
+            
+            result = surya_engine.extract_text(no_text_image_data)
+            assert result['text'] == "", \
+                f"Expected empty text, got '{result['text']}'"
+
+    def test_surya_handles_images_without_text_includes_confidence(self):
+        """
+        GIVEN SuryaOCR engine
+        WHEN calling extract_text() with image containing no text
+        THEN should include confidence in result
+        """
+        no_text_image_data = self._create_not_text_image_data()
+        
+        with patch.object(SuryaOCR, '_initialize'):
+            surya_engine = SuryaOCR()
+            surya_engine.available = True
+            surya_engine.detection_predictor = Mock()
+            surya_engine.recognition_predictor = Mock()
+            
+            # Mock Surya result structure with no text lines
+            mock_result = Mock()
+            mock_result.text_lines = []  # No text lines found
+            
+            surya_engine.recognition_predictor.return_value = [mock_result]
+            
+            result = surya_engine.extract_text(no_text_image_data)
+            assert 'confidence' in result, \
+                f"Expected 'confidence' key in result, got keys: {list(result.keys())}"
 
     def test_trocr_handles_images_without_text(self):
         """

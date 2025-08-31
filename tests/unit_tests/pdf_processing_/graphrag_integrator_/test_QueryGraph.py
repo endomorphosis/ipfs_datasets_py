@@ -373,29 +373,20 @@ class TestQueryGraph:
         """
         GIVEN an empty query string
         WHEN query_graph is called
-        THEN no entities should match
-        AND empty results should be returned
+        THEN should raise ValueError for empty query
         """
-        result = await integrator.query_graph("")
-        
-        assert result["entities"] == []
-        assert result["relationships"] == []
-        assert result["total_matches"] == 0
-        assert result["query"] == ""
+        with pytest.raises(ValueError, match="query must be a non-empty string"):
+            await integrator.query_graph("")
 
     @pytest.mark.asyncio
     async def test_query_graph_whitespace_only_query(self, integrator):
         """
         GIVEN a query containing only whitespace
         WHEN query_graph is called
-        THEN no entities should match
-        AND empty results should be returned
+        THEN should raise ValueError for whitespace-only query
         """
-        result = await integrator.query_graph("   \t\n   ")
-        
-        assert result["entities"] == []
-        assert result["relationships"] == []
-        assert result["total_matches"] == 0
+        with pytest.raises(ValueError, match="query must be a non-empty string"):
+            await integrator.query_graph("   \t\n   ")
 
     @pytest.mark.asyncio
     async def test_query_graph_nonexistent_graph_id(self, integrator):
@@ -529,24 +520,57 @@ class TestQueryGraph:
                 assert field in relationship
 
     @pytest.mark.asyncio
-    async def test_query_graph_timestamp_generation(self, integrator):
+    async def test_query_graph_timestamp_generation_is_iso_format(self, integrator):
         """
         GIVEN any query execution
         WHEN query_graph is called
         THEN a timestamp should be generated in ISO format
-        AND the timestamp should be recent (within last few seconds)
+        """
+        integrator.global_graph.edges.return_value = []
+
+        result = await integrator.query_graph("test")
+
+        timestamp_str = result["timestamp"]
+
+        # Verify timestamp is in ISO format by parsing it
+        parsed_timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        assert isinstance(parsed_timestamp, datetime)
+
+    @pytest.mark.asyncio
+    async def test_query_graph_timestamp_generation_is_after_function_begins(self, integrator):
+        """
+        GIVEN any query execution
+        WHEN query_graph is called
+        THEN the timestamp should be greater than or equal to the time just before the function call
         """
         integrator.global_graph.edges.return_value = []
         
-        before_time = datetime.utcnow()
+        before_time = datetime.now()
         result = await integrator.query_graph("test")
-        after_time = datetime.utcnow()
+
+        timestamp_str = result["timestamp"]
+        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+
+        # Verify timestamp is after before_time
+        assert before_time <= timestamp.replace(tzinfo=None)
+
+    @pytest.mark.asyncio
+    async def test_query_graph_timestamp_generated_during_execution(self, integrator):
+        """
+        GIVEN any query execution
+        WHEN query_graph is called
+        THEN the timestamp should be less than or equal to the time just after the function call
+        """
+        integrator.global_graph.edges.return_value = []
+
+        result = await integrator.query_graph("test")
+        after_time = datetime.now()
         
         timestamp_str = result["timestamp"]
         timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
         
-        # Verify timestamp is between before and after
-        assert before_time <= timestamp.replace(tzinfo=None) <= after_time
+        # Verify timestamp is before after_time
+        assert timestamp.replace(tzinfo=None) <= after_time
 
     @pytest.mark.asyncio
     async def test_query_graph_total_matches_accuracy(self, integrator):

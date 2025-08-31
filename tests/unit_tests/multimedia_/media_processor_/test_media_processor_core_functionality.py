@@ -181,7 +181,8 @@ class TestGetCapabilitiesMethod:
     Covers capabilities reporting and supported operations.
     """
 
-    def test_when_get_capabilities_called_then_returns_supported_operations(self, mock_capabilities_processor, test_expected_capabilities):
+    @pytest.mark.parametrize("capability", ["download", "convert", "extract_metadata"])
+    def test_when_get_capabilities_called_then_returns_supported_operations(self, mock_capabilities_processor, capability):
         """
         GIVEN MediaProcessor instance
         WHEN get_capabilities is called
@@ -189,8 +190,7 @@ class TestGetCapabilitiesMethod:
         """
         capabilities = mock_capabilities_processor.get_capabilities()
         
-        for capability in capabilities.keys():
-            assert capability in test_expected_capabilities, f"Unexpected capability '{capability}' not in expected list {test_expected_capabilities}"
+        assert capability in capabilities, f"Expected capability '{capability}' not found in returned capabilities {list(capabilities.keys())}"
 
 
 class TestProcessorConfiguration:

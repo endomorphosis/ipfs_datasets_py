@@ -107,7 +107,7 @@ class TestBatchProcessorInitializationImplementationDetails:
                         assert processor.llm_optimizer is not None
                         assert processor.graphrag_integrator is not None
 
-    def test_init_processing_statistics_initialization(self):
+    def test_init_processing_statistics_initialization(self, mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphrag_integrator):
         """
         GIVEN initialization of BatchProcessor
         WHEN the processing_stats dictionary is created
@@ -117,27 +117,31 @@ class TestBatchProcessorInitializationImplementationDetails:
          - Include timing, success rate, and resource tracking fields
          - Be ready for accumulating processing metrics
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor()
-            
-            stats = processor.processing_stats
-            assert isinstance(stats, dict)
-            
-            # Check for expected statistical fields
-            expected_fields = [
-                'total_processed', 'total_failed', 'total_processing_time',
-                'peak_memory_usage', 'batches_created', 'start_time'
-            ]
-            for field in expected_fields:
-                assert field in stats, f"Missing expected field: {field}"
-            
-            # Check initial values are appropriate
-            assert stats['total_processed'] == 0
-            assert stats['total_failed'] == 0
-            assert stats['total_processing_time'] == 0.0
-            assert stats['batches_created'] == 0
+        processor = BatchProcessor(
+            storage=mock_storage,
+            pdf_processor=mock_pdf_processor,
+            llm_optimizer=mock_llm_optimizer,
+            graphrag_integrator=mock_graphrag_integrator
+        )
+        
+        stats = processor.processing_stats
+        assert isinstance(stats, dict)
+        
+        # Check for expected statistical fields
+        expected_fields = [
+            'total_processed', 'total_failed', 'total_processing_time',
+            'peak_memory_usage', 'batches_created', 'start_time'
+        ]
+        for field in expected_fields:
+            assert field in stats, f"Missing expected field: {field}"
+        
+        # Check initial values are appropriate
+        assert stats['total_processed'] == 0
+        assert stats['total_failed'] == 0
+        assert stats['total_processing_time'] == 0.0
+        assert stats['batches_created'] == 0
 
-    def test_init_with_default_parameters_internal_structures(self):
+    def test_init_with_default_parameters_internal_structures(self, mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphrag_integrator):
         """
         GIVEN no specific configuration parameters
         WHEN BatchProcessor is initialized with defaults
@@ -147,28 +151,29 @@ class TestBatchProcessorInitializationImplementationDetails:
          - Initialize threading primitives properly
          - Create proper internal component references
         """
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage') as mock_storage_class:
-            mock_storage = Mock(spec=IPLDStorage)
-            mock_storage_class.return_value = mock_storage
-            
-            processor = BatchProcessor()
-            
-            # Check that processing components are initialized
-            assert hasattr(processor, 'pdf_processor')
-            assert hasattr(processor, 'llm_optimizer') 
-            assert hasattr(processor, 'graphrag_integrator')
-            
-            # Check job tracking structures
-            assert isinstance(processor.job_queue, Queue)
-            assert isinstance(processor.batch_jobs, dict)
-            assert isinstance(processor.active_batches, dict)
-            assert isinstance(processor.workers, list)
-            assert isinstance(processor.processing_stats, dict)
-            
-            # Check threading primitives
-            assert isinstance(processor.stop_event, threading.Event)
-            assert processor.is_processing is False
-            assert processor.worker_pool is None
+        processor = BatchProcessor(
+            storage=mock_storage,
+            pdf_processor=mock_pdf_processor,
+            llm_optimizer=mock_llm_optimizer,
+            graphrag_integrator=mock_graphrag_integrator
+        )
+        
+        # Check that processing components are initialized
+        assert hasattr(processor, 'pdf_processor')
+        assert hasattr(processor, 'llm_optimizer') 
+        assert hasattr(processor, 'graphrag_integrator')
+        
+        # Check job tracking structures
+        assert isinstance(processor.job_queue, Queue)
+        assert isinstance(processor.batch_jobs, dict)
+        assert isinstance(processor.active_batches, dict)
+        assert isinstance(processor.workers, list)
+        assert isinstance(processor.processing_stats, dict)
+        
+        # Check threading primitives
+        assert isinstance(processor.stop_event, threading.Event)
+        assert processor.is_processing is False
+        assert processor.worker_pool is None
 
 
 if __name__ == "__main__":

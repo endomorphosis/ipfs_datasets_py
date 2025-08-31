@@ -76,18 +76,33 @@ class TestBatchProcessorStatisticsAndMonitoring:
     """Test class for statistics and monitoring methods in BatchProcessor."""
 
     @pytest.fixture
-    def processor(self):
-        """Create a BatchProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_workers=4)
-            processor._get_resource_usage = Mock(return_value={
-                'memory_mb': 1024.0,
-                'memory_percent': 25.0,
-                'cpu_percent': 15.0,
-                'active_workers': 4,
-                'queue_size': 5
-            })
-            return processor
+    def processor(self, mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphrag_integrator):
+        """Create a BatchProcessor instance for testing with mocked dependencies."""
+        processor = BatchProcessor(
+            storage=mock_storage,
+            pdf_processor=mock_pdf_processor,
+            llm_optimizer=mock_llm_optimizer,
+            graphrag_integrator=mock_graphrag_integrator,
+            max_workers=4
+        )
+        processor._get_resource_usage = Mock(return_value={
+            'memory_mb': 1024.0,
+            'memory_percent': 25.0,
+            'cpu_percent': 15.0,
+            'active_workers': 4,
+            'queue_size': 5
+        })
+        # Mock processing stats
+        processor.processing_stats = {
+            'total_processed': 0,
+            'total_failed': 0,
+            'total_processing_time': 0.0,
+            'peak_memory_usage': 0.0,
+            'average_throughput': 0.0,
+            'batches_created': 0,
+            'start_time': datetime.now().isoformat()
+        }
+        return processor
 
     @pytest.mark.asyncio
     async def test_get_processing_statistics_comprehensive(self, processor):

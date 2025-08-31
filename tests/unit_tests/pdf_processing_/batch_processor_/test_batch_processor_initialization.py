@@ -279,7 +279,7 @@ class TestBatchProcessorInitialization:
         with pytest.raises(ValueError) as exc_info:
             BatchProcessor(max_workers=0)
         error_msg = str(exc_info.value)
-        assert "max_workers must be positive" in error_msg
+        assert "max_workers must be a positive integer" in error_msg
 
     def test_init_invalid_max_workers_negative_raises_error(self):
         """
@@ -300,7 +300,7 @@ class TestBatchProcessorInitialization:
         with pytest.raises(ValueError) as exc_info:
             BatchProcessor(max_workers=-5)
         error_msg = str(exc_info.value).lower()
-        assert "workers must be positive" in error_msg
+        assert "max_workers must be a positive integer" in error_msg
 
     def test_init_invalid_memory_limit_too_low_raises_error(self):
         """

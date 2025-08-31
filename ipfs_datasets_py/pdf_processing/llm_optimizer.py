@@ -1338,10 +1338,40 @@ class LLMOptimizer:
             ...     print(f"Chunk {chunk.chunk_id}: {chunk.token_count} tokens")
             >>> print(f"Document summary: {llm_doc.summary[:100]}...")
         """
+        expected_types = {
+            "decomposed_content": (decomposed_content, dict),
+            "document_metadata": (document_metadata, dict),
+            "timeout": (timeout, int),
+        }
+        for name, args in expected_types.items():
+            if not isinstance(*args):
+                raise TypeError(f"{name} must be of type {args[1].__name__}, got {type(args[0]).__name__} instead.")
+
+        expected_metadata_keys = ['author', 'title', 'document_id']
+
+        expected_dict_key_types = {
+            "decomposed_content": (decomposed_content, str),
+            "document_metadata": (document_metadata, str),
+        }
+        for name, args in expected_dict_key_types.items():
+            dictionary, expected_type = args
+            for key in dictionary.keys():
+                if not isinstance(key, expected_type):
+                    raise TypeError(f"All keys in {name} must be of type {expected_type.__name__}, got {type(key).__name__} for key '{key}' instead.")
+                if key not in expected_metadata_keys:
+                    raise KeyError(f"Unexpected key '{key}' is in from {name} dictionary")
+
+            for keys in args[0].keys():
+                if key not in expected_metadata_keys:
+                    raise KeyError("Required key '{key}' is missing from metadata dictionary")
+
+        if timeout < 0:
+            raise ValueError(f"timeout must be non-negative, got {timeout}.")
+
         async with asyncio.timeout(timeout):
-        
+
             self.logger.info("Starting LLM optimization process")
-            
+
             # Extract text content with structure preservation
             structured_text: dict[str, Any] = await self._extract_structured_text(decomposed_content)
             self.logger.info("Extracted structured text content with preserved document structure")
@@ -1363,7 +1393,11 @@ class LLMOptimizer:
             self.logger.info(f"Created {len(chunks)} initial chunks")
 
             # Generate embeddings
-            chunks_with_embeddings: list[LLMChunk] = await self._generate_embeddings(chunks)
+            try:
+                chunks_with_embeddings: list[LLMChunk] = await self._generate_embeddings(chunks)
+            except Exception as e:
+                self.logger.error(f"Error creating chunk embeddings: {e}")
+                chunks_with_embeddings = []
 
             self.logger.info("Generated embeddings for all chunks")
             self.logger.debug(f"chunks_with_embeddings: {chunks_with_embeddings}")
@@ -1403,7 +1437,7 @@ class LLMOptimizer:
             return llm_document
 
         raise TimeoutError(f"LLM optimization process timed out after '{timeout}' seconds")
-    
+
     async def _extract_structured_text(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """
         Extract and organize text content while preserving document structure and element context.

@@ -115,7 +115,7 @@ class TestBatchProcessorBatchOperations:
         for job in target_jobs + [other_job]:
             processor.job_queue.put(job)
             
-        return batch_id, batch_status
+        return processor, batch_id, batch_status
 
     @pytest.mark.asyncio
     async def test_cancel_batch_returns_true_on_success(self, cancel_batch_setup):
@@ -124,8 +124,7 @@ class TestBatchProcessorBatchOperations:
         WHEN cancel_batch is called
         THEN it should return True indicating successful cancellation
         """
-        batch_id, batch_status = cancel_batch_setup
-        processor = cancel_batch_setup[0]  # Get processor from setup
+        processor, batch_id, batch_status = cancel_batch_setup
         result = await processor.cancel_batch(batch_id)
         assert result is True
 
@@ -136,8 +135,7 @@ class TestBatchProcessorBatchOperations:
         WHEN cancel_batch is called
         THEN it should set batch end_time to current timestamp
         """
-        batch_id, batch_status = cancel_batch_setup
-        processor = cancel_batch_setup[0]  # Get processor from setup
+        processor, batch_id, batch_status = cancel_batch_setup
         await processor.cancel_batch(batch_id)
         assert batch_status.end_time is not None
 
@@ -148,8 +146,7 @@ class TestBatchProcessorBatchOperations:
         WHEN cancel_batch is called
         THEN it should remove all pending jobs for the batch from job_queue
         """
-        batch_id, batch_status = cancel_batch_setup
-        processor = cancel_batch_setup[0]  # Get processor from setup
+        processor, batch_id, batch_status = cancel_batch_setup
         await processor.cancel_batch(batch_id)
         
         remaining_jobs = []
@@ -165,8 +162,7 @@ class TestBatchProcessorBatchOperations:
         WHEN cancel_batch is called
         THEN it should preserve jobs for other batches in queue
         """
-        batch_id, batch_status = cancel_batch_setup
-        processor = cancel_batch_setup[0]  # Get processor from setup
+        processor, batch_id, batch_status = cancel_batch_setup
         await processor.cancel_batch(batch_id)
         
         remaining_jobs = []
@@ -204,7 +200,7 @@ class TestBatchProcessorBatchOperations:
             resource_usage={}
         )
         processor.active_batches[batch_id] = batch_status
-        return batch_id, batch_status
+        return processor, batch_id, batch_status
 
     @pytest.mark.asyncio
     async def test_cancel_completed_batch_returns_false(self, completed_batch_setup):
@@ -213,8 +209,7 @@ class TestBatchProcessorBatchOperations:
         WHEN cancel_batch is called
         THEN it should return False indicating batch already complete
         """
-        batch_id, batch_status = completed_batch_setup
-        processor = completed_batch_setup[0]  # Get processor from setup
+        processor, batch_id, batch_status = completed_batch_setup
         result = await processor.cancel_batch(batch_id)
         assert result is False
 
@@ -225,8 +220,7 @@ class TestBatchProcessorBatchOperations:
         WHEN cancel_batch is called
         THEN it should not modify the completed batch status
         """
-        batch_id, batch_status = completed_batch_setup
-        processor = completed_batch_setup[0]  # Get processor from setup
+        processor, batch_id, batch_status = completed_batch_setup
         original_end_time = batch_status.end_time
         await processor.cancel_batch(batch_id)
         assert batch_status.end_time == original_end_time

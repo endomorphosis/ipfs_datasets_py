@@ -76,11 +76,18 @@ class TestBatchProcessorWorkerProcessing:
     """Test class for worker processing and job handling methods in BatchProcessor."""
 
     @pytest.fixture
-    def processor(self):
+    def processor(self, mock_storage, mock_pdf_processor, mock_llm_optimizer, mock_graphrag_integrator):
         """Create a BatchProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_workers=4, max_memory_mb=2048)
-            return processor
+        processor = BatchProcessor(
+            max_workers=4, 
+            max_memory_mb=2048,
+            storage=mock_storage,
+            pdf_processor=mock_pdf_processor,
+            llm_optimizer=mock_llm_optimizer,
+            graphrag_integrator=mock_graphrag_integrator,
+            enable_audit=False
+        )
+        return processor
 
     def test_worker_loop_basic_functionality(self, processor):
         """

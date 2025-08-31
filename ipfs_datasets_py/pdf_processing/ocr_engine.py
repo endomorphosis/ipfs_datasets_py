@@ -416,6 +416,7 @@ class SuryaOCR(OCREngine):
             - Initialization may take 30-60 seconds on first run
             - Subsequent initializations are much faster using cached models
         """
+        self.name = "surya"
         try:
             # Import Surya components
             import surya
