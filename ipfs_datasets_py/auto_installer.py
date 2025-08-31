@@ -1,0 +1,493 @@
+"""
+Automated Dependency Installation System
+
+Provides cross-platform automated installation of dependencies to replace
+mock implementations with full functionality. Supports Linux, macOS, and Windows.
+"""
+import os
+import sys
+import platform
+import subprocess
+import importlib
+import logging
+from pathlib import Path
+from typing import Dict, List, Optional, Union, Tuple
+import warnings
+
+logger = logging.getLogger(__name__)
+
+
+class DependencyInstaller:
+    """Cross-platform dependency installer that replaces mock implementations"""
+    
+    def __init__(self, auto_install: bool = True, verbose: bool = False):
+        self.auto_install = auto_install
+        self.verbose = verbose
+        self.system = platform.system().lower()
+        self.architecture = platform.machine().lower()
+        self.python_version = sys.version_info
+        
+        # Track installed packages to avoid duplicate installations
+        self.installed_packages = set()
+        
+        # Package mappings for different systems
+        self.system_packages = {
+            'linux': {
+                'tesseract': 'tesseract-ocr',
+                'ffmpeg': 'ffmpeg',
+                'opencv': 'libopencv-dev',
+                'poppler': 'poppler-utils',
+            },
+            'darwin': {  # macOS
+                'tesseract': 'tesseract',
+                'ffmpeg': 'ffmpeg', 
+                'opencv': 'opencv',
+                'poppler': 'poppler',
+            },
+            'windows': {
+                'tesseract': 'tesseract',
+                'ffmpeg': 'ffmpeg',
+                'opencv': 'opencv',
+                'poppler': 'poppler-utils',
+            }
+        }
+        
+        # Python package specifications with fallbacks
+        self.python_packages = {
+            # Core ML/AI packages
+            'numpy': ['numpy>=1.21.0,<2.0.0'],
+            'pandas': ['pandas>=1.5.0,<3.0.0'],
+            'torch': ['torch>=1.9.0,<3.0.0', 'torch-cpu>=1.9.0'],
+            'transformers': ['transformers>=4.0.0,<5.0.0'],
+            'sentence-transformers': ['sentence-transformers>=2.2.0,<3.0.0'],
+            'datasets': ['datasets>=2.10.0,<3.0.0'],
+            
+            # PDF processing
+            'pymupdf': ['pymupdf>=1.24.0,<2.0.0', 'PyMuPDF>=1.24.0'],
+            'pdfplumber': ['pdfplumber>=0.10.0,<1.0.0'],
+            'pytesseract': ['pytesseract>=0.3.10,<1.0.0'],
+            'pillow': ['pillow>=10.0.0', 'PIL>=10.0.0'],
+            
+            # OCR and vision
+            'opencv-python': ['opencv-python>=4.5.0', 'opencv-contrib-python>=4.5.0'],
+            'surya-ocr': ['surya-ocr>=0.14.0'],
+            'easyocr': ['easyocr>=1.6.0'],
+            
+            # NLP
+            'nltk': ['nltk>=3.8.0,<4.0.0'],
+            'spacy': ['spacy>=3.4.0,<4.0.0'],
+            
+            # Vector stores
+            'faiss-cpu': ['faiss-cpu>=1.7.4,<2.0.0', 'faiss>=1.7.4'],
+            'qdrant-client': ['qdrant-client>=1.0.0'],
+            'elasticsearch': ['elasticsearch>=8.0.0,<9.0.0'],
+            
+            # Scientific computing
+            'scipy': ['scipy>=1.11.0,<2.0.0'],
+            'scikit-learn': ['scikit-learn>=1.3.0,<2.0.0'],
+            'networkx': ['networkx>=3.0.0,<4.0.0'],
+            
+            # LLM APIs
+            'openai': ['openai>=1.0.0,<2.0.0'],
+            'anthropic': ['anthropic>=0.50.0,<1.0.0'],
+            
+            # Web and API
+            'fastapi': ['fastapi>=0.100.0,<1.0.0'],
+            'uvicorn': ['uvicorn>=0.20.0,<1.0.0'],
+            'requests': ['requests>=2.25.0,<3.0.0'],
+            
+            # Data formats
+            'pyarrow': ['pyarrow>=15.0.0,<21.0.0'],
+            'pydantic': ['pydantic>=2.0.0,<3.0.0'],
+            'jsonschema': ['jsonschema>=4.0.0,<5.0.0'],
+            
+            # Media processing
+            'ffmpeg-python': ['ffmpeg-python>=0.2.0'],
+            'moviepy': ['moviepy>=1.0.0'],
+            
+            # Development
+            'pytest': ['pytest>=8.0.0,<9.0.0'],
+            'coverage': ['coverage>=7.0.0,<8.0.0'],
+        }
+
+    def detect_package_manager(self) -> str:
+        """Detect system package manager"""
+        if self.system == 'linux':
+            # Check for various Linux package managers
+            if self._command_exists('apt-get'):
+                return 'apt'
+            elif self._command_exists('yum'):
+                return 'yum'
+            elif self._command_exists('dnf'):
+                return 'dnf'
+            elif self._command_exists('pacman'):
+                return 'pacman'
+            elif self._command_exists('zypper'):
+                return 'zypper'
+        elif self.system == 'darwin':
+            if self._command_exists('brew'):
+                return 'brew'
+            elif self._command_exists('port'):
+                return 'macports'
+        elif self.system == 'windows':
+            if self._command_exists('choco'):
+                return 'chocolatey'
+            elif self._command_exists('scoop'):
+                return 'scoop'
+            elif self._command_exists('winget'):
+                return 'winget'
+        
+        return 'pip-only'
+
+    def _command_exists(self, command: str) -> bool:
+        """Check if a command exists in PATH"""
+        try:
+            subprocess.run([command, '--version'], 
+                         capture_output=True, check=False, timeout=5)
+            return True
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return False
+
+    def install_system_dependency(self, package_name: str) -> bool:
+        """Install system-level dependency"""
+        # Skip system dependency installation in sandboxed environments
+        if not self.auto_install or os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
+            if self.verbose:
+                logger.info(f"Skipping system dependency {package_name} in CI/sandbox environment")
+            return False
+            
+        package_manager = self.detect_package_manager()
+        
+        if package_name not in self.system_packages.get(self.system, {}):
+            if self.verbose:
+                logger.warning(f"No system package mapping for {package_name} on {self.system}")
+            return False
+            
+        system_package = self.system_packages[self.system][package_name]
+        
+        commands = {
+            'apt': ['sudo', 'apt-get', 'install', '-y', system_package],
+            'yum': ['sudo', 'yum', 'install', '-y', system_package],
+            'dnf': ['sudo', 'dnf', 'install', '-y', system_package],
+            'pacman': ['sudo', 'pacman', '-S', '--noconfirm', system_package],
+            'zypper': ['sudo', 'zypper', 'install', '-y', system_package],
+            'brew': ['brew', 'install', system_package],
+            'macports': ['sudo', 'port', 'install', system_package],
+            'chocolatey': ['choco', 'install', system_package, '-y'],
+            'scoop': ['scoop', 'install', system_package],
+            'winget': ['winget', 'install', system_package],
+        }
+        
+        if package_manager not in commands:
+            if self.verbose:
+                logger.warning(f"Unsupported package manager: {package_manager}")
+            return False
+            
+        try:
+            cmd = commands[package_manager]
+            if self.verbose:
+                logger.info(f"Installing system package {system_package} using {package_manager}")
+                
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                if self.verbose:
+                    logger.info(f"Successfully installed {system_package}")
+                return True
+            else:
+                if self.verbose:
+                    logger.warning(f"Failed to install {system_package}: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            if self.verbose:
+                logger.warning(f"Timeout installing {system_package}")
+            return False
+        except Exception as e:
+            if self.verbose:
+                logger.warning(f"Error installing {system_package}: {e}")
+            return False
+
+    def install_python_dependency(self, package_name: str, force_reinstall: bool = False) -> bool:
+        """Install Python dependency with fallback options"""
+        if package_name in self.installed_packages and not force_reinstall:
+            return True
+            
+        if package_name not in self.python_packages:
+            # Try direct pip install
+            return self._pip_install(package_name)
+            
+        packages_to_try = self.python_packages[package_name]
+        
+        for package_spec in packages_to_try:
+            if self._pip_install(package_spec):
+                self.installed_packages.add(package_name)
+                return True
+                
+        logger.error(f"Failed to install any variant of {package_name}")
+        return False
+
+    def _pip_install(self, package_spec: str) -> bool:
+        """Install package using pip"""
+        try:
+            if self.verbose:
+                logger.info(f"Installing {package_spec} with pip")
+                
+            result = subprocess.run([
+                sys.executable, '-m', 'pip', 'install', package_spec, '--quiet'
+            ], capture_output=True, text=True, timeout=600)
+            
+            if result.returncode == 0:
+                if self.verbose:
+                    logger.info(f"Successfully installed {package_spec}")
+                return True
+            else:
+                if self.verbose:
+                    logger.warning(f"Failed to install {package_spec}: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            logger.warning(f"Timeout installing {package_spec}")
+            return False
+        except Exception as e:
+            logger.warning(f"Error installing {package_spec}: {e}")
+            return False
+
+    def ensure_dependency(self, module_name: str, package_name: Optional[str] = None, 
+                         system_deps: Optional[List[str]] = None) -> Tuple[bool, Optional[object]]:
+        """
+        Ensure a dependency is available, installing if necessary
+        
+        Args:
+            module_name: Python module to import
+            package_name: PyPI package name (if different from module_name)
+            system_deps: List of system dependencies to install first
+            
+        Returns:
+            Tuple of (success, imported_module)
+        """
+        # First try to import
+        try:
+            module = importlib.import_module(module_name)
+            return True, module
+        except ImportError as e:
+            if not self.auto_install:
+                logger.warning(f"Module {module_name} not available and auto_install disabled")
+                return False, None
+                
+            if self.verbose:
+                logger.info(f"Module {module_name} not found, attempting to install")
+            
+            # Install system dependencies first
+            if system_deps:
+                for sys_dep in system_deps:
+                    self.install_system_dependency(sys_dep)
+            
+            # Install Python package
+            pkg_name = package_name or module_name
+            if self.install_python_dependency(pkg_name):
+                # Try importing again
+                try:
+                    module = importlib.import_module(module_name)
+                    if self.verbose:
+                        logger.info(f"Successfully installed and imported {module_name}")
+                    return True, module
+                except ImportError:
+                    logger.error(f"Failed to import {module_name} after installation")
+                    return False, None
+            else:
+                logger.error(f"Failed to install {pkg_name}")
+                return False, None
+
+    def install_graphrag_dependencies(self) -> bool:
+        """Install all dependencies needed for GraphRAG PDF processing"""
+        if self.verbose:
+            logger.info("Installing GraphRAG PDF processing dependencies...")
+            
+        # Core dependencies for GraphRAG
+        dependencies = [
+            # Core ML
+            ('numpy', 'numpy'),
+            ('pandas', 'pandas'), 
+            ('torch', 'torch'),
+            ('transformers', 'transformers'),
+            ('sentence_transformers', 'sentence-transformers'),
+            ('datasets', 'datasets'),
+            
+            # PDF processing
+            ('fitz', 'pymupdf', ['poppler']),  # PyMuPDF imports as 'fitz'
+            ('pdfplumber', 'pdfplumber'),
+            ('pytesseract', 'pytesseract', ['tesseract']),
+            ('PIL', 'pillow'),
+            
+            # OCR and vision
+            ('cv2', 'opencv-python'),
+            ('surya', 'surya-ocr'),
+            ('easyocr', 'easyocr'),
+            
+            # NLP
+            ('nltk', 'nltk'),
+            
+            # Vector stores
+            ('faiss', 'faiss-cpu'),
+            ('qdrant_client', 'qdrant-client'),
+            ('elasticsearch', 'elasticsearch'),
+            
+            # Scientific
+            ('scipy', 'scipy'),
+            ('sklearn', 'scikit-learn'),
+            ('networkx', 'networkx'),
+            
+            # LLM APIs
+            ('openai', 'openai'),
+            
+            # Data
+            ('pyarrow', 'pyarrow'),
+            ('pydantic', 'pydantic'),
+        ]
+        
+        success_count = 0
+        total_count = len(dependencies)
+        
+        for dep_info in dependencies:
+            module_name = dep_info[0]
+            package_name = dep_info[1] if len(dep_info) > 1 else module_name
+            system_deps = dep_info[2] if len(dep_info) > 2 else None
+            
+            success, _ = self.ensure_dependency(module_name, package_name, system_deps)
+            if success:
+                success_count += 1
+            
+        if self.verbose:
+            logger.info(f"Installed {success_count}/{total_count} GraphRAG dependencies")
+            
+        return success_count >= (total_count * 0.8)  # 80% success rate
+
+
+# Global installer instance
+_installer = None
+
+def get_installer() -> DependencyInstaller:
+    """Get global installer instance"""
+    global _installer
+    if _installer is None:
+        # Check environment variables for configuration
+        auto_install = os.getenv('IPFS_AUTO_INSTALL', 'true').lower() == 'true'
+        verbose = os.getenv('IPFS_INSTALL_VERBOSE', 'false').lower() == 'true'
+        _installer = DependencyInstaller(auto_install=auto_install, verbose=verbose)
+    return _installer
+
+
+def ensure_module(module_name: str, package_name: Optional[str] = None, 
+                  system_deps: Optional[List[str]] = None, 
+                  fallback_mock: Optional[object] = None, 
+                  required: bool = False) -> object:
+    """
+    Ensure a module is available, installing if necessary, with optional fallback
+    
+    Args:
+        module_name: Python module to import
+        package_name: PyPI package name (if different from module_name)  
+        system_deps: List of system dependencies to install first
+        fallback_mock: Mock object to return if installation fails
+        required: If True, raise ImportError on failure. If False, return None.
+        
+    Returns:
+        Imported module, fallback mock, or None
+    """
+    installer = get_installer()
+    success, module = installer.ensure_dependency(module_name, package_name, system_deps)
+    
+    if success:
+        return module
+    elif fallback_mock is not None:
+        if installer.verbose:
+            warnings.warn(f"Using mock implementation for {module_name} - install failed")
+        return fallback_mock
+    elif required:
+        raise ImportError(f"Failed to install and import {module_name}")
+    else:
+        return None
+
+
+def install_for_component(component: str) -> bool:
+    """Install dependencies for a specific component"""
+    installer = get_installer()
+    
+    if component == 'graphrag':
+        return installer.install_graphrag_dependencies()
+    elif component == 'pdf':
+        dependencies = [
+            ('fitz', 'pymupdf', ['poppler']),
+            ('pdfplumber', 'pdfplumber'),
+            ('pytesseract', 'pytesseract', ['tesseract']),
+            ('PIL', 'pillow'),
+        ]
+    elif component == 'ocr':
+        dependencies = [
+            ('cv2', 'opencv-python'),
+            ('surya', 'surya-ocr'),
+            ('easyocr', 'easyocr'),
+            ('pytesseract', 'pytesseract', ['tesseract']),
+        ]
+    elif component == 'ml':
+        dependencies = [
+            ('numpy', 'numpy'),
+            ('torch', 'torch'),
+            ('transformers', 'transformers'),
+            ('sentence_transformers', 'sentence-transformers'),
+        ]
+    elif component == 'vectors':
+        dependencies = [
+            ('faiss', 'faiss-cpu'),
+            ('qdrant_client', 'qdrant-client'),
+            ('elasticsearch', 'elasticsearch'),
+        ]
+    else:
+        logger.warning(f"Unknown component: {component}")
+        return False
+    
+    success_count = 0
+    for dep_info in dependencies:
+        module_name = dep_info[0]
+        package_name = dep_info[1] if len(dep_info) > 1 else module_name
+        system_deps = dep_info[2] if len(dep_info) > 2 else None
+        
+        success, _ = installer.ensure_dependency(module_name, package_name, system_deps)
+        if success:
+            success_count += 1
+    
+    return success_count >= len(dependencies)
+
+
+if __name__ == '__main__':
+    # CLI for testing dependency installation
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Install dependencies for IPFS datasets')
+    parser.add_argument('component', nargs='?', default='graphrag',
+                       help='Component to install deps for (graphrag, pdf, ocr, ml, vectors)')
+    parser.add_argument('--verbose', action='store_true', help='Verbose output')
+    parser.add_argument('--no-auto-install', action='store_true', 
+                       help='Disable auto installation')
+    
+    args = parser.parse_args()
+    
+    # Configure installer
+    installer = DependencyInstaller(
+        auto_install=not args.no_auto_install,
+        verbose=args.verbose
+    )
+    
+    # Set global installer
+    _installer = installer
+    
+    # Install for component
+    success = install_for_component(args.component)
+    
+    if success:
+        print(f"✅ Successfully installed dependencies for {args.component}")
+        sys.exit(0)
+    else:
+        print(f"❌ Failed to install some dependencies for {args.component}")
+        sys.exit(1)

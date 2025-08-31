@@ -17,25 +17,26 @@ import os
 from types import ModuleType
 import math
 
-# Import dependencies with graceful fallbacks
-try:
-    import tiktoken as tiktoken_module
-    HAVE_TIKTOKEN = True
-except ImportError:
-    tiktoken_module = None
-    HAVE_TIKTOKEN = False
+# Import dependencies with automated installation
+from ipfs_datasets_py.auto_installer import ensure_module
 
-try:
+# Install required dependencies
+tiktoken_module = ensure_module('tiktoken', 'tiktoken')
+HAVE_TIKTOKEN = tiktoken_module is not None
+
+transformers_module = ensure_module('transformers', 'transformers')
+if transformers_module:
     from transformers import AutoTokenizer
     HAVE_TRANSFORMERS = True
-except ImportError:
+else:
     AutoTokenizer = None
     HAVE_TRANSFORMERS = False
 
-try:
-    import numpy as np
+numpy = ensure_module('numpy', 'numpy')
+if numpy:
+    np = numpy
     HAVE_NUMPY = True
-except ImportError:
+else:
     # Mock numpy for basic functionality
     class MockNumpy:
         @staticmethod
@@ -47,21 +48,23 @@ except ImportError:
     np = MockNumpy()
     HAVE_NUMPY = False
 
-try:
+sentence_transformers_module = ensure_module('sentence_transformers', 'sentence-transformers')
+if sentence_transformers_module:
     from sentence_transformers import SentenceTransformer
     HAVE_SENTENCE_TRANSFORMERS = True
-except ImportError:
+else:
     SentenceTransformer = None
     HAVE_SENTENCE_TRANSFORMERS = False
 
-try:
+nltk_module = ensure_module('nltk', 'nltk')
+if nltk_module:
     import nltk
     from nltk.tokenize import sent_tokenize, word_tokenize
     from nltk.tag import pos_tag
     from nltk.chunk import ne_chunk
     from nltk.tree import Tree
     HAVE_NLTK = True
-except ImportError:
+else:
     nltk = None
     # Mock NLTK functions
     def sent_tokenize(text):
@@ -75,19 +78,26 @@ except ImportError:
     Tree = None
     HAVE_NLTK = False
 
-try:
-    import pydantic
-    HAVE_PYDANTIC = True
-except ImportError:
-    pydantic = None
-    HAVE_PYDANTIC = False
+pydantic = ensure_module('pydantic', 'pydantic')
+HAVE_PYDANTIC = pydantic is not None
 
-try:
-    import openai
-    HAVE_OPENAI = True
-except ImportError:
-    openai = None
-    HAVE_OPENAI = False
+openai = ensure_module('openai', 'openai')
+HAVE_OPENAI = openai is not None
+
+logger = logging.getLogger(__name__)
+missing_deps = []
+if not HAVE_TIKTOKEN: missing_deps.append('tiktoken')
+if not HAVE_TRANSFORMERS: missing_deps.append('transformers')
+if not HAVE_NUMPY: missing_deps.append('numpy')
+if not HAVE_SENTENCE_TRANSFORMERS: missing_deps.append('sentence-transformers')
+if not HAVE_NLTK: missing_deps.append('nltk')
+if not HAVE_PYDANTIC: missing_deps.append('pydantic')
+if not HAVE_OPENAI: missing_deps.append('openai')
+
+if missing_deps:
+    logger.warning(f"LLM optimizer dependencies partially available. Missing: {', '.join(missing_deps)}")
+else:
+    logger.info("✅ All LLM optimizer dependencies successfully installed and available")
 
 
 from ipfs_datasets_py.pdf_processing.classify_with_llm import classify_with_llm, ClassificationResult

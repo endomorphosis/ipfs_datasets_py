@@ -10,23 +10,21 @@ import logging
 import io
 from typing import Dict, List, Any
 
-# Import dependencies with fallbacks
-try:
-    import numpy as np
-    HAVE_NUMPY = True
-except ImportError:
-    # Create mock numpy
-    class MockNumpy:
-        @staticmethod
-        def array(data):
-            return list(data) if hasattr(data, '__iter__') else [data]
-    np = MockNumpy()
-    HAVE_NUMPY = False
+# Import dependencies with automated installation
+from ipfs_datasets_py.auto_installer import ensure_module
 
-try:
+# Install required dependencies
+numpy = ensure_module('numpy', 'numpy')
+np = numpy if numpy else type('MockNumpy', (), {
+    'array': staticmethod(lambda data: list(data) if hasattr(data, '__iter__') else [data])
+})()
+HAVE_NUMPY = numpy is not None
+
+cachetools_module = ensure_module('cachetools', 'cachetools')
+if cachetools_module:
     from cachetools import cached
     HAVE_CACHETOOLS = True
-except ImportError:
+else:
     # Mock cachetools.cached decorator
     def cached(*args, **kwargs):
         def decorator(func):
@@ -34,10 +32,11 @@ except ImportError:
         return decorator
     HAVE_CACHETOOLS = False
 
-try:
+pil_module = ensure_module('PIL', 'pillow')
+if pil_module:
     from PIL import Image
     HAVE_PIL = True
-except ImportError:
+else:
     # Mock PIL Image
     class MockImage:
         class Image:
@@ -60,10 +59,10 @@ except ImportError:
     Image.Image = MockImage.Image  # Add the nested attribute
     HAVE_PIL = False
 
-try:
-    import cv2
+cv2 = ensure_module('cv2', 'opencv-python')
+if cv2:
     HAVE_CV2 = True
-except ImportError:
+else:
     # Mock cv2
     class MockCV2:
         @staticmethod
@@ -77,6 +76,10 @@ except ImportError:
     HAVE_CV2 = False
 
 logger = logging.getLogger(__name__)
+if not HAVE_NUMPY or not HAVE_PIL or not HAVE_CV2:
+    logger.warning(f"OCR dependencies partially available: numpy={HAVE_NUMPY}, PIL={HAVE_PIL}, cv2={HAVE_CV2}")
+else:
+    logger.info("✅ All OCR dependencies successfully installed and available")
 
 
 

@@ -17,36 +17,65 @@ import multiprocessing
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError
 from ..embeddings.schema import EmbeddingResult, SearchResult, VectorStoreConfig, VectorStoreType
 
+# Import FAISS with automated dependency installation
+from ..auto_installer import ensure_module
 
 logger = logging.getLogger(__name__)
 
-class MockFaissIndex:
-    """Mock FAISS index for testing purposes."""
-
-    def __init__(self, dimension: int):
-        self.dimension = dimension
-        self.ntotal = 0
-        self.is_trained = True
-
-    def Index(self):
-        """Mock Index method."""
-        return self
-
-    def add(self, vectors):
-        """Mock add method."""
-        self.ntotal += len(vectors)
-
-    def search(self, query_vector, top_k):
-        """Mock search method."""
-        return [[1.0] * top_k], [[i for i in range(top_k)]]
-
-    def write_index(self, path):
-        """Mock write index method."""
-        pass
+# Install FAISS automatically
+faiss = ensure_module('faiss', 'faiss-cpu')
+if faiss:
+    HAVE_FAISS = True
+    logger.info("✅ FAISS successfully installed and available")
+else:
+    HAVE_FAISS = False
+    logger.warning("⚠️ FAISS installation failed, using mock implementation")
     
-    def read_index(self, path):
-        """Mock read index method."""
-        return self
+    # Create mock FAISS for fallback
+    class MockFaissIndex:
+        """Mock FAISS index for testing purposes."""
+
+        def __init__(self, dimension: int):
+            self.dimension = dimension
+            self.ntotal = 0
+            self.is_trained = True
+
+        def Index(self):
+            """Mock Index method."""
+            return self
+
+        def add(self, vectors):
+            """Mock add method."""
+            self.ntotal += len(vectors)
+
+        def search(self, query_vector, top_k):
+            """Mock search method."""
+            return [[1.0] * top_k], [[i for i in range(top_k)]]
+
+        def write_index(self, path):
+            """Mock write index method."""
+            pass
+        
+        def read_index(self, path):
+            """Mock read index method."""
+            return self
+    
+    # Create mock faiss module
+    class MockFaiss:
+        IndexFlatIP = MockFaissIndex
+        IndexFlatL2 = MockFaissIndex
+        IndexIVFFlat = MockFaissIndex
+        IndexHNSWFlat = MockFaissIndex
+        
+        @staticmethod
+        def write_index(index, path):
+            pass
+            
+        @staticmethod
+        def read_index(path):
+            return MockFaissIndex(768)
+    
+    faiss = MockFaiss()
 
 
 from typing import TypeAlias

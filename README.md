@@ -1082,9 +1082,75 @@ dashboard = AdminDashboard(
 dashboard.start()
 ```
 
-## 🚀 **NEW: Complete GraphRAG PDF Processing System**
+## 🎉 **NEW: Automated Dependency Installation System**
 
-IPFS Datasets Python now includes a **production-ready GraphRAG PDF processing pipeline** with comprehensive testing infrastructure (182+ tests) for intelligent document analysis and knowledge extraction.
+**🔧 Cross-platform | 🚀 Full functionality | 📦 No more mocks**
+
+IPFS Datasets Python now features an **intelligent automated dependency installation system** that replaces graceful degradations with real functionality. Dependencies are automatically installed across Linux, macOS, and Windows, ensuring complete GraphRAG PDF processing capabilities instead of None fallbacks.
+
+### 🔄 **Transformation: From Mocks to Real Functionality**
+
+```python
+# ❌ BEFORE: Graceful degradations with None fallbacks  
+import ipfs_datasets_py
+print(ipfs_datasets_py.PDFProcessor)       # None - no functionality
+print(ipfs_datasets_py.GraphRAGIntegrator) # None - no processing
+
+# ✅ AFTER: Full functionality with automated installation
+import ipfs_datasets_py as ids  
+processor = ids.PDFProcessor()             # ✅ Complete pipeline operational
+integrator = ids.GraphRAGIntegrator()      # ✅ Entity extraction working
+query_engine = ids.QueryEngine()          # ✅ Semantic search available
+```
+
+### 🌟 **Smart Installation Capabilities**
+
+| **Feature** | **Description** | **Platform** |
+|-------------|-----------------|--------------|
+| **🖥️ OS Detection** | Automatic Linux/macOS/Windows detection | ✅ Universal |
+| **📦 Package Managers** | apt, yum, dnf, brew, choco, winget support | ✅ Auto-detected |
+| **🧠 Intelligent Fallbacks** | Multiple package variants tried automatically | ✅ Robust |
+| **⚡ On-demand Installation** | Dependencies installed when needed | ✅ Efficient |
+| **🔧 Environment Aware** | CI/sandbox detection and safe defaults | ✅ Smart |
+
+### 🛠️ **Installation Methods**
+
+#### **Method 1: Enhanced Cross-Platform Installer (Recommended)**
+```bash
+git clone https://github.com/endomorphosis/ipfs_datasets_py.git
+cd ipfs_datasets_py
+chmod +x install.sh && ./install.sh    # Linux/macOS
+# install.bat                           # Windows
+```
+
+#### **Method 2: Import-Time Auto-Installation**
+```python
+# Just import - dependencies installed automatically!
+import ipfs_datasets_py  # Triggers intelligent dependency management
+```
+
+#### **Method 3: Component-Specific Installation**
+```python
+from ipfs_datasets_py.auto_installer import install_for_component
+
+install_for_component('graphrag')  # Complete PDF processing + GraphRAG  
+install_for_component('ocr')       # Multi-engine OCR (Surya, Tesseract, EasyOCR)
+install_for_component('vectors')   # Vector stores (FAISS, Qdrant, Elasticsearch)
+install_for_component('ml')        # ML stack (transformers, torch, sentence-transformers)
+```
+
+#### **Method 4: Configuration Control**
+```bash
+# Control behavior with environment variables
+export IPFS_AUTO_INSTALL=true       # Enable auto-installation (default)
+export IPFS_INSTALL_VERBOSE=true    # Show installation progress
+
+python -c "import ipfs_datasets_py; print('✅ Ready!')"
+```
+
+## 🚀 **Complete GraphRAG PDF Processing System**
+
+**🎯 182+ tests | 📊 5-phase implementation | 🔧 Real dependencies auto-installed**
 
 ### 🎯 **What's New: 5-Phase Implementation Complete**
 

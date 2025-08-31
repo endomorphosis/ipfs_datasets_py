@@ -18,41 +18,29 @@ from dataclasses import dataclass
 import traceback
 
 
-try:
-    import pydantic
-    from pydantic import (
-        BaseModel, 
-        Field,
-        ValidationError
-    )
-    HAVE_PYDANTIC = True
-except ImportError:
-    pydantic = None
-    BaseModel = object
-    Field = lambda **kwargs: None
-    ValidationError = Exception
-    HAVE_PYDANTIC = False
+# Import with automated dependency installation
+from ipfs_datasets_py.auto_installer import ensure_module
 
-try:
-    import pymupdf  # PyMuPDF
-    HAVE_PYMUPDF = True
-except ImportError:
-    pymupdf = None
-    HAVE_PYMUPDF = False
+# Install PDF processing dependencies automatically
+pydantic = ensure_module('pydantic', 'pydantic')
+BaseModel = pydantic.BaseModel if pydantic else object
+Field = pydantic.Field if pydantic else (lambda **kwargs: None)
+ValidationError = pydantic.ValidationError if pydantic else Exception
+HAVE_PYDANTIC = pydantic is not None
 
-try:
-    import pdfplumber
-    HAVE_PDFPLUMBER = True
-except ImportError:
-    pdfplumber = None
-    HAVE_PDFPLUMBER = False
+pymupdf = ensure_module('fitz', 'pymupdf', system_deps=['poppler'])
+HAVE_PYMUPDF = pymupdf is not None
 
-# If we don't have the required PDF libraries, provide mock functionality
-if not all([HAVE_PYDANTIC, HAVE_PYMUPDF, HAVE_PDFPLUMBER]):
-    print(f"Info: Using mock PDF processing (missing: {'pydantic ' if not HAVE_PYDANTIC else ''}{'pymupdf ' if not HAVE_PYMUPDF else ''}{'pdfplumber' if not HAVE_PDFPLUMBER else ''})")
-    USE_MOCK_PDF = True
+pdfplumber = ensure_module('pdfplumber', 'pdfplumber')
+HAVE_PDFPLUMBER = pdfplumber is not None
+
+# All dependencies should now be available (or installation attempted)
+USE_MOCK_PDF = not all([HAVE_PYDANTIC, HAVE_PYMUPDF, HAVE_PDFPLUMBER])
+if USE_MOCK_PDF:
+    logger = logging.getLogger(__name__)
+    logger.warning("Some PDF processing dependencies could not be installed, using limited functionality")
 else:
-    USE_MOCK_PDF = False
+    print("✅ PDF processing dependencies successfully installed and available")
 
 
 from ipfs_datasets_py.ipld import IPLDStorage

@@ -1,22 +1,31 @@
 """
 IPFS Datasets Python
 
-A unified interface for data processing and distribution across decentralized networks.
+A unified interface for data processing and distribution across decentralized networks
+with automated dependency installation for full functionality.
 """
 
-# Main entry points
+# Import automated dependency installer
+from .auto_installer import get_installer, ensure_module
+
+# Initialize installer with environment configuration
+installer = get_installer()
+
+# Main entry points with automated installation
 try:
     from .ipfs_datasets import ipfs_datasets_py
     HAVE_IPFS_DATASETS = True
 except ImportError:
     HAVE_IPFS_DATASETS = False
 
-# Re-export key functions
-try:
+# Re-export key functions with automated installation
+datasets_module = ensure_module('datasets', 'datasets', required=False)
+if datasets_module:
     from datasets import load_dataset
     HAVE_LOAD_DATASET = True
-except ImportError:
+else:
     HAVE_LOAD_DATASET = False
+    load_dataset = None
 
 
 # Use conditional imports to handle missing modules gracefully
@@ -228,45 +237,76 @@ try:
 except ImportError:
     HAVE_IPWB = False
 
+# PDF Processing Components with automated dependency installation
+if installer.auto_install:
+    print("🔧 Installing PDF processing dependencies...")
+    from .auto_installer import install_for_component
+    install_for_component('pdf')
+    install_for_component('ocr')
+
 try:
     from .pdf_processing import PDFProcessor
     HAVE_PDF_PROCESSOR = True
-except ImportError:
+    if installer.verbose:
+        print("✅ PDFProcessor successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ PDFProcessor installation failed: {e}")
     PDFProcessor = None
     HAVE_PDF_PROCESSOR = False
 
 try:
     from .pdf_processing import MultiEngineOCR
     HAVE_MULTI_ENGINE_OCR = True
-except ImportError:
+    if installer.verbose:
+        print("✅ MultiEngineOCR successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ MultiEngineOCR installation failed: {e}")
     MultiEngineOCR = None
     HAVE_MULTI_ENGINE_OCR = False
 
 try:
     from .pdf_processing import LLMOptimizer
     HAVE_LLM_OPTIMIZER = True
-except ImportError:
+    if installer.verbose:
+        print("✅ LLMOptimizer successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ LLMOptimizer installation failed: {e}")
     LLMOptimizer = None
     HAVE_LLM_OPTIMIZER = False
 
 try:
     from .pdf_processing import GraphRAGIntegrator
     HAVE_GRAPHRAG_INTEGRATOR = True
-except ImportError:
+    if installer.verbose:
+        print("✅ GraphRAGIntegrator successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ GraphRAGIntegrator installation failed: {e}")
     GraphRAGIntegrator = None
     HAVE_GRAPHRAG_INTEGRATOR = False
 
 try:
     from .pdf_processing import QueryEngine
     HAVE_QUERY_ENGINE = True
-except ImportError:
+    if installer.verbose:
+        print("✅ QueryEngine successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ QueryEngine installation failed: {e}")
     QueryEngine = None
     HAVE_QUERY_ENGINE = False
 
 try:
     from .pdf_processing import BatchProcessor
     HAVE_BATCH_PROCESSOR = True
-except ImportError:
+    if installer.verbose:
+        print("✅ BatchProcessor successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ BatchProcessor installation failed: {e}")
     BatchProcessor = None
     HAVE_BATCH_PROCESSOR = False
 
