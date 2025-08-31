@@ -7,9 +7,13 @@
         "-s",
         "./tests",
         "-p",
-        "test_*.py"
+        "test_*.py",
     ],
     "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "-n",
+        "12",
+    ],
     "python.testing.unittestEnabled": false,
     "cSpell.words": [
         "aiohttp",

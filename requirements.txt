@@ -9,6 +9,8 @@ requests>=2.25.0,<3.0.0
 # Testing framework
 pytest>=7.3.1,<9.0.0
 pytest-cov>=4.1.0,<6.0.0
+pytest-parallel>=0.1.1
+pytest-xdist>=3.8.0
 
 # Basic utilities
 tqdm>=4.60.0,<5.0.0
@@ -43,6 +45,9 @@ toml>=0.10.2
 
 # For testing only
 Faker>=37.4.2
+reportlab>=4.4.3
+pyfakefs
+moviepy
 
 # Add these one by one after basic setup works:
 # datasets>=2.10.0,<3.0.0

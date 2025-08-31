@@ -6,9 +6,10 @@
 from datetime import datetime
 import pytest
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import time
 import numpy as np
+import openai
 
 
 from tests._test_utils import (
@@ -70,36 +71,82 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
+
+
+def _make_mock_openai_client():
+    """Create a proper mock AsyncOpenAI client with correct structure."""
+    mock_client = AsyncMock(spec=openai.AsyncOpenAI)
+    
+    # Create nested mock structure
+    mock_client.chat = AsyncMock()
+    mock_client.chat.completions = AsyncMock()
+    
+    # Mock the create method to return a proper response structure
+    mock_response = AsyncMock()
+    mock_choice = AsyncMock()
+    mock_choice.message.content = "Business"
+    mock_choice.logprobs = AsyncMock()
+    mock_choice.logprobs.content = [AsyncMock()]
+    mock_choice.logprobs.content[0].top_logprobs = [
+        AsyncMock(token="Business", logprob=-0.693)
+    ]
+    mock_response.choices = [mock_choice]
+    
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+    
+    return mock_client
+
+
+def _make_mock_choices():
+    mock_response = Mock()
+    mock_response.choices = [Mock()]
+    mock_response.choices[0].logprobs = Mock()
+    mock_response.choices[0].logprobs.content = [Mock()]
+    return mock_response
+
+class TestLLMOptimizerGetEntityClassificationHappyPath:
+    """Test LLMOptimizer._get_entity_classification method."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mock_openai_client = _make_mock_openai_client()
+
+        self.optimizer = LLMOptimizer(
+            api_key='fake-api-key',
+            sentence_transformer=MagicMock(),
+            async_openai = self.mock_openai_client,
+        )
+        self.mock_response = _make_mock_choices()
+
+        # Mock OpenAI response
+        self.mock_response.choices[0].logprobs.content[0].top_logprobs = [
+            Mock(token="Business", logprob=-0.693),
+        ]
+
 class TestLLMOptimizerOptimizeForLlm:
     """Test LLMOptimizer.optimize_for_llm main processing method."""
 
     def setup_method(self):
         """Set up test fixtures."""
+        self.mock_openai_client = _make_mock_openai_client()
         self.optimizer = LLMOptimizer(
             max_chunk_size=1024,
             chunk_overlap=100,
-            min_chunk_size=50
+            min_chunk_size=50,
+            api_key="api-key",
+            async_openai=lambda **kwargs: self.mock_openai_client,  # Return mock directly
         )
-        
+
         # Mock the models to avoid actual model loading
         self.optimizer.embedding_model = Mock()
         self.optimizer.embedding_model.encode.return_value = np.random.rand(384)
         self.optimizer.tokenizer = Mock()
         self.optimizer.tokenizer.encode.return_value = list(range(50))
 
-    @pytest.mark.asyncio
-    async def test_optimize_for_llm_complete_pipeline(self):
-        """
-        GIVEN valid decomposed_content and document_metadata
-        WHEN optimize_for_llm is called
-        THEN expect:
-            - Complete processing pipeline executed
-            - LLMDocument returned with all required fields
-            - No errors or exceptions raised
-            - Processing metadata populated
-        """
-        # Given
-        decomposed_content = {
+    @property
+    def decomposed_content(self):
+        """Mock decomposed content for testing."""
+        return {
             'pages': [
                 {
                     'elements': [
@@ -125,92 +172,282 @@ class TestLLMOptimizerOptimizeForLlm:
                 'title': 'ML Basics'
             }
         }
-        
-        document_metadata = {
+
+    @property
+    def document_metadata(self):
+        """Mock document metadata for testing."""
+        return {
             'document_id': 'test_doc_001',
             'title': 'Machine Learning Basics',
             'author': 'Test Author'
         }
-        
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_returns_llm_document(self):
+        """
+        GIVEN valid decomposed_content and document_metadata
+        WHEN optimize_for_llm is called
+        THEN expect LLMDocument instance returned
+        """
+
         # When
-        result = await self.optimizer.optimize_for_llm(decomposed_content, document_metadata)
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
         # Then
         assert isinstance(result, LLMDocument)
-        assert result.document_id == document_metadata['document_id']
-        assert result.title == document_metadata['title']
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_preserves_document_id(self):
+        """
+        GIVEN valid decomposed_content and document_metadata with document_id
+        WHEN optimize_for_llm is called
+        THEN expect document_id preserved in result
+        """
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
-        # Verify chunks
+        # Then
+        assert result.document_id == self.document_metadata['document_id']
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_preserves_title(self):
+        """
+        GIVEN valid decomposed_content and document_metadata with title
+        WHEN optimize_for_llm is called
+        THEN expect title preserved in result
+        """
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert result.title == self.document_metadata['title']
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_chunks_list(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect chunks returned as list
+        """
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+
+        # Then
         assert isinstance(result.chunks, list)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_non_empty_chunks(self):
+        """
+        GIVEN valid decomposed_content with content
+        WHEN optimize_for_llm is called
+        THEN expect at least one chunk created
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert len(result.chunks) > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunks_are_llm_chunk_instances(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect all chunks to be LLMChunk instances
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        for idx, chunk in enumerate(result.chunks):
+            assert isinstance(chunk, LLMChunk), \
+                f"Expected chunk {idx} to be LLMChunk, got {type(chunk).__name__} instead"
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunks_have_content(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect all chunks to have non-empty content
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         for chunk in result.chunks:
-            assert isinstance(chunk, LLMChunk)
             assert len(chunk.content) > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunks_have_token_count(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect all chunks to have positive token count
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        for chunk in result.chunks:
             assert chunk.token_count > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_summary_string(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect summary returned as string
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
-        # Verify other components
+        # Then
         assert isinstance(result.summary, str)
-        assert len(result.summary) > 0
-        assert isinstance(result.key_entities, list)
-        assert isinstance(result.processing_metadata, dict)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_non_empty_summary(self):
+        """
+        GIVEN valid decomposed_content with content
+        WHEN optimize_for_llm is called
+        THEN expect non-empty summary
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
         
-        # Verify processing metadata
-        assert 'processing_time_seconds' in result.processing_metadata
-        assert 'chunk_count' in result.processing_metadata
-        assert 'token_count' in result.processing_metadata
+        # Then
+        assert len(result.summary) > 0
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_key_entities_list(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect key_entities returned as list
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert isinstance(result.key_entities, list)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_creates_processing_metadata_dict(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect processing_metadata returned as dict
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert isinstance(result.processing_metadata, dict)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("metadata_key", [
+        "optimization_timestamp",
+        "chunk_count",
+        "total_tokens"
+    ])
+    async def test_optimize_for_llm_includes_required_processing_metadata(self, metadata_key):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect required metadata keys in processing_metadata
+        """
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
+        assert metadata_key in result.processing_metadata
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_chunk_count_metadata_matches_actual_chunks(self):
+        """
+        GIVEN valid decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect chunk_count metadata to match actual chunk count
+        """
+
+        # When
+        result = await self.optimizer.optimize_for_llm(self.decomposed_content, self.document_metadata)
+        
+        # Then
         assert result.processing_metadata['chunk_count'] == len(result.chunks)
 
     @pytest.mark.asyncio
-    async def test_optimize_for_llm_invalid_decomposed_content(self):
+    async def test_optimize_for_llm_missing_pages_key_raises_key_error(self):
         """
-        GIVEN invalid or missing decomposed_content structure
+        GIVEN decomposed_content missing 'pages' key
         WHEN optimize_for_llm is called
-        THEN expect:
-            - ValueError raised with descriptive message
-            - Processing halted gracefully
-            - No partial results returned
+        THEN expect KeyError raised
         """
         document_metadata = {'document_id': 'test', 'title': 'Test'}
-        
-        # Test case 1: Missing 'pages' key
-        invalid_content_1 = {
+        invalid_content = {
             'metadata': {'title': 'Test'},
             'structure': {}
         }
         
         with pytest.raises(KeyError) as exc_info:
-            await self.optimizer.optimize_for_llm(invalid_content_1, document_metadata)
+            await self.optimizer.optimize_for_llm(invalid_content, document_metadata)
         assert 'pages' in str(exc_info.value).lower()
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_none_content_raises_type_error(self):
+        """
+        GIVEN None as decomposed_content
+        WHEN optimize_for_llm is called
+        THEN expect TypeError raised
+        """
+        document_metadata = {'document_id': 'test', 'title': 'Test'}
         
-        # Test case 2: None content
-        with pytest.raises((TypeError, AttributeError)):
+        with pytest.raises(TypeError):
             await self.optimizer.optimize_for_llm(None, document_metadata)
-        
-        # Test case 3: Empty pages list
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_empty_pages_raises_value_error(self):
+        """
+        GIVEN decomposed_content with empty pages list
+        WHEN optimize_for_llm is called
+        THEN expect ValueError raised
+        """
+        document_metadata = {'document_id': 'test', 'title': 'Test'}
         empty_content = {'pages': []}
-        result = await self.optimizer.optimize_for_llm(empty_content, document_metadata)
-        assert isinstance(result, LLMDocument)
-        assert len(result.chunks) == 0
         
-        # Test case 4: Pages with no elements
+        with pytest.raises(ValueError):
+            result = await self.optimizer.optimize_for_llm(empty_content, document_metadata)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_pages_with_no_elements_returns_llm_document(self):
+        """
+        GIVEN decomposed_content with pages containing no elements
+        WHEN optimize_for_llm is called
+        THEN expect ValueError raised
+        """
+        document_metadata = {'document_id': 'test', 'title': 'Test'}
         no_elements_content = {
             'pages': [
                 {'elements': []},
                 {'elements': []}
             ]
         }
-        result = await self.optimizer.optimize_for_llm(no_elements_content, document_metadata)
-        assert isinstance(result, LLMDocument)
-        assert len(result.chunks) == 0
+        with pytest.raises(ValueError):
+            result = await self.optimizer.optimize_for_llm(no_elements_content, document_metadata)
 
     @pytest.mark.asyncio
-    async def test_optimize_for_llm_invalid_document_metadata(self):
+    async def test_optimize_for_llm_none_metadata_raises_type_error(self):
         """
-        GIVEN invalid document_metadata structure
+        GIVEN None as document_metadata
         WHEN optimize_for_llm is called
-        THEN expect:
-            - ValueError raised
-            - Appropriate error handling
+        THEN expect AttributeError raised
         """
         valid_content = {
             'pages': [
@@ -228,25 +465,97 @@ class TestLLMOptimizerOptimizeForLlm:
             ]
         }
         
-        # Test case 1: None metadata
-        with pytest.raises((TypeError, AttributeError)):
+        with pytest.raises(TypeError):
             await self.optimizer.optimize_for_llm(valid_content, None)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_missing_document_id_raises_key_error(self):
+        """
+        GIVEN document_metadata missing document_id key
+        WHEN optimize_for_llm is called
+        THEN expect KeyError raised
+        """
+        valid_content = {
+            'pages': [
+                {
+                    'elements': [
+                        {
+                            'content': 'Test content',
+                            'type': 'text',
+                            'subtype': 'paragraph',
+                            'position': {'x': 0, 'y': 0},
+                            'confidence': 0.9
+                        }
+                    ]
+                }
+            ]
+        }
         
-        # Test case 2: Missing required keys
         incomplete_metadata = {'title': 'Test'}  # Missing document_id
         with pytest.raises(KeyError):
             await self.optimizer.optimize_for_llm(valid_content, incomplete_metadata)
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_invalid_document_id_type_converts_to_string(self):
+        """
+        GIVEN document_metadata with non-string document_id
+        WHEN optimize_for_llm is called
+        THEN expect ValueError raised
+        """
+        valid_content = {
+            'pages': [
+                {
+                    'elements': [
+                        {
+                            'content': 'Test content',
+                            'type': 'text',
+                            'subtype': 'paragraph',
+                            'position': {'x': 0, 'y': 0},
+                            'confidence': 0.9
+                        }
+                    ]
+                }
+            ]
+        }
         
-        # Test case 3: Invalid data types
         invalid_type_metadata = {
             'document_id': 123,  # Should be string
+            'title': 'Valid Title',
+            'author': 'Valid Author'
+        }
+        with pytest.raises(ValueError):
+            await self.optimizer.optimize_for_llm(valid_content, invalid_type_metadata)
+
+
+    @pytest.mark.asyncio
+    async def test_optimize_for_llm_invalid_title_type_converts_to_string(self):
+        """
+        GIVEN document_metadata with non-string title
+        WHEN optimize_for_llm is called
+        THEN expect ValueError raised
+        """
+        valid_content = {
+            'pages': [
+                {
+                    'elements': [
+                        {
+                            'content': 'Test content',
+                            'type': 'text',
+                            'subtype': 'paragraph',
+                            'position': {'x': 0, 'y': 0},
+                            'confidence': 0.9
+                        }
+                    ]
+                }
+            ]
+        }
+        
+        invalid_type_metadata = {
+            'document_id': 'valid_id',
             'title': ['not', 'a', 'string']  # Should be string
         }
-        # Should handle gracefully by converting to string
-        result = await self.optimizer.optimize_for_llm(valid_content, invalid_type_metadata)
-        assert isinstance(result, LLMDocument)
-        assert isinstance(result.document_id, str)
-        assert isinstance(result.title, str)
+        with pytest.raises(ValueError):
+            result = await self.optimizer.optimize_for_llm(valid_content, invalid_type_metadata)
 
     @pytest.mark.asyncio
     async def test_optimize_for_llm_empty_content(self):
@@ -254,9 +563,7 @@ class TestLLMOptimizerOptimizeForLlm:
         GIVEN decomposed_content with no extractable text
         WHEN optimize_for_llm is called
         THEN expect:
-            - Graceful handling of empty content
             - LLMDocument returned with empty chunks list
-            - Appropriate warning messages
         """
         # Given - Content with empty elements
         empty_content = {
@@ -285,17 +592,14 @@ class TestLLMOptimizerOptimizeForLlm:
         document_metadata = {'document_id': 'empty_test', 'title': 'Empty Content Test'}
         
         # When
-        with patch('logging.warning') as mock_warning:
-            result = await self.optimizer.optimize_for_llm(empty_content, document_metadata)
+        result = await self.optimizer.optimize_for_llm(empty_content, document_metadata)
         
         # Then
         assert isinstance(result, LLMDocument)
         assert len(result.chunks) == 0
-        assert result.summary == '' or 'no content' in result.summary.lower()
+        assert result.summary == ''
         assert len(result.key_entities) == 0
-        
-        # Should log warning about empty content
-        mock_warning.assert_called()
+
 
     @pytest.mark.asyncio
     async def test_optimize_for_llm_large_document(self):

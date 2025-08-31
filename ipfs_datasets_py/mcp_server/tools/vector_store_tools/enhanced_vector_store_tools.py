@@ -3,10 +3,16 @@
 import logging
 import asyncio
 from typing import Dict, Any, List, Optional, Union
-from ...validators import validator, ValidationError
-from ...monitoring import metrics_collector
-from ..tool_wrapper import EnhancedBaseMCPTool
 
+from ipfs_datasets_py.mcp_server.tools.validators import (
+    validator, ValidationError
+)
+# from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import metrics_collector
+
+from ...monitoring import metrics_collector
+from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import (
+    EnhancedBaseMCPTool
+)
 logger = logging.getLogger(__name__)
 
 class MockVectorStoreService:

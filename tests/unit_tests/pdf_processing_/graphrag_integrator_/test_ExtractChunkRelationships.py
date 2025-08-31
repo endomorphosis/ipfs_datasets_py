@@ -66,12 +66,14 @@ try:
     import numpy as np
 
     from ipfs_datasets_py.ipld import IPLDStorage
-    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk, LLMChunkMetadata
 except ImportError as e:
     raise ImportError(f"Could into import the module's dependencies: {e}") 
 
 
-
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
+    LLMChunkMetadataTestDataFactory as MetadataFactory
+)
 
 class TestExtractChunkRelationships:
     """Test class for GraphRAGIntegrator._extract_chunk_relationships method."""
@@ -80,6 +82,11 @@ class TestExtractChunkRelationships:
     def integrator(self):
         """Create a GraphRAGIntegrator instance for testing."""
         return GraphRAGIntegrator()
+
+    @property
+    def sample_metadata(self):
+        """Create sample metadata for LLMChunk objects."""
+        return LLMChunkMetadata(**MetadataFactory.create_valid_baseline_data())
 
     @pytest.fixture
     def sample_chunk(self):
@@ -90,8 +97,8 @@ class TestExtractChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=18,
-            semantic_types={"text"},
-            metadata={}
+            semantic_types="text",
+            metadata=self.sample_metadata,
         )
 
     @pytest.fixture
@@ -267,8 +274,8 @@ class TestExtractChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=7,
-            semantic_types={"text"},
-            metadata={}
+            semantic_types="text",
+            metadata=self.sample_metadata
         )
         
         entities = [
@@ -449,8 +456,8 @@ class TestExtractChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=10,
-            semantic_types={"text"},
-            metadata={}
+            semantic_types="text",
+            metadata=self.sample_metadata
         )
         
         entities = [
@@ -551,8 +558,8 @@ class TestExtractChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=1,
-            semantic_types={"text"},
-            metadata={}
+            semantic_types="text",
+            metadata=self.sample_metadata
         )
         
         result = await integrator._extract_chunk_relationships(sample_entities, empty_chunk)
@@ -577,8 +584,8 @@ class TestExtractChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=len(content.split()),
-            semantic_types={"text"},
-            metadata={}
+            semantic_types="text",
+            metadata=self.sample_metadata
         )
         
         entities = [
@@ -611,8 +618,8 @@ class TestExtractChunkRelationships:
             source_page=1,
             source_elements=["paragraph"],
             token_count=9,
-            semantic_types={"text"},
-            metadata={}
+            semantic_types="text",
+            metadata=self.sample_metadata
         )
         
         entities = [

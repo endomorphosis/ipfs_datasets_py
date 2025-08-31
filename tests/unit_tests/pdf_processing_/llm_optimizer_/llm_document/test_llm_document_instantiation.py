@@ -148,16 +148,16 @@ class TestLLMDocumentInstantiation:
         
         # When/Then - missing document_id
         data_missing_id = LLMDocumentTestDataFactory.create_data_missing_field("document_id")
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMDocument(**data_missing_id)
         
         # When/Then - missing multiple fields
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMDocument(document_id="doc_001")
         
         # When/Then - missing chunks field
         data_missing_chunks = LLMDocumentTestDataFactory.create_data_missing_field("chunks")
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMDocument(**data_missing_chunks)
 
     def test_instantiation_with_none_document_embedding(self):

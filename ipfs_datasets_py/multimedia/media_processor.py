@@ -4,12 +4,69 @@ Media processor that coordinates between different multimedia libraries.
 This module provides a unified interface for processing multimedia content
 using various backends like FFmpeg and yt-dlp.
 """
+from __future__ import annotations
+import asyncio
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-from .ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
-from .ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
+try:
+    from pydantic import BaseModel, Field, NonNegativeFloat, NonNegativeInt, FilePath
+except ImportError:
+    raise ImportError("pydantic required for MediaProcessor. Please install it with 'pip install pydantic'.")
+
+
+from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
+from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
+
+
+class MediaProcessorMetadata(BaseModel):
+    """
+    Metadata model for MediaProcessor operations.
+
+    Attributes:
+        output_path (str): Path to the output media file.
+        filesize (NonNegativeInt): Size of the media file in bytes.
+        format (str): Format/container type of the media file.
+        title (str): Title of the media content. Defaults to "[Unknown Title]".
+        duration (NonNegativeFloat): Duration of the media in seconds. Defaults to 0.0.
+        resolution (str): Resolution of the media (e.g., "1920x1080"). Defaults to "unknown".
+        converted_path (Optional[FilePath]): Path to converted file if conversion was performed. Defaults to None.
+        conversion_result (Optional[Dict[str, Any]]): Result metadata from conversion operation. Defaults to None.
+    """
+    output_path: str
+    filesize: NonNegativeInt
+    format: str
+    title: str = "[Unknown Title]"
+    duration: NonNegativeFloat = 0.0
+    resolution: str = "unknown"
+    converted_path: Optional[FilePath] = None  # Path to converted file if applicable
+    conversion_result: Optional[Dict[str, Any]] = None  # Result of conversion operation if applicable
+
+
+CORE_METADATA_FIELDS = [
+    "output_path", "title", "duration", "filesize", "format", "resolution"
+]
+
+OPTIONAL_METADATA_FIELDS = [
+    "converted_path", "conversion_result"
+]
+
+ALL_METADATA_FIELDS = CORE_METADATA_FIELDS + OPTIONAL_METADATA_FIELDS
+
+# Weighted completeness: core fields = 0.85 weight, optional fields = 0.15 weight
+CORE_WEIGHT = 0.85
+OPTIONAL_WEIGHT = 0.15
+COMPLETENESS_THRESHOLD = 0.90  # Reduced from 0.98 for practical deployment scenarios
+
+# Metadata field defaults for graceful degradation
+METADATA_DEFAULTS = {
+    "title": "[Unknown Title]",  # Fallback when both video title and filename are unavailable
+    "duration": 0.0,             # Zero duration for streams/unknown
+    "resolution": "unknown",     # String format for undetectable resolution
+    "converted_path": None,      # Explicit None when no conversion
+    "conversion_result": None    # Explicit None when no conversion
+}
 
 
 
@@ -19,7 +76,7 @@ def make_media_processor(
     logger: logging.Logger = logging.getLogger(__name__),
     ytdlp: Optional[YtDlpWrapper] = None,
     ffmpeg: Optional[FFmpegWrapper] = None
-) -> 'MediaProcessor':
+    ) -> 'MediaProcessor':
     """
     Factory function to create a MediaProcessor instance.
 
@@ -135,7 +192,7 @@ class MediaProcessor:
                 logger: logging.Logger =  logging.getLogger(__name__),
                 ytdlp: Optional[YtDlpWrapper] = None,
                 ffmpeg: Optional[FFmpegWrapper] = None
-                ) -> None:
+        ) -> None:
         """
         Initialize the MediaProcessor with specified configuration options.
 
@@ -152,21 +209,26 @@ class MediaProcessor:
             enable_logging (bool, optional): Enable detailed logging for debugging and monitoring.
                 When True, logs initialization status, backend availability, operation progress,
                 and error details to the configured logger. Defaults to True.
+            logger (logging.Logger, optional): Logger instance for logging messages.
+                If None, uses the default logger. Defaults to logging.getLogger(__name__).
+            ytdlp (Optional[YtDlpWrapper], optional): Pre-initialized YtDlpWrapper instance.
+            ffmpeg (Optional[FFmpegWrapper], optional): Pre-initialized FFmpegWrapper instance.
 
-        Attributes initialized:
+        Attributes set:
             default_output_dir (Path): Resolved absolute path for default output directory.
                 Created from provided path or current working directory if None.
             enable_logging (bool): Flag indicating whether detailed logging is enabled.
             ytdlp (Optional[YtDlpWrapper]): yt-dlp wrapper instance for video downloading.
-                Initialized only if yt-dlp is available, otherwise None.
+                Set only if YtDlpWrapper instance is provided, otherwise None.
             ffmpeg (Optional[FFmpegWrapper]): FFmpeg wrapper instance for media conversion.
-                Initialized only if FFmpeg is available, otherwise None.
+                Set only if FFmpegWrapper instance is provided is available, otherwise None.
 
         Raises:
             OSError: If the default_output_dir cannot be created due to permission issues
                 or invalid path specifications.
             ImportError: If required dependencies for wrapper initialization are missing
                 beyond the expected optional dependencies.
+            RuntimeError: If neither yt-dlp nor FFmpeg is provided in arguments.
 
         Examples:
             >>> # Basic initialization with defaults
@@ -183,19 +245,34 @@ class MediaProcessor:
             ...     default_output_dir="./downloads",
             ...     enable_logging=True
             ... )
-
-        Note:
-            The initialization process logs the availability status of backend libraries
-            (yt-dlp and FFmpeg) when logging is enabled.
         """
-        self.default_output_dir: Path = Path(default_output_dir) if default_output_dir else Path.cwd()
+        if default_output_dir is None:
+            default_output_dir = Path.cwd()
+        else:
+            if not isinstance(default_output_dir, (Path, str)):
+                raise TypeError(f"default_output_dir must be a string or Path, got {type(default_output_dir)}")
+            default_output_dir = Path(default_output_dir).resolve()
+
+        self.default_output_dir: Path = default_output_dir
         self.enable_logging: bool = enable_logging
+        self.logger = None
+        if enable_logging:
+            self.logger = logger
 
         # Initialize component wrappers
         self.ytdlp: Optional[YtDlpWrapper] = ytdlp
         self.ffmpeg: Optional[FFmpegWrapper] = ffmpeg
         
-        logger.info(f"MediaProcessor initialized - YT-DLP: {YTDLP_AVAILABLE}, FFmpeg: {FFMPEG_AVAILABLE}")
+        if self.logger is not None:
+            self.logger.info(
+                f"MediaProcessor initialized - YT-DLP: {YTDLP_AVAILABLE}, FFmpeg: {FFMPEG_AVAILABLE}"
+            )
+
+        # Ensure instances are set.
+        if self.ytdlp is None and self.ffmpeg is None:
+            if self.logger is not None:
+                self.logger.error("No multimedia backends available - cannot perform operations")
+            raise RuntimeError("No multimedia backends available - cannot perform operations")
     
     async def download_and_convert(self,
                                  url: str,
@@ -282,7 +359,7 @@ class MediaProcessor:
             - Operation respects rate limiting and platform-specific restrictions
         """
         try:
-            if not self.ytdlp:
+            if self.ytdlp is None:
                 return {
                     "status": "error",
                     "error": "YT-DLP not available for download"
@@ -298,20 +375,38 @@ class MediaProcessor:
             if download_result.get("status") != "success":
                 return download_result
             
+            # Initialize conversion fields to None (may be overridden if conversion occurs)
+            download_result["converted_path"] = None
+            download_result["conversion_result"] = None
+            
             # If format conversion is needed and FFmpeg is available
             downloaded_file = download_result.get("output_path")
-            if downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}"):
+            conversion_needed = downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}")
+            
+            if conversion_needed:
                 convert_path = str(Path(downloaded_file).with_suffix(f".{output_format}"))
                 convert_result = await self.ffmpeg.convert_video(downloaded_file, convert_path)
+                print(f"convert_result: {convert_result}")
                 
-                if convert_result.get("status") == "success":
-                    download_result["converted_path"] = convert_path
-                    download_result["conversion_result"] = convert_result
+                status = convert_result.get("status")
+                match status:
+                    case "success":
+                        download_result["converted_path"] = convert_path
+                        download_result["conversion_result"] = convert_result
+                    case "error":
+                        # Conversion failure should result in overall error status
+                        return {
+                            "status": "error",
+                            "error": f"Conversion failed: {convert_result.get('error', 'Unknown conversion error')}"
+                        }
+                    case _:
+                        raise ValueError(f"Unexpected conversion status: '{status}'")
             
             return download_result
-            
+
         except Exception as e:
-            self.logger.error(f"Error in download_and_convert: {e}")
+            if self.logger is not None:
+                self.logger.exception(f"Error in download_and_convert: {e}")
             return {
                 "status": "error",
                 "error": str(e)

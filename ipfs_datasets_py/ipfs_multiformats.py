@@ -3,6 +3,7 @@ from multiformats import CID, multihash
 import tempfile
 import os
 import sys
+
 class ipfs_multiformats_py:
     """
     IPFS Multiformats Content Identifier Generation and Validation System
@@ -161,6 +162,7 @@ class ipfs_multiformats_py:
             - No network connectivity required for CID generation operations
             - Generated CIDs are deterministic and reproducible across systems
         """
+        self.multihash = multihash
 
     # Step 1: Hash the file content with SHA-256
     def get_file_sha256(self, file_path):

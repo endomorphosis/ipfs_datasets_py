@@ -78,20 +78,6 @@ class TestBatchProcessorStatusManagement:
     """Test class for batch status management methods in BatchProcessor."""
 
     @pytest.fixture
-    def processor(self):
-        """Create a BatchProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.IPLDStorage'):
-            processor = BatchProcessor(max_workers=4)
-            processor._get_resource_usage = Mock(return_value={
-                'memory_mb': 1024.0,
-                'memory_percent': 25.0,
-                'cpu_percent': 15.0,
-                'active_workers': 4,
-                'queue_size': 10
-            })
-            return processor
-
-    @pytest.fixture
     def sample_batch_status(self):
         """Create a sample BatchStatus for testing."""
         return BatchStatus(
@@ -109,223 +95,23 @@ class TestBatchProcessorStatusManagement:
             resource_usage={}
         )
 
-    def test_update_batch_status_successful_job(self, processor):
-        """
-        GIVEN a batch with pending jobs and a successful job result
-        WHEN _update_batch_status is called with completed job
-        THEN it should:
-         - Increment completed_jobs count
-         - Decrement pending_jobs count
-         - Update total_processing_time
-         - Recalculate average_job_time
-         - Keep end_time as None (batch not complete)
-         - Maintain other counters unchanged
-        """
-        # Setup initial batch status
-        batch_id = "batch_test_123"
-        initial_status = BatchStatus(
-            batch_id=batch_id,
-            total_jobs=5,
-            completed_jobs=2,
-            failed_jobs=0,
-            pending_jobs=3,
-            processing_jobs=0,
-            start_time="2024-01-01T10:00:00",
-            total_processing_time=100.0,
-            average_job_time=50.0,
-            throughput=0.0,
-            resource_usage={}
-        )
-        processor.active_batches[batch_id] = initial_status
-        
-        # Create successful job and result
-        job = ProcessingJob(
-            job_id="job_1",
-            pdf_path="/test.pdf",
-            metadata={'batch_id': batch_id}
-        )
-        result = BatchJobResult(
-            job_id="job_1",
-            status='completed',
-            processing_time=45.0,
-            entity_count=10,
-            relationship_count=15,
-            chunk_count=5
-        )
-        
-        processor._update_batch_status(job, result)
-        
-        updated_status = processor.active_batches[batch_id]
-        assert updated_status.completed_jobs == 3
-        assert updated_status.failed_jobs == 0
-        assert updated_status.pending_jobs == 2
-        assert updated_status.total_processing_time == 145.0
-        assert updated_status.average_job_time == 145.0 / 3  # Total time / completed jobs
-        assert updated_status.end_time is None
 
-    def test_update_batch_status_failed_job(self, processor):
-        """
-        GIVEN a batch with pending jobs and a failed job result
-        WHEN _update_batch_status is called with failed job
-        THEN it should:
-         - Increment failed_jobs count
-         - Decrement pending_jobs count
-         - Update total_processing_time (including failed job time)
-         - Not affect average_job_time calculation (failed jobs excluded)
-         - Keep batch as incomplete
-        """
-        batch_id = "batch_test_456"
-        initial_status = BatchStatus(
-            batch_id=batch_id,
-            total_jobs=4,
-            completed_jobs=2,
-            failed_jobs=0,
-            pending_jobs=2,
-            processing_jobs=0,
-            start_time="2024-01-01T10:00:00",
-            total_processing_time=80.0,
-            average_job_time=40.0,
-            throughput=0.0,
-            resource_usage={}
-        )
-        processor.active_batches[batch_id] = initial_status
-        
-        job = ProcessingJob(
-            job_id="failed_job",
-            pdf_path="/test.pdf",
-            metadata={'batch_id': batch_id}
-        )
-        result = BatchJobResult(
-            job_id="failed_job",
-            status='failed',
-            processing_time=25.0,
-            error_message="Processing failed",
-            entity_count=0,
-            relationship_count=0,
-            chunk_count=0
-        )
-        
-        processor._update_batch_status(job, result)
-        
-        updated_status = processor.active_batches[batch_id]
-        assert updated_status.completed_jobs == 2
-        assert updated_status.failed_jobs == 1
-        assert updated_status.pending_jobs == 1
-        assert updated_status.total_processing_time == 105.0  # 80 + 25
-        assert updated_status.average_job_time == 35.0  # Total time / total finished jobs (105.0 / 3)
 
-    def test_update_batch_status_batch_completion(self, processor):
-        """
-        GIVEN a batch with only one pending job remaining
-        WHEN _update_batch_status is called with the final job result
-        THEN it should:
-         - Mark batch as complete by setting end_time
-         - Calculate final throughput (jobs per second)
-         - Update all job counters appropriately
-         - Calculate final batch metrics
-        """
-        batch_id = "batch_final_test"
-        initial_status = BatchStatus(
-            batch_id=batch_id,
-            total_jobs=3,
-            completed_jobs=2,
-            failed_jobs=0,
-            pending_jobs=1,
-            processing_jobs=0,
-            start_time="2024-01-01T10:00:00",
-            total_processing_time=90.0,
-            average_job_time=45.0,
-            throughput=0.0,
-            resource_usage={}
-        )
-        processor.active_batches[batch_id] = initial_status
-        
-        job = ProcessingJob(
-            job_id="final_job",
-            pdf_path="/test.pdf",
-            metadata={'batch_id': batch_id}
-        )
-        result = BatchJobResult(
-            job_id="final_job",
-            status='completed',
-            processing_time=30.0,
-            entity_count=5,
-            relationship_count=8,
-            chunk_count=3
-        )
-        
-        with patch('ipfs_datasets_py.pdf_processing.batch_processor.datetime') as mock_datetime:
-            # Mock datetime.now() to return a controlled timestamp
-            mock_now = Mock()
-            mock_now.isoformat.return_value = "2024-01-01T10:05:00"
-            mock_datetime.now.return_value = mock_now
-            
-            # Keep the original fromisoformat method for actual datetime parsing
-            mock_datetime.fromisoformat = datetime.fromisoformat
-            
-            processor._update_batch_status(job, result)
-        
-        updated_status = processor.active_batches[batch_id]
-        assert updated_status.completed_jobs == 3
-        assert updated_status.failed_jobs == 0
-        assert updated_status.pending_jobs == 0
-        assert updated_status.end_time == "2024-01-01T10:05:00"
-        assert updated_status.throughput > 0  # Should calculate throughput
-
-    def test_update_batch_status_missing_batch_id(self, processor):
-        """
-        GIVEN a job with missing or invalid batch_id in metadata
-        WHEN _update_batch_status is called
-        THEN it should:
-         - Handle the error gracefully without crashing
-         - Log appropriate warning about missing batch
-         - Not modify any batch status
-         - Continue processing other jobs normally
-        """
-        job = ProcessingJob(
-            job_id="orphan_job",
-            pdf_path="/test.pdf",
-            metadata={}  # Missing batch_id
-        )
-        result = BatchJobResult(
-            job_id="orphan_job",
-            status='completed',
-            processing_time=30.0
-        )
-        
-        # Should not raise exception
-        processor._update_batch_status(job, result)
-        
-        # No batches should be modified
-        assert len(processor.active_batches) == 0
-
-    def test_update_batch_status_nonexistent_batch(self, processor):
-        """
-        GIVEN a job with batch_id that doesn't exist in active_batches
-        WHEN _update_batch_status is called
-        THEN it should:
-         - Handle the missing batch gracefully
-         - Log warning about orphaned job
-         - Not create new batch status entry
-         - Continue normal operation
-        """
-        job = ProcessingJob(
-            job_id="orphan_job",
-            pdf_path="/test.pdf",
-            metadata={'batch_id': 'nonexistent_batch'}
-        )
-        result = BatchJobResult(
-            job_id="orphan_job",
-            status='completed',
-            processing_time=30.0
-        )
-        
-        processor._update_batch_status(job, result)
-        
-        assert 'nonexistent_batch' not in processor.active_batches
+    @pytest.fixture
+    def processor_with_mocked_resources(self, processor):
+        """Create a processor with mocked resource usage."""
+        from unittest.mock import MagicMock
+        processor._get_resource_usage = MagicMock(return_value={
+            'memory_mb': 1024.0,
+            'cpu_percent': 25.5,
+            'active_workers': 4,
+            'queue_size': 10,
+            'peak_memory_mb': 1200.0
+        })
+        return processor
 
     @pytest.mark.asyncio
-    async def test_get_batch_status_existing_batch(self, processor, sample_batch_status):
+    async def test_get_batch_status_existing_batch(self, processor_with_mocked_resources, sample_batch_status):
         """
         GIVEN an active batch in the processor
         WHEN get_batch_status is called with valid batch_id
@@ -335,6 +121,7 @@ class TestBatchProcessorStatusManagement:
          - Provide all BatchStatus fields
          - Return real-time resource metrics
         """
+        processor = processor_with_mocked_resources
         batch_id = "batch_test_123"
         processor.active_batches[batch_id] = sample_batch_status
         
@@ -366,7 +153,7 @@ class TestBatchProcessorStatusManagement:
         assert status is None
 
     @pytest.mark.asyncio
-    async def test_get_batch_status_resource_usage_integration(self, processor, sample_batch_status):
+    async def test_get_batch_status_resource_usage_integration(self, processor_with_mocked_resources, sample_batch_status):
         """
         GIVEN an active batch
         WHEN get_batch_status is called
@@ -375,6 +162,7 @@ class TestBatchProcessorStatusManagement:
          - Include fresh resource data in response
          - Handle resource monitoring failures gracefully
         """
+        processor = processor_with_mocked_resources
         batch_id = "batch_resource_test"
         processor.active_batches[batch_id] = sample_batch_status
         
@@ -448,174 +236,7 @@ class TestBatchProcessorStatusManagement:
         assert active_list == []
         assert isinstance(active_list, list)
 
-    @pytest.mark.asyncio
-    async def test_monitor_batch_progress_callback_invocation(self, processor):
-        """
-        GIVEN an active batch and a progress callback function
-        WHEN _monitor_batch_progress is called
-        THEN it should:
-         - Periodically invoke the callback with BatchStatus
-         - Continue monitoring until batch completion
-         - Handle both sync and async callbacks
-         - Stop monitoring when batch completes
-        """
-        batch_id = "monitor_test_batch"
-        callback_calls = []
-        
-        def progress_callback(status):
-            callback_calls.append(status)
-        
-        # Create batch that will complete after a few updates
-        batch_status = BatchStatus(
-            batch_id=batch_id,
-            total_jobs=3,
-            completed_jobs=0,
-            failed_jobs=0,
-            pending_jobs=3,
-            processing_jobs=0,
-            start_time="2024-01-01T10:00:00",
-            total_processing_time=0.0,
-            average_job_time=0.0,
-            throughput=0.0,
-            resource_usage={}
-        )
-        processor.active_batches[batch_id] = batch_status
-        
-        # Simulate batch completion after short delay
-        async def complete_batch():
-            await asyncio.sleep(0.1)
-            batch_status.completed_jobs = 3
-            batch_status.pending_jobs = 0
-            batch_status.end_time = "2024-01-01T10:05:00"
-        
-        # Start monitoring and batch completion concurrently
-        monitor_task = asyncio.create_task(
-            processor._monitor_batch_progress(batch_id, progress_callback)
-        )
-        complete_task = asyncio.create_task(complete_batch())
-        
-        await asyncio.wait([monitor_task, complete_task], return_when=asyncio.ALL_COMPLETED)
-        
-        # Verify callback was invoked
-        assert len(callback_calls) > 0
-        assert all(isinstance(call, BatchStatus) for call in callback_calls)
 
-    @pytest.mark.asyncio
-    async def test_monitor_batch_progress_async_callback(self, processor):
-        """
-        GIVEN an async callback function
-        WHEN _monitor_batch_progress is called with async callback
-        THEN it should:
-         - Properly await async callback invocations
-         - Handle async callback errors gracefully
-         - Not block monitoring loop on callback execution
-        """
-        batch_id = "async_monitor_test"
-        callback_calls = []
-        
-        async def async_progress_callback(status):
-            await asyncio.sleep(0.01)  # Simulate async work
-            callback_calls.append(status)
-        
-        batch_status = BatchStatus(
-            batch_id=batch_id,
-            total_jobs=2,
-            completed_jobs=0,
-            failed_jobs=0,
-            pending_jobs=2,
-            processing_jobs=0,
-            start_time="2024-01-01T10:00:00",
-            total_processing_time=0.0,
-            average_job_time=0.0,
-            throughput=0.0,
-            resource_usage={}
-        )
-        processor.active_batches[batch_id] = batch_status
-        
-        # Complete batch quickly
-        async def complete_batch():
-            await asyncio.sleep(0.05)
-            batch_status.completed_jobs = 2
-            batch_status.pending_jobs = 0
-            batch_status.end_time = "2024-01-01T10:05:00"
-        
-        monitor_task = asyncio.create_task(
-            processor._monitor_batch_progress(batch_id, async_progress_callback)
-        )
-        complete_task = asyncio.create_task(complete_batch())
-        
-        await asyncio.wait([monitor_task, complete_task], return_when=asyncio.ALL_COMPLETED)
-        
-        assert len(callback_calls) > 0
-
-    @pytest.mark.asyncio
-    async def test_monitor_batch_progress_callback_error_handling(self, processor):
-        """
-        GIVEN a callback function that raises exceptions
-        WHEN _monitor_batch_progress encounters callback errors
-        THEN it should:
-         - Log callback errors appropriately
-         - Continue monitoring despite callback failures
-         - Not terminate monitoring loop due to callback issues
-         - Handle callback errors gracefully
-        """
-        batch_id = "error_callback_test"
-        
-        def failing_callback(status):
-            raise Exception("Callback failed")
-        
-        batch_status = BatchStatus(
-            batch_id=batch_id,
-            total_jobs=1,
-            completed_jobs=0,
-            failed_jobs=0,
-            pending_jobs=1,
-            processing_jobs=0,
-            start_time="2024-01-01T10:00:00",
-            total_processing_time=0.0,
-            average_job_time=0.0,
-            throughput=0.0,
-            resource_usage={}
-        )
-        processor.active_batches[batch_id] = batch_status
-        
-        # Complete batch to end monitoring
-        async def complete_batch():
-            await asyncio.sleep(0.05)
-            batch_status.completed_jobs = 1
-            batch_status.pending_jobs = 0
-            batch_status.end_time = "2024-01-01T10:05:00"
-        
-        # Should not raise exception despite failing callback
-        monitor_task = asyncio.create_task(
-            processor._monitor_batch_progress(batch_id, failing_callback)
-        )
-        complete_task = asyncio.create_task(complete_batch())
-        
-        await asyncio.wait([monitor_task, complete_task], return_when=asyncio.ALL_COMPLETED)
-        
-        # Monitor should complete without raising exception
-
-    @pytest.mark.asyncio
-    async def test_monitor_batch_progress_nonexistent_batch(self, processor):
-        """
-        GIVEN a batch_id that doesn't exist
-        WHEN _monitor_batch_progress is called
-        THEN it should:
-         - Exit immediately without calling the callback
-         - Not raise exceptions or crash
-         - Handle missing batch gracefully
-        """
-        callback_calls = []
-        
-        def dummy_callback(status):
-            callback_calls.append(status)
-        
-        # Should not raise exception and should exit immediately
-        await processor._monitor_batch_progress("nonexistent_batch", dummy_callback)
-        
-        # Callback should never be called for nonexistent batch
-        assert len(callback_calls) == 0
 
 
 

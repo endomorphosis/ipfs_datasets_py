@@ -4,14 +4,22 @@
 import pytest
 import os
 import asyncio
-from unittest.mock import Mock, patch, MagicMock
 from urllib.error import URLError, HTTPError
+import psutil
+import os
+
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists('media_processor.py'), "media_processor.py does not exist at the specified directory."
-assert os.path.exists('media_processor_stubs.md'), "Documentation for media_processor.py does not exist at the specified directory."
+home_dir = os.path.expanduser('~')
+file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py")
+md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor_stubs.md")
 
-from media_processor import MediaProcessor
+# Import the MediaProcessor class and its class dependencies
+from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+
+from subprocess import CalledProcessError
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -31,289 +39,114 @@ REQUIRED_EXCEPTION_TYPES = [
 TOTAL_EXCEPTION_COUNT = 15
 COVERAGE_TARGET = 1.0  # 100%
 
+# Adverb parameters - Quantified behavioral expectations
+PERFORMANCE_OVERHEAD_THRESHOLD = 0.02  # 2% maximum increase in execution time
+CLEANUP_TIME_LIMIT_MS = 100  # milliseconds for immediate cleanup
+ERROR_CLASSIFICATION_CONSISTENCY = 1.0  # 100% - same exception type produces same classification
+RESOURCE_LEAK_TOLERANCE = 0  # zero resources should remain allocated post-exception
+THREAD_SAFETY_REQUIREMENT = 1.0  # 100% - no race conditions, corruption, or deadlocks allowed
+STATE_CONSISTENCY_REQUIREMENT = 1.0  # 100% - object attributes must remain valid
+CONTEXT_PRESERVATION_COMPLETENESS = 1.0  # 100% - all debugging context must be preserved
+ERROR_INFORMATION_COMPLETENESS = 1.0  # 100% - all required error information must be provided
 
-class TestExceptionCoverageRate:
-    """Test exception coverage rate criteria for error resilience."""
 
-    def test_ensure_docstring_quality(self):
-        """
-        Ensure that the docstring of the MediaProcessor class meets the standards set forth in `_example_docstring_format.md`.
-        """
-        try:
-            has_good_callable_metadata(MediaProcessor)
-        except Exception as e:
-            pytest.fail(f"Callable metadata in MediaProcessor does not meet standards: {e}")
+class TestExceptionHandlingBehavior:
+    """Test exception handling behavior for error resilience.
+    
+    COMMON DEFINITIONS:
+        - "handled correctly" means: error does not propagate uncaught, operation terminates cleanly without system instability
+        - "processed completely" means: error is logged, classified by error type, caller receives error indication
+        - "cleanly" means: operation terminates without system instability or resource corruption
+        - "complete error information" means: error type, error message, operation context, timestamp
+        - "complete context" means: stack trace, operation parameters, system state at time of error
+        - "complete information" means: error classification, retry recommendations, resource state
+        - "uniform handling behavior" means: same exception type produces same error classification with {ERROR_CLASSIFICATION_CONSISTENCY} consistency
+        - "uniform error reporting" means: same error format, same logging level, same caller interface
+        - "bounded performance overhead" means: <{PERFORMANCE_OVERHEAD_THRESHOLD} increase in execution time for normal operations
+        - "concurrent-safe" means: no race conditions, no shared state corruption, no deadlocks with {THREAD_SAFETY_REQUIREMENT} reliability
+        - "complete resource cleanup" means: files closed, memory freed, network connections closed
+        - "rapid cleanup" means: within {CLEANUP_TIME_LIMIT_MS}ms, before any other operations
+        - "system-critical exception" means: MemoryError, OSError with errno ENOSPC
+        - "complete handling behavior" means: exception is caught, logged, classified, and caller is notified
+    """
 
-    def test_urlerror_has_dedicated_except_clause(self):
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("exception_name,exception_instance", [
+        ("URLError", URLError("Network error")),
+        ("HTTPError", HTTPError("http://test.com", 404, "Not found", {}, None)),
+        ("TimeoutError", TimeoutError("Timeout")),
+        ("ConnectionError", ConnectionError("Connection failed")),
+        ("OSError", OSError("System error")),
+        ("PermissionError", PermissionError("Access denied")),
+        ("FileNotFoundError", FileNotFoundError("File not found")),
+        ("DiskSpaceError", OSError(28, "No space left")),  # errno.ENOSPC
+        ("CalledProcessError", __import__('subprocess').CalledProcessError(1, "cmd")),
+        ("ValueError", ValueError("Invalid value")),
+        ("TypeError", TypeError("Invalid type")),
+        ("KeyError", KeyError("Missing key")),
+        ("IndexError", IndexError("Index error")),
+        ("MemoryError", MemoryError("Out of memory"))
+    ])
+    async def test_all_required_exception_types_have_handling_behavior(self, mock_factory, tmp_path, test_url, exception_name, exception_instance):
         """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except URLError:' clause with specific error classification
+        GIVEN required exception type
+        WHEN testing exception handling coverage
+        THEN expect exception type to have complete handling behavior
+        WHERE:
+            - See class docstring for "complete handling behavior" definition
+        """
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": exception_instance}
+        )
+        result = await processor.download_and_convert(test_url)
         
-        NOTE: Testing for specific exception handler implementation is overly prescriptive - should test error handling behavior
-        NOTE: Exception handling strategy may legitimately use broader catch blocks with runtime type checking
-        """
-        raise NotImplementedError("test_urlerror_has_dedicated_except_clause test needs to be implemented")
+        assert result["status"] == "error", f"Expected error status for {exception_name} but got {result['status']}"
 
-    def test_httperror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except HTTPError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_httperror_has_dedicated_except_clause test needs to be implemented")
 
-    def test_timeouterror_has_dedicated_except_clause(self):
+    @pytest.mark.asyncio
+    async def test_exception_handling_processes_error_status_correctly(self, mock_factory, tmp_path, test_url):
         """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except TimeoutError:' clause with specific error classification
+        GIVEN MediaProcessor operation that acquires resources
+        WHEN exception occurs during resource usage
+        THEN expect error to be processed with correct status
+        WHERE:
+            - See class docstring for "processed completely" definition
         """
-        raise NotImplementedError("test_timeouterror_has_dedicated_except_clause test needs to be implemented")
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": Exception("Test exception")}
+        )
+        result = await processor.download_and_convert(test_url)
 
-    def test_connectionerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except ConnectionError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_connectionerror_has_dedicated_except_clause test needs to be implemented")
+        # Verify error was handled
+        assert result["status"] == "error", f"Expected error status but got {result['status']}"
 
-    def test_oserror_has_dedicated_except_clause(self):
+    @pytest.mark.asyncio
+    async def test_exception_handling_prevents_resource_leaks_completely(self, mock_factory, tmp_path, test_url):
         """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except OSError:' clause with specific error classification
+        GIVEN MediaProcessor operation that acquires resources
+        WHEN exception occurs during resource usage
+        THEN expect complete resource cleanup to prevent leaks
+        WHERE:
+            - See class docstring for "complete resource cleanup" definition
+            - "prevent leaks" means: {RESOURCE_LEAK_TOLERANCE} resources remain allocated after exception handling completes
         """
-        raise NotImplementedError("test_oserror_has_dedicated_except_clause test needs to be implemented")
+        # Get initial resource state
+        process = psutil.Process(os.getpid())
+        initial_open_files = len(process.open_files())
 
-    def test_permissionerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except PermissionError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_permissionerror_has_dedicated_except_clause test needs to be implemented")
+        processor = mock_factory.create_mock_processor(
+            tmp_path,
+            ytdlp_kwargs={"side_effect": Exception("Test exception")}
+        )
+        result = await processor.download_and_convert(test_url)
 
-    def test_filenotfounderror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except FileNotFoundError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_filenotfounderror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_diskspaceerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except DiskSpaceError:' clause with specific error classification
+        # Check resource state after exception
+        final_open_files = len(process.open_files())
         
-        NOTE: DiskSpaceError may not be a standard Python exception - custom exception types need clear definition
-        NOTE: Disk space issues typically manifest as OSError with specific errno values
-        """
-        raise NotImplementedError("test_diskspaceerror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_calledprocesserror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except CalledProcessError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_calledprocesserror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_valueerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except ValueError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_valueerror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_typeerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except TypeError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_typeerror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_keyerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except KeyError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_keyerror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_indexerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except IndexError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_indexerror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_asyncio_cancellederror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except asyncio.CancelledError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_asyncio_cancellederror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_memoryerror_has_dedicated_except_clause(self):
-        """
-        GIVEN MediaProcessor method implementation
-        WHEN checking exception handling
-        THEN expect dedicated 'except MemoryError:' clause with specific error classification
-        """
-        raise NotImplementedError("test_memoryerror_has_dedicated_except_clause test needs to be implemented")
-
-    def test_exception_coverage_calculation_method(self):
-        """
-        GIVEN 15 specific except clauses out of 15 required exception types
-        WHEN calculating exception coverage rate
-        THEN expect coverage = 15/15 = 1.0 (100%)
-        """
-        raise NotImplementedError("test_exception_coverage_calculation_method test needs to be implemented")
-
-    def test_exception_coverage_target_100_percent(self):
-        """
-        GIVEN exception coverage measurement
-        WHEN comparing against target
-        THEN expect coverage to equal exactly 1.0 (100%)
-        
-        NOTE: 100% coverage target may be overly strict - some exceptions may be handled by generic handlers appropriately
-        NOTE: Coverage should focus on meaningful error handling rather than mechanical exception enumeration
-        """
-        raise NotImplementedError("test_exception_coverage_target_100_percent test needs to be implemented")
-
-    def test_generic_exception_handlers_not_counted_toward_coverage(self):
-        """
-        GIVEN 'except Exception:' clause in code
-        WHEN calculating exception coverage
-        THEN expect generic handlers to be excluded from coverage count
-        
-        NOTE: Generic exception handlers may be appropriate for unknown errors - excluding them from coverage may penalize good error handling
-        NOTE: Coverage metric should distinguish between catch-all handlers and missing specific handlers
-        """
-        raise NotImplementedError("test_generic_exception_handlers_not_counted_toward_coverage test needs to be implemented")
-
-    def test_each_exception_handler_includes_error_classification(self):
-        """
-        GIVEN specific exception handler (e.g., except URLError:)
-        WHEN handler processes exception
-        THEN expect appropriate error classification to be assigned
-        
-        NOTE: "Appropriate error classification" criteria not defined - unclear what constitutes correct classification
-        NOTE: Classification scheme and mapping from exception types to error categories need specification
-        """
-        raise NotImplementedError("test_each_exception_handler_includes_error_classification test needs to be implemented")
-
-    def test_exception_handler_source_code_inspection_method(self):
-        """
-        GIVEN MediaProcessor source code
-        WHEN analyzing exception handling implementation
-        THEN expect AST parsing or source inspection to identify except clauses
-        
-        NOTE: Source code inspection method is fragile and implementation-dependent - should test runtime behavior instead
-        NOTE: Dynamic exception handling and runtime-generated handlers would not be detected by static analysis
-        """
-        raise NotImplementedError("test_exception_handler_source_code_inspection_method test needs to be implemented")
-
-    def test_exception_hierarchy_handling_specificity(self):
-        """
-        GIVEN exception inheritance hierarchy (e.g., FileNotFoundError inherits from OSError)
-        WHEN checking handler specificity
-        THEN expect most specific exception type to be handled first
-        
-        NOTE: Handler ordering verification method not specified - static analysis may miss runtime handler selection
-        NOTE: Some scenarios may legitimately handle broader exception types first for efficiency or simplicity
-        """
-        raise NotImplementedError("test_exception_hierarchy_handling_specificity test needs to be implemented")
-
-    def test_exception_handler_logging_includes_context(self):
-        """
-        GIVEN any exception handler
-        WHEN exception is caught and handled
-        THEN expect handler to log exception with relevant context information
-        
-        NOTE: "Relevant context" definition subjective and varies by exception type and operation context
-        NOTE: Logging requirements should specify minimal context elements rather than vague "relevant context"
-        """
-        raise NotImplementedError("test_exception_handler_logging_includes_context test needs to be implemented")
-
-    def test_exception_handler_cleanup_before_re_raising(self):
-        """
-        GIVEN exception handler that needs to re-raise
-        WHEN handler processes exception
-        THEN expect cleanup operations to be performed before re-raising
-        """
-        raise NotImplementedError("test_exception_handler_cleanup_before_re_raising test needs to be implemented")
-
-    def test_custom_exception_types_excluded_from_coverage_requirement(self):
-        """
-        GIVEN custom application-specific exception types
-        WHEN calculating coverage against required exception set
-        THEN expect only the 15 standard exception types to be required
-        """
-        raise NotImplementedError("test_custom_exception_types_excluded_from_coverage_requirement test needs to be implemented")
-
-    def test_exception_handler_return_value_consistency(self):
-        """
-        GIVEN different exception handlers
-        WHEN handlers process exceptions
-        THEN expect consistent return value structure across all handlers
-        """
-        raise NotImplementedError("test_exception_handler_return_value_consistency test needs to be implemented")
-
-    def test_exception_chaining_preservation_in_handlers(self):
-        """
-        GIVEN exception handler that wraps original exception
-        WHEN creating new exception
-        THEN expect original exception to be preserved via exception chaining
-        """
-        raise NotImplementedError("test_exception_chaining_preservation_in_handlers test needs to be implemented")
-
-    def test_exception_handling_performance_overhead_minimal(self):
-        """
-        GIVEN exception handling code in normal operation
-        WHEN measuring performance impact
-        THEN expect <1% overhead when no exceptions are raised
-        
-        NOTE: 1% overhead threshold may be too strict for complex exception handling logic
-        NOTE: Performance measurement should account for try/except block overhead vs inline error checking
-        """
-        raise NotImplementedError("test_exception_handling_performance_overhead_minimal test needs to be implemented")
-
-    def test_exception_handler_thread_safety_for_concurrent_operations(self):
-        """
-        GIVEN concurrent operations raising exceptions
-        WHEN multiple threads execute exception handlers
-        THEN expect thread-safe exception handling without race conditions
-        
-        NOTE: Thread safety verification methodology not specified - unclear how to test for race conditions in exception handling
-        NOTE: Exception handling thread safety depends on handler implementation details and shared resource access patterns
-        """
-        raise NotImplementedError("test_exception_handler_thread_safety_for_concurrent_operations test needs to be implemented")
-
-    def test_exception_handler_resource_cleanup_on_system_exceptions(self):
-        """
-        GIVEN system-level exceptions (MemoryError, OSError)
-        WHEN handlers process these critical exceptions
-        THEN expect essential resource cleanup to be performed
-        """
-        raise NotImplementedError("test_exception_handler_resource_cleanup_on_system_exceptions test needs to be implemented")
-
-    def test_exception_handler_graceful_degradation_on_handler_failure(self):
-        """
-        GIVEN exception handler that itself raises an exception
-        WHEN processing original exception
-        THEN expect graceful degradation with minimal error reporting
-        """
-        raise NotImplementedError("test_exception_handler_graceful_degradation_on_handler_failure test needs to be implemented")
-
+        # Verify no resource leaks
+        assert final_open_files <= initial_open_files + RESOURCE_LEAK_TOLERANCE, f"Expected file descriptor leaks <= {RESOURCE_LEAK_TOLERANCE} but got {final_open_files - initial_open_files}"
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

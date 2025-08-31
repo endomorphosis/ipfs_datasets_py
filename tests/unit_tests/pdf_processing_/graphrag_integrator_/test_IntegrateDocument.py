@@ -66,10 +66,13 @@ try:
     import numpy as np
 
     from ipfs_datasets_py.ipld import IPLDStorage
-    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
+    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk, LLMChunkMetadata
 except ImportError as e:
     raise ImportError(f"Could into import the module's dependencies: {e}") 
 
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
+    LLMChunkMetadataTestDataFactory as MetadataFactory
+)
 
 
 
@@ -89,6 +92,11 @@ class TestIntegrateDocument:
         integrator._discover_cross_document_relationships = AsyncMock()
         return integrator
 
+    @property
+    def sample_metadata(self):
+        """Create sample metadata for LLMChunk objects."""
+        return LLMChunkMetadata(**MetadataFactory.create_valid_baseline_data())
+
     @pytest.fixture
     def sample_llm_document(self):
         """Create a sample LLMDocument for testing."""
@@ -99,9 +107,9 @@ class TestIntegrateDocument:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=12,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={},
+                metadata=self.sample_metadata,
                 embedding=None
             ),
             LLMChunk(
@@ -110,9 +118,9 @@ class TestIntegrateDocument:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=10,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={},
+                metadata=self.sample_metadata,
                 embedding=None
             )
         ]
@@ -248,9 +256,9 @@ class TestIntegrateDocument:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=6,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={},
+                metadata=self.sample_metadata,
                 embedding=None
             )],
             summary="Single chunk document for testing",
@@ -319,9 +327,9 @@ class TestIntegrateDocument:
                     source_page=1,
                     source_elements=["paragraph"],
                     token_count=3,
-                    semantic_types={"text"},
+                    semantic_types="text",
                     relationships=[],
-                    metadata={},
+                    metadata=self.sample_metadata,
                     embedding=None
                 ),
                 LLMChunk(
@@ -330,9 +338,9 @@ class TestIntegrateDocument:
                     source_page=2,
                     source_elements=["paragraph"],
                     token_count=3,
-                    semantic_types={"text"},
+                    semantic_types="text",
                     relationships=[],
-                    metadata={},
+                    metadata=self.sample_metadata,
                     embedding=None
                 ),
                 LLMChunk(
@@ -341,9 +349,9 @@ class TestIntegrateDocument:
                     source_page=2,
                     source_elements=["paragraph"],
                     token_count=4,
-                    semantic_types={"text"},
+                    semantic_types="text",
                     relationships=[],
-                    metadata={},
+                    metadata=self.sample_metadata,
                     embedding=None
                 )
             ],
@@ -457,7 +465,7 @@ class TestIntegrateDocument:
             entities=[],
             relationships=[],
             chunks=[],
-            metadata={},
+            metadata=self.sample_metadata,
             creation_timestamp="2024-01-01T00:00:00Z"
         )
         mock_integrator.knowledge_graphs["existing"] = existing_kg
@@ -679,9 +687,9 @@ class TestIntegrateDocument:
                     source_page=1,
                     source_elements=["paragraph"],
                     token_count=5,
-                    semantic_types={"text"},
+                    semantic_types="text",
                     relationships=[],
-                    metadata={},
+                    metadata=self.sample_metadata,
                     embedding=None
                 )],
                 summary=f"Summary for document {i}",
@@ -720,9 +728,9 @@ class TestIntegrateDocument:
                 source_page=i // 10 + 1,
                 source_elements=["paragraph"],
                 token_count=12,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={},
+                metadata=self.sample_metadata,
                 embedding=None
             ) for i in range(150)
         ]
@@ -768,9 +776,9 @@ class TestIntegrateDocument:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=10,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={},
+                metadata=self.sample_metadata,
                 embedding=None
             )],
             summary="Document with no entities for testing",
@@ -809,9 +817,9 @@ class TestIntegrateDocument:
                 source_page=1,
                 source_elements=["paragraph"],
                 token_count=6,
-                semantic_types={"text"},
+                semantic_types="text",
                 relationships=[],
-                metadata={},
+                metadata=self.sample_metadata,
                 embedding=None
             )],
             summary="Document with low confidence entities for testing",

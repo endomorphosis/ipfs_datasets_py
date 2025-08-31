@@ -18,7 +18,6 @@ from ..tool_wrapper import EnhancedBaseMCPTool
 from ...validators import EnhancedParameterValidator
 from ...monitoring import EnhancedMetricsCollector
 
-logger = logging.getLogger(__name__)
 
 class CacheType(Enum):
     """Cache type enumeration."""
@@ -126,6 +125,7 @@ class MockCacheService:
                 }
             }
         else:
+            # TODO This is a mock implementation, replace with actual cache retrieval logic
             # Mock individual cache stats
             stats = CacheStats(
                 total_entries=1500,
@@ -149,6 +149,7 @@ class MockCacheService:
         if not confirm_clear:
             raise ValueError("Cache clear operation requires confirmation")
         
+        # TODO This is ANOTHER mock implementation, replace with actual cache clearing logic
         if cache_type == CacheType.ALL:
             total_cleared = 5000
             total_freed_bytes = 800000000  # 800MB
@@ -184,6 +185,7 @@ class MockCacheService:
                 "restart_required": "max_size_bytes" in config if config else False
             }
         
+        # TODO MORE FUCKING MOCKS
         elif action == "warm_up":
             # Mock cache warming
             await asyncio.sleep(0.3)
@@ -234,6 +236,7 @@ class MockCacheService:
     async def monitor_cache(self, time_window: str, metrics: List[str]) -> Dict[str, Any]:
         """Monitor cache performance."""
         # Mock monitoring data
+        # TODO OH COME ON, MORE MOCKS?!?!
         monitoring_data = {
             "time_window": time_window,
             "timestamp": datetime.now().isoformat(),
@@ -329,6 +332,7 @@ class EnhancedCacheStatsTool(EnhancedBaseMCPTool):
             "timestamp": datetime.now().isoformat()
         }
         
+        # TODO EVEN MORE FUCKING MOCKS
         if include_details:
             result["analysis"] = {
                 "efficiency_score": 85.2,

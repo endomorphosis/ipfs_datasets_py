@@ -414,7 +414,7 @@ class TestErrorHandlingAndRecovery:
         ]
         
         for invalid_input in invalid_inputs:
-            with pytest.raises(ValidationError):
+            with pytest.raises(ValueError):
                 validate_fol_input(**invalid_input)
         
         # Test that valid inputs still work after validation errors

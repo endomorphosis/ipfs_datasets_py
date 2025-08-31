@@ -425,13 +425,13 @@ class TestQueryEngineProcessGraphTraversalQuery:
         # Mock the entity extraction to return expected entities
         with patch.object(self.query_engine, '_extract_entity_names_from_query', 
                          return_value=["Bill Gates", "Microsoft"]):
-            # Negative max_results - should handle gracefully
-            results_negative = await self.query_engine._process_graph_traversal_query(query, filters, -2)
-            assert isinstance(results_negative, list)  # Should not crash
+            # Negative max_results - should raise ValueError
+            with pytest.raises(ValueError, match="max_results must be a positive integer"):
+                await self.query_engine._process_graph_traversal_query(query, filters, -2)
             
-            # Zero max_results - should return empty
-            results_zero = await self.query_engine._process_graph_traversal_query(query, filters, 0)
-            assert len(results_zero) == 0
+            # Zero max_results - should raise ValueError
+            with pytest.raises(ValueError, match="max_results must be a positive integer"):
+                await self.query_engine._process_graph_traversal_query(query, filters, 0)
 
     @pytest.mark.asyncio
     async def test_process_graph_traversal_query_invalid_filters_type(self):
@@ -449,9 +449,9 @@ class TestQueryEngineProcessGraphTraversalQuery:
         # Mock the entity extraction to return expected entities
         with patch.object(self.query_engine, '_extract_entity_names_from_query', 
                          return_value=["Bill Gates", "Microsoft"]):
-            # Should handle gracefully - may ignore invalid filters
-            results = await self.query_engine._process_graph_traversal_query(query, filters, max_results)
-            assert isinstance(results, list)  # Should not crash
+            # Should raise TypeError for invalid filter type
+            with pytest.raises(TypeError, match="Filters must be a dictionary or None"):
+                await self.query_engine._process_graph_traversal_query(query, filters, max_results)
 
     @pytest.mark.asyncio
     async def test_process_graph_traversal_query_corrupted_graph(self):
@@ -459,7 +459,7 @@ class TestQueryEngineProcessGraphTraversalQuery:
         GIVEN a QueryEngine instance with corrupted NetworkX graph
         AND normalized query "path test entities"
         WHEN _process_graph_traversal_query is called
-        THEN expect graceful handling (empty results or exception caught)
+        THEN expect RuntimeError to be raised
         """
         # Mock corrupted graph
         self.mock_graphrag.global_graph = None
@@ -471,11 +471,9 @@ class TestQueryEngineProcessGraphTraversalQuery:
         # Mock the entity extraction to return expected entities
         with patch.object(self.query_engine, '_extract_entity_names_from_query', 
                          return_value=["Bill Gates", "Microsoft"]):
-            # Should handle gracefully - implementation catches exceptions
-            results = await self.query_engine._process_graph_traversal_query(query, filters, max_results)
-            assert isinstance(results, list)  # Should not crash
-            # Likely empty results due to graph issues
-            assert len(results) == 0
+            # Should raise RuntimeError for corrupted graph
+            with pytest.raises(RuntimeError, match="NetworkX graph is not available or corrupted"):
+                await self.query_engine._process_graph_traversal_query(query, filters, max_results)
 
     @pytest.mark.asyncio
     async def test_process_graph_traversal_query_missing_networkx(self):
@@ -483,7 +481,7 @@ class TestQueryEngineProcessGraphTraversalQuery:
         GIVEN a QueryEngine instance without NetworkX library available
         AND normalized query "path entities"
         WHEN _process_graph_traversal_query is called
-        THEN expect graceful handling (likely ImportError caught and empty results)
+        THEN expect ImportError to be raised
         """
         query = "path Bill Gates Microsoft"
         filters = None
@@ -494,11 +492,9 @@ class TestQueryEngineProcessGraphTraversalQuery:
                          return_value=["Bill Gates", "Microsoft"]):
             # Mock nx.shortest_path to raise ImportError 
             with patch('networkx.shortest_path', side_effect=ImportError("No module named 'networkx'")):
-                # Should handle gracefully - implementation has exception handling
-                results = await self.query_engine._process_graph_traversal_query(query, filters, max_results)
-                assert isinstance(results, list)  # Should not crash
-                # Likely empty results due to import error
-                assert len(results) == 0
+                # Should raise ImportError - implementation propagates import errors
+                with pytest.raises(ImportError, match="NetworkX is required for graph traversal"):
+                    await self.query_engine._process_graph_traversal_query(query, filters, max_results)
 
     @pytest.mark.asyncio
     async def test_process_graph_traversal_query_result_structure_validation(self):

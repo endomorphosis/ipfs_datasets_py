@@ -140,110 +140,110 @@
 #             assert 'engine' in result
 #             assert result['engine'] == 'surya'
 
-#     def test_tesseract_ocr_docstring_promises(self):
-#         """
-#         GIVEN TesseractOCR class documentation claims
-#         WHEN testing actual implementation
-#         THEN should fulfill all documented capabilities
-#         AND should handle all mentioned preprocessing steps
-#         """
-#         # Test that TesseractOCR class exists and has documented methods
-#         assert hasattr(TesseractOCR, '__init__')
-#         assert hasattr(TesseractOCR, 'extract_text')
-#         assert hasattr(TesseractOCR, 'is_available')
-#         assert hasattr(TesseractOCR, '_preprocess_image')
+    # def test_tesseract_ocr_docstring_promises(self):
+    #     """
+    #     GIVEN TesseractOCR class documentation claims
+    #     WHEN testing actual implementation
+    #     THEN should fulfill all documented capabilities
+    #     AND should handle all mentioned preprocessing steps
+    #     """
+    #     # Test that TesseractOCR class exists and has documented methods
+    #     assert hasattr(TesseractOCR, '__init__')
+    #     assert hasattr(TesseractOCR, 'extract_text')
+    #     assert hasattr(TesseractOCR, 'is_available')
+    #     assert hasattr(TesseractOCR, '_preprocess_image')
         
-#         # Test initialization
-#         with patch.object(TesseractOCR, '_initialize'):
-#             engine = TesseractOCR()
-#             assert hasattr(engine, 'name')
-#             assert engine.name == 'tesseract'
+    #     # Test initialization
+    #     with patch.object(TesseractOCR, '_initialize'):
+    #         engine = TesseractOCR()
+    #         assert hasattr(engine, 'name')
+    #         assert engine.name == 'tesseract'
             
-#             # Test that it implements the OCREngine interface
-#             assert isinstance(engine, OCREngine)
+    #         # Test that it implements the OCREngine interface
+    #         assert isinstance(engine, OCREngine)
             
-#             # Test preprocessing capability as documented
-#             engine.available = True
-#             engine.pytesseract = Mock()
+    #         # Test preprocessing capability as documented
+    #         engine.available = True
+    #         engine.pytesseract = Mock()
             
-#             # Test that _preprocess_image is implemented
-#             with patch.object(engine, '_preprocess_image') as mock_preprocess:
-#                 test_image = Image.new('RGB', (100, 50), 'white')
-#                 mock_preprocess.return_value = test_image
+    #         # Test that _preprocess_image is implemented
+    #         with patch.object(engine, '_preprocess_image') as mock_preprocess:
+    #             test_image = Image.new('RGB', (100, 50), 'white')
+    #             mock_preprocess.return_value = test_image
                 
-#                 engine.pytesseract.image_to_string.return_value = "Preprocessed text"
-#                 engine.pytesseract.image_to_data.return_value = {
-#                     'text': ['Preprocessed', 'text'], 'conf': [95, 92],
-#                     'left': [10, 80], 'top': [10, 10], 
-#                     'width': [60, 40], 'height': [15, 15]
-#                 }
+    #             engine.pytesseract.image_to_string.return_value = "Preprocessed text"
+    #             engine.pytesseract.image_to_data.return_value = {
+    #                 'text': ['Preprocessed', 'text'], 'conf': [95, 92],
+    #                 'left': [10, 80], 'top': [10, 10], 
+    #                 'width': [60, 40], 'height': [15, 15]
+    #             }
                 
-#                 result = engine.extract_text(b'fake_image_data')
+    #             result = engine.extract_text(b'fake_image_data')
                 
-#                 # Verify preprocessing was called as documented
-#                 mock_preprocess.assert_called_once()
+    #             # Verify preprocessing was called as documented
+    #             mock_preprocess.assert_called_once()
                 
-#                 # Verify return format matches documentation
-#                 assert isinstance(result, dict)
-#                 assert 'text' in result
-#                 assert 'confidence' in result
-#                 assert 'engine' in result
-#                 assert result['engine'] == 'tesseract'
-#                 assert 'Preprocessed text' in result['text']
+    #             # Verify return format matches documentation
+    #             assert isinstance(result, dict)
+    #             assert 'text' in result
+    #             assert 'confidence' in result
+    #             assert 'engine' in result
+    #             assert result['engine'] == 'tesseract'
+    #             assert 'Preprocessed text' in result['text']
 
-#     def test_easyocr_docstring_promises(self):
-#         """
-#         GIVEN EasyOCR class documentation claims
-#         WHEN testing actual implementation
-#         THEN should fulfill all documented capabilities
-#         AND should handle complex layouts as promised
-#         """
-#         # Test that EasyOCR class exists and has documented methods
-#         assert hasattr(EasyOCR, '__init__')
-#         assert hasattr(EasyOCR, 'extract_text')
-#         assert hasattr(EasyOCR, 'is_available')
+    # def test_easyocr_docstring_promises(self):
+    #     """
+    #     GIVEN EasyOCR class documentation claims
+    #     WHEN testing actual implementation
+    #     THEN should fulfill all documented capabilities
+    #     AND should handle complex layouts as promised
+    #     """
+    #     # Test that EasyOCR class exists and has documented methods
+    #     assert hasattr(EasyOCR, '__init__')
+    #     assert hasattr(EasyOCR, 'extract_text')
+    #     assert hasattr(EasyOCR, 'is_available')
         
-#         # Test initialization
-#         with patch.object(EasyOCR, '_initialize'):
-#             engine = EasyOCR()
-#             assert hasattr(engine, 'name')
-#             assert engine.name == 'easyocr'
+    #     # Test initialization
+    #     with patch.object(EasyOCR, '_initialize'):
+    #         engine = EasyOCR()
+    #         assert hasattr(engine, 'name')
+    #         assert engine.name == 'easyocr'
             
-#             # Test that it implements the OCREngine interface
-#             assert isinstance(engine, OCREngine)
+    #         # Test that it implements the OCREngine interface
+    #         assert isinstance(engine, OCREngine)
             
-#             # Test complex layout handling as documented
-#             engine.available = True
-#             engine.reader = Mock()
+    #         # Test complex layout handling as documented
+    #         engine.available = True
+    #         engine.reader = Mock()
             
-#             # Mock complex layout detection with multiple text regions
-#             complex_layout_result = [
-#                 ([[10, 10], [100, 10], [100, 30], [10, 30]], 'Header Text', 0.95),
-#                 ([[10, 50], [200, 50], [200, 80], [10, 80]], 'Body paragraph text', 0.88),
-#                 ([[150, 100], [250, 100], [250, 120], [150, 120]], 'Footer', 0.92),
-#                 ([[20, 150], [80, 180], [60, 200], [0, 170]], 'Rotated text', 0.85)  # Rotated/skewed
-#             ]
-#             engine.reader.readtext.return_value = complex_layout_result
+    #         # Mock complex layout detection with multiple text regions
+    #         complex_layout_result = [
+    #             ([[10, 10], [100, 10], [100, 30], [10, 30]], 'Header Text', 0.95),
+    #             ([[10, 50], [200, 50], [200, 80], [10, 80]], 'Body paragraph text', 0.88),
+    #             ([[150, 100], [250, 100], [250, 120], [150, 120]], 'Footer', 0.92),
+    #             ([[20, 150], [80, 180], [60, 200], [0, 170]], 'Rotated text', 0.85)  # Rotated/skewed
+    #         ]
+    #         engine.reader.readtext.return_value = complex_layout_result
             
-#             result = engine.extract_text(b'fake_complex_layout_image')
+    #         result = engine.extract_text(b'fake_complex_layout_image')
             
-#             # Verify return format matches documentation
-#             assert isinstance(result, dict)
-#             assert 'text' in result
-#             assert 'confidence' in result
-#             assert 'engine' in result
-#             assert result['engine'] == 'easyocr'
+    #         # Verify return format matches documentation
+    #         assert isinstance(result, dict)
+    #         assert 'text' in result
+    #         assert 'confidence' in result
+    #         assert 'engine' in result
+    #         assert result['engine'] == 'easyocr'
             
-#             # Verify complex layout handling
-#             text = result['text']
-#             assert 'Header Text' in text
-#             assert 'Body paragraph text' in text
-#             assert 'Footer' in text
-#             assert 'Rotated text' in text
+    #         # Verify complex layout handling
+    #         text = result['text']
+    #         assert 'Header Text' in text
+    #         assert 'Body paragraph text' in text
+    #         assert 'Footer' in text
+    #         assert 'Rotated text' in text
             
-#             # Verify confidence is computed appropriately
-#             assert isinstance(result['confidence'], float)
-#             assert 0.0 <= result['confidence'] <= 1.0
+    #         # Verify confidence is computed appropriately
+    #         assert isinstance(result['confidence'], float)
+    #         assert 0.0 <= result['confidence'] <= 1.0
 
 #     def test_trocr_docstring_promises(self):
 #         """

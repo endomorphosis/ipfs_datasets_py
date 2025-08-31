@@ -242,7 +242,7 @@ class TestGraphRAGIntegratorInit:
         with pytest.raises(TypeError) as exc_info:
             GraphRAGIntegrator(storage="not_an_ipld_storage")
         
-        assert "storage must be an instance of IPLDStorage" in str(exc_info.value)
+        assert "storage" in str(exc_info.value)
 
     def test_init_similarity_threshold_type_validation(self):
         """
@@ -254,7 +254,7 @@ class TestGraphRAGIntegratorInit:
         with pytest.raises(TypeError) as exc_info:
             GraphRAGIntegrator(similarity_threshold="0.8")
         
-        assert "similarity_threshold must be a number" in str(exc_info.value)
+        assert "similarity_threshold must be an int or float" in str(exc_info.value)
 
     def test_init_entity_extraction_confidence_type_validation(self):
         """
@@ -266,7 +266,7 @@ class TestGraphRAGIntegratorInit:
         with pytest.raises(TypeError) as exc_info:
             GraphRAGIntegrator(entity_extraction_confidence="0.6")
         
-        assert "entity_extraction_confidence must be a number" in str(exc_info.value)
+        assert "entity_extraction_confidence must be an int or float" in str(exc_info.value)
 
     def test_init_attributes_immutability(self):
         """

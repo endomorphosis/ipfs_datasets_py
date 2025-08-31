@@ -113,6 +113,7 @@ class EnhancedMetricsCollector:
     
     def _start_monitoring(self):
         """Start background monitoring tasks."""
+        loop = asyncio.get_event_loop()
         if self.monitoring_task is None or self.monitoring_task.done():
             self.monitoring_task = asyncio.create_task(self._monitoring_loop())
         
@@ -515,6 +516,17 @@ class EnhancedMetricsCollector:
                 await self.cleanup_task
             except asyncio.CancelledError:
                 pass
+
+
+
+# ✅ BETTER APPROACH
+metrics_collector = None
+
+def get_metrics_collector():
+    global metrics_collector
+    if metrics_collector is None:
+        metrics_collector = EnhancedMetricsCollector()
+    return metrics_collector
 
 # Global monitoring instance
 metrics_collector = EnhancedMetricsCollector()

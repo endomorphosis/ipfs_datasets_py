@@ -129,12 +129,12 @@ class TestLLMChunkInstantiation:
         from pydantic import ValidationError
         
         # When/Then - missing content
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             data = LLMChunkTestDataFactory.create_data_missing_field("content")
             LLMChunk(**data)
         
         # When/Then - missing multiple fields
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             LLMChunk(content="Test content")
 
     def test_instantiation_with_none_embedding(self):

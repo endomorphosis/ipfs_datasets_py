@@ -56,6 +56,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 
 import psutil
+from pydantic import (
+    BaseModel, 
+    PositiveInt
+)
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
@@ -348,7 +352,10 @@ class BatchProcessor:
                  max_memory_mb: int = 4096,
                  storage: Optional[IPLDStorage] = None,
                  enable_monitoring: bool = False,
-                 enable_audit: bool = True
+                 enable_audit: bool = True,
+                 pdf_processor: Optional['PDFProcessor'] = None,
+                 llm_optimizer: Optional['LLMOptimizer'] = None,
+                 graphrag_integrator: Optional['GraphRAGIntegrator'] = None
                  ) -> None:
         """
         Initialize the BatchProcessor with configuration for concurrent PDF processing operations.
@@ -374,6 +381,15 @@ class BatchProcessor:
             enable_audit (bool, optional): Enable audit logging for compliance and debugging.
                 Defaults to True. Tracks all batch operations, job status changes, and errors
                 for regulatory compliance and troubleshooting.
+            pdf_processor (Optional[PDFProcessor], optional): Pre-configured PDF processor instance.
+                Defaults to None. If provided, uses the given instance instead of creating new one.
+                Useful for testing and custom configurations.
+            llm_optimizer (Optional[LLMOptimizer], optional): Pre-configured LLM optimizer instance.
+                Defaults to None. If provided, uses the given instance instead of creating new one.
+                Useful for testing and custom configurations.
+            graphrag_integrator (Optional[GraphRAGIntegrator], optional): Pre-configured GraphRAG integrator instance.
+                Defaults to None. If provided, uses the given instance instead of creating new one.
+                Useful for testing and custom configurations.
 
         Attributes initialized:
             max_workers (int): Maximum number of concurrent worker threads for processing.
@@ -432,17 +448,15 @@ class BatchProcessor:
             raise ValueError("max_workers must be a positive integer")
         
         if not isinstance(max_memory_mb, int) or max_memory_mb < 512:
-            if max_memory_mb < 0:
-                raise ValueError("max_memory_mb must be positive")
-            else:
-                raise ValueError("max_memory_mb must be at least 512 MB")
-        
+            msg = "max_memory_mb must be positive" if max_memory_mb < 0 else "max_memory_mb must be at least 512 MB"
+            raise ValueError(msg)
+
         # Store configuration flags
-        self.enable_monitoring = enable_monitoring
-        self.enable_audit = enable_audit
+        self.enable_monitoring: bool = enable_monitoring
+        self.enable_audit: bool = enable_audit
         
-        self.max_workers = max_workers or min(mp.cpu_count(), 8)
-        self.max_memory_mb = max_memory_mb
+        self.max_workers: int = max_workers or min(mp.cpu_count(), 8)
+        self.max_memory_mb: int = max_memory_mb
         self.storage = storage or IPLDStorage()
         
         # Initialize monitoring and audit
@@ -458,18 +472,16 @@ class BatchProcessor:
                 )
                 # Create and configure monitoring system
                 self.monitoring = MonitoringSystem()
-                # In real usage, we would call initialize, but tests expect the instance itself
-                if hasattr(self.monitoring, 'initialize'):
-                    self.monitoring.initialize(config)
+                self.monitoring.initialize(config)
             except (ImportError, AttributeError, TypeError) as e:
                 raise ImportError(f"Monitoring dependencies not available: {e}")
         else:
             self.monitoring = None
-        
-        # Processing components
-        self.pdf_processor = PDFProcessor(storage=self.storage)
-        self.llm_optimizer = LLMOptimizer()
-        self.graphrag_integrator = GraphRAGIntegrator(storage=self.storage)
+
+        # Processing components - use injected dependencies if provided, otherwise create new instances
+        self.pdf_processor = pdf_processor or PDFProcessor(storage=self.storage)
+        self.llm_optimizer = llm_optimizer or LLMOptimizer()
+        self.graphrag_integrator = graphrag_integrator or GraphRAGIntegrator(storage=self.storage)
         
         # Job management
         self.job_queue: Queue = Queue()
@@ -1249,8 +1261,10 @@ class BatchProcessor:
         active_batches = []
         
         for batch_id, batch_status in self.active_batches.items():
+
             # Only include batches that are not complete
             total_finished = batch_status.completed_jobs + batch_status.failed_jobs
+
             if total_finished < batch_status.total_jobs:
                 batch_dict = asdict(batch_status)
                 batch_dict['resource_usage'] = self._get_resource_usage()

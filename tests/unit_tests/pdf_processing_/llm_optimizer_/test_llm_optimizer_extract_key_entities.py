@@ -6,7 +6,7 @@
 from datetime import datetime
 import pytest
 import os
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 
 import os
 import pytest
@@ -72,6 +72,21 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
+from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
+
+def _mock_classify_entity(sentence, **kwargs):
+    # Return different entities based on sentence content
+    if 'ACME Corporation' in sentence:
+        return ClassificationResult(entity=sentence, category='Organizations', confidence=0.85)
+    elif 'john.smith@university.edu' in sentence:
+        return ClassificationResult(entity=sentence, category='People', confidence=0.9)
+    elif 'MIT researchers' in sentence:
+        return ClassificationResult(entity=sentence, category='People', confidence=0.8)
+    elif '12/25/2024' in sentence:
+        return ClassificationResult(entity=sentence, category='Events', confidence=0.7)
+    else:
+        return ClassificationResult(entity=sentence, category='unclassified', confidence=0.0)
 
 
 class TestLLMOptimizerExtractKeyEntities:
@@ -79,40 +94,27 @@ class TestLLMOptimizerExtractKeyEntities:
 
     def setup_method(self):
         """Set up test fixtures."""
-        # Mock the environment variable 
-        self.env_patcher = patch.dict(os.environ, {'OPENAI_API_KEY': 'test-api-key'})
-        self.env_patcher.start()
-        
         # Mock the SentenceTransformer
-        self.sentence_transformer_patcher = patch('ipfs_datasets_py.pdf_processing.llm_optimizer.SentenceTransformer')
-        self.sentence_transformer_mock = self.sentence_transformer_patcher.start()
-        self.embedding_model_mock = Mock()
+        self.embedding_model_mock = MagicMock()
+        self.sentence_transformer_mock = MagicMock()
         self.sentence_transformer_mock.return_value = self.embedding_model_mock
         
         # Mock the tiktoken encoding
-        self.tiktoken_patcher = patch('ipfs_datasets_py.pdf_processing.llm_optimizer.tiktoken.encoding_for_model')
-        self.tiktoken_mock = self.tiktoken_patcher.start()
-        self.tokenizer_mock = Mock()
+        self.tokenizer_mock = MagicMock()
+        self.tiktoken_mock = MagicMock()
         self.tiktoken_mock.return_value = self.tokenizer_mock
         
         # Mock the OpenAI async client 
-        self.openai_patcher = patch('ipfs_datasets_py.pdf_processing.llm_optimizer.openai.AsyncOpenAI')
-        self.openai_client_mock = self.openai_patcher.start()
-        self.async_client_mock = Mock()
+        self.async_client_mock = MagicMock()
+        self.openai_client_mock = MagicMock()
         self.openai_client_mock.return_value = self.async_client_mock
         
-        self.optimizer = LLMOptimizer()
-
-    def teardown_method(self):
-        """Clean up test fixtures."""
-        if hasattr(self, 'env_patcher'):
-            self.env_patcher.stop()
-        if hasattr(self, 'sentence_transformer_patcher'):
-            self.sentence_transformer_patcher.stop()
-        if hasattr(self, 'tiktoken_patcher'):
-            self.tiktoken_patcher.stop()
-        if hasattr(self, 'openai_patcher'):
-            self.openai_patcher.stop()
+        self.optimizer = LLMOptimizer(
+            api_key='test-api-key',
+            async_openai=self.async_client_mock,
+            sentence_transformer=self.sentence_transformer_mock,
+            tiktoken=self.tiktoken_mock,
+        )
 
     @pytest.mark.asyncio
     async def test_extract_key_entities_valid_content(self):
@@ -137,23 +139,8 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification to return predictable results
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
-        
-        def mock_classify_entity(sentence, **kwargs):
-            # Return different entities based on sentence content
-            if 'ACME Corporation' in sentence:
-                return ClassificationResult(entity=sentence, category='Organizations', confidence=0.85)
-            elif 'john.smith@university.edu' in sentence:
-                return ClassificationResult(entity=sentence, category='People', confidence=0.9)
-            elif 'MIT researchers' in sentence:
-                return ClassificationResult(entity=sentence, category='People', confidence=0.8)
-            elif '12/25/2024' in sentence:
-                return ClassificationResult(entity=sentence, category='Events', confidence=0.7)
-            else:
-                return ClassificationResult(entity=sentence, category='unclassified', confidence=0.0)
-        
         # Patch the entity classification method
-        with patch.object(self.optimizer, '_get_entity_classification', side_effect=mock_classify_entity):
+        with patch.object(self.optimizer, '_get_entity_classification', side_effect=_mock_classify_entity):
             # When
             entities = await self.optimizer._extract_key_entities(structured_text)
         
@@ -248,7 +235,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'Date patterns' in sentence:
@@ -281,14 +268,45 @@ class TestLLMOptimizerExtractKeyEntities:
         assert any('Organization patterns' in e['text'] for e in org_entities)
 
     @pytest.mark.asyncio
-    async def test_extract_key_entities_confidence_scoring(self):
+    async def test_extract_key_entities_confidence_scores_in_valid_range(self):
         """
-        GIVEN various entity patterns with different match strength
+        GIVEN various entity patterns
         WHEN _extract_key_entities is called
-        THEN expect:
-            - Confidence scores between 0.0 and 1.0
-            - Higher confidence for stronger pattern matches
-            - Reasonable score distribution
+        THEN expect all confidence scores between 0.0 and 1.0
+        """
+        # Given
+        structured_text = {
+            'pages': [
+                {
+                    'full_text': 'Strong patterns: john.smith@university.edu, 12/25/2024, NASA. Weak patterns: something@something, 99/99/9999, ABC.'
+                }
+            ]
+        }
+
+        def mock_classify_entity(sentence, **kwargs):
+            if 'university.edu' in sentence:
+                return ClassificationResult(entity=sentence, category='Education', confidence=0.9)
+            elif 'NASA' in sentence:
+                return ClassificationResult(entity=sentence, category='Science and technology', confidence=0.85)
+            else:
+                return ClassificationResult(entity=sentence, category='unclassified', confidence=0.5)
+        
+        # Patch the entity classification method
+        with patch.object(self.optimizer, '_get_entity_classification', side_effect=mock_classify_entity):
+            # When
+            entities = await self.optimizer._extract_key_entities(structured_text)
+        
+        # Then
+        for entity in entities:
+            assert 0.0 <= entity['confidence'] <= 1.0, \
+                f"Confidence score out of range: {entity['confidence']} for entity {entity['text']}"
+
+    @pytest.mark.asyncio
+    async def test_extract_key_entities_returns_entities(self):
+        """
+        GIVEN various entity patterns
+        WHEN _extract_key_entities is called
+        THEN expect at least one entity returned
         """
         # Given
         structured_text = {
@@ -300,7 +318,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification method
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'university.edu' in sentence:
@@ -316,18 +334,45 @@ class TestLLMOptimizerExtractKeyEntities:
             entities = await self.optimizer._extract_key_entities(structured_text)
         
         # Then
-        assert len(entities) > 0
+        assert len(entities) > 0, \
+            "Expected at least one entity to be extracted, but got none."
+
+    @pytest.mark.asyncio
+    async def test_extract_key_entities_strong_patterns_have_high_confidence(self):
+        """
+        GIVEN strong entity patterns like university emails
+        WHEN _extract_key_entities is called
+        THEN expect high confidence scores for strong patterns
+        """
+        # Given
+        structured_text = {
+            'pages': [
+                {
+                    'full_text': 'Strong patterns: john.smith@university.edu, 12/25/2024, NASA.'
+                }
+            ]
+        }
         
-        # All confidence scores should be in valid range
-        for entity in entities:
-            assert 0.0 <= entity['confidence'] <= 1.0
+        # Mock the entity classification method
+
         
-        # Strong email pattern should have higher confidence than weak ones
-        email_entities = [e for e in entities if 'email' in e['type']]
-        if len(email_entities) > 1:
-            strong_email = next((e for e in email_entities if 'university.edu' in e['text']), None)
-            if strong_email:
-                assert strong_email['confidence'] > 0.5
+        def mock_classify_entity(sentence, **kwargs):
+            if 'university.edu' in sentence:
+                return ClassificationResult(entity=sentence, category='Education', confidence=0.9)
+            else:
+                return ClassificationResult(entity=sentence, category='unclassified', confidence=0.5)
+        
+        # Patch the entity classification method
+        with patch.object(self.optimizer, '_get_entity_classification', side_effect=mock_classify_entity):
+            # When
+            entities = await self.optimizer._extract_key_entities(structured_text)
+        
+        # Then
+        education_entities = [e for e in entities if e['type'] == 'Education']
+        assert len(education_entities) > 0
+        for entity in education_entities:
+            if 'university.edu' in entity['text']:
+                assert entity['confidence'] > 0.5
 
     @pytest.mark.asyncio
     async def test_extract_key_entities_result_limiting(self):
@@ -349,7 +394,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification method
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'Corporation' in sentence:
@@ -398,7 +443,7 @@ class TestLLMOptimizerExtractKeyEntities:
         }
         
         # Mock the entity classification method
-        from ipfs_datasets_py.pdf_processing.llm_optimizer import ClassificationResult
+
         
         def mock_classify_entity(sentence, **kwargs):
             if 'josé@universidad' in sentence or 'müller@universität' in sentence:
@@ -423,10 +468,9 @@ class TestLLMOptimizerExtractKeyEntities:
             assert isinstance(entity['confidence'], float)
         
         # Should detect some international patterns
-        if len(entities) > 0:
-            entity_texts = {entity['text'] for entity in entities}
-            # At least some Unicode content should be preserved
-            assert any(len(text.encode('utf-8')) > len(text) for text in entity_texts)
+        entity_texts = {entity['text'] for entity in entities}
+        # At least some Unicode content should be preserved
+        assert any(len(text.encode('utf-8')) > len(text) for text in entity_texts)
 
 
 if __name__ == "__main__":

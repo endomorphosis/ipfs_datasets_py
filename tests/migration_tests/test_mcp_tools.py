@@ -712,6 +712,7 @@ class CLIToolTests(unittest.TestCase):
         self.assertEqual(result["return_code"], 0)
         self.assertEqual(result["stdout"], "Command executed successfully")
 
+
 class FunctionToolTests(unittest.TestCase):
     """Test cases for function tools."""
 
@@ -721,7 +722,7 @@ class FunctionToolTests(unittest.TestCase):
     def tearDown(self):
         cleanup_test_environment()
 
-    @patch('exec')
+    @patch('builtins.exec')
     async def test_execute_python_snippet(self, mock_exec):
         """Test the execute_python_snippet tool."""
         execute_python_snippet_module = import_tool("functions", "execute_python_snippet")

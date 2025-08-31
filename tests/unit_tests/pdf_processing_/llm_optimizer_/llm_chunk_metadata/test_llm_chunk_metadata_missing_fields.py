@@ -23,115 +23,109 @@ class TestLLMChunkMetadataMissingFields:
         """
         GIVEN complete field dictionary missing element_type field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value "text" (element_type has default)
         """
         # Constants
         MISSING_FIELD = "element_type"
-        ERROR_WORDS = ["element_type", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.element_type == "text"  # Default value
 
     def test_metadata_creation_missing_element_id(self):
         """
         GIVEN complete field dictionary missing element_id field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use generated default value (element_id has default_factory)
         """
         # Constants
         MISSING_FIELD = "element_id"
-        ERROR_WORDS = ["element_id", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.element_id.startswith("element_")  # Generated default value
 
     def test_metadata_creation_missing_section(self):
         """
         GIVEN complete field dictionary missing section field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value "unknown" (section has default)
         """
         # Constants
         MISSING_FIELD = "section"
-        ERROR_WORDS = ["section", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.section == "unknown"  # Default value
 
     def test_metadata_creation_missing_confidence(self):
         """
         GIVEN complete field dictionary missing confidence field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value 1.0 (confidence has default)
         """
         # Constants
         MISSING_FIELD = "confidence"
-        ERROR_WORDS = ["confidence", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.confidence == 1.0  # Default value
 
     def test_metadata_creation_missing_source_file(self):
         """
         GIVEN complete field dictionary missing source_file field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value "unknown" (source_file has default)
         """
         # Constants
         MISSING_FIELD = "source_file"
-        ERROR_WORDS = ["source_file", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.source_file == "unknown"  # Default value
 
     def test_metadata_creation_missing_extraction_method(self):
         """
         GIVEN complete field dictionary missing extraction_method field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value "llm_optimization" (extraction_method has default)
         """
         # Constants
         MISSING_FIELD = "extraction_method"
-        ERROR_WORDS = ["extraction_method", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.extraction_method == "llm_optimization"  # Default value
 
     def test_metadata_creation_missing_character_count(self):
         """
@@ -147,7 +141,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -166,7 +160,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -185,7 +179,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -204,7 +198,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -223,7 +217,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -242,7 +236,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -261,7 +255,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -280,7 +274,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -299,7 +293,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -318,7 +312,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -337,7 +331,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -356,7 +350,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -375,7 +369,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -384,39 +378,37 @@ class TestLLMChunkMetadataMissingFields:
         """
         GIVEN complete field dictionary missing original_position field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value "{}" (original_position has default)
         """
         # Constants
         MISSING_FIELD = "original_position"
-        ERROR_WORDS = ["original_position", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.original_position == "{}"  # Default value
 
     def test_metadata_creation_missing_chunk_position_in_doc(self):
         """
         GIVEN complete field dictionary missing chunk_position_in_doc field
         WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        THEN use default value 0 (chunk_position_in_doc has default)
         """
         # Constants
         MISSING_FIELD = "chunk_position_in_doc"
-        ERROR_WORDS = ["chunk_position_in_doc", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.chunk_position_in_doc == 0  # Default value
 
     def test_metadata_creation_missing_page_number(self):
         """
@@ -432,7 +424,7 @@ class TestLLMChunkMetadataMissingFields:
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -440,21 +432,22 @@ class TestLLMChunkMetadataMissingFields:
     def test_metadata_creation_missing_total_chunks_on_page(self):
         """
         GIVEN complete field dictionary missing total_chunks_on_page field
-        WHEN LLMChunkMetadata is instantiated
-        THEN raise ValidationError with "missing" error type
+        WHEN LLMChunkMetadata is instantiated with consistent chunk_position_in_doc
+        THEN use default value 1 (total_chunks_on_page has default)
         """
         # Constants
         MISSING_FIELD = "total_chunks_on_page"
-        ERROR_WORDS = ["total_chunks_on_page", "missing"]
         
         # Given
         data = DataFactory.create_data_missing_field(MISSING_FIELD)
+        # Fix logical inconsistency: chunk_position_in_doc should not exceed default total_chunks_on_page (1)
+        data["chunk_position_in_doc"] = 0  # Valid value when total_chunks_on_page defaults to 1
         
-        # When/Then
-        with pytest.raises(ValidationError) as exc_info:
-            LLMChunkMetadata(**data)
+        # When
+        metadata = LLMChunkMetadata(**data)
         
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
+        # Then
+        assert metadata.total_chunks_on_page == 1  # Default value
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

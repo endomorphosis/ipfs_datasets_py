@@ -1,8 +1,8 @@
 # Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py'
 
-Files last updated: 1752448606.4870503
+Files last updated: 1755040346.494445
 
-Stub file last updated: 2025-07-13 16:27:47
+Stub file last updated: 2025-08-12 16:14:23
 
 ## MediaProcessor
 
@@ -69,7 +69,7 @@ Usage Example:
     
     # Check available capabilities
     capabilities = processor.get_capabilities()
-    if capabilities["supported_operations"]["download"]:
+    if capabilities["download"]:
         print("Video downloading is available")
     
     # Custom output directory and logging
@@ -90,10 +90,32 @@ Notes:
 * **Method:** False
 * **Class:** N/A
 
+## MediaProcessorMetadata
+
+```python
+class MediaProcessorMetadata(BaseModel):
+    """
+    Metadata model for MediaProcessor operations.
+
+Attributes:
+    output_path (str): Path to the output media file.
+    filesize (NonNegativeInt): Size of the media file in bytes.
+    format (str): Format/container type of the media file.
+    title (str): Title of the media content. Defaults to "[Unknown Title]".
+    duration (NonNegativeFloat): Duration of the media in seconds. Defaults to 0.0.
+    resolution (str): Resolution of the media (e.g., "1920x1080"). Defaults to "unknown".
+    converted_path (Optional[FilePath]): Path to converted file if conversion was performed. Defaults to None.
+    conversion_result (Optional[Dict[str, Any]]): Result metadata from conversion operation. Defaults to None.
+    """
+```
+* **Async:** False
+* **Method:** False
+* **Class:** N/A
+
 ## __init__
 
 ```python
-def __init__(self, default_output_dir: Optional[str] = None, enable_logging: bool = True) -> None:
+def __init__(self, default_output_dir: Optional[str | Path] = None, enable_logging: bool = True, logger: logging.Logger = logging.getLogger(__name__), ytdlp: Optional[YtDlpWrapper] = None, ffmpeg: Optional[FFmpegWrapper] = None) -> None:
     """
     Initialize the MediaProcessor with specified configuration options.
 
@@ -103,7 +125,7 @@ The initialization process detects which multimedia tools are available
 and configures the processor accordingly.
 
 Args:
-    default_output_dir (Optional[str], optional): Default directory path for output files.
+    default_output_dir (Optional[str|Path], optional): Default directory path for output files.
         Can be relative or absolute path. If relative, it will be resolved relative
         to the current working directory. If None, uses current working directory.
         The directory will be created if it doesn't exist. Defaults to None.
@@ -243,7 +265,8 @@ Note:
 ## get_capabilities
 
 ```python
-def get_capabilities(self) -> Dict[str, Any]:
+@classmethod
+def get_capabilities(cls) -> Dict[str, Any]:
     """
     Get comprehensive information about available capabilities and supported operations.
 
@@ -258,35 +281,30 @@ are available but what complete workflows can be executed.
 
 Returns:
     Dict[str, Any]: Comprehensive capabilities information with the following structure:
-    {
-        "ytdlp_available": bool,      # Whether yt-dlp backend is available
-        "ffmpeg_available": bool,     # Whether FFmpeg backend is available
-        "supported_operations": {
+        {
             "download": bool,                    # Video downloading capability
             "convert": bool,                     # Media conversion capability
-            "download_and_convert": bool         # Complete workflow capability
         }
-    }
 
 Examples:
-    >>> capabilities = processor.get_capabilities()
+    >>> processor_can = processor.get_capabilities()
     >>> 
     >>> # Check if downloading is supported
-    >>> if capabilities["supported_operations"]["download"]:
+    >>> if processor_can["download"]:
     ...     print("Video downloading is available")
     ... else:
     ...     print("yt-dlp is required for video downloading")
     >>> 
     >>> # Adapt UI based on capabilities
-    >>> if capabilities["ytdlp_available"] and capabilities["ffmpeg_available"]:
+    >>> if processor_can["download"] and processor_can["convert"]:
     ...     show_full_interface()
-    ... elif capabilities["ytdlp_available"]:
+    ... elif processor_can["download"]:
     ...     show_download_only_interface()
     ... else:
     ...     show_no_capabilities_message()
     >>> 
     >>> # Validate operation before attempting
-    >>> if not capabilities["supported_operations"]["convert"]:
+    >>> if not processor_can["convert"]:
     ...     raise RuntimeError("Conversion not supported - FFmpeg required")
 
 Note:
@@ -300,3 +318,26 @@ Note:
 * **Async:** False
 * **Method:** True
 * **Class:** MediaProcessor
+
+## make_media_processor
+
+```python
+def make_media_processor(default_output_dir: Optional[str | Path] = None, enable_logging: bool = True, logger: logging.Logger = logging.getLogger(__name__), ytdlp: Optional[YtDlpWrapper] = None, ffmpeg: Optional[FFmpegWrapper] = None) -> "MediaProcessor":
+    """
+    Factory function to create a MediaProcessor instance.
+
+Args:
+    default_output_dir (Optional[str], optional): Default directory path for output files.
+        If not provided, defaults to the current working directory. The directory will
+        be created if it doesn't exist. Defaults to None.
+    enable_logging (bool, optional): Enable detailed logging for debugging and monitoring.
+        When True, logs initialization status, operation progress, and error details.
+        Defaults to True.
+
+Returns:
+    MediaProcessor: Configured MediaProcessor instance.
+    """
+```
+* **Async:** False
+* **Method:** False
+* **Class:** N/A

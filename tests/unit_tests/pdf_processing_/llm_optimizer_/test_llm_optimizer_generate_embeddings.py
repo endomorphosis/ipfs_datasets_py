@@ -6,7 +6,7 @@
 from datetime import datetime
 import pytest
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 import os
 import pytest
@@ -75,38 +75,92 @@ try:
 except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
+def _make_mock_chunks():
+    # Create mock chunks for testing using factory
+    return [
+        ChunkFactory.create_chunk_instance(
+            content="This is the first chunk of text for testing embeddings.",
+            chunk_id="chunk_0000",
+            source_page=1,
+            source_elements=["paragraph"],
+            token_count=12,
+        ),
+        ChunkFactory.create_chunk_instance(
+            content="This is the second chunk with different content for embedding generation.",
+            chunk_id="chunk_0001", 
+            source_page=1,
+            source_elements=["paragraph"],
+        ),
+        ChunkFactory.create_chunk_instance(
+            content="Final chunk for comprehensive embedding testing scenarios.",
+            chunk_id="chunk_0002",
+            source_page=2,
+            source_elements=["paragraph"],
+            token_count=10,
+        )
+    ]
 
+def _make_mock_embedding():
+    return np.random.rand(3, 384)
 
 class TestLLMOptimizerGenerateEmbeddings:
     """Test LLMOptimizer._generate_embeddings method."""
 
-    def setup_method(self):
+    def setup_method(self, method):
         """Set up test fixtures."""
-        self.optimizer = LLMOptimizer()
+        # Mock embedding data
+        self.mock_embedding = _make_mock_embedding()
+        self.mock_embeddings = np.random.rand(3, 384)  # For error test compatibility
         
-        # Create mock chunks for testing using factory
-        self.mock_chunks = [
-            ChunkFactory.create_chunk_instance(
-                content="This is the first chunk of text for testing embeddings.",
-                chunk_id="chunk_0000",
-                source_page=1,
-                source_elements=["paragraph"],
-                token_count=12,
-            ),
-            ChunkFactory.create_chunk_instance(
-                content="This is the second chunk with different content for embedding generation.",
-                chunk_id="chunk_0001", 
-                source_page=1,
-                source_elements=["paragraph"],
-            ),
-            ChunkFactory.create_chunk_instance(
-                content="Final chunk for comprehensive embedding testing scenarios.",
-                chunk_id="chunk_0002",
-                source_page=2,
+        # Mock embedding model with standard configuration
+        self.mock_embedding_model = MagicMock(spec=SentenceTransformer)
+        
+        def mock_encode(texts, **kwargs):
+            # Return appropriate number of embeddings based on input
+            num_texts = len(texts)
+            return np.random.rand(num_texts, 384)
+        
+        self.mock_embedding_model.encode = MagicMock(side_effect=mock_encode)
+        
+        # Create fresh logger mock for each test
+        self.mock_logger = MagicMock(spec_set=logging.Logger)
+        
+        # Create LLMOptimizer instance with mocked components
+        self.optimizer = LLMOptimizer(
+            logger=self.mock_logger,
+            sentence_transformer=self.mock_embedding_model,
+        )
+        
+        # Standard test chunks
+        self.mock_chunks = _make_mock_chunks()
+        
+        # Large chunk set for batch processing tests
+        self.large_chunks = []
+        for i in range(50):
+            chunk = ChunkFactory.create_chunk_instance(
+                content=f"Content for chunk number {i} in batch processing test.",
+                chunk_id=f"chunk_{i:04d}",
+                source_page=i // 10 + 1,
                 source_elements=["paragraph"],
                 token_count=10,
             )
-        ]
+            self.large_chunks.append(chunk)
+        
+        # Batch embeddings for batch processing tests
+        self.batch1_embeddings = np.random.rand(32, 384)
+        self.batch2_embeddings = np.random.rand(18, 384)
+        
+        # Common mock configurations
+        self.error_mock_model = Mock()
+        self.error_mock_model.encode.side_effect = Exception("Embedding generation failed")
+        
+        self.memory_error_mock_model = Mock()
+        self.memory_error_mock_model.encode.side_effect = MemoryError("Insufficient memory for embeddings")
+        
+        self.empty_chunks_mock_model = Mock()
+
+
+
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_returns_correct_chunk_count(self):
@@ -117,16 +171,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
-        
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert len(result_chunks) == 3, "Expected exactly 3 chunks in the result"
+        expected_length = len(self.mock_chunks)
+        assert len(result_chunks) == expected_length, \
+            f"Expected exactly {expected_length} chunks in the result, got {len(result_chunks)}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_creates_numpy_array_embeddings(self):
@@ -137,36 +189,31 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
-        
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert isinstance(result_chunks[0].embedding, np.ndarray), "First chunk embedding should be a numpy array"
+        assert isinstance(result_chunks[0].embedding, np.ndarray), \
+            f"First chunk embedding should be a numpy array, got {type(result_chunks[0].embedding).__name__}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_creates_correct_embedding_shape(self):
         """
         GIVEN a list of chunks with valid content
         WHEN _generate_embeddings is called
-        THEN each chunk embedding should have the expected shape (384,)
+        THEN each chunk embedding should have the expected shape (5,)
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
-        
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert result_chunks[0].embedding.shape == (384,), "Embedding should have shape (384,)"
+        shape = (5,)
+        assert result_chunks[0].embedding.shape == shape, \
+            f"Embedding should have shape {shape}, got {result_chunks[0].embedding.shape}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_preserves_embedding_values(self):
@@ -177,16 +224,19 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
+        expected_embeddings = self.mock_embeddings
         
+        # Override the mock for this specific test
+        self.optimizer.embedding_model.encode = MagicMock(return_value=expected_embeddings)
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        np.testing.assert_array_equal(result_chunks[0].embedding, mock_embeddings[0], "First chunk embedding should match mock embedding")
+        np.testing.assert_array_equal(
+            result_chunks[0].embedding, expected_embeddings[0], 
+            "result_chunks[0].embedding did not match expected_embeddings[0] values"
+        )
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_calls_model_once(self):
@@ -197,16 +247,13 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
-        
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+
         # Then
-        mock_embedding_model.encode.assert_called_once(), "Embedding model should be called exactly once"
+        self.optimizer.embedding_model.encode.assert_called_once(), \
+            "Embedding model should be called exactly once"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_passes_correct_content_count(self):
@@ -217,17 +264,15 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
-        
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+
         # Then
-        call_args = mock_embedding_model.encode.call_args[0][0]
-        assert len(call_args) == 3, "Model should receive exactly 3 content strings"
+        content_strings = 3
+        call_args = self.optimizer.embedding_model.encode.call_args[0][0]
+        assert len(call_args) == content_strings, \
+            f"Model should receive exactly {content_strings} content strings, got {len(call_args)}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_passes_correct_first_content(self):
@@ -238,17 +283,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embeddings = np.random.rand(3, 384)
-        mock_embedding_model.encode.return_value = mock_embeddings
-        self.optimizer.embedding_model = mock_embedding_model
-        
+
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        call_args = mock_embedding_model.encode.call_args[0][0]
-        assert call_args[0] == chunks[0].content, "First content string should match first chunk content"
+        call_args = self.optimizer.embedding_model.encode.call_args[0][0]
+        assert call_args[0] == chunks[0].content, \
+            f"First content string should match first chunk content, got {call_args[0]}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_model_unavailable_returns_correct_count(self):
@@ -262,11 +304,12 @@ class TestLLMOptimizerGenerateEmbeddings:
         self.optimizer.embedding_model = None
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.warning') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert len(result_chunks) == 3, "Should return 3 chunks when model is unavailable"
+        assert len(result_chunks) == len(chunks), \
+            f"Should return the same number of chunks when model is unavailable, got {len(result_chunks)}"
+
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_model_unavailable_returns_unchanged_chunks(self):
@@ -278,11 +321,10 @@ class TestLLMOptimizerGenerateEmbeddings:
         # Given
         chunks = self.mock_chunks.copy()
         self.optimizer.embedding_model = None
-        
+
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.warning') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
+
         # Then
         assert result_chunks == chunks, "Should return unchanged chunks when model is unavailable"
 
@@ -298,11 +340,12 @@ class TestLLMOptimizerGenerateEmbeddings:
         self.optimizer.embedding_model = None
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.warning') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        mock_log.assert_called_once_with("No embedding model available, skipping embedding generation"), "Should log warning when model is unavailable"
+        log_message = "No embedding model available, skipping embedding generation"
+        self.mock_logger.warning.assert_called_once_with(log_message), \
+            "Should log warning when model is unavailable"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_model_unavailable_preserves_none_embeddings(self):
@@ -311,16 +354,26 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN all chunk embeddings should remain None
         """
-        # Given
-        chunks = self.mock_chunks.copy()
+        # Given - Create chunks with None embeddings
+        chunks = [
+            ChunkFactory.create_chunk_instance(
+                content="This is the first chunk of text for testing embeddings.",
+                chunk_id="chunk_0000",
+                source_page=1,
+                source_elements=["paragraph"],
+                token_count=12,
+                embedding=None
+            )
+        ]
         self.optimizer.embedding_model = None
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.warning') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert chunks[0].embedding is None, "First chunk embedding should remain None when model is unavailable"
+        assert result_chunks[0].embedding is None, \
+            f"chunk embedding should remain None when model is unavailable, got {result_chunks[0].embedding}"
+
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_empty_chunks_returns_empty_list(self):
@@ -331,14 +384,13 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = []
-        mock_embedding_model = Mock()
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.empty_chunks_mock_model
         
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert result_chunks == [], "Should return empty list for empty input"
+        assert result_chunks == [], f"Should return empty list for empty input, got {result_chunks}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_empty_chunks_returns_zero_length(self):
@@ -349,14 +401,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = []
-        mock_embedding_model = Mock()
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.empty_chunks_mock_model
         
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert len(result_chunks) == 0, "Returned list should have zero length for empty input"
+        assert len(result_chunks) == 0, \
+            f"Returned list should have zero length for empty input, got {len(result_chunks)}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_empty_chunks_does_not_call_model(self):
@@ -367,14 +419,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = []
-        mock_embedding_model = Mock()
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.empty_chunks_mock_model
         
         # When
         result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        mock_embedding_model.encode.assert_not_called(), "Embedding model should not be called for empty input"
+        self.empty_chunks_mock_model.encode.assert_not_called(), \
+            "Embedding model should not be called for empty input"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_batch_processing_returns_correct_count(self):
@@ -383,26 +435,13 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN the returned list should contain all 50 chunks
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
         
         # Then
         assert len(result_chunks) == 50, "Should return all 50 chunks after batch processing"
@@ -414,26 +453,13 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN each chunk should have a non-None embedding
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
         
         # Then
         assert result_chunks[0].embedding is not None, "First chunk should have non-None embedding after batch processing"
@@ -445,26 +471,13 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN each chunk embedding should be a numpy array
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
         
         # Then
         assert isinstance(result_chunks[0].embedding, np.ndarray), "First chunk embedding should be numpy array after batch processing"
@@ -476,26 +489,13 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN each chunk embedding should have the correct shape (384,)
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
         
         # Then
         assert result_chunks[0].embedding.shape == (384,), "First chunk embedding should have shape (384,) after batch processing"
@@ -507,29 +507,19 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN the embedding model should be called exactly twice for batching
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
         
         # Then
-        assert mock_embedding_model.encode.call_count == 2, "Embedding model should be called exactly twice for 50 chunks"
+        expected_call_count = 2
+        actual_call_count = mock_embedding_model.encode.call_count
+        assert actual_call_count == expected_call_count, \
+            f"Embedding model should be called exactly {expected_call_count} for 50 chunks, got {actual_call_count}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_batch_processing_first_batch_size(self):
@@ -538,30 +528,20 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN the first batch should contain 32 chunks
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
         
         # Then
+        expected_batch_size = 32
         first_batch_call = mock_embedding_model.encode.call_args_list[0]
-        assert len(first_batch_call[0][0]) == 32, "First batch should contain exactly 32 chunks"
+        actual_batch_size = len(first_batch_call[0][0])
+        assert actual_batch_size == expected_batch_size, \
+            f"First batch should contain exactly {expected_batch_size} chunks, got {actual_batch_size}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_batch_processing_second_batch_size(self):
@@ -570,30 +550,19 @@ class TestLLMOptimizerGenerateEmbeddings:
         WHEN _generate_embeddings is called
         THEN the second batch should contain 18 chunks
         """
-        # Given - Create many chunks using factory
-        large_chunks = []
-        for i in range(50):
-            chunk = ChunkFactory.create_chunk_instance(
-                content=f"Content for chunk number {i} in batch processing test.",
-                chunk_id=f"chunk_{i:04d}",
-                source_page=i // 10 + 1,
-                source_elements=["paragraph"],
-                token_count=10,
-            )
-            large_chunks.append(chunk)
-        
+        # Given
         mock_embedding_model = Mock()
-        batch1_embeddings = np.random.rand(32, 384)
-        batch2_embeddings = np.random.rand(18, 384)
-        mock_embedding_model.encode.side_effect = [batch1_embeddings, batch2_embeddings]
+        mock_embedding_model.encode.side_effect = [self.batch1_embeddings, self.batch2_embeddings]
         self.optimizer.embedding_model = mock_embedding_model
         
         # When
-        result_chunks = await self.optimizer._generate_embeddings(large_chunks)
-        
+        result_chunks = await self.optimizer._generate_embeddings(self.large_chunks)
+
         # Then
+        expected_batch_size = 18
         second_batch_call = mock_embedding_model.encode.call_args_list[1]
-        assert len(second_batch_call[0][0]) == 18, "Second batch should contain exactly 18 chunks"
+        assert len(second_batch_call[0][0]) == expected_batch_size, \
+            f"Second batch should contain exactly {expected_batch_size} chunks, got {len(second_batch_call[0][0])}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_error_handling_returns_correct_count(self):
@@ -604,16 +573,15 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = Exception("Embedding generation failed")
-        self.optimizer.embedding_model = mock_embedding_model
-        
+        self.optimizer.embedding_model = self.error_mock_model
+
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert len(result_chunks) == 3, "Should return 3 chunks even when embedding generation fails"
+        expected_length = len(chunks)
+        assert len(result_chunks) == expected_length, \
+            f"Should return {expected_length} chunks even when embedding generation fails"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_error_handling_preserves_none_embeddings(self):
@@ -624,14 +592,11 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = Exception("Embedding generation failed")
-        self.optimizer.embedding_model = mock_embedding_model
-        
+        self.optimizer.embedding_model = self.error_mock_model
+
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
+
         # Then
         assert result_chunks[0].embedding is None, "First chunk embedding should remain None after exception"
 
@@ -644,16 +609,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = Exception("Embedding generation failed")
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.error_mock_model
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
+
         # Then
-        mock_log.assert_called_once(), "Error should be logged exactly once when embedding generation fails"
+        self.optimizer.logger.error.assert_called_once(), \
+            "Error should be logged exactly once when embedding generation fails"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_error_handling_logs_correct_message(self):
@@ -664,17 +627,16 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = Exception("Embedding generation failed")
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.error_mock_model
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        log_call_args = mock_log.call_args[0][0]
-        assert "Failed to generate embeddings for batch 1: Embedding generation failed" == log_call_args, "Error message should contain correct batch and error details"
+        expected_msg = "Failed to generate embeddings for batch 1: Embedding generation failed"
+        log_call_args = self.optimizer.logger.error.call_args[0][0]
+        assert expected_msg == log_call_args, \
+            f"Error message should have been '{expected_msg}', got '{log_call_args}'"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_memory_error_returns_correct_count(self):
@@ -685,16 +647,15 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = MemoryError("Insufficient memory for embeddings")
-        self.optimizer.embedding_model = mock_embedding_model
-        
+        self.optimizer.embedding_model = self.memory_error_mock_model
+
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert len(result_chunks) == 3, "Should return 3 chunks even when MemoryError occurs"
+        expected_length = 3
+        assert len(result_chunks) == expected_length, \
+            f"Should return {expected_length} chunks even when MemoryError occurs, got {len(result_chunks)}"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_memory_error_preserves_none_embeddings(self):
@@ -705,16 +666,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = MemoryError("Insufficient memory for embeddings")
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.memory_error_mock_model
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
         
         # Then
-        assert result_chunks[0].embedding is None, "First chunk embedding should remain None after MemoryError"
+        assert result_chunks[0].embedding is None, \
+            "First chunk embedding should remain None after MemoryError"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_memory_error_logs_error_once(self):
@@ -725,16 +684,14 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = MemoryError("Insufficient memory for embeddings")
-        self.optimizer.embedding_model = mock_embedding_model
-        
+        self.optimizer.embedding_model = self.memory_error_mock_model
+
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
+
         # Then
-        mock_log.assert_called_once(), "Error should be logged exactly once when MemoryError occurs"
+        self.optimizer.logger.error.assert_called_once(), \
+            "Error should be logged exactly once when MemoryError occurs"
 
     @pytest.mark.asyncio
     async def test_generate_embeddings_memory_error_logs_correct_message(self):
@@ -745,17 +702,16 @@ class TestLLMOptimizerGenerateEmbeddings:
         """
         # Given
         chunks = self.mock_chunks.copy()
-        mock_embedding_model = Mock()
-        mock_embedding_model.encode.side_effect = MemoryError("Insufficient memory for embeddings")
-        self.optimizer.embedding_model = mock_embedding_model
+        self.optimizer.embedding_model = self.memory_error_mock_model
         
         # When
-        with patch('ipfs_datasets_py.pdf_processing.llm_optimizer.logger.error') as mock_log:
-            result_chunks = await self.optimizer._generate_embeddings(chunks)
-        
+        result_chunks = await self.optimizer._generate_embeddings(chunks)
+
         # Then
-        log_call_args = mock_log.call_args[0][0]
-        assert "Failed to generate embeddings for batch 1: Insufficient memory for embeddings" == log_call_args, "Error message should contain correct memory error details"
+        expected_msg = "Failed to generate embeddings for batch 1: Insufficient memory for embeddings"
+        log_call_args = self.optimizer.logger.error.call_args[0][0]
+        assert expected_msg == log_call_args, \
+            f"Error message should have been '{expected_msg}', got '{log_call_args}'"
 
 
 if __name__ == "__main__":

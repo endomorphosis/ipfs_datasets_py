@@ -1,0 +1,1 @@
+# Needed to get coverage package to work. Don't know why.

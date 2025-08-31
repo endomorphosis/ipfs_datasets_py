@@ -13,6 +13,7 @@ import asyncio
 import logging
 import json
 from typing import Dict, List, Any, Optional
+from types import ModuleType
 from dataclasses import dataclass
 from datetime import datetime
 import re
@@ -25,13 +26,16 @@ from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.chunk import tree2conlltags
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
-
+import torch
 
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
 
 
 logger = logging.getLogger(__name__)
+
+
+
 
 
 # Ensure required NLTK data is available
@@ -253,6 +257,36 @@ class SemanticSearchResult:
     semantic_types: str
     related_entities: List[str]
 
+
+
+
+# Private Methods:
+#     _normalize_query(query: str) -> str:
+#         Normalize query text by lowercasing, whitespace cleanup, and stop word removal.
+#     _detect_query_type(query: str) -> str:
+#         Auto-detect query type based on keyword patterns and linguistic cues.
+#     _process_entity_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
+#         Process entity-focused queries using name matching and type filtering.
+#     _process_relationship_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
+#         Process relationship-focused queries with entity and type matching.
+#     _process_semantic_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
+#         Process semantic search queries using embedding similarity.
+#     _process_document_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
+#         Process document-level queries with title, entity, and content matching.
+#     _process_cross_document_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
+#         Process cross-document relationship analysis queries.
+#     _process_graph_traversal_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
+#         Process graph path-finding and traversal queries using NetworkX.
+#     _extract_entity_names_from_query(query: str) -> List[str]:
+#         Extract potential entity names from query text using capitalization patterns.
+#     _get_entity_documents(entity: Entity) -> List[str]:
+#         Retrieve document IDs where a specific entity appears.
+#     _get_relationship_documents(relationship: Relationship) -> List[str]:
+#         Retrieve document IDs where a specific relationship appears.
+#     _generate_query_suggestions(query: str, results: List[QueryResult]) -> List[str]:
+#         Generate intelligent follow-up query suggestions based on result content.
+
+
 class QueryEngine:
     """
     Advanced Query Engine for PDF Knowledge Base Processing and Retrieval
@@ -300,32 +334,6 @@ class QueryEngine:
             Retrieve analytics about query patterns, performance metrics, and cache utilization.
             Provides insights into query distribution, processing times, and system usage.
 
-    Private Methods:
-        _normalize_query(query: str) -> str:
-            Normalize query text by lowercasing, whitespace cleanup, and stop word removal.
-        _detect_query_type(query: str) -> str:
-            Auto-detect query type based on keyword patterns and linguistic cues.
-        _process_entity_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
-            Process entity-focused queries using name matching and type filtering.
-        _process_relationship_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
-            Process relationship-focused queries with entity and type matching.
-        _process_semantic_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
-            Process semantic search queries using embedding similarity.
-        _process_document_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
-            Process document-level queries with title, entity, and content matching.
-        _process_cross_document_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
-            Process cross-document relationship analysis queries.
-        _process_graph_traversal_query(query: str, filters: Optional[Dict[str, Any]], max_results: int) -> List[QueryResult]:
-            Process graph path-finding and traversal queries using NetworkX.
-        _extract_entity_names_from_query(query: str) -> List[str]:
-            Extract potential entity names from query text using capitalization patterns.
-        _get_entity_documents(entity: Entity) -> List[str]:
-            Retrieve document IDs where a specific entity appears.
-        _get_relationship_documents(relationship: Relationship) -> List[str]:
-            Retrieve document IDs where a specific relationship appears.
-        _generate_query_suggestions(query: str, results: List[QueryResult]) -> List[str]:
-            Generate intelligent follow-up query suggestions based on result content.
-
     Usage Example:
         # Initialize query engine
         engine = QueryEngine(
@@ -361,7 +369,10 @@ class QueryEngine:
     def __init__(self, 
                  graphrag_integrator: GraphRAGIntegrator,
                  storage: Optional[IPLDStorage] = None,
-                 embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"):
+                 embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+                 logger: logging.Logger = logger,
+                 torch_library: Optional[ModuleType] = None 
+                 ) -> None:
         """
         Initialize the QueryEngine with GraphRAG integration and semantic search capabilities.
 
@@ -393,6 +404,9 @@ class QueryEngine:
                 redundant calculations during repeated queries.
             query_cache (Dict[str, QueryResponse]): Cache for storing complete query responses
                 to improve performance for repeated queries.
+            logger (logging.Logger): Logger instance for logging query processing events.
+            torch_library (Optional[ModuleType]): Optional Torch library module for embedding operations.
+                If None, uses the torch module imported into this module. Used for mocking or testing purposes.
 
         Raises:
             ImportError: If sentence-transformers library is not available.
@@ -419,35 +433,41 @@ class QueryEngine:
         # Validate inputs
         if graphrag_integrator is None:
             raise TypeError("graphrag_integrator cannot be None")
-        
-        if not isinstance(graphrag_integrator, GraphRAGIntegrator):
-            raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
-        
-        if hasattr(graphrag_integrator, 'is_initialized') and not graphrag_integrator.is_initialized:
-            raise RuntimeError("GraphRAGIntegrator must be properly initialized")
-        
-        if storage is not None and not isinstance(storage, IPLDStorage):
-            raise TypeError("storage must be an IPLDStorage instance")
-        
+
         if not isinstance(embedding_model, str):
             raise TypeError("embedding_model must be a string")
-        
+
         if embedding_model == "":
             raise ValueError("embedding_model cannot be empty")
 
+        if not isinstance(graphrag_integrator, GraphRAGIntegrator):
+            raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
+
+        # try: TODO this breaks tests with mocks. Figure out how to handle this.
+        #     # Try to access an instance attribute to ensure it's initialized
+        #     _ = graphrag_integrator.global_entities
+        # except AttributeError:
+        #     raise RuntimeError("GraphRAGIntegrator must be properly initialized")
+
+        if storage is not None and not isinstance(storage, IPLDStorage):
+            raise TypeError("storage must be an IPLDStorage instance")
+
         self.graphrag = graphrag_integrator
         self.storage = storage or IPLDStorage()
+        self.logger = logger
+
+        self.torch = torch_library or torch
 
         # Initialize embedding model for semantic search
         try:
             self.embedding_model = SentenceTransformer(embedding_model)
-            logger.info(f"Loaded embedding model: {embedding_model}")
+            self.logger.info(f"Loaded embedding model: {embedding_model}")
         except ImportError as e:
-            logger.error(f"Failed to load embedding model: {e}")
-            self.embedding_model = None
+            self.logger.error(f"Failed to load embedding model: {e}")
+            raise ImportError("sentence-transformers library is required for semantic search") from e
         except Exception as e:
-            logger.warning(f"Failed to load embedding model: {e}")
-            self.embedding_model = None
+            self.logger.warning(f"Unexpected failure loading embedding model: {e}")
+            raise RuntimeError(f"Unexpected failure to load embedding model '{embedding_model}': {e}") from e
         
         # Query processing components
         self.query_processors = {
@@ -460,6 +480,7 @@ class QueryEngine:
         }
         
         # Cache for embeddings and frequent queries
+        self.classification_embeddings = {}
         self.embedding_cache = {}
         self.query_cache = {}
         
@@ -529,7 +550,7 @@ class QueryEngine:
 
         Notes:
             - Query normalization includes lowercasing, whitespace cleanup, and stop word removal
-            - Auto-detection uses keyword patterns to classify query intent
+            - Auto-classification of query to classify query intent
             - Results are cached for performance; identical queries return cached responses
             - Processing time includes all operations from normalization to suggestion generation
             - Suggestions are generated based on result content and common query patterns
@@ -543,13 +564,13 @@ class QueryEngine:
         if not query_type:
             query_type = self._detect_query_type(normalized_query)
         
-        logger.info(f"Processing {query_type} query: {normalized_query}")
+        self.logger.info(f"Processing {query_type} query: {normalized_query}")
         
         # Check cache
         cache_key = f"{query_type}:{normalized_query}:{json.dumps(filters, sort_keys=True)}"
         if cache_key in self.query_cache:
             cached_result = self.query_cache[cache_key]
-            logger.info("Returning cached query result")
+            self.logger.info("Returning cached query result")
             return cached_result
         
         # Process query based on type
@@ -579,14 +600,14 @@ class QueryEngine:
             metadata={
                 'normalized_query': normalized_query,
                 'filters_applied': filters or {},
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now().isoformat()
             }
         )
         
         # Cache response
         self.query_cache[cache_key] = response
         
-        logger.info(f"Query processed in {processing_time:.2f}s, {len(results)} results")
+        self.logger.info(f"Query processed in {processing_time:.2f}s, {len(results)} results")
         return response
     
     def _normalize_query(self, query: str) -> str:
@@ -642,6 +663,7 @@ class QueryEngine:
         normalized = re.sub(r'\s+', ' ', normalized)
         
         # Remove common stop words for better matching
+        # TODO Should probably skip this step when doing sentence embeddings.
         stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is'}
         words = normalized.split()
         filtered_words = [word for word in words if word not in stop_words]
@@ -695,37 +717,84 @@ class QueryEngine:
             'semantic_search'
 
         Notes:
-            - Detection is based on keyword presence, not semantic understanding
-            - Order of pattern checking determines priority when multiple patterns match
             - Defaults to semantic_search for ambiguous or unrecognized patterns
-            - Keywords are checked using substring matching for flexibility
             - Detection accuracy improves with well-formed natural language queries
         """
-        query_lower = query.lower()
-        
+        top_k = min(5, len(corpus))
+
+        # Normalize the sentence for consistent processing
+        query_lower = query.lower().strip().capitalize()
+
+        if not self.classification_embeddings:
+            classifications = {
+                "entity_search": ["This is a question about a specific entity or entities (who, what, person, organization)."], 
+                "relationship_search": ["This is a question about connections between entities (relationship, related, works for)"],
+                "cross_document": ["This is a question about multiple documents (across documents, compare, different documents, multiple)"],
+                "graph_traversal": ["This is a question about how two entities are connected (path, connected through, how are)"],
+                "document_search": ["This is a question about a specific document (document, paper, article, file)"],
+            }
+            class_copy = classifications.copy()
+
+            # Get embeddings for each classification and add them to the dictionary.
+            for key, value in classifications.items():
+                class_copy[key].append(
+                    self.embedding_model.encode(value[0], convert_to_tensor=True)
+                )
+
+            # Cache the embeddings.
+            self.classification_embeddings.update(class_copy)
+
+        # Compute the query embedding
+        query_embedding = self.embedding_model.encode(query_lower, convert_to_tensor=True)
+
+        similarity_scores = self.embedding_model.similarity(
+            query_embedding, [embed for embed in self.classification_embeddings.values()[1]]
+        )[0]
+        possible_cats = []
+
+        # Get the top k most similar classifications
+        scores, indices = self.torch.topk(similarity_scores, k=top_k)
+        for score, idx in zip(scores, indices):
+            classification = list(self.classification_embeddings.keys())[idx]
+            if score > 0.7:
+                possible_cats.append(classification)
+
+        if not possible_cats:
+            # If no categories matched well enough, default to semantic search
+            return 'semantic_search'
+
+        # Run them through a re-ranker to get the best match
+        if len(possible_cats) > 1:
+            reranked_scores = self.embedding_model.similarity(
+                query_embedding, [self.classification_embeddings[cat][1] for cat in possible_cats]
+            )[0]
+            best_idx = reranked_scores.argmax().item()
+            return possible_cats[best_idx]
+
+
         # Entity search patterns
         if any(keyword in query_lower for keyword in ['who is', 'what is', 'person', 'organization', 'company']):
             return 'entity_search'
-        
+
         # Relationship patterns
         if any(keyword in query_lower for keyword in ['relationship', 'related', 'connected', 'works for', 'founded']):
             return 'relationship_search'
-        
+
         # Cross-document patterns
         if any(keyword in query_lower for keyword in ['across documents', 'compare', 'different documents', 'multiple']):
             return 'cross_document'
-        
+
         # Graph traversal patterns
         if any(keyword in query_lower for keyword in ['path', 'connected through', 'how are', 'degree']):
             return 'graph_traversal'
-        
+
         # Document search patterns
         if any(keyword in query_lower for keyword in ['document', 'paper', 'article', 'file']):
             return 'document_search'
-        
+
         # Default to semantic search
         return 'semantic_search'
-    
+
     async def _process_entity_query(self, 
                                    query: str, 
                                    filters: Optional[Dict[str, Any]], 
@@ -967,6 +1036,17 @@ class QueryEngine:
             - Results include complete entity information for both relationship participants
             - Missing entities are skipped with warning logs rather than causing failures
         """
+        # Input validation
+        if max_results <= 0:
+            raise ValueError("max_results must be positive")
+        
+        if filters is not None and not isinstance(filters, dict):
+            raise TypeError("filters must be a dictionary")
+        
+        # Check for corrupted data
+        if self.graphrag.knowledge_graphs is None:
+            raise RuntimeError("GraphRAG data is corrupted")
+        
         results = []
         
         # Get all relationships from all knowledge graphs
@@ -983,6 +1063,9 @@ class QueryEngine:
                     r for r in all_relationships 
                     if r.source_entity_id == filters['entity_id'] or r.target_entity_id == filters['entity_id']
                 ]
+            if 'confidence' in filters:
+                min_confidence = filters['confidence']
+                all_relationships = [r for r in all_relationships if r.confidence >= min_confidence]
         
         # Score relationships by query relevance
         scored_relationships = []
@@ -996,6 +1079,10 @@ class QueryEngine:
             target_entity = self.graphrag.global_entities.get(relationship.target_entity_id)
             
             if not source_entity or not target_entity:
+                if not source_entity:
+                    logging.warning(f"Missing source entity {relationship.source_entity_id} for relationship {relationship.id}")
+                if not target_entity:
+                    logging.warning(f"Missing target entity {relationship.target_entity_id} for relationship {relationship.id}")
                 continue
             
             # Relationship type match
@@ -1050,9 +1137,9 @@ class QueryEngine:
         
         return results
     
-    async def _process_semantic_query(self, 
-                                    query: str, 
-                                    filters: Optional[Dict[str, Any]], 
+    async def _process_semantic_query(self,
+                                    query: str,
+                                    filters: Optional[Dict[str, Any]],
                                     max_results: int) -> List[QueryResult]:
         """
         Process semantic search queries using embedding similarity matching.
@@ -1091,7 +1178,7 @@ class QueryEngine:
             >>> # Conceptual search
             >>> results = await _process_semantic_query("machine learning applications", None, 10)
             >>> print(f"Similarity: {results[0].relevance_score}")
-            
+
             >>> # Filtered semantic search
             >>> results = await _process_semantic_query(
             ...     "artificial intelligence",
@@ -1106,14 +1193,32 @@ class QueryEngine:
             - Related entities are identified by checking entity source chunks
             - Content may be truncated in results for readability (full content in metadata)
         """
+        # Input validation
+        if max_results <= 0:
+            raise ValueError("max_results must be positive")
+        
+        if filters is not None and not isinstance(filters, dict):
+            raise TypeError("filters must be a dictionary")
+        
+        if filters and 'min_similarity' in filters:
+            min_sim = filters['min_similarity']
+            if not isinstance(min_sim, (int, float)) or not (0.0 <= min_sim <= 1.0):
+                raise ValueError("min_similarity must be between 0.0 and 1.0")
+        
         if not self.embedding_model:
-            logger.warning("No embedding model available for semantic search")
-            return []
-        
+            raise RuntimeError("No embedding model available for semantic search")
+
         results = []
-        
-        # Generate query embedding
-        query_embedding = self.embedding_model.encode([query])[0]
+
+        # Generate query embedding with caching
+        if query in self.embedding_cache:
+            query_embedding = self.embedding_cache[query]
+        else:
+            try:
+                query_embedding = self.embedding_model.encode([query])[0]
+                self.embedding_cache[query] = query_embedding
+            except Exception as e:
+                raise RuntimeError(f"Embedding computation failed: {e}")
         
         # Get all chunks from all documents
         all_chunks = []
@@ -1123,7 +1228,7 @@ class QueryEngine:
                     all_chunks.append((chunk, kg.document_id))
         
         if not all_chunks:
-            logger.warning("No chunks with embeddings found for semantic search")
+            self.logger.warning("No chunks with embeddings found for semantic search")
             return []
         
         # Calculate similarities
@@ -1141,7 +1246,18 @@ class QueryEngine:
             if 'document_id' in filters:
                 chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if d == filters['document_id']]
             if 'semantic_types' in filters:
-                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if c.semantic_types == filters['semantic_types']]
+                target_type = filters['semantic_types']
+                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities 
+                                        if (
+                                            c.semantic_types == target_type or 
+                                            (isinstance(c.semantic_types, (set, list)) 
+                                             and target_type in c.semantic_types)
+                                        )
+                                    ]
+            if 'page_range' in filters:
+                start_page, end_page = filters['page_range']
+                chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities 
+                                    if start_page <= c.page_number <= end_page]
             if 'min_similarity' in filters:
                 chunk_similarities = [(c, d, s) for c, d, s in chunk_similarities if s >= filters['min_similarity']]
         
@@ -1151,24 +1267,41 @@ class QueryEngine:
         for chunk, doc_id, similarity in chunk_similarities[:max_results]:
             # Find related entities
             related_entities = []
-            for entity in self.graphrag.global_entities.values():
-                if chunk.chunk_id in entity.source_chunks:
-                    related_entities.append(entity.name)
+            if self.graphrag.global_entities:
+                for entity in self.graphrag.global_entities.values():
+                    if chunk.chunk_id in entity.source_chunks:
+                        related_entities.append(entity.name)
+            
+            # Handle content truncation
+            content = chunk.content
+            truncated = False
+            if len(content) > 500:
+                content = content[:500] + '...'
+                truncated = True
+            
+            # Build metadata
+            metadata = {
+                'document_id': doc_id,
+                'semantic_types': getattr(chunk, 'semantic_types', 'unknown'),
+                'source_page': getattr(chunk, 'page_number', getattr(chunk, 'source_page', 1)),
+                'token_count': getattr(chunk, 'token_count', len(chunk.content.split())),
+                'related_entities': related_entities,
+                'relationships': getattr(chunk, 'relationships', []),
+                'similarity_score': similarity
+            }
+            
+            # Add full content if truncated
+            if truncated:
+                metadata['full_content'] = chunk.content
             
             result = QueryResult(
                 id=chunk.chunk_id,
                 type='chunk',
-                content=chunk.content[:500] + '...' if len(chunk.content) > 500 else chunk.content,
+                content=content,
                 relevance_score=similarity,
                 source_document=doc_id,
                 source_chunks=[chunk.chunk_id],
-                metadata={
-                    'semantic_types': chunk.semantic_types,
-                    'source_page': chunk.source_page,
-                    'token_count': chunk.token_count,
-                    'related_entities': related_entities,
-                    'relationships': chunk.relationships
-                }
+                metadata=metadata
             )
             results.append(result)
         
@@ -1334,7 +1467,7 @@ class QueryEngine:
                 raise e
             except Exception as e:
                 # Log other errors but continue processing
-                logger.warning(f"Error processing document {getattr(kg, 'document_id', 'unknown')}: {e}")
+                self.logger.warning(f"Error processing document {getattr(kg, 'document_id', 'unknown')}: {e}")
                 continue
         
         # Sort and limit results
@@ -1414,7 +1547,7 @@ class QueryEngine:
                 results.append(result)
                 
             except Exception as e:
-                logger.warning(f"Error creating result for document {getattr(kg, 'document_id', 'unknown')}: {e}")
+                self.logger.warning(f"Error creating result for document {getattr(kg, 'document_id', 'unknown')}: {e}")
                 continue
         
         return results
@@ -1481,7 +1614,7 @@ class QueryEngine:
         cross_relationships = self.graphrag.cross_document_relationships
         
         if not cross_relationships:
-            logger.info("No cross-document relationships found")
+            self.logger.info("No cross-document relationships found")
             return results
         
         # Score cross-document relationships
@@ -1493,10 +1626,18 @@ class QueryEngine:
             if filters:
                 # Filter by relationship type
                 if "relationship_type" in filters and cross_rel.relationship_type != filters["relationship_type"]:
+                    self.logger.warning(
+                        f"Skipping cross-document relationship {cross_rel.id} due to type mismatch: "
+                        f"{cross_rel.relationship_type} != {filters['relationship_type']}"
+                    )
                     continue
                     
                 # Filter by confidence
                 if "min_confidence" in filters and cross_rel.confidence < filters["min_confidence"]:
+                    self.logger.warning(
+                        f"Skipping cross-document relationship {cross_rel.id} due to low confidence: "
+                        f"{cross_rel.confidence} < {filters['min_confidence']}"
+                    )
                     continue
                     
                 # Filter by source/target documents (extract from chunks)
@@ -1667,7 +1808,7 @@ class QueryEngine:
         entity_names = self._extract_entity_names_from_query(query)
         
         if len(entity_names) < 2:
-            logger.info("Need at least 2 entities for graph traversal")
+            self.logger.info("Need at least 2 entities for graph traversal")
             return results
         
         # Validate graph availability
@@ -1698,7 +1839,7 @@ class QueryEngine:
                     break
         
         if not start_entities or not end_entities:
-            logger.info("Could not find entities for graph traversal")
+            self.logger.info("Could not find entities for graph traversal")
             return results
         
         # Apply filters if provided
@@ -1806,10 +1947,10 @@ class QueryEngine:
                     # No path found
                     continue
                 except ImportError as e:
-                    logger.error(f"NetworkX library not available: {e}")
+                    self.logger.error(f"NetworkX library not available: {e}")
                     raise ImportError(f"NetworkX is required for graph traversal: {e}")
                 except Exception as e:
-                    logger.warning(f"Error finding path: {e}")
+                    self.logger.warning(f"Error finding path: {e}")
                     continue
         
         # Sort by relevance (path length)
@@ -1817,7 +1958,7 @@ class QueryEngine:
         
         return results[:max_results]
     
-    def _extract_entity_names_from_query(self, query: str, min_chars: int = 3) -> List[str]:
+    def _extract_entity_names_from_query(self, query: str, min_chars: int = 2) -> List[str]:
         """
         Extract potential entity names from query text using NLTK NER and POS tagging.
 
@@ -1894,7 +2035,6 @@ class QueryEngine:
         if has_numbers:
             # Consider numbers as part of potential entities IF
             # - They precede or follow a stand-alone proper noun (e.g. 'Death Race 2000', '2020 Olympics')
-            # - They precede 
             # - The whole query is just a number (e.g. '42', '12345252562667', '3.14')
             # - They are not standalone question words (e.g. 'What is 42')
             pass
@@ -1928,29 +2068,41 @@ class QueryEngine:
         # Also find proper nouns that might not be caught by NER
         proper_nouns = []
         current_noun_phrase = []
-        
+
+        def _join_and_add(current_noun_phrase, entity_names, proper_nouns):
+            if current_noun_phrase and len(current_noun_phrase) >= 1:
+                noun_phrase = ' '.join(current_noun_phrase)
+                print(f"Found proper noun phrase: {noun_phrase}")
+                # Only add if not already found by NER and meets criteria
+                if (noun_phrase not in entity_names and 
+                    len(noun_phrase) >= 3 and
+                    not self._is_question_word(noun_phrase)):
+                    proper_nouns.append(noun_phrase)
+
         for word, pos in pos_tags:
+            # If & is in the word, and it immediately follows an upper case letter,
+            # treat it as a potential proper noun phrase. ex AT&T, Johnson & Johnson
+            if word == '&' and current_noun_phrase:
+                # Check if previous word ended with uppercase letter
+                if current_noun_phrase and current_noun_phrase[-1][-1].isupper():
+                    current_noun_phrase.append(word)
+                else:
+                    # Finish current phrase if it exists
+                    _join_and_add(current_noun_phrase, entity_names, proper_nouns)
+                    current_noun_phrase = []
+            elif word == '&' and not current_noun_phrase:
+                # Skip standalone & symbols
+                continue
+
             if pos in ['NNP', 'NNPS']:  # Proper nouns
                 current_noun_phrase.append(word)
             else:
-                if current_noun_phrase and len(current_noun_phrase) >= 1:
-                    noun_phrase = ' '.join(current_noun_phrase)
-                    print(f"Found proper noun phrase: {noun_phrase}")
-                    # Only add if not already found by NER and meets criteria
-                    if (noun_phrase not in entity_names and 
-                        len(noun_phrase) >= 3 and
-                        not self._is_question_word(noun_phrase)):
-                        proper_nouns.append(noun_phrase)
+                _join_and_add(current_noun_phrase, entity_names, proper_nouns)
                 current_noun_phrase = []
-        
+
         # Don't forget the last noun phrase
-        if current_noun_phrase and len(current_noun_phrase) >= 1:
-            noun_phrase = ' '.join(current_noun_phrase)
-            if (noun_phrase not in entity_names and 
-                len(noun_phrase) >= 3 and
-                not self._is_question_word(noun_phrase)):
-                proper_nouns.append(noun_phrase)
-        
+        _join_and_add(current_noun_phrase, entity_names, proper_nouns)
+
         # Combine NER results with proper noun detection
         all_entities = entity_names + proper_nouns
         
@@ -1977,6 +2129,23 @@ class QueryEngine:
             if not self._is_question_word(entity) and len(entity.strip()) >= min_chars:
                 print(f"{entity} is a valid entity")
                 filtered_entities.append(entity)
+
+        # Strip off any leading stop-characters if it starts with 'a' or 'an', remove it
+        final_entities = []
+        for entity in filtered_entities:
+            entity: str
+
+            # Remove leading articles
+            for idx, char in [(2, 'a '), (3, 'an ')]:
+                if entity.lower().startswith(char):
+                    entity = entity[idx:].strip()
+
+            # Only add if it still meets minimum length requirement after article removal
+            if len(entity) >= min_chars:
+                final_entities.append(entity)
+        filtered_entities = final_entities
+
+
 
         end_time = time.time()
         print(f"Entity extraction took {end_time - start_time:.2f} seconds")

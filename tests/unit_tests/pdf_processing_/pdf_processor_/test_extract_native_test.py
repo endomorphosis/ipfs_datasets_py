@@ -74,6 +74,10 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 class TestExtractNativeText:
     """Test _extract_native_text method - text block processing utility."""
 
+    def setup_method(self):
+        """Setup method to initialize PDFProcessor instance."""
+        self.processor = PDFProcessor()
+
     def test_extract_native_text_complete_extraction(self):
         """
         GIVEN list of text blocks with content and metadata
@@ -83,7 +87,6 @@ class TestExtractNativeText:
             - Document structure and flow preserved
             - Original text block ordering maintained
         """
-        processor = PDFProcessor()
         text_blocks = [
             {'content': 'Chapter 1: Introduction', 'bbox': [0, 0, 100, 20]},
             {'content': 'This document describes the main concepts.', 'bbox': [0, 25, 100, 45]},
@@ -91,7 +94,7 @@ class TestExtractNativeText:
             {'content': 'The methodology section explains our approach.', 'bbox': [0, 75, 100, 95]}
         ]
         
-        result = processor._extract_native_text(text_blocks)
+        result = self.processor._extract_native_text(text_blocks)
         
         expected = "Chapter 1: Introduction\nThis document describes the main concepts.\nChapter 2: Methods\nThe methodology section explains our approach."
         assert result == expected
@@ -113,13 +116,12 @@ class TestExtractNativeText:
             - No processing errors
             - Graceful handling of missing content
         """
-        processor = PDFProcessor()
         text_blocks = []
         
-        result = processor._extract_native_text(text_blocks)
-        
+        result = self.processor._extract_native_text(text_blocks)
+
         assert result == ""
-        assert isinstance(result, str)
+
 
     def test_extract_native_text_missing_content_field(self):
         """
@@ -127,65 +129,71 @@ class TestExtractNativeText:
         WHEN _extract_native_text processes malformed blocks
         THEN expect KeyError to be raised
         """
-        processor = PDFProcessor()
+
         text_blocks = [
             {'bbox': [0, 0, 100, 20], 'font': 'Arial'},  # Missing 'content' field
             {'content': 'Valid block', 'bbox': [0, 25, 100, 45]}
         ]
         
         with pytest.raises(KeyError):
-            processor._extract_native_text(text_blocks)
+            self.processor._extract_native_text(text_blocks)
 
-    def test_extract_native_text_non_list_input(self):
+    @pytest.mark.parametrize("invalid_input", [
+        "not a list",           # String input
+        {'content': 'test'},    # Dict input
+        None,                   # None input
+        123,                    # Integer input
+        45.67,                  # Float input
+        True,                   # Boolean input
+    ])
+    def test_extract_native_text_non_list_input(self, invalid_input):
         """
         GIVEN non-list input instead of text blocks list
         WHEN _extract_native_text processes invalid input
         THEN expect TypeError to be raised
         """
-        processor = PDFProcessor()
-        
-        # Test with string input
-        with pytest.raises(TypeError):
-            processor._extract_native_text("not a list")
-        
-        # Test with dict input
-        with pytest.raises(TypeError):
-            processor._extract_native_text({'content': 'test'})
-        
-        # Test with None input
-        with pytest.raises(TypeError):
-            processor._extract_native_text(None)
 
-    def test_extract_native_text_non_dict_elements(self):
+        
+        with pytest.raises(TypeError):
+            self.processor._extract_native_text(invalid_input)
+
+    @pytest.mark.parametrize("invalid_element", [
+        "string element",           # String element
+        123,                       # Integer element
+        45.67,                     # Float element
+        True,                      # Boolean element
+        None,                      # None element
+        ['nested', 'list'],        # List element
+        ('tuple', 'element'),      # Tuple element
+    ])
+    def test_extract_native_text_non_dict_elements(self, invalid_element):
         """
         GIVEN list containing non-dictionary elements
         WHEN _extract_native_text processes invalid elements
         THEN expect TypeError to be raised
         """
-        processor = PDFProcessor()
         text_blocks = [
             {'content': 'Valid block'},
-            "invalid string element",  # Non-dict element
+            invalid_element,  # Non-dict element
             {'content': 'Another valid block'}
         ]
         
         with pytest.raises(TypeError):
-            processor._extract_native_text(text_blocks)
+            self.processor._extract_native_text(text_blocks)
 
     def test_extract_native_text_non_string_content(self):
         """
         GIVEN text blocks with non-string content fields
         WHEN _extract_native_text processes invalid content
-        THEN expect AttributeError to be raised
+        THEN expect ValueError to be raised
         """
-        processor = PDFProcessor()
         text_blocks = [
             {'content': 123},  # Non-string content
             {'content': 'Valid content'}
         ]
         
-        with pytest.raises(AttributeError):
-            processor._extract_native_text(text_blocks)
+        with pytest.raises(ValueError):
+            self.processor._extract_native_text(text_blocks)
 
     def test_extract_native_text_whitespace_filtering(self):
         """
@@ -196,7 +204,6 @@ class TestExtractNativeText:
             - Whitespace-only blocks removed
             - Clean text output without unnecessary spacing
         """
-        processor = PDFProcessor()
         text_blocks = [
             {'content': 'Valid content'},
             {'content': ''},  # Empty content
@@ -206,7 +213,7 @@ class TestExtractNativeText:
             {'content': ''},  # Another empty
         ]
         
-        result = processor._extract_native_text(text_blocks)
+        result = self.processor._extract_native_text(text_blocks)
         
         # Should only contain the two valid content blocks
         expected = "Valid content\nAnother valid content"
@@ -226,7 +233,7 @@ class TestExtractNativeText:
             - Reading flow maintained
             - Document hierarchy reflected in output
         """
-        processor = PDFProcessor()
+
         text_blocks = [
             {'content': 'Title: Important Document'},
             {'content': 'Abstract: This paper discusses...'},
@@ -236,7 +243,7 @@ class TestExtractNativeText:
             {'content': 'Our approach involves three steps.'}
         ]
         
-        result = processor._extract_native_text(text_blocks)
+        result = self.processor._extract_native_text(text_blocks)
         
         # Verify structure is preserved with newlines
         lines = result.split('\n')
@@ -260,7 +267,7 @@ class TestExtractNativeText:
             - Memory usage controlled during concatenation
             - Complete text extraction without truncation
         """
-        processor = PDFProcessor()
+
         
         # Create a large number of text blocks
         text_blocks = [
@@ -268,7 +275,7 @@ class TestExtractNativeText:
             for i in range(1000)
         ]
         
-        result = processor._extract_native_text(text_blocks)
+        result = self.processor._extract_native_text(text_blocks)
         
         # Verify all content is processed
         lines = result.split('\n')
@@ -295,7 +302,7 @@ class TestExtractNativeText:
             - Special characters maintained in output
             - Character encoding handled properly
         """
-        processor = PDFProcessor()
+
         text_blocks = [
             {'content': 'English: Hello World!'},
             {'content': 'Spanish: ¡Hola Mundo! ñáéíóú'},
@@ -307,7 +314,7 @@ class TestExtractNativeText:
             {'content': 'Math: ∑∆√∞≤≥≠±×÷∈∉∪∩'}
         ]
         
-        result = processor._extract_native_text(text_blocks)
+        result = self.processor._extract_native_text(text_blocks)
         
         # Verify all Unicode content is preserved
         lines = result.split('\n')

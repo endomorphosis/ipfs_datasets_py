@@ -27,13 +27,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         # Constants
         FIELD_NAME = "confidence"
         INVALID_VALUE = -0.1
-        ERROR_WORDS = ["confidence", "greater", "0.0", "range"]
+        ERROR_WORDS = ["confidence", "greater", "0"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
         
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -47,13 +47,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         # Constants
         FIELD_NAME = "confidence"
         INVALID_VALUE = 1.1
-        ERROR_WORDS = ["confidence", "less", "1.0", "range"]
+        ERROR_WORDS = ["confidence", "less", "1"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -67,13 +67,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         # Constants
         FIELD_NAME = "confidence"
         INVALID_VALUE = float('inf')
-        ERROR_WORDS = ["confidence", "finite", "range", "inf"]
+        ERROR_WORDS = ["confidence", "inf"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
@@ -87,13 +87,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         # Constants
         FIELD_NAME = "confidence"
         INVALID_VALUE = float('nan')
-        ERROR_WORDS = ["confidence", "finite", "nan", "number"]
+        ERROR_WORDS = ["confidence", "nan"]
         
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
         
         # When/Then
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)

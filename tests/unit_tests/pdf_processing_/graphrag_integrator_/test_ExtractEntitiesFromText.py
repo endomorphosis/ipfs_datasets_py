@@ -109,7 +109,35 @@ class TestExtractEntitiesFromText:
             assert entity['properties']['source_chunk'] == chunk_id
 
     @pytest.mark.asyncio
-    async def test_extract_entities_from_text_organization_entities(self, integrator: GraphRAGIntegrator):
+    @pytest.mark.parametrize("text, expected_orgs, min_count", [
+        (
+            "Apple Inc. partnered with Microsoft Corporation and Harvard University. Amazon LLC also joined.",
+            ['Apple Inc.', 'Microsoft Corporation', 'Harvard University', 'Amazon LLC'],
+            4
+        ),
+        (
+            "Google LLC and Facebook Inc. compete with Twitter Corp.",
+            ['Google LLC', 'Facebook Inc.', 'Twitter Corp.'],
+            3
+        ),
+        (
+            "Stanford University works with IBM Corp. and Tesla Motors Inc.",
+            ['Stanford University', 'IBM Corp.', 'Tesla Motors Inc.'],
+            3
+        ),
+        (
+            "JPMorgan Chase & Co. and Goldman Sachs Group Inc. are major banks.",
+            ['JPMorgan Chase & Co.', 'Goldman Sachs Group Inc.'],
+            2
+        ),
+        (
+            "MIT and Caltech collaborate on research projects.",
+            ['MIT', 'Caltech'],
+            2
+        ),
+    ])
+    async def test_extract_entities_from_text_organization_entities(self, 
+    integrator: GraphRAGIntegrator, text: str, expected_orgs: list, min_count: int):
         """
         GIVEN text containing organization names with common suffixes
         WHEN _extract_entities_from_text is called
@@ -117,19 +145,16 @@ class TestExtractEntitiesFromText:
         AND entity type should be 'organization'
         AND various suffixes (Inc., Corp., LLC, University, etc.) should be recognized
         """
-        text = "Apple Inc. partnered with Microsoft Corporation and Harvard University. Amazon LLC also joined."
         chunk_id = "org_chunk"
         
         result = await integrator._extract_entities_from_text(text, chunk_id)
         
         org_entities = [entity for entity in result if entity['type'] == 'organization']
-        assert len(org_entities) >= 4
+        assert len(org_entities) >= min_count
         
         org_names = [entity['name'] for entity in org_entities]
-        assert 'Apple Inc' in org_names
-        assert 'Microsoft Corporation' in org_names
-        assert 'Harvard University' in org_names
-        assert 'Amazon LLC' in org_names
+        for expected_org in expected_orgs:
+            assert any(expected_org in name for name in org_names), f"Expected organization '{expected_org}' not found in {org_names}"
         
         for entity in org_entities:
             assert entity['confidence'] == 0.7

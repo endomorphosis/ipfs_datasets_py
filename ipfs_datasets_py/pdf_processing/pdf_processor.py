@@ -6,6 +6,8 @@ PDF Input → Decomposition → IPLD Structuring → OCR Processing →
 LLM Optimization → Entity Extraction → Vector Embedding → 
 IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 """
+from __future__ import annotations
+import asyncio
 import logging
 import hashlib
 import datetime
@@ -13,25 +15,37 @@ from pathlib import Path
 from typing import Any, Optional, Union
 from contextlib import nullcontext
 from dataclasses import dataclass
+import traceback
 
 
-import pymupdf  # PyMuPDF
-import pdfplumber
-from PIL import Image
+try:
+    import pydantic
+    from pydantic import (
+        BaseModel, 
+        Field,
+        FilePath, 
+        ValidationError
+    )
+    import pymupdf  # PyMuPDF
+    import pdfplumber
+except ImportError as e:
+    raise ImportError("Required PDF processing libraries are not installed: pydantic, pymupdf, pdfplumber") from e
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
-from ipfs_datasets_py.monitoring import MonitoringSystem
+from ipfs_datasets_py.monitoring import MonitoringSystem, monitor_context
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity
 from ipfs_datasets_py.monitoring import MonitoringConfig, MetricsConfig
 from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMDocument, LLMChunk
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+import json
 
 
-logger = logging.getLogger(__name__)
+class InitializationError(RuntimeError):
+    """Custom exception for errors that occur during the __init__ method in the PDFProcessor."""
 
 
 class PDFProcessor:
@@ -48,136 +62,103 @@ class PDFProcessor:
     knowledge graphs with full content addressability, semantic search capabilities,
     and cross-document relationship discovery.
 
-    Args:
-        storage (Optional[IPLDStorage], optional): IPLD storage instance for data persistence.
-            Defaults to a new IPLDStorage instance if not provided.
-        enable_monitoring (bool, optional): Enable performance monitoring and metrics collection.
-            When True, initializes MonitoringSystem with Prometheus export capabilities.
-            Defaults to False.
-        enable_audit (bool, optional): Enable audit logging for security and compliance tracking.
-            When True, initializes AuditLogger for data access and security event logging.
-            Defaults to True.
-        mock_dict (Optional[dict[str, Any]], optional): Dictionary for dependency injection
-            during testing. Allows replacement of components with mock objects.
-            Defaults to None.
+    ## Pipeline Stages:
+    1. **PDF Input** - Validation and analysis of input PDF file
+    2. **Decomposition** - Extract PDF layers, content, images, and metadata
+    3. **IPLD Structuring** - Create content-addressed data structures
+    4. **OCR Processing** - Process images with optical character recognition
+    5. **LLM Optimization** - Optimize content for language model consumption
+    6. **Entity Extraction** - Extract entities and relationships from content
+    7. **Vector Embedding** - Create semantic embeddings for content chunks
+    8. **IPLD GraphRAG Integration** - Integrate with GraphRAG knowledge system
+    9. **Cross-Document Analysis** - Analyze relationships across document collections
+    10. **Query Interface Setup** - Configure natural language query capabilities
 
-    Pipeline Stages:
-    1. PDF Input - Validation and analysis of input PDF file
-    2. Decomposition - Extract PDF layers, content, images, and metadata
-    3. IPLD Structuring - Create content-addressed data structures
-    4. OCR Processing - Process images with optical character recognition
-    5. LLM Optimization - Optimize content for language model consumption
-    6. Entity Extraction - Extract entities and relationships from content
-    7. Vector Embedding - Create semantic embeddings for content chunks
-    8. IPLD GraphRAG Integration - Integrate with GraphRAG knowledge system
-    9. Cross-Document Analysis - Analyze relationships across document collections
-    10. Query Interface Setup - Configure natural language query capabilities
+    ## Attributes:
+    - **storage** (IPLDStorage): IPLD storage instance for persistent data storage
+    - **audit_logger** (Optional[AuditLogger]): Audit logger for security and compliance tracking
+    - **monitoring** (Optional[MonitoringSystem]): Performance monitoring system for metrics collection
+    - **pipeline_version** (str): Version identifier for the processing pipeline
+    - **integrator** (GraphRAGIntegrator): GraphRAG integration component
+    - **ocr_engine** (MultiEngineOCR): Multi-engine OCR processor
+    - **optimizer** (LLMOptimizer): LLM content optimization engine
+    - **query_engine** (Optional[QueryEngine]): Natural language query interface
+    - **logger** (logging.Logger): Logger instance for debug and info messages
+    - **processing_stats** (dict[str, Any]): Runtime statistics and performance metrics
 
-    Attributes:
-        storage (IPLDStorage): IPLD storage instance for persistent data storage
-        audit_logger (Optional[AuditLogger]): Audit logger for security and compliance tracking
-        monitoring (Optional[MonitoringSystem]): Performance monitoring system for metrics collection
-        pipeline_version (str): Version identifier for the processing pipeline
-        integrator (GraphRAGIntegrator): GraphRAG integration component
-        ocr_engine (MultiEngineOCR): Multi-engine OCR processor
-        optimizer (LLMOptimizer): LLM content optimization engine
-        logger (logging.Logger): Logger instance for debug and info messages
-        processing_stats (dict[str, Any]): Runtime statistics and performance metrics
-
-    Public Methods:
-        process_pdf(pdf_path: Union[str, Path], metadata: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-            Execute the complete PDF processing pipeline from input validation through
-            query interface setup, returning comprehensive processing results.
-
-    Private Methods:
-        _validate_and_analyze_pdf(pdf_path: Path) -> dict[str, Any]:
-            Stage 1: Validate PDF file integrity and extract basic metadata analysis.
-        _decompose_pdf(pdf_path: Path) -> dict[str, Any]:
-            Stage 2: Decompose PDF into constituent elements including text, images,
-            annotations, tables, and structural components.
-        _extract_page_content(page: pymupdf.Page, page_num: int) -> dict[str, Any]:
-            Extract comprehensive content from a single PDF page including text blocks,
-            images, annotations, and vector graphics.
-        _create_ipld_structure(decomposed_content: dict[str, Any]) -> dict[str, Any]:
-            Stage 3: Create hierarchical IPLD structure with content-addressed storage
-            for all decomposed PDF components.
-        _process_ocr(decomposed_content: dict[str, Any]) -> dict[str, Any]:
-            Stage 4: Process embedded images with multi-engine OCR for text extraction
-            with confidence scoring and word-level positioning.
-        _optimize_for_llm(decomposed_content: dict[str, Any], ocr_results: dict[str, Any]) -> dict[str, Any]:
-            Stage 5: Optimize extracted content for large language model consumption
-            through chunking, summarization, and semantic structuring.
-        _extract_entities(optimized_content: dict[str, Any]) -> dict[str, Any]:
-            Stage 6: Extract named entities and relationships from optimized content
-            using pattern matching and co-occurrence analysis.
-        _create_embeddings(optimized_content: dict[str, Any], entities_and_relations: dict[str, Any]) -> dict[str, Any]:
-            Stage 7: Generate vector embeddings for content chunks and document-level
-            representations using transformer models.
-        _integrate_with_graphrag(ipld_structure: dict[str, Any], entities_and_relations: dict[str, Any], embeddings: dict[str, Any]) -> dict[str, Any]:
-            Stage 8: Integrate processed content with GraphRAG system for knowledge
-            graph construction and semantic relationship discovery.
-        _analyze_cross_document_relationships(graph_nodes: dict[str, Any]) -> list[dict[str, Any]]:
-            Stage 9: Analyze and discover relationships between entities across
-            multiple documents in the knowledge graph.
-        _setup_query_interface(graph_nodes: dict[str, Any], cross_doc_relations: list[dict[str, Any]]) -> None:
-            Stage 10: Configure natural language query interface for semantic search
-            and knowledge graph exploration.
-        _calculate_file_hash(file_path: Path) -> str:
-            Calculate SHA-256 hash of input file for integrity verification and
-            content addressability.
-        _extract_native_text(text_blocks: list[dict[str, Any]]) -> str:
-            Extract and concatenate native text content from PDF text blocks
-            preserving document structure.
-        _get_processing_time(start_time: float) -> float:
-            Calculate total elapsed time for complete pipeline processing
-            given a start timestamp.
-        _get_quality_scores(result: dict[str, Any]) -> dict[str, float]:
-            Generate quality assessment scores for text extraction, OCR confidence,
-            entity extraction, and overall processing quality.
-
-    Usage Example:
-        # Basic usage with default settings
-        processor = PDFProcessor()
-        result = await processor.process_pdf("document.pdf")
+    Examples:
+        Basic PDF processing workflow:
         
-        # Advanced usage with monitoring and custom storage
-        storage = IPLDStorage(config={'node_url': 'http://localhost:5001'})
-        processor = PDFProcessor(
-            storage=storage,
-            enable_monitoring=True,
-            enable_audit=True
-        )
-        metadata = {'source': 'legal_docs', 'priority': 'high'}
-        result = await processor.process_pdf(
-            pdf_path="contract.pdf",
-            metadata=metadata
-        )
+        >>> # Initialize processor with default settings
+        >>> processor = PDFProcessor()
+        >>> 
+        >>> # Process a simple PDF document
+        >>> import asyncio
+        >>> async def process_document():
+        ...     result = await processor.process_pdf("example.pdf")
+        ...     return result
+        >>> 
+        >>> # Check processing results
+        >>> result = asyncio.run(process_document())
+        >>> result['status']
+        'success'
+        >>> result['entities_count'] > 0
+        True
+        >>> 'ipld_cid' in result
+        True
+
+        Advanced configuration with custom storage and monitoring:
         
-        # Check processing results
-        if result['status'] == 'success':
-            print(f"Document ID: {result['document_id']}")
-            print(f"Entities found: {result['entities_count']}")
-            print(f"IPLD CID: {result['ipld_cid']}")
+        >>> # Configure custom storage backend
+        >>> from ipfs_datasets_py.ipld import IPLDStorage
+        >>> storage = IPLDStorage(config={'node_url': 'http://localhost:5001'})
+        >>> 
+        >>> # Initialize processor with monitoring enabled
+        >>> processor = PDFProcessor(
+        ...     storage=storage,
+        ...     enable_monitoring=True,
+        ...     enable_audit=True
+        ... )
+        >>> processor.pipeline_version
+        '2.0'
+        >>> processor.monitoring is not None
+        True
+
+        Batch processing with metadata:
+        
+        >>> # Process multiple documents with custom metadata
+        >>> async def batch_process():
+        ...     documents = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+        ...     results = []
+        ...     for doc in documents:
+        ...         metadata = {'batch_id': 'legal_docs_2024', 'priority': 'high'}
+        ...         result = await processor.process_pdf(doc, metadata=metadata)
+        ...         results.append(result)
+        ...     return results
+        >>> 
+        >>> # All documents processed successfully
+        >>> results = asyncio.run(batch_process())
+        >>> all(r['status'] == 'success' for r in results)
+        True
 
     Notes:
-        - All processing stages are asynchronous for optimal performance
-        - IPLD integration provides content-addressable storage and deduplication
-        - GraphRAG integration enables semantic search and relationship discovery
-        - Monitoring and audit logging support enterprise deployment requirements
-        - Error handling ensures graceful failure with detailed error reporting
-        - Cross-document analysis requires multiple documents in the knowledge graph
-        - Pipeline is optimized for both single-document and batch processing scenarios
-        - Mock dictionary support enables comprehensive unit testing with dependency injection
+    - All processing stages are asynchronous for optimal performance
+    - IPLD integration provides content-addressable storage and deduplication
+    - GraphRAG integration enables semantic search and relationship discovery
+    - Monitoring and audit logging support enterprise deployment requirements
+    - Error handling ensures graceful failure with detailed error reporting
+    - Cross-document analysis requires multiple documents in the knowledge graph
+    - Pipeline is optimized for both single-document and batch processing scenarios
+    - Mock dictionary support enables comprehensive unit testing with dependency injection
     """
-    
     def __init__(self, 
                  storage: Optional[IPLDStorage] = None,
                  enable_monitoring: bool = False,
                  enable_audit: bool = True,
+                 logger: logging.Logger = logging.getLogger(__name__),
                  mock_dict: Optional[dict[str, Any]] = None
                  ) -> None:
-        """
-        Initialize the PDF processor with storage, monitoring, and audit capabilities.
+        """Initialize the PDF processor with storage, monitoring, and audit capabilities.
 
         Sets up the core PDF processing pipeline with configurable storage backend,
         performance monitoring, and audit logging. Initializes processing state
@@ -196,79 +177,157 @@ class PDFProcessor:
                 When True, initializes AuditLogger singleton for data access logging,
                 security event tracking, and compliance reporting.
                 Defaults to True.
-
-        Attributes initialized:
-            storage (IPLDStorage): IPLD storage instance for persistent data storage.
-                Handles content-addressed storage, IPFS integration, and data retrieval.
-            audit_logger (Optional[AuditLogger]): Audit logger for security and compliance tracking.
-                Logs data access events, security incidents, and processing activities.
-            monitoring (Optional[MonitoringSystem]): Performance monitoring system for metrics.
-                Tracks operation performance, resource usage, and system health metrics.
-            processing_stats (dict[str, Any]): Runtime statistics and performance metrics.
-                Stores pipeline execution times, quality scores, and processing metadata.
+            logger (logging.Logger, optional): Logger instance for debug and info messages.
+                If None, creates a default logger for the module.
+                Defaults to module logger.
+            mock_dict (Optional[dict[str, Any]], optional): Dictionary for dependency injection
+                during testing. Allows replacement of components with mock objects.
+                Keys should match attribute names (storage, audit_logger, etc.).
+                Defaults to None.
 
         Raises:
-            ImportError: If monitoring dependencies are missing when enable_monitoring=True
-            RuntimeError: If audit logger initialization fails when enable_audit=True
-            ConnectionError: If IPLD storage cannot connect to IPFS node
+            ImportError: If monitoring dependencies are missing when enable_monitoring=True.
+            RuntimeError: If audit logger initialization fails when enable_audit=True.
+            ConnectionError: If IPLD storage cannot connect to IPFS node.
+            AttributeError: If mock_dict contains invalid attribute names.
 
         Examples:
-            >>> # Basic initialization with defaults
             >>> processor = PDFProcessor()
-            >>> 
-            >>> # Enterprise setup with full monitoring
+            >>> processor.pipeline_version
+            '2.0'
+            >>> processor.processing_stats['pages_processed']
+            0
             >>> custom_storage = IPLDStorage(config={'node_url': 'http://ipfs-cluster:5001'})
             >>> processor = PDFProcessor(
             ...     storage=custom_storage,
             ...     enable_monitoring=True,
             ...     enable_audit=True
             ... )
-            >>> 
-            >>> # Development setup without monitoring
+            >>> processor.monitoring is not None
+            True
+            >>> processor.audit_logger is not None
+            True
             >>> processor = PDFProcessor(enable_monitoring=False, enable_audit=False)
+            >>> processor.monitoring is None
+            True
+            >>> processor.audit_logger is None
+            True
+            >>> from unittest.mock import Mock
+            >>> mock_storage = Mock(spec=IPLDStorage)
+            >>> mock_ocr = Mock(spec=MultiEngineOCR)
+            >>> processor = PDFProcessor(mock_dict={
+            ...     'storage': mock_storage,
+            ...     'ocr_engine': mock_ocr
+            ... })
+            >>> processor.storage == mock_storage
+            True
+            >>> processor.ocr_engine == mock_ocr
+            True
 
         Note:
             Monitoring configuration includes Prometheus export and JSON metrics output.
             Audit logging captures all data access and security events for compliance.
             IPLD storage provides content deduplication and distributed storage capabilities.
+            Mock dictionary enables comprehensive unit testing with dependency injection.
         """
-        self.storage = storage or IPLDStorage()
-        self.audit_logger = None 
-        self.monitoring = None
+        self.storage: IPLDStorage = storage
+        self.audit_logger: AuditLogger = None 
+        self.monitoring: MonitoringSystem = None
+        self.query_engine: QueryEngine = None
         self.pipeline_version: str = '2.0'
-        self.integrator = GraphRAGIntegrator(storage=self.storage)
-        self.ocr_engine = MultiEngineOCR()
-        self.optimizer = LLMOptimizer()
-        self.logger = logger
-
-        if enable_audit:
-            self.audit_logger = AuditLogger.get_instance()
-
-        if enable_monitoring:
-            config = MonitoringConfig()
-            config.metrics = MetricsConfig(
-                output_file="pdf_processing_metrics.json",
-                prometheus_export=True
-            )
-            self.monitoring = MonitoringSystem.initialize(config)
+        self.logger: logging.Logger = logger
+        self.integrator: GraphRAGIntegrator = None
+        self.ocr_engine: MultiEngineOCR = None
+        self.optimizer: LLMOptimizer = None
 
         # For testing purposes, allow dependency injection of mock objects
-        if mock_dict is not None:
+        if isinstance(mock_dict, dict):
             for key, value in mock_dict.items():
                 try:
                     setattr(self, key, value)
                 except AttributeError:
-                    print(f"Warning: Mock attribute '{key}' not set in PDFProcessor")
-                except KeyError:
-                    print(f"Warning: Mock key '{key}' not found in mock_dict")
+                    raise AttributeError(f"Warning: Mock attribute '{key}' not set in PDFProcessor")
+                except Exception as e:
+                    raise InitializationError(f"Unexpected error during mock injection: {e}") from e
+
+        if enable_audit:
+            if self.audit_logger is None:
+                try:
+                    self.audit_logger = AuditLogger.get_instance()
+                except Exception as e:
+                    raise InitializationError(f"Failed to initialize AuditLogger: {e}") from e
+
+        if enable_monitoring:
+            if self.monitoring is None:
+                try:
+                    config = MonitoringConfig()
+                except Exception as e:
+                    raise InitializationError(f"Failed to initialize MonitoringConfig: {e}") from e
+                config.metrics = MetricsConfig(
+                    output_file="pdf_processing_metrics.json",
+                    prometheus_export=True
+                )
+                try:
+                    self.monitoring = MonitoringSystem.initialize(config)
+                except Exception as e:
+                    raise InitializationError(f"Failed to initialize MonitoringSystem: {e}") from e
 
         # Processing state
-        self.processing_stats = {
+        self.processing_stats: dict[str, float] = {
             "start_time": None,
             "end_time": None,
-
+            "pages_processed": 0,
+            "entities_extracted": 0,
         }
-        
+        debugging = True if self.logger.level == logging.DEBUG else False
+
+        # Initialize real components if not provided in mock_dict
+        if self.storage is None:
+            try:
+                self.storage = IPLDStorage()
+            except Exception as e:
+                raise InitializationError(f"Failed to initialize IPLDStorage: {e}") from e
+        if self.integrator is None:
+            try:
+                self.integrator = GraphRAGIntegrator(
+                    storage=self.storage,
+                    logger=self.logger if debugging else None
+                )
+            except Exception as e:
+                raise InitializationError(f"Failed to initialize GraphRAGIntegrator: {e}") from e
+        if self.ocr_engine is None:
+            try:
+                self.ocr_engine = MultiEngineOCR()
+            except Exception as e:
+                raise InitializationError(f"Failed to initialize MultiEngineOCR: {e}") from e
+        if self.optimizer is None:
+            try:
+                self.optimizer = LLMOptimizer(
+                    logger=self.logger if debugging else None
+                )
+            except Exception as e:
+                raise InitializationError(f"Failed to initialize LLMOptimizer: {e}") from e
+
+    def _validate_process_pdf_inputs(pdf_path: Any, metadata: Optional[Any] = None):
+
+        if not isinstance(pdf_path, (str, Path)):
+            raise TypeError(f"pdf_path must be a string or Path object, got {type(pdf_path).__name__}")
+
+        class _ValidateProcessPdfInputs(BaseModel):
+            pdf_path: FilePath
+            metadata: dict[str, Any] = Field(default_factory=dict)
+
+        try:
+            validated_args = _ValidateProcessPdfInputs(
+                pdf_path=pdf_path,
+                metadata=metadata
+            )
+        except ValidationError as e:
+            raise ValueError(f"Invalid input parameters: {e}") from e
+
+        return validated_args.pdf_path, validated_args.metadata
+
+
     async def process_pdf(self, 
                          pdf_path: Union[str, Path], 
                          metadata: Optional[dict[str, Any]] = None) -> dict[str, Any]:
@@ -302,18 +361,21 @@ class PDFProcessor:
                     - pipeline_version (str): Version of the processing pipeline
                     - processing_time (float): Total processing time in seconds
                     - quality_scores (dict[str, float]): Quality assessment metrics
-                    - stages_completed (int): Number of successfully completed stages
+                    - stages_completed (list[str]): List of successfully completed stages
                 For error cases, returns:
                 - status (str): 'error'
+                - stages_completed (list[str]): List of successfully completed stages.
                 - error (str): Error message describing the failure
                 - pdf_path (str): Original file path for debugging
 
         Raises:
+            TypeError: If pdf_path is not a string or Path, or if the metadata is not a dictionary
             FileNotFoundError: If the specified PDF file does not exist
-            ValueError: If the PDF file is invalid, corrupted, or empty
-            PermissionError: If insufficient permissions to read the PDF file
-            RuntimeError: If critical pipeline stage fails and cannot be recovered
-            TimeoutError: If processing exceeds configured timeout limits
+            ValueError: If the PDF file path contains invalid characters, is empty, or if it is not a file.
+            KeyError: If the metadata dictionary, if provided, has overlapping keys with processing_metadata.
+                (e.g. contains 'pipeline_version', 'processing_time', 'quality_scores', and 'stages_completed')
+            RuntimeError: If audit logging or monitoring context initialization fails.
+            NOTE: Other errors may occur, but these are considered non-fatal and 
 
         Examples:
             >>> # Basic document processing
@@ -341,66 +403,123 @@ class PDFProcessor:
             Failed processing attempts are logged for debugging and error analysis.
             Cross-document relationships require multiple documents in the knowledge graph.
         """
+        # Type-check the pdf_path parameter
+        if not isinstance(pdf_path, (str, Path)):
+            raise TypeError(f"pdf_path must be a string or Path object, got {type(pdf_path).__name__}")
+
+        # Validate string path
+        if isinstance(pdf_path, str):
+            # Check for invalid or unsafe characters in the string path
+            if not pdf_path.strip():
+                raise ValueError("pdf_path cannot be empty or whitespace")
+            invalid_chars = set('<>:"/\\|?*')
+            # Also check for control characters (ASCII 0-31 and 127)
+            if any(char in invalid_chars or ord(char) < 32 or ord(char) == 127 for char in pdf_path):
+                raise ValueError("pdf_path contains invalid characters")
+
         pdf_path = Path(pdf_path)
-        
+
+        if not pdf_path.exists():
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+        if not pdf_path.is_file():
+            raise ValueError(f"PDF path is not a file: {pdf_path}")
+
+        # Type-check the metadata dictionary
+        if metadata is not None:
+            if not isinstance(metadata, dict):
+                raise TypeError(f"metadata must be dict or None, got {type(metadata).__name__}")
+            else:
+                for key in metadata.keys():
+                    if not isinstance(key, str):
+                        raise TypeError(f"metadata keys must be strings, got {type(key).__name__}")
+                    # Prevent overlapping keys
+                    if key in ['pipeline_version', 'processing_time', 'quality_scores', 'stages_completed']:
+                        raise KeyError(
+                            "Input metadata and built-in processing metadata have overlapping keys."
+                        )
+
+        stages_completed: list[str] = []
+        optimized_content = None
+
         # Audit logging
         if self.audit_logger:
-            self.audit_logger.data_access(
-                "pdf_processing_start",
-                resource_id=str(pdf_path),
-                resource_type="pdf_document"
-            )
-        
+            try:
+                self.audit_logger.data_access(
+                    "pdf_processing_start",
+                    resource_id=str(pdf_path),
+                    resource_type="pdf_document"
+                )
+            except Exception as e:
+                raise RuntimeError(f"Audit logging failed to start: {e}") from e
+
         # Performance monitoring
         operation_context: MonitoringSystem = None
         if self.monitoring:
-            operation_context = self.monitoring.start_operation_trace(
-                "pdf_processing_pipeline",
-                tags=["pdf", "llm_optimization"]
-            )
-
-        start_time = datetime.datetime.now().timestamp()
+            try:
+                operation_context = self.monitoring.monitor_context(
+                    name="pdf_processing_pipeline",
+                    tags=["pdf", "llm_optimization"]
+                )
+            except Exception as e:
+                raise RuntimeError(f"Monitoring context initialization failed: {e}") from e
 
         try:
             with operation_context if operation_context is not None else nullcontext():
+
+                start_time: float = datetime.datetime.now().timestamp()
+                self.logger.debug(f"start_time: {start_time}")
+
                 # Stage 1: PDF Input
                 pdf_info = await self._validate_and_analyze_pdf(pdf_path)
-                
+                stages_completed.append('PDF validated and analyzed')
+
                 # Stage 2: Decomposition  
                 decomposed_content = await self._decompose_pdf(pdf_path)
-                
+                stages_completed.append('PDF decomposed')
+
                 # Stage 3: IPLD Structuring
                 ipld_structure = await self._create_ipld_structure(decomposed_content)
-                
+                stages_completed.append('IPLD structure created with decomposed PDF content')
+
                 # Stage 4: OCR Processing
                 ocr_results = await self._process_ocr(decomposed_content)
-                
+                stages_completed.append('Decomposed PDF content processed with OCR')
+
                 # Stage 5: LLM Optimization
-                optimized_content = await self._optimize_for_llm(
+                optimized_content: dict[str, Any] = await self._optimize_for_llm(
                     decomposed_content, ocr_results
                 )
-                
+                stages_completed.append('Decomposed PDF content optimized for LLM')
+
                 # Stage 6: Entity Extraction
-                entities_and_relations = await self._extract_entities(optimized_content)
-                
+                entities_and_relations: dict[str, Any] = await self._extract_entities(optimized_content)
+                stages_completed.append('Entities and relations extracted from optimized content')
+
                 # Stage 7: Vector Embedding
                 embeddings = await self._create_embeddings(
                     optimized_content, entities_and_relations
                 )
-                
+                stages_completed.append('Embeddings created from optimized content and entities and relations')
+
                 # Stage 8: IPLD GraphRAG Integration
                 graph_nodes = await self._integrate_with_graphrag(
-                    ipld_structure, entities_and_relations, embeddings
+                    ipld_structure=ipld_structure, 
+                    optimized_content=optimized_content, 
+                    entities_and_relations=entities_and_relations, 
+                    embeddings=embeddings
                 )
-                
+                stages_completed.append('IPLD, entities and relations, and embeddings integrated into GraphRAG')
+
                 # Stage 9: Cross-Document Analysis
                 cross_doc_relations = await self._analyze_cross_document_relationships(
                     graph_nodes
                 )
-                
+                stages_completed.append('GraphRAG analyzed to find cross document relations.')
+
                 # Stage 10: Query Interface Setup
                 await self._setup_query_interface(graph_nodes, cross_doc_relations)
-                
+                stages_completed.append('Query Engine initialized with graph nodes and cross document relations.')
+
                 # Compile results
                 result = {
                     'status': 'success',
@@ -413,14 +532,14 @@ class PDFProcessor:
                         'pipeline_version': self.pipeline_version,
                         'processing_time': self._get_processing_time(start_time),
                         'quality_scores': None,
-                        'stages_completed': 10,
+                        'stages_completed': stages_completed,
                     },
                     'pdf_info': pdf_info,
                 }
                 if metadata:
                     result['processing_metadata'].update(metadata)
 
-                quality_scores = self._get_quality_scores(result)
+                quality_scores = self._get_quality_scores(result, ocr_results)
                 result['processing_metadata']['quality_scores'] = quality_scores
 
                 # Audit logging
@@ -435,20 +554,46 @@ class PDFProcessor:
                 return result
                 
         except Exception as e:
-            self.logger.error(f"PDF processing failed for {pdf_path}: {e}")
-            
+            if self.logger.level == logging.DEBUG:
+                # Enable exception tracing if in debug.
+                self.logger.exception(f"PDF processing failed for {pdf_path}: {e}")
+            else:
+                self.logger.error(f"PDF processing failed for {pdf_path}: {e}")
+
             if self.audit_logger:
                 self.audit_logger.security(
                     "pdf_processing_error",
                     details={"error": str(e), "pdf_path": str(pdf_path)}
                 )
-            
-            return {
+
+            result = {
                 'status': 'error',
+                'stages_completed': stages_completed,
                 'error': str(e),
                 'pdf_path': str(pdf_path)
             }
-    
+
+        finally:
+            if self.logger.level == logging.DEBUG:
+                # Dump the results dict to the CWD
+                debug_filename = f"pdf_processing_results_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                
+                # Add the text to the result when debugging.
+                result_with_text = result.copy()
+                if optimized_content is not None:
+                    result_with_text['llm_document'] = optimized_content['llm_document'].model_dump()
+                else:
+                    self.logger.warning("Optimized content is None, skipping LLM document inclusion.")
+
+                try:
+                    with open(debug_filename, 'w', encoding='utf-8') as debug_file:
+                        json.dump(result_with_text, debug_file, indent=2, default=str)
+                    self.logger.debug(f"Debug results saved to {debug_filename}")
+                except Exception as debug_error:
+                    self.logger.warning(f"Failed to save debug results: {debug_error}")
+
+            return result
+
     async def _validate_and_analyze_pdf(self, pdf_path: Path) -> dict[str, Any]:
         """
         Stage 1: Validate PDF file integrity and extract basic metadata analysis.
@@ -499,6 +644,8 @@ class PDFProcessor:
             doc = pymupdf.open(str(pdf_path))
             page_count = doc.page_count
             doc.close()
+        except PermissionError:
+            raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
         except FileNotFoundError:
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
         except pymupdf.FileDataError as e:
@@ -684,13 +831,17 @@ class PDFProcessor:
         if not isinstance(page_num, int):
             raise TypeError(f"Page number must be an integer, got {type(page_num).__name__}")
 
-        if page_num < 0 or page_num >= page.parent.page_count:
-            raise ValueError(f"Invalid page number: {page_num}")
-        elif page_num == 0:
-            page_num += 1
+        if page_num < 0:
+            raise ValueError(f"Page number cannot be negative: {page_num}")
+        
+        if page_num >= page.parent.page_count:
+            raise ValueError(f"Page number {page_num} exceeds document page count {page.parent.page_count}")
+
+        # Convert to one-based page numbering for output
+        display_page_num = page_num + 1
 
         page_content = {
-            'page_number': page_num,
+            'page_number': display_page_num,
             'elements': [],
             'images': [],
             'annotations': [],
@@ -702,7 +853,7 @@ class PDFProcessor:
         try:
             text_dict = page.get_text('dict')
         except Exception as e:
-            self.logger.error(f"Failed to extract text from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract text from page {display_page_num}: {e}")
             text_dict = {"blocks": []}
 
         for block in text_dict["blocks"]:
@@ -737,7 +888,7 @@ class PDFProcessor:
         try:
             image_list = page.get_images()
         except Exception as e:
-            self.logger.error(f"Failed to extract images from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract images from page {display_page_num}: {e}")
             image_list = []
 
         for img_index, img in enumerate(image_list):
@@ -749,6 +900,13 @@ class PDFProcessor:
                 if pix.n - pix.alpha < 4:  # GRAY or RGB
                     img_data = pix.tobytes("png")
                     
+                    # Get actual image position on page
+                    try:
+                        img_rects = page.get_image_rects(xref)
+                        bbox = list(img_rects[0]) if img_rects else [0, 0, pix.width, pix.height]
+                    except:
+                        bbox = [0, 0, pix.width, pix.height]  # Fallback
+                    
                     page_content['images'].append({
                         'image_index': img_index,
                         'xref': xref,
@@ -757,7 +915,7 @@ class PDFProcessor:
                         'height': pix.height,
                         'colorspace': pix.colorspace.name if pix.colorspace else 'unknown',
                         'ext': 'png',  # Default format
-                        'bbox': [0, 0, pix.width, pix.height]  # Default bbox
+                        'bbox': bbox
                     })
                     
                     # Add as structured element
@@ -775,6 +933,9 @@ class PDFProcessor:
                     })
                 pix = None  # Free memory
 
+            except (MemoryError, RuntimeError):
+                # Re-raise critical errors
+                raise
             except Exception as e:
                 self.logger.warning(f"Failed to extract image {img_index}: {e}")
         
@@ -782,7 +943,7 @@ class PDFProcessor:
         try:
             page_annots = [annot for annot in page.annots()]
         except Exception as e:
-            self.logger.error(f"Failed to extract annotations from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract annotations from page {display_page_num}: {e}")
             page_annots = []
 
         for annot in page_annots:
@@ -790,11 +951,15 @@ class PDFProcessor:
                 'type': annot.type[1],  # Annotation type name
                 'content': annot.info.get("content", ""),
                 'author': annot.info.get("title", ""),
-                'page': page_num,
-                'bbox': list(annot.rect)
+                'page': display_page_num,
+                'bbox': list(annot.rect),
+                'creation_date': annot.info.get("creationDate", ""),
+                'modification_date': annot.info.get("modDate", ""),
+                'colors': annot.colors if hasattr(annot, 'colors') else None,
             }
+
             page_content['annotations'].append(annot_dict)
-            
+
             # Add as structured element if has content
             if annot_dict['content']:
                 page_content['elements'].append({
@@ -814,24 +979,27 @@ class PDFProcessor:
         try:
             drawings = page.get_drawings()
         except Exception as e:
-            self.logger.error(f"Failed to extract drawings from page {page_num}: {e}")
+            self.logger.error(f"Failed to extract drawings from page {display_page_num}: {e}")
             drawings = []
     
         for drawing in drawings:
             page_content['drawings'].append({
-                'bbox': drawing['rect'],
-                'type': 'vector_drawing',
+                'bbox': drawing['bbox'],
+                'type': drawing.get('type', 'vector_drawing'),
                 'items': len(drawing.get('items', []))
             })
 
         # Check if we actually extracted any content
-        page_num = page_content.pop('page_number')
-        if not all(value for value in page_content.values()):
-            raise ValueError(f"No content extracted from page {page_num}")
-
+        page_num_value = page_content['page_number']
+        content_lists = [page_content['elements'], page_content['images'], 
+                        page_content['annotations'], page_content['text_blocks'], 
+                        page_content['drawings']]
+        if not any(content_list for content_list in content_lists):
+            self.logger.warning(f"No content extracted from page {page_num_value}")
+        
         return page_content
 
-    def _get_processing_time(self, start_time: float):
+    def _get_processing_time(self, start_time: float) -> float:
         """
         Calculate total elapsed time for complete pipeline processing including all stages.
 
@@ -842,6 +1010,7 @@ class PDFProcessor:
 
         Args:
             start_time (float): Timestamp when processing started, typically from
+                datetime.datetime.now().timestamp()
 
         Returns:
             float: Total processing time in seconds with decimal precision.
@@ -849,10 +1018,12 @@ class PDFProcessor:
 
         Raises:
             TypeError: If start_time is not a float timestamp
-            ValueError: If start_time or the return value are negative.
+            ValueError: If start_time is negative or results in negative duration.
 
         Examples:
-            >>> processing_time = processor._get_processing_time()
+            >>> start = datetime.datetime.now().timestamp()
+            >>> # ... do processing ...
+            >>> processing_time = processor._get_processing_time(start)
             >>> print(f"Total processing time: {processing_time:.2f} seconds")
             >>> # Performance monitoring
             >>> if processing_time > 60.0:
@@ -865,15 +1036,28 @@ class PDFProcessor:
         # Get processing statistics or calculate from start time
         end_time = datetime.datetime.now().timestamp()
 
-        if not isinstance(start_time, float):
-            raise TypeError("Start time must be a float timestamp")
+        if not isinstance(start_time, (int, float)):
+            raise TypeError(f"Start time must be a numeric timestamp, got {type(start_time).__name__}")
 
-        if start_time > 0:
-            total_time = end_time - start_time
-            if total_time < 0:
-                raise ValueError("Invalid processing time calculation: negative duration")
-        else:
-            raise ValueError("Processing start time is a negative value")
+        # Fix 2: Check start_time for validity before calculating total_time
+        if start_time <= 0:
+            raise ValueError(f"Processing start time must be positive, got '{start_time}'")
+        
+        # Fix 3: Add additional validation for reasonable timestamp range
+        if start_time > end_time:
+            raise ValueError(f"Start time ({start_time}) cannot be after end time ({end_time})")
+
+        total_time = end_time - start_time
+        
+        # Fix 4: Additional safety check for negative durations (shouldn't happen now, but defensive)
+        if total_time < 0:
+            raise ValueError(f"Invalid processing time calculation: negative duration '{total_time}'. Start: {start_time}, End: {end_time}")
+
+        # Fix 5: Store stats after validation
+        self.processing_stats['start_time'] = start_time
+        self.processing_stats['end_time'] = end_time
+        
+        return total_time
 
     async def _create_ipld_structure(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """
@@ -997,32 +1181,36 @@ class PDFProcessor:
             Word-level positioning supports precise content localization and extraction.
         """
         self.logger.info("Stage 4: Processing OCR")
-        
-        
+
         ocr_results = {}
-        
+
         for page_data in decomposed_content['pages']:
             page_num = page_data['page_number']
             page_ocr_results = []
             
             # Process images on this page
             for img_data in page_data.get('images', []):
+
+                # Convert image data for OCR processing
+                if 'data' in img_data:
+                    image_data = img_data['data']
+                else:
+                    # Skip if no image data available
+                    self.logger.warning(f"No image data available for image {img_data.get('image_index', 0)} on page {page_num}")
+                    continue
+
+                if image_data is None or not image_data:
+                    self.logger.warning(f"Empty image data for image {img_data.get('image_index', 0)} on page {page_num}")
+                    continue
+
                 try:
-                    # Convert image data for OCR processing
-                    if 'data' in img_data:
-                        image_data = img_data['data']
-                    else:
-                        # Skip if no image data available
-                        self.logger.warning(f"No image data available for image {img_data.get('image_index', 0)} on page {page_num}")
-                        continue
-                    
                     # Process image with OCR engine
                     ocr_result = await self.ocr_engine.extract_with_ocr(
                         image_data=image_data,
                         strategy='quality_first', # TODO need to allow setting of strategy.
                         confidence_threshold=0.7 # TODO need to allow setting of threshold.
                     )
-                    
+
                     page_ocr_results.append({
                         'image_index': img_data.get('image_index', 0),
                         'text': ocr_result.get('text', ''),
@@ -1030,7 +1218,10 @@ class PDFProcessor:
                         'engine_used': ocr_result.get('engine', 'unknown'),
                         'word_boxes': ocr_result.get('word_boxes', [])
                     })
-                    
+                except ImportError as e:
+                    # Fail fast if OCR engine is not available
+                    raise ImportError(f"Required OCR engine not available: {e}") from e
+
                 except Exception as e:
                     self.logger.warning(f"OCR failed for image {img_data.get('image_index', 0)} on page {page_num}: {e}")
                     # Add empty result for failed OCR
@@ -1041,11 +1232,11 @@ class PDFProcessor:
                         'engine_used': 'failed',
                         'word_boxes': []
                     })
-            
+
             ocr_results[page_num] = page_ocr_results
-        
+
         return ocr_results
-    
+
     async def _optimize_for_llm(self, 
                                decomposed_content: dict[str, Any], 
                                ocr_results: dict[str, Any]) -> dict[str, Any]:
@@ -1164,7 +1355,7 @@ class PDFProcessor:
                 ent['text'].lower() in chunk.content.lower() 
                 for ent in entities
             )]
-            
+
             # Create relationships between entities in the same chunk
             for j, entity1 in enumerate(chunk_entities):
                 for entity2 in chunk_entities[j+1:]:
@@ -1172,7 +1363,7 @@ class PDFProcessor:
                         'source': entity1['text'],
                         'target': entity2['text'],
                         'type': 'co_occurrence',
-                        'confidence': 0.6,
+                        'confidence': 0.6, # TODO COME THE FUCK ON!!!!
                         'source_chunk': chunk.chunk_id
                     })
         
@@ -1253,6 +1444,8 @@ class PDFProcessor:
         }
 
     async def _integrate_with_graphrag(self, 
+                                       *,
+                                       optimized_content: dict[str, Any],
                                       ipld_structure: dict[str, Any],
                                       entities_and_relations: dict[str, Any], 
                                       embeddings: dict[str, Any]) -> dict[str, Any]:
@@ -1302,28 +1495,25 @@ class PDFProcessor:
         self.logger.info("Stage 8: Integrating with GraphRAG")
 
         # Get LLM document from optimized content
-        llm_document = None
-        for result_data in [entities_and_relations, embeddings]:
-            if isinstance(result_data, dict) and 'llm_document' in result_data:
-                llm_document = result_data['llm_document']
-                break
-        else:
-            raise ValueError("No LLM document found in entities or embeddings data")
+        assert 'llm_document' in optimized_content, "optimized_content has no key 'llm_document'."
+        llm_document: LLMDocument = optimized_content['llm_document']
+
+        assert isinstance(llm_document, LLMDocument), f"llm_document is not an LLMDocument, but a {type(llm_document).__name__}"
 
         # Integrate with GraphRAG
         knowledge_graph = await self.integrator.integrate_document(llm_document)
-        
+
         return {
             'document': {
                 'id': knowledge_graph.document_id,
-                'title': llm_document,
+                'title': llm_document.title,
                 'ipld_cid': ipld_structure['root_cid']
             },
             'knowledge_graph': knowledge_graph,
             'entities': knowledge_graph.entities,
             'relationships': knowledge_graph.relationships
         }
-    
+
     async def _analyze_cross_document_relationships(self, graph_nodes: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Stage 9: Analyze and discover relationships between entities across documents.
@@ -1478,12 +1668,9 @@ class PDFProcessor:
             - Results include relevance scoring and context-aware ranking.
         """
         self.logger.info("Stage 10: Setting up query interface")
-        
 
-        
         # Create query engine with the GraphRAG integrator
-        integrator = GraphRAGIntegrator(storage=self.storage)
-        query_engine = QueryEngine(integrator, storage=self.storage)
+        self.query_engine = QueryEngine(self.integrator, storage=self.storage)
         
         # The query engine is now ready to handle queries for this document
         self.logger.info("Query interface setup complete")
@@ -1550,7 +1737,7 @@ class PDFProcessor:
         Raises:
             KeyError: If text blocks lack required 'content' field
             TypeError: If text_blocks is not a list or contains non-dictionary elements
-            AttributeError: If text block content is not string-compatible
+            ValueError: If text block content is not string-compatible
 
         Examples:
             >>> text_blocks = [
@@ -1568,13 +1755,36 @@ class PDFProcessor:
             Empty or whitespace-only blocks are filtered to improve text quality.
             Result suitable for further processing including LLM optimization and entity extraction.
         """
+        # Input validation: Check if text_blocks is a list
+        if not isinstance(text_blocks, list):
+            raise TypeError(f"Expected list, got {type(text_blocks).__name__}")
+        
         text_parts = []
         for block in text_blocks:
-            if block.get('content'):
-                text_parts.append(block['content'])
+            # Validate each block is a dictionary
+            if not isinstance(block, dict):
+                raise TypeError(f"Expected dict in text_blocks, got {type(block).__name__}")
+            
+            # Check if content field exists
+            if 'content' not in block:
+                raise KeyError("Text block missing required 'content' field")
+            
+            content = block['content']
+            
+            # Validate content is a string
+            if not isinstance(content, str):
+                raise ValueError(f"Text block content must be string, got {type(content).__name__}")
+            
+            # Filter out empty or whitespace-only content
+            if content.strip():
+                text_parts.append(content)
+
         return "\n".join(text_parts)
-    
-    def _get_quality_scores(self, result: dict[str, Any]) -> dict[str, float]:
+
+    def _get_quality_scores(self, 
+                            entity_results: dict[str, Any], 
+                            ocr_results: dict[str, Any]
+                            ) -> dict[str, float]:
         """
         Generate quality assessment scores for processing stages and overall document quality.
 
@@ -1631,7 +1841,7 @@ class PDFProcessor:
         try:
             # Text extraction quality based on content extraction success
             text_quality = 1.0
-            if hasattr(self, 'processing_stats') and self.processing_stats:
+            if self.processing_stats:
                 pages_processed = self.processing_stats.get('pages_processed', 0)
                 pages_with_text = self.processing_stats.get('pages_with_text', 0)
                 if pages_processed > 0:
@@ -1639,10 +1849,12 @@ class PDFProcessor:
             
             # OCR confidence from processing results
             ocr_confidence = 0.95  # Default confidence
-            if hasattr(self, 'ocr_results') and self.ocr_results:
+            if ocr_results:
                 confidence_scores = []
-                for page_results in self.ocr_results.values():
+                for page_results in ocr_results.values():
                     for result in page_results:
+                        assert isinstance(result, dict), \
+                            f"expected results in page results to be a dict, got {type(result).__name__}"
                         if isinstance(result, dict) and 'confidence' in result:
                             confidence_scores.append(result['confidence'])
                 if confidence_scores:
@@ -1650,9 +1862,9 @@ class PDFProcessor:
             
             # Entity extraction confidence from NER results
             entity_confidence = 0.95
-            if hasattr(self, 'entity_results') and self.entity_results:
+            if entity_results:
                 confidence_scores = []
-                for entity in self.entity_results:
+                for entity in entity_results:
                     if isinstance(entity, dict) and 'confidence' in entity:
                         confidence_scores.append(entity['confidence'])
                 if confidence_scores:
@@ -1677,7 +1889,9 @@ class PDFProcessor:
                 'entity_extraction_confidence': round(entity_confidence, 3),
                 'overall_quality': round(overall_quality, 3)
             }
-            
+        except AttributeError as e:
+            self.logger.exception(f"Quality score calculation failed: {e}")
+            raise ValueError("Quality score calculation failed due to missing processing statistics") from e
         except Exception as e:
             self.logger.exception(f"Quality score calculation failed: {e}")
             raise RuntimeError("Quality score calculation failed") from e

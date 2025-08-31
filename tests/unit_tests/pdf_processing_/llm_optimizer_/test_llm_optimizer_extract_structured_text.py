@@ -75,23 +75,14 @@ class TestLLMOptimizerExtractStructuredText:
     """Test LLMOptimizer._extract_structured_text method."""
 
     @pytest.fixture
-    def optimizer(self):
+    def optimizer(self) -> LLMOptimizer:
         """Create LLMOptimizer instance for testing."""
         return LLMOptimizer()
 
-    @pytest.mark.asyncio
-    async def test_extract_structured_text_valid_content(self, optimizer):
-        """
-        GIVEN valid decomposed_content with pages and elements
-        WHEN _extract_structured_text is called
-        THEN expect:
-            - Structured text format returned
-            - Pages organized correctly
-            - Element metadata preserved
-            - full_text generated for each page
-        """
-        # Given
-        decomposed_content = {
+    @pytest.fixture
+    def decomposed_content_valid(self):
+        """Create valid decomposed content for testing."""
+        return {
             'pages': [
                 {
                     'elements': [
@@ -128,111 +119,387 @@ class TestLLMOptimizerExtractStructuredText:
             ],
             'metadata': {'document_type': 'research_paper', 'total_pages': 2}
         }
-        
-        # When
-        result = await optimizer._extract_structured_text(decomposed_content)
-        
-        # Then
-        assert isinstance(result, dict), "Result should be a dictionary"
-        assert 'pages' in result, "Result should contain 'pages' key"
-        assert 'metadata' in result, "Result should contain 'metadata' key"
-        assert 'structure' in result, "Result should contain 'structure' key"
-        
-        # Check pages structure
-        assert len(result['pages']) == 2, "Should have 2 pages"
-        
-        # Check first page
-        page1 = result['pages'][0]
-        assert 'page_number' in page1, "Page should have page_number"
-        assert 'elements' in page1, "Page should have elements"
-        assert 'full_text' in page1, "Page should have full_text"
-        assert len(page1['elements']) == 2, "First page should have 2 text elements"
-        
-        # Check element preservation - ALL metadata should be preserved
-        element1 = page1['elements'][0]
-        assert element1['content'] == 'Chapter 1: Introduction'
-        assert element1['type'] == 'header'  # Should be normalized from subtype
-        assert element1['confidence'] == 0.95
-        assert element1['position'] == {'x': 100, 'y': 50}  # Complete position metadata
-        assert element1['style'] == {'font_size': 18, 'bold': True}  # Complete style metadata
-        
-        element2 = page1['elements'][1]
-        assert element2['content'] == 'This is the introduction paragraph with important content.'
-        assert element2['type'] == 'paragraph'  # Should be normalized from subtype
-        assert element2['confidence'] == 0.89
-        assert element2['position'] == {'x': 100, 'y': 100}  # Complete position metadata
-        assert element2['style'] == {'font_size': 12, 'bold': False}  # Complete style metadata
-        
-        # Check full_text generation
-        assert 'Chapter 1: Introduction' in page1['full_text']
-        assert 'This is the introduction paragraph' in page1['full_text']
-        
-        # Check second page (table element should be normalized to its subtype)
-        page2 = result['pages'][1]
-        assert len(page2['elements']) == 1, "Second page should have 1 element"
-        assert page2['elements'][0]['type'] == 'caption'  # Normalized from subtype
-        assert page2['elements'][0]['content'] == 'Table: Sample Data'
-        assert page2['elements'][0]['position'] == {'x': 100, 'y': 200}
-        assert page2['elements'][0]['style'] == {'font_size': 10, 'italic': True}
-        assert page2['elements'][0]['confidence'] == 0.92
 
     @pytest.mark.asyncio
-    async def test_extract_structured_text_missing_pages(self, optimizer):
+    async def test_extract_structured_text_returns_dict(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages and elements
+        WHEN _extract_structured_text is called
+        THEN result should be a dictionary
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        assert isinstance(result, dict), "Result should be a dictionary"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_contains_pages_key(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages and elements
+        WHEN _extract_structured_text is called
+        THEN result should contain 'pages' key
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        assert 'pages' in result, "Result should contain 'pages' key"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_contains_metadata_key(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages and elements
+        WHEN _extract_structured_text is called
+        THEN result should contain 'metadata' key
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        assert 'metadata' in result, "Result should contain 'metadata' key"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_contains_structure_key(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages and elements
+        WHEN _extract_structured_text is called
+        THEN result should contain 'structure' key
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        assert 'structure' in result, "Result should contain 'structure' key"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_correct_page_count(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with 2 pages
+        WHEN _extract_structured_text is called
+        THEN result should have 2 pages
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        assert len(result['pages']) == 2, "Should have 2 pages"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_page_has_page_number(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages
+        WHEN _extract_structured_text is called
+        THEN first page should have page_number field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page1 = result['pages'][0]
+        assert 'page_number' in page1, "Page should have page_number"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_page_has_elements(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages
+        WHEN _extract_structured_text is called
+        THEN first page should have elements field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page1 = result['pages'][0]
+        assert 'elements' in page1, "Page should have elements"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_page_has_full_text(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with pages
+        WHEN _extract_structured_text is called
+        THEN first page should have full_text field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page1 = result['pages'][0]
+        assert 'full_text' in page1, "Page should have full_text"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_correct_element_count(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with 2 elements on first page
+        WHEN _extract_structured_text is called
+        THEN first page should have 2 text elements
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page1 = result['pages'][0]
+        assert len(page1['elements']) == 2, "First page should have 2 text elements"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_first_element_content(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with header element
+        WHEN _extract_structured_text is called
+        THEN first element should preserve content correctly
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element1 = result['pages'][0]['elements'][0]
+        assert element1['content'] == 'Chapter 1: Introduction', "First element content should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_first_element_type_normalization(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with header subtype
+        WHEN _extract_structured_text is called
+        THEN first element type should be normalized from subtype
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element1 = result['pages'][0]['elements'][0]
+        assert element1['type'] == 'header', "First element type should be normalized from subtype"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_first_element_confidence(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with confidence metadata
+        WHEN _extract_structured_text is called
+        THEN first element should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element1 = result['pages'][0]['elements'][0]
+        assert element1['confidence'] == 0.95, "First element confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_first_element_position(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with position metadata
+        WHEN _extract_structured_text is called
+        THEN first element should preserve complete position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element1 = result['pages'][0]['elements'][0]
+        assert element1['position'] == {'x': 100, 'y': 50}, "First element position metadata should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_first_element_style(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with style metadata
+        WHEN _extract_structured_text is called
+        THEN first element should preserve complete style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element1 = result['pages'][0]['elements'][0]
+        assert element1['style'] == {'font_size': 18, 'bold': True}, "First element style metadata should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_second_element_content(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with paragraph element
+        WHEN _extract_structured_text is called
+        THEN second element should preserve content correctly
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element2 = result['pages'][0]['elements'][1]
+        assert element2['content'] == 'This is the introduction paragraph with important content.', "Second element content should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_second_element_type_normalization(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with paragraph subtype
+        WHEN _extract_structured_text is called
+        THEN second element type should be normalized from subtype
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element2 = result['pages'][0]['elements'][1]
+        assert element2['type'] == 'paragraph', "Second element type should be normalized from subtype"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_second_element_confidence(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with confidence metadata
+        WHEN _extract_structured_text is called
+        THEN second element should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element2 = result['pages'][0]['elements'][1]
+        assert element2['confidence'] == 0.89, "Second element confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_second_element_position(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with position metadata
+        WHEN _extract_structured_text is called
+        THEN second element should preserve complete position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element2 = result['pages'][0]['elements'][1]
+        assert element2['position'] == {'x': 100, 'y': 100}, "Second element position metadata should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_second_element_style(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with style metadata
+        WHEN _extract_structured_text is called
+        THEN second element should preserve complete style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        element2 = result['pages'][0]['elements'][1]
+        assert element2['style'] == {'font_size': 12, 'bold': False}, "Second element style metadata should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_full_text_contains_header(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with header content
+        WHEN _extract_structured_text is called
+        THEN full_text should contain header content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page1 = result['pages'][0]
+        assert 'Chapter 1: Introduction' in page1['full_text'], "Full text should contain header content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_full_text_contains_paragraph(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with paragraph content
+        WHEN _extract_structured_text is called
+        THEN full_text should contain paragraph content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page1 = result['pages'][0]
+        assert 'This is the introduction paragraph' in page1['full_text'], "Full text should contain paragraph content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_second_page_element_count(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with 1 element on second page
+        WHEN _extract_structured_text is called
+        THEN second page should have 1 element
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page2 = result['pages'][1]
+        assert len(page2['elements']) == 1, "Second page should have 1 element"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_table_element_type_normalization(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with table caption subtype
+        WHEN _extract_structured_text is called
+        THEN table element type should be normalized from subtype
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page2 = result['pages'][1]
+        assert page2['elements'][0]['type'] == 'caption', "Table element type should be normalized from subtype"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_table_element_content(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with table caption content
+        WHEN _extract_structured_text is called
+        THEN table element should preserve content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page2 = result['pages'][1]
+        assert page2['elements'][0]['content'] == 'Table: Sample Data', "Table element content should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_table_element_position(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with table position metadata
+        WHEN _extract_structured_text is called
+        THEN table element should preserve position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page2 = result['pages'][1]
+        assert page2['elements'][0]['position'] == {'x': 100, 'y': 200}, "Table element position should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_table_element_style(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with table style metadata
+        WHEN _extract_structured_text is called
+        THEN table element should preserve style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page2 = result['pages'][1]
+        assert page2['elements'][0]['style'] == {'font_size': 10, 'italic': True}, "Table element style should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_table_element_confidence(self, optimizer, decomposed_content_valid):
+        """
+        GIVEN valid decomposed_content with table confidence metadata
+        WHEN _extract_structured_text is called
+        THEN table element should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_valid)
+        page2 = result['pages'][1]
+        assert page2['elements'][0]['confidence'] == 0.92, "Table element confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_missing_pages_raises_keyerror(self, optimizer):
         """
         GIVEN decomposed_content missing 'pages' key
         WHEN _extract_structured_text is called
-        THEN expect KeyError to be raised
+        THEN KeyError should be raised
         """
-        # Given
         decomposed_content = {
             'metadata': {'document_type': 'test'},
             'structure': {}
         }
         
-        # When/Then
         with pytest.raises(KeyError, match="pages"):
             await optimizer._extract_structured_text(decomposed_content)
 
-    @pytest.mark.asyncio
-    async def test_extract_structured_text_empty_pages(self, optimizer):
-        """
-        GIVEN decomposed_content with empty pages list
-        WHEN _extract_structured_text is called
-        THEN expect:
-            - Empty structured text returned
-            - No errors raised
-            - Proper structure maintained
-        """
-        # Given
-        decomposed_content = {
+    @pytest.fixture
+    def decomposed_content_empty_pages(self):
+        """Create decomposed content with empty pages for testing."""
+        return {
             'pages': [],
             'metadata': {'document_type': 'empty_doc'},
             'structure': {}
         }
-        
-        # When
-        result = await optimizer._extract_structured_text(decomposed_content)
-        
-        # Then
-        assert isinstance(result, dict), "Result should be a dictionary"
-        assert 'pages' in result, "Result should contain 'pages' key"
-        assert 'metadata' in result, "Result should contain 'metadata' key"
-        assert 'structure' in result, "Result should contain 'structure' key"
-        assert len(result['pages']) == 0, "Should have 0 pages"
-        assert result['metadata']['document_type'] == 'empty_doc'
 
     @pytest.mark.asyncio
-    async def test_extract_structured_text_element_filtering(self, optimizer):
+    async def test_extract_structured_text_empty_pages_returns_dict(self, optimizer, decomposed_content_empty_pages):
         """
-        GIVEN decomposed_content with various element types and empty content
+        GIVEN decomposed_content with empty pages list
         WHEN _extract_structured_text is called
-        THEN expect:
-            - Empty content elements filtered out
-            - Element types normalized correctly
-            - Valid elements preserved
+        THEN result should be a dictionary
         """
-        # Given
-        decomposed_content = {
+        result = await optimizer._extract_structured_text(decomposed_content_empty_pages)
+        assert isinstance(result, dict), "Result should be a dictionary"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_empty_pages_contains_pages_key(self, optimizer, decomposed_content_empty_pages):
+        """
+        GIVEN decomposed_content with empty pages list
+        WHEN _extract_structured_text is called
+        THEN result should contain 'pages' key
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_empty_pages)
+        assert 'pages' in result, "Result should contain 'pages' key"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_empty_pages_contains_metadata_key(self, optimizer, decomposed_content_empty_pages):
+        """
+        GIVEN decomposed_content with empty pages list
+        WHEN _extract_structured_text is called
+        THEN result should contain 'metadata' key
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_empty_pages)
+        assert 'metadata' in result, "Result should contain 'metadata' key"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_empty_pages_contains_structure_key(self, optimizer, decomposed_content_empty_pages):
+        """
+        GIVEN decomposed_content with empty pages list
+        WHEN _extract_structured_text is called
+        THEN result should contain 'structure' key
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_empty_pages)
+        assert 'structure' in result, "Result should contain 'structure' key"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_empty_pages_zero_page_count(self, optimizer, decomposed_content_empty_pages):
+        """
+        GIVEN decomposed_content with empty pages list
+        WHEN _extract_structured_text is called
+        THEN result should have 0 pages
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_empty_pages)
+        assert len(result['pages']) == 0, "Should have 0 pages"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_empty_pages_preserves_metadata(self, optimizer, decomposed_content_empty_pages):
+        """
+        GIVEN decomposed_content with empty pages and specific metadata
+        WHEN _extract_structured_text is called
+        THEN metadata document_type should be preserved
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_empty_pages)
+        assert result['metadata']['document_type'] == 'empty_doc', "Metadata document_type should be preserved"
+
+    @pytest.fixture
+    def decomposed_content_filtering(self):
+        """Create decomposed content with various element types for filtering tests."""
+        return {
             'pages': [
                 {
                     'elements': [
@@ -281,72 +548,345 @@ class TestLLMOptimizerExtractStructuredText:
             ],
             'metadata': {}
         }
-        
-        # When
-        result = await optimizer._extract_structured_text(decomposed_content)
-        
-        # Then
-        page = result['pages'][0]
-        assert len(page['elements']) == 5, "Should have 5 elements (all elements including empty ones are processed)"
-        
-        # Check element type normalization (should use subtype as type for text elements)
-        element_types = [elem['type'] for elem in page['elements']]
-        assert 'paragraph' in element_types, "Should have normalized paragraph type"
-        assert 'header' in element_types, "Should have normalized header type"
-        assert 'data' in element_types, "Should have table subtype as type"
-        
-        # Check ALL metadata is preserved for each element
-        valid_header = next(elem for elem in page['elements'] if elem['content'] == 'Valid header content')
-        assert valid_header['type'] == 'header'  # normalized from subtype
-        assert valid_header['position'] == {'x': 100, 'y': 50}
-        assert valid_header['style'] == {'font_size': 18}
-        assert valid_header['confidence'] == 0.95
-        
-        valid_paragraph = next(elem for elem in page['elements'] if elem['content'] == 'Valid paragraph content')
-        assert valid_paragraph['type'] == 'paragraph'  # normalized from subtype
-        assert valid_paragraph['position'] == {'x': 100, 'y': 100}
-        assert valid_paragraph['style'] == {'font_size': 12}
-        assert valid_paragraph['confidence'] == 0.88
-        
-        # Check empty content elements are included with all metadata
-        empty_elem = next(elem for elem in page['elements'] if elem['content'] == '')
-        assert empty_elem['type'] == 'paragraph'
-        assert empty_elem['position'] == {'x': 0, 'y': 0}
-        assert empty_elem['style'] == {}
-        assert empty_elem['confidence'] == 0.9
-        
-        whitespace_elem = next(elem for elem in page['elements'] if elem['content'] == '   ')
-        assert whitespace_elem['type'] == 'paragraph'
-        assert whitespace_elem['position'] == {'x': 10, 'y': 10}
-        assert whitespace_elem['style'] == {}
-        assert whitespace_elem['confidence'] == 0.8
-        
-        # Check content preservation (all elements including empty)
-        contents = [elem['content'] for elem in page['elements']]
-        assert 'Valid header content' in contents
-        assert 'Valid paragraph content' in contents
-        assert '' in contents  # Empty content included
-        assert '   ' in contents  # Whitespace content included
-        assert 'Table data' in contents  # Table data now included
-        
-        # Check full_text includes all element content (including empty)
-        full_text = page['full_text']
-        assert 'Valid header content' in full_text
-        assert 'Valid paragraph content' in full_text
-        assert 'Table data' in full_text
-        # Note: empty content and whitespace will be in full_text but hard to test
 
     @pytest.mark.asyncio
-    async def test_extract_structured_text_metadata_preservation(self, optimizer):
+    async def test_extract_structured_text_filtering_element_count(self, optimizer, decomposed_content_filtering):
         """
-        GIVEN decomposed_content with rich metadata
+        GIVEN decomposed_content with various element types including empty content
         WHEN _extract_structured_text is called
-        THEN expect:
-            - Original metadata preserved
-            - Additional structure metadata added
-            - Hierarchical organization maintained
+        THEN all 5 elements should be processed including empty ones
         """
-        # Given
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        assert len(page['elements']) == 5, "Should have 5 elements (all elements including empty ones are processed)"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_has_paragraph_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with paragraph subtypes
+        WHEN _extract_structured_text is called
+        THEN result should have normalized paragraph type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        element_types = [elem['type'] for elem in page['elements']]
+        assert 'paragraph' in element_types, "Should have normalized paragraph type"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_has_header_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with header subtype
+        WHEN _extract_structured_text is called
+        THEN result should have normalized header type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        element_types = [elem['type'] for elem in page['elements']]
+        assert 'header' in element_types, "Should have normalized header type"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_has_data_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with table data subtype
+        WHEN _extract_structured_text is called
+        THEN result should have table subtype as type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        element_types = [elem['type'] for elem in page['elements']]
+        assert 'data' in element_types, "Should have table subtype as type"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_header_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid header element
+        WHEN _extract_structured_text is called
+        THEN valid header should have normalized type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_header = next(elem for elem in page['elements'] if elem['content'] == 'Valid header content')
+        assert valid_header['type'] == 'header', "Valid header type should be normalized from subtype"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_header_position(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid header element
+        WHEN _extract_structured_text is called
+        THEN valid header should preserve position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_header = next(elem for elem in page['elements'] if elem['content'] == 'Valid header content')
+        assert valid_header['position'] == {'x': 100, 'y': 50}, "Valid header position should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_header_style(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid header element
+        WHEN _extract_structured_text is called
+        THEN valid header should preserve style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_header = next(elem for elem in page['elements'] if elem['content'] == 'Valid header content')
+        assert valid_header['style'] == {'font_size': 18}, "Valid header style should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_header_confidence(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid header element
+        WHEN _extract_structured_text is called
+        THEN valid header should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_header = next(elem for elem in page['elements'] if elem['content'] == 'Valid header content')
+        assert valid_header['confidence'] == 0.95, "Valid header confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_paragraph_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid paragraph element
+        WHEN _extract_structured_text is called
+        THEN valid paragraph should have normalized type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_paragraph = next(elem for elem in page['elements'] if elem['content'] == 'Valid paragraph content')
+        assert valid_paragraph['type'] == 'paragraph', "Valid paragraph type should be normalized from subtype"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_paragraph_position(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid paragraph element
+        WHEN _extract_structured_text is called
+        THEN valid paragraph should preserve position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_paragraph = next(elem for elem in page['elements'] if elem['content'] == 'Valid paragraph content')
+        assert valid_paragraph['position'] == {'x': 100, 'y': 100}, "Valid paragraph position should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_paragraph_style(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid paragraph element
+        WHEN _extract_structured_text is called
+        THEN valid paragraph should preserve style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_paragraph = next(elem for elem in page['elements'] if elem['content'] == 'Valid paragraph content')
+        assert valid_paragraph['style'] == {'font_size': 12}, "Valid paragraph style should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_valid_paragraph_confidence(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid paragraph element
+        WHEN _extract_structured_text is called
+        THEN valid paragraph should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        valid_paragraph = next(elem for elem in page['elements'] if elem['content'] == 'Valid paragraph content')
+        assert valid_paragraph['confidence'] == 0.88, "Valid paragraph confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_empty_element_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with empty content element
+        WHEN _extract_structured_text is called
+        THEN empty element should have normalized type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        empty_elem = next(elem for elem in page['elements'] if elem['content'] == '')
+        assert empty_elem['type'] == 'paragraph', "Empty element type should be normalized"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_empty_element_position(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with empty content element
+        WHEN _extract_structured_text is called
+        THEN empty element should preserve position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        empty_elem = next(elem for elem in page['elements'] if elem['content'] == '')
+        assert empty_elem['position'] == {'x': 0, 'y': 0}, "Empty element position should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_empty_element_style(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with empty content element
+        WHEN _extract_structured_text is called
+        THEN empty element should preserve style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        empty_elem = next(elem for elem in page['elements'] if elem['content'] == '')
+        assert empty_elem['style'] == {}, "Empty element style should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_empty_element_confidence(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with empty content element
+        WHEN _extract_structured_text is called
+        THEN empty element should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        empty_elem = next(elem for elem in page['elements'] if elem['content'] == '')
+        assert empty_elem['confidence'] == 0.9, "Empty element confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_whitespace_element_type(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with whitespace content element
+        WHEN _extract_structured_text is called
+        THEN whitespace element should have normalized type
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        whitespace_elem = next(elem for elem in page['elements'] if elem['content'] == '   ')
+        assert whitespace_elem['type'] == 'paragraph', "Whitespace element type should be normalized"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_whitespace_element_position(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with whitespace content element
+        WHEN _extract_structured_text is called
+        THEN whitespace element should preserve position metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        whitespace_elem = next(elem for elem in page['elements'] if elem['content'] == '   ')
+        assert whitespace_elem['position'] == {'x': 10, 'y': 10}, "Whitespace element position should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_whitespace_element_style(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with whitespace content element
+        WHEN _extract_structured_text is called
+        THEN whitespace element should preserve style metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        whitespace_elem = next(elem for elem in page['elements'] if elem['content'] == '   ')
+        assert whitespace_elem['style'] == {}, "Whitespace element style should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_whitespace_element_confidence(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with whitespace content element
+        WHEN _extract_structured_text is called
+        THEN whitespace element should preserve confidence value
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        whitespace_elem = next(elem for elem in page['elements'] if elem['content'] == '   ')
+        assert whitespace_elem['confidence'] == 0.8, "Whitespace element confidence should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_content_includes_valid_header(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid header content
+        WHEN _extract_structured_text is called
+        THEN result contents should include valid header content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        contents = [elem['content'] for elem in page['elements']]
+        assert 'Valid header content' in contents, "Contents should include valid header content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_content_includes_valid_paragraph(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid paragraph content
+        WHEN _extract_structured_text is called
+        THEN result contents should include valid paragraph content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        contents = [elem['content'] for elem in page['elements']]
+        assert 'Valid paragraph content' in contents, "Contents should include valid paragraph content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_content_includes_empty(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with empty content element
+        WHEN _extract_structured_text is called
+        THEN result contents should include empty content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        contents = [elem['content'] for elem in page['elements']]
+        assert '' in contents, "Contents should include empty content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_content_includes_whitespace(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with whitespace content element
+        WHEN _extract_structured_text is called
+        THEN result contents should include whitespace content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        contents = [elem['content'] for elem in page['elements']]
+        assert '   ' in contents, "Contents should include whitespace content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_content_includes_table_data(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with table data element
+        WHEN _extract_structured_text is called
+        THEN result contents should include table data content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        contents = [elem['content'] for elem in page['elements']]
+        assert 'Table data' in contents, "Contents should include table data content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_full_text_includes_valid_header(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid header content
+        WHEN _extract_structured_text is called
+        THEN full_text should include valid header content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        full_text = page['full_text']
+        assert 'Valid header content' in full_text, "Full text should include valid header content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_full_text_includes_valid_paragraph(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with valid paragraph content
+        WHEN _extract_structured_text is called
+        THEN full_text should include valid paragraph content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        full_text = page['full_text']
+        assert 'Valid paragraph content' in full_text, "Full text should include valid paragraph content"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_filtering_full_text_includes_table_data(self, optimizer, decomposed_content_filtering):
+        """
+        GIVEN decomposed_content with table data content
+        WHEN _extract_structured_text is called
+        THEN full_text should include table data content
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_filtering)
+        page = result['pages'][0]
+        full_text = page['full_text']
+        assert 'Table data' in full_text, "Full text should include table data content"
+
+    @pytest.fixture
+    def decomposed_content_rich_metadata(self):
+        """Create decomposed content with rich metadata for testing."""
         original_metadata = {
             'document_type': 'research_paper',
             'author': 'Dr. Smith',
@@ -355,7 +895,7 @@ class TestLLMOptimizerExtractStructuredText:
             'language': 'en'
         }
         
-        decomposed_content = {
+        return {
             'pages': [
                 {
                     'elements': [
@@ -374,31 +914,163 @@ class TestLLMOptimizerExtractStructuredText:
                 'has_figures': False
             }
         }
-        
-        # When
-        result = await optimizer._extract_structured_text(decomposed_content)
-        
-        # Then
-        # Check original metadata preservation
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_metadata_preserves_document_type(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with document_type metadata
+        WHEN _extract_structured_text is called
+        THEN document_type should be preserved in result metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
         result_metadata = result['metadata']
-        for key, value in original_metadata.items():
-            assert key in result_metadata, f"Original metadata key '{key}' should be preserved"
-            assert result_metadata[key] == value, f"Original metadata value for '{key}' should be preserved"
-        
-        # Check structure preservation
+        assert 'document_type' in result_metadata, "Original metadata key 'document_type' should be preserved"
+        assert result_metadata['document_type'] == 'research_paper', "Original metadata value for 'document_type' should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_metadata_preserves_author(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with author metadata
+        WHEN _extract_structured_text is called
+        THEN author should be preserved in result metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_metadata = result['metadata']
+        assert 'author' in result_metadata, "Original metadata key 'author' should be preserved"
+        assert result_metadata['author'] == 'Dr. Smith', "Original metadata value for 'author' should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_metadata_preserves_creation_date(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with creation_date metadata
+        WHEN _extract_structured_text is called
+        THEN creation_date should be preserved in result metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_metadata = result['metadata']
+        assert 'creation_date' in result_metadata, "Original metadata key 'creation_date' should be preserved"
+        assert result_metadata['creation_date'] == '2024-01-01', "Original metadata value for 'creation_date' should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_metadata_preserves_total_pages(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with total_pages metadata
+        WHEN _extract_structured_text is called
+        THEN total_pages should be preserved in result metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_metadata = result['metadata']
+        assert 'total_pages' in result_metadata, "Original metadata key 'total_pages' should be preserved"
+        assert result_metadata['total_pages'] == 1, "Original metadata value for 'total_pages' should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_metadata_preserves_language(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with language metadata
+        WHEN _extract_structured_text is called
+        THEN language should be preserved in result metadata
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_metadata = result['metadata']
+        assert 'language' in result_metadata, "Original metadata key 'language' should be preserved"
+        assert result_metadata['language'] == 'en', "Original metadata value for 'language' should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_structure_preservation_contains_structure(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with structure information
+        WHEN _extract_structured_text is called
+        THEN result should contain structure field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
         assert 'structure' in result, "Structure should be preserved"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_structure_preservation_has_sections(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with sections in structure
+        WHEN _extract_structured_text is called
+        THEN structure should contain sections field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
         result_structure = result['structure']
-        assert 'sections' in result_structure
-        assert result_structure['sections'] == ['introduction', 'methodology']
-        assert result_structure['has_tables'] is True
-        assert result_structure['has_figures'] is False
-        
-        # Check hierarchical organization
-        assert len(result['pages']) == 1
+        assert 'sections' in result_structure, "Structure should contain sections field"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_structure_preservation_sections_values(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with specific sections
+        WHEN _extract_structured_text is called
+        THEN sections should preserve original values
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_structure = result['structure']
+        assert result_structure['sections'] == ['introduction', 'methodology'], "Sections should preserve original values"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_structure_preservation_has_tables_true(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with has_tables=True
+        WHEN _extract_structured_text is called
+        THEN has_tables should be preserved as True
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_structure = result['structure']
+        assert result_structure['has_tables'] is True, "has_tables should be preserved as True"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_structure_preservation_has_figures_false(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with has_figures=False
+        WHEN _extract_structured_text is called
+        THEN has_figures should be preserved as False
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        result_structure = result['structure']
+        assert result_structure['has_figures'] is False, "has_figures should be preserved as False"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_hierarchical_organization_one_page(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with one page
+        WHEN _extract_structured_text is called
+        THEN result should have one page in hierarchical organization
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        assert len(result['pages']) == 1, "Should have one page in hierarchical organization"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_hierarchical_organization_page_has_page_number(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with page structure
+        WHEN _extract_structured_text is called
+        THEN page should have page_number field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
         page = result['pages'][0]
-        assert 'page_number' in page
-        assert 'elements' in page
-        assert 'full_text' in page
+        assert 'page_number' in page, "Page should have page_number field"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_hierarchical_organization_page_has_elements(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with page structure
+        WHEN _extract_structured_text is called
+        THEN page should have elements field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        page = result['pages'][0]
+        assert 'elements' in page, "Page should have elements field"
+
+    @pytest.mark.asyncio
+    async def test_extract_structured_text_hierarchical_organization_page_has_full_text(self, optimizer, decomposed_content_rich_metadata):
+        """
+        GIVEN decomposed_content with page structure
+        WHEN _extract_structured_text is called
+        THEN page should have full_text field
+        """
+        result = await optimizer._extract_structured_text(decomposed_content_rich_metadata)
+        page = result['pages'][0]
+        assert 'full_text' in page, "Page should have full_text field"
 
 
 if __name__ == "__main__":

@@ -511,7 +511,7 @@ class TestCreateIpldStructure:
         """
         GIVEN IPLD storage operations that fail
         WHEN _create_ipld_structure attempts storage
-        THEN expect the method to handle errors gracefully and return storage_failed
+        THEN expect RuntimeError to be raised with storage failure details
         """
         # Mock storage failure
         mock_storage = processor.storage
@@ -521,21 +521,16 @@ class TestCreateIpldStructure:
         
         mock_storage.store_json.side_effect = failing_store
         
-        # Execute and expect graceful error handling
-        result = await processor._create_ipld_structure(sample_decomposed_content)
-        
-        # Should return structure with storage_failed indicator
-        assert result['root_cid'] == 'storage_failed'
-        assert isinstance(result, dict)
-        assert 'document' in result
-        assert 'content_map' in result
+        # Execute and expect RuntimeError to be raised
+        with pytest.raises(RuntimeError, match="Failed to store page 1 in IPLD: Storage failed"):
+            await processor._create_ipld_structure(sample_decomposed_content)
 
     @pytest.mark.asyncio
     async def test_create_ipld_structure_network_connectivity_failure(self, processor, sample_decomposed_content):
         """
         GIVEN IPFS node unreachable or unresponsive
         WHEN _create_ipld_structure attempts network operations
-        THEN expect graceful error handling with storage_failed result
+        THEN expect RuntimeError to be raised with network failure details
         """
         # Mock network failure
         mock_storage = processor.storage
@@ -545,19 +540,16 @@ class TestCreateIpldStructure:
         
         mock_storage.store_json.side_effect = network_failure
         
-        # Execute and expect graceful error handling
-        result = await processor._create_ipld_structure(sample_decomposed_content)
-        
-        # Should return structure with storage_failed indicator
-        assert result['root_cid'] == 'storage_failed'
-        assert isinstance(result, dict)
+        # Execute and expect RuntimeError to be raised
+        with pytest.raises(RuntimeError, match="Failed to store page 1 in IPLD: IPFS node unreachable"):
+            await processor._create_ipld_structure(sample_decomposed_content)
 
     @pytest.mark.asyncio
     async def test_create_ipld_structure_content_serialization_failure(self, processor):
         """
         GIVEN content that cannot be serialized for IPLD storage
         WHEN _create_ipld_structure processes unsupported content
-        THEN expect graceful error handling with partial success
+        THEN expect RuntimeError to be raised with serialization failure details
         """
         # Create content with unserializable objects in the document metadata
         unserializable_content = {
@@ -588,12 +580,9 @@ class TestCreateIpldStructure:
         
         mock_storage.store_json.side_effect = serialization_failure
         
-        # Execute and expect graceful error handling
-        result = await processor._create_ipld_structure(unserializable_content)
-        
-        # Should return structure with storage_failed indicator when document fails
-        assert result['root_cid'] == 'storage_failed'
-        assert isinstance(result, dict)
+        # Execute and expect RuntimeError to be raised when document metadata fails serialization
+        with pytest.raises(RuntimeError, match="Failed to store document metadata in IPLD: Serialization failed"):
+            await processor._create_ipld_structure(unserializable_content)
 
     @pytest.mark.asyncio
     async def test_create_ipld_structure_large_content_handling(self, processor):
@@ -753,10 +742,8 @@ class TestCreateIpldStructure:
         GIVEN partial storage failures during IPLD operations
         WHEN _create_ipld_structure encounters recoverable errors
         THEN expect:
-            - Errors logged appropriately
-            - Recovery attempted where possible
-            - Partial results preserved
-            - Clear error reporting for failed operations
+            - Errors raised as RuntimeError for failed operations
+            - No partial recovery since implementation follows fail-fast approach
         """
         # Mock storage with intermittent failures
         mock_storage = processor.storage
@@ -773,16 +760,10 @@ class TestCreateIpldStructure:
         
         mock_storage.store_json.side_effect = intermittent_failure
         
-        # Mock logging using patch context
-        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.logger') as mock_logger:
-            # Execute - should handle partial failures
-            result = await processor._create_ipld_structure(sample_decomposed_content)
-            
-            # Should return structure even with some failures
-            assert isinstance(result, dict)
-            
-            # Verify logging occurred (warnings for page failures)
-            assert mock_logger.warning.called or mock_logger.error.called
+        # Execute - should raise exception on first page storage failure (3rd call)
+        # Page storage is the first call, so it should fail and raise RuntimeError
+        with pytest.raises(RuntimeError, match="Failed to store document metadata"):
+            await processor._create_ipld_structure(sample_decomposed_content)
 
     @pytest.mark.asyncio
     async def test_create_ipld_structure_distributed_storage_verification(self, processor, sample_decomposed_content):

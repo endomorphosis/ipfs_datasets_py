@@ -54,7 +54,11 @@ except ImportError:
     HAVE_IPLD_CAR = False
 
 
+from ipfs_datasets_py.ipld.dag_pb import create_dag_node
+
+
 T = TypeVar('T')
+
 
 class IPLDSchema:
     """A schema for validating IPLD data structures."""
@@ -125,6 +129,12 @@ class IPLDStorage:
     - Cache frequently accessed blocks for performance
     """
 
+    def __new__(cls, base_dir=None, ipfs_api="/ip4/127.0.0.1/tcp/5001"):
+        """Enforce singleton pattern for IPLDStorage."""
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(IPLDStorage, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self, base_dir=None, ipfs_api="/ip4/127.0.0.1/tcp/5001"):
         """
         Initialize a new IPLD Storage instance.
@@ -138,6 +148,7 @@ class IPLDStorage:
         self.ipfs_api = ipfs_api
 
         # Initialize IPFS client if available
+        
         self.ipfs_client = None
         if ipfshttpclient:
             try:
@@ -207,7 +218,7 @@ class IPLDStorage:
             else:
                 # Complex case: create a DAG node with links
                 # This requires DAG-PB format
-                from ipfs_datasets_py.ipld.dag_pb import create_dag_node
+
 
                 # Create a DAG node with the data and links
                 node_data = create_dag_node(data, links)
@@ -710,6 +721,7 @@ class IPLDStorage:
         # Read the CAR file into memory
         # Note: For true streaming, we would need to modify ipld_car to support
         # incremental decoding, which is beyond the scope of this implementation
+        # TODO: Implement true streaming support in ipld_car
         try:
             car_data = bytearray()
             while True:

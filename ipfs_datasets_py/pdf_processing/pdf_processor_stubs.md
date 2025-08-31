@@ -1,8 +1,8 @@
 # Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py'
 
-Files last updated: 1751978169.2389922
+Files last updated: 1755467478.428939
 
-Stub file last updated: 2025-07-08 05:37:03
+Stub file last updated: 2025-08-17 14:51:40
 
 ## PDFProcessor
 
@@ -21,117 +21,94 @@ This class serves as the primary entry point for converting PDF documents into
 knowledge graphs with full content addressability, semantic search capabilities,
 and cross-document relationship discovery.
 
-Args:
-    storage (Optional[IPLDStorage], optional): IPLD storage instance for data persistence.
-        Defaults to a new IPLDStorage instance if not provided.
-    enable_monitoring (bool, optional): Enable performance monitoring and metrics collection.
-        When True, initializes MonitoringSystem with Prometheus export capabilities.
-        Defaults to False.
-    enable_audit (bool, optional): Enable audit logging for security and compliance tracking.
-        When True, initializes AuditLogger for data access and security event logging.
-        Defaults to True.
+## Pipeline Stages:
+1. **PDF Input** - Validation and analysis of input PDF file
+2. **Decomposition** - Extract PDF layers, content, images, and metadata
+3. **IPLD Structuring** - Create content-addressed data structures
+4. **OCR Processing** - Process images with optical character recognition
+5. **LLM Optimization** - Optimize content for language model consumption
+6. **Entity Extraction** - Extract entities and relationships from content
+7. **Vector Embedding** - Create semantic embeddings for content chunks
+8. **IPLD GraphRAG Integration** - Integrate with GraphRAG knowledge system
+9. **Cross-Document Analysis** - Analyze relationships across document collections
+10. **Query Interface Setup** - Configure natural language query capabilities
 
-Pipeline Stages:
-1. PDF Input - Validation and analysis of input PDF file
-2. Decomposition - Extract PDF layers, content, images, and metadata
-3. IPLD Structuring - Create content-addressed data structures
-4. OCR Processing - Process images with optical character recognition
-5. LLM Optimization - Optimize content for language model consumption
-6. Entity Extraction - Extract entities and relationships from content
-7. Vector Embedding - Create semantic embeddings for content chunks
-8. IPLD GraphRAG Integration - Integrate with GraphRAG knowledge system
-9. Cross-Document Analysis - Analyze relationships across document collections
-10. Query Interface Setup - Configure natural language query capabilities
+## Attributes:
+- **storage** (IPLDStorage): IPLD storage instance for persistent data storage
+- **audit_logger** (Optional[AuditLogger]): Audit logger for security and compliance tracking
+- **monitoring** (Optional[MonitoringSystem]): Performance monitoring system for metrics collection
+- **pipeline_version** (str): Version identifier for the processing pipeline
+- **integrator** (GraphRAGIntegrator): GraphRAG integration component
+- **ocr_engine** (MultiEngineOCR): Multi-engine OCR processor
+- **optimizer** (LLMOptimizer): LLM content optimization engine
+- **query_engine** (Optional[QueryEngine]): Natural language query interface
+- **logger** (logging.Logger): Logger instance for debug and info messages
+- **processing_stats** (dict[str, Any]): Runtime statistics and performance metrics
 
-Attributes:
-    storage (IPLDStorage): IPLD storage instance for persistent data storage
-    audit_logger (Optional[AuditLogger]): Audit logger for security and compliance tracking
-    monitoring (Optional[MonitoringSystem]): Performance monitoring system for metrics collection
-    processing_stats (Dict[str, Any]): Runtime statistics and performance metrics
-
-Public Methods:
-    process_pdf(pdf_path: Union[str, Path], metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        Execute the complete PDF processing pipeline from input validation through
-        query interface setup, returning comprehensive processing results.
-
-Private Methods:
-    _validate_and_analyze_pdf(pdf_path: Path) -> Dict[str, Any]:
-        Stage 1: Validate PDF file integrity and extract basic metadata analysis.
-    _decompose_pdf(pdf_path: Path) -> Dict[str, Any]:
-        Stage 2: Decompose PDF into constituent elements including text, images,
-        annotations, tables, and structural components.
-    _extract_page_content(page, page_num: int) -> Dict[str, Any]:
-        Extract comprehensive content from a single PDF page including text blocks,
-        images, annotations, and vector graphics.
-    _create_ipld_structure(decomposed_content: Dict[str, Any]) -> Dict[str, Any]:
-        Stage 3: Create hierarchical IPLD structure with content-addressed storage
-        for all decomposed PDF components.
-    _process_ocr(decomposed_content: Dict[str, Any]) -> Dict[str, Any]:
-        Stage 4: Process embedded images with multi-engine OCR for text extraction
-        with confidence scoring and word-level positioning.
-    _optimize_for_llm(decomposed_content: Dict[str, Any], ocr_results: Dict[str, Any]) -> Dict[str, Any]:
-        Stage 5: Optimize extracted content for large language model consumption
-        through chunking, summarization, and semantic structuring.
-    _extract_entities(optimized_content: Dict[str, Any]) -> Dict[str, Any]:
-        Stage 6: Extract named entities and relationships from optimized content
-        using pattern matching and co-occurrence analysis.
-    _create_embeddings(optimized_content: Dict[str, Any], entities_and_relations: Dict[str, Any]) -> Dict[str, Any]:
-        Stage 7: Generate vector embeddings for content chunks and document-level
-        representations using transformer models.
-    _integrate_with_graphrag(ipld_structure: Dict[str, Any], entities_and_relations: Dict[str, Any], embeddings: Dict[str, Any]) -> Dict[str, Any]:
-        Stage 8: Integrate processed content with GraphRAG system for knowledge
-        graph construction and semantic relationship discovery.
-    _analyze_cross_document_relationships(graph_nodes: Dict[str, Any]) -> List[Dict[str, Any]]:
-        Stage 9: Analyze and discover relationships between entities across
-        multiple documents in the knowledge graph.
-    _setup_query_interface(graph_nodes: Dict[str, Any], cross_doc_relations: List[Dict[str, Any]]):
-        Stage 10: Configure natural language query interface for semantic search
-        and knowledge graph exploration.
-    _calculate_file_hash(file_path: Path) -> str:
-        Calculate SHA-256 hash of input file for integrity verification and
-        content addressability.
-    _extract_native_text(text_blocks: List[Dict[str, Any]]) -> str:
-        Extract and concatenate native text content from PDF text blocks
-        preserving document structure.
-    _get_processing_time() -> float:
-        Calculate total elapsed time for complete pipeline processing
-        including all stages and error handling.
-    _get_quality_scores() -> Dict[str, float]:
-        Generate quality assessment scores for text extraction, OCR confidence,
-        entity extraction, and overall processing quality.
-
-Usage Example:
-    # Basic usage with default settings
-    processor = PDFProcessor()
-    result = await processor.process_pdf("document.pdf")
+Examples:
+    Basic PDF processing workflow:
     
-    # Advanced usage with monitoring and custom storage
-    storage = IPLDStorage(config={'node_url': 'http://localhost:5001'})
-    processor = PDFProcessor(
-        storage=storage,
-        enable_monitoring=True,
-        enable_audit=True
-    )
-    metadata = {'source': 'legal_docs', 'priority': 'high'}
-    result = await processor.process_pdf(
-        pdf_path="contract.pdf",
-        metadata=metadata
-    )
+    >>> # Initialize processor with default settings
+    >>> processor = PDFProcessor()
+    >>> 
+    >>> # Process a simple PDF document
+    >>> import asyncio
+    >>> async def process_document():
+    ...     result = await processor.process_pdf("example.pdf")
+    ...     return result
+    >>> 
+    >>> # Check processing results
+    >>> result = asyncio.run(process_document())
+    >>> result['status']
+    'success'
+    >>> result['entities_count'] > 0
+    True
+    >>> 'ipld_cid' in result
+    True
+
+    Advanced configuration with custom storage and monitoring:
     
-    # Check processing results
-    if result['status'] == 'success':
-        print(f"Document ID: {result['document_id']}")
-        print(f"Entities found: {result['entities_count']}")
-        print(f"IPLD CID: {result['ipld_cid']}")
+    >>> # Configure custom storage backend
+    >>> from ipfs_datasets_py.ipld import IPLDStorage
+    >>> storage = IPLDStorage(config={'node_url': 'http://localhost:5001'})
+    >>> 
+    >>> # Initialize processor with monitoring enabled
+    >>> processor = PDFProcessor(
+    ...     storage=storage,
+    ...     enable_monitoring=True,
+    ...     enable_audit=True
+    ... )
+    >>> processor.pipeline_version
+    '2.0'
+    >>> processor.monitoring is not None
+    True
+
+    Batch processing with metadata:
+    
+    >>> # Process multiple documents with custom metadata
+    >>> async def batch_process():
+    ...     documents = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+    ...     results = []
+    ...     for doc in documents:
+    ...         metadata = {'batch_id': 'legal_docs_2024', 'priority': 'high'}
+    ...         result = await processor.process_pdf(doc, metadata=metadata)
+    ...         results.append(result)
+    ...     return results
+    >>> 
+    >>> # All documents processed successfully
+    >>> results = asyncio.run(batch_process())
+    >>> all(r['status'] == 'success' for r in results)
+    True
 
 Notes:
-    - All processing stages are asynchronous for optimal performance
-    - IPLD integration provides content-addressable storage and deduplication
-    - GraphRAG integration enables semantic search and relationship discovery
-    - Monitoring and audit logging support enterprise deployment requirements
-    - Error handling ensures graceful failure with detailed error reporting
-    - Cross-document analysis requires multiple documents in the knowledge graph
-    - Pipeline is optimized for both single-document and batch processing scenarios
+- All processing stages are asynchronous for optimal performance
+- IPLD integration provides content-addressable storage and deduplication
+- GraphRAG integration enables semantic search and relationship discovery
+- Monitoring and audit logging support enterprise deployment requirements
+- Error handling ensures graceful failure with detailed error reporting
+- Cross-document analysis requires multiple documents in the knowledge graph
+- Pipeline is optimized for both single-document and batch processing scenarios
+- Mock dictionary support enables comprehensive unit testing with dependency injection
     """
 ```
 * **Async:** False
@@ -141,7 +118,7 @@ Notes:
 ## __init__
 
 ```python
-def __init__(self, storage: Optional[IPLDStorage] = None, enable_monitoring: bool = False, enable_audit: bool = True):
+def __init__(self, storage: Optional[IPLDStorage] = None, enable_monitoring: bool = False, enable_audit: bool = True, logger: logging.Logger = logging.getLogger(__name__), mock_dict: Optional[dict[str, Any]] = None) -> None:
     """
     Initialize the PDF processor with storage, monitoring, and audit capabilities.
 
@@ -162,41 +139,58 @@ Args:
         When True, initializes AuditLogger singleton for data access logging,
         security event tracking, and compliance reporting.
         Defaults to True.
-
-Attributes initialized:
-    storage (IPLDStorage): IPLD storage instance for persistent data storage.
-        Handles content-addressed storage, IPFS integration, and data retrieval.
-    audit_logger (Optional[AuditLogger]): Audit logger for security and compliance tracking.
-        Logs data access events, security incidents, and processing activities.
-    monitoring (Optional[MonitoringSystem]): Performance monitoring system for metrics.
-        Tracks operation performance, resource usage, and system health metrics.
-    processing_stats (Dict[str, Any]): Runtime statistics and performance metrics.
-        Stores pipeline execution times, quality scores, and processing metadata.
+    logger (logging.Logger, optional): Logger instance for debug and info messages.
+        If None, creates a default logger for the module.
+        Defaults to module logger.
+    mock_dict (Optional[dict[str, Any]], optional): Dictionary for dependency injection
+        during testing. Allows replacement of components with mock objects.
+        Keys should match attribute names (storage, audit_logger, etc.).
+        Defaults to None.
 
 Raises:
-    ImportError: If monitoring dependencies are missing when enable_monitoring=True
-    RuntimeError: If audit logger initialization fails when enable_audit=True
-    ConnectionError: If IPLD storage cannot connect to IPFS node
+    ImportError: If monitoring dependencies are missing when enable_monitoring=True.
+    RuntimeError: If audit logger initialization fails when enable_audit=True.
+    ConnectionError: If IPLD storage cannot connect to IPFS node.
+    AttributeError: If mock_dict contains invalid attribute names.
 
 Examples:
-    >>> # Basic initialization with defaults
     >>> processor = PDFProcessor()
-    >>> 
-    >>> # Enterprise setup with full monitoring
+    >>> processor.pipeline_version
+    '2.0'
+    >>> processor.processing_stats['pages_processed']
+    0
     >>> custom_storage = IPLDStorage(config={'node_url': 'http://ipfs-cluster:5001'})
     >>> processor = PDFProcessor(
     ...     storage=custom_storage,
     ...     enable_monitoring=True,
     ...     enable_audit=True
     ... )
-    >>> 
-    >>> # Development setup without monitoring
+    >>> processor.monitoring is not None
+    True
+    >>> processor.audit_logger is not None
+    True
     >>> processor = PDFProcessor(enable_monitoring=False, enable_audit=False)
+    >>> processor.monitoring is None
+    True
+    >>> processor.audit_logger is None
+    True
+    >>> from unittest.mock import Mock
+    >>> mock_storage = Mock(spec=IPLDStorage)
+    >>> mock_ocr = Mock(spec=MultiEngineOCR)
+    >>> processor = PDFProcessor(mock_dict={
+    ...     'storage': mock_storage,
+    ...     'ocr_engine': mock_ocr
+    ... })
+    >>> processor.storage == mock_storage
+    True
+    >>> processor.ocr_engine == mock_ocr
+    True
 
 Note:
     Monitoring configuration includes Prometheus export and JSON metrics output.
     Audit logging captures all data access and security events for compliance.
     IPLD storage provides content deduplication and distributed storage capabilities.
+    Mock dictionary enables comprehensive unit testing with dependency injection.
     """
 ```
 * **Async:** False
@@ -206,41 +200,88 @@ Note:
 ## _analyze_cross_document_relationships
 
 ```python
-async def _analyze_cross_document_relationships(self, graph_nodes: Dict[str, Any]) -> List[Dict[str, Any]]:
+async def _analyze_cross_document_relationships(self, graph_nodes: dict[str, Any]) -> list[dict[str, Any]]:
     """
-    Stage 9: Analyze and discover relationships between entities across documents.
+        Stage 9: Analyze and discover relationships between entities across documents.
 
-Performs cross-document entity resolution and relationship discovery by comparing
-entities across the global knowledge graph. Identifies entity aliases, merges
-similar entities, and discovers implicit relationships between documents
-based on shared entities, topics, and semantic similarity patterns.
+    Performs cross-document entity resolution and relationship discovery by comparing
+    entities across the global knowledge graph. Identifies entity aliases, merges
+    similar entities, and discovers implicit relationships between documents
+    based on shared entities, topics, and semantic similarity patterns.
 
-Args:
-    graph_nodes (Dict[str, Any]): GraphRAG integration results with knowledge graph.
-        Contains document knowledge graph with entities and relationships.
+    Args:
+        graph_nodes (dict[str, Any]): GraphRAG integration results with knowledge graph.
+            Contains document knowledge graph with entities and relationships.
+            A knowledge graph object is defined as follows:
+            - graph_id (str): Unique identifier for the knowledge graph in the format "kg_{id}".
+            - document_id (str): Identifier for the document associated with the knowledge graph.
+            - entities (list[Entity]): List of Entity objects extracted from documents for knowledge graph construction.
 
-Returns:
-    List[Dict[str, Any]]: Cross-document relationships discovered between entities.
-        Each relationship includes entity pairs, relationship type, confidence,
-        and source documents for comprehensive cross-document analysis.
+An entity is a distinct object, concept, person, organization, or location
+identified within text chunks during the document processing pipeline.
 
-Raises:
-    ValueError: If graph nodes structure is invalid or incomplete
-    RuntimeError: If cross-document analysis encounters processing errors
-    AttributeError: If knowledge graph lacks required methods or attributes
-    MemoryError: If global graph size exceeds available memory for analysis
+Attributes:
+    id (str): Unique identifier for the entity within the knowledge graph.
+    name (str): The canonical name or primary label of the entity.
+    type (str): Category classification of the entity. Categories are arbitrary and are determined
+    description (str): Detailed textual description providing context and 
+        additional information about the entity.
+    confidence (float): Confidence score (0.0-1.0) indicating the reliability
+        of the entity extraction and classification.
+    source_chunks (List[str]): List of chunk identifiers where this entity
+        appears, enabling traceability back to source documents.
+    properties (Dict[str, Any]): Additional metadata and attributes specific
+        to the entity type (e.g., dates, relationships, custom fields).
+    embedding (Optional[np.ndarray]): High-dimensional vector representation
+        of the entity for semantic similarity calculations. Defaults to None
+        if not computed.
 
-Examples:
-    >>> cross_relations = await processor._analyze_cross_document_relationships(graph_nodes)
-    >>> print(f"Found {len(cross_relations)} cross-document relationships")
-    >>> for relation in cross_relations:
-    ...     print(f"{relation['source']} -> {relation['target']} ({relation['type']})")
+Example:
+    >>> entity = Entity(
+    ...     id="ent_001",
+    ...     name="John Smith",
+    ...     type="person",
+    ...     description="Software engineer at Tech Corp",
+    ...     confidence=0.95,
+    ...     source_chunks=["chunk_1", "chunk_3"],
+    ...     properties={"role": "engineer", "company": "Tech Corp"}
+    ... )
 
-Note:
-    Cross-document analysis requires multiple documents in the knowledge graph.
-    Entity resolution uses similarity thresholds and fuzzy matching algorithms.
-    Relationship discovery leverages both explicit mentions and implicit connections.
-    Results enable comprehensive knowledge discovery across document collections.
+
+            >>> from ipfs_datasets_py.pdf_processing.knowledge_graph import KnowledgeGraph, Entity,
+            >>> kg = KnowledgeGraph(
+            ...     graph_id="kg_001",
+            ...     document_id="doc_123",
+            ...     entities=[entity1, entity2],
+            ...     relationships=[rel1, rel2],
+            ...     chunks=[chunk1, chunk2],
+            ...     metadata={"model": "gpt-4", "confidence": 0.95},
+            ...     creation_timestamp="2024-01-01T12:00:00Z"
+            ... )
+
+    Returns:
+        list[dict[str, Any]]: Cross-document relationships discovered between entities.
+            Each relationship includes entity pairs, relationship type, confidence,
+            and source documents for comprehensive cross-document analysis.
+
+    Raises:
+        ValueError: If graph nodes structure is invalid or incomplete
+        RuntimeError: If cross-document analysis encounters processing errors
+        AttributeError: If knowledge graph lacks required methods or attributes
+        MemoryError: If global graph size exceeds available memory for analysis
+
+    Examples:
+        >>> cross_relations = await processor._analyze_cross_document_relationships(graph_nodes)
+        >>> print(f"Found {len(cross_relations)} cross-document relationships")
+        >>> for relation in cross_relations:
+        ...     print(f"{relation['source']} -> {relation['target']} ({relation['type']})")
+
+    Note:
+        Cross-document analysis requires multiple documents in the knowledge graph.
+        Entity resolution uses similarity thresholds and fuzzy matching algorithms.
+        Relationship discovery leverages both explicit mentions and implicit connections.
+        Results enable comprehensive knowledge discovery across document collections.
+    
     """
 ```
 * **Async:** True
@@ -294,7 +335,7 @@ Note:
 ## _create_embeddings
 
 ```python
-async def _create_embeddings(self, optimized_content: Dict[str, Any], entities_and_relations: Dict[str, Any]) -> Dict[str, Any]:
+async def _create_embeddings(self, optimized_content: dict[str, Any], entities_and_relations: dict[str, Any]) -> dict[str, Any]:
     """
     Stage 7: Generate vector embeddings for content chunks and document representation.
 
@@ -304,15 +345,15 @@ for semantic similarity search, clustering, and knowledge graph construction
 with consistent dimensionality and normalization for downstream processing.
 
 Args:
-    optimized_content (Dict[str, Any]): LLM-optimized content with structured chunks.
+    optimized_content (dict[str, Any]): LLM-optimized content with structured chunks.
         Contains LLM document with preprocessed chunks ready for embedding.
-    entities_and_relations (Dict[str, Any]): Extracted entities and relationships.
+    entities_and_relations (dict[str, Any]): Extracted entities and relationships.
         Used for context-aware embedding generation and entity-specific vectors.
 
 Returns:
-    Dict[str, Any]: Vector embedding results containing:
-        - chunk_embeddings (List[Dict[str, Any]]): Per-chunk embeddings with metadata
-        - document_embedding (List[float]): Document-level embedding vector
+    dict[str, Any]: Vector embedding results containing:
+        - chunk_embeddings (list[dict[str, Any]]): Per-chunk embeddings with metadata
+        - document_embedding (list[float]): Document-level embedding vector
         - embedding_model (str): Identifier of the embedding model used
 
 Raises:
@@ -342,7 +383,7 @@ Note:
 ## _create_ipld_structure
 
 ```python
-async def _create_ipld_structure(self, decomposed_content: Dict[str, Any]) -> Dict[str, Any]:
+async def _create_ipld_structure(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
     """
     Stage 3: Create hierarchical IPLD structure with content-addressed storage.
 
@@ -352,14 +393,14 @@ Creates hierarchical node structure with separate storage for pages, metadata,
 and content elements enabling efficient retrieval and cross-document linking.
 
 Args:
-    decomposed_content (Dict[str, Any]): Complete decomposed PDF content structure.
+    decomposed_content (dict[str, Any]): Complete decomposed PDF content structure.
         Must contain pages, metadata, images, and structural information from
         the decomposition stage.
 
 Returns:
-    Dict[str, Any]: IPLD structure with content identifiers containing:
-        - document (Dict[str, Any]): Document-level metadata and page references
-        - content_map (Dict[str, str]): Mapping of content keys to IPLD CIDs
+    dict[str, Any]: IPLD structure with content identifiers containing:
+        - document (dict[str, Any]): Document-level metadata and page references
+        - content_map (dict[str, str]): Mapping of content keys to IPLD CIDs
         - root_cid (str): Content identifier for the document root node
 
 Raises:
@@ -389,7 +430,7 @@ Note:
 ## _decompose_pdf
 
 ```python
-async def _decompose_pdf(self, pdf_path: Path) -> Dict[str, Any]:
+async def _decompose_pdf(self, pdf_path: Path) -> dict[str, Any]:
     """
     Stage 2: Decompose PDF into constituent elements and content layers.
 
@@ -403,13 +444,13 @@ Args:
         Must be a readable PDF file that has passed validation stage.
 
 Returns:
-    Dict[str, Any]: Comprehensive decomposed content structure containing:
-        - pages (List[Dict[str, Any]]): Per-page content with elements, images, annotations
-        - metadata (Dict[str, str]): Document metadata including title, author, dates
-        - structure (Dict[str, Any]): Table of contents and outline information
-        - images (List[Dict[str, Any]]): Extracted image data and metadata
-        - fonts (List[Dict[str, str]]): Font information and usage statistics
-        - annotations (List[Dict[str, Any]]): Comments, highlights, and markup elements
+    dict[str, Any]: Comprehensive decomposed content structure containing:
+        - pages (list[dict[str, Any]]): Per-page content with elements, images, annotations
+        - metadata (dict[str, str]): Document metadata including title, author, dates
+        - structure (dict[str, Any]): Table of contents and outline information
+        - images (list[dict[str, Any]]): Extracted image data and metadata
+        - fonts (list[dict[str, str]]): Font information and usage statistics
+        - annotations (list[dict[str, Any]]): Comments, highlights, and markup elements
 
 Raises:
     ValueError: If PDF file cannot be opened or is corrupted during processing
@@ -437,7 +478,7 @@ Note:
 ## _extract_entities
 
 ```python
-async def _extract_entities(self, optimized_content: Dict[str, Any]) -> Dict[str, Any]:
+async def _extract_entities(self, optimized_content: dict[str, Any]) -> dict[str, Any]:
     """
     Stage 6: Extract named entities and relationships from optimized content.
 
@@ -448,13 +489,13 @@ dates, and domain-specific entities with confidence scoring and relationship
 classification for knowledge graph construction.
 
 Args:
-    optimized_content (Dict[str, Any]): LLM-optimized content with structured chunks.
+    optimized_content (dict[str, Any]): LLM-optimized content with structured chunks.
         Must contain llm_document with processed chunks and entity annotations.
 
 Returns:
-    Dict[str, Any]: Entity and relationship extraction results containing:
-        - entities (List[Dict[str, Any]]): Named entities with types, positions, confidence
-        - relationships (List[Dict[str, Any]]): Entity relationships with types and sources
+    dict[str, Any]: Entity and relationship extraction results containing:
+        - entities (list[dict[str, Any]]): Named entities with types, positions, confidence
+        - relationships (list[dict[str, Any]]): Entity relationships with types and sources
 
 Raises:
     ValueError: If optimized content structure is invalid or missing required fields
@@ -484,7 +525,7 @@ Note:
 ## _extract_native_text
 
 ```python
-def _extract_native_text(self, text_blocks: List[Dict[str, Any]]) -> str:
+def _extract_native_text(self, text_blocks: list[dict[str, Any]]) -> str:
     """
     Extract and concatenate native text content from PDF text blocks preserving structure.
 
@@ -494,7 +535,7 @@ Handles text block ordering, spacing, and formatting to maintain original
 document flow and semantic meaning for downstream processing.
 
 Args:
-    text_blocks (List[Dict[str, Any]]): List of text block dictionaries from PDF extraction.
+    text_blocks (list[dict[str, Any]]): list of text block dictionaries from PDF extraction.
         Each block must contain 'content' field with extracted text content.
 
 Returns:
@@ -504,7 +545,7 @@ Returns:
 Raises:
     KeyError: If text blocks lack required 'content' field
     TypeError: If text_blocks is not a list or contains non-dictionary elements
-    AttributeError: If text block content is not string-compatible
+    ValueError: If text block content is not string-compatible
 
 Examples:
     >>> text_blocks = [
@@ -530,7 +571,7 @@ Note:
 ## _extract_page_content
 
 ```python
-async def _extract_page_content(self, page, page_num: int) -> Dict[str, Any]:
+async def _extract_page_content(self, page: pymupdf.Page, page_num: int) -> dict[str, Any]:
     """
     Extract comprehensive content from a single PDF page with detailed positioning.
 
@@ -542,23 +583,23 @@ Handles complex page layouts with overlapping elements and mixed content types.
 Args:
     page: PyMuPDF page object representing a single PDF page.
         Must be a valid pymupdf.Page object with loaded content.
-    page_num (int): Zero-based page number for identification and ordering.
+    page_num (int): Page number for identification and ordering.
         Used for element referencing and cross-page relationship analysis.
+        If page number is 0, 1 is added to it for one-based indexing.
 
 Returns:
-    Dict[str, Any]: Comprehensive page content structure containing:
+    dict[str, Any]: Comprehensive page content structure containing:
         - page_number (int): One-based page number for user reference
-        - elements (List[Dict[str, Any]]): Structured elements with type, content, position
-        - images (List[Dict[str, Any]]): Image metadata including size, colorspace, format
-        - annotations (List[Dict[str, Any]]): Comments, highlights, and markup elements
-        - text_blocks (List[Dict[str, Any]]): Text content with bounding boxes
-        - drawings (List[Dict[str, Any]]): Vector graphics and drawing elements
+        - elements (list[dict[str, Any]]): Structured elements with type, content, position
+        - images (list[dict[str, Any]]): Image metadata including size, colorspace, format
+        - annotations (list[dict[str, Any]]): Comments, highlights, and markup elements
+        - text_blocks (list[dict[str, Any]]): Text content with bounding boxes
+        - drawings (list[dict[str, Any]]): Vector graphics and drawing elements
 
 Raises:
-    AttributeError: If page object lacks required methods or properties
-    MemoryError: If page contains extremely large images or complex graphics
-    RuntimeError: If image extraction fails due to format or encoding issues
+    TypeError: If page is not a valid PyMuPDF Page object or page_num is not an integer
     ValueError: If page number is negative or exceeds document page count
+    RuntimeError: If no content is extracted from the page.
 
 Examples:
     >>> page_content = await processor._extract_page_content(page, 0)
@@ -568,10 +609,10 @@ Examples:
     ...     print(f"{element['type']}: {element['content'][:50]}...")
 
 Note:
-    Text blocks preserve original formatting and positioning information.
-    Images are extracted with metadata but not stored as binary data initially.
-    Annotations include author information and modification timestamps.
-    Vector graphics are catalogued but not rasterized unless specifically needed.
+    - Text blocks preserve original formatting and positioning information.
+    - Images are extracted with metadata but not stored as binary data initially.
+    - Annotations include author information and modification timestamps.
+    - Vector graphics are catalogued but not rasterized.
     """
 ```
 * **Async:** True
@@ -581,7 +622,7 @@ Note:
 ## _get_processing_time
 
 ```python
-def _get_processing_time(self, pdf_path) -> Dict[str, Any]:
+def _get_processing_time(self, start_time: float) -> float:
     """
     Calculate total elapsed time for complete pipeline processing including all stages.
 
@@ -591,15 +632,15 @@ Provides performance metrics for monitoring, optimization, and capacity planning
 across different document types and sizes.
 
 Args:
-    None: Method accesses internal processing statistics and timestamps.
+    start_time (float): Timestamp when processing started, typically from
 
 Returns:
     float: Total processing time in seconds with decimal precision.
         Includes all pipeline stages and overhead operations.
 
 Raises:
-    AttributeError: If processing statistics are not properly initialized
-    ValueError: If timestamp calculations result in invalid time values
+    TypeError: If start_time is not a float timestamp
+    ValueError: If start_time or the return value are negative.
 
 Examples:
     >>> processing_time = processor._get_processing_time()
@@ -609,49 +650,6 @@ Examples:
     ...     print("Warning: Processing time exceeded threshold")
 
 Note:
-    Currently returns placeholder value for development purposes.
-    Production implementation would track actual start and end timestamps.
-    Processing time includes I/O operations, computation, and storage overhead.
-    Metrics support performance optimization and capacity planning.
-    """
-```
-* **Async:** False
-* **Method:** True
-* **Class:** PDFProcessor
-
-## _get_processing_time
-
-```python
-def _get_processing_time(self) -> float:
-    """
-    Calculate total elapsed time for complete pipeline processing including all stages.
-
-Computes total processing time from pipeline initiation through completion
-including all 10 processing stages, error handling, and overhead operations.
-Provides performance metrics for monitoring, optimization, and capacity planning
-across different document types and sizes.
-
-Args:
-    None: Method accesses internal processing statistics and timestamps.
-
-Returns:
-    float: Total processing time in seconds with decimal precision.
-        Includes all pipeline stages and overhead operations.
-
-Raises:
-    AttributeError: If processing statistics are not properly initialized
-    ValueError: If timestamp calculations result in invalid time values
-
-Examples:
-    >>> processing_time = processor._get_processing_time()
-    >>> print(f"Total processing time: {processing_time:.2f} seconds")
-    >>> # Performance monitoring
-    >>> if processing_time > 60.0:
-    ...     print("Warning: Processing time exceeded threshold")
-
-Note:
-    Currently returns placeholder value for development purposes.
-    Production implementation would track actual start and end timestamps.
     Processing time includes I/O operations, computation, and storage overhead.
     Metrics support performance optimization and capacity planning.
     """
@@ -663,7 +661,7 @@ Note:
 ## _get_quality_scores
 
 ```python
-def _get_quality_scores(self) -> Dict[str, float]:
+def _get_quality_scores(self, result: dict[str, Any]) -> dict[str, float]:
     """
     Generate quality assessment scores for processing stages and overall document quality.
 
@@ -673,10 +671,26 @@ quality. Provides quantitative assessment enabling quality control,
 processing validation, and continuous improvement of pipeline performance.
 
 Args:
-    None: Method accesses internal processing statistics and quality metrics.
+    result (dict[str, Any]): Processing result containing statistics and metadata.
+        Contains the following keys:
+        result = {
+            'status': 'success',
+            'document_id': graph_nodes['document']['id'],
+            'ipld_cid': ipld_structure['root_cid'],
+            'entities_count': len(entities_and_relations['entities']),
+            'relationships_count': len(entities_and_relations['relationships']),
+            'cross_doc_relations': len(cross_doc_relations),
+            'processing_metadata': {
+                'pipeline_version': self.pipeline_version,
+                'processing_time': self._get_processing_time(start_time),
+                'quality_scores': None,
+                'stages_completed': 10,
+            },
+            'pdf_info': pdf_info,
+        }
 
 Returns:
-    Dict[str, float]: Quality assessment scores containing:
+    dict[str, float]: Quality assessment scores containing:
         - text_extraction_quality (float): Native text extraction accuracy (0.0-1.0)
         - ocr_confidence (float): Average OCR confidence score (0.0-1.0)
         - entity_extraction_confidence (float): Entity extraction precision (0.0-1.0)
@@ -696,10 +710,10 @@ Examples:
     ...     print("Warning: Low quality processing detected")
 
 Note:
-    Currently returns placeholder values for development purposes.
-    Production implementation would calculate actual quality metrics.
-    Quality scores enable automated quality control and threshold filtering.
-    Metrics support continuous improvement and pipeline optimization.
+    Quality scores are calculated from actual processing statistics.
+    Text extraction quality is based on successful content extraction rates.
+    OCR confidence reflects average confidence from optical character recognition.
+    Entity confidence measures precision of named entity recognition results.
     """
 ```
 * **Async:** False
@@ -709,7 +723,7 @@ Note:
 ## _integrate_with_graphrag
 
 ```python
-async def _integrate_with_graphrag(self, ipld_structure: Dict[str, Any], entities_and_relations: Dict[str, Any], embeddings: Dict[str, Any]) -> Dict[str, Any]:
+async def _integrate_with_graphrag(self, ipld_structure: dict[str, Any], entities_and_relations: dict[str, Any], embeddings: dict[str, Any]) -> dict[str, Any]:
     """
     Stage 8: Integrate processed content with GraphRAG knowledge system.
 
@@ -719,19 +733,19 @@ discovery, and cross-document analysis. Creates knowledge graph nodes with
 content addressability and prepares data for natural language querying.
 
 Args:
-    ipld_structure (Dict[str, Any]): IPLD content structure with CIDs and references.
+    ipld_structure (dict[str, Any]): IPLD content structure with CIDs and references.
         Contains document hierarchy and content addressing information.
-    entities_and_relations (Dict[str, Any]): Extracted entities and relationships.
+    entities_and_relations (dict[str, Any]): Extracted entities and relationships.
         Provides knowledge graph nodes and edges for graph construction.
-    embeddings (Dict[str, Any]): Vector embeddings for semantic search.
+    embeddings (dict[str, Any]): Vector embeddings for semantic search.
         Enables similarity-based querying and content clustering.
 
 Returns:
-    Dict[str, Any]: GraphRAG integration results containing:
-        - document (Dict[str, Any]): Document metadata with ID and IPLD CID
+    dict[str, Any]: GraphRAG integration results containing:
+        - document (dict[str, Any]): Document metadata with ID and IPLD CID
         - knowledge_graph (KnowledgeGraph): Constructed knowledge graph object
-        - entities (List[Entity]): Graph entities with embeddings and metadata
-        - relationships (List[Relationship]): Graph relationships with types and weights
+        - entities (list[Entity]): Graph entities with embeddings and metadata
+        - relationships (list[Relationship]): Graph relationships with types and weights
 
 Raises:
     ValueError: If input data structures are incompatible or invalid
@@ -761,7 +775,7 @@ Note:
 ## _optimize_for_llm
 
 ```python
-async def _optimize_for_llm(self, decomposed_content: Dict[str, Any], ocr_results: Dict[str, Any]) -> Dict[str, Any]:
+async def _optimize_for_llm(self, decomposed_content: dict[str, Any], ocr_results: dict[str, Any]) -> dict[str, Any]:
     """
     Stage 5: Optimize extracted content for large language model consumption.
 
@@ -771,17 +785,17 @@ OCR results with native text and creates coherent, contextually meaningful
 chunks suitable for embedding generation and semantic analysis.
 
 Args:
-    decomposed_content (Dict[str, Any]): Complete decomposed PDF content structure.
+    decomposed_content (dict[str, Any]): Complete decomposed PDF content structure.
         Contains text blocks, images, annotations, and structural information.
-    ocr_results (Dict[str, Any]): OCR processing results for embedded images.
+    ocr_results (dict[str, Any]): OCR processing results for embedded images.
         Provides extracted text content with confidence scores and positioning.
 
 Returns:
-    Dict[str, Any]: LLM-optimized content structure containing:
+    dict[str, Any]: LLM-optimized content structure containing:
         - llm_document (LLMDocument): Structured document with chunks and metadata
-        - chunks (List[LLMChunk]): Optimized content chunks with embeddings
+        - chunks (list[LLMChunk]): Optimized content chunks with embeddings
         - summary (str): Document-level summary for context and retrieval
-        - key_entities (List[Dict[str, Any]]): Extracted entities with types and positions
+        - key_entities (list[dict[str, Any]]): Extracted entities with types and positions
 
 Raises:
     ValueError: If content structure is invalid or cannot be processed
@@ -810,7 +824,7 @@ Note:
 ## _process_ocr
 
 ```python
-async def _process_ocr(self, decomposed_content: Dict[str, Any]) -> Dict[str, Any]:
+async def _process_ocr(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
     """
     Stage 4: Process embedded images with multi-engine OCR for text extraction.
 
@@ -820,11 +834,11 @@ Extracts text content, word-level positioning, and confidence metrics for
 each recognized text element enabling comprehensive image-based content recovery.
 
 Args:
-    decomposed_content (Dict[str, Any]): Decomposed PDF content containing image data.
+    decomposed_content (dict[str, Any]): Decomposed PDF content containing image data.
         Must include page-level image information with extraction metadata.
 
 Returns:
-    Dict[str, Any]: OCR processing results organized by page containing:
+    dict[str, Any]: OCR processing results organized by page containing:
         - Page-keyed dictionary with OCR results for each image
         - For each image: text content, confidence score, engine used, word boxes
         - Aggregate confidence scores and text quality metrics
@@ -843,8 +857,7 @@ Examples:
     ...         print(f"Confidence: {img_result['confidence']}")
 
 Note:
-    Currently implements mock OCR results for development purposes.
-    Production implementation would integrate Tesseract, PaddleOCR, or cloud services.
+    Production implementation integrates Tesseract, PaddleOCR, or cloud services.
     Multiple engines enable confidence comparison and accuracy validation.
     Word-level positioning supports precise content localization and extraction.
     """
@@ -856,7 +869,7 @@ Note:
 ## _setup_query_interface
 
 ```python
-async def _setup_query_interface(self, graph_nodes: Dict[str, Any], cross_doc_relations: List[Dict[str, Any]]):
+async def _setup_query_interface(self, graph_nodes: dict[str, Any], cross_doc_relations: list[dict[str, Any]]) -> None:
     """
     Stage 10: Configure natural language query interface for semantic search.
 
@@ -866,9 +879,9 @@ natural language processing for query interpretation, graph traversal
 algorithms, and result ranking for comprehensive document exploration.
 
 Args:
-    graph_nodes (Dict[str, Any]): GraphRAG integration results with knowledge graph.
+    graph_nodes (dict[str, Any]): GraphRAG integration results with knowledge graph.
         Contains complete knowledge graph structure with entities and relationships.
-    cross_doc_relations (List[Dict[str, Any]]): Cross-document relationships discovered.
+    cross_doc_relations (list[dict[str, Any]]): Cross-document relationships discovered.
         Provides additional relationship context for enhanced query capabilities.
 
 Returns:
@@ -890,10 +903,10 @@ Examples:
     >>> # "What entities are connected to contract negotiations?"
 
 Note:
-    Query interface supports both keyword-based and semantic search capabilities.
-    Natural language processing enables intuitive query formulation.
-    Graph traversal algorithms provide comprehensive relationship exploration.
-    Results include relevance scoring and context-aware ranking.
+    - Query interface supports both keyword-based and semantic search capabilities.
+    - Natural language processing enables intuitive query formulation.
+    - Graph traversal algorithms provide comprehensive relationship exploration.
+    - Results include relevance scoring and context-aware ranking.
     """
 ```
 * **Async:** True
@@ -903,7 +916,7 @@ Note:
 ## _validate_and_analyze_pdf
 
 ```python
-async def _validate_and_analyze_pdf(self, pdf_path: Path) -> Dict[str, Any]:
+async def _validate_and_analyze_pdf(self, pdf_path: Path) -> dict[str, Any]:
     """
     Stage 1: Validate PDF file integrity and extract basic metadata analysis.
 
@@ -917,7 +930,7 @@ Args:
         Must be a valid pathlib.Path object with appropriate file permissions.
 
 Returns:
-    Dict[str, Any]: PDF validation and analysis results containing:
+    dict[str, Any]: PDF validation and analysis results containing:
         - file_path (str): Absolute path to the validated PDF file
         - file_size (int): File size in bytes
         - page_count (int): Number of pages in the PDF document
@@ -949,7 +962,7 @@ Note:
 ## process_pdf
 
 ```python
-async def process_pdf(self, pdf_path: Union[str, Path], metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+async def process_pdf(self, pdf_path: Union[str, Path], metadata: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """
     Execute the complete PDF processing pipeline from input to query interface.
 
@@ -963,23 +976,23 @@ Args:
     pdf_path (Union[str, Path]): Path to the PDF file to be processed.
         Must be a valid file path pointing to a readable PDF document.
         Supports both string paths and pathlib.Path objects.
-    metadata (Optional[Dict[str, Any]], optional): Additional metadata for the document.
+    metadata (Optional[dict[str, Any]], optional): Additional metadata for the document.
         Can include source information, processing priorities, custom tags,
         or domain-specific metadata. Merged with extracted document metadata.
         Defaults to None.
 
 Returns:
-    Dict[str, Any]: Comprehensive processing results containing:
+    dict[str, Any]: Comprehensive processing results containing:
         - status (str): Processing status ('success' or 'error')
         - document_id (str): Unique identifier for the processed document
         - ipld_cid (str): Content identifier for IPLD root node
         - entities_count (int): Number of extracted entities
         - relationships_count (int): Number of discovered relationships
         - cross_doc_relations (int): Number of cross-document relationships
-        - processing_metadata (Dict[str, Any]): Processing statistics including:
+        - processing_metadata (dict[str, Any]): Processing statistics including:
             - pipeline_version (str): Version of the processing pipeline
             - processing_time (float): Total processing time in seconds
-            - quality_scores (Dict[str, float]): Quality assessment metrics
+            - quality_scores (dict[str, float]): Quality assessment metrics
             - stages_completed (int): Number of successfully completed stages
         For error cases, returns:
         - status (str): 'error'

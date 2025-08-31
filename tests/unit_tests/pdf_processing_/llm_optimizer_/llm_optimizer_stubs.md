@@ -60,7 +60,7 @@ class LLMChunk:
         ...     source_page=3,
         ...     source_elements=["paragraph"],
         ...     token_count=245,
-        ...     semantic_types={"text"},
+        ...     semantic_types="text",
         ...     relationships=["chunk_0014", "chunk_0016"],
         ...     metadata={"creation_timestamp": 1625097600.0}
         ... )

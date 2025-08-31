@@ -1281,7 +1281,8 @@ class MonitoringSystem:
 
         # Log shutdown
         if self.logger:
-            self.logger.info("Monitoring system shutdown")
+            # FIXME This self.logger.info produces a ValueError on shutdown. Figure out why.
+            print("Monitoring system shutdown")
 
         # Reset state
         self.initialized = False
@@ -1312,6 +1313,37 @@ class MonitoringSystem:
             exc_info=exc_info,
             extra={"traceback": tb_str, **kwargs}
         )
+
+    @contextlib.contextmanager
+    def monitor_context(self, **kwargs):
+        """
+        Context manager for setting log context and timing operations.
+
+        Args:
+            **kwargs: Context data
+        """
+        registry = self.get_metrics_registry()
+        operation_name = kwargs.pop("operation_name", "operation")
+
+        # Create operation
+        operation = registry.start_operation(operation_name, kwargs)
+
+        # Set log context
+        with log_context(**kwargs):
+            try:
+                yield operation
+                registry.complete_operation(operation, success=True)
+            except Exception as e:
+                registry.complete_operation(operation, success=False, error=str(e))
+                MonitoringSystem.get_instance().log_exception(
+                    operation=operation_name,
+                    error=str(e),
+                    **kwargs
+                )
+                raise
+
+
+
 
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
