@@ -325,9 +325,9 @@ class WebsiteGraphRAGProcessor:
             return None
         
         # Extract knowledge graph
-        knowledge_graph = self.knowledge_extractor.extract_graph_from_text(
+        knowledge_graph = self.knowledge_extractor.extract_knowledge_graph(
             text=combined_text,
-            confidence_threshold=0.7
+            extraction_temperature=0.7
         )
         
         logger.info(
