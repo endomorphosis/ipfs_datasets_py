@@ -897,21 +897,687 @@ class TestPerformance:
 - **Multi-Modal Search**: Successful audio/video content search
 - **Cross-Reference Accuracy**: Correct relationship identification
 
-## Timeline Summary
+## Phase 5: Production Optimization & Advanced Features (Week 6-8)
 
-| Phase | Duration | Deliverables |
-|-------|----------|--------------|
-| Phase 1 | Week 1-2 | Core orchestration infrastructure |
-| Phase 2 | Week 2-3 | Multi-modal content processing |
-| Phase 3 | Week 3-4 | GraphRAG system integration |
-| Phase 4 | Week 4-5 | Comprehensive testing suite |
-| **Total** | **5 Weeks** | **Production-ready system** |
+### Step 5.1: Performance Optimization Engine
+```python
+# File: ipfs_datasets_py/performance_optimizer.py
 
-## Implementation Priority
+class WebsiteProcessingOptimizer:
+    """
+    Advanced performance optimization for large-scale website processing.
+    
+    Features:
+    - Adaptive batching based on content types
+    - Dynamic resource allocation
+    - Smart caching strategies
+    - Processing pipeline optimization
+    """
+    
+    def __init__(self):
+        self.metrics_collector = ProcessingMetrics()
+        self.cache_manager = ContentCacheManager()
+        self.resource_monitor = ResourceMonitor()
+    
+    async def optimize_processing_pipeline(
+        self,
+        content_manifest: ContentManifest,
+        available_resources: Dict[str, Any]
+    ) -> OptimizedProcessingPlan:
+        """
+        Create optimized processing plan based on content and resources
+        
+        Optimization Strategies:
+        1. Content-type prioritization
+        2. Parallel processing optimization
+        3. Memory usage optimization
+        4. Caching strategy selection
+        """
+        
+        # Analyze content complexity
+        complexity_analysis = self._analyze_content_complexity(content_manifest)
+        
+        # Determine optimal batch sizes
+        batch_strategy = self._calculate_optimal_batching(
+            complexity_analysis, available_resources
+        )
+        
+        # Plan caching strategy
+        cache_strategy = self._optimize_cache_usage(content_manifest)
+        
+        # Create processing order
+        processing_order = self._optimize_processing_order(content_manifest)
+        
+        return OptimizedProcessingPlan(
+            batch_strategy=batch_strategy,
+            cache_strategy=cache_strategy,
+            processing_order=processing_order,
+            estimated_time=self._estimate_processing_time(complexity_analysis),
+            memory_requirements=self._estimate_memory_usage(complexity_analysis)
+        )
+    
+    def _analyze_content_complexity(self, manifest: ContentManifest) -> Dict[str, Any]:
+        """Analyze content complexity for optimization planning"""
+        return {
+            'html_complexity': len(manifest.html_pages) * 1.0,  # Base complexity
+            'pdf_complexity': len(manifest.pdf_documents) * 2.5,  # More complex
+            'media_complexity': sum(
+                3.0 if asset.content_type == 'video' else 2.0  # Video most complex
+                for asset in manifest.media_files
+            ),
+            'total_size_mb': sum(asset.size_bytes for asset in 
+                                [*manifest.html_pages, *manifest.pdf_documents, *manifest.media_files]) / 1024 / 1024
+        }
+```
 
-1. **High Priority**: Core orchestration and HTML processing
-2. **Medium Priority**: PDF and media processing capabilities  
-3. **Low Priority**: Advanced knowledge graph features
-4. **Future**: Real-time processing and streaming capabilities
+### Step 5.2: Advanced Monitoring & Analytics
+```python
+# File: ipfs_datasets_py/monitoring/website_analytics.py
 
-This implementation plan provides a comprehensive roadmap for building a production-ready GraphRAG system for website processing, with emphasis on testing, scalability, and maintainability.
+class WebsiteProcessingAnalytics:
+    """
+    Comprehensive analytics for website processing operations.
+    
+    Tracks:
+    - Processing performance metrics
+    - Content quality scores  
+    - User interaction patterns
+    - System health indicators
+    """
+    
+    def __init__(self):
+        self.metrics_store = MetricsStorage()
+        self.alert_manager = AlertManager()
+        self.dashboard = AnalyticsDashboard()
+    
+    async def track_processing_session(
+        self,
+        session_id: str,
+        website_url: str,
+        processing_config: WebsiteProcessingConfig
+    ) -> ProcessingSessionTracker:
+        """Track complete processing session with detailed metrics"""
+        
+        tracker = ProcessingSessionTracker(
+            session_id=session_id,
+            website_url=website_url,
+            config=processing_config,
+            start_time=datetime.now()
+        )
+        
+        return tracker
+    
+    def calculate_content_quality_score(
+        self, 
+        processed_content: ProcessedContentBatch
+    ) -> ContentQualityReport:
+        """
+        Calculate comprehensive quality scores for processed content
+        
+        Quality Metrics:
+        - Text extraction completeness
+        - Transcription accuracy (where applicable)
+        - Knowledge graph coherence
+        - Embedding quality indicators
+        """
+        
+        quality_scores = {}
+        
+        for item in processed_content.processed_items:
+            item_score = self._calculate_item_quality(item)
+            quality_scores[item.source_url] = item_score
+        
+        overall_score = sum(quality_scores.values()) / len(quality_scores)
+        
+        return ContentQualityReport(
+            overall_score=overall_score,
+            item_scores=quality_scores,
+            quality_breakdown=self._analyze_quality_factors(processed_content),
+            improvement_suggestions=self._generate_improvement_suggestions(quality_scores)
+        )
+    
+    async def generate_processing_report(
+        self, 
+        website_system: WebsiteGraphRAGSystem
+    ) -> ComprehensiveProcessingReport:
+        """Generate detailed processing report for website"""
+        
+        return ComprehensiveProcessingReport(
+            website_url=website_system.url,
+            processing_summary=self._summarize_processing(website_system),
+            content_analysis=self._analyze_content_distribution(website_system),
+            performance_metrics=self._collect_performance_metrics(website_system),
+            knowledge_graph_analysis=self._analyze_knowledge_graph(website_system),
+            search_quality_assessment=await self._assess_search_quality(website_system),
+            recommendations=self._generate_optimization_recommendations(website_system)
+        )
+```
+
+### Step 5.3: Enterprise Features & API Management
+```python
+# File: ipfs_datasets_py/enterprise/website_processing_api.py
+
+from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+class WebsiteProcessingAPI:
+    """
+    Enterprise-grade API for website GraphRAG processing.
+    
+    Features:
+    - REST API with async processing
+    - Authentication and authorization
+    - Rate limiting and quotas
+    - Job queue management
+    - Real-time progress tracking
+    """
+    
+    def __init__(self):
+        self.app = FastAPI(title="Website GraphRAG Processing API")
+        self.job_queue = ProcessingJobQueue()
+        self.auth_manager = AuthenticationManager()
+        self.rate_limiter = RateLimiter()
+        self._setup_routes()
+    
+    def _setup_routes(self):
+        """Setup API routes"""
+        
+        @self.app.post("/api/v1/process-website")
+        async def process_website(
+            request: WebsiteProcessingRequest,
+            background_tasks: BackgroundTasks,
+            credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+        ):
+            """Submit website for processing"""
+            
+            # Authenticate user
+            user = await self.auth_manager.authenticate(credentials.credentials)
+            
+            # Check rate limits
+            await self.rate_limiter.check_limits(user.user_id, "website_processing")
+            
+            # Create processing job
+            job_id = await self.job_queue.submit_job(
+                job_type="website_processing",
+                user_id=user.user_id,
+                parameters=request.dict(),
+                priority=request.priority
+            )
+            
+            # Start background processing
+            background_tasks.add_task(self._process_website_job, job_id)
+            
+            return ProcessingJobResponse(
+                job_id=job_id,
+                status="submitted",
+                estimated_completion_time=await self._estimate_completion_time(request),
+                webhook_url=request.webhook_url
+            )
+        
+        @self.app.get("/api/v1/jobs/{job_id}/status")
+        async def get_job_status(
+            job_id: str,
+            credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+        ):
+            """Get processing job status"""
+            
+            user = await self.auth_manager.authenticate(credentials.credentials)
+            job = await self.job_queue.get_job(job_id, user.user_id)
+            
+            if not job:
+                raise HTTPException(status_code=404, detail="Job not found")
+            
+            return JobStatusResponse(
+                job_id=job_id,
+                status=job.status,
+                progress=job.progress,
+                created_at=job.created_at,
+                completed_at=job.completed_at,
+                results_url=job.results_url if job.status == "completed" else None,
+                error_message=job.error_message if job.status == "failed" else None
+            )
+        
+        @self.app.get("/api/v1/systems/{system_id}/query")
+        async def query_website_system(
+            system_id: str,
+            query: str,
+            content_types: Optional[List[str]] = None,
+            max_results: int = 10,
+            credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+        ):
+            """Query processed website system"""
+            
+            user = await self.auth_manager.authenticate(credentials.credentials)
+            
+            # Get website system
+            system = await self._get_user_system(system_id, user.user_id)
+            
+            # Execute query
+            results = system.query(
+                query_text=query,
+                content_types=content_types,
+                max_results=max_results
+            )
+            
+            return QueryResponse(
+                query=query,
+                results=[self._serialize_result(r) for r in results.results],
+                total_results=results.total_results,
+                processing_time_ms=results.processing_time_ms
+            )
+```
+
+## Phase 6: Scaling & Deployment Infrastructure (Week 9-10)
+
+### Step 6.1: Kubernetes Deployment Configuration
+```yaml
+# File: deployments/kubernetes/website-graphrag-processor.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-graphrag-processor
+  namespace: graphrag-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: website-graphrag-processor
+  template:
+    metadata:
+      labels:
+        app: website-graphrag-processor
+    spec:
+      containers:
+      - name: processor
+        image: ipfs-datasets/website-graphrag:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"
+        - name: POSTGRES_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: postgres-url
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi" 
+            cpu: "4000m"
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: graphrag-storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-graphrag-service
+  namespace: graphrag-system
+spec:
+  selector:
+    app: website-graphrag-processor
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: LoadBalancer
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup-old-processing-jobs
+  namespace: graphrag-system
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cleanup
+            image: ipfs-datasets/website-graphrag:latest
+            command: ["python", "-m", "ipfs_datasets_py.maintenance.cleanup_jobs"]
+          restartPolicy: OnFailure
+```
+
+### Step 6.2: Docker Compose for Development
+```yaml
+# File: docker-compose.yml
+
+version: '3.8'
+services:
+  website-graphrag-processor:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+      - ipfs
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://graphrag:password@postgres:5432/graphrag_db
+      - IPFS_API_URL=http://ipfs:5001
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=graphrag_db
+      - POSTGRES_USER=graphrag
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - ipfs_data:/data/ipfs
+
+  monitoring:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  redis_data:
+  postgres_data:
+  ipfs_data:
+  grafana_data:
+```
+
+### Step 6.3: CI/CD Pipeline Configuration
+```yaml
+# File: .github/workflows/deploy-website-graphrag.yml
+
+name: Deploy Website GraphRAG System
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/**'
+      - 'tests/**'
+      - 'requirements.txt'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run unit tests
+      run: |
+        python -m pytest tests/unit/ -v --cov=ipfs_datasets_py
+    
+    - name: Run integration tests
+      run: |
+        python -m pytest tests/integration/ -v
+    
+    - name: Run performance benchmarks
+      run: |
+        python -m pytest tests/performance/ -v --benchmark-only
+  
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t ipfs-datasets/website-graphrag:${{ github.sha }} .
+        docker tag ipfs-datasets/website-graphrag:${{ github.sha }} ipfs-datasets/website-graphrag:latest
+    
+    - name: Push to registry
+      run: |
+        docker push ipfs-datasets/website-graphrag:${{ github.sha }}
+        docker push ipfs-datasets/website-graphrag:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl set image deployment/website-graphrag-processor processor=ipfs-datasets/website-graphrag:${{ github.sha }}
+        kubectl rollout status deployment/website-graphrag-processor
+```
+
+## Phase 7: Advanced Analytics & ML Integration (Week 11-12)
+
+### Step 7.1: Machine Learning Pipeline Integration
+```python
+# File: ipfs_datasets_py/ml/content_classification.py
+
+class ContentClassificationPipeline:
+    """
+    Advanced ML pipeline for content classification and quality assessment.
+    
+    Features:
+    - Automated content quality scoring
+    - Topic classification and clustering
+    - Sentiment analysis across content types
+    - Anomaly detection in processed content
+    """
+    
+    def __init__(self):
+        self.quality_classifier = QualityClassifier()
+        self.topic_classifier = TopicClassifier()
+        self.sentiment_analyzer = SentimentAnalyzer()
+        self.anomaly_detector = ContentAnomalyDetector()
+    
+    async def analyze_processed_content(
+        self,
+        processed_content: ProcessedContentBatch
+    ) -> ContentAnalysisReport:
+        """Run comprehensive ML analysis on processed content"""
+        
+        analysis_results = {}
+        
+        for item in processed_content.processed_items:
+            # Quality assessment
+            quality_score = await self.quality_classifier.assess_quality(item)
+            
+            # Topic classification
+            topics = await self.topic_classifier.classify_topics(item.text_content)
+            
+            # Sentiment analysis
+            sentiment = await self.sentiment_analyzer.analyze_sentiment(item.text_content)
+            
+            # Anomaly detection
+            anomaly_score = await self.anomaly_detector.detect_anomalies(item)
+            
+            analysis_results[item.source_url] = ContentAnalysis(
+                quality_score=quality_score,
+                topics=topics,
+                sentiment=sentiment,
+                anomaly_score=anomaly_score,
+                content_type=item.content_type
+            )
+        
+        return ContentAnalysisReport(
+            website_url=processed_content.base_url,
+            analysis_results=analysis_results,
+            aggregate_metrics=self._calculate_aggregate_metrics(analysis_results),
+            recommendations=self._generate_ml_recommendations(analysis_results)
+        )
+```
+
+### Step 7.2: Recommendation Engine
+```python
+# File: ipfs_datasets_py/recommendations/content_recommender.py
+
+class ContentRecommendationEngine:
+    """
+    Intelligent content recommendation system for GraphRAG queries.
+    
+    Features:
+    - Query suggestion based on content
+    - Related content discovery
+    - Personalized recommendations
+    - Cross-website content connections
+    """
+    
+    def __init__(self):
+        self.query_analyzer = QueryAnalyzer()
+        self.content_similarity = ContentSimilarityEngine()
+        self.user_preference_tracker = UserPreferenceTracker()
+    
+    async def generate_query_suggestions(
+        self,
+        current_query: str,
+        website_system: WebsiteGraphRAGSystem,
+        user_history: Optional[List[str]] = None
+    ) -> List[QuerySuggestion]:
+        """Generate intelligent query suggestions"""
+        
+        # Analyze current query
+        query_intent = await self.query_analyzer.analyze_intent(current_query)
+        
+        # Find related topics in content
+        related_topics = await self._find_related_topics(
+            query_intent, website_system.knowledge_graph
+        )
+        
+        # Generate suggestions based on content structure
+        content_based_suggestions = await self._generate_content_based_suggestions(
+            related_topics, website_system
+        )
+        
+        # Personalize based on user history
+        if user_history:
+            personalized_suggestions = await self._personalize_suggestions(
+                content_based_suggestions, user_history
+            )
+        else:
+            personalized_suggestions = content_based_suggestions
+        
+        return personalized_suggestions[:10]  # Return top 10
+    
+    async def discover_related_content(
+        self,
+        source_content: ProcessedContent,
+        website_system: WebsiteGraphRAGSystem,
+        similarity_threshold: float = 0.7
+    ) -> List[RelatedContent]:
+        """Discover related content across the website"""
+        
+        # Calculate content similarities
+        similarities = await self.content_similarity.calculate_similarities(
+            source_content, website_system.processed_content.processed_items
+        )
+        
+        # Filter by threshold and rank
+        related_items = [
+            item for item in similarities
+            if item.similarity_score >= similarity_threshold
+        ]
+        
+        # Sort by similarity and diversify by content type
+        diversified_results = self._diversify_by_content_type(related_items)
+        
+        return diversified_results[:20]  # Return top 20
+```
+
+## Extended Timeline Summary
+
+| Phase | Duration | Deliverables | Status |
+|-------|----------|--------------|--------|
+| Phase 1 | Week 1-2 | Core orchestration infrastructure | ✅ **COMPLETED** |
+| Phase 2 | Week 2-3 | Multi-modal content processing | ✅ **COMPLETED** |
+| Phase 3 | Week 3-4 | GraphRAG system integration | ✅ **COMPLETED** |
+| Phase 4 | Week 4-5 | Comprehensive testing suite | ✅ **COMPLETED** |
+| **Phase 5** | **Week 6-8** | **Production optimization & advanced features** | 📋 **PLANNED** |
+| **Phase 6** | **Week 9-10** | **Scaling & deployment infrastructure** | 📋 **PLANNED** |
+| **Phase 7** | **Week 11-12** | **Advanced analytics & ML integration** | 📋 **PLANNED** |
+| **Total** | **12 Weeks** | **Enterprise-ready system with advanced features** |
+
+## Implementation Priority (Updated)
+
+### ✅ Completed (Phases 1-4)
+1. **✅ High Priority**: Core orchestration and HTML processing
+2. **✅ Medium Priority**: PDF and media processing capabilities  
+3. **✅ Medium Priority**: GraphRAG system integration
+4. **✅ High Priority**: Comprehensive testing framework
+
+### 📋 Next Implementation Phases
+
+#### Phase 5 (Weeks 6-8) - Production Optimization
+1. **🔥 Critical**: Performance optimization engine
+2. **🔥 Critical**: Advanced monitoring and analytics
+3. **⚡ High**: Enterprise API management
+4. **⚡ High**: Authentication and authorization
+
+#### Phase 6 (Weeks 9-10) - Infrastructure & Deployment
+1. **🔥 Critical**: Kubernetes deployment configuration
+2. **⚡ High**: Docker containerization optimization
+3. **⚡ High**: CI/CD pipeline setup
+4. **📊 Medium**: Production monitoring stack
+
+#### Phase 7 (Weeks 11-12) - Advanced Features
+1. **📊 Medium**: ML-based content classification
+2. **📊 Medium**: Intelligent recommendation engine
+3. **🔮 Future**: Real-time processing capabilities
+4. **🔮 Future**: Cross-website knowledge graph integration
+
+## Next Steps for Continuation
+
+### Immediate Actions (Next 1-2 weeks)
+1. **Implement Performance Optimizer** - Create adaptive processing pipeline
+2. **Add Enterprise Authentication** - Implement secure API access
+3. **Setup Production Monitoring** - Add comprehensive metrics collection
+4. **Create Deployment Scripts** - Automate infrastructure deployment
+
+### Medium-term Goals (Weeks 6-8)
+1. **Kubernetes Infrastructure** - Production-grade container orchestration
+2. **Advanced Analytics Dashboard** - Real-time processing insights
+3. **ML Content Classification** - Automated quality assessment
+4. **Multi-tenant Architecture** - Support multiple organizations
+
+### Long-term Vision (Weeks 9-12)
+1. **Cross-Website Knowledge Graphs** - Connect related content across sites
+2. **Real-time Processing** - Stream-based content processing
+3. **AI-Powered Insights** - Advanced content understanding
+4. **Global Content Network** - Distributed processing infrastructure
+
+This expanded implementation plan provides a clear roadmap for evolving the current GraphRAG website processing system into a world-class enterprise platform with advanced ML capabilities, production-grade infrastructure, and intelligent content discovery features.
