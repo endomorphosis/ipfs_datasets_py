@@ -498,11 +498,10 @@ class AdvancedPerformanceOptimizer:
             'estimated_seconds': total_seconds,
             'estimated_minutes': total_seconds / 60,
             'estimated_hours': total_seconds / 3600,
+            'items_per_second': effective_rate,
             'base_rate': effective_rate,
             'quality_factor': quality_factor,
-            'size_factor': size_factor
-        }
-            'items_per_second': effective_rate,
+            'size_factor': size_factor,
             'confidence': 0.7  # Estimation confidence
         }
     
