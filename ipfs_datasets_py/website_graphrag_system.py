@@ -618,8 +618,8 @@ class WebsiteGraphRAGSystem:
         entities = []
         text_lower = text.lower()
         
-        for entity in self.knowledge_graph.entities:
-            if entity.name.lower() in text_lower:
+        for entity in self.knowledge_graph.entities.values():
+            if hasattr(entity, 'name') and entity.name.lower() in text_lower:
                 entities.append(entity.name)
         
         return entities
@@ -632,8 +632,8 @@ class WebsiteGraphRAGSystem:
         entities = []
         text_lower = text.lower()
         
-        for entity in self.knowledge_graph.entities:
-            if entity.name.lower() in text_lower:
+        for entity in self.knowledge_graph.entities.values():
+            if hasattr(entity, 'name') and entity.name.lower() in text_lower:
                 entities.append(entity.name)
         
         return entities
@@ -643,12 +643,14 @@ class WebsiteGraphRAGSystem:
         if not self.knowledge_graph:
             return None
         
-        for relationship in self.knowledge_graph.relationships:
-            if (relationship.source_entity.name == entity1 and 
-                relationship.target_entity.name == entity2) or \
-               (relationship.source_entity.name == entity2 and 
-                relationship.target_entity.name == entity1):
-                return relationship.relationship_type
+        for relationship in self.knowledge_graph.relationships.values():
+            if (hasattr(relationship.source_entity, 'name') and 
+                hasattr(relationship.target_entity, 'name')):
+                if (relationship.source_entity.name == entity1 and 
+                    relationship.target_entity.name == entity2) or \
+                   (relationship.source_entity.name == entity2 and 
+                    relationship.target_entity.name == entity1):
+                    return relationship.relationship_type
         
         return None
     

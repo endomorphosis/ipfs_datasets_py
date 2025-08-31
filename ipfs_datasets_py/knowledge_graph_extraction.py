@@ -965,26 +965,35 @@ class KnowledgeGraphExtractor:
             bidirectional = pattern_info.get("bidirectional", False)
 
             # Find matches
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                source_text = match.group(1).strip()
-                target_text = match.group(2).strip()
+            try:
+                for match in re.finditer(pattern, text, re.IGNORECASE):
+                    # Check if the pattern has exactly 2 groups
+                    if len(match.groups()) < 2:
+                        continue
+                        
+                    source_text = match.group(1).strip()
+                    target_text = match.group(2).strip()
 
-                # Look for entities that match or contain the matched text
-                source_entity = self._find_best_entity_match(source_text, entity_map)
-                target_entity = self._find_best_entity_match(target_text, entity_map)
+                    # Look for entities that match or contain the matched text
+                    source_entity = self._find_best_entity_match(source_text, entity_map)
+                    target_entity = self._find_best_entity_match(target_text, entity_map)
 
-                if source_entity and target_entity:
-                    # Create relationship
-                    rel = Relationship(
-                        relationship_type=relation_type,
-                        source=source_entity,
-                        target=target_entity,
-                        confidence=confidence,
-                        source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
-                        bidirectional=bidirectional
-                    )
+                    if source_entity and target_entity and source_entity != target_entity:
+                        # Create relationship
+                        rel = Relationship(
+                            relationship_type=relation_type,
+                            source_entity=source_entity,
+                            target_entity=target_entity,
+                            confidence=confidence,
+                            source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
+                            bidirectional=bidirectional
+                        )
 
-                    relationships.append(rel)
+                        relationships.append(rel)
+            
+            except Exception as e:
+                # Skip problematic patterns and continue
+                continue
 
         return relationships
 
@@ -2420,6 +2429,36 @@ def _default_relation_patterns() -> List[Dict[str, Any]]:
         List[Dict]: List of relation patterns
     """
     return [
+        # Enhanced patterns for AI research content
+        {
+            "name": "expert_in",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+is\s+(?:a\s+)?(?:leading\s+)?expert\s+in\s+([a-z][a-z\s]+)",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.9
+        },
+        {
+            "name": "focuses_on",
+            "pattern": r"(Project\s+[A-Z][a-z]+)\s+focus(?:es)?\s+on\s+([a-z][a-z\s]+)",
+            "source_type": "project",
+            "target_type": "field",
+            "confidence": 0.8
+        },
+        {
+            "name": "contributed_to",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+contributed\s+to\s+([a-z][a-z\s]+)",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.85
+        },
+        {
+            "name": "works_at_org",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:works?\s+at|is\s+at|joined)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        # Original comprehensive patterns
         {
             "name": "founded_by",
             "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+founded\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
@@ -2694,7 +2733,7 @@ def _map_spacy_entity_type(spacy_type: str) -> str:
     }
     return mapping.get(spacy_type, "entity")
 
-def _map_transformers_entity_type(self, transformers_type: str) -> str:
+def _map_transformers_entity_type(transformers_type: str) -> str:
     """Map Transformers entity types to our entity types.
 
     Args:
@@ -2756,36 +2795,81 @@ def _rule_based_entity_extraction(text: str) -> List[Entity]:
         List[Entity]: List of extracted entities
     """
     entities = []
+    entity_names_seen = set()  # Track unique entities
 
-    # Simple rules for common entity types
+    # Enhanced patterns for better AI research content extraction
     patterns = [
-        # Person: titles + names
-        (r"(?:Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s+(\w+(?:\s+\w+){0,2})", "person", 0.8),
-        # Organization: company suffixes
-        (r"(\w+(?:\s+\w+){0,3}?)\s+(?:Inc\.?|Corp\.?|Ltd\.?|LLC|Group)", "organization", 0.8),
-        # Location: prepositions + capitalized words
-        (r"(?:in|at|from|to)\s+([A-Z]\w+(?:\s+[A-Z]\w+){0,2})", "location", 0.7),
-        # Date: month day year
-        (r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4})", "date", 0.9),
-        # Technology: tech keywords
-        (r"(\w+(?:\s+\w+){0,2}?)\s+(?:algorithm|framework|library|language|platform|system|technology|tool)", "technology", 0.7),
-        # AI/ML fields
-        (r"((?:Deep|Machine|Reinforcement)\s+Learning|Neural\s+Networks?|(?:Large\s+Language|Generative|Transformer)\s+Models?)", "field", 0.9),
-        # AI model names
-        (r"((?:GPT|BERT|T5|LLaMA|Stable\s+Diffusion|DALL-E|PaLM|Gemini|Claude)(?:-\d+)?(?:\s+\w+)?)", "model", 0.9)
+        # Person names: Dr./Prof. + proper names (improved)
+        (r"(?:Dr\.|Prof\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})(?=\s|$|[.,;:])", "person", 0.9),
+        
+        # Person names: common academic patterns
+        (r"Principal\s+Investigator:\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})", "person", 0.95),
+        
+        # Organizations: specific patterns for AI companies/institutes
+        (r"(Google\s+DeepMind|OpenAI|Anthropic|Microsoft\s+Research|Meta\s+AI|IBM\s+Research)", "organization", 0.95),
+        (r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:Institute|Research|Lab|Laboratory|Center|University)", "organization", 0.85),
+        
+        # AI/ML fields and techniques (enhanced)
+        (r"\b((?:artificial\s+intelligence|machine\s+learning|deep\s+learning|neural\s+networks?|computer\s+vision|natural\s+language\s+processing|reinforcement\s+learning))\b", "field", 0.95),
+        (r"\b((?:transformer\s+architectures?|attention\s+mechanisms?|self-supervised\s+learning|few-shot\s+learning|cross-modal\s+reasoning))\b", "field", 0.9),
+        (r"\b((?:physics-informed\s+neural\s+networks?|graph\s+neural\s+networks?|generative\s+models?))\b", "field", 0.9),
+        
+        # Technology and tools
+        (r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:framework|platform|system|technology|tool|algorithm)s?\b", "technology", 0.8),
+        
+        # Projects and research areas
+        (r"Project\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?):?\s+", "project", 0.9),
+        
+        # Medical/Healthcare terms
+        (r"\b((?:medical\s+)?(?:image\s+analysis|radiology|pathology|healthcare|diagnosis|medical\s+AI))\b", "field", 0.9),
+        
+        # Conferences and venues (common in AI)
+        (r"\b(NeurIPS|ICML|ICLR|AAAI|IJCAI|NIPS)\b", "conference", 0.95),
+        
+        # Years and timeframes
+        (r"\b(20[0-9]{2}(?:-20[0-9]{2})?)\b", "date", 0.8),
+        
+        # Locations (improved)
+        (r"\b(?:in|at|from|to|headquartered\s+in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:,\s*[A-Z][A-Z])?)\b", "location", 0.8),
     ]
+    
     for pattern, entity_type, confidence in patterns:
-        flags = re.IGNORECASE if entity_type in ["field"] else 0
+        flags = re.IGNORECASE if entity_type in ["field", "technology"] else 0
+        
         for match in re.finditer(pattern, text, flags):
             name = match.group(1).strip()
-            if name:
-                entity = Entity(
-                    entity_type=entity_type,
-                    name=name,
-                    confidence=confidence,
-                    source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-                )
-                entities.append(entity)
+            
+            # Clean up the extracted name
+            name = re.sub(r'\s+', ' ', name)  # Normalize whitespace
+            name = name.strip('.,;:')  # Remove trailing punctuation
+            
+            # Skip if empty or too short
+            if not name or len(name) < 2:
+                continue
+                
+            # Skip if already seen (for deduplication)
+            name_key = (name.lower(), entity_type)
+            if name_key in entity_names_seen:
+                continue
+            entity_names_seen.add(name_key)
+            
+            # Skip common false positives
+            if name.lower() in ['timeline', 'the', 'and', 'our', 'this', 'that', 'with', 'from']:
+                continue
+                
+            # Create entity with better source text extraction
+            start_pos = max(0, match.start() - 20)
+            end_pos = min(len(text), match.end() + 20)
+            source_snippet = text[start_pos:end_pos].replace('\n', ' ').strip()
+            
+            entity = Entity(
+                entity_type=entity_type,
+                name=name,
+                confidence=confidence,
+                source_text=source_snippet
+            )
+            entities.append(entity)
+    
     return entities
 
 
