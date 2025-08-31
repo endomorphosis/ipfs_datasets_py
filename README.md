@@ -38,13 +38,14 @@ Experience the newest feature with one command:
 git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
+# Install demo dependencies (for sample PDF generation)
+pip install reportlab numpy
+
 # Run the comprehensive GraphRAG demo (creates sample PDF automatically)
 python demonstrate_graphrag_pdf.py --create-sample --show-architecture --test-queries
 ```
 
 This demonstrates the complete AI-powered PDF processing pipeline with entity extraction, knowledge graphs, and intelligent querying.
-
-## Overview
 
 ## Overview
 
@@ -1186,6 +1187,9 @@ pip install ipfs-datasets-py[graphrag]
 
 # Or install individual dependencies as needed
 pip install transformers sentence-transformers torch scikit-learn
+
+# For the interactive demo with sample PDF generation
+pip install reportlab numpy
 ```
 
 ### 📊 **Current Status**
