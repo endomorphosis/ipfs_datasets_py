@@ -160,6 +160,30 @@ class AdvancedKnowledgeExtractor:
             'low': ['possible', 'potential', 'might', 'could', 'perhaps', 'may']
         }
     
+    def extract_knowledge(
+        self,
+        text: str,
+        context: Optional['ExtractionContext'] = None
+    ) -> KnowledgeGraph:
+        """
+        Main extraction method for compatibility with test interface
+        
+        Args:
+            text: Input text to process
+            context: Extraction context with domain and settings
+            
+        Returns:
+            Knowledge graph with extracted entities and relationships
+        """
+        if context:
+            self.context = context
+        
+        return self.extract_enhanced_knowledge_graph(
+            text, 
+            domain=self.context.domain,
+            multi_pass=True
+        )
+    
     def extract_enhanced_knowledge_graph(
         self,
         text: str,

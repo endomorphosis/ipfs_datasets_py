@@ -33,6 +33,7 @@ class ResourceMetrics:
     cpu_percent: float = 0.0
     memory_percent: float = 0.0
     memory_available_gb: float = 0.0
+    memory_used_gb: float = 0.0
     disk_usage_percent: float = 0.0
     network_io: Dict[str, int] = field(default_factory=dict)
     process_memory_mb: float = 0.0
@@ -170,6 +171,7 @@ class AdvancedPerformanceOptimizer:
                 cpu_percent=cpu_percent,
                 memory_percent=memory_info.percent,
                 memory_available_gb=memory_info.available / (1024**3),
+                memory_used_gb=memory_info.used / (1024**3),
                 disk_usage_percent=disk_info.percent,
                 network_io=network_io,
                 process_memory_mb=process_memory,
@@ -178,7 +180,92 @@ class AdvancedPerformanceOptimizer:
             
         except Exception as e:
             logger.error(f"Failed to collect resource metrics: {e}")
+            # Return default metrics on error
             return ResourceMetrics()
+    
+    def monitor_resources(self) -> ResourceMetrics:
+        """
+        Public method to get current resource metrics
+        
+        Returns:
+            Current resource metrics
+        """
+        return self._collect_resource_metrics()
+    
+    def get_optimization_recommendations(
+        self,
+        metrics: ResourceMetrics,
+        content_count: int,
+        **kwargs
+    ) -> List[Dict[str, str]]:
+        """
+        Generate optimization recommendations based on current metrics
+        
+        Args:
+            metrics: Current resource metrics
+            content_count: Number of items to process
+            **kwargs: Additional parameters
+            
+        Returns:
+            List of optimization recommendations
+        """
+        recommendations = []
+        
+        # Memory recommendations
+        if metrics.memory_percent > 80:
+            recommendations.append({
+                'optimization': 'reduce_batch_size',
+                'description': 'High memory usage - reduce batch size and enable garbage collection',
+                'impact': 'high',
+                'action': 'Set batch_size=5, enable aggressive GC'
+            })
+        elif metrics.memory_available_gb > 4:
+            recommendations.append({
+                'optimization': 'increase_batch_size',  
+                'description': 'Plenty of memory available - increase batch size for better throughput',
+                'impact': 'medium',
+                'action': 'Increase batch_size to 20-50'
+            })
+        
+        # CPU recommendations
+        if metrics.cpu_percent > 85:
+            recommendations.append({
+                'optimization': 'reduce_workers',
+                'description': 'High CPU load - reduce parallel workers',
+                'impact': 'high',
+                'action': 'Set max_workers to 1-2'
+            })
+        elif metrics.cpu_percent < 30:
+            recommendations.append({
+                'optimization': 'increase_parallelism',
+                'description': 'CPU underutilized - increase parallel processing',
+                'impact': 'medium', 
+                'action': f'Increase max_workers to {min(psutil.cpu_count(), 8)}'
+            })
+        
+        # Processing recommendations based on content
+        if content_count > 100:
+            recommendations.append({
+                'optimization': 'use_fast_profile',
+                'description': 'Large batch processing - prioritize speed over quality',
+                'impact': 'high',
+                'action': 'Set processing_profile="fast", quality_threshold=0.4'
+            })
+        
+        # Storage recommendations  
+        if metrics.disk_usage_percent > 90:
+            recommendations.append({
+                'optimization': 'cleanup_storage',
+                'description': 'Low disk space - enable cache cleanup',
+                'impact': 'critical',
+                'action': 'Enable cache cleanup, reduce temporary files'
+            })
+        
+        return recommendations
+    
+    def _collect_resource_metrics_default(self) -> ResourceMetrics:
+        """Return default metrics when collection fails"""
+        return ResourceMetrics()
     
     def _check_critical_conditions(self, metrics: ResourceMetrics):
         """Check for critical resource conditions and take immediate action"""
@@ -411,6 +498,10 @@ class AdvancedPerformanceOptimizer:
             'estimated_seconds': total_seconds,
             'estimated_minutes': total_seconds / 60,
             'estimated_hours': total_seconds / 3600,
+            'base_rate': effective_rate,
+            'quality_factor': quality_factor,
+            'size_factor': size_factor
+        }
             'items_per_second': effective_rate,
             'confidence': 0.7  # Estimation confidence
         }

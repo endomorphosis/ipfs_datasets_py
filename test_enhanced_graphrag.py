@@ -51,8 +51,8 @@ sys.modules['ipfs_datasets_py.knowledge_graph_extraction'].Entity = Entity
 sys.modules['ipfs_datasets_py.knowledge_graph_extraction'].Relationship = Relationship
 sys.modules['ipfs_datasets_py.knowledge_graph_extraction'].KnowledgeGraph = KnowledgeGraph
 
-from advanced_knowledge_extractor import AdvancedKnowledgeExtractor, ExtractionContext
-from advanced_performance_optimizer import AdvancedPerformanceOptimizer, ProcessingProfile
+from ipfs_datasets_py.advanced_knowledge_extractor import AdvancedKnowledgeExtractor, ExtractionContext
+from ipfs_datasets_py.advanced_performance_optimizer import AdvancedPerformanceOptimizer, ProcessingProfile
 
 
 def test_advanced_knowledge_extraction():
