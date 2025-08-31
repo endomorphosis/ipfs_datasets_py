@@ -2,6 +2,21 @@
 
 This documentation provides detailed information about the modules, classes, and functions available in the IPFS Datasets Python package.
 
+## 🗺️ Navigation Guide
+
+### By Use Case
+- **Getting Started**: [Core Modules](#core-modules) → [Basic Usage](#basic-usage-examples)
+- **Vector Search**: [Vector Storage](#vector-storage-and-search) → [Search Examples](#search-examples)
+- **PDF Processing**: [PDF Module](#pdf-processing) → [PDF Examples](#pdf-examples)
+- **AI Integration**: [RAG Modules](#graph-based-rag) → [LLM Examples](#llm-examples)
+
+### By Component Type
+- **🏗️ Infrastructure**: [Core Modules](#core-modules), [IPLD Integration](#ipld-integration)
+- **🔍 Search & Retrieval**: [Vector Storage](#vector-storage-and-search), [Search Module](#search-module)
+- **🤖 AI & ML**: [Embeddings](#embeddings), [RAG Modules](#graph-based-rag)
+- **📄 Document Processing**: [PDF Processing](#pdf-processing), [Text Utils](#text-utilities)
+- **🔧 Tools & Management**: [MCP Tools](#mcp-tools), [Operations](#operations-and-management)
+
 ## Table of Contents
 
 1. [Core Modules](#core-modules)
@@ -10,37 +25,58 @@ This documentation provides detailed information about the modules, classes, and
    - [car_conversion](#car_conversion)
    - [ipfs_parquet_to_car](#ipfs_parquet_to_car)
    
-2. [IPLD Integration](#ipld-integration)
+2. [Embeddings](#embeddings)
+   - [Embedding Generation](#embedding-generation)
+   - [Text Chunking](#text-chunking)
+   - [Schema Definitions](#schema-definitions)
+
+3. [Vector Storage and Search](#vector-storage-and-search)
+   - [Vector Stores](#vector-stores) 
+   - [Search Module](#search-module)
+   - [ipfs_knn_index](#ipfs_knn_index)
+
+4. [PDF Processing](#pdf-processing)
+   - [PDF Processor](#pdf-processor)
+   - [Batch Processing](#batch-processing)
+   - [OCR Engine](#ocr-engine)
+   - [LLM Optimization](#llm-optimization)
+
+5. [Text Utilities](#text-utilities)
+   - [Text Processing](#text-processing)
+   - [Chunk Optimization](#chunk-optimization)
+   
+6. [IPLD Integration](#ipld-integration)
    - [ipld.storage](#ipld-storage)
    - [ipld.dag_pb](#ipld-dag_pb)
    - [unixfs_integration](#unixfs_integration)
-   
-3. [Vector Storage and Search](#vector-storage-and-search)
-   - [ipfs_knn_index](#ipfs_knn_index)
-   - [ipfs_embeddings_py](#ipfs_embeddings_py)
 
-4. [Graph-Based RAG](#graph-based-rag)
+7. [Graph-Based RAG](#graph-based-rag)
    - [knowledge_graph_extraction](#knowledge_graph_extraction)
    - [llm_graphrag](#llm_graphrag)
    - [rag_query_optimizer](#rag_query_optimizer)
    - [llm_reasoning_tracer](#llm_reasoning_tracer)
    - [llm_semantic_validation](#llm_semantic_validation)
 
-5. [Web Archive Integration](#web-archive-integration)
+8. [MCP Tools](#mcp-tools)
+   - [Tool Registry](#tool-registry)
+   - [Available Tools](#available-tools)
+   - [Tool Development](#tool-development)
+
+9. [Web Archive Integration](#web-archive-integration)
    - [web_archive_utils](#web_archive_utils)
 
-6. [Operations and Management](#operations-and-management)
-   - [data_provenance](#data_provenance)
-   - [cross_document_lineage](#cross_document_lineage)
-   - [monitoring](#monitoring)
-   - [security](#security)
-   - [resilient_operations](#resilient_operations)
-   - [admin_dashboard](#admin_dashboard)
-   - [streaming_data_loader](#streaming_data_loader)
-   - [federated_search](#federated_search)
+10. [Operations and Management](#operations-and-management)
+    - [data_provenance](#data_provenance)
+    - [cross_document_lineage](#cross_document_lineage)
+    - [monitoring](#monitoring)
+    - [security](#security)
+    - [resilient_operations](#resilient_operations)
+    - [admin_dashboard](#admin_dashboard)
+    - [streaming_data_loader](#streaming_data_loader)
+    - [federated_search](#federated_search)
 
-7. [Configuration](#configuration)
-   - [config](#config)
+11. [Configuration](#configuration)
+    - [config](#config)
 
 ---
 
