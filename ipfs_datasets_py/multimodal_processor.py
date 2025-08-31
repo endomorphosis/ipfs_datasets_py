@@ -25,9 +25,14 @@ import numpy as np
 
 # Import existing components
 from ipfs_datasets_py.content_discovery import ContentAsset, ContentManifest
-from ipfs_datasets_py.embeddings.create_embeddings import EmbeddingGenerator
-from ipfs_datasets_py.mcp_server.tools.media_tools.ytdlp_download import ytdlp_download_video
-from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_info import ffmpeg_get_media_info
+
+# Media tools - graceful fallback
+try:
+    from ipfs_datasets_py.mcp_server.tools.media_tools.ytdlp_download import ytdlp_download_video
+    from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_info import ffmpeg_get_media_info
+    HAVE_MEDIA_TOOLS = True
+except ImportError:
+    HAVE_MEDIA_TOOLS = False
 
 # External dependencies (with graceful fallback)
 try:
@@ -49,6 +54,45 @@ try:
     HAVE_SPEECH_RECOGNITION = True
 except ImportError:
     HAVE_SPEECH_RECOGNITION = False
+
+# Simple embedding generator using sentence transformers
+try:
+    from sentence_transformers import SentenceTransformer
+    HAVE_SENTENCE_TRANSFORMERS = True
+    
+    class EmbeddingGenerator:
+        """Simple embedding generator using sentence transformers"""
+        def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+            try:
+                self.model = SentenceTransformer(model_name)
+                self.is_dummy = False
+            except Exception as e:
+                print(f"Warning: Failed to load sentence transformer model {model_name}: {e}")
+                print("Using dummy embeddings instead")
+                self.model = None
+                self.is_dummy = True
+                
+        def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+            """Generate embeddings for list of texts"""
+            if self.is_dummy or self.model is None:
+                # Return dummy embeddings with consistent dimensions
+                return np.random.rand(len(texts), 384)  # 384-dim embeddings
+            else:
+                return self.model.encode(texts)
+            
+except ImportError:
+    HAVE_SENTENCE_TRANSFORMERS = False
+    
+    class EmbeddingGenerator:
+        """Fallback embedding generator"""
+        def __init__(self, model_name: str = "dummy"):
+            self.model_name = model_name
+            self.is_dummy = True
+            print("Warning: Sentence transformers not available, using dummy embeddings")
+            
+        def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+            """Generate dummy embeddings"""
+            return np.random.rand(len(texts), 384)  # 384-dim embeddings
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -163,10 +207,16 @@ class MultiModalContentProcessor:
             else:
                 self.html_converter = None
                 
-            # Embedding generator
-            self.embedding_generator = EmbeddingGenerator(
-                model_name=self.config['embedding_model']
-            )
+            # Embedding generator - with offline fallback
+            try:
+                self.embedding_generator = EmbeddingGenerator(
+                    model_name=self.config['embedding_model']
+                )
+                logger.info("Initialized embedding generator with sentence transformers")
+            except Exception as e:
+                logger.warning(f"Failed to initialize sentence transformer model: {e}")
+                logger.info("Using dummy embedding generator for offline testing")
+                self.embedding_generator = EmbeddingGenerator(model_name="dummy")
             
             # Speech recognition for transcription
             if HAVE_SPEECH_RECOGNITION:

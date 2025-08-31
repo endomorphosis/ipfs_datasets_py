@@ -315,8 +315,8 @@ class KnowledgeGraph:
         relationship = Relationship(
             relationship_id=relationship_id,
             relationship_type=relationship_type,
-            source=source,
-            target=target,
+            source_entity=source,
+            target_entity=target,
             properties=properties,
             confidence=confidence,
             source_text=source_text,
