@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-08-31T22:16:03.791727",
+  "timestamp": "2025-08-31T22:23:14.328255",
   "overall_status": "NOT_READY",
-  "readiness_score": 62.85714285714287,
+  "readiness_score": 48.57142857142857,
   "summary": {
-    "FAIL": 2,
-    "PASS": 3,
-    "WARNING": 2
+    "FAIL": 3,
+    "WARNING": 2,
+    "PASS": 2
   },
   "results": [
     {
@@ -24,15 +24,15 @@
     },
     {
       "name": "Configuration Files",
-      "status": "PASS",
-      "message": "All required configuration files are present",
+      "status": "FAIL",
+      "message": "Missing configuration files: .env.example",
       "details": null,
-      "remediation": null
+      "remediation": "Ensure all deployment files are present"
     },
     {
       "name": "Security Configuration",
       "status": "WARNING",
-      "message": "Security issues found: Default placeholder values found in .env.example; Default admin credentials detected; Default credentials found in database initialization",
+      "message": "Security issues found: Default credentials found in database initialization",
       "details": null,
       "remediation": "Review and update default credentials and sensitive values"
     },
