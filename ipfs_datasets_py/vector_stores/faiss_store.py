@@ -57,7 +57,25 @@ try:
     FAISS_AVAILABLE = True
 except ImportError:
     logger.warning("FAISS not available. Using mock implementation.")
-    #faiss: TypeAlias = MockFaissIndex
+    # Create a mock faiss module with necessary methods
+    class MockFaiss:
+        IndexFlatIP = MockFaissIndex
+        IndexIVFFlat = MockFaissIndex
+        IndexHNSWFlat = MockFaissIndex
+        
+        @staticmethod
+        def read_index(path):
+            return MockFaissIndex(128)  # Default dimension
+        
+        @staticmethod
+        def write_index(index, path):
+            pass
+        
+        @staticmethod
+        def normalize_L2(vectors):
+            pass
+    
+    faiss = MockFaiss()
     FAISS_AVAILABLE = False
 
 try:
@@ -65,7 +83,27 @@ try:
     NUMPY_AVAILABLE = True
 except ImportError:
     logger.warning("numpy not available. Using mock implementation.")
-    np = None
+    # Create a mock numpy module
+    class MockNumpy:
+        ndarray = list  # Use list as mock ndarray
+        float32 = float
+        
+        @staticmethod
+        def array(data, dtype=None):
+            return list(data) if hasattr(data, '__iter__') else [data]
+        
+        @staticmethod
+        def zeros(shape, dtype=None):
+            if isinstance(shape, int):
+                return [0] * shape
+            return [[0] * shape[1] for _ in range(shape[0])]
+        
+        @staticmethod
+        def random_rand(*args):
+            import random
+            return [random.random() for _ in range(args[0])] if len(args) == 1 else [[random.random() for _ in range(args[1])] for _ in range(args[0])]
+    
+    np = MockNumpy()
     NUMPY_AVAILABLE = False
 
 try:
@@ -130,7 +168,7 @@ class FAISSVectorStore(BaseVectorStore):
         """Get the file path for metadata storage."""
         return os.path.join(self.metadata_path, f"{collection_name}_metadata.pkl")
     
-    def _create_index(self, dimension: int, index_type: str = "Flat") -> faiss.Index:
+    def _create_index(self, dimension: int, index_type: str = "Flat"):
         """Create a FAISS index.
 
         Args:
@@ -153,7 +191,7 @@ class FAISSVectorStore(BaseVectorStore):
                 logger.warning(f"Unknown index type {index_type}, using Flat")
                 return faiss.IndexFlatIP(dimension)
 
-    def _load_index(self, collection_name: str) -> Optional[faiss.Index]:
+    def _load_index(self, collection_name: str):
         """Load a FAISS index from disk."""
         index_path = self._get_index_file_path(collection_name)
         if os.path.exists(index_path):
@@ -164,7 +202,7 @@ class FAISSVectorStore(BaseVectorStore):
                 return None
         return None
     
-    def _save_index(self, collection_name: str, index: faiss.Index):
+    def _save_index(self, collection_name: str, index):
         """Save a FAISS index to disk."""
         os.makedirs(self.index_path, exist_ok=True)
         index_path = self._get_index_file_path(collection_name)

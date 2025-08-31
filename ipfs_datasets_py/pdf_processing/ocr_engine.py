@@ -8,12 +8,73 @@ from abc import ABC, abstractmethod
 
 import logging
 import io
-import numpy as np
 from typing import Dict, List, Any
-from cachetools import cached
 
-from PIL import Image
-import cv2
+# Import dependencies with fallbacks
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    # Create mock numpy
+    class MockNumpy:
+        @staticmethod
+        def array(data):
+            return list(data) if hasattr(data, '__iter__') else [data]
+    np = MockNumpy()
+    HAVE_NUMPY = False
+
+try:
+    from cachetools import cached
+    HAVE_CACHETOOLS = True
+except ImportError:
+    # Mock cachetools.cached decorator
+    def cached(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    HAVE_CACHETOOLS = False
+
+try:
+    from PIL import Image
+    HAVE_PIL = True
+except ImportError:
+    # Mock PIL Image
+    class MockImage:
+        class Image:
+            def save(self, path):
+                pass
+            def convert(self, mode):
+                return self
+        
+        @staticmethod
+        def open(file):
+            return MockImage.Image()
+        @staticmethod
+        def fromarray(arr):
+            return MockImage.Image()
+        
+        # Make the module itself accessible as Image.Image
+        Image = Image
+        
+    Image = MockImage()
+    Image.Image = MockImage.Image  # Add the nested attribute
+    HAVE_PIL = False
+
+try:
+    import cv2
+    HAVE_CV2 = True
+except ImportError:
+    # Mock cv2
+    class MockCV2:
+        @staticmethod
+        def imread(path):
+            return None
+        @staticmethod
+        def cvtColor(img, code):
+            return img
+        COLOR_BGR2RGB = 1
+    cv2 = MockCV2()
+    HAVE_CV2 = False
 
 logger = logging.getLogger(__name__)
 

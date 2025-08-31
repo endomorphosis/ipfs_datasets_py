@@ -229,20 +229,50 @@ except ImportError:
     HAVE_IPWB = False
 
 try:
-    from .pdf_processing import (
-        PDFProcessor, MultiEngineOCR, LLMOptimizer, 
-        GraphRAGIntegrator, QueryEngine, BatchProcessor
-    )
-    HAVE_PDF_PROCESSING = True
+    from .pdf_processing import PDFProcessor
+    HAVE_PDF_PROCESSOR = True
 except ImportError:
-    HAVE_PDF_PROCESSING = False
-    # Provide fallbacks
     PDFProcessor = None
+    HAVE_PDF_PROCESSOR = False
+
+try:
+    from .pdf_processing import MultiEngineOCR
+    HAVE_MULTI_ENGINE_OCR = True
+except ImportError:
     MultiEngineOCR = None
+    HAVE_MULTI_ENGINE_OCR = False
+
+try:
+    from .pdf_processing import LLMOptimizer
+    HAVE_LLM_OPTIMIZER = True
+except ImportError:
     LLMOptimizer = None
+    HAVE_LLM_OPTIMIZER = False
+
+try:
+    from .pdf_processing import GraphRAGIntegrator
+    HAVE_GRAPHRAG_INTEGRATOR = True
+except ImportError:
     GraphRAGIntegrator = None
+    HAVE_GRAPHRAG_INTEGRATOR = False
+
+try:
+    from .pdf_processing import QueryEngine
+    HAVE_QUERY_ENGINE = True
+except ImportError:
     QueryEngine = None
+    HAVE_QUERY_ENGINE = False
+
+try:
+    from .pdf_processing import BatchProcessor
+    HAVE_BATCH_PROCESSOR = True
+except ImportError:
     BatchProcessor = None
+    HAVE_BATCH_PROCESSOR = False
+
+HAVE_PDF_PROCESSING = (HAVE_PDF_PROCESSOR or HAVE_MULTI_ENGINE_OCR or 
+                       HAVE_LLM_OPTIMIZER or HAVE_GRAPHRAG_INTEGRATOR or 
+                       HAVE_QUERY_ENGINE or HAVE_BATCH_PROCESSOR)
 
 # Define base exports that should always be available
 __all__ = [

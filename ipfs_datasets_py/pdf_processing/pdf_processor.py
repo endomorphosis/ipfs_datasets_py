@@ -23,13 +23,36 @@ try:
     from pydantic import (
         BaseModel, 
         Field,
-        FilePath, 
         ValidationError
     )
+    HAVE_PYDANTIC = True
+except ImportError:
+    pydantic = None
+    BaseModel = object
+    Field = lambda **kwargs: None
+    ValidationError = Exception
+    HAVE_PYDANTIC = False
+
+try:
     import pymupdf  # PyMuPDF
+    HAVE_PYMUPDF = True
+except ImportError:
+    pymupdf = None
+    HAVE_PYMUPDF = False
+
+try:
     import pdfplumber
-except ImportError as e:
-    raise ImportError("Required PDF processing libraries are not installed: pydantic, pymupdf, pdfplumber") from e
+    HAVE_PDFPLUMBER = True
+except ImportError:
+    pdfplumber = None
+    HAVE_PDFPLUMBER = False
+
+# If we don't have the required PDF libraries, provide mock functionality
+if not all([HAVE_PYDANTIC, HAVE_PYMUPDF, HAVE_PDFPLUMBER]):
+    print(f"Info: Using mock PDF processing (missing: {'pydantic ' if not HAVE_PYDANTIC else ''}{'pymupdf ' if not HAVE_PYMUPDF else ''}{'pdfplumber' if not HAVE_PDFPLUMBER else ''})")
+    USE_MOCK_PDF = True
+else:
+    USE_MOCK_PDF = False
 
 
 from ipfs_datasets_py.ipld import IPLDStorage
