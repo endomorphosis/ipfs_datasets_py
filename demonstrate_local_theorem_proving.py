@@ -520,7 +520,23 @@ def create_corporate_governance_knowledge_graph(text: str):
     ]
     
     # Create knowledge graph
-    knowledge_graph = KnowledgeGraph(name="Corporate Governance Requirements")
+    knowledge_graph = KnowledgeGraph()
+    
+    # Initialize dictionary-like structure to match expected interface
+    if not hasattr(knowledge_graph, 'entities') or isinstance(knowledge_graph.entities, list):
+        knowledge_graph.entities = {}
+        knowledge_graph.entity_types = {}
+        knowledge_graph.entity_names = {}
+        knowledge_graph.entity_relationships = {}
+        knowledge_graph.relationships = {}
+        knowledge_graph.relationship_types = {}
+        
+        # Initialize default collections
+        from collections import defaultdict
+        knowledge_graph.entity_types = defaultdict(set)
+        knowledge_graph.entity_names = defaultdict(set)
+        knowledge_graph.entity_relationships = defaultdict(set)
+        knowledge_graph.relationship_types = defaultdict(set)
     
     # Add entities
     for entity in entities:

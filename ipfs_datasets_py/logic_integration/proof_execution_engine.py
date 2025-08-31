@@ -730,7 +730,7 @@ Qed.
             if available:
                 # Create a simple test formula
                 from .deontic_logic_core import create_obligation, LegalAgent
-                test_agent = LegalAgent("test_agent", "Test Agent")
+                test_agent = LegalAgent("test_agent", "Test Agent", "organization")
                 test_formula = create_obligation(test_agent, "test_proposition", "Test proposition")
                 
                 try:
