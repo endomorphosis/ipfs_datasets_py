@@ -168,13 +168,15 @@ class DeonticLogicConverter:
         all_formulas = []
         
         try:
-            # Analyze entities for deontic content
-            entity_formulas = self.convert_entities_to_logic(knowledge_graph.entities, context)
+            # Analyze entities for deontic content  
+            entities_list = list(knowledge_graph.entities.values()) if isinstance(knowledge_graph.entities, dict) else knowledge_graph.entities
+            entity_formulas = self.convert_entities_to_logic(entities_list, context)
             all_formulas.extend(entity_formulas)
             
             # Analyze relationships for deontic content
+            relationships_list = list(knowledge_graph.relationships.values()) if isinstance(knowledge_graph.relationships, dict) else knowledge_graph.relationships
             relationship_formulas = self.convert_relationships_to_logic(
-                knowledge_graph.relationships, context
+                relationships_list, context
             )
             all_formulas.extend(relationship_formulas)
             
@@ -245,10 +247,12 @@ class DeonticLogicConverter:
                 # Extract text content from entity
                 entity_text = self._extract_entity_text(entity)
                 if not entity_text:
+                    logger.debug(f"Skipping entity {entity.entity_id} - no text content")
                     continue
                 
                 # Classify the deontic nature of the entity
                 operator, confidence = self.domain_knowledge.classify_legal_statement(entity_text)
+                logger.debug(f"Entity {entity.entity_id}: operator={operator}, confidence={confidence}")
                 
                 if operator and confidence >= context.confidence_threshold:
                     # Extract components for the formula
@@ -272,10 +276,14 @@ class DeonticLogicConverter:
                     formulas.append(formula)
                     self._update_statistics(operator)
                     
-                    logger.debug(f"Extracted formula from entity {entity.id}: {formula.to_fol_string()}")
+                    logger.info(f"✅ Extracted formula from entity {entity.entity_id}: {formula.to_fol_string()}")
+                else:
+                    logger.debug(f"Skipping entity {entity.entity_id} - operator={operator}, confidence={confidence} < {context.confidence_threshold}")
                 
             except Exception as e:
-                logger.warning(f"Error processing entity {entity.id}: {e}")
+                logger.error(f"Error processing entity {entity.entity_id}: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
         
         return formulas
@@ -312,8 +320,8 @@ class DeonticLogicConverter:
                     
                     if confidence >= context.confidence_threshold:
                         # Extract agents from source and target entities
-                        source_agent = self._create_agent_from_entity_id(relationship.source, context)
-                        target_agent = self._create_agent_from_entity_id(relationship.target, context)
+                        source_agent = self._create_agent_from_entity_id(relationship.source_entity.entity_id if relationship.source_entity else "", context)
+                        target_agent = self._create_agent_from_entity_id(relationship.target_entity.entity_id if relationship.target_entity else "", context)
                         
                         # Use source as primary agent, target as beneficiary if applicable
                         formula = DeonticFormula(
@@ -329,10 +337,10 @@ class DeonticLogicConverter:
                         formulas.append(formula)
                         self._update_statistics(operator)
                         
-                        logger.debug(f"Extracted formula from relationship {relationship.id}: {formula.to_fol_string()}")
+                        logger.debug(f"Extracted formula from relationship {relationship.relationship_id}: {formula.to_fol_string()}")
                 
             except Exception as e:
-                logger.warning(f"Error processing relationship {relationship.id}: {e}")
+                logger.warning(f"Error processing relationship {relationship.relationship_id}: {e}")
                 continue
         
         return formulas
@@ -343,11 +351,15 @@ class DeonticLogicConverter:
         text_fields = ["text", "content", "description", "name", "title"]
         
         for field in text_fields:
-            if field in entity.data and entity.data[field]:
-                return str(entity.data[field])
+            if field in entity.properties and entity.properties[field]:
+                return str(entity.properties[field])
         
-        # Fallback to entity ID if no text found
-        return entity.id if hasattr(entity, 'id') else ""
+        # Also try the source_text field
+        if entity.source_text:
+            return entity.source_text
+        
+        # Fallback to entity name
+        return entity.name or entity.entity_id
     
     def _extract_proposition_from_entity(self, entity: Entity) -> str:
         """Extract the proposition/action from an entity."""
@@ -355,8 +367,8 @@ class DeonticLogicConverter:
         proposition_fields = ["action", "proposition", "activity", "behavior", "conduct"]
         
         for field in proposition_fields:
-            if field in entity.data and entity.data[field]:
-                return self._normalize_proposition(str(entity.data[field]))
+            if field in entity.properties and entity.properties[field]:
+                return self._normalize_proposition(str(entity.properties[field]))
         
         # Extract from entity text using pattern matching
         entity_text = self._extract_entity_text(entity)
@@ -387,10 +399,10 @@ class DeonticLogicConverter:
         # Check if entity itself represents an agent
         agent_indicators = ["agent", "party", "person", "organization", "role"]
         
-        if any(indicator in entity.type.lower() for indicator in agent_indicators):
+        if any(indicator in entity.entity_type.lower() for indicator in agent_indicators):
             return LegalAgent(
-                identifier=entity.id,
-                name=entity.data.get("name", entity.id),
+                identifier=entity.entity_id,
+                name=entity.properties.get("name", entity.name) or entity.entity_id,
                 agent_type=self._classify_agent_type(entity)
             )
         
@@ -465,7 +477,7 @@ class DeonticLogicConverter:
                 return str(relationship.data[field])
         
         # Fallback to relationship type
-        return relationship.type if hasattr(relationship, 'type') else ""
+        return relationship.relationship_type if hasattr(relationship, 'relationship_type') else ""
     
     def _analyze_relationship_for_deontic_content(self, relationship: Relationship, 
                                                 context: ConversionContext) -> Optional[Tuple[DeonticOperator, float, str]]:
@@ -482,7 +494,7 @@ class DeonticLogicConverter:
         permission_rels = ["may", "can", "allows", "permits", "authorizes", "enables"]
         prohibition_rels = ["must_not", "shall_not", "prohibits", "forbids", "bars", "prevents"]
         
-        rel_type_lower = relationship.type.lower() if hasattr(relationship, 'type') else ""
+        rel_type_lower = relationship.relationship_type.lower() if hasattr(relationship, 'relationship_type') else ""
         
         # Check relationship type
         if any(oblig in rel_type_lower for oblig in obligation_rels):
@@ -511,11 +523,13 @@ class DeonticLogicConverter:
         
         for verb in action_verbs:
             if verb in rel_text.lower():
-                return self._normalize_proposition(f"{verb}_{relationship.target}")
+                target_id = relationship.target_entity.entity_id if relationship.target_entity else "unknown"
+                return self._normalize_proposition(f"{verb}_{target_id}")
         
         # Fallback to relationship type + target
-        rel_type = relationship.type if hasattr(relationship, 'type') else "relates_to"
-        return self._normalize_proposition(f"{rel_type}_{relationship.target}")
+        rel_type = relationship.relationship_type if hasattr(relationship, 'relationship_type') else "relates_to"
+        target_id = relationship.target_entity.entity_id if relationship.target_entity else "unknown"
+        return self._normalize_proposition(f"{rel_type}_{target_id}")
     
     def _create_agent_from_entity_id(self, entity_id: str, context: ConversionContext) -> Optional[LegalAgent]:
         """Create a legal agent from an entity ID."""

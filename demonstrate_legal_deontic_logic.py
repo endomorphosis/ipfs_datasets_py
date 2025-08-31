@@ -39,18 +39,26 @@ except ImportError:
     
     # Mock classes for demonstration
     class Entity:
-        def __init__(self, id: str, data: Dict[str, Any], type: str = "entity"):
-            self.id = id
-            self.data = data
-            self.type = type
+        def __init__(self, entity_id: str = None, entity_type: str = "entity", name: str = "", 
+                     properties: Dict[str, Any] = None, confidence: float = 1.0, source_text: str = None):
+            self.entity_id = entity_id
+            self.entity_type = entity_type
+            self.name = name
+            self.properties = properties or {}
+            self.confidence = confidence
+            self.source_text = source_text
     
     class Relationship:
-        def __init__(self, id: str, source: str, target: str, type: str, data: Dict[str, Any] = None):
-            self.id = id
+        def __init__(self, relationship_id: str = None, source: str = "", target: str = "", 
+                     relationship_type: str = "relationship", properties: Dict[str, Any] = None, 
+                     confidence: float = 1.0, source_text: str = None):
+            self.relationship_id = relationship_id
             self.source = source
             self.target = target
-            self.type = type
-            self.data = data or {}
+            self.relationship_type = relationship_type
+            self.properties = properties or {}
+            self.confidence = confidence
+            self.source_text = source_text
     
     class KnowledgeGraph:
         def __init__(self, entities: List[Entity] = None, relationships: List[Relationship] = None):
@@ -97,179 +105,224 @@ def create_mock_knowledge_graph() -> KnowledgeGraph:
     # Create entities representing legal concepts
     entities = [
         Entity(
-            id="contractor_abc",
-            data={
-                "name": "ABC Construction LLC",
+            entity_id="contractor_abc",
+            entity_type="legal_agent",
+            name="ABC Construction LLC",
+            properties={
                 "text": "The Contractor shall complete all construction work by December 31, 2024",
-                "type": "organization",
                 "role": "contractor"
             },
-            type="legal_agent"
+            source_text="The Contractor shall complete all construction work by December 31, 2024"
         ),
         Entity(
-            id="client_springfield",
-            data={
-                "name": "City of Springfield", 
+            entity_id="client_springfield",
+            entity_type="legal_agent",
+            name="City of Springfield",
+            properties={
                 "text": "The Client shall pay the Contractor within 30 days of completion",
-                "type": "government",
                 "role": "client"
             },
-            type="legal_agent"
+            source_text="The Client shall pay the Contractor within 30 days of completion"
         ),
         Entity(
-            id="completion_obligation",
-            data={
+            entity_id="completion_obligation",
+            entity_type="legal_obligation",
+            name="Construction Completion Obligation",
+            properties={
                 "text": "The Contractor shall complete all construction work by December 31, 2024",
                 "action": "complete_construction_work",
                 "deadline": "December 31, 2024",
                 "subject": "all construction work"
             },
-            type="legal_obligation"
+            source_text="The Contractor shall complete all construction work by December 31, 2024"
         ),
         Entity(
-            id="payment_obligation",
-            data={
+            entity_id="payment_obligation",
+            entity_type="legal_obligation",
+            name="Payment Obligation",
+            properties={
                 "text": "The Client shall pay the Contractor within 30 days of completion",
                 "action": "pay_contractor",
                 "timeframe": "within 30 days",
                 "condition": "after completion"
             },
-            type="legal_obligation"
+            source_text="The Client shall pay the Contractor within 30 days of completion"
         ),
         Entity(
-            id="inspection_permission",
-            data={
+            entity_id="inspection_permission",
+            entity_type="legal_permission",
+            name="Inspection Permission",
+            properties={
                 "text": "The Client may inspect the work at any time with 24 hours advance notice",
                 "action": "inspect_work",
                 "condition": "24 hours advance notice",
                 "frequency": "any time"
             },
-            type="legal_permission"
+            source_text="The Client may inspect the work at any time with 24 hours advance notice"
         ),
         Entity(
-            id="material_prohibition",
-            data={
+            entity_id="material_prohibition",
+            entity_type="legal_prohibition",
+            name="Substandard Materials Prohibition",
+            properties={
                 "text": "The Contractor must not use materials that do not meet specification requirements",
                 "action": "use_substandard_materials",
                 "restriction": "materials must meet specifications"
             },
-            type="legal_prohibition"
+            source_text="The Contractor must not use materials that do not meet specification requirements"
         ),
         Entity(
-            id="subcontracting_prohibition",
-            data={
+            entity_id="subcontracting_prohibition",
+            entity_type="legal_prohibition", 
+            name="Unauthorized Subcontracting Prohibition",
+            properties={
                 "text": "The Contractor shall not subcontract work without prior written approval",
                 "action": "subcontract_without_approval",
                 "requirement": "prior written approval"
             },
-            type="legal_prohibition"
+            source_text="The Contractor shall not subcontract work without prior written approval"
         ),
         Entity(
-            id="insurance_requirement",
-            data={
+            entity_id="insurance_requirement",
+            entity_type="legal_obligation",
+            name="Insurance Requirement",
+            properties={
                 "text": "The Contractor is required to maintain comprehensive insurance coverage",
                 "action": "maintain_insurance_coverage",
                 "type": "comprehensive insurance"
             },
-            type="legal_obligation"
+            source_text="The Contractor is required to maintain comprehensive insurance coverage"
         ),
         Entity(
-            id="termination_right",
-            data={
+            entity_id="termination_right",
+            entity_type="legal_permission",
+            name="Termination Right",
+            properties={
                 "text": "Either party may terminate this agreement with 30 days written notice",
                 "action": "terminate_agreement",
                 "notice_period": "30 days written notice",
                 "applicability": "either party"
             },
-            type="legal_permission"
+            source_text="Either party may terminate this agreement with 30 days written notice"
         ),
         Entity(
-            id="arbitration_obligation",
-            data={
+            entity_id="arbitration_obligation",
+            entity_type="legal_obligation",
+            name="Arbitration Obligation",
+            properties={
                 "text": "All disputes shall be resolved through binding arbitration in Springfield, Illinois",
                 "action": "resolve_disputes_through_arbitration",
                 "location": "Springfield, Illinois",
                 "type": "binding arbitration"
             },
-            type="legal_obligation"
+            source_text="All disputes shall be resolved through binding arbitration in Springfield, Illinois"
         )
     ]
     
     # Create relationships between entities
+    entity_map = {entity.entity_id: entity for entity in entities}
+    
     relationships = [
         Relationship(
-            id="contractor_must_complete",
-            source="contractor_abc",
-            target="completion_obligation",
-            type="must_fulfill",
-            data={"legal_basis": "contractual obligation", "enforceability": "binding"}
+            relationship_id="contractor_must_complete",
+            relationship_type="must_fulfill",
+            source_entity=entity_map["contractor_abc"],
+            target_entity=entity_map["completion_obligation"],
+            properties={"legal_basis": "contractual obligation", "enforceability": "binding"},
+            source_text="The Contractor shall complete all construction work by December 31, 2024"
         ),
         Relationship(
-            id="client_must_pay",
-            source="client_springfield", 
-            target="payment_obligation",
-            type="must_fulfill",
-            data={"legal_basis": "contractual obligation", "condition": "work completion"}
+            relationship_id="client_must_pay",
+            relationship_type="must_fulfill",
+            source_entity=entity_map["client_springfield"],
+            target_entity=entity_map["payment_obligation"],
+            properties={"legal_basis": "contractual obligation", "condition": "work completion"},
+            source_text="The Client shall pay the Contractor within 30 days of completion"
         ),
         Relationship(
-            id="client_may_inspect",
-            source="client_springfield",
-            target="inspection_permission", 
-            type="may_exercise",
-            data={"legal_basis": "contractual right", "limitation": "advance notice required"}
+            relationship_id="client_may_inspect",
+            relationship_type="may_exercise",
+            source_entity=entity_map["client_springfield"],
+            target_entity=entity_map["inspection_permission"],
+            properties={"legal_basis": "contractual right", "limitation": "advance notice required"},
+            source_text="The Client may inspect the work at any time with 24 hours advance notice"
         ),
         Relationship(
-            id="contractor_prohibited_materials",
-            source="contractor_abc",
-            target="material_prohibition",
-            type="must_not_do",
-            data={"legal_basis": "contractual prohibition", "penalty": "contract breach"}
+            relationship_id="contractor_prohibited_materials",
+            relationship_type="must_not_do",
+            source_entity=entity_map["contractor_abc"],
+            target_entity=entity_map["material_prohibition"],
+            properties={"legal_basis": "contractual prohibition", "penalty": "contract breach"},
+            source_text="The Contractor must not use materials that do not meet specification requirements"
         ),
         Relationship(
-            id="contractor_prohibited_subcontracting",
-            source="contractor_abc",
-            target="subcontracting_prohibition",
-            type="must_not_do",
-            data={"legal_basis": "contractual prohibition", "exception": "with written approval"}
+            relationship_id="contractor_prohibited_subcontracting",
+            relationship_type="must_not_do",
+            source_entity=entity_map["contractor_abc"],
+            target_entity=entity_map["subcontracting_prohibition"],
+            properties={"legal_basis": "contractual prohibition", "exception": "with written approval"},
+            source_text="The Contractor shall not subcontract work without prior written approval"
         ),
         Relationship(
-            id="contractor_must_insure",
-            source="contractor_abc",
-            target="insurance_requirement",
-            type="must_fulfill",
-            data={"legal_basis": "contractual obligation", "duration": "contract term"}
+            relationship_id="contractor_must_insure",
+            relationship_type="must_fulfill",
+            source_entity=entity_map["contractor_abc"],
+            target_entity=entity_map["insurance_requirement"],
+            properties={"legal_basis": "contractual obligation", "duration": "contract term"},
+            source_text="The Contractor is required to maintain comprehensive insurance coverage"
         ),
         Relationship(
-            id="parties_may_terminate",
-            source="contractor_abc",
-            target="termination_right",
-            type="may_exercise",
-            data={"legal_basis": "contractual right", "mutuality": "both parties"}
+            relationship_id="parties_may_terminate",
+            relationship_type="may_exercise", 
+            source_entity=entity_map["contractor_abc"],
+            target_entity=entity_map["termination_right"],
+            properties={"legal_basis": "contractual right", "mutuality": "both parties"},
+            source_text="Either party may terminate this agreement with 30 days written notice"
         ),
         Relationship(
-            id="parties_may_terminate_alt",
-            source="client_springfield",
-            target="termination_right", 
-            type="may_exercise",
-            data={"legal_basis": "contractual right", "mutuality": "both parties"}
+            relationship_id="parties_may_terminate_alt",
+            relationship_type="may_exercise",
+            source_entity=entity_map["client_springfield"],
+            target_entity=entity_map["termination_right"],
+            properties={"legal_basis": "contractual right", "mutuality": "both parties"},
+            source_text="Either party may terminate this agreement with 30 days written notice"
         ),
         Relationship(
-            id="parties_must_arbitrate",
-            source="contractor_abc",
-            target="arbitration_obligation",
-            type="must_fulfill",
-            data={"legal_basis": "dispute resolution clause", "binding": True}
+            relationship_id="parties_must_arbitrate",
+            relationship_type="must_fulfill",
+            source_entity=entity_map["contractor_abc"],
+            target_entity=entity_map["arbitration_obligation"],
+            properties={"legal_basis": "dispute resolution clause", "binding": True},
+            source_text="All disputes shall be resolved through binding arbitration in Springfield, Illinois"
         ),
         Relationship(
-            id="parties_must_arbitrate_alt",
-            source="client_springfield",
-            target="arbitration_obligation",
-            type="must_fulfill", 
-            data={"legal_basis": "dispute resolution clause", "binding": True}
+            relationship_id="parties_must_arbitrate_alt",
+            relationship_type="must_fulfill",
+            source_entity=entity_map["client_springfield"],
+            target_entity=entity_map["arbitration_obligation"],
+            properties={"legal_basis": "dispute resolution clause", "binding": True},
+            source_text="All disputes shall be resolved through binding arbitration in Springfield, Illinois"
         )
     ]
+    # Create knowledge graph and add entities
+    knowledge_graph = KnowledgeGraph(name="Springfield Construction Contract")
     
-    return KnowledgeGraph(entities=entities, relationships=relationships)
+    # Add entities to the knowledge graph
+    for entity in entities:
+        knowledge_graph.entities[entity.entity_id] = entity
+        knowledge_graph.entity_types[entity.entity_type].add(entity.entity_id)
+        knowledge_graph.entity_names[entity.name].add(entity.entity_id)
+    
+    # Add relationships to the knowledge graph
+    for relationship in relationships:
+        knowledge_graph.relationships[relationship.relationship_id] = relationship
+        knowledge_graph.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
+        if relationship.source_entity:
+            knowledge_graph.entity_relationships[relationship.source_entity.entity_id].add(relationship.relationship_id)
+        if relationship.target_entity:
+            knowledge_graph.entity_relationships[relationship.target_entity.entity_id].add(relationship.relationship_id)
+    
+    return knowledge_graph
 
 
 def demonstrate_full_pipeline(sample_document_path: str = None):
@@ -423,13 +476,109 @@ def demonstrate_full_pipeline(sample_document_path: str = None):
                 print("...")
             print()
     
-    # Step 7: Save results
+    # Prepare output directory for all results
     output_dir = Path("./logic_conversion_results")
     output_dir.mkdir(exist_ok=True)
     
-    print(f"Step 7: Saving results to {output_dir}")
+    # Step 7: Demonstrate IPLD storage with provenance
+    print("Step 7: Demonstrating IPLD logic storage with provenance...")
     
-    # Save conversion result as JSON
+    from ipfs_datasets_py.logic_integration import LogicIPLDStorage, LogicProvenanceTracker
+    
+    # Create IPLD storage
+    logic_storage = LogicIPLDStorage("./logic_conversion_results/ipld_storage")
+    provenance_tracker = LogicProvenanceTracker(logic_storage)
+    
+    # Store formulas with provenance
+    formula_cids = []
+    for formula in conversion_result.deontic_formulas:
+        formula_cid = provenance_tracker.track_formula_creation(
+            formula=formula,
+            source_pdf_path=context.source_document_path,
+            knowledge_graph_cid="mock_kg_cid",
+            entity_cids=[f"entity_{i}" for i in range(3)]  # Mock entity CIDs
+        )
+        formula_cids.append(formula_cid)
+    
+    # Store translations
+    for name, translator in translators:
+        target = LogicTranslationTarget.LEAN if "Lean" in name else (
+            LogicTranslationTarget.COQ if "Coq" in name else LogicTranslationTarget.SMT_LIB
+        )
+        for i, formula in enumerate(conversion_result.deontic_formulas):
+            if i < len(formula_cids):
+                translation_result = translation_results[name]["formula_translations"][i]
+                if translation_result.success:
+                    logic_storage.store_translation_result(
+                        formula_cids[i], target, translation_result
+                    )
+    
+    # Create collection
+    collection_cid = logic_storage.store_logic_collection(
+        formulas=conversion_result.deontic_formulas,
+        collection_name="Springfield Construction Contract",
+        source_doc_cid="mock_doc_cid"
+    )
+    
+    # Generate provenance report
+    provenance_report = provenance_tracker.export_provenance_report(
+        output_dir / "provenance_report.json"
+    )
+    
+    print(f"✓ Stored {len(formula_cids)} formulas in IPLD with provenance")
+    print(f"✓ Collection CID: {collection_cid}")
+    print(f"✓ Storage statistics: {logic_storage.get_storage_statistics()}")
+    print()
+    
+    # Step 8: Demonstrate query capabilities
+    print("Step 8: Demonstrating deontic logic query capabilities...")
+    
+    from ipfs_datasets_py.logic_integration import DeonticQueryEngine, QueryType
+    
+    # Create query engine
+    query_engine = DeonticQueryEngine(conversion_result.rule_set)
+    
+    # Query obligations
+    obligations = query_engine.query_obligations()
+    print(f"✓ Found {obligations.total_matches} total obligations")
+    
+    # Query obligations for specific agent
+    contractor_obligations = query_engine.query_obligations(agent="contractor")
+    print(f"✓ Found {contractor_obligations.total_matches} obligations for contractor")
+    
+    # Query permissions
+    permissions = query_engine.query_permissions()
+    print(f"✓ Found {permissions.total_matches} total permissions")
+    
+    # Query prohibitions
+    prohibitions = query_engine.query_prohibitions()
+    print(f"✓ Found {prohibitions.total_matches} total prohibitions")
+    
+    # Test compliance checking
+    compliance_result = query_engine.check_compliance(
+        proposed_action="subcontract construction work without approval",
+        agent="contractor"
+    )
+    print(f"✓ Compliance check: {'COMPLIANT' if compliance_result.is_compliant else 'NON-COMPLIANT'} "
+          f"(score: {compliance_result.compliance_score:.2f})")
+    
+    # Test natural language query
+    nl_query_result = query_engine.query_by_natural_language(
+        "What must the contractor do regarding insurance?"
+    )
+    print(f"✓ Natural language query found {nl_query_result.total_matches} relevant rules")
+    
+    # Find conflicts
+    conflicts = query_engine.find_conflicts()
+    print(f"✓ Detected {len(conflicts)} potential logical conflicts")
+    
+    print()
+    
+    # Step 9: Save results (renamed from Step 8)
+    
+    print(f"Step 9: Saving results to {output_dir}")
+    
+    # Save conversion result as JSON (output_dir already defined above)
     with open(output_dir / "conversion_result.json", 'w') as f:
         json.dump(conversion_result.to_dict(), f, indent=2, default=str)
     

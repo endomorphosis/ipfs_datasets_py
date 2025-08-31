@@ -8,7 +8,7 @@ from legal documents.
 
 import logging
 import re
-from typing import Dict, List, Optional, Set, Tuple, Pattern, Union
+from typing import Dict, List, Optional, Set, Tuple, Pattern, Union, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import json
@@ -378,6 +378,13 @@ class LegalDomainKnowledge:
         best_operator = None
         best_confidence = 0.0
         
+        # Check prohibition patterns FIRST (must check negations before positive patterns)
+        for pattern in self.prohibition_patterns:
+            if pattern.compiled_pattern.search(text_clean):
+                if pattern.confidence > best_confidence:
+                    best_operator = pattern.deontic_operator
+                    best_confidence = pattern.confidence
+        
         # Check obligation patterns
         for pattern in self.obligation_patterns:
             if pattern.compiled_pattern.search(text_clean):
@@ -387,13 +394,6 @@ class LegalDomainKnowledge:
         
         # Check permission patterns  
         for pattern in self.permission_patterns:
-            if pattern.compiled_pattern.search(text_clean):
-                if pattern.confidence > best_confidence:
-                    best_operator = pattern.deontic_operator
-                    best_confidence = pattern.confidence
-        
-        # Check prohibition patterns
-        for pattern in self.prohibition_patterns:
             if pattern.compiled_pattern.search(text_clean):
                 if pattern.confidence > best_confidence:
                     best_operator = pattern.deontic_operator

@@ -1,0 +1,60 @@
+(* Legal Theory: Springfield Construction Contract *)
+(* Generated deontic logic formulas *)
+
+Require Import Coq.Logic.Classical.
+Require Import Coq.Sets.Ensembles.
+
+Module Springfield_Construction_Contract.
+
+(* Deontic logic operators *)
+Definition Obligatory (P : Prop) : Prop := P.
+Definition Permitted (P : Prop) : Prop := ~ ~ P.
+Definition Forbidden (P : Prop) : Prop := ~ P.
+Definition Right (P : Prop) : Prop := P.
+Definition Liberty (P : Prop) : Prop := P \/ ~ P.
+
+(* Agent type *)
+Record Agent : Type := mkAgent {
+  agent_id : string;
+  agent_name : string
+}.
+
+(* Legal formulas *)
+Definition formula_1 : Prop := (December_31) -> (Obligatory complete_all_construction_work_by_december_31).
+(* Source: The Contractor shall complete all construction work by Decem... *)
+
+Definition formula_2 : Prop := (id_30_days_of_completion) -> (Obligatory pay_the_contractor_within_30_days_of_completion).
+(* Source: The Client shall pay the Contractor within 30 days of comple... *)
+
+Definition formula_3 : Prop := (December_31) -> (Obligatory complete_construction_work).
+(* Source: The Contractor shall complete all construction work by Decem... *)
+
+Definition formula_4 : Prop := (id_30_days_of_completion) -> (Obligatory pay_contractor).
+(* Source: The Client shall pay the Contractor within 30 days of comple... *)
+
+Definition formula_5 : Prop := Permitted inspect_work.
+(* Source: The Client may inspect the work at any time with 24 hours ad... *)
+
+Definition formula_6 : Prop := Forbidden use_substandard_materials.
+(* Source: The Contractor must not use materials that do not meet speci... *)
+
+Definition formula_7 : Prop := Forbidden subcontract_without_approval.
+(* Source: The Contractor shall not subcontract work without prior writ... *)
+
+Definition formula_8 : Prop := Obligatory maintain_insurance_coverage.
+(* Source: The Contractor is required to maintain comprehensive insuran... *)
+
+Definition formula_9 : Prop := Permitted terminate_agreement.
+(* Source: Either party may terminate this agreement with 30 days writt... *)
+
+Definition formula_10 : Prop := Obligatory resolve_disputes_through_arbitration.
+(* Source: All disputes shall be resolved through binding arbitration i... *)
+
+(* Consistency axioms *)
+Axiom no_obligation_and_prohibition :
+  forall P : Prop, ~ (Obligatory P /\ Forbidden P).
+
+Axiom permission_consistency :
+  forall P : Prop, Permitted P -> ~ Forbidden P.
+
+End Springfield_Construction_Contract.

@@ -86,6 +86,37 @@ from .deontic_logic_converter import (
     ConversionResult
 )
 
+# IPLD logic storage exports
+from .ipld_logic_storage import (
+    LogicIPLDStorage,
+    LogicProvenanceTracker,
+    LogicIPLDNode,
+    LogicProvenanceChain,
+    create_logic_storage_with_provenance
+)
+
+# Legal SymbolicAI analysis exports
+from .legal_symbolic_analyzer import (
+    LegalSymbolicAnalyzer,
+    LegalReasoningEngine,
+    LegalAnalysisResult,
+    DeonticProposition,
+    LegalEntity,
+    create_legal_analyzer,
+    create_legal_reasoning_engine
+)
+
+# Deontic logic query engine exports
+from .deontic_query_engine import (
+    DeonticQueryEngine,
+    QueryType,
+    QueryResult,
+    ComplianceResult,
+    LogicConflict,
+    create_query_engine,
+    query_legal_rules
+)
+
 # Legacy SymbolicAI exports
 from .symbolic_fol_bridge import SymbolicFOLBridge
 from .symbolic_logic_primitives import LogicPrimitives
