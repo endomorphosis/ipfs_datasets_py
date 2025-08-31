@@ -441,6 +441,29 @@ if HAVE_PDF_PROCESSING:
         'BatchProcessor'
     ])
 
+# Web Text Extraction
+try:
+    from .web_text_extractor import (
+        WebTextExtractor,
+        WebTextExtractionResult,
+        extract_website_text,
+        extract_multiple_websites,
+        save_website_text
+    )
+    HAVE_WEB_TEXT_EXTRACTOR = True
+    __all__.extend([
+        'WebTextExtractor',
+        'WebTextExtractionResult', 
+        'extract_website_text',
+        'extract_multiple_websites',
+        'save_website_text'
+    ])
+except ImportError as e:
+    HAVE_WEB_TEXT_EXTRACTOR = False
+    WebTextExtractor = None
+    if installer.verbose:
+        warnings.warn(f"Web text extractor unavailable due to missing dependencies: {e}")
+
 # Proper module aliasing for backward compatibility
 from . import llm
 from . import rag

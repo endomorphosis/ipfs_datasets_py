@@ -37,18 +37,40 @@ class DependencyInstaller:
                 'ffmpeg': 'ffmpeg',
                 'opencv': 'libopencv-dev',
                 'poppler': 'poppler-utils',
+                # Theorem Provers and SAT/SMT Solvers
+                'z3': 'z3',
+                'cvc4': 'cvc4',
+                'cvc5': 'cvc5',
+                'lean': 'lean4',
+                'coq': 'coq',
+                'isabelle': 'isabelle',
+                'vampire': 'vampire',
+                'eprover': 'eprover',
             },
             'darwin': {  # macOS
                 'tesseract': 'tesseract',
                 'ffmpeg': 'ffmpeg', 
                 'opencv': 'opencv',
                 'poppler': 'poppler',
+                # Theorem Provers and SAT/SMT Solvers
+                'z3': 'z3',
+                'cvc4': 'cvc4',
+                'cvc5': 'cvc5',
+                'lean': 'lean',
+                'coq': 'coq',
+                'isabelle': 'isabelle',
             },
             'windows': {
                 'tesseract': 'tesseract',
                 'ffmpeg': 'ffmpeg',
                 'opencv': 'opencv',
                 'poppler': 'poppler-utils',
+                # Theorem Provers and SAT/SMT Solvers
+                'z3': 'z3',
+                'cvc4': 'cvc4',
+                'cvc5': 'cvc5',
+                'lean': 'lean',
+                'coq': 'coq',
             }
         }
         
@@ -98,12 +120,25 @@ class DependencyInstaller:
             
             # Data formats
             'pyarrow': ['pyarrow>=15.0.0,<21.0.0'],
+            
+            # Theorem Provers and SAT/SMT Solvers (Python bindings)
+            'z3-solver': ['z3-solver>=4.12.0,<5.0.0'],
+            'pysmt': ['pysmt>=0.9.5,<1.0.0'],
+            'cvc5': ['cvc5>=1.0.0,<2.0.0'], 
+            'mathsat': ['mathsat>=5.6.0'],
+            'beartype': ['beartype>=0.15.0,<1.0.0'],
             'pydantic': ['pydantic>=2.0.0,<3.0.0'],
             'jsonschema': ['jsonschema>=4.0.0,<5.0.0'],
             
             # Media processing
             'ffmpeg-python': ['ffmpeg-python>=0.2.0'],
             'moviepy': ['moviepy>=1.0.0'],
+            
+            # Web scraping
+            'requests': ['requests>=2.25.0,<3.0.0'],
+            'beautifulsoup4': ['beautifulsoup4>=4.10.0,<5.0.0'],
+            'newspaper3k': ['newspaper3k>=0.2.8,<1.0.0'],
+            'readability-lxml': ['readability-lxml>=0.8.0,<1.0.0'],
             
             # Development
             'pytest': ['pytest>=8.0.0,<9.0.0'],
@@ -363,6 +398,140 @@ class DependencyInstaller:
             
         return success_count >= (total_count * 0.8)  # 80% success rate
 
+    def install_theorem_provers(self) -> Dict[str, bool]:
+        """Install multiple theorem provers and return status"""
+        if self.verbose:
+            logger.info("Installing theorem provers and SAT/SMT solvers...")
+            
+        provers = ['z3', 'cvc5', 'lean', 'coq']
+        results = {}
+        
+        for prover in provers:
+            if self.verbose:
+                logger.info(f"Installing theorem prover: {prover}")
+            success = True
+            
+            # Special handling for Lean 4
+            if prover == 'lean':
+                success = self.install_lean_elan()
+            else:
+                # Install system package
+                if not self.install_system_dependency(prover):
+                    success = False
+            
+            # Install Python binding if available
+            python_packages = {
+                'z3': 'z3-solver',
+                'cvc5': 'cvc5',
+                'lean': None,    # No Python binding, system only
+                'coq': None      # No Python binding, system only
+            }
+            
+            if python_packages.get(prover):
+                if not self.install_python_dependency(python_packages[prover]):
+                    success = False
+            
+            # Verify installation
+            if success:
+                success = self.verify_theorem_prover_installation(prover)
+            
+            results[prover] = success
+            
+            if self.verbose:
+                status = "✓" if success else "✗"
+                logger.info(f"{status} {prover}: {'Success' if success else 'Failed'}")
+            
+        return results
+
+    def verify_theorem_prover_installation(self, prover: str) -> bool:
+        """Verify that a theorem prover is properly installed"""
+        verification_commands = {
+            'z3': ['z3', '--version'],
+            'cvc4': ['cvc4', '--version'],
+            'cvc5': ['cvc5', '--version'],
+            'lean': ['lean', '--version'],
+            'coq': ['coqc', '--version'],
+            'isabelle': ['isabelle', 'version'],
+            'vampire': ['vampire', '--version'],
+            'eprover': ['eprover', '--version']
+        }
+        
+        if prover not in verification_commands:
+            return False
+            
+        try:
+            result = subprocess.run(
+                verification_commands[prover],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if self.verbose and result.returncode == 0:
+                logger.info(f"{prover} version: {result.stdout.strip()}")
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            return False
+
+    def install_lean_elan(self) -> bool:
+        """Install Lean 4 using elan (recommended approach)"""
+        try:
+            # Check if elan is already installed
+            result = subprocess.run(['elan', '--version'], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                if self.verbose:
+                    logger.info("elan already installed")
+                # Install latest Lean 4
+                subprocess.run(['elan', 'toolchain', 'install', 'leanprover/lean4:stable'], 
+                             capture_output=True, timeout=300)
+                return True
+        except (FileNotFoundError, subprocess.SubprocessError):
+            pass
+        
+        # Install elan first
+        if self.verbose:
+            logger.info("Installing elan (Lean toolchain manager)...")
+            
+        if self.system in ['linux', 'darwin']:
+            # Unix-like systems
+            try:
+                # Download and run elan installer
+                curl_cmd = [
+                    'curl', '-sSf', 'https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh'
+                ]
+                sh_cmd = ['sh', '-s', '--', '-y']
+                
+                curl_process = subprocess.Popen(curl_cmd, stdout=subprocess.PIPE)
+                sh_process = subprocess.Popen(sh_cmd, stdin=curl_process.stdout, 
+                                            capture_output=True, text=True)
+                curl_process.stdout.close()
+                
+                output, error = sh_process.communicate(timeout=600)
+                
+                if sh_process.returncode == 0:
+                    # Add to PATH for current session
+                    home = os.path.expanduser("~")
+                    elan_bin = os.path.join(home, ".elan", "bin")
+                    if elan_bin not in os.environ.get("PATH", ""):
+                        os.environ["PATH"] = f"{elan_bin}:{os.environ.get('PATH', '')}"
+                    
+                    if self.verbose:
+                        logger.info("elan installed successfully")
+                    return True
+                else:
+                    if self.verbose:
+                        logger.error(f"Failed to install elan: {error}")
+                    return False
+                    
+            except Exception as e:
+                if self.verbose:
+                    logger.error(f"Error installing elan: {e}")
+                return False
+        else:
+            # Windows - would need PowerShell script
+            if self.verbose:
+                logger.warning("Lean 4 installation on Windows requires manual setup")
+            return False
+
 
 # Global installer instance
 _installer = None
@@ -443,6 +612,42 @@ def install_for_component(component: str) -> bool:
             ('qdrant_client', 'qdrant-client'),
             ('elasticsearch', 'elasticsearch'),
         ]
+    elif component == 'theorem_provers':
+        # Install theorem provers and SAT/SMT solvers
+        return installer.install_theorem_provers()
+    elif component == 'z3':
+        dependencies = [
+            ('z3', 'z3-solver', ['z3']),
+        ]
+    elif component == 'lean':
+        dependencies = [
+            # Lean 4 is system-only, no Python binding
+        ]
+        # Install system dependency only
+        return installer.install_system_dependency('lean')
+    elif component == 'coq':
+        dependencies = [
+            # Coq is system-only, no Python binding
+        ]
+        # Install system dependency only
+        return installer.install_system_dependency('coq')
+    elif component == 'cvc5':
+        dependencies = [
+            ('cvc5', 'cvc5', ['cvc5']),
+        ]
+    elif component == 'smt_solvers':
+        dependencies = [
+            ('z3', 'z3-solver', ['z3']),
+            ('cvc5', 'cvc5', ['cvc5']),
+            ('pysmt', 'pysmt'),
+        ]
+    elif component == 'web':
+        dependencies = [
+            ('requests', 'requests'),
+            ('bs4', 'beautifulsoup4'),
+            ('newspaper', 'newspaper3k'),
+            ('readability', 'readability-lxml'),
+        ]
     else:
         logger.warning(f"Unknown component: {component}")
         return False
@@ -466,7 +671,7 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Install dependencies for IPFS datasets')
     parser.add_argument('component', nargs='?', default='graphrag',
-                       help='Component to install deps for (graphrag, pdf, ocr, ml, vectors)')
+                       help='Component to install deps for (graphrag, pdf, ocr, ml, vectors, theorem_provers, z3, lean, coq, cvc5, smt_solvers, web)')
     parser.add_argument('--verbose', action='store_true', help='Verbose output')
     parser.add_argument('--no-auto-install', action='store_true', 
                        help='Disable auto installation')

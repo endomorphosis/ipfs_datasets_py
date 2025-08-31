@@ -117,6 +117,17 @@ from .deontic_query_engine import (
     query_legal_rules
 )
 
+# Proof execution engine exports
+from .proof_execution_engine import (
+    ProofExecutionEngine,
+    ProofResult,
+    ProofStatus,
+    create_proof_engine,
+    prove_formula,
+    prove_with_all_provers,
+    check_consistency
+)
+
 # Legacy SymbolicAI exports
 from .symbolic_fol_bridge import SymbolicFOLBridge
 from .symbolic_logic_primitives import LogicPrimitives
