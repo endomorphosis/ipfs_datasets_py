@@ -373,5 +373,20 @@ class FFmpegUtils:
         secs = seconds % 60
         return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
 
-# Global instance
-ffmpeg_utils = FFmpegUtils()
+# Global instance - lazy loaded to avoid import-time dependency check
+_ffmpeg_utils_instance = None
+
+def get_ffmpeg_utils():
+    """Get the FFmpeg utils instance, creating it lazily if needed."""
+    global _ffmpeg_utils_instance
+    if _ffmpeg_utils_instance is None:
+        _ffmpeg_utils_instance = FFmpegUtils()
+    return _ffmpeg_utils_instance
+
+# Legacy compatibility - will raise error if FFmpeg not available
+# This maintains the API but defers the error to actual usage
+class _LazyFFmpegUtils:
+    def __getattr__(self, name):
+        return getattr(get_ffmpeg_utils(), name)
+        
+ffmpeg_utils = _LazyFFmpegUtils()

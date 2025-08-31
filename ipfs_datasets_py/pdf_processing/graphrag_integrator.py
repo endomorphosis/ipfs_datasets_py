@@ -324,9 +324,7 @@ def _is_question_word(word: str) -> bool:
     }
     return word in question_words
 
-import nltk
-
-from nltk.corpus import brown
+# NLTK imports handled in try/catch blocks above - removed hard dependencies
 
 @dataclass
 class Entity:
