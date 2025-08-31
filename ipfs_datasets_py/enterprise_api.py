@@ -157,6 +157,35 @@ class AuthenticationManager:
         expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
         to_encode = {"sub": username, "exp": expire}
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+    
+    def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """
+        Verify JWT token and return user data.
+        
+        Args:
+            token: JWT token string
+            
+        Returns:
+            User data dict if valid, None if invalid
+        """
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            username = payload.get("sub")
+            
+            if username and username in self.users_db:
+                user = self.users_db[username]
+                return {
+                    "user_id": user.user_id,
+                    "username": user.username,
+                    "email": user.email,
+                    "roles": user.roles,
+                    "is_active": user.is_active
+                }
+            else:
+                return None
+                
+        except jwt.PyJWTError:
+            return None
 
 
 class RateLimiter:
@@ -329,6 +358,32 @@ class EnterpriseGraphRAGAPI:
         
         # Global GraphRAG systems cache
         self.graphrag_systems: Dict[str, Any] = {}
+    
+    def create_jwt_token(self, user_data: Dict[str, Any]) -> str:
+        """
+        Create JWT token for user authentication.
+        
+        Args:
+            user_data: User information dict (user_id, role, etc.)
+            
+        Returns:
+            JWT token string
+        """
+        # Convert user_data dict to username for AuthenticationManager
+        username = user_data.get('username') or user_data.get('user_id', 'default_user')
+        return self.auth_manager.create_access_token(username)
+    
+    def validate_jwt_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """
+        Validate JWT token and return user data.
+        
+        Args:
+            token: JWT token string
+            
+        Returns:
+            User data dict if valid, None if invalid
+        """
+        return self.auth_manager.verify_token(token)
     
     def _create_app(self) -> FastAPI:
         """Create and configure FastAPI application"""

@@ -126,6 +126,78 @@ class EnhancedMultiModalProcessor:
         
         logger.info(f"Enhanced processor initialized with capabilities: {self.available_processors}")
     
+    async def process_content(
+        self,
+        content: str,
+        content_type: str,
+        source_url: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Process individual content item (API compatibility method).
+        
+        Args:
+            content: Content to process
+            content_type: MIME type of content
+            source_url: Source URL of content
+            metadata: Optional metadata
+            
+        Returns:
+            Dict with processed content and metadata
+        """
+        try:
+            # Create a ContentAsset for processing
+            asset = ContentAsset(
+                url=source_url,
+                content_type=content_type,
+                content=content.encode('utf-8') if isinstance(content, str) else content,
+                metadata=metadata or {}
+            )
+            
+            # Create a minimal ContentManifest with single asset
+            from ipfs_datasets_py.content_discovery import ContentManifest
+            manifest = ContentManifest()
+            
+            # Add asset to appropriate category based on content type
+            if content_type == "text/html":
+                manifest.html_pages = [asset]
+            elif content_type == "application/pdf":
+                manifest.pdf_documents = [asset]
+            else:
+                manifest.other_documents = [asset]
+            
+            manifest.total_assets = 1
+            
+            # Process using existing batch method
+            batch_result = self.process_enhanced_content_batch(manifest)
+            
+            if batch_result.processed_items:
+                processed_item = batch_result.processed_items[0]
+                return {
+                    'processed_content': processed_item,
+                    'text': processed_item.text_content if hasattr(processed_item, 'text_content') else str(processed_item),
+                    'metadata': processed_item.metadata if hasattr(processed_item, 'metadata') else {},
+                    'status': 'success'
+                }
+            else:
+                return {
+                    'processed_content': None,
+                    'text': content if content_type == "text/html" else "",  # Fallback
+                    'metadata': metadata or {},
+                    'status': 'no_processing',
+                    'warning': 'No content processed, using fallback'
+                }
+                
+        except Exception as e:
+            logger.error(f"Content processing failed: {str(e)}")
+            return {
+                'processed_content': None,
+                'text': content if content_type == "text/html" else "",  # Fallback
+                'metadata': metadata or {},
+                'status': 'error',
+                'error': str(e)
+            }
+
     def process_enhanced_content_batch(
         self,
         content_manifest: ContentManifest,

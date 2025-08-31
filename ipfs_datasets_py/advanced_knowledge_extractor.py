@@ -421,8 +421,8 @@ class AdvancedKnowledgeExtractor:
         # Add entities
         entity_map = {}  # Map entity text to Entity object
         for candidate in entities:
-            entity = Entity(
-                entity_id=str(uuid.uuid4()),
+            # Use add_entity with correct parameters
+            entity = kg.add_entity(
                 entity_type=candidate.entity_type,
                 name=candidate.text,
                 properties={
@@ -433,7 +433,6 @@ class AdvancedKnowledgeExtractor:
                 confidence=candidate.confidence,
                 source_text=candidate.context
             )
-            kg.add_entity(entity)
             entity_map[self._normalize_entity_text(candidate.text)] = entity
         
         # Add relationships

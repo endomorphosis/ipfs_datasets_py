@@ -418,6 +418,31 @@ class WebsiteGraphRAGProcessor:
         """Get list of supported archive services"""
         return ['ia', 'is', 'cc']
     
+    def get_processing_status(self) -> Dict[str, Any]:
+        """
+        Get current processing status and statistics.
+        
+        Returns:
+            Dict containing processing status, statistics, and metrics
+        """
+        return {
+            'status': 'ready',
+            'last_processed_url': getattr(self, '_last_processed_url', None),
+            'total_websites_processed': getattr(self, '_websites_processed_count', 0),
+            'average_processing_time': getattr(self, '_avg_processing_time', 0.0),
+            'config': {
+                'crawl_depth': self.config.crawl_depth,
+                'include_media': self.config.include_media,
+                'archive_services': self.config.archive_services
+            },
+            'capabilities': {
+                'archive_services': self.get_supported_archive_services(),
+                'vector_store_type': self.config.vector_store_type,
+                'embedding_model': self.config.embedding_model
+            },
+            'timestamp': datetime.now().isoformat()
+        }
+    
     def get_default_config(self) -> WebsiteProcessingConfig:
         """Get default configuration"""
         return WebsiteProcessingConfig()

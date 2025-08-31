@@ -6,12 +6,17 @@ and available system resources.
 """
 
 import asyncio
+import os
 import psutil
+import logging
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 from ipfs_datasets_py.content_discovery import ContentManifest
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -392,6 +397,99 @@ class WebsiteProcessingOptimizer:
         error = abs(estimated - actual) / estimated
         accuracy = max(0, 1 - error)
         return accuracy * 100
+    
+    async def get_optimization_recommendations(self) -> Dict[str, Any]:
+        """
+        Get optimization recommendations based on current system state.
+        
+        Returns:
+            Dict containing optimization recommendations and settings
+        """
+        try:
+            # Get current resource state
+            resources = await self.monitor_resources()
+            
+            # Analyze historical performance if available
+            recommendations = {
+                'strategy': 'balanced',  # fast, balanced, comprehensive
+                'batch_size': 10,
+                'parallel_workers': 4,
+                'cache_policy': 'intelligent',
+                'optimization_level': 'medium'
+            }
+            
+            # Adjust based on available resources
+            if resources['cpu_percent'] < 30 and resources['memory_percent'] < 50:
+                recommendations['strategy'] = 'comprehensive'
+                recommendations['parallel_workers'] = 6
+                recommendations['optimization_level'] = 'high'
+            elif resources['cpu_percent'] > 80 or resources['memory_percent'] > 80:
+                recommendations['strategy'] = 'fast'
+                recommendations['parallel_workers'] = 2
+                recommendations['optimization_level'] = 'low'
+            
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"Failed to get optimization recommendations: {e}")
+            return {
+                'strategy': 'balanced',
+                'batch_size': 5,
+                'parallel_workers': 2,
+                'error': str(e)
+            }
+    
+    async def monitor_resources(self) -> Dict[str, Any]:
+        """
+        Monitor current system resources.
+        
+        Returns:
+            Dict containing current resource usage metrics
+        """
+        try:
+            import psutil
+            
+            # Get CPU usage
+            cpu_percent = psutil.cpu_percent(interval=1)
+            
+            # Get memory usage
+            memory = psutil.virtual_memory()
+            memory_percent = memory.percent
+            memory_available_gb = memory.available / (1024**3)
+            
+            # Get disk usage
+            disk = psutil.disk_usage('/')
+            disk_percent = (disk.used / disk.total) * 100
+            disk_free_gb = disk.free / (1024**3)
+            
+            # Get load average (Unix systems)
+            try:
+                load_avg = os.getloadavg()
+            except (AttributeError, OSError):
+                load_avg = [0.0, 0.0, 0.0]
+            
+            return {
+                'cpu_percent': cpu_percent,
+                'memory_percent': memory_percent,
+                'memory_available_gb': memory_available_gb,
+                'disk_percent': disk_percent,
+                'disk_free_gb': disk_free_gb,
+                'load_average': load_avg,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Resource monitoring failed: {e}")
+            return {
+                'cpu_percent': 0.0,
+                'memory_percent': 0.0,
+                'memory_available_gb': 0.0,
+                'disk_percent': 0.0,
+                'disk_free_gb': 0.0,
+                'load_average': [0.0, 0.0, 0.0],
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }
 
 
 # Example usage and testing
