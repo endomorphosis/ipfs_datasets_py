@@ -298,7 +298,33 @@ class TestTaskRetryAndRecovery:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_bulk_task_operations test needs to be implemented")
+        # Test bulk task management operations
+        task_configs = [
+            {
+                "name": f"bulk_task_{i}",
+                "type": "data_processing",
+                "parameters": {"batch_id": i, "data_size": 100 * i}
+            }
+            for i in range(3)
+        ]
+        
+        # Test bulk task creation
+        results = []
+        for config in task_configs:
+            result = await manage_background_tasks(action="create", task_config=config)
+            results.append(result)
+        
+        # All tasks should be created successfully
+        assert len(results) == 3
+        for result in results:
+            assert result is not None
+            assert "status" in result
+            assert result["status"] in ["created", "success", "queued"]
+        
+        # Test bulk task status checking
+        queue_status = await manage_task_queue(action="status")
+        assert queue_status is not None
+        assert "status" in queue_status
 
 class TestTaskIntegration:
     """Test TaskIntegration functionality."""
@@ -346,7 +372,39 @@ class TestTaskIntegration:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_dataset_processing_task test needs to be implemented")
+        # Test dataset processing task with IPFS integration
+        try:
+            from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import create_dataset_task
+            
+            # Test dataset processing task creation
+            result = await create_dataset_task(
+                dataset_name="test_dataset",
+                processing_type="embedding_generation",
+                chunk_size=512,
+                overlap=50
+            )
+            
+            assert result is not None
+            assert "status" in result
+            assert result["status"] in ["created", "success", "processing"]
+            if "task_id" in result:
+                assert result["task_id"] is not None
+                
+        except ImportError:
+            # Fallback test for dataset processing with generic task manager
+            dataset_task_config = {
+                "name": "dataset_processing_task",
+                "type": "dataset_processing",
+                "parameters": {
+                    "dataset_path": "/test/dataset",
+                    "output_format": "embeddings",
+                    "batch_size": 32
+                }
+            }
+            
+            result = await manage_background_tasks(action="create", task_config=dataset_task_config)
+            assert result is not None
+            assert result.get("status") in ["created", "success", "queued"]
 
     @pytest.mark.asyncio
     async def test_vector_indexing_task(self):
