@@ -64,7 +64,15 @@ class TestWebArchiveInitialization:
         THEN expect:
             - persistence_mode is "persistent"
         """
-        raise NotImplementedError("test_init_with_storage_path_sets_persistent_mode test needs to be implemented")
+        # GIVEN
+        storage_path = "/data/archives"
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert hasattr(archive, 'persistence_mode')
+        assert archive.persistence_mode == "persistent"
 
     def test_init_without_storage_path_creates_instance(self):
         """
@@ -89,7 +97,13 @@ class TestWebArchiveInitialization:
         THEN expect:
             - storage_path attribute is None
         """
-        raise NotImplementedError("test_init_without_storage_path_sets_storage_path_none test needs to be implemented")
+        # GIVEN - use default None storage_path
+        
+        # WHEN
+        archive = WebArchive()
+        
+        # THEN
+        assert archive.storage_path is None
 
     def test_init_without_storage_path_initializes_archived_items(self):
         """
@@ -98,7 +112,15 @@ class TestWebArchiveInitialization:
         THEN expect:
             - archived_items attribute is initialized as empty dict
         """
-        raise NotImplementedError("test_init_without_storage_path_initializes_archived_items test needs to be implemented")
+        # GIVEN - use default None storage_path
+        
+        # WHEN
+        archive = WebArchive()
+        
+        # THEN
+        assert hasattr(archive, 'archived_items')
+        assert archive.archived_items == {}
+        assert isinstance(archive.archived_items, dict)
 
     def test_init_without_storage_path_sets_memory_only_mode(self):
         """
@@ -107,7 +129,14 @@ class TestWebArchiveInitialization:
         THEN expect:
             - persistence_mode is "memory_only"
         """
-        raise NotImplementedError("test_init_without_storage_path_sets_memory_only_mode test needs to be implemented")
+        # GIVEN - use default None storage_path
+        
+        # WHEN
+        archive = WebArchive()
+        
+        # THEN
+        assert hasattr(archive, 'persistence_mode')
+        assert archive.persistence_mode == "memory_only"
 
     def test_init_with_empty_string_storage_path_creates_instance(self):
         """
@@ -116,7 +145,15 @@ class TestWebArchiveInitialization:
         THEN expect:
             - Instance created successfully
         """
-        raise NotImplementedError("test_init_with_empty_string_storage_path_creates_instance test needs to be implemented")
+        # GIVEN
+        storage_path = ""
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert archive is not None
+        assert isinstance(archive, WebArchive)
 
     def test_init_with_empty_string_storage_path_sets_attribute(self):
         """
@@ -125,7 +162,14 @@ class TestWebArchiveInitialization:
         THEN expect:
             - storage_path attribute is set to ""
         """
-        raise NotImplementedError("test_init_with_empty_string_storage_path_sets_attribute test needs to be implemented")
+        # GIVEN
+        storage_path = ""
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert archive.storage_path == ""
 
     def test_init_with_empty_string_storage_path_initializes_archived_items(self):
         """
@@ -134,7 +178,16 @@ class TestWebArchiveInitialization:
         THEN expect:
             - archived_items attribute is initialized as empty dict
         """
-        raise NotImplementedError("test_init_with_empty_string_storage_path_initializes_archived_items test needs to be implemented")
+        # GIVEN
+        storage_path = ""
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert hasattr(archive, 'archived_items')
+        assert archive.archived_items == {}
+        assert isinstance(archive.archived_items, dict)
 
     def test_archived_items_attribute_exists(self):
         """
@@ -143,7 +196,11 @@ class TestWebArchiveInitialization:
         THEN expect:
             - archived_items attribute exists
         """
-        raise NotImplementedError("test_archived_items_attribute_exists test needs to be implemented")
+        # GIVEN
+        archive = WebArchive()
+        
+        # WHEN & THEN
+        assert hasattr(archive, 'archived_items')
 
     def test_archived_items_attribute_is_dictionary(self):
         """
@@ -152,7 +209,11 @@ class TestWebArchiveInitialization:
         THEN expect:
             - archived_items is a dictionary
         """
-        raise NotImplementedError("test_archived_items_attribute_is_dictionary test needs to be implemented")
+        # GIVEN
+        archive = WebArchive()
+        
+        # WHEN & THEN
+        assert isinstance(archive.archived_items, dict)
 
 
 if __name__ == "__main__":

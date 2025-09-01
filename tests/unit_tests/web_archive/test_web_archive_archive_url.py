@@ -276,7 +276,15 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - status: "success"
         """
-        raise NotImplementedError("test_archive_url_return_structure_success_contains_status test needs to be implemented")
+        # GIVEN
+        url = "https://example.com"
+        
+        # WHEN
+        result = archive.archive_url(url)
+        
+        # THEN
+        assert "status" in result
+        assert result["status"] == "success"
 
     def test_archive_url_return_structure_success_contains_archive_id(self, archive):
         """
@@ -285,7 +293,16 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - archive_id: string starting with "archive_"
         """
-        raise NotImplementedError("test_archive_url_return_structure_success_contains_archive_id test needs to be implemented")
+        # GIVEN
+        url = "https://example.com"
+        
+        # WHEN
+        result = archive.archive_url(url)
+        
+        # THEN
+        assert "archive_id" in result
+        assert isinstance(result["archive_id"], str)
+        assert result["archive_id"].startswith("archive_")
 
     def test_archive_url_return_structure_success_no_message_key(self, archive):
         """
@@ -294,7 +311,14 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - does not contain message key
         """
-        raise NotImplementedError("test_archive_url_return_structure_success_no_message_key test needs to be implemented")
+        # GIVEN
+        url = "https://example.com"
+        
+        # WHEN
+        result = archive.archive_url(url)
+        
+        # THEN
+        assert "message" not in result
 
     def test_archive_url_return_structure_error_contains_status(self, archive):
         """
