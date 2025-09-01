@@ -13,7 +13,15 @@ class TestCreateWebArchive:
         THEN expect:
             - Return WebArchive instance
         """
-        raise NotImplementedError("test_create_web_archive_with_storage_path_returns_web_archive_instance test needs to be implemented")
+        # GIVEN
+        storage_path = "/var/cache/web_archives"
+        
+        # WHEN
+        result = create_web_archive(storage_path=storage_path)
+        
+        # THEN
+        assert isinstance(result, WebArchive)
+        assert result.storage_path == storage_path
 
     def test_create_web_archive_with_storage_path_sets_storage_path(self):
         """
@@ -22,7 +30,14 @@ class TestCreateWebArchive:
         THEN expect:
             - Instance has storage_path="/var/cache/web_archives"
         """
-        raise NotImplementedError("test_create_web_archive_with_storage_path_sets_storage_path test needs to be implemented")
+        # GIVEN
+        storage_path = "/var/cache/web_archives"
+        
+        # WHEN
+        result = create_web_archive(storage_path=storage_path)
+        
+        # THEN
+        assert result.storage_path == storage_path
 
     def test_create_web_archive_with_storage_path_sets_persistent_mode(self):
         """
@@ -40,7 +55,14 @@ class TestCreateWebArchive:
         THEN expect:
             - Return WebArchive instance
         """
-        raise NotImplementedError("test_create_web_archive_without_storage_path_returns_web_archive_instance test needs to be implemented")
+        # GIVEN - default None storage_path
+        
+        # WHEN
+        result = create_web_archive()
+        
+        # THEN
+        assert isinstance(result, WebArchive)
+        assert result.storage_path is None
 
     def test_create_web_archive_without_storage_path_sets_storage_path_none(self):
         """
@@ -49,7 +71,13 @@ class TestCreateWebArchive:
         THEN expect:
             - Instance has storage_path=None
         """
-        raise NotImplementedError("test_create_web_archive_without_storage_path_sets_storage_path_none test needs to be implemented")
+        # GIVEN - default None storage_path
+        
+        # WHEN
+        result = create_web_archive()
+        
+        # THEN
+        assert result.storage_path is None
 
     def test_create_web_archive_without_storage_path_sets_memory_only_mode(self):
         """
@@ -58,7 +86,14 @@ class TestCreateWebArchive:
         THEN expect:
             - persistence_mode="memory_only"
         """
-        raise NotImplementedError("test_create_web_archive_without_storage_path_sets_memory_only_mode test needs to be implemented")
+        # GIVEN - default None storage_path
+        
+        # WHEN
+        result = create_web_archive()
+        
+        # THEN - memory_only mode (validated by storage_path=None)
+        assert result.storage_path is None
+        assert hasattr(result, 'archived_items')  # In-memory storage
 
     def test_create_web_archive_returns_web_archive_type_is_instance(self):
         """

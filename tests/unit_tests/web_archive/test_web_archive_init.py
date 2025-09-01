@@ -13,7 +13,15 @@ class TestWebArchiveInitialization:
         THEN expect:
             - Instance created successfully
         """
-        raise NotImplementedError("test_init_with_storage_path_creates_instance test needs to be implemented")
+        # GIVEN
+        storage_path = "/data/archives"
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert archive is not None
+        assert isinstance(archive, WebArchive)
 
     def test_init_with_storage_path_sets_storage_path_attribute(self):
         """
@@ -22,7 +30,14 @@ class TestWebArchiveInitialization:
         THEN expect:
             - storage_path attribute is set to "/data/archives"
         """
-        raise NotImplementedError("test_init_with_storage_path_sets_storage_path_attribute test needs to be implemented")
+        # GIVEN
+        storage_path = "/data/archives"
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert archive.storage_path == storage_path
 
     def test_init_with_storage_path_initializes_archived_items(self):
         """
@@ -31,7 +46,16 @@ class TestWebArchiveInitialization:
         THEN expect:
             - archived_items attribute is initialized as empty dict
         """
-        raise NotImplementedError("test_init_with_storage_path_initializes_archived_items test needs to be implemented")
+        # GIVEN
+        storage_path = "/data/archives"
+        
+        # WHEN
+        archive = WebArchive(storage_path=storage_path)
+        
+        # THEN
+        assert hasattr(archive, 'archived_items')
+        assert archive.archived_items == {}
+        assert isinstance(archive.archived_items, dict)
 
     def test_init_with_storage_path_sets_persistent_mode(self):
         """
@@ -49,7 +73,14 @@ class TestWebArchiveInitialization:
         THEN expect:
             - Instance created successfully
         """
-        raise NotImplementedError("test_init_without_storage_path_creates_instance test needs to be implemented")
+        # GIVEN - use default None storage_path
+        
+        # WHEN
+        archive = WebArchive()
+        
+        # THEN
+        assert archive is not None
+        assert isinstance(archive, WebArchive)
 
     def test_init_without_storage_path_sets_storage_path_none(self):
         """

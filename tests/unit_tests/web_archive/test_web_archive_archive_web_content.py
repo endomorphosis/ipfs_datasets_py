@@ -14,7 +14,16 @@ class TestArchiveWebContent:
         THEN expect:
             - Return dict with status="success"
         """
-        raise NotImplementedError("test_archive_web_content_success_with_metadata_returns_success_status test needs to be implemented")
+        # GIVEN
+        url = "https://important-docs.com/guide.html"
+        metadata = {"priority": "high", "category": "documentation"}
+        
+        # WHEN
+        result = archive_web_content(url, metadata)
+        
+        # THEN
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
 
     def test_archive_web_content_success_with_metadata_contains_archive_id(self):
         """
@@ -24,7 +33,16 @@ class TestArchiveWebContent:
         THEN expect:
             - Return dict contains archive_id key
         """
-        raise NotImplementedError("test_archive_web_content_success_with_metadata_contains_archive_id test needs to be implemented")
+        # GIVEN
+        url = "https://important-docs.com/guide.html"
+        metadata = {"priority": "high", "category": "documentation"}
+        
+        # WHEN
+        result = archive_web_content(url, metadata)
+        
+        # THEN
+        assert "archive_id" in result
+        assert isinstance(result["archive_id"], str)
 
     def test_archive_web_content_success_with_metadata_archive_id_format(self):
         """
@@ -34,7 +52,19 @@ class TestArchiveWebContent:
         THEN expect:
             - archive_id follows format "archive_{n}"
         """
-        raise NotImplementedError("test_archive_web_content_success_with_metadata_archive_id_format test needs to be implemented")
+        # GIVEN
+        url = "https://important-docs.com/guide.html"
+        metadata = {"priority": "high", "category": "documentation"}
+        
+        # WHEN
+        result = archive_web_content(url, metadata)
+        
+        # THEN
+        archive_id = result["archive_id"]
+        assert archive_id.startswith("archive_")
+        # Extract number part and verify it's numeric
+        number_part = archive_id.replace("archive_", "")
+        assert number_part.isdigit()
 
     def test_archive_web_content_success_without_metadata_returns_success_status(self):
         """

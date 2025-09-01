@@ -36,7 +36,39 @@ class TestMainControlFlow:
             - SystemExit raised with code 0
             - All processing steps called in correct order
         """
-        raise NotImplementedError("test_main_successful_execution test needs to be implemented")
+        # GIVEN - mock all dependencies to succeed
+        with patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._parse_arguments') as mock_parse, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._validate_file_system') as mock_validate_fs, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._validate_dependencies') as mock_validate_deps, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._read_file_content') as mock_read, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._parse_python_syntax') as mock_parse_syntax, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._extract_docstrings') as mock_extract, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._analyze_adverbs') as mock_analyze, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._generate_statistics') as mock_stats, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._generate_output') as mock_output:
+            
+            mock_parse.return_value = {"file_path": "test.py"}
+            mock_read.return_value = "test content"
+            mock_parse_syntax.return_value = Mock()
+            mock_extract.return_value = ["docstring1", "docstring2"]
+            mock_analyze.return_value = [("quickly", "adverb")]
+            mock_stats.return_value = {"total_adverbs": 1}
+            
+            # WHEN
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            
+            # THEN
+            assert exc_info.value.code == 0
+            mock_parse.assert_called_once()
+            mock_validate_fs.assert_called_once()
+            mock_validate_deps.assert_called_once()
+            mock_read.assert_called_once()
+            mock_parse_syntax.assert_called_once()
+            mock_extract.assert_called_once()
+            mock_analyze.assert_called_once()
+            mock_stats.assert_called_once()
+            mock_output.assert_called_once()
 
     def test_main_argument_parsing_failure(self):
         """
@@ -46,7 +78,17 @@ class TestMainControlFlow:
             - SystemExit raised with code 8
             - No further processing steps called
         """
-        raise NotImplementedError("test_main_argument_parsing_failure test needs to be implemented")
+        # GIVEN
+        with patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._parse_arguments') as mock_parse:
+            mock_parse.side_effect = SystemExit(8)
+            
+            # WHEN
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            
+            # THEN
+            assert exc_info.value.code == 8
+            mock_parse.assert_called_once()
 
     def test_main_file_validation_failure(self):
         """

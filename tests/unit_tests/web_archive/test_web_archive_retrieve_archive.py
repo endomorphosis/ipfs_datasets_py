@@ -18,7 +18,17 @@ class TestWebArchiveRetrieveArchive:
         THEN expect:
             - Return dict with status="success"
         """
-        raise NotImplementedError("test_retrieve_existing_archive_success_returns_success_status test needs to be implemented")
+        # GIVEN - archive with existing item
+        url = "https://example.com"
+        archive_result = archive.archive_url(url)
+        archive_id = archive_result["archive_id"]
+        
+        # WHEN - retrieve_archive is called
+        result = archive.retrieve_archive(archive_id)
+        
+        # THEN - return dict with status="success"
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
 
     def test_retrieve_existing_archive_success_contains_data_key(self, archive):
         """
@@ -27,7 +37,18 @@ class TestWebArchiveRetrieveArchive:
         THEN expect:
             - Return dict contains data key
         """
-        raise NotImplementedError("test_retrieve_existing_archive_success_contains_data_key test needs to be implemented")
+        # GIVEN - archive with existing item
+        url = "https://example.com"
+        metadata = {"category": "test"}
+        archive_result = archive.archive_url(url, metadata)
+        archive_id = archive_result["archive_id"]
+        
+        # WHEN - retrieve_archive is called
+        result = archive.retrieve_archive(archive_id)
+        
+        # THEN - return dict contains data key
+        assert "data" in result
+        assert isinstance(result["data"], dict)
 
     def test_retrieve_existing_archive_success_data_contains_required_fields(self, archive):
         """

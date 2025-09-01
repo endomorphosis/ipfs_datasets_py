@@ -679,8 +679,6 @@ class TestVectorMetadataTool:
             update_result = await service.update_metadata("test_index", "vec_001", update_metadata)
             assert update_result is not None
             assert isinstance(update_result, dict)
-        """
-        raise NotImplementedError("test_execute_update_metadata test needs to be implemented")
 
     @pytest.mark.asyncio
     async def test_execute_delete_metadata(self):

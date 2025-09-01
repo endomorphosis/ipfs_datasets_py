@@ -18,7 +18,14 @@ class TestWebArchiveListArchives:
         THEN expect:
             - Return empty list []
         """
-        raise NotImplementedError("test_list_archives_empty_archive_returns_empty_list test needs to be implemented")
+        # GIVEN - empty archive (already from fixture)
+        
+        # WHEN - list_archives is called
+        result = archive.list_archives()
+        
+        # THEN - return empty list
+        assert isinstance(result, list)
+        assert result == []
 
     def test_list_archives_empty_archive_returns_list_type(self, archive):
         """
@@ -27,7 +34,13 @@ class TestWebArchiveListArchives:
         THEN expect:
             - List is of type list
         """
-        raise NotImplementedError("test_list_archives_empty_archive_returns_list_type test needs to be implemented")
+        # GIVEN - empty archive (already from fixture)
+        
+        # WHEN - list_archives is called
+        result = archive.list_archives()
+        
+        # THEN - list is of type list
+        assert isinstance(result, list)
 
     def test_list_archives_with_single_item_returns_list_with_one_dict(self, archive):
         """
@@ -36,7 +49,17 @@ class TestWebArchiveListArchives:
         THEN expect:
             - Return list with one dict
         """
-        raise NotImplementedError("test_list_archives_with_single_item_returns_list_with_one_dict test needs to be implemented")
+        # GIVEN - archive with one item
+        url = "https://example.com"
+        archive.archive_url(url)
+        
+        # WHEN - list_archives is called
+        result = archive.list_archives()
+        
+        # THEN - return list with one dict
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], dict)
 
     def test_list_archives_with_single_item_dict_contains_required_fields(self, archive):
         """

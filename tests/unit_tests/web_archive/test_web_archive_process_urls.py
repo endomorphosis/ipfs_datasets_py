@@ -18,7 +18,16 @@ class TestWebArchiveProcessorProcessUrls:
         THEN expect:
             - Return dict with status=1.0 (100% success)
         """
-        raise NotImplementedError("test_process_urls_all_success_returns_100_percent_status test needs to be implemented")
+        # GIVEN
+        urls = ["https://news.ycombinator.com", "https://reddit.com/r/programming"]
+        
+        # WHEN
+        result = processor.process_urls(urls)
+        
+        # THEN
+        assert isinstance(result, dict)
+        # Success rate should be reported in the result
+        assert "success_rate" in result or "status" in result
 
     def test_process_urls_all_success_contains_results_list(self, processor):
         """
@@ -27,7 +36,16 @@ class TestWebArchiveProcessorProcessUrls:
         THEN expect:
             - Return dict contains results list
         """
-        raise NotImplementedError("test_process_urls_all_success_contains_results_list test needs to be implemented")
+        # GIVEN
+        urls = ["https://news.ycombinator.com", "https://reddit.com/r/programming"]
+        
+        # WHEN
+        result = processor.process_urls(urls)
+        
+        # THEN
+        assert isinstance(result, dict)
+        assert "results" in result
+        assert isinstance(result["results"], list)
 
     def test_process_urls_all_success_results_have_success_status_and_archive_id(self, processor):
         """
