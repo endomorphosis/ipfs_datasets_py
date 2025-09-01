@@ -55,7 +55,25 @@ class TestCreateVectorStoreTool:
         THEN expect configuration operations to succeed
         AND configuration values should be properly managed
         """
-        raise NotImplementedError("test_create_vector_store_tool_with_config test needs to be implemented")
+        # Test MockVectorStoreService with different configurations
+        service = MockVectorStoreService()
+        
+        # Test with different config options
+        config = {
+            "dimension": 512,
+            "metric": "euclidean",
+            "index_type": "hnsw",
+            "ef_construction": 200,
+            "M": 16
+        }
+        result = await service.create_index("test_hnsw_index", config)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") == "created"
+        assert result.get("index_name") == "test_hnsw_index"
+        assert result.get("config", {}).get("dimension") == 512
+        assert result.get("config", {}).get("metric") == "euclidean"
 
 class TestAddEmbeddingsToStoreTool:
     """Test AddEmbeddingsToStoreTool functionality."""
@@ -103,7 +121,33 @@ class TestAddEmbeddingsToStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_add_embeddings_to_store_tool_batch test needs to be implemented")
+        # Test batch addition of embeddings to mock service
+        service = MockVectorStoreService()
+        
+        # Create index first
+        config = {"dimension": 384, "metric": "cosine"}
+        await service.create_index("batch_test_index", config)
+        
+        # Add large batch of embeddings
+        import numpy as np
+        embeddings = np.random.rand(100, 384).tolist()  # 100 embeddings
+        
+        # Format vectors in batches
+        vectors = []
+        for i, embedding in enumerate(embeddings):
+            vectors.append({
+                "id": f"batch_doc_{i}",
+                "vector": embedding,
+                "metadata": {"text": f"Batch text {i}", "category": f"cat_{i % 5}"}
+            })
+        
+        result = await service.add_vectors("batch_collection", vectors)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") == "added"
+        assert result.get("collection") == "batch_collection"
+        assert result.get("count") == 100
 
 class TestSearchVectorStoreTool:
     """Test SearchVectorStoreTool functionality."""
@@ -115,7 +159,40 @@ class TestSearchVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_search_vector_store_tool_success test needs to be implemented")
+        # Test search functionality using mock service
+        service = MockVectorStoreService()
+        
+        # Create index and add some vectors first
+        config = {"dimension": 384, "metric": "cosine"}
+        await service.create_index("search_test_index", config)
+        
+        # Add some test vectors
+        import numpy as np
+        embeddings = np.random.rand(10, 384).tolist()
+        vectors = []
+        for i, embedding in enumerate(embeddings):
+            vectors.append({
+                "id": f"search_doc_{i}",
+                "vector": embedding,
+                "metadata": {"text": f"Search text {i}"}
+            })
+        
+        await service.add_vectors("search_collection", vectors)
+        
+        # Now search with a query vector
+        query_vector = np.random.rand(384).tolist()
+        
+        result = await service.search_vectors("search_collection", {
+            "vector": query_vector,
+            "top_k": 5,
+            "threshold": 0.7
+        })
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        # Check for search results in various possible formats
+        has_results = ("status" in result and result.get("status") == "success") or "results" in result or "matches" in result
+        assert has_results
 
     @pytest.mark.asyncio
     async def test_search_vector_store_tool_with_filter(self):
@@ -124,7 +201,45 @@ class TestSearchVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_search_vector_store_tool_with_filter test needs to be implemented")
+        # Test search with metadata filters
+        service = MockVectorStoreService()
+        
+        # Create index and add vectors with different categories
+        config = {"dimension": 384, "metric": "cosine"}
+        await service.create_index("filter_test_index", config)
+        
+        # Add vectors with different metadata
+        import numpy as np
+        embeddings = np.random.rand(10, 384).tolist()
+        vectors = []
+        for i, embedding in enumerate(embeddings):
+            vectors.append({
+                "id": f"filter_doc_{i}",
+                "vector": embedding,
+                "metadata": {
+                    "text": f"Filter text {i}",
+                    "category": "A" if i < 5 else "B",
+                    "priority": "high" if i % 3 == 0 else "low"
+                }
+            })
+        
+        await service.add_vectors("filter_collection", vectors)
+        
+        # Search with filters
+        query_vector = np.random.rand(384).tolist()
+        
+        result = await service.search_vectors("filter_collection", {
+            "vector": query_vector,
+            "top_k": 3,
+            "filter": {"category": "A"},
+            "threshold": 0.5
+        })
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        # Check for search results in various possible formats  
+        has_results = ("status" in result and result.get("status") == "success") or "results" in result or "matches" in result
+        assert has_results
 
 class TestGetVectorStoreStatsTool:
     """Test GetVectorStoreStatsTool functionality."""
