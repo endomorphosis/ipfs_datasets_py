@@ -25,10 +25,15 @@ class FFmpegError(Exception):
 class FFmpegUtils:
     """Utility class for FFmpeg operations."""
     
-    def __init__(self):
-        self.ffmpeg_path = self._find_ffmpeg()
-        self.ffprobe_path = self._find_ffprobe()
-        
+    def __init__(self, require_ffmpeg: bool = True):
+        """Initialize FFmpeg utilities with optional FFmpeg requirement"""
+        if require_ffmpeg:
+            self.ffmpeg_path = self._find_ffmpeg()
+            self.ffprobe_path = self._find_ffprobe()
+        else:
+            self.ffmpeg_path = None
+            self.ffprobe_path = None
+            
     def _find_ffmpeg(self) -> str:
         """Find FFmpeg executable path."""
         ffmpeg_path = shutil.which("ffmpeg")
@@ -42,6 +47,10 @@ class FFmpegUtils:
         if not ffprobe_path:
             raise FFmpegError("FFprobe not found. Please install FFmpeg with FFprobe.")
         return ffprobe_path
+    
+    def is_available(self) -> bool:
+        """Check if FFmpeg is available"""
+        return self.ffmpeg_path is not None and self.ffprobe_path is not None
     
     def validate_input_file(self, file_path: str) -> bool:
         """Validate input media file exists and is accessible."""
@@ -390,3 +399,11 @@ class _LazyFFmpegUtils:
         return getattr(get_ffmpeg_utils(), name)
         
 ffmpeg_utils = _LazyFFmpegUtils()
+
+# Global instance
+# Global instance - lazy initialization to handle missing FFmpeg gracefully
+try:
+    ffmpeg_utils = FFmpegUtils(require_ffmpeg=True)
+except FFmpegError:
+    # Create instance without FFmpeg for testing/development
+    ffmpeg_utils = FFmpegUtils(require_ffmpeg=False)

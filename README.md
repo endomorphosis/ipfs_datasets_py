@@ -352,8 +352,8 @@ pip install ipfs-datasets-py[vector]
 # For knowledge graph and RAG capabilities
 pip install ipfs-datasets-py[graphrag]
 
-# For web archive integration
-pip install ipfs-datasets-py[web_archive]
+# For web archive and multimedia scraping
+pip install ipfs-datasets-py[web_archive,media]
 
 # For security features
 pip install ipfs-datasets-py[security]
@@ -363,6 +363,56 @@ pip install ipfs-datasets-py[audit]
 
 # For all features (includes theorem proving)
 pip install ipfs-datasets-py[all]
+
+# Additional media processing dependencies
+pip install yt-dlp ffmpeg-python
+```
+
+## Key Capabilities
+
+### 🌐 Comprehensive Web Scraping and Archiving
+
+IPFS Datasets Python provides industry-leading web scraping capabilities:
+
+#### Web Archive Integration
+- **InterPlanetary Wayback Machine (IPWB)**: Decentralized web archiving on IPFS
+- **Internet Archive**: Query and download historical web content
+- **Archive.is (archive.today)**: Permanent webpage snapshots  
+- **Common Crawl**: Access to massive web crawl datasets
+- **Perma.cc**: Academic and legal webpage preservation
+
+#### Multimedia Content Scraping  
+- **YT-DLP Integration**: Download from 1000+ platforms (YouTube, Vimeo, TikTok, SoundCloud, etc.)
+- **FFmpeg Processing**: Professional media conversion and analysis
+- **Batch Operations**: Parallel processing for large-scale content acquisition
+
+#### Advanced Features
+- **Multi-Service Archiving**: Archive to multiple services simultaneously
+- **Content Deduplication**: Intelligent duplicate detection and removal
+- **Quality Control**: Content validation and quality assessment
+- **Temporal Analysis**: Historical content tracking and comparison
+- **Resource Management**: Optimized resource usage with monitoring
+
+```python
+# Quick web scraping example
+from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
+from ipfs_datasets_py.mcp_server.tools.media_tools import ytdlp_download_video
+from archivenow import archivenow
+
+# Archive website to multiple services
+ia_url = archivenow.push("https://example.com", "ia")        # Internet Archive
+is_url = archivenow.push("https://example.com", "is")        # Archive.is
+warc_file = processor.create_warc("https://example.com")     # Local WARC
+
+# Download multimedia content
+video_result = await ytdlp_download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    quality="720p",
+    download_info_json=True
+)
+
+print(f"Content archived to: {ia_url}, {is_url}, {warc_file}")
+print(f"Video downloaded: {video_result['output_file']}")
 ```
 
 ## Basic Usage

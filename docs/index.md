@@ -53,7 +53,9 @@ This documentation is organized into several sections:
 - **IPLD Integration** - Content-addressed data structures with IPLD
 - **Vector Storage** - Efficient storage and retrieval of vector embeddings
 - **GraphRAG** - Graph-enhanced retrieval augmented generation
-- **Web Archive Integration** - Working with web archives via IPWB
+- **Web Archive Integration** - Working with web archives via IPWB, Internet Archive, Archive.is
+- **Multimedia Scraping** - YT-DLP integration for 1000+ platforms with FFmpeg processing
+- **Common Crawl Integration** - Large-scale web crawl data access and processing
 
 ## Advanced Features
 
@@ -76,8 +78,10 @@ This documentation is organized into several sections:
 ## Tutorials
 
 - [GraphRAG Tutorial](tutorials/graphrag_tutorial.md) - Building knowledge-enhanced retrieval systems
-- [Web Archive Processing](tutorials/security_compliance_tutorial.md) - Working with web archives
-- [Distributed Dataset Management](tutorials/distributed_dataset_tutorial.md) - Managing datasets across nodes
+- [Web Archive Processing](tutorials/web_archive_tutorial.md) - Complete web archiving and processing workflow
+- [Media Scraping Tutorial](tutorials/media_scraping_tutorial.md) - Comprehensive multimedia content scraping and processing
+- [Comprehensive Web Scraping Guide](comprehensive_web_scraping_guide.md) - Complete guide to all web scraping capabilities
+- [Distributed Dataset Management](tutorials/distributed_dataset_tutorial.md) - Managing datasets across nodes  
 - [Security Implementation](tutorials/security_tutorial.md) - Implementing security features
 
 ## Component Documentation
