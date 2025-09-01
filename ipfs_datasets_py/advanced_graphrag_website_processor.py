@@ -1334,6 +1334,178 @@ class AdvancedGraphRAGWebsiteProcessor:
                 'entities_cached': len(self.entity_cache)
             }
         }
+    
+    def validate_config(self, config: Optional[WebsiteProcessingConfiguration] = None) -> Dict[str, Any]:
+        """Validate processing configuration and return validation results"""
+        config = config or self.config
+        
+        validation_result = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+            "config_summary": {}
+        }
+        
+        try:
+            # Validate processing mode
+            valid_modes = ["fast", "balanced", "quality"]
+            if config.processing_mode not in valid_modes:
+                validation_result["errors"].append(f"Invalid processing_mode: {config.processing_mode}. Must be one of {valid_modes}")
+                validation_result["valid"] = False
+            
+            # Validate quality threshold
+            if not 0.0 <= config.quality_threshold <= 1.0:
+                validation_result["errors"].append(f"quality_threshold must be between 0.0 and 1.0, got {config.quality_threshold}")
+                validation_result["valid"] = False
+            
+            # Validate batch size
+            if config.batch_size <= 0:
+                validation_result["errors"].append(f"batch_size must be positive, got {config.batch_size}")
+                validation_result["valid"] = False
+            
+            validation_result["config_summary"] = {
+                "processing_mode": config.processing_mode,
+                "quality_threshold": config.quality_threshold,
+                "batch_size": config.batch_size,
+                "max_workers": config.max_workers,
+                "domain": config.domain
+            }
+            
+        except Exception as e:
+            validation_result["valid"] = False
+            validation_result["errors"].append(f"Configuration validation failed: {str(e)}")
+        
+        return validation_result
+    
+    def extract_entities(self, content: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Extract entities from content with advanced processing"""
+        context = context or {}
+        
+        extraction_result = {
+            "entities": {},
+            "relationships": {},
+            "metadata": {
+                "extraction_time": time.time(),
+                "content_length": len(content),
+                "context": context
+            }
+        }
+        
+        try:
+            # Use basic entity extraction (advanced extractor handled elsewhere)
+            entities = self._extract_entities_basic(content)
+            extraction_result["entities"] = entities
+            extraction_result["metadata"]["entities_found"] = len(extraction_result["entities"])
+            
+        except Exception as e:
+            extraction_result["error"] = str(e)
+            extraction_result["metadata"]["extraction_failed"] = True
+        
+        return extraction_result
+    
+    def _extract_entities_basic(self, content: str) -> Dict[str, Any]:
+        """Basic entity extraction fallback"""
+        import re
+        
+        entities = {}
+        
+        # Simple named entity patterns
+        patterns = {
+            "PERSON": r'\b[A-Z][a-z]+\s+[A-Z][a-z]+\b',
+            "ORGANIZATION": r'\b[A-Z][A-Z]+\b|\b[A-Z][a-z]+\s+(?:Inc|Corp|LLC|Ltd|University|Institute|Company)\b',
+            "LOCATION": r'\b(?:New York|California|Boston|MIT|Stanford|Harvard)\b'
+        }
+        
+        entity_id = 0
+        for entity_type, pattern in patterns.items():
+            matches = re.findall(pattern, content)
+            for match in matches:
+                entity_id += 1
+                entities[f"entity_{entity_id}"] = {
+                    "id": f"entity_{entity_id}",
+                    "name": match,
+                    "type": entity_type,
+                    "confidence": 0.6  # Basic confidence
+                }
+        
+        return entities
+    
+    def process_html_content(self, html_content: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Process HTML content and extract structured information"""
+        metadata = metadata or {}
+        
+        processing_result = {
+            "success": True,
+            "processed_content": "",
+            "extracted_entities": {},
+            "content_structure": {},
+            "metadata": metadata,
+            "processing_time": 0
+        }
+        
+        start_time = time.time()
+        
+        try:
+            # Preprocess HTML content
+            processed_content = self._preprocess_content_comprehensive(
+                html_content,
+                "html",
+                metadata.get("title", ""),
+                metadata
+            )
+            processing_result["processed_content"] = processed_content
+            
+            # Extract content structure
+            processing_result["content_structure"] = self._extract_content_structure(html_content)
+            
+            # Extract entities from processed content
+            extraction_result = self.extract_entities(processed_content, metadata)
+            processing_result["extracted_entities"] = extraction_result.get("entities", {})
+            
+            processing_result["processing_time"] = time.time() - start_time
+            
+        except Exception as e:
+            processing_result["success"] = False
+            processing_result["error"] = str(e)
+            processing_result["processing_time"] = time.time() - start_time
+        
+        return processing_result
+    
+    def _extract_content_structure(self, html_content: str) -> Dict[str, Any]:
+        """Extract structural information from HTML content"""
+        import re
+        
+        structure = {
+            "headings": [],
+            "links": [],
+            "images": [],
+            "tables": 0,
+            "lists": 0,
+            "paragraphs": 0
+        }
+        
+        try:
+            # Extract headings
+            headings = re.findall(r'<h([1-6])[^>]*>(.*?)</h\1>', html_content, flags=re.IGNORECASE | re.DOTALL)
+            structure["headings"] = [{"level": int(level), "text": text.strip()} for level, text in headings]
+            
+            # Extract links
+            links = re.findall(r'<a[^>]*href=["\']([^"\']*)["\'][^>]*>(.*?)</a>', html_content, flags=re.IGNORECASE | re.DOTALL)
+            structure["links"] = [{"url": url, "text": text.strip()} for url, text in links]
+            
+            # Extract images
+            images = re.findall(r'<img[^>]*src=["\']([^"\']*)["\'][^>]*>', html_content, flags=re.IGNORECASE)
+            structure["images"] = images
+            
+            # Count structural elements
+            structure["tables"] = len(re.findall(r'<table[^>]*>', html_content, flags=re.IGNORECASE))
+            structure["lists"] = len(re.findall(r'<[uo]l[^>]*>', html_content, flags=re.IGNORECASE))
+            structure["paragraphs"] = len(re.findall(r'<p[^>]*>', html_content, flags=re.IGNORECASE))
+            
+        except Exception as e:
+            structure["extraction_error"] = str(e)
+        
+        return structure
 
 
 # Example usage and demo

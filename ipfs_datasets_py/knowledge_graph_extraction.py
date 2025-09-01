@@ -367,10 +367,27 @@ class KnowledgeGraph:
         # Add to graph
         self.relationships[relationship.relationship_id] = relationship
 
-        # Update indexes
+        # Update indexes - handle both Entity objects and string IDs
         self.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
-        self.entity_relationships[relationship.source_entity.entity_id].add(relationship.relationship_id)
-        self.entity_relationships[relationship.target_entity.entity_id].add(relationship.relationship_id)
+        
+        # Handle source entity
+        if hasattr(relationship.source_entity, 'entity_id'):
+            source_id = relationship.source_entity.entity_id
+        elif isinstance(relationship.source_entity, str):
+            source_id = relationship.source_entity
+        else:
+            source_id = str(relationship.source_entity)
+        
+        # Handle target entity
+        if hasattr(relationship.target_entity, 'entity_id'):
+            target_id = relationship.target_entity.entity_id
+        elif isinstance(relationship.target_entity, str):
+            target_id = relationship.target_entity
+        else:
+            target_id = str(relationship.target_entity)
+        
+        self.entity_relationships[source_id].add(relationship.relationship_id)
+        self.entity_relationships[target_id].add(relationship.relationship_id)
 
         return relationship
 

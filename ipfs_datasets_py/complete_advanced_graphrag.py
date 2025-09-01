@@ -160,38 +160,58 @@ class CompleteGraphRAGSystem:
         # Ensure output directory exists
         os.makedirs(self.config.output_directory, exist_ok=True)
     
-    def _initialize_components(self):
+    def _initialize_components(self) -> Dict[str, Any]:
         """Initialize all advanced processing components"""
         
         self.logger.info("Initializing complete GraphRAG system components...")
         
-        # Web archiving system
-        self.web_archiver = AdvancedWebArchiver(self.config.archiving_config)
+        initialization_result = {
+            "status": "success",
+            "components_initialized": [],
+            "warnings": [],
+            "timestamp": datetime.now().isoformat()
+        }
         
-        # Media processing system
-        self.media_processor = AdvancedMediaProcessor(self.config.media_config)
+        try:
+            # Web archiving system
+            self.web_archiver = AdvancedWebArchiver(self.config.archiving_config)
+            initialization_result["components_initialized"].append("web_archiver")
+            
+            # Media processing system
+            self.media_processor = AdvancedMediaProcessor(self.config.media_config)
+            initialization_result["components_initialized"].append("media_processor")
+            
+            # Knowledge extraction system
+            extraction_context = ExtractionContext(
+                domain=self.config.extraction_domain,
+                confidence_threshold=self.config.knowledge_quality_threshold,
+                enable_disambiguation=True
+            )
+            self.knowledge_extractor = AdvancedKnowledgeExtractor(extraction_context)
+            initialization_result["components_initialized"].append("knowledge_extractor")
+            
+            # Performance optimization system
+            optimization_profile = self._get_optimization_profile()
+            self.performance_optimizer = AdvancedPerformanceOptimizer(optimization_profile)
+            initialization_result["components_initialized"].append("performance_optimizer")
+            
+            # Enhanced multimodal processor
+            processing_context = ProcessingContext(
+                quality_threshold=self.config.knowledge_quality_threshold,
+                enable_ocr=True,
+                enable_content_filtering=True
+            )
+            self.multimodal_processor = EnhancedMultiModalProcessor(processing_context)
+            initialization_result["components_initialized"].append("multimodal_processor")
+            
+            self.logger.info("All components initialized successfully")
+            
+        except Exception as e:
+            initialization_result["status"] = "error"
+            initialization_result["error"] = str(e)
+            self.logger.error(f"Component initialization failed: {str(e)}")
         
-        # Knowledge extraction system
-        extraction_context = ExtractionContext(
-            domain=self.config.extraction_domain,
-            confidence_threshold=self.config.knowledge_quality_threshold,
-            enable_disambiguation=True
-        )
-        self.knowledge_extractor = AdvancedKnowledgeExtractor(extraction_context)
-        
-        # Performance optimization system
-        optimization_profile = self._get_optimization_profile()
-        self.performance_optimizer = AdvancedPerformanceOptimizer(optimization_profile)
-        
-        # Enhanced multimodal processor
-        processing_context = ProcessingContext(
-            quality_threshold=self.config.knowledge_quality_threshold,
-            enable_ocr=True,
-            enable_content_filtering=True
-        )
-        self.multimodal_processor = EnhancedMultiModalProcessor(processing_context)
-        
-        self.logger.info("All components initialized successfully")
+        return initialization_result
     
     def _get_optimization_profile(self) -> ProcessingProfile:
         """Get performance optimization profile based on configuration"""
@@ -904,6 +924,73 @@ class CompleteGraphRAGSystem:
             }
             for result in self.processing_history
         ]
+    
+    def get_analytics(self) -> Dict[str, Any]:
+        """Get comprehensive analytics and metrics for the GraphRAG system"""
+        
+        if not self.processing_history:
+            return {
+                "status": "no_data",
+                "message": "No processing history available",
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Calculate analytics from processing history
+        total_sessions = len(self.processing_history)
+        successful_sessions = len([r for r in self.processing_history if r.processing_status == "completed"])
+        
+        if successful_sessions > 0:
+            avg_quality = sum(r.overall_quality_score for r in self.processing_history if r.processing_status == "completed") / successful_sessions
+            avg_processing_time = sum(r.total_processing_time for r in self.processing_history if r.processing_status == "completed") / successful_sessions
+            total_entities = sum(r.total_entities_extracted for r in self.processing_history)
+            total_relationships = sum(r.total_relationships_extracted for r in self.processing_history)
+        else:
+            avg_quality = 0.0
+            avg_processing_time = 0.0
+            total_entities = 0
+            total_relationships = 0
+        
+        analytics = {
+            "system_overview": {
+                "total_processing_sessions": total_sessions,
+                "successful_sessions": successful_sessions,
+                "success_rate": (successful_sessions / total_sessions * 100) if total_sessions > 0 else 0,
+                "system_uptime": datetime.now().isoformat()
+            },
+            "performance_metrics": {
+                "average_quality_score": avg_quality,
+                "average_processing_time_seconds": avg_processing_time,
+                "total_entities_extracted": total_entities,
+                "total_relationships_extracted": total_relationships,
+                "entities_per_session": total_entities / total_sessions if total_sessions > 0 else 0
+            },
+            "recommendations": self._generate_analytics_recommendations(),
+            "metadata": {
+                "analytics_generated_at": datetime.now().isoformat(),
+                "system_version": "1.0.0"
+            }
+        }
+        
+        return analytics
+    
+    def _generate_analytics_recommendations(self) -> List[str]:
+        """Generate recommendations based on analytics"""
+        recommendations = []
+        
+        if not self.processing_history:
+            recommendations.append("Run initial website processing to generate analytics data")
+            return recommendations
+        
+        # Performance recommendations
+        avg_time = sum(r.total_processing_time for r in self.processing_history) / len(self.processing_history)
+        if avg_time > 300:  # 5 minutes
+            recommendations.append("Consider optimizing processing pipeline - average processing time is high")
+        
+        return recommendations
+    
+    def initialize_components(self) -> Dict[str, Any]:
+        """Initialize all GraphRAG components and return status"""
+        return self._initialize_components()
 
 
 # Factory function

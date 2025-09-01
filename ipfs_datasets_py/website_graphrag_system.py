@@ -14,6 +14,7 @@ Features:
 
 import json
 import logging
+import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
@@ -90,12 +91,15 @@ class WebsiteGraphRAGSystem:
     
     def __init__(
         self,
-        url: str,
-        content_manifest: ContentManifest,
-        processed_content: ProcessedContentBatch,
-        knowledge_graph: Optional[KnowledgeGraph],
+        url: Optional[str] = None,
+        content_manifest: Optional[ContentManifest] = None,
+        processed_content: Optional[ProcessedContentBatch] = None,
+        knowledge_graph: Optional[Union[KnowledgeGraph, Dict[str, Any]]] = None,
         graphrag: Optional[Any] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        # Support direct testing parameters
+        embeddings: Optional[Dict[str, List[float]]] = None,
+        documents: Optional[Dict[str, Dict[str, Any]]] = None
     ):
         """
         Initialize website GraphRAG system
@@ -103,17 +107,42 @@ class WebsiteGraphRAGSystem:
         Args:
             url: Website URL
             content_manifest: Discovered content manifest
-            processed_content: Processed content batch
-            knowledge_graph: Extracted knowledge graph
+            processed_content: Processed content batch  
+            knowledge_graph: Extracted knowledge graph (KnowledgeGraph object or dict)
             graphrag: GraphRAG integration instance
             metadata: Additional metadata
+            embeddings: Direct embeddings dict for testing
+            documents: Direct documents dict for testing
         """
-        self.url = url
+        self.url = url or "test://example.com"
         self.content_manifest = content_manifest
         self.processed_content = processed_content
-        self.knowledge_graph = knowledge_graph
+        
+        # Handle knowledge graph as dict or object
+        if isinstance(knowledge_graph, dict):
+            # Convert dict to KnowledgeGraph object
+            self.knowledge_graph = KnowledgeGraph()
+            if "entities" in knowledge_graph:
+                for entity_data in knowledge_graph["entities"]:
+                    if isinstance(entity_data, dict):
+                        entity = Entity(
+                            entity_id=entity_data.get("id", str(uuid.uuid4())),
+                            entity_type=entity_data.get("type", "UNKNOWN"),
+                            name=entity_data.get("name", "Unknown"),
+                            confidence=entity_data.get("confidence", 1.0)
+                        )
+                        self.knowledge_graph.add_entity(entity)
+        else:
+            self.knowledge_graph = knowledge_graph
+            
         self.graphrag = graphrag
         self.metadata = metadata or {}
+        
+        # Handle direct test parameters
+        if embeddings:
+            self.embeddings = embeddings
+        if documents:
+            self.documents = documents
         
         # Initialize search capabilities
         self._initialize_search_indexes()
