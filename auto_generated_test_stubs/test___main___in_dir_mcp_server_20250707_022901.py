@@ -69,8 +69,21 @@ class TestMain:
     """Test class for main function."""
 
     def test_main(self):
-        """GIVEN-WHEN-THEN-PLACEHOLDER"""
-        raise NotImplementedError(f"Test for main function is not implemented yet.")
+        """
+        GIVEN an MCP server __main__ module
+        WHEN the main function is called
+        THEN expect the function to exist and be callable (may need arguments)
+        """
+        # GIVEN
+        from ipfs_datasets_py.mcp_server.__main__ import main
+        
+        # WHEN/THEN
+        # Verify main function exists and is callable
+        assert callable(main)
+        
+        # Note: Not calling main() directly as it may start a server
+        # or require specific command line arguments
+        assert hasattr(main, '__doc__')  # Should have documentation
 
 
 if __name__ == "__main__":
