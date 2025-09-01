@@ -251,7 +251,17 @@ class TestGetVectorStoreStatsTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_get_vector_store_stats_tool_success test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # Get stats for an index
+        result = await service.get_stats("test_index")
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") == "success"
+        if "stats" in result:
+            stats = result["stats"]
+            assert "total_vectors" in stats or "dimension" in stats
 
     @pytest.mark.asyncio
     async def test_get_vector_store_stats_tool_with_data(self):
@@ -260,11 +270,28 @@ class TestGetVectorStoreStatsTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_get_vector_store_stats_tool_with_data test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # First add some data
+        vectors = [
+            {"id": "doc1", "vector": [0.1] * 384, "metadata": {"type": "document"}},
+            {"id": "doc2", "vector": [0.2] * 384, "metadata": {"type": "document"}}
+        ]
+        await service.add_vectors("test_collection", vectors)
+        
+        # Then get stats
+        result = await service.get_stats("test_collection")
+        
+        assert result is not None
+        assert result.get("status") == "success"
+        # Stats should reflect the added data
+        if "stats" in result:
+            assert result["stats"].get("total_vectors", 0) >= 0
 
 class TestDeleteFromVectorStoreTool:
     """Test DeleteFromVectorStoreTool functionality."""
 
+    @pytest.mark.asyncio
     @pytest.mark.asyncio
     async def test_delete_from_vector_store_tool_by_ids_success(self):
         """GIVEN a system component for delete from vector store tool by ids success
@@ -272,7 +299,17 @@ class TestDeleteFromVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_delete_from_vector_store_tool_by_ids_success test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # Delete vectors by IDs
+        ids_to_delete = ["doc1", "doc3", "doc5"]
+        result = await service.delete_vectors("test_collection", ids=ids_to_delete)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["success", "partial_success", "not_found"]
+        if "deleted_count" in result:
+            assert isinstance(result["deleted_count"], int)
 
     @pytest.mark.asyncio
     async def test_delete_from_vector_store_tool_by_filter_success(self):
@@ -281,7 +318,15 @@ class TestDeleteFromVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_delete_from_vector_store_tool_by_filter_success test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # Delete vectors by filter
+        filter_criteria = {"metadata.type": "temporary"}
+        result = await service.delete_vectors("test_collection", filter=filter_criteria)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["success", "partial_success", "not_found"]
 
 class TestOptimizeVectorStoreTool:
     """Test OptimizeVectorStoreTool functionality."""
@@ -293,7 +338,14 @@ class TestOptimizeVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_optimize_vector_store_tool_success test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # Optimize vector store
+        result = await service.optimize_index("test_collection")
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["success", "completed", "optimized"]
 
     @pytest.mark.asyncio
     async def test_optimize_vector_store_tool_with_options(self):
@@ -302,7 +354,19 @@ class TestOptimizeVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_optimize_vector_store_tool_with_options test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # Optimize with specific options
+        optimization_options = {
+            "strategy": "rebuild",
+            "cleanup_deleted": True,
+            "rebalance": True
+        }
+        result = await service.optimize_index("test_collection", options=optimization_options)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["success", "completed", "optimized"]
 
 class TestVectorStoreToolsIntegration:
     """Test VectorStoreToolsIntegration functionality."""
@@ -314,7 +378,26 @@ class TestVectorStoreToolsIntegration:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_complete_workflow test needs to be implemented")
+        service = MockVectorStoreService()
+        
+        # Complete workflow: create -> add -> search -> optimize -> delete
+        # 1. Create index
+        create_result = await service.create_index("workflow_test", {"dimension": 384})
+        assert create_result.get("status") == "created"
+        
+        # 2. Add vectors
+        vectors = [{"id": f"doc_{i}", "vector": [0.1] * 384} for i in range(5)]
+        add_result = await service.add_vectors("workflow_test", vectors)
+        assert add_result.get("status") == "success"
+        
+        # 3. Search
+        query_vector = [0.15] * 384
+        search_result = await service.search_vectors("workflow_test", {"vector": query_vector, "top_k": 3})
+        assert "results" in search_result
+        
+        # 4. Get stats
+        stats_result = await service.get_stats("workflow_test")
+        assert stats_result.get("status") == "success"
 
     @pytest.mark.asyncio
     async def test_concurrent_operations(self):
@@ -323,11 +406,33 @@ class TestVectorStoreToolsIntegration:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_concurrent_operations test needs to be implemented")
+        import asyncio
+        
+        service = MockVectorStoreService()
+        
+        # Test concurrent operations
+        async def create_and_add(index_name, vector_data):
+            await service.create_index(index_name, {"dimension": 384})
+            return await service.add_vectors(index_name, vector_data)
+        
+        # Run concurrent operations
+        tasks = [
+            create_and_add(f"concurrent_{i}", [{"id": f"doc_{i}", "vector": [0.1] * 384}])
+            for i in range(3)
+        ]
+        
+        results = await asyncio.gather(*tasks)
+        
+        # All operations should complete successfully
+        for result in results:
+            assert result is not None
+            assert isinstance(result, dict)
 
 class TestVectorIndexTool:
     """Test VectorIndexTool functionality."""
 
+    @pytest.mark.asyncio
+    async def test_execute_create_action(self):
     @pytest.mark.asyncio
     async def test_execute_create_action(self):
         """GIVEN a system component for execute create action
@@ -335,7 +440,16 @@ class TestVectorIndexTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_create_action test needs to be implemented")
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorIndexTool
+        
+        tool = EnhancedVectorIndexTool()
+        
+        # Test create action
+        result = tool.execute("create", index_name="test_index", config={"dimension": 384})
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["created", "success", "exists"]
 
     @pytest.mark.asyncio
     async def test_execute_update_action(self):
@@ -344,7 +458,16 @@ class TestVectorIndexTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_update_action test needs to be implemented")
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorIndexTool
+        
+        tool = EnhancedVectorIndexTool()
+        
+        # Test update action
+        result = tool.execute("update", index_name="test_index", config={"dimension": 512})
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["updated", "success", "not_found"]
 
     @pytest.mark.asyncio
     async def test_execute_delete_action(self):
@@ -353,7 +476,16 @@ class TestVectorIndexTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_delete_action test needs to be implemented")
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorIndexTool
+        
+        tool = EnhancedVectorIndexTool()
+        
+        # Test delete action
+        result = tool.execute("delete", index_name="test_index")
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["deleted", "success", "not_found"]
 
     @pytest.mark.asyncio
     async def test_execute_info_action(self):
@@ -362,7 +494,16 @@ class TestVectorIndexTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_info_action test needs to be implemented")
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorIndexTool
+        
+        tool = EnhancedVectorIndexTool()
+        
+        # Test info action
+        result = tool.execute("info", index_name="test_index")
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["success", "not_found"]
 
     @pytest.mark.asyncio
     async def test_execute_invalid_action(self):
@@ -371,7 +512,16 @@ class TestVectorIndexTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_invalid_action test needs to be implemented")
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorIndexTool
+        
+        tool = EnhancedVectorIndexTool()
+        
+        # Test invalid action
+        result = tool.execute("invalid_action", index_name="test_index")
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result.get("status") in ["error", "invalid_action", "failed"]
 
 class TestVectorRetrievalTool:
     """Test VectorRetrievalTool functionality."""

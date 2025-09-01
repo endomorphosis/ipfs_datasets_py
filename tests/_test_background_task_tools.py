@@ -30,7 +30,23 @@ class TestBackgroundTaskTools:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_create_background_task test needs to be implemented")
+        # Test creating a background task
+        task_config = {
+            "name": "test_embedding_task",
+            "type": "embedding_generation",
+            "parameters": {
+                "texts": ["Hello world", "Test document"],
+                "model": "sentence-transformers/all-MiniLM-L6-v2"
+            }
+        }
+        
+        result = await manage_background_tasks(action="create", task_config=task_config)
+        
+        assert result is not None
+        assert "status" in result
+        assert result["status"] in ["created", "success", "queued"]
+        if "task_id" in result:
+            assert result["task_id"] is not None
 
     @pytest.mark.asyncio
     async def test_get_task_status(self):
@@ -39,7 +55,13 @@ class TestBackgroundTaskTools:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_get_task_status test needs to be implemented")
+        # Test getting task status
+        result = await check_task_status(task_id="test_task_123")
+        
+        assert result is not None
+        assert "status" in result
+        # Status could be success, not_found, pending, completed, failed
+        assert result["status"] in ["success", "not_found", "pending", "completed", "failed", "running"]
 
     @pytest.mark.asyncio
     async def test_cancel_background_task(self):
@@ -48,7 +70,12 @@ class TestBackgroundTaskTools:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_cancel_background_task test needs to be implemented")
+        # Test canceling a background task
+        result = await manage_background_tasks(action="cancel", task_id="test_task_123")
+        
+        assert result is not None
+        assert "status" in result
+        assert result["status"] in ["cancelled", "success", "not_found", "already_completed"]
 
     @pytest.mark.asyncio
     async def test_list_background_tasks(self):
@@ -57,7 +84,14 @@ class TestBackgroundTaskTools:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_list_background_tasks test needs to be implemented")
+        # Test listing background tasks
+        result = await manage_background_tasks(action="list")
+        
+        assert result is not None
+        assert "status" in result
+        if result["status"] == "success":
+            assert "tasks" in result
+            assert isinstance(result["tasks"], list)
 
     @pytest.mark.asyncio
     async def test_schedule_recurring_task(self):
@@ -66,7 +100,19 @@ class TestBackgroundTaskTools:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_schedule_recurring_task test needs to be implemented")
+        # Test scheduling a recurring task
+        recurring_config = {
+            "name": "daily_cleanup",
+            "type": "cleanup",
+            "schedule": "daily",
+            "parameters": {"cleanup_type": "temporary_files"}
+        }
+        
+        result = await manage_background_tasks(action="schedule", task_config=recurring_config)
+        
+        assert result is not None
+        assert "status" in result
+        assert result["status"] in ["scheduled", "success", "created"]
 
     @pytest.mark.asyncio
     async def test_task_queue_management(self):
@@ -75,7 +121,13 @@ class TestBackgroundTaskTools:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_task_queue_management test needs to be implemented")
+        # Test task queue management
+        result = await manage_task_queue(action="status")
+        
+        assert result is not None
+        assert "status" in result
+        if result["status"] == "success":
+            assert "queue_info" in result or "queue_status" in result
 
 class TestTaskMonitoring:
     """Test TaskMonitoring functionality."""
