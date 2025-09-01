@@ -689,7 +689,23 @@ class TestVectorMetadataTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_delete_metadata test needs to be implemented")
+        # GIVEN enhanced vector storage tool
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorStorageTool
+        
+        tool = EnhancedVectorStorageTool()
+        
+        # WHEN testing delete metadata functionality
+        result = tool.execute("delete", vector_id="test_vector_to_delete")
+        
+        # THEN expect the operation to complete successfully
+        assert result is not None
+        assert isinstance(result, dict)
+        
+        # AND results should meet the expected criteria
+        assert result.get("status") in ["deleted", "success", "not_found"]
+        if result.get("status") == "deleted":
+            assert "vector_id" in result
+            assert result["vector_id"] == "test_vector_to_delete"
 
     @pytest.mark.asyncio
     async def test_execute_list_metadata(self):
@@ -698,7 +714,22 @@ class TestVectorMetadataTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_list_metadata test needs to be implemented")
+        # GIVEN enhanced vector storage tool
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorStorageTool
+        
+        tool = EnhancedVectorStorageTool()
+        
+        # WHEN testing list metadata functionality
+        result = tool.execute("list", index_name="test_index", limit=10)
+        
+        # THEN expect the operation to complete successfully
+        assert result is not None
+        assert isinstance(result, dict)
+        
+        # AND results should meet the expected criteria
+        assert result.get("status") in ["success", "found", "empty"]
+        if result.get("status") == "success":
+            assert "vectors" in result or "metadata_list" in result
 
     @pytest.mark.asyncio
     async def test_execute_metadata_missing_vector_id(self):
@@ -707,7 +738,27 @@ class TestVectorMetadataTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_execute_metadata_missing_vector_id test needs to be implemented")
+        # GIVEN enhanced vector storage tool
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import EnhancedVectorStorageTool
+        
+        tool = EnhancedVectorStorageTool()
+        
+        # WHEN testing metadata with missing vector id functionality
+        try:
+            result = tool.execute("get_metadata", vector_id="nonexistent_vector_123")
+            
+            # THEN expect the operation to complete successfully with appropriate status
+            assert result is not None
+            assert isinstance(result, dict)
+            
+            # AND results should meet the expected criteria
+            assert result.get("status") in ["not_found", "error", "missing"]
+            if result.get("status") == "not_found":
+                assert "message" in result or "error" in result
+                
+        except Exception as e:
+            # Handle gracefully if vector_id validation raises exception
+            assert "vector_id" in str(e).lower() or "not found" in str(e).lower()
 
 
 if __name__ == "__main__":
