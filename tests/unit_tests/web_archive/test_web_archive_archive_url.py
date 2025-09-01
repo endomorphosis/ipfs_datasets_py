@@ -160,7 +160,19 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - archive_id follows format "archive_{n}"
         """
-        raise NotImplementedError("test_archive_url_success_without_metadata_archive_id_format test needs to be implemented")
+        # GIVEN valid URL without metadata
+        url = "https://docs.python.org"
+        
+        # WHEN archive_url is called without metadata
+        result = archive.archive_url(url)
+        
+        # THEN archive_id follows format "archive_{n}"
+        assert "archive_id" in result
+        archive_id = result["archive_id"]
+        assert isinstance(archive_id, str)
+        assert archive_id.startswith("archive_")
+        # Should be numeric after "archive_"
+        assert archive_id[8:].isdigit()
 
     def test_archive_url_success_without_metadata_stores_metadata(self, archive):
         """
@@ -170,7 +182,22 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - Metadata stored as empty dict or None
         """
-        raise NotImplementedError("test_archive_url_success_without_metadata_stores_metadata test needs to be implemented")
+        # GIVEN valid URL without metadata
+        url = "https://docs.python.org"
+        
+        # WHEN archive_url is called without metadata
+        result = archive.archive_url(url)
+        
+        # THEN should successfully archive without metadata
+        assert result["status"] == "success"
+        archive_id = result["archive_id"]
+        
+        # Retrieve the archive to check metadata handling
+        archived_item = archive.retrieve_archive(archive_id)
+        assert archived_item["status"] == "success"
+        # Metadata should be empty dict or None
+        metadata = archived_item.get("metadata")
+        assert metadata is None or metadata == {}
 
     def test_archive_url_invalid_url_returns_error_status(self, archive):
         """
@@ -179,7 +206,15 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - Return dict with status="error"
         """
-        raise NotImplementedError("test_archive_url_invalid_url_returns_error_status test needs to be implemented")
+        # GIVEN invalid URL
+        invalid_url = "not-a-valid-url"
+        
+        # WHEN archive_url is called with invalid URL
+        result = archive.archive_url(invalid_url)
+        
+        # THEN return dict with status="error"
+        assert isinstance(result, dict)
+        assert result["status"] == "error"
 
     def test_archive_url_invalid_url_contains_message(self, archive):
         """
@@ -188,7 +223,16 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - Return dict contains message key
         """
-        raise NotImplementedError("test_archive_url_invalid_url_contains_message test needs to be implemented")
+        # GIVEN invalid URL
+        invalid_url = "not-a-valid-url"
+        
+        # WHEN archive_url is called with invalid URL
+        result = archive.archive_url(invalid_url)
+        
+        # THEN return dict contains message key
+        assert "message" in result
+        assert isinstance(result["message"], str)
+        assert len(result["message"]) > 0
 
     def test_archive_url_invalid_url_message_describes_error(self, archive):
         """
@@ -197,7 +241,16 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - message describes the error
         """
-        raise NotImplementedError("test_archive_url_invalid_url_message_describes_error test needs to be implemented")
+        # GIVEN invalid URL
+        invalid_url = "not-a-valid-url"
+        
+        # WHEN archive_url is called with invalid URL
+        result = archive.archive_url(invalid_url)
+        
+        # THEN message describes the error
+        assert result["status"] == "error"
+        message = result.get("message", "").lower()
+        assert "url" in message or "invalid" in message or "format" in message
 
     def test_archive_url_invalid_url_no_archive_id(self, archive):
         """
@@ -206,7 +259,15 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - No archive_id in return dict
         """
-        raise NotImplementedError("test_archive_url_invalid_url_no_archive_id test needs to be implemented")
+        # GIVEN invalid URL
+        invalid_url = "not-a-valid-url"
+        
+        # WHEN archive_url is called with invalid URL
+        result = archive.archive_url(invalid_url)
+        
+        # THEN no archive_id in return dict for error case
+        assert result["status"] == "error"
+        assert "archive_id" not in result
 
     def test_archive_url_return_structure_success_contains_status(self, archive):
         """
