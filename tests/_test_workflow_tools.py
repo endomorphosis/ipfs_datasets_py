@@ -354,7 +354,29 @@ class TestWorkflowOrchestration:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_parallel_workflow_steps test needs to be implemented")
+        # GIVEN a workflow system with parallel steps
+        from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import create_workflow, run_workflow
+        
+        # WHEN testing parallel workflow steps functionality
+        workflow_config = {
+            "name": "parallel_test_workflow",
+            "steps": [
+                {"id": "step1", "action": "embedding", "parallel": True},
+                {"id": "step2", "action": "indexing", "parallel": True},
+                {"id": "step3", "action": "validation", "depends_on": ["step1", "step2"]}
+            ]
+        }
+        
+        create_result = await create_workflow("parallel_workflow_123", workflow_config)
+        run_result = await run_workflow("parallel_workflow_123")
+        
+        # THEN expect the operation to complete successfully
+        assert create_result["status"] in ["created", "success", "exists"]
+        assert run_result["status"] in ["running", "success", "completed"]
+        
+        # AND results should meet the expected criteria
+        if "parallel_execution" in run_result:
+            assert isinstance(run_result["parallel_execution"], bool)
 
     @pytest.mark.asyncio
     async def test_workflow_error_handling(self):
@@ -363,7 +385,19 @@ class TestWorkflowOrchestration:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_workflow_error_handling test needs to be implemented")
+        # GIVEN a workflow system with error scenarios
+        from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import run_workflow
+        
+        # WHEN testing workflow error handling functionality
+        result = await run_workflow("nonexistent_workflow_999")
+        
+        # THEN expect the operation to complete successfully
+        assert result is not None
+        assert isinstance(result, dict)
+        
+        # AND results should meet the expected criteria (error handling)
+        assert result["status"] in ["error", "not_found", "failed"]
+        assert "message" in result or "error" in result
 
 class TestWorkflowMonitoring:
     """Test WorkflowMonitoring functionality."""
@@ -375,7 +409,24 @@ class TestWorkflowMonitoring:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_get_workflow_logs test needs to be implemented")
+        # GIVEN a workflow logging system
+        from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import get_workflow_status, list_workflows
+        
+        # WHEN testing get workflow logs functionality
+        status_result = await get_workflow_status("test_workflow_logs")
+        list_result = await list_workflows(include_logs=True)
+        
+        # THEN expect the operation to complete successfully
+        assert status_result is not None
+        assert list_result is not None
+        
+        # AND results should meet the expected criteria
+        assert isinstance(status_result, dict)
+        assert isinstance(list_result, dict)
+        if "logs" in status_result:
+            assert isinstance(status_result["logs"], list)
+        if "workflows" in list_result:
+            assert isinstance(list_result["workflows"], list)
 
     @pytest.mark.asyncio
     async def test_workflow_metrics(self):
@@ -384,7 +435,24 @@ class TestWorkflowMonitoring:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_workflow_metrics test needs to be implemented")
+        # GIVEN a workflow metrics system
+        from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import get_workflow_metrics
+        
+        # WHEN testing workflow metrics functionality
+        result = await get_workflow_metrics(
+            workflow_id="test_workflow_metrics",
+            include_performance=True,
+            time_range="1h"
+        )
+        
+        # THEN expect the operation to complete successfully
+        assert result is not None
+        assert isinstance(result, dict)
+        
+        # AND results should meet the expected criteria
+        assert "status" in result or "metrics" in result
+        if "metrics" in result:
+            assert isinstance(result["metrics"], dict)
 
     @pytest.mark.asyncio
     async def test_workflow_alerts(self):
