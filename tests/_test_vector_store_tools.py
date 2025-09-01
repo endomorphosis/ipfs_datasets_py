@@ -31,7 +31,22 @@ class TestCreateVectorStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_create_vector_store_tool_success test needs to be implemented")
+        # Test MockVectorStoreService functionality
+        service = MockVectorStoreService()
+        
+        # Create a vector store with proper config format
+        config = {
+            "dimension": 384,
+            "metric": "cosine",
+            "index_type": "faiss"
+        }
+        result = await service.create_index("test_index", config)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        # Mock service should return success indication
+        assert result.get("status") == "created"
+        assert result.get("index_name") == "test_index"
 
     @pytest.mark.asyncio
     async def test_create_vector_store_tool_with_config(self):
@@ -52,7 +67,34 @@ class TestAddEmbeddingsToStoreTool:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        raise NotImplementedError("test_add_embeddings_to_store_tool_success test needs to be implemented")
+        # Test adding embeddings to mock service using add_vectors
+        service = MockVectorStoreService()
+        
+        # Create index first
+        config = {"dimension": 384, "metric": "cosine"}
+        await service.create_index("test_index", config)
+        
+        # Add some embeddings as vectors
+        import numpy as np
+        embeddings = np.random.rand(5, 384).tolist()  # 5 embeddings of dimension 384
+        
+        # Format vectors for the add_vectors method
+        vectors = []
+        for i, embedding in enumerate(embeddings):
+            vectors.append({
+                "id": f"doc_{i}",
+                "vector": embedding,
+                "metadata": {"text": f"Text sample {i}"}
+            })
+        
+        result = await service.add_vectors("test_collection", vectors)
+        
+        assert result is not None
+        assert isinstance(result, dict)
+        # Mock service should indicate successful addition
+        assert result.get("status") == "added"
+        assert result.get("collection") == "test_collection"
+        assert result.get("count") == 5
 
     @pytest.mark.asyncio
     async def test_add_embeddings_to_store_tool_batch(self):

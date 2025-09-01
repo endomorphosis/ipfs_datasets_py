@@ -53,7 +53,16 @@ class TestFastAPIService:
         THEN expect status code 200
         AND response JSON should contain 'status' field
         """
-        raise NotImplementedError("test_health_endpoint test needs to be implemented")
+        from fastapi.testclient import TestClient
+        from ipfs_datasets_py.fastapi_service import app
+        
+        client = TestClient(app)
+        response = client.get("/health")
+        
+        assert response.status_code == 200
+        response_json = response.json()
+        assert "status" in response_json
+        assert response_json["status"] in ["healthy", "ok"]
 
     @pytest.mark.asyncio
     async def test_authentication_endpoint(self):
@@ -63,7 +72,24 @@ class TestFastAPIService:
         THEN expect status code to be 200, 401, or 422
         AND response should handle authentication appropriately
         """
-        raise NotImplementedError("test_authentication_endpoint test needs to be implemented")
+        from fastapi.testclient import TestClient
+        from ipfs_datasets_py.fastapi_service import app
+        
+        client = TestClient(app)
+        
+        # Test with valid credentials (should accept any for demo)
+        response = client.post("/auth/login", json={
+            "username": "test_user",
+            "password": "test_password"
+        })
+        
+        # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
+        assert response.status_code in [200, 401, 422]
+        
+        if response.status_code == 200:
+            response_json = response.json()
+            # Should have token or similar auth response
+            assert "access_token" in response_json or "token" in response_json or "message" in response_json
 
 
 class TestFastAPIEmbeddingEndpoints:
@@ -77,7 +103,26 @@ class TestFastAPIEmbeddingEndpoints:
         THEN expect status code to be 200, 401, or 422
         AND request should handle embedding generation appropriately
         """
-        raise NotImplementedError("test_generate_embeddings_endpoint test needs to be implemented")
+        from fastapi.testclient import TestClient
+        from ipfs_datasets_py.fastapi_service import app
+        
+        client = TestClient(app)
+        
+        # Test embedding generation with sample data
+        test_data = {
+            "texts": ["Hello world", "This is a test"],
+            "model": "all-MiniLM-L6-v2"
+        }
+        
+        response = client.post("/embeddings/generate", json=test_data)
+        
+        # Should be 200 (success), 401 (unauthorized), or 422 (validation error)
+        assert response.status_code in [200, 401, 422]
+        
+        if response.status_code == 200:
+            response_json = response.json()
+            # Should have embeddings or similar response
+            assert "embeddings" in response_json or "data" in response_json or "result" in response_json
 
     @pytest.mark.asyncio
     async def test_search_embeddings_endpoint(self):
