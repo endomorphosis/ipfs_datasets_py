@@ -1,0 +1,146 @@
+[
+  {
+    "prover": "z3",
+    "statement": "O[board_of_directors](exercise_diligent_oversight)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.008439779281616211,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_3085c99c4f62.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O[directors](each_individual_director_has_a_personal_fiduciary)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.007775783538818359,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_cbf882edd050.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O[audit_committee](be_comprised_entirely_of_independent_directors)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.008010625839233398,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_56c272c2db2c.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O[employers](provide_a_workplace_that_is_free_from_recognized_hazards)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.007671833038330078,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_88b16435f06a.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "P[employees](all_employees_have_the_right_to_organize_form_jo)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.007917642593383789,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_08f7de2b59ae.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O[agent_1894](exercise_diligent_oversight_of_the_corporations_operations)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.007634162902832031,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_6b808fa45d63.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O(has_a_personal_fiduciary_duty_to_exercise_reasonab)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.0077745914459228516,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_35daaa98c09e.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O(provide_a_workplace_that_is_free_from_recognized_hazards)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.008231163024902344,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_3028299f16ab.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "F(are_prohibited_from_discriminating_against_employe)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.007944345474243164,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_09da4e8a7409.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "P(have_the_right_to_organize_form_join_or_assist)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.007686138153076172,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_7bdcce2f2e7a.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O(comply_with_all_applicable_export_control_laws)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.00820469856262207,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_aef8bc573097.smt2"
+    }
+  },
+  {
+    "prover": "z3",
+    "statement": "O(implement_appropriate_technical_and_organizational_measures)",
+    "status": "success",
+    "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+    "execution_time": 0.008784294128417969,
+    "errors": [],
+    "warnings": [],
+    "metadata": {
+      "smt_file": "/tmp/ipfs_proofs/formula_957a99a4fe52.smt2"
+    }
+  }
+]

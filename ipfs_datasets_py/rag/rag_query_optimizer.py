@@ -71,13 +71,49 @@ import logging
 import time
 import hashlib
 import json
-import numpy as np
 import re
 import os
 import csv
 import uuid
-import psutil
 import datetime
+
+# Optional dependencies with graceful fallbacks
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    HAVE_NUMPY = False
+    # Provide minimal numpy-like functionality for basic operations
+    class MockNumpy:
+        @staticmethod
+        def array(x):
+            return list(x) if hasattr(x, '__iter__') else [x]
+        @staticmethod
+        def mean(x):
+            return sum(x) / len(x) if x else 0
+        @staticmethod
+        def std(x):
+            if not x:
+                return 0
+            mean_val = sum(x) / len(x)
+            variance = sum((val - mean_val) ** 2 for val in x) / len(x)
+            return variance ** 0.5
+    np = MockNumpy()
+
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:
+    HAVE_PSUTIL = False
+    # Mock psutil for basic functionality
+    class MockPsutil:
+        @staticmethod
+        def virtual_memory():
+            return type('Memory', (), {'percent': 50, 'available': 1000000000})()
+        @staticmethod
+        def cpu_percent():
+            return 25.0
+    psutil = MockPsutil()
 import copy
 import math
 from io import StringIO

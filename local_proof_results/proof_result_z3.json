@@ -1,0 +1,12 @@
+{
+  "prover": "z3",
+  "statement": "O[audit_committee](establish_an_audit_committee_comprised_of_independent_directors)",
+  "status": "success",
+  "proof_output": "unsupported\nsat\n(\n  ;; universe for Proposition:\n  ;;   Proposition!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Proposition!val!0 () Proposition)\n  ;; cardinality constraint:\n  (forall ((x Proposition)) (= x Proposition!val!0))\n  ;; -----------\n  ;; universe for Agent:\n  ;;   Agent!val!0 \n  ;; -----------\n  ;; definitions for universe elements:\n  (declare-fun Agent!val!0 () Agent)\n  ;; cardinality constraint:\n  (forall ((x Agent)) (= x Agent!val!0))\n  ;; -----------\n  (define-fun Forbidden ((x!0 Agent) (x!1 Proposition)) Bool\n    false)\n  (define-fun Obligatory ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n  (define-fun Permitted ((x!0 Agent) (x!1 Proposition)) Bool\n    true)\n)",
+  "execution_time": 0.008967161178588867,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "smt_file": "local_proof_results/proofs/formula_3226fa1ad1de.smt2"
+  }
+}

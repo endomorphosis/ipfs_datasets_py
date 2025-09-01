@@ -13,7 +13,14 @@ from typing import Any, Callable, Optional
 # from types import ModuleType
 # from functools import partial
 
-import nltk
+# Import NLTK with graceful fallback
+try:
+    import nltk
+    HAVE_NLTK = True
+except ImportError:
+    nltk = None
+    HAVE_NLTK = False
+    print("Info: TextProcessor using basic text processing (NLTK not available)")
 # from nltk.tokenize import sent_tokenize
 
 class TextProcessor:
@@ -158,7 +165,7 @@ class TextProcessor:
     def __init__(self, 
                  stop_words: Optional[set[str]] = None,
                  logger: logging.Logger = logging.getLogger(__name__),
-                 sent_tokenize: Callable = nltk.tokenize.sent_tokenize,
+                 sent_tokenize: Optional[Callable] = None,
                  ):
         """
         Initialize Text Processing Utility with Comprehensive Language Resources
@@ -217,12 +224,30 @@ class TextProcessor:
         if not isinstance(logger, logging.Logger):
             raise TypeError("logger must be an instance of logging.Logger")
 
-        if not inspect.isfunction(sent_tokenize):
+        # Set up sent_tokenize function with fallback
+        if sent_tokenize is None:
+            if HAVE_NLTK:
+                try:
+                    sent_tokenize = nltk.tokenize.sent_tokenize
+                except AttributeError:
+                    # Fallback if nltk doesn't have tokenize
+                    sent_tokenize = self._basic_sentence_tokenize
+            else:
+                sent_tokenize = self._basic_sentence_tokenize
+
+        if not callable(sent_tokenize):
             raise TypeError("sent_tokenize must be a callable function")
 
         self.logger = logger
         self.stop_words = stop_words if stop_words is not None else self.STOP_WORDS
         self.sent_tokenize = sent_tokenize
+    
+    def _basic_sentence_tokenize(self, text: str) -> list[str]:
+        """Basic sentence tokenization when NLTK is not available."""
+        # Simple sentence splitting on common sentence endings
+        import re
+        sentences = re.split(r'[.!?]+', text)
+        return [s.strip() for s in sentences if s.strip()]
 
     def clean_text(self, text: str) -> str:
         """Clean and normalize text."""

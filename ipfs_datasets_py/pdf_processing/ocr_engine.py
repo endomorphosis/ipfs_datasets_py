@@ -8,14 +8,78 @@ from abc import ABC, abstractmethod
 
 import logging
 import io
-import numpy as np
 from typing import Dict, List, Any
-from cachetools import cached
 
-from PIL import Image
-import cv2
+# Import dependencies with automated installation
+from ipfs_datasets_py.auto_installer import ensure_module
+
+# Install required dependencies
+numpy = ensure_module('numpy', 'numpy')
+np = numpy if numpy else type('MockNumpy', (), {
+    'array': staticmethod(lambda data: list(data) if hasattr(data, '__iter__') else [data])
+})()
+HAVE_NUMPY = numpy is not None
+
+cachetools_module = ensure_module('cachetools', 'cachetools')
+if cachetools_module:
+    from cachetools import cached
+    HAVE_CACHETOOLS = True
+else:
+    # Mock cachetools.cached decorator
+    def cached(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    HAVE_CACHETOOLS = False
+
+pil_module = ensure_module('PIL', 'pillow')
+if pil_module:
+    from PIL import Image
+    HAVE_PIL = True
+else:
+    # Mock PIL Image
+    class MockImage:
+        class Image:
+            def save(self, path):
+                pass
+            def convert(self, mode):
+                return self
+        
+        @staticmethod
+        def open(file):
+            return MockImage.Image()
+        @staticmethod
+        def fromarray(arr):
+            return MockImage.Image()
+        
+        # Make the module itself accessible as Image.Image
+        Image = Image
+        
+    Image = MockImage()
+    Image.Image = MockImage.Image  # Add the nested attribute
+    HAVE_PIL = False
+
+cv2 = ensure_module('cv2', 'opencv-python')
+if cv2:
+    HAVE_CV2 = True
+else:
+    # Mock cv2
+    class MockCV2:
+        @staticmethod
+        def imread(path):
+            return None
+        @staticmethod
+        def cvtColor(img, code):
+            return img
+        COLOR_BGR2RGB = 1
+    cv2 = MockCV2()
+    HAVE_CV2 = False
 
 logger = logging.getLogger(__name__)
+if not HAVE_NUMPY or not HAVE_PIL or not HAVE_CV2:
+    logger.warning(f"OCR dependencies partially available: numpy={HAVE_NUMPY}, PIL={HAVE_PIL}, cv2={HAVE_CV2}")
+else:
+    logger.info("✅ All OCR dependencies successfully installed and available")
 
 
 
