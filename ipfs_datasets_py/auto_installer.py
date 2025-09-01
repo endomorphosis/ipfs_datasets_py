@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 class DependencyInstaller:
     """Cross-platform dependency installer that replaces mock implementations"""
     
-    def __init__(self, auto_install: bool = True, verbose: bool = False):
+    def __init__(self, auto_install: bool = None, verbose: bool = False):
+        # Check environment variable first, then parameter, default to False
+        if auto_install is None:
+            auto_install = os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
         self.auto_install = auto_install
         self.verbose = verbose
         self.system = platform.system().lower()

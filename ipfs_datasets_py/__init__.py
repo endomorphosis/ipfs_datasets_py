@@ -237,8 +237,9 @@ try:
 except ImportError:
     HAVE_IPWB = False
 
-# PDF Processing Components with automated dependency installation
-if installer.auto_install:
+# PDF Processing Components with conditional automated dependency installation
+import os
+if installer.auto_install and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true':
     print("🔧 Installing PDF processing dependencies...")
     from .auto_installer import install_for_component
     install_for_component('pdf')
