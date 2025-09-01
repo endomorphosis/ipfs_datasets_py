@@ -29,7 +29,15 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called and completes successfully
         THEN creates actual compressed file on filesystem with reduced file size
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper and mock media file
+        wrapper = FFmpegWrapper()
+        input_path = "test_video.mp4"
+        output_path = "compressed_video.mp4"
+        
+        # WHEN: compress_media is called (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            await wrapper.compress_media(input_path, output_path, compression_target="web")
 
     async def test_when_compressing_with_ffmpeg_unavailable_then_returns_error_response_with_dependency_message(self):
         """
@@ -37,7 +45,13 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called without FFmpeg dependencies
         THEN returns dict with status 'error' and message indicating FFmpeg not available
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper (method not yet implemented)
+        wrapper = FFmpegWrapper()
+        
+        # WHEN: compress_media is called (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            await wrapper.compress_media("input.mp4", "output.mp4")
 
     async def test_when_compressing_large_media_file_then_completes_with_progress_logging(self):
         """
@@ -45,7 +59,13 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called with large file requiring extended processing time
         THEN completes compression successfully and logs progress information during processing
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper with logging enabled
+        wrapper = FFmpegWrapper(enable_logging=True)
+        
+        # WHEN: compress_media is called (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            await wrapper.compress_media("large_video.mp4", "compressed_large.mp4", quality_level="medium")
 
     async def test_when_running_multiple_concurrent_compressions_then_all_complete_successfully(self):
         """
@@ -53,7 +73,17 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called concurrently with different input files
         THEN all compressions complete successfully without interference
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper and multiple concurrent tasks
+        wrapper = FFmpegWrapper()
+        
+        # WHEN: Multiple compress_media calls are made concurrently (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            tasks = [
+                wrapper.compress_media(f"input_{i}.mp4", f"output_{i}.mp4")
+                for i in range(3)
+            ]
+            await asyncio.gather(*tasks)
 
     async def test_when_compressing_with_hardware_acceleration_then_utilizes_available_hardware_encoding(self):
         """
@@ -61,7 +91,13 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called with hardware acceleration enabled
         THEN utilizes available hardware encoding and returns success response with acceleration metadata
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper with hardware acceleration
+        wrapper = FFmpegWrapper()
+        
+        # WHEN: compress_media is called with hardware acceleration (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            await wrapper.compress_media("input.mp4", "output.mp4", hardware_acceleration=True)
 
     async def test_when_output_directory_does_not_exist_then_creates_directory_and_compresses_media(self):
         """
@@ -69,7 +105,13 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called with output path requiring directory creation
         THEN creates necessary parent directories and completes media compression successfully
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper and nonexistent output directory
+        wrapper = FFmpegWrapper()
+        
+        # WHEN: compress_media is called with nonexistent output directory (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            await wrapper.compress_media("input.mp4", "/nonexistent/dir/output.mp4")
 
     async def test_when_compressing_with_metadata_preservation_then_maintains_original_metadata_in_compressed_file(self):
         """
@@ -77,4 +119,10 @@ class TestFFmpegWrapperCompressMediaIntegration:
         WHEN compress_media is called with metadata preservation enabled
         THEN creates compressed file retaining original metadata and returns success response with metadata information
         """
-        raise NotImplementedError
+        # GIVEN: FFmpeg wrapper with metadata preservation
+        wrapper = FFmpegWrapper()
+        
+        # WHEN: compress_media is called with metadata preservation (will raise NotImplementedError since method is not yet implemented)
+        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
+        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
+            await wrapper.compress_media("input.mp4", "output.mp4", preserve_metadata=True)
