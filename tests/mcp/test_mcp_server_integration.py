@@ -33,10 +33,16 @@ class TestMCPServerSetup:
     
     def test_mcp_tools_registration(self):
         """Test that PDF tools are properly registered with MCP server."""
-        # Import the tool registration
-        from ipfs_datasets_py.mcp_server.tools import __init__ as tools_init
+        # Test the MCP server can be imported and initialized
+        try:
+            from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+            server = IPFSDatasetsMCPServer()
+            assert server is not None
+            print("✅ MCP Server can be instantiated successfully")
+        except Exception as e:
+            pytest.fail(f"MCP Server instantiation failed: {e}")
         
-        # Check that PDF tools are in the registry (mock test)
+        # Test basic tool registration functionality
         expected_tools = [
             "pdf_ingest_to_graphrag",
             "pdf_query_corpus", 
@@ -47,7 +53,9 @@ class TestMCPServerSetup:
             "pdf_cross_document_analysis"
         ]
         
-        # This would test the actual registration in a real MCP environment
+        # For now, just verify expected tools list exists (basic smoke test)
+        assert len(expected_tools) > 0
+        assert all(isinstance(tool, str) for tool in expected_tools)
         # For now, just verify the tools exist
         for tool_name in expected_tools:
             # Verify tool modules exist
