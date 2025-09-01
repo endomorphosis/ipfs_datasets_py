@@ -19,7 +19,19 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - processed_at field contains ISO 8601 timestamp
         """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_contains_processed_at_field test needs to be implemented")
+        # GIVEN valid HTML content and metadata
+        html_content = "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
+        metadata = {"source": "crawler", "depth": 2}
+        
+        # WHEN process_html_content is called
+        result = processor.process_html_content(html_content, metadata)
+        
+        # THEN processed_at field contains ISO 8601 timestamp
+        assert "processed_at" in result
+        assert isinstance(result["processed_at"], str)
+        # Verify ISO 8601 format (basic validation)
+        assert "T" in result["processed_at"]
+        assert len(result["processed_at"]) >= 19  # Basic format check
 
     def test_process_html_content_success_without_metadata_returns_success_status(self, processor):
         """
@@ -29,7 +41,15 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - Return dict with status="success"
         """
-        raise NotImplementedError("test_process_html_content_success_without_metadata_returns_success_status test needs to be implemented")
+        # GIVEN valid HTML content with no metadata
+        html_content = "<html><body><h1>Test</h1><p>Sample content</p></body></html>"
+        
+        # WHEN process_html_content is called
+        result = processor.process_html_content(html_content)
+        
+        # THEN return dict with status="success"
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
 
     def test_process_html_content_success_without_metadata_contains_empty_metadata(self, processor):
         """
@@ -39,7 +59,15 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - metadata field contains empty dict
         """
-        raise NotImplementedError("test_process_html_content_success_without_metadata_contains_empty_metadata test needs to be implemented")
+        # GIVEN valid HTML content with no metadata
+        html_content = "<html><body><h1>Test</h1><p>Sample content</p></body></html>"
+        
+        # WHEN process_html_content is called
+        result = processor.process_html_content(html_content)
+        
+        # THEN metadata field contains empty dict
+        assert "metadata" in result
+        assert result["metadata"] == {}
 
     def test_process_html_content_success_without_metadata_populates_other_fields(self, processor):
         """
@@ -49,7 +77,21 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - All other fields populated according to specification
         """
-        raise NotImplementedError("test_process_html_content_success_without_metadata_populates_other_fields test needs to be implemented")
+        # GIVEN valid HTML content with no metadata
+        html_content = "<html><body><h1>Test</h1><p>Sample content</p></body></html>"
+        
+        # WHEN process_html_content is called
+        result = processor.process_html_content(html_content)
+        
+        # THEN all other fields populated
+        assert "status" in result
+        assert "text" in result
+        assert "html_length" in result
+        assert "text_length" in result
+        assert "processed_at" in result
+        assert isinstance(result["text"], str)
+        assert isinstance(result["html_length"], int)
+        assert isinstance(result["text_length"], int)
 
     def test_process_html_content_return_structure_success_contains_status(self, processor):
         """
@@ -58,7 +100,14 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - status: "success"
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_status test needs to be implemented")
+        # GIVEN valid HTML content
+        html_content = "<html><body><p>Test content</p></body></html>"
+        
+        # WHEN process_html_content is called and succeeds
+        result = processor.process_html_content(html_content)
+        
+        # THEN status is "success"
+        assert result["status"] == "success"
 
     def test_process_html_content_return_structure_success_contains_text(self, processor):
         """
@@ -67,7 +116,16 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - text: string with extracted plain text
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_text test needs to be implemented")
+        # GIVEN HTML content with tags
+        html_content = "<html><body><h1>Title</h1><p>Content paragraph</p></body></html>"
+        
+        # WHEN process_html_content is called and succeeds
+        result = processor.process_html_content(html_content)
+        
+        # THEN text field contains extracted plain text
+        assert "text" in result
+        assert isinstance(result["text"], str)
+        assert len(result["text"]) > 0  # Should contain extracted text
 
     def test_process_html_content_return_structure_success_contains_html_length(self, processor):
         """
@@ -76,7 +134,17 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - html_length: integer original HTML size in bytes
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_html_length test needs to be implemented")
+        # GIVEN HTML content with known length
+        html_content = "<html><body><p>Test</p></body></html>"
+        expected_length = len(html_content)
+        
+        # WHEN process_html_content is called and succeeds
+        result = processor.process_html_content(html_content)
+        
+        # THEN html_length matches original HTML size
+        assert "html_length" in result
+        assert isinstance(result["html_length"], int)
+        assert result["html_length"] == expected_length
 
     def test_process_html_content_return_structure_success_contains_text_length(self, processor):
         """
@@ -148,7 +216,40 @@ class TestWebArchiveProcessorProcessHtmlContent:
         THEN expect:
             - text field contains plain text with markup removed
         """
-        raise NotImplementedError("test_process_html_content_text_extraction_removes_markup test needs to be implemented")
+        # GIVEN HTML with markup, scripts, and styles
+        html_content = """
+        <html>
+            <head>
+                <script>console.log('test');</script>
+                <style>body { color: red; }</style>
+            </head>
+            <body>
+                <h1>Title</h1>
+                <p>Plain text content</p>
+                <script>alert('more js');</script>
+            </body>
+        </html>
+        """
+        
+        # WHEN process_html_content is called
+        result = processor.process_html_content(html_content)
+        
+        # THEN text field contains plain text with markup removed
+        assert "text" in result
+        text = result["text"]
+        
+        # Verify markup removed
+        assert "<" not in text
+        assert ">" not in text
+        
+        # Verify scripts/styles excluded
+        assert "console.log" not in text
+        assert "color: red" not in text
+        assert "alert" not in text
+        
+        # Verify actual content preserved
+        assert "Title" in text
+        assert "Plain text content" in text
 
     def test_process_html_content_text_extraction_excludes_scripts(self, processor):
         """

@@ -19,7 +19,16 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - Return dict with status="success"
         """
-        raise NotImplementedError("test_archive_url_success_with_metadata_returns_success_status test needs to be implemented")
+        # GIVEN valid URL and metadata
+        url = "https://example.com"
+        metadata = {"type": "documentation", "priority": "high"}
+        
+        # WHEN archive_url is called
+        result = archive.archive_url(url, metadata)
+        
+        # THEN return dict with status="success"
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
 
     def test_archive_url_success_with_metadata_contains_archive_id(self, archive):
         """
@@ -29,7 +38,16 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - Return dict contains archive_id key
         """
-        raise NotImplementedError("test_archive_url_success_with_metadata_contains_archive_id test needs to be implemented")
+        # GIVEN valid URL and metadata
+        url = "https://example.com"
+        metadata = {"type": "documentation", "priority": "high"}
+        
+        # WHEN archive_url is called
+        result = archive.archive_url(url, metadata)
+        
+        # THEN return dict contains archive_id key
+        assert "archive_id" in result
+        assert isinstance(result["archive_id"], str)
 
     def test_archive_url_success_with_metadata_archive_id_format(self, archive):
         """
@@ -39,7 +57,19 @@ class TestWebArchiveArchiveUrl:
         THEN expect:
             - archive_id follows format "archive_{n}"
         """
-        raise NotImplementedError("test_archive_url_success_with_metadata_archive_id_format test needs to be implemented")
+        # GIVEN valid URL and metadata
+        url = "https://example.com"
+        metadata = {"type": "documentation", "priority": "high"}
+        
+        # WHEN archive_url is called
+        result = archive.archive_url(url, metadata)
+        
+        # THEN archive_id follows format "archive_{n}"
+        archive_id = result["archive_id"]
+        assert archive_id.startswith("archive_")
+        # Extract the numeric part and verify it's a number
+        numeric_part = archive_id.replace("archive_", "")
+        assert numeric_part.isdigit()
 
     def test_archive_url_success_with_metadata_stores_url(self, archive):
         """
