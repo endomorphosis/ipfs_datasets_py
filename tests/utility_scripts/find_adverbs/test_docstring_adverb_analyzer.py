@@ -98,7 +98,29 @@ class TestMainControlFlow:
             - SystemExit raised with appropriate code
             - Processing stops at validation step
         """
-        raise NotImplementedError("test_main_file_validation_failure test needs to be implemented")
+    def test_main_file_validation_failure(self):
+        """
+        GIVEN _validate_file_system raises SystemExit with code 1-3 or 5
+        WHEN main() is called
+        THEN expect:
+            - SystemExit raised with appropriate code
+            - Processing stops at validation step
+        """
+        # GIVEN validation failure
+        with patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._parse_arguments') as mock_parse, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._validate_file_system') as mock_validate:
+            
+            mock_parse.return_value = {"file_path": "nonexistent.py"}
+            mock_validate.side_effect = SystemExit(1)  # File not found
+            
+            # WHEN main() is called
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            
+            # THEN SystemExit raised with appropriate code
+            assert exc_info.value.code == 1
+            mock_parse.assert_called_once()
+            mock_validate.assert_called_once()
 
     def test_main_dependency_validation_failure(self):
         """
@@ -108,7 +130,31 @@ class TestMainControlFlow:
             - SystemExit raised with appropriate code
             - Processing stops at dependency validation
         """
-        raise NotImplementedError("test_main_dependency_validation_failure test needs to be implemented")
+    def test_main_dependency_validation_failure(self):
+        """
+        GIVEN _validate_dependencies raises SystemExit with code 6 or 7
+        WHEN main() is called
+        THEN expect:
+            - SystemExit raised with appropriate code
+            - Processing stops at dependency validation
+        """
+        # GIVEN dependency validation failure
+        with patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._parse_arguments') as mock_parse, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._validate_file_system') as mock_validate_fs, \
+             patch('tests.utility_scripts.find_adverbs.docstring_adverb_analyzer._validate_dependencies') as mock_validate_deps:
+            
+            mock_parse.return_value = {"file_path": "test.py"}
+            mock_validate_deps.side_effect = SystemExit(7)  # NLTK not installed
+            
+            # WHEN main() is called
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            
+            # THEN SystemExit raised with appropriate code
+            assert exc_info.value.code == 7
+            mock_parse.assert_called_once()
+            mock_validate_fs.assert_called_once()
+            mock_validate_deps.assert_called_once()
 
     def test_main_unexpected_exception(self):
         """
