@@ -70,6 +70,11 @@ else:
             mean_val = sum(data) / len(data)
             variance = sum((x - mean_val) ** 2 for x in data) / len(data)
             return variance ** 0.5
+        
+        # Add ndarray class for type hints
+        class ndarray:
+            def __init__(self, data=None):
+                self.data = list(data) if data and hasattr(data, '__iter__') else []
     np = MockNumpy()
 
 # Install NLTK with fallback functionality
