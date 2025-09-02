@@ -34,10 +34,8 @@ class TestCreateVectorStoreTool:
     # The tests for the class-based tools (VectorIndexTool, etc.) will be added below.
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_create_vector_store_tool_success(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_create_vector_store_tool_success(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test successful vector store creation using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service # Ensure patch returns the mock service
 
         store_path = Path(temp_dir) / "test_store"
         dimension = 384
@@ -53,19 +51,17 @@ class TestCreateVectorStoreTool:
 
         assert result["success"] is True
         assert "store_id" in result
-        # The function-based tool might return slightly different structure,
-        # adapting assertions based on the mock implementation in conftest.py
-        assert result["store_id"] == "mock_store_id" # Based on mock return value
-
-        # Verify the underlying service method was called
-        mock_vector_service.create_index.assert_called_once_with(ANY, ANY) # Assuming create_index is called with index_name and config
+        # Check that store_id is a valid UUID string
+        import uuid
+        uuid.UUID(result["store_id"])  # Will raise ValueError if not valid UUID
+        assert result["store_path"] == str(store_path)
+        assert result["dimension"] == dimension
+        assert result["provider"] == provider
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_create_vector_store_tool_with_config(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_create_vector_store_tool_with_config(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test vector store creation with custom config using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_path = Path(temp_dir) / "test_store_config"
         dimension = 768
@@ -138,10 +134,8 @@ class TestAddEmbeddingsToStoreTool:
         return [{"id": i, "text": f"sample text {i}"} for i in range(10)]
     
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_add_embeddings_to_store_tool_success(self, mock_service_class, mock_vector_service, temp_dir, sample_embeddings, sample_metadata): # Updated test name and fixtures
+    async def test_add_embeddings_to_store_tool_success(self, mock_vector_service, temp_dir, sample_embeddings, sample_metadata): # Updated test name and fixtures
         """Test successful embeddings addition using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id" # Use the mock store ID
 
@@ -161,10 +155,8 @@ class TestAddEmbeddingsToStoreTool:
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_add_embeddings_to_store_tool_batch(self, mock_service_class, mock_vector_service, temp_dir, sample_embeddings, sample_metadata): # Updated test name and fixtures
+    async def test_add_embeddings_to_store_tool_batch(self, mock_vector_service, temp_dir, sample_embeddings, sample_metadata): # Updated test name and fixtures
         """Test adding embeddings in batches using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
         batch_size = 5
@@ -271,10 +263,8 @@ class TestSearchVectorStoreTool:
         return store_id
     
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_search_vector_store_tool_success(self, mock_service_class, mock_vector_service, populated_store): # Updated test name and fixtures
+    async def test_search_vector_store_tool_success(self, mock_vector_service, populated_store): # Updated test name and fixtures
         """Test successful vector store search using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = populated_store
         query_vector = np.random.rand(384).tolist()
@@ -298,10 +288,8 @@ class TestSearchVectorStoreTool:
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_search_vector_store_tool_with_filter(self, mock_service_class, mock_vector_service, populated_store): # Updated test name and fixtures
+    async def test_search_vector_store_tool_with_filter(self, mock_vector_service, populated_store): # Updated test name and fixtures
         """Test vector store search with metadata filter using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = populated_store
         query_vector = np.random.rand(384).tolist()
@@ -362,10 +350,8 @@ class TestGetVectorStoreStatsTool:
     """Test get_vector_store_stats_tool function."""
     
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_get_vector_store_stats_tool_success(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_get_vector_store_stats_tool_success(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test successful stats retrieval using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
 
@@ -385,10 +371,8 @@ class TestGetVectorStoreStatsTool:
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_get_vector_store_stats_tool_with_data(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_get_vector_store_stats_tool_with_data(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test stats retrieval with data in store using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
         # Mock the service to return stats with data
@@ -424,10 +408,8 @@ class TestDeleteFromVectorStoreTool:
     """Test delete_from_vector_store_tool function."""
     
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_delete_from_vector_store_tool_by_ids_success(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_delete_from_vector_store_tool_by_ids_success(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test successful deletion by IDs using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
         ids_to_delete = ["item_0", "item_1", "item_2"]
@@ -450,10 +432,8 @@ class TestDeleteFromVectorStoreTool:
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_delete_from_vector_store_tool_by_filter_success(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_delete_from_vector_store_tool_by_filter_success(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test successful deletion by filter using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
         filter_criteria = {"category": "cat_1"}
@@ -518,10 +498,8 @@ class TestOptimizeVectorStoreTool:
     """Test optimize_vector_store_tool function."""
     
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_optimize_vector_store_tool_success(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_optimize_vector_store_tool_success(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test successful store optimization using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
         # Mock the service to return optimization result
@@ -541,10 +519,8 @@ class TestOptimizeVectorStoreTool:
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_optimize_vector_store_tool_with_options(self, mock_service_class, mock_vector_service, temp_dir): # Updated test name and fixtures
+    async def test_optimize_vector_store_tool_with_options(self, mock_vector_service, temp_dir): # Updated test name and fixtures
         """Test store optimization with custom options using the function-based tool."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "mock_store_id"
         optimization_options = {"rebuild_index": True, "compress": True}
@@ -584,10 +560,8 @@ class TestVectorStoreToolsIntegration:
     # They should work as long as the mocks and tool wrappers are correct.
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_complete_workflow(self, mock_service_class, mock_vector_service, temp_dir): # Updated fixtures
+    async def test_complete_workflow(self, mock_vector_service, temp_dir): # Updated fixtures
         """Test complete vector store workflow using the function-based tools."""
-        mock_service_class.return_value = mock_vector_service
 
         store_path = Path(temp_dir) / "integration_store"
         sample_embeddings = np.random.rand(50, 384).tolist()
@@ -666,10 +640,8 @@ class TestVectorStoreToolsIntegration:
 
 
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.search.search_embeddings.search_embeddings') # Patch the service
-    async def test_concurrent_operations(self, mock_service_class, mock_vector_service, temp_dir): # Updated fixtures
+    async def test_concurrent_operations(self, mock_vector_service, temp_dir): # Updated fixtures
         """Test concurrent operations on vector store using the function-based tools."""
-        mock_service_class.return_value = mock_vector_service
 
         store_id = "concurrent_store_id" # Use a different mock store ID
 
