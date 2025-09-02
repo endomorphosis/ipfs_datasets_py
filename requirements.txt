@@ -49,6 +49,18 @@ reportlab>=4.4.3
 pyfakefs
 moviepy
 
+# Web scraping and archiving tools
+cdx-toolkit>=0.9.37  # Common Crawl CDX access
+wayback>=0.4.5  # Wayback Machine API
+internetarchive>=5.5.0  # Internet Archive access
+autoscraper>=1.1.14  # Intelligent web scraping
+ipwb>=0.2024.10.24  # InterPlanetary Wayback Machine
+warcio>=1.7.4  # WARC file processing
+beautifulsoup4>=4.12.0  # HTML parsing for scraping
+selenium>=4.15.0  # Browser automation for dynamic content
+scrapy>=2.11.0  # Advanced web scraping framework
+aiohttp>=3.8.0  # Async HTTP client for web archiving
+
 # Add these one by one after basic setup works:
 # datasets>=2.10.0,<3.0.0
 # transformers>=4.0.0,<5.0.0
