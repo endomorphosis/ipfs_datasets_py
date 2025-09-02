@@ -5,7 +5,7 @@ A unified interface for data processing and distribution across decentralized ne
 with automated dependency installation for full functionality.
 """
 
-__version__ = "1.0.0"
+__version__ = "0.2.0"
 
 # Import automated dependency installer
 from .auto_installer import get_installer, ensure_module

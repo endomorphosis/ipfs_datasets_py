@@ -13,7 +13,14 @@ import logging
 import datetime
 import threading
 from collections import Counter, defaultdict
-from typing import Dict, List, Any, Optional, Tuple, Union, Callable, Set
+from typing import Dict, List, Any, Optional, Tuple, Union, Callable, Set, TYPE_CHECKING
+
+# Type checking imports
+if TYPE_CHECKING:
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        plt = Any
 
 # Add UTC import to fix deprecation warnings
 # Python 3.11+ supports datetime.UTC directly, older versions need to use timezone.utc
@@ -5127,7 +5134,7 @@ class PerformanceMetricsVisualizer:
         self.default_figsize = (10, 6)
 
     def visualize_processing_time_breakdown(self, output_file: Optional[str] = None,
-                                          top_n: int = 10, theme: str = "light") -> Union[plt.Figure, None]:
+                                          top_n: int = 10, theme: str = "light") -> Union["plt.Figure", None]:
         """
         Create a visualization of processing time breakdown by component.
 
@@ -5228,7 +5235,7 @@ class PerformanceMetricsVisualizer:
         return fig
 
     def visualize_latency_distribution(self, output_file: Optional[str] = None,
-                                     bins: int = 20, theme: str = "light") -> Union[plt.Figure, None]:
+                                     bins: int = 20, theme: str = "light") -> Union["plt.Figure", None]:
         """
         Create a visualization of query latency distribution.
 
@@ -5301,7 +5308,7 @@ class PerformanceMetricsVisualizer:
 
     def visualize_throughput_over_time(self, output_file: Optional[str] = None,
                                      interval_minutes: int = 10, hours: int = 24,
-                                     theme: str = "light") -> Union[plt.Figure, None]:
+                                     theme: str = "light") -> Union["plt.Figure", None]:
         """
         Create a visualization of query throughput over time.
 
@@ -5391,7 +5398,7 @@ class PerformanceMetricsVisualizer:
         return fig
 
     def visualize_performance_by_query_complexity(self, output_file: Optional[str] = None,
-                                               theme: str = "light") -> Union[plt.Figure, None]:
+                                               theme: str = "light") -> Union["plt.Figure", None]:
         """
         Create a scatter plot of query performance vs complexity.
 
