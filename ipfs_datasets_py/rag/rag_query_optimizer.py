@@ -846,7 +846,7 @@ class QueryMetricsCollector:
                     return str(obj)
             elif isinstance(obj, (np.datetime64, np.timedelta64)):
                 return str(obj)
-            elif isinstance(obj, np.complex_):
+            elif isinstance(obj, np.complex128):
                 return {"real": float(obj.real), "imag": float(obj.imag)}
             
             # Handle other numpy types with item method
@@ -959,6 +959,8 @@ class GraphRAGQueryStats:
     def record_cache_hit(self) -> None:
         """Record a cache hit."""
         self.cache_hits += 1
+        self.query_count += 1  # Cache hits are also queries
+        self.query_timestamps.append(time.time())
         
     def record_query_pattern(self, pattern: Dict[str, Any]) -> None:
         """
@@ -2556,7 +2558,7 @@ class GraphRAGQueryOptimizer:
                     return str(result)
             elif isinstance(result, (np.datetime64, np.timedelta64)):
                 return str(result)
-            elif isinstance(result, np.complex_):
+            elif isinstance(result, np.complex128):
                 return {"real": float(result.real), "imag": float(result.imag)}
             
             # Handle other numpy types with item method
@@ -6578,7 +6580,7 @@ class UnifiedGraphRAGQueryOptimizer:
                     return str(obj)
             elif isinstance(obj, (np.datetime64, np.timedelta64)):
                 return str(obj)
-            elif isinstance(obj, np.complex_):
+            elif isinstance(obj, np.complex128):
                 return {"real": float(obj.real), "imag": float(obj.imag)}
             
             # Handle other numpy types with item method

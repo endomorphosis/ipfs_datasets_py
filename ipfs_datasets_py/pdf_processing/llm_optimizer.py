@@ -1176,7 +1176,7 @@ class LLMOptimizer:
                  min_chunk_size: int = 100,
                  entity_classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
                  api_key: Optional[str] = os.environ.get("OPENAI_API_KEY"),
-                 async_openai: openai.AsyncOpenAI = openai.AsyncOpenAI,
+                 async_openai: Any = None,
                  sentence_transformer: SentenceTransformer = SentenceTransformer,
                  text_processor: TextProcessor = TextProcessor,
                  auto_tokenizer: AutoTokenizer = AutoTokenizer,
@@ -1266,6 +1266,10 @@ class LLMOptimizer:
         self.tokenizer: Callable = None  # Will be set during model initialization
 
         self.logger: logging.Logger = logger or module_logger
+        # Initialize OpenAI client if available
+        if async_openai is None and HAVE_OPENAI:
+            async_openai = openai.AsyncOpenAI
+        
         self.openai_async_client = async_openai  # OpenAI AsyncOpenAI client when available
         self.SentenceTransformer: SentenceTransformer = sentence_transformer
         self.text_processor: TextProcessor = text_processor
@@ -1348,13 +1352,16 @@ class LLMOptimizer:
             self.tokenizer = None
 
         try:
-            # Only initialize OpenAI client if we have an API key
-            if self.api_key:
+            # Only initialize OpenAI client if we have the module and API key
+            if self.api_key and self.openai_async_client and HAVE_OPENAI:
                 self.openai_async_client = self.openai_async_client(api_key=self.api_key)
             else:
-                # For testing or when API key is not available
+                # For testing or when OpenAI is not available
                 self.openai_async_client = None
-                self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
+                if not HAVE_OPENAI:
+                    self.logger.warning("OpenAI not available - using mock implementation")
+                elif not self.api_key:
+                    self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
         except Exception as e:
             self.logger.warning(f"Could not initialize OpenAI client: {e}")
             self.openai_async_client = None

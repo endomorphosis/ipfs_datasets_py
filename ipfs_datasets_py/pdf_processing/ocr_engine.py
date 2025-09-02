@@ -329,7 +329,7 @@ class OCREngine(ABC):
             - All implementations should provide consistent return format
             - Processing time varies based on image size and complexity
         """
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement extract_text")
     
     def is_available(self) -> bool:
         """

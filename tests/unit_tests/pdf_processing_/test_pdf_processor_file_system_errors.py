@@ -1,3 +1,4 @@
+import asyncio
 """
 Test cases for file system related issues in process_pdf method.
 

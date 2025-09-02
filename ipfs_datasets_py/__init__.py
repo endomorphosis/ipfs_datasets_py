@@ -5,6 +5,8 @@ A unified interface for data processing and distribution across decentralized ne
 with automated dependency installation for full functionality.
 """
 
+__version__ = "0.2.0"
+
 # Import automated dependency installer
 from .auto_installer import get_installer, ensure_module
 
@@ -77,6 +79,12 @@ try:
     HAVE_VECTOR_TOOLS = True
 except ImportError:
     HAVE_VECTOR_TOOLS = False
+
+try:
+    from . import search
+    HAVE_SEARCH = True
+except ImportError:
+    HAVE_SEARCH = False
 
 try:
     # Import new embeddings and vector store capabilities
@@ -237,8 +245,9 @@ try:
 except ImportError:
     HAVE_IPWB = False
 
-# PDF Processing Components with automated dependency installation
-if installer.auto_install:
+# PDF Processing Components with conditional automated dependency installation
+import os
+if installer.auto_install and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true':
     print("🔧 Installing PDF processing dependencies...")
     from .auto_installer import install_for_component
     install_for_component('pdf')
@@ -360,6 +369,9 @@ if HAVE_WEB_ARCHIVE:
 
 if HAVE_VECTOR_TOOLS:
     __all__.extend(['VectorSimilarityCalculator'])
+
+if HAVE_SEARCH:
+    __all__.extend(['search'])
 
 if HAVE_EMBEDDINGS:
     __all__.extend([

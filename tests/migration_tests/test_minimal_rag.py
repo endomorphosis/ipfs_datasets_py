@@ -24,8 +24,8 @@ class TestMinimalRAG(unittest.TestCase):
 
         # Record a cache hit
         stats.record_cache_hit()
-        # The query count should not change
-        self.assertEqual(stats.query_count, 1)
+        # The query count should increase because a cache hit is still a query
+        self.assertEqual(stats.query_count, 2)
         self.assertEqual(stats.cache_hits, 1)
 
         # Cache hit rate should be 50%

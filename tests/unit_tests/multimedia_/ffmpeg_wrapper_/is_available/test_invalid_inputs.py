@@ -29,7 +29,14 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         WHEN is_available is called with any parameter arguments
         THEN raises TypeError indicating method takes no arguments
         """
-        raise NotImplementedError
+        # Since is_available() has a working implementation, test parameter validation
+        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        
+        wrapper = FFmpegWrapper()
+        
+        # Test that method properly rejects parameters
+        with pytest.raises(TypeError):
+            wrapper.is_available("unexpected_parameter")
 
     def test_when_called_with_keyword_arguments_then_raises_type_error(self):
         """
@@ -37,7 +44,14 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         WHEN is_available is called with any keyword parameter arguments
         THEN raises TypeError indicating method takes no arguments
         """
-        raise NotImplementedError
+        # Since is_available() has a working implementation, test keyword argument validation
+        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        
+        wrapper = FFmpegWrapper()
+        
+        # Test that method properly rejects keyword arguments
+        with pytest.raises(TypeError):
+            wrapper.is_available(check_path=True)
 
     def test_when_called_on_uninitialized_class_then_raises_attribute_error(self):
         """
@@ -45,4 +59,9 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         WHEN is_available is called on FFmpegWrapper class directly
         THEN raises AttributeError or TypeError indicating method requires instance
         """
-        raise NotImplementedError
+        # Since is_available() has a working implementation, test class vs instance access
+        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        
+        # Test that method requires instance, not class access
+        with pytest.raises((AttributeError, TypeError)):
+            FFmpegWrapper.is_available()  # Should fail - no instance
