@@ -96,7 +96,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         )
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
-    def test_extract_dataset_from_cdxj(self, mock_processor_class):
+    async def test_extract_dataset_from_cdxj(self, mock_processor_class):
         """Test extract_dataset_from_cdxj tool."""
         # Set up mock
         mock_processor = MagicMock()
@@ -104,10 +104,10 @@ class WebArchiveToolsTest(unittest.TestCase):
         sample_dataset = {"data": [{"id": 1, "text": "Sample"}]}
         mock_processor.extract_dataset_from_cdxj.return_value = sample_dataset
 
-        # Call the function
-        result = extract_dataset_from_cdxj(
+        # Call the function with correct parameter (await it)
+        result = await extract_dataset_from_cdxj(
             cdxj_path=str(self.cdxj_path),
-            output_path=str(self.output_path)
+            output_format='arrow'  # Use output_format instead of output_path
         )
 
         # Check results
@@ -124,17 +124,16 @@ class WebArchiveToolsTest(unittest.TestCase):
         sample_text = {"text": "Sample extracted text"}
         mock_processor.extract_text_from_warc.return_value = sample_text
 
-        # Call the function
+        # Call the function (no output_path needed)
         result = extract_text_from_warc(
-            warc_path=str(self.warc_path),
-            output_path=str(self.output_path)
+            warc_path=str(self.warc_path)
         )
 
         # Check results
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["text"], sample_text)
         mock_processor.extract_text_from_warc.assert_called_once_with(
-            str(self.warc_path), str(self.output_path)
+            str(self.warc_path)
         )
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
@@ -146,10 +145,9 @@ class WebArchiveToolsTest(unittest.TestCase):
         sample_links = ["https://example.com/page1", "https://example.com/page2"]
         mock_processor.extract_links_from_warc.return_value = sample_links
 
-        # Call the function
+        # Call the function (no output_path needed)
         result = extract_links_from_warc(
-            warc_path=str(self.warc_path),
-            output_path=str(self.output_path)
+            warc_path=str(self.warc_path)
         )
 
         # Check results
@@ -166,10 +164,9 @@ class WebArchiveToolsTest(unittest.TestCase):
         sample_metadata = {"title": "Example Page", "description": "Sample description"}
         mock_processor.extract_metadata_from_warc.return_value = sample_metadata
 
-        # Call the function
+        # Call the function (no output_path needed)
         result = extract_metadata_from_warc(
-            warc_path=str(self.warc_path),
-            output_path=str(self.output_path)
+            warc_path=str(self.warc_path)
         )
 
         # Check results
