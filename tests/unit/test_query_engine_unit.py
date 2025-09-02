@@ -1,3 +1,4 @@
+import asyncio
 """
 Unit tests for QueryEngine component of PDF processing pipeline
 

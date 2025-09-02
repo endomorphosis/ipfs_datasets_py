@@ -5,6 +5,7 @@ import pytest
 import os
 from unittest.mock import Mock, patch, MagicMock
 from urllib.parse import urlparse
+import asyncio
 
 # Make sure the input file and documentation file exist.
 home_dir = os.path.expanduser('~')

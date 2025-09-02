@@ -1,3 +1,4 @@
+import asyncio
 
 # Test for ipfs_tools/get_from_ipfs
 def test_get_from_ipfs(self):

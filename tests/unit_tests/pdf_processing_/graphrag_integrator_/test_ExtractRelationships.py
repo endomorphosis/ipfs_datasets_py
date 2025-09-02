@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch, AsyncMock
 
 
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import (
+import asyncio
     GraphRAGIntegrator, Entity, Relationship, KnowledgeGraph
 )
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk

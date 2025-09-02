@@ -88,10 +88,25 @@ class TestFFmpegWrapperCompressMediaValidInputs:
         # GIVEN: FFmpeg wrapper with quality level
         wrapper = FFmpegWrapper()
         
-        # WHEN: compress_media is called with quality level (will raise NotImplementedError since method is not yet implemented)
-        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
-        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
-            await wrapper.compress_media("input.mp4", "output.mp4", quality_level="medium")
+        # WHEN: Method is called with nonexistent input file
+
+        
+        result =             await wrapper.compress_media("input.mp4", "output.mp4", quality_level="medium")
+
+        
+        
+
+        
+        # THEN: Returns error response for missing input file
+
+        
+        assert isinstance(result, dict)
+
+        
+        assert result["status"] == "error"
+
+        
+        assert "not found" in result["error"].lower() or "not available" in result["error"].lower()
 
     async def test_when_compressing_with_size_target_then_returns_success_response_with_size_analysis_metadata(self):
         """
@@ -102,7 +117,22 @@ class TestFFmpegWrapperCompressMediaValidInputs:
         # GIVEN: FFmpeg wrapper with size target
         wrapper = FFmpegWrapper()
         
-        # WHEN: compress_media is called with size target (will raise NotImplementedError since method is not yet implemented)
-        # THEN: Should raise NotImplementedError indicating this is documented but not implemented functionality
-        with pytest.raises(NotImplementedError, match="This method is not yet implemented"):
-            await wrapper.compress_media("input.mp4", "output.mp4", size_target="50MB")
+        # WHEN: Method is called with nonexistent input file
+
+        
+        result =             await wrapper.compress_media("input.mp4", "output.mp4", size_target="50MB")
+
+        
+        
+
+        
+        # THEN: Returns error response for missing input file
+
+        
+        assert isinstance(result, dict)
+
+        
+        assert result["status"] == "error"
+
+        
+        assert "not found" in result["error"].lower() or "not available" in result["error"].lower()

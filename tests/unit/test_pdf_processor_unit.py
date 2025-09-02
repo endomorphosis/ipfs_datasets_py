@@ -1,3 +1,4 @@
+import asyncio
 """
 Unit tests for PDFProcessor component of GraphRAG PDF processing pipeline
 

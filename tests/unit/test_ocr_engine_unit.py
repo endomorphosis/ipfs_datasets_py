@@ -1,3 +1,4 @@
+import asyncio
 """
 Unit tests for OCR Engine component of PDF processing pipeline
 

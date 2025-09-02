@@ -11,6 +11,7 @@ from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 from tests._test_utils import (
+import asyncio
     has_good_callable_metadata,
     raise_on_bad_callable_code_quality,
     get_ast_tree,

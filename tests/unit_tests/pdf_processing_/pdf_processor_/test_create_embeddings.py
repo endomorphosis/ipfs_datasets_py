@@ -9,6 +9,7 @@ from unittest.mock import Mock, MagicMock, patch
 import numpy as np
 
 from tests._test_utils import (
+import asyncio
     has_good_callable_metadata,
     raise_on_bad_callable_code_quality,
     get_ast_tree,
