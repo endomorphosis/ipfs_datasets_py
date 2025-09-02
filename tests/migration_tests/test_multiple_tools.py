@@ -28,7 +28,7 @@ async def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = extract_text_from_warc(warc_path)
+        result = await extract_text_from_warc(warc_path)
         tools_tested += 1
 
         if result.get("status") == "success":
