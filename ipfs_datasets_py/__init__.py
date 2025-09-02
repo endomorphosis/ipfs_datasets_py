@@ -81,6 +81,12 @@ except ImportError:
     HAVE_VECTOR_TOOLS = False
 
 try:
+    from . import search
+    HAVE_SEARCH = True
+except ImportError:
+    HAVE_SEARCH = False
+
+try:
     # Import new embeddings and vector store capabilities
     from .embeddings.core import IpfsEmbeddings, PerformanceMetrics
     from .embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
@@ -363,6 +369,9 @@ if HAVE_WEB_ARCHIVE:
 
 if HAVE_VECTOR_TOOLS:
     __all__.extend(['VectorSimilarityCalculator'])
+
+if HAVE_SEARCH:
+    __all__.extend(['search'])
 
 if HAVE_EMBEDDINGS:
     __all__.extend([
