@@ -125,7 +125,7 @@ IPFS Datasets Python is a **production-ready** unified interface to multiple dat
 
 **🎬 Multimedia & Web Integration** ✅ **Production Ready**
 - **YT-DLP integration** for downloading from 1000+ platforms (YouTube, Vimeo, etc.)
-- **InterPlanetary Wayback (IPWB)** for web archive integration
+- **Comprehensive Web Archiving** with Common Crawl, Wayback Machine, Archive.is, AutoScraper, and IPWB
 - **Audio/video processing** with format conversion and metadata extraction
 
 **🔒 Security & Governance** ✅ **Production Ready**
@@ -352,8 +352,11 @@ pip install ipfs-datasets-py[vector]
 # For knowledge graph and RAG capabilities
 pip install ipfs-datasets-py[graphrag]
 
-# For web archive and multimedia scraping
-pip install ipfs-datasets-py[web_archive,media]
+# For web archive and multimedia scraping (ENHANCED)
+pip install ipfs-datasets-py[web_archive,multimedia]
+
+# For comprehensive web scraping tools
+pip install cdx-toolkit wayback internetarchive autoscraper ipwb warcio beautifulsoup4
 
 # For security features
 pip install ipfs-datasets-py[security]
@@ -370,50 +373,126 @@ pip install yt-dlp ffmpeg-python
 
 ## Key Capabilities
 
-### 🌐 Comprehensive Web Scraping and Archiving
+### 🌐 Comprehensive Web Scraping and Archival Tools ⭐ **ENHANCED**
 
-IPFS Datasets Python provides industry-leading web scraping capabilities:
+IPFS Datasets Python now includes **industry-leading web scraping capabilities** with comprehensive integration across all major web archiving services and intelligent scraping tools.
 
-#### Web Archive Integration
-- **InterPlanetary Wayback Machine (IPWB)**: Decentralized web archiving on IPFS
-- **Internet Archive**: Query and download historical web content
-- **Archive.is (archive.today)**: Permanent webpage snapshots  
-- **Common Crawl**: Access to massive web crawl datasets
-- **Perma.cc**: Academic and legal webpage preservation
+#### Complete Web Archive Integration
+- **Common Crawl** (@cocrawler/cdx_toolkit): Access to massive monthly web crawl datasets with billions of pages
+- **Internet Archive Wayback Machine** (@internetarchive/wayback): Historical web content retrieval with enhanced API
+- **InterPlanetary Wayback Machine** (@oduwsdl/ipwb): Decentralized web archiving on IPFS with content addressing
+- **AutoScraper** (@alirezamika/autoscraper): Intelligent automated web scraping with machine learning
+- **Archive.is**: Permanent webpage snapshots with instant archiving
+- **Heritrix3** (@internetarchive/heritrix3): Advanced web crawling via integration patterns
+
+#### Intelligent Content Extraction
+- **AutoScraper ML Models**: Train custom scrapers to extract structured data from websites
+- **Multi-Method Fallbacks**: Automatic fallback between scraping methods for reliability
+- **Batch Processing**: Concurrent processing of large URL lists with rate limiting
+- **Content Validation**: Quality assessment and duplicate detection
 
 #### Multimedia Content Scraping  
 - **YT-DLP Integration**: Download from 1000+ platforms (YouTube, Vimeo, TikTok, SoundCloud, etc.)
 - **FFmpeg Processing**: Professional media conversion and analysis
 - **Batch Operations**: Parallel processing for large-scale content acquisition
 
-#### Advanced Features
+#### Advanced Archiving Features
 - **Multi-Service Archiving**: Archive to multiple services simultaneously
-- **Content Deduplication**: Intelligent duplicate detection and removal
-- **Quality Control**: Content validation and quality assessment
-- **Temporal Analysis**: Historical content tracking and comparison
-- **Resource Management**: Optimized resource usage with monitoring
+- **IPFS Integration**: Store and retrieve archived content via IPFS hashes
+- **Temporal Analysis**: Historical content tracking and comparison across archives
+- **Resource Management**: Optimized resource usage with comprehensive monitoring
 
 ```python
-# Quick web scraping example
-from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
+# Complete web scraping and archival example
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
+    search_common_crawl,
+    search_wayback_machine,
+    archive_to_archive_is,
+    create_autoscraper_model,
+    index_warc_to_ipwb
+)
+
+async def comprehensive_archiving_example():
+    # Search massive Common Crawl datasets
+    cc_results = await search_common_crawl(
+        domain="example.com",
+        crawl_id="CC-MAIN-2024-10",
+        limit=100
+    )
+    print(f"Found {cc_results['count']} pages in Common Crawl")
+    
+    # Get historical captures from Wayback Machine
+    wb_results = await search_wayback_machine(
+        url="example.com",
+        from_date="20200101",
+        to_date="20240101",
+        limit=50
+    )
+    print(f"Found {wb_results['count']} historical captures")
+    
+    # Create permanent Archive.is snapshot
+    archive_result = await archive_to_archive_is(
+        url="http://example.com/important-page",
+        wait_for_completion=True
+    )
+    print(f"Archived to: {archive_result['archive_url']}")
+    
+    # Train intelligent scraper
+    scraper_result = await create_autoscraper_model(
+        sample_url="http://example.com/product/123",
+        wanted_data=["Product Name", "$99.99", "In Stock"],
+        model_name="product_scraper"
+    )
+    print(f"AutoScraper model trained: {scraper_result['model_path']}")
+    
+    # Archive to decentralized IPFS
+    ipwb_result = await index_warc_to_ipwb(
+        warc_path="/path/to/archive.warc",
+        ipfs_endpoint="http://localhost:5001"
+    )
+    print(f"IPFS archived: {ipwb_result['ipfs_hash']}")
+
+# Enhanced AdvancedWebArchiver with all services
+from ipfs_datasets_py.advanced_web_archiving import AdvancedWebArchiver, ArchivingConfig
+
+config = ArchivingConfig(
+    enable_local_warc=True,
+    enable_internet_archive=True,
+    enable_archive_is=True,
+    enable_common_crawl=True,      # New: Access CC datasets
+    enable_ipwb=True,              # New: IPFS archiving
+    autoscraper_model="trained",   # New: ML-based scraping
+)
+
+archiver = AdvancedWebArchiver(config)
+collection = await archiver.archive_website_collection(
+    root_urls=["http://example.com"],
+    crawl_depth=2,
+    include_media=True
+)
+print(f"Archived {collection.archived_resources} resources across {len(collection.services)} services")
+
+# Download multimedia content  
 from ipfs_datasets_py.mcp_server.tools.media_tools import ytdlp_download_video
-from archivenow import archivenow
-
-# Archive website to multiple services
-ia_url = archivenow.push("https://example.com", "ia")        # Internet Archive
-is_url = archivenow.push("https://example.com", "is")        # Archive.is
-warc_file = processor.create_warc("https://example.com")     # Local WARC
-
-# Download multimedia content
 video_result = await ytdlp_download_video(
     url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     quality="720p",
     download_info_json=True
 )
-
-print(f"Content archived to: {ia_url}, {is_url}, {warc_file}")
 print(f"Video downloaded: {video_result['output_file']}")
 ```
+
+#### Installation for Web Scraping
+
+```bash
+# Install comprehensive web scraping dependencies
+pip install cdx-toolkit wayback internetarchive autoscraper ipwb warcio beautifulsoup4 selenium
+
+# Or use the complete installation
+pip install ipfs-datasets-py[web_archive,multimedia]
+```
+
+**For complete documentation and examples**: See [`WEB_SCRAPING_GUIDE.md`](WEB_SCRAPING_GUIDE.md) for comprehensive usage examples, configuration, and integration patterns.
 
 ## Basic Usage
 
