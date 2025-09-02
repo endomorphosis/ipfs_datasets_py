@@ -14,6 +14,7 @@ import sys
 import inspect
 import importlib
 from unittest.mock import patch, MagicMock
+import pytest
 
 # Add the parent directory to the path so we can import the tools
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,9 +23,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs import pin_to_ipfs
     from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs
+    IPFS_TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing IPFS tools: {e}")
-    sys.exit(1)
+    IPFS_TOOLS_AVAILABLE = False
 
 # Function to analyze the function signature
 def analyze_function_signature(func):

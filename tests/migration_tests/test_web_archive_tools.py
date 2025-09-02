@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import unittest
+import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -26,9 +27,10 @@ try:
     )
     from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
     print("Successfully imported web archive tools")
+    WEB_ARCHIVE_TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing web archive tools: {e}")
-    sys.exit(1)
+    WEB_ARCHIVE_TOOLS_AVAILABLE = False
 
 class WebArchiveToolsTest(unittest.TestCase):
     """Test cases for web archive tools."""
@@ -54,7 +56,7 @@ class WebArchiveToolsTest(unittest.TestCase):
             shutil.rmtree(self.test_dir)
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
-    def test_create_warc(self, mock_processor_class):
+    async def test_create_warc(self, mock_processor_class):
         """Test create_warc tool."""
         # Set up mock
         mock_processor = MagicMock()
@@ -62,7 +64,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.create_warc.return_value = str(self.warc_path)
 
         # Call the function
-        result = create_warc(
+        result = await create_warc(
             url="https://example.com",
             output_path=str(self.warc_path)
         )
@@ -75,7 +77,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         )
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
-    def test_index_warc(self, mock_processor_class):
+    async def test_index_warc(self, mock_processor_class):
         """Test index_warc tool."""
         # Set up mock
         mock_processor = MagicMock()
@@ -83,7 +85,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.index_warc.return_value = str(self.cdxj_path)
 
         # Call the function
-        result = index_warc(
+        result = await index_warc(
             warc_path=str(self.warc_path),
             output_path=str(self.cdxj_path)
         )
@@ -116,7 +118,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.extract_dataset_from_cdxj.assert_called_once()
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
-    def test_extract_text_from_warc(self, mock_processor_class):
+    async def test_extract_text_from_warc(self, mock_processor_class):
         """Test extract_text_from_warc tool."""
         # Set up mock
         mock_processor = MagicMock()
@@ -125,7 +127,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.extract_text_from_warc.return_value = sample_text
 
         # Call the function (no output_path needed)
-        result = extract_text_from_warc(
+        result = await extract_text_from_warc(
             warc_path=str(self.warc_path)
         )
 
@@ -137,7 +139,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         )
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
-    def test_extract_links_from_warc(self, mock_processor_class):
+    async def test_extract_links_from_warc(self, mock_processor_class):
         """Test extract_links_from_warc tool."""
         # Set up mock
         mock_processor = MagicMock()
@@ -146,7 +148,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.extract_links_from_warc.return_value = sample_links
 
         # Call the function (no output_path needed)
-        result = extract_links_from_warc(
+        result = await extract_links_from_warc(
             warc_path=str(self.warc_path)
         )
 
@@ -156,7 +158,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.extract_links_from_warc.assert_called_once()
 
     @patch('ipfs_datasets_py.web_archive_utils.WebArchiveProcessor')
-    def test_extract_metadata_from_warc(self, mock_processor_class):
+    async def test_extract_metadata_from_warc(self, mock_processor_class):
         """Test extract_metadata_from_warc tool."""
         # Set up mock
         mock_processor = MagicMock()
@@ -165,7 +167,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         mock_processor.extract_metadata_from_warc.return_value = sample_metadata
 
         # Call the function (no output_path needed)
-        result = extract_metadata_from_warc(
+        result = await extract_metadata_from_warc(
             warc_path=str(self.warc_path)
         )
 

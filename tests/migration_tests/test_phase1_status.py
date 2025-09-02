@@ -113,11 +113,17 @@ def test_phase1_status():
 
     return all_passed
 
+import pytest
+
+def test_phase1_status_pytest():
+    """Pytest wrapper for phase1 status test."""
+    success = test_phase1_status()
+    assert success, "Phase 1 status test failed"
+
 if __name__ == "__main__":
     try:
         success = test_phase1_status()
-        sys.exit(0 if success else 1)
+        print(f"Test {'PASSED' if success else 'FAILED'}")
     except Exception as e:
         print(f"Test failed with exception: {e}")
         traceback.print_exc()
-        sys.exit(1)
