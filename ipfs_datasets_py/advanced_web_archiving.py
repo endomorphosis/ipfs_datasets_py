@@ -156,7 +156,9 @@ class AdvancedWebArchiver:
         # Archive service endpoints
         self.archive_endpoints = {
             "internet_archive": "https://web.archive.org/save/",
-            "archive_is": "https://archive.is/submit/"
+            "archive_is": "https://archive.is/submit/",
+            "wayback_machine": "http://web.archive.org/cdx/search/cdx",
+            "common_crawl": "https://index.commoncrawl.org"
         }
         
         # Content type mappings
@@ -170,6 +172,10 @@ class AdvancedWebArchiver:
             "video/": "media",
             "audio/": "media"
         }
+        
+        # Initialize new archiving tools
+        self.autoscraper_models = {}
+        self.ipwb_indexes = {}
         
         # Ensure local archive directory exists
         os.makedirs(self.config.local_archive_path, exist_ok=True)
@@ -508,10 +514,27 @@ class AdvancedWebArchiver:
                 if self.config.enable_internet_archive:
                     if await self._archive_to_internet_archive(resource):
                         archived = True
+                    
+                    # Also try enhanced Wayback Machine integration
+                    if await self._archive_to_wayback_enhanced(resource):
+                        archived = True
                         
                 if self.config.enable_archive_is:
                     if await self._archive_to_archive_is(resource):
                         archived = True
+                
+                # New archiving services
+                if hasattr(self.config, 'enable_common_crawl') and self.config.enable_common_crawl:
+                    if await self._archive_to_common_crawl(resource):
+                        archived = True
+                
+                if hasattr(self.config, 'enable_ipwb') and self.config.enable_ipwb:
+                    if await self._archive_to_ipwb(resource, collection):
+                        archived = True
+                
+                # AutoScraper extraction (if model specified)
+                if hasattr(self.config, 'autoscraper_model') and self.config.autoscraper_model:
+                    await self._extract_with_autoscraper(resource, self.config.autoscraper_model)
                 
                 if archived:
                     resource.archive_status = "archived"
@@ -630,6 +653,108 @@ class AdvancedWebArchiver:
                     
         except Exception as e:
             self.logger.error(f"Archive.is archiving failed for {resource.url}: {e}")
+            
+        return False
+    
+    async def _archive_to_common_crawl(self, resource: WebResource) -> bool:
+        """Search for existing content in Common Crawl."""
+        try:
+            # Import the new tool
+            from .mcp_server.tools.web_archive_tools.common_crawl_search import search_common_crawl
+            
+            # Extract domain from URL
+            from urllib.parse import urlparse
+            parsed_url = urlparse(resource.url)
+            domain = parsed_url.netloc
+            
+            # Search for existing archives in Common Crawl
+            search_result = await search_common_crawl(domain, limit=10)
+            
+            if search_result['status'] == 'success' and search_result['results']:
+                # Found existing archives
+                resource.archive_urls["common_crawl"] = search_result['results'][0]['warc_filename']
+                resource.metadata["common_crawl_results"] = len(search_result['results'])
+                return True
+                
+        except Exception as e:
+            self.logger.error(f"Common Crawl search failed for {resource.url}: {e}")
+            
+        return False
+    
+    async def _archive_to_wayback_enhanced(self, resource: WebResource) -> bool:
+        """Archive to Wayback Machine using enhanced wayback library."""
+        try:
+            # Import the new tool
+            from .mcp_server.tools.web_archive_tools.wayback_machine_search import archive_to_wayback
+            
+            # Archive to Wayback Machine
+            result = await archive_to_wayback(resource.url)
+            
+            if result['status'] == 'success':
+                resource.archive_urls["wayback_machine"] = result['archived_url']
+                return True
+                
+        except Exception as e:
+            self.logger.error(f"Enhanced Wayback archiving failed for {resource.url}: {e}")
+            
+        return False
+    
+    async def _archive_to_ipwb(self, resource: WebResource, collection: ArchiveCollection) -> bool:
+        """Archive to InterPlanetary Wayback Machine (IPWB)."""
+        try:
+            # First create a local WARC for this resource
+            local_warc_success = await self._archive_to_local_warc(resource, collection)
+            
+            if local_warc_success:
+                # Import IPWB tool
+                from .mcp_server.tools.web_archive_tools.ipwb_integration import index_warc_to_ipwb
+                
+                # Get the WARC path for this resource
+                warc_path = os.path.join(
+                    self.config.local_archive_path,
+                    f"{collection.collection_id}_{resource.resource_id}.warc"
+                )
+                
+                # Index to IPWB
+                result = await index_warc_to_ipwb(warc_path)
+                
+                if result['status'] == 'success':
+                    resource.archive_urls["ipwb"] = f"ipwb://{result['ipfs_hashes'][0]}"
+                    resource.metadata["ipwb_cdxj"] = result['cdxj_path']
+                    return True
+                    
+        except Exception as e:
+            self.logger.error(f"IPWB archiving failed for {resource.url}: {e}")
+            
+        return False
+    
+    async def _extract_with_autoscraper(self, resource: WebResource, model_name: Optional[str] = None) -> bool:
+        """Extract structured data using AutoScraper."""
+        try:
+            if not model_name:
+                return False
+                
+            # Import AutoScraper tool
+            from .mcp_server.tools.web_archive_tools.autoscraper_integration import scrape_with_autoscraper
+            
+            # Get model path
+            model_path = f"/tmp/autoscraper_models/{model_name}.pkl"
+            if not os.path.exists(model_path):
+                self.logger.warning(f"AutoScraper model {model_name} not found")
+                return False
+            
+            # Scrape data
+            result = await scrape_with_autoscraper(model_path, [resource.url])
+            
+            if result['status'] == 'success' and resource.url in result['results']:
+                url_result = result['results'][resource.url]
+                if url_result['status'] == 'success':
+                    resource.metadata["autoscraper_data"] = url_result['data']
+                    resource.metadata["autoscraper_model"] = model_name
+                    return True
+                    
+        except Exception as e:
+            self.logger.error(f"AutoScraper extraction failed for {resource.url}: {e}")
             
         return False
     
