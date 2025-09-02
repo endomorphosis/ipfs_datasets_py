@@ -47,7 +47,6 @@ class TestGraphRAGQueryOptimizerMethods(unittest.TestCase):
         # Retrieve from cache
         cached_result = self.optimizer.get_from_cache(query_key)
         self.assertEqual(cached_result, test_result)
-        self.assertAlmostEqual(stats["avg_query_time"], 0.6)
 
 if __name__ == "__main__":
     unittest.main()

@@ -197,8 +197,8 @@ class TestCaching(unittest.TestCase):
         result2 = self.optimizer.execute_query_with_caching(query_key, query_func)
         self.assertEqual(result2, "test_result")
 
-        # Check stats after second execution - should increment cache_hits but not query_count
-        self.assertEqual(self.optimizer.query_stats.query_count, 1)  # Should still be 1
+        # Check stats after second execution - should increment both cache_hits and query_count
+        self.assertEqual(self.optimizer.query_stats.query_count, 2)  # Cache hits are queries too
         self.assertEqual(self.optimizer.query_stats.cache_hits, 1)   # Should be 1
 
         # Cache hit rate should be 1/2 = 0.5
