@@ -45,9 +45,9 @@ python -m ipfs_datasets_py.auto_installer --test-provers
 
 | **I want to...** | **Start here** | **Example** |
 |------------------|---------------|-------------|
-| **🔬 Prove legal statements** | [SAT/SMT Theorem Proving](#-complete-satemt-solver-and-theorem-prover-integration) | `python demonstrate_complete_pipeline.py --install-all --prove-long-statements` |
-| **🌐 Extract & formalize web content** | [Website Text Extraction](#-website-text-extraction) | `python demonstrate_complete_pipeline.py --url "https://legal-site.com"` |
-| **📄 Process PDFs with AI** | [GraphRAG PDF](#-new-complete-graphrag-pdf-processing-system) | `python demonstrate_graphrag_pdf.py --create-sample` |
+| **🔬 Prove legal statements** | [SAT/SMT Theorem Proving](#-complete-satemt-solver-and-theorem-prover-integration) | `python scripts/demo/demonstrate_complete_pipeline.py --install-all --prove-long-statements` |
+| **🌐 Extract & formalize web content** | [Website Text Extraction](#-website-text-extraction) | `python scripts/demo/demonstrate_complete_pipeline.py --url "https://legal-site.com"` |
+| **📄 Process PDFs with AI** | [GraphRAG PDF](#-new-complete-graphrag-pdf-processing-system) | `python scripts/demo/demonstrate_graphrag_pdf.py --create-sample` |
 | **📊 Work with datasets** | [Basic Usage](#basic-usage) | Load and process HuggingFace datasets |
 | **🔍 Build vector search** | [Vector Search](#vector-search) | Create semantic search with embeddings |
 | **🎬 Download videos/audio** | [Multimedia Processing](#-multimedia-processing-with-yt-dlp-integration) | YouTube and 1000+ platforms support |
@@ -63,13 +63,13 @@ git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
 # Install all theorem provers and dependencies automatically
-python demonstrate_complete_pipeline.py --install-all --prove-long-statements
+python scripts/demo/demonstrate_complete_pipeline.py --install-all --prove-long-statements
 
 # Test with real website content (if network available)
-python demonstrate_complete_pipeline.py --url "https://legal-site.com" --prover z3
+python scripts/demo/demonstrate_complete_pipeline.py --url "https://legal-site.com" --prover z3
 
 # Quick local demonstration
-python demonstrate_complete_pipeline.py --test-provers
+python scripts/demo/demonstrate_complete_pipeline.py --test-provers
 ```
 
 This demonstrates the complete pipeline from website text extraction through formal logic conversion to **actual theorem proving execution** using Z3, CVC5, Lean 4, and Coq.
@@ -83,7 +83,7 @@ Also available - comprehensive AI-powered PDF processing:
 pip install reportlab numpy
 
 # Run the comprehensive GraphRAG demo (creates sample PDF automatically)
-python demonstrate_graphrag_pdf.py --create-sample --show-architecture --test-queries
+python scripts/demo/demonstrate_graphrag_pdf.py --create-sample --show-architecture --test-queries
 ```
 
 ## Overview
