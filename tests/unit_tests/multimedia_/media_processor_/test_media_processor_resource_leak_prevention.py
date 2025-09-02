@@ -13,9 +13,9 @@ import pytest
 
 
 # Make sure the input file and documentation file exist.
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/multimedia/media_processor_stubs.md")
+work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
+file_path = os.path.join(work_dir, "ipfs_datasets_py/multimedia/media_processor.py")
+md_path = os.path.join(work_dir, "ipfs_datasets_py/multimedia/media_processor_stubs.md")
 
 
 # Import the MediaProcessor class and its class dependencies

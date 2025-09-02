@@ -498,7 +498,6 @@ class TestDependencyValidation:
 
 
     def test_validate_dependencies_all_available(self):
-    def test_validate_dependencies_all_available(self):
         """
         GIVEN NLTK is installed and all required data is available
         WHEN _validate_dependencies() is called
