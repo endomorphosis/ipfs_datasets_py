@@ -457,8 +457,7 @@ def start_interactive_demo():
     config = MCPDashboardConfig(
         host="0.0.0.0",
         port=8080,
-        enable_tool_execution=True,
-        debug=True
+        enable_tool_execution=True
     )
     
     # Create dashboard
@@ -488,7 +487,7 @@ def start_interactive_demo():
         webbrowser.open(f"http://localhost:{config.port}/news")
         
         # Run dashboard
-        dashboard.run()
+        dashboard.start()
         
     except KeyboardInterrupt:
         print("\n\nShutting down News Analysis Dashboard...")

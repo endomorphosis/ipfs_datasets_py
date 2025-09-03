@@ -761,9 +761,10 @@ class NewsAnalysisDashboard(MCPDashboard):
     
     def setup_app(self):
         """Setup Flask application with news analysis routes."""
-        # Call parent setup
-        super().setup_app()
-        
+        # Initialize if not already done
+        if not self._initialized:
+            self.initialize()
+            
         if self._initialized:
             # Register news-specific routes
             self._register_news_routes()
