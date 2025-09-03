@@ -985,7 +985,733 @@ class StatsComponent {
     }
 }
 
+// ============== EXTENDED FUNCTIONALITY ==============
+
+/**
+ * Website Crawling Component
+ */
+class WebsiteCrawlingComponent {
+    constructor(selector, client) {
+        this.container = document.querySelector(selector);
+        this.client = client;
+        this.progressBar = null;
+        this.progressLog = null;
+        this.currentCrawlId = null;
+        
+        this.initializeComponent();
+    }
+
+    initializeComponent() {
+        // Initialize progress tracking elements
+        this.progressBar = document.getElementById('crawlProgressFill');
+        this.progressLog = document.getElementById('crawlLog');
+        
+        // Bind form submission
+        const form = document.getElementById('websiteCrawlForm');
+        if (form) {
+            form.addEventListener('submit', this.handleCrawlSubmission.bind(this));
+        }
+    }
+
+    async handleCrawlSubmission(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const crawlConfig = {
+            url: formData.get('websiteUrl'),
+            maxPages: parseInt(formData.get('maxPages')) || 50,
+            maxDepth: parseInt(formData.get('maxDepth')) || 3,
+            includePatterns: this.parsePatterns(formData.get('includePatterns')),
+            excludePatterns: this.parsePatterns(formData.get('excludePatterns')),
+            contentTypes: this.getSelectedContentTypes(),
+            metadata: this.parseJSON(formData.get('crawlMetadata')) || {}
+        };
+
+        try {
+            this.showProgressSection();
+            this.currentCrawlId = await this.client.crawlWebsite(crawlConfig);
+            this.startProgressMonitoring();
+        } catch (error) {
+            console.error('Website crawl failed:', error);
+            this.logError('Crawl failed: ' + error.message);
+        }
+    }
+
+    parsePatterns(patternsString) {
+        return patternsString ? patternsString.split(',').map(p => p.trim()).filter(p => p.length > 0) : [];
+    }
+
+    getSelectedContentTypes() {
+        const checkboxes = document.querySelectorAll('input[name="contentTypes"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    parseJSON(jsonString) {
+        try {
+            return jsonString ? JSON.parse(jsonString) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    showProgressSection() {
+        const progressSection = document.getElementById('crawlProgress');
+        if (progressSection) {
+            progressSection.style.display = 'block';
+        }
+    }
+
+    startProgressMonitoring() {
+        if (!this.currentCrawlId) return;
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const status = await this.client.getCrawlStatus(this.currentCrawlId);
+                this.updateProgress(status);
+                
+                if (status.status === 'completed' || status.status === 'failed') {
+                    clearInterval(pollInterval);
+                    this.handleCrawlComplete(status);
+                }
+            } catch (error) {
+                console.error('Error monitoring crawl progress:', error);
+                clearInterval(pollInterval);
+            }
+        }, 2000);
+    }
+
+    updateProgress(status) {
+        const percentage = (status.crawledPages / status.totalPages) * 100;
+        if (this.progressBar) {
+            this.progressBar.style.width = `${percentage}%`;
+        }
+        
+        document.getElementById('crawledPages').textContent = status.crawledPages;
+        document.getElementById('totalPages').textContent = status.totalPages;
+        
+        if (status.lastLog) {
+            this.addLogEntry(status.lastLog);
+        }
+    }
+
+    addLogEntry(logEntry) {
+        if (!this.progressLog) return;
+        
+        const entryElement = document.createElement('div');
+        entryElement.className = `log-entry ${logEntry.level || 'info'}`;
+        entryElement.textContent = `${new Date().toLocaleTimeString()}: ${logEntry.message}`;
+        
+        this.progressLog.appendChild(entryElement);
+        this.progressLog.scrollTop = this.progressLog.scrollHeight;
+    }
+
+    logError(message) {
+        this.addLogEntry({ level: 'error', message });
+    }
+
+    handleCrawlComplete(status) {
+        this.addLogEntry({ 
+            level: status.status === 'completed' ? 'success' : 'error', 
+            message: `Crawl ${status.status}. ${status.crawledPages} pages processed.`
+        });
+        
+        if (status.status === 'completed') {
+            this.displayCrawlResults(status.results);
+        }
+    }
+
+    displayCrawlResults(results) {
+        const resultsDiv = document.getElementById('websiteCrawlResults');
+        if (!resultsDiv) return;
+        
+        const resultSummary = document.createElement('div');
+        resultSummary.className = 'crawl-summary';
+        resultSummary.innerHTML = `
+            <h4>Crawl Complete</h4>
+            <p>Successfully crawled ${results.totalPages} pages</p>
+            <p>Extracted ${results.totalEntities} entities</p>
+            <p>Found ${results.totalRelationships} relationships</p>
+        `;
+        
+        resultsDiv.appendChild(resultSummary);
+    }
+}
+
+/**
+ * GraphRAG Query Component
+ */
+class GraphRAGQueryComponent {
+    constructor(selector, client) {
+        this.container = document.querySelector(selector);
+        this.client = client;
+        this.currentQueryType = 'semantic';
+        
+        this.initializeComponent();
+    }
+
+    initializeComponent() {
+        // Initialize query type toggles
+        const typeButtons = document.querySelectorAll('.type-btn');
+        typeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.switchQueryType(e.target.dataset.type);
+            });
+        });
+
+        // Initialize query execution
+        const executeBtn = document.getElementById('executeQueryBtn');
+        if (executeBtn) {
+            executeBtn.addEventListener('click', this.executeQuery.bind(this));
+        }
+
+        // Initialize other buttons
+        this.initializeQueryActions();
+    }
+
+    switchQueryType(type) {
+        this.currentQueryType = type;
+        
+        // Update button states
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.type === type);
+        });
+        
+        // Show/hide appropriate query tabs
+        document.querySelectorAll('.query-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.id === `${type}QueryTab`);
+        });
+    }
+
+    initializeQueryActions() {
+        const actions = {
+            'saveQueryBtn': this.saveQuery.bind(this),
+            'loadQueryBtn': this.loadQuery.bind(this),
+            'clearQueryBtn': this.clearQuery.bind(this)
+        };
+
+        Object.entries(actions).forEach(([btnId, handler]) => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', handler);
+            }
+        });
+    }
+
+    async executeQuery() {
+        const queryData = this.getQueryData();
+        if (!queryData.query) {
+            alert('Please enter a query');
+            return;
+        }
+
+        try {
+            this.showLoadingState();
+            const results = await this.client.executeGraphRAGQuery(queryData);
+            this.displayQueryResults(results);
+        } catch (error) {
+            console.error('Query execution failed:', error);
+            this.showError('Query failed: ' + error.message);
+        } finally {
+            this.hideLoadingState();
+        }
+    }
+
+    getQueryData() {
+        const baseData = {
+            type: this.currentQueryType,
+            userType: this.client.userType
+        };
+
+        switch (this.currentQueryType) {
+            case 'semantic':
+                return {
+                    ...baseData,
+                    query: document.getElementById('semanticQuery')?.value,
+                    context: document.getElementById('semanticContext')?.value,
+                    limit: parseInt(document.getElementById('resultLimit')?.value) || 10
+                };
+            case 'entity':
+                return {
+                    ...baseData,
+                    query: document.getElementById('entityQueryInput')?.value,
+                    entityTypes: this.getSelectedOptions('entityTypes'),
+                    hops: parseInt(document.getElementById('entityHops')?.value) || 0
+                };
+            case 'relationship':
+                return {
+                    ...baseData,
+                    sourceEntity: document.getElementById('sourceEntity')?.value,
+                    relationshipType: document.getElementById('relationshipType')?.value,
+                    targetEntity: document.getElementById('targetEntity')?.value,
+                    minStrength: parseInt(document.getElementById('relationshipStrength')?.value) || 0
+                };
+            case 'temporal':
+                return {
+                    ...baseData,
+                    query: document.getElementById('temporalQuery')?.value,
+                    startDate: document.getElementById('timeStartDate')?.value,
+                    endDate: document.getElementById('timeEndDate')?.value,
+                    granularity: document.getElementById('timeGranularity')?.value
+                };
+            case 'cross_doc':
+                return {
+                    ...baseData,
+                    query: document.getElementById('crossDocQuery')?.value,
+                    analysisType: document.getElementById('analysisType')?.value,
+                    sources: this.parseSources(document.getElementById('documentSources')?.value)
+                };
+            default:
+                return baseData;
+        }
+    }
+
+    getSelectedOptions(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return [];
+        return Array.from(select.selectedOptions).map(option => option.value);
+    }
+
+    parseSources(sourcesString) {
+        return sourcesString ? sourcesString.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+    }
+
+    displayQueryResults(results) {
+        const resultsContent = document.getElementById('queryResultsContent');
+        const resultsPlaceholder = document.querySelector('.results-placeholder');
+        
+        if (resultsPlaceholder) {
+            resultsPlaceholder.style.display = 'none';
+        }
+        
+        if (resultsContent) {
+            resultsContent.style.display = 'block';
+            resultsContent.innerHTML = this.formatResults(results);
+        }
+    }
+
+    formatResults(results) {
+        if (!results || !results.results) {
+            return '<p>No results found.</p>';
+        }
+
+        let html = `<div class="query-results-summary">
+            <h4>Found ${results.results.length} results</h4>
+            <p>Query executed in ${results.processingTime}ms</p>
+        </div>`;
+
+        results.results.forEach((result, index) => {
+            html += `
+                <div class="result-item">
+                    <h5>Result ${index + 1}</h5>
+                    <p><strong>Source:</strong> ${result.source || 'Unknown'}</p>
+                    <p><strong>Relevance:</strong> ${result.relevanceScore || 'N/A'}</p>
+                    <div class="result-content">${result.content || result.snippet || 'No content available'}</div>
+                </div>
+            `;
+        });
+
+        return html;
+    }
+
+    showLoadingState() {
+        const executeBtn = document.getElementById('executeQueryBtn');
+        if (executeBtn) {
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '⏳ Executing...';
+        }
+    }
+
+    hideLoadingState() {
+        const executeBtn = document.getElementById('executeQueryBtn');
+        if (executeBtn) {
+            executeBtn.disabled = false;
+            executeBtn.innerHTML = '🔍 Execute Query';
+        }
+    }
+
+    showError(message) {
+        const resultsContent = document.getElementById('queryResultsContent');
+        if (resultsContent) {
+            resultsContent.innerHTML = `<div class="error-message">${message}</div>`;
+            resultsContent.style.display = 'block';
+        }
+    }
+
+    saveQuery() {
+        const queryData = this.getQueryData();
+        localStorage.setItem('saved-graphrag-query', JSON.stringify(queryData));
+        alert('Query saved locally');
+    }
+
+    loadQuery() {
+        const saved = localStorage.getItem('saved-graphrag-query');
+        if (saved) {
+            const queryData = JSON.parse(saved);
+            this.loadQueryData(queryData);
+            alert('Query loaded');
+        }
+    }
+
+    clearQuery() {
+        // Clear all query inputs based on current type
+        document.querySelectorAll('.query-tab.active input, .query-tab.active textarea').forEach(input => {
+            input.value = '';
+        });
+    }
+
+    loadQueryData(data) {
+        // Load query data back into form
+        this.switchQueryType(data.type);
+        
+        // Fill in the appropriate fields based on query type
+        Object.entries(data).forEach(([key, value]) => {
+            const element = document.getElementById(key);
+            if (element) {
+                element.value = value;
+            }
+        });
+    }
+}
+
+/**
+ * Graph Explorer Component
+ */
+class GraphExplorerComponent {
+    constructor(selector, client) {
+        this.container = document.querySelector(selector);
+        this.client = client;
+        this.graphData = null;
+        this.graphInstance = null;
+        
+        this.initializeComponent();
+    }
+
+    initializeComponent() {
+        // Initialize control actions
+        const actions = {
+            'refreshGraphBtn': this.refreshGraph.bind(this),
+            'centerGraphBtn': this.centerGraph.bind(this),
+            'findPathBtn': this.findPath.bind(this),
+            'clusterGraphBtn': this.detectCommunities.bind(this),
+            'exportGraphBtn': this.exportGraph.bind(this),
+            'loadGraphBtn': this.loadGraphData.bind(this),
+            'findShortestPath': this.findShortestPath.bind(this)
+        };
+
+        Object.entries(actions).forEach(([btnId, handler]) => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', handler);
+            }
+        });
+
+        // Initialize filter change handlers
+        ['graphLayout', 'nodeFilter', 'relationshipFilter', 'nodeSize', 'edgeWeight'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', this.handleFilterChange.bind(this));
+            }
+        });
+
+        // Initialize time slider
+        const timeSlider = document.getElementById('timeRangeSlider');
+        if (timeSlider) {
+            timeSlider.addEventListener('input', this.handleTimeRangeChange.bind(this));
+        }
+    }
+
+    async loadGraphData() {
+        try {
+            this.showGraphLoading();
+            const graphData = await this.client.getKnowledgeGraph();
+            this.graphData = graphData;
+            this.renderGraph();
+            this.updateGraphStats();
+        } catch (error) {
+            console.error('Failed to load graph data:', error);
+            this.showGraphError('Failed to load graph data: ' + error.message);
+        }
+    }
+
+    renderGraph() {
+        if (!this.graphData) return;
+
+        const graphContainer = document.getElementById('knowledgeGraph');
+        if (!graphContainer) return;
+
+        // Clear placeholder
+        graphContainer.innerHTML = '<div id="graph-svg"></div>';
+
+        // Initialize D3 force simulation
+        this.initializeD3Graph();
+    }
+
+    initializeD3Graph() {
+        const width = 800;
+        const height = 600;
+
+        const svg = d3.select('#graph-svg')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        const simulation = d3.forceSimulation(this.graphData.nodes)
+            .force('link', d3.forceLink(this.graphData.links).id(d => d.id))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(width / 2, height / 2));
+
+        // Add links
+        const link = svg.append('g')
+            .selectAll('line')
+            .data(this.graphData.links)
+            .enter().append('line')
+            .attr('stroke', '#999')
+            .attr('stroke-opacity', 0.6);
+
+        // Add nodes
+        const node = svg.append('g')
+            .selectAll('circle')
+            .data(this.graphData.nodes)
+            .enter().append('circle')
+            .attr('r', 5)
+            .attr('fill', d => this.getNodeColor(d.type))
+            .call(d3.drag()
+                .on('start', this.dragstarted)
+                .on('drag', this.dragged)
+                .on('end', this.dragended));
+
+        // Add labels
+        const label = svg.append('g')
+            .selectAll('text')
+            .data(this.graphData.nodes)
+            .enter().append('text')
+            .text(d => d.name)
+            .attr('font-size', 10)
+            .attr('dx', 8)
+            .attr('dy', 3);
+
+        // Update positions on tick
+        simulation.on('tick', () => {
+            link
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+            node
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y);
+
+            label
+                .attr('x', d => d.x)
+                .attr('y', d => d.y);
+        });
+
+        this.graphInstance = { svg, simulation, nodes: node, links: link };
+    }
+
+    getNodeColor(type) {
+        const colors = {
+            'PERSON': '#ff6b6b',
+            'ORG': '#4ecdc4',
+            'GPE': '#45b7d1',
+            'EVENT': '#f9ca24',
+            'TOPIC': '#a55eea'
+        };
+        return colors[type] || '#95a5a6';
+    }
+
+    handleFilterChange() {
+        if (this.graphData) {
+            this.applyFilters();
+            this.renderGraph();
+        }
+    }
+
+    handleTimeRangeChange(event) {
+        const value = event.target.value;
+        // Update time labels and apply temporal filtering
+        this.applyTemporalFilter(value);
+    }
+
+    applyFilters() {
+        const nodeTypes = this.getSelectedOptions('nodeFilter');
+        const relationshipTypes = this.getSelectedOptions('relationshipFilter');
+
+        if (nodeTypes.length > 0) {
+            this.graphData.nodes = this.graphData.nodes.filter(node => 
+                nodeTypes.includes(node.type)
+            );
+        }
+
+        if (relationshipTypes.length > 0) {
+            this.graphData.links = this.graphData.links.filter(link => 
+                relationshipTypes.includes(link.type)
+            );
+        }
+    }
+
+    updateGraphStats() {
+        if (!this.graphData) return;
+
+        document.getElementById('nodeCount').textContent = this.graphData.nodes.length;
+        document.getElementById('edgeCount').textContent = this.graphData.links.length;
+        
+        // Calculate density
+        const n = this.graphData.nodes.length;
+        const maxEdges = n * (n - 1) / 2;
+        const density = maxEdges > 0 ? (this.graphData.links.length / maxEdges * 100).toFixed(1) : 0;
+        document.getElementById('graphDensity').textContent = density + '%';
+    }
+
+    async refreshGraph() {
+        await this.loadGraphData();
+    }
+
+    centerGraph() {
+        if (this.graphInstance && this.graphInstance.simulation) {
+            this.graphInstance.simulation.restart();
+        }
+    }
+
+    findPath() {
+        // Toggle path finder mode
+        alert('Click on two nodes to find the shortest path between them');
+    }
+
+    async detectCommunities() {
+        try {
+            const communities = await this.client.detectCommunities(this.graphData);
+            document.getElementById('communityCount').textContent = communities.length;
+            this.highlightCommunities(communities);
+        } catch (error) {
+            console.error('Community detection failed:', error);
+        }
+    }
+
+    exportGraph() {
+        const dataStr = JSON.stringify(this.graphData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'knowledge-graph.json';
+        link.click();
+        
+        URL.revokeObjectURL(url);
+    }
+
+    async findShortestPath() {
+        const startNode = document.getElementById('pathStart').value;
+        const endNode = document.getElementById('pathEnd').value;
+        
+        if (!startNode || !endNode) {
+            alert('Please enter both start and end nodes');
+            return;
+        }
+
+        try {
+            const path = await this.client.findShortestPath(startNode, endNode);
+            this.displayPath(path);
+        } catch (error) {
+            console.error('Path finding failed:', error);
+        }
+    }
+
+    displayPath(path) {
+        const pathResults = document.getElementById('pathResults');
+        if (pathResults && path) {
+            pathResults.innerHTML = `
+                <div class="path-found">
+                    <strong>Path found (${path.length} steps):</strong><br>
+                    ${path.join(' → ')}
+                </div>
+            `;
+        }
+    }
+
+    showGraphLoading() {
+        const graph = document.getElementById('knowledgeGraph');
+        if (graph) {
+            graph.innerHTML = '<div class="loading">Loading graph data...</div>';
+        }
+    }
+
+    showGraphError(message) {
+        const graph = document.getElementById('knowledgeGraph');
+        if (graph) {
+            graph.innerHTML = `<div class="error">${message}</div>`;
+        }
+    }
+
+    dragstarted(event, d) {
+        if (!event.active) this.graphInstance.simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    dragended(event, d) {
+        if (!event.active) this.graphInstance.simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+}
+
+// Add new methods to NewsAnalysisClient for extended functionality
+NewsAnalysisClient.prototype.crawlWebsite = async function(crawlConfig) {
+    const response = await this._makeRequest('/api/news/crawl/website', {
+        method: 'POST',
+        body: JSON.stringify(crawlConfig)
+    });
+    return response.crawlId;
+};
+
+NewsAnalysisClient.prototype.getCrawlStatus = async function(crawlId) {
+    return await this._makeRequest(`/api/news/crawl/status/${crawlId}`);
+};
+
+NewsAnalysisClient.prototype.executeGraphRAGQuery = async function(queryData) {
+    return await this._makeRequest('/api/news/graphrag/query', {
+        method: 'POST',
+        body: JSON.stringify(queryData)
+    });
+};
+
+NewsAnalysisClient.prototype.getKnowledgeGraph = async function(filters = {}) {
+    return await this._makeRequest('/api/news/graph/data', {
+        method: 'POST',
+        body: JSON.stringify(filters)
+    });
+};
+
+NewsAnalysisClient.prototype.detectCommunities = async function(graphData) {
+    return await this._makeRequest('/api/news/graph/communities', {
+        method: 'POST',
+        body: JSON.stringify({ graphData })
+    });
+};
+
+NewsAnalysisClient.prototype.findShortestPath = async function(startNode, endNode) {
+    return await this._makeRequest('/api/news/graph/path', {
+        method: 'POST',
+        body: JSON.stringify({ startNode, endNode })
+    });
+};
+
 // Export for use in browser or Node.js
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { NewsAnalysisClient, NewsAnalysisDashboard, NewsAnalysisError };
+    module.exports = { 
+        NewsAnalysisClient, 
+        NewsAnalysisDashboard, 
+        NewsAnalysisError,
+        WebsiteCrawlingComponent,
+        GraphRAGQueryComponent,
+        GraphExplorerComponent
+    };
 }
