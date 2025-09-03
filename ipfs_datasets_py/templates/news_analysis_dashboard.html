@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Analysis Dashboard - IPFS Datasets</title>
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/mcp-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/news-analysis-dashboard.css') }}">
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- D3.js for advanced visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <style>
+        /* Additional styles for this template */
+        .professional-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-data-scientist {
+            background: var(--ds-primary);
+            color: white;
+        }
+        
+        .badge-historian {
+            background: var(--hist-primary);
+            color: white;
+        }
+        
+        .badge-lawyer {
+            background: var(--law-primary);
+            color: white;
+        }
+        
+        .workflow-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-running { background: #3b82f6; }
+        .status-completed { background: #10b981; }
+        .status-failed { background: #ef4444; }
+        .status-pending { background: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div id="newsAnalysisDashboard" class="news-dashboard">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="header-left">
+                <h1>📰 News Analysis Dashboard</h1>
+                <div class="professional-badge badge-{{ user_type or 'general' }}">
+                    {{ (user_type or 'general').replace('_', ' ').title() }}
+                </div>
+            </div>
+            
+            <div class="user-controls">
+                <select id="userTypeSelector" class="user-type-selector">
+                    <option value="general" {{ 'selected' if user_type == 'general' else '' }}>General User</option>
+                    <option value="data_scientist" {{ 'selected' if user_type == 'data_scientist' else '' }}>Data Scientist</option>
+                    <option value="historian" {{ 'selected' if user_type == 'historian' else '' }}>Historian</option>
+                    <option value="lawyer" {{ 'selected' if user_type == 'lawyer' else '' }}>Lawyer</option>
+                </select>
+                
+                <div class="connection-status" id="connectionStatus">
+                    <div class="status-indicator status-running"></div>
+                    <span>Connected</span>
+                </div>
+                
+                <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+                <button id="helpBtn" class="settings-btn" title="Help">❓</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="dashboard-nav">
+            <button class="nav-btn active" data-view="overview">📊 Overview</button>
+            <button class="nav-btn" data-view="ingest">📥 Ingest</button>
+            <button class="nav-btn" data-view="timeline">📈 Timeline</button>
+            <button class="nav-btn" data-view="analyze">🔍 Analyze</button>
+            <button class="nav-btn" data-view="entities">🔗 Entities</button>
+            <button class="nav-btn" data-view="search">🔎 Search</button>
+            <button class="nav-btn" data-view="export">📤 Export</button>
+            <button class="nav-btn" data-view="workflows">⚙️ Workflows</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+            <!-- Overview Panel -->
+            <div id="overviewPanel" class="content-panel active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Articles Processed</h3>
+                        <div class="stat-value" id="articlesCount">{{ stats.articles_processed or 0 }}</div>
+                        <div class="stat-change">+{{ stats.articles_today or 0 }} today</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Entities Extracted</h3>
+                        <div class="stat-value" id="entitiesCount">{{ stats.entities_extracted or 0 }}</div>
+                        <div class="stat-change">{{ stats.entity_types or 0 }} types</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Workflows</h3>
+                        <div class="stat-value" id="workflowsCount">{{ stats.active_workflows or 0 }}</div>
+                        <div class="stat-change">{{ stats.completed_workflows or 0 }} completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Sources Analyzed</h3>
+                        <div class="stat-value" id="sourcesCount">{{ stats.sources_analyzed or 0 }}</div>
+                        <div class="stat-change">{{ stats.reliability_avg or 0 }}% avg reliability</div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div id="activityList" class="activity-list">
+                            <!-- Activity items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <h3>Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button class="btn-primary" onclick="quickIngestArticle()">📰 Ingest Article</button>
+                            <button class="btn-secondary" onclick="generateQuickTimeline()">📊 Quick Timeline</button>
+                            <button class="btn-secondary" onclick="findConflicts()">⚖️ Find Conflicts</button>
+                            <button class="btn-secondary" onclick="exportData()">📤 Export Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingestion Panel -->
+            <div id="ingestPanel" class="content-panel">
+                <div class="ingestion-tabs">
+                    <button class="tab-btn active" data-tab="single">Single Article</button>
+                    <button class="tab-btn" data-tab="batch">Batch/Feed</button>
+                    <button class="tab-btn" data-tab="documents">Documents</button>
+                    <button class="tab-btn" data-tab="monitoring">Monitoring</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Single Article Tab -->
+                    <div id="singleTab" class="tab-panel active">
+                        <h3>📰 Ingest Single Article</h3>
+                        <form id="singleArticleForm">
+                            <div class="form-group">
+                                <label for="articleUrl">Article URL *</label>
+                                <input type="url" id="articleUrl" placeholder="https://example.com/article" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="articleTags">Tags (comma-separated)</label>
+                                <input type="text" id="articleTags" placeholder="technology, ai, news">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="articleMetadata">Additional Metadata (JSON)</label>
+                                <textarea id="articleMetadata" placeholder='{"importance": "high", "category": "technology"}'></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary loading" id="ingestBtn">
+                                    <span>Ingest Article</span>
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="clearForm('singleArticleForm')">Clear</button>
+                            </div>
+                        </form>
+                        
+                        <div id="singleIngestResults" class="results-section"></div>
+                    </div>
+
+                    <!-- Batch Ingestion Tab -->
+                    <div id="batchTab" class="tab-panel">
+                        <h3>📦 Batch Ingest from Feed</h3>
+                        <form id="batchIngestForm">
+                            <div class="form-group">
+                                <label for="feedUrl">RSS/JSON Feed URL *</label>
+                                <input type="url" id="feedUrl" placeholder="https://example.com/rss.xml" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="maxArticles">Max Articles</label>
+                                    <input type="number" id="maxArticles" placeholder="50" min="1" max="1000">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="batchKeywords">Keywords Filter</label>
+                                    <input type="text" id="batchKeywords" placeholder="technology, AI, science">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="batchFilters">Advanced Filters (JSON)</label>
+                                <textarea id="batchFilters" placeholder='{"min_word_count": 100, "exclude_duplicates": true}'></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Start Batch Ingestion</button>
+                                <button type="button" class="btn-secondary" onclick="clearForm('batchIngestForm')">Clear</button>
+                            </div>
+                        </form>
+                        
+                        <div id="batchIngestResults" class="results-section"></div>
+                    </div>
+
+                    <!-- Document Upload Tab -->
+                    <div id="documentsTab" class="tab-panel">
+                        <h3>📄 Upload Document Collection</h3>
+                        <div id="documentDropZone" class="drop-zone">
+                            <div class="drop-zone-content">
+                                <div class="drop-icon">📁</div>
+                                <p>Drop documents here or click to select</p>
+                                <p class="drop-hint">Supports: PDF, TXT, DOC, DOCX, HTML</p>
+                                <input type="file" id="documentFiles" multiple accept=".pdf,.txt,.doc,.docx,.html">
+                            </div>
+                        </div>
+                        
+                        <div id="documentList" class="document-list"></div>
+                        
+                        <div class="form-actions">
+                            <button id="uploadDocuments" class="btn-primary" disabled>Upload Documents</button>
+                            <button id="clearDocuments" class="btn-secondary">Clear All</button>
+                        </div>
+                    </div>
+
+                    <!-- Monitoring Tab -->
+                    <div id="monitoringTab" class="tab-panel">
+                        <h3>📡 Source Monitoring</h3>
+                        <p>Set up automated monitoring of news sources for specific topics or keywords.</p>
+                        
+                        <form id="monitoringForm">
+                            <div class="form-group">
+                                <label for="monitorKeywords">Keywords to Monitor *</label>
+                                <input type="text" id="monitorKeywords" placeholder="artificial intelligence, machine learning" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="monitorSources">Sources (URLs, comma-separated)</label>
+                                <textarea id="monitorSources" placeholder="https://example.com/rss1, https://example.com/rss2"></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="monitorFrequency">Check Frequency</label>
+                                    <select id="monitorFrequency">
+                                        <option value="15min">Every 15 minutes</option>
+                                        <option value="1hour">Every hour</option>
+                                        <option value="6hours">Every 6 hours</option>
+                                        <option value="daily">Daily</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="monitorAlerts">Alert Method</label>
+                                    <select id="monitorAlerts">
+                                        <option value="dashboard">Dashboard notification</option>
+                                        <option value="email">Email alert</option>
+                                        <option value="webhook">Webhook</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Start Monitoring</button>
+                                <button type="button" class="btn-secondary">Save as Template</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline Panel -->
+            <div id="timelinePanel" class="content-panel">
+                <div class="timeline-controls">
+                    <div class="control-group">
+                        <label for="timelineQuery">Search Query *</label>
+                        <input type="text" id="timelineQuery" placeholder="artificial intelligence" required>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="timelineStartDate">Start Date</label>
+                        <input type="date" id="timelineStartDate" value="{{ default_start_date }}">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="timelineEndDate">End Date</label>
+                        <input type="date" id="timelineEndDate" value="{{ default_end_date }}">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="timelineGranularity">Granularity</label>
+                        <select id="timelineGranularity">
+                            <option value="hour">Hourly</option>
+                            <option value="day" selected>Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-actions">
+                        <button id="generateTimelineBtn" class="btn-primary">Generate Timeline</button>
+                        <button id="exportTimelineBtn" class="btn-secondary">Export</button>
+                    </div>
+                </div>
+                
+                <div class="timeline-container">
+                    <div id="timelineVisualization" class="timeline-viz">
+                        <div class="timeline-placeholder">
+                            <div class="placeholder-icon">📈</div>
+                            <h3>Timeline Visualization</h3>
+                            <p>Enter a search query and date range to generate an interactive timeline of news events.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="timelineInsights" class="timeline-insights">
+                        <h3>Key Insights</h3>
+                        <div id="insightsList" class="insights-list">
+                            <!-- Insights will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Panel -->
+            <div id="analyzePanel" class="content-panel">
+                <div class="analysis-tools">
+                    <div class="tool-section">
+                        <div class="tool-header">
+                            <h3>⚖️ Cross-Document Conflict Analysis</h3>
+                            <p>Identify conflicting information across multiple news sources</p>
+                        </div>
+                        
+                        <div class="tool-controls">
+                            <input type="text" id="conflictTopic" placeholder="Topic to analyze (e.g., 'COVID-19 vaccine effectiveness')">
+                            <div class="control-row">
+                                <input type="date" id="conflictStartDate" placeholder="Start date">
+                                <input type="date" id="conflictEndDate" placeholder="End date">
+                            </div>
+                            <button id="findConflictsBtn" class="btn-primary">Find Conflicting Reports</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header">
+                            <h3>🔗 Information Flow Tracing</h3>
+                            <p>Track how information spreads and mutates across sources</p>
+                        </div>
+                        
+                        <div class="tool-controls">
+                            <input type="text" id="claimToTrace" placeholder="Claim to trace (e.g., 'AI will replace human jobs')">
+                            <button id="traceFlowBtn" class="btn-primary">Trace Information Flow</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header">
+                            <h3>📊 Sentiment Analysis</h3>
+                            <p>Analyze sentiment trends across time and sources</p>
+                        </div>
+                        
+                        <div class="tool-controls">
+                            <input type="text" id="sentimentQuery" placeholder="Topic for sentiment analysis">
+                            <select id="sentimentTimeframe">
+                                <option value="week">Past week</option>
+                                <option value="month" selected>Past month</option>
+                                <option value="quarter">Past quarter</option>
+                                <option value="year">Past year</option>
+                            </select>
+                            <button id="analyzeSentimentBtn" class="btn-primary">Analyze Sentiment</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="analysisResults" class="analysis-results">
+                    <div class="results-placeholder">
+                        <div class="placeholder-icon">🔍</div>
+                        <h3>Analysis Results</h3>
+                        <p>Select an analysis tool above to get started. Results will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entities Panel -->
+            <div id="entitiesPanel" class="content-panel">
+                <div class="entity-controls">
+                    <div class="control-group">
+                        <label for="entitySearch">Search Entities</label>
+                        <input type="text" id="entitySearch" placeholder="Search for people, organizations, locations...">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="entityTypeFilter">Entity Types</label>
+                        <select id="entityTypeFilter" multiple>
+                            <option value="PERSON">People</option>
+                            <option value="ORG">Organizations</option>
+                            <option value="GPE">Locations</option>
+                            <option value="EVENT">Events</option>
+                            <option value="PRODUCT">Products</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-actions">
+                        <button id="buildEntityGraphBtn" class="btn-primary">Build Entity Graph</button>
+                        <button id="exportEntitiesBtn" class="btn-secondary">Export</button>
+                    </div>
+                </div>
+                
+                <div class="entity-visualization">
+                    <div id="entityGraph" class="entity-graph">
+                        <div class="graph-placeholder">
+                            <div class="placeholder-icon">🔗</div>
+                            <h3>Entity Relationship Graph</h3>
+                            <p>Visualize connections between people, organizations, and events mentioned in news articles.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="entityDetails" class="entity-details">
+                        <h3>Entity Details</h3>
+                        <div id="entityInfo" class="entity-info">
+                            <p>Click on an entity in the graph to see detailed information.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Panel -->
+            <div id="searchPanel" class="content-panel">
+                <div class="search-interface">
+                    <div class="search-header">
+                        <h2>🔎 Advanced Search</h2>
+                        <div class="search-mode-toggle">
+                            <button class="mode-btn active" data-mode="semantic">Semantic</button>
+                            <button class="mode-btn" data-mode="keyword">Keyword</button>
+                            <button class="mode-btn" data-mode="professional">Professional</button>
+                        </div>
+                    </div>
+                    
+                    <div class="search-form">
+                        <div class="search-input-group">
+                            <input type="text" id="searchQuery" placeholder="Enter your search query...">
+                            <button id="searchBtn" class="btn-primary">Search</button>
+                        </div>
+                        
+                        <div class="search-filters">
+                            <div class="filter-group">
+                                <label>Date Range</label>
+                                <input type="date" id="searchStartDate">
+                                <span>to</span>
+                                <input type="date" id="searchEndDate">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Sources</label>
+                                <input type="text" id="searchSources" placeholder="BBC, Reuters, NYTimes...">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Article Type</label>
+                                <select id="searchArticleType">
+                                    <option value="">All Types</option>
+                                    <option value="news">News Article</option>
+                                    <option value="opinion">Opinion</option>
+                                    <option value="analysis">Analysis</option>
+                                    <option value="report">Report</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="searchResults" class="search-results">
+                        <div class="results-placeholder">
+                            <div class="placeholder-icon">🔍</div>
+                            <h3>Search Results</h3>
+                            <p>Enter a search query to find relevant articles from your analyzed content.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Panel -->
+            <div id="exportPanel" class="content-panel">
+                <div class="export-options">
+                    <div class="export-card" data-export="data-science">
+                        <div class="export-icon">📊</div>
+                        <h3>Data Science Export</h3>
+                        <p>Structured datasets for machine learning and statistical analysis</p>
+                        <ul>
+                            <li>CSV, JSON, Parquet formats</li>
+                            <li>Embeddings included</li>
+                            <li>Feature engineering ready</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportForDataScience()">Export Dataset</button>
+                    </div>
+                    
+                    <div class="export-card" data-export="academic">
+                        <div class="export-icon">📚</div>
+                        <h3>Academic Research Export</h3>
+                        <p>Properly cited research materials for academic use</p>
+                        <ul>
+                            <li>APA, Chicago, MLA citations</li>
+                            <li>Bibliography generation</li>
+                            <li>Source validation included</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportForAcademic()">Export Research</button>
+                    </div>
+                    
+                    <div class="export-card" data-export="legal">
+                        <div class="export-icon">⚖️</div>
+                        <h3>Legal Research Export</h3>
+                        <p>Evidence packages with chain of custody documentation</p>
+                        <ul>
+                            <li>Legal citation format</li>
+                            <li>Chain of custody tracking</li>
+                            <li>Evidence authenticity verification</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportForLegal()">Export Evidence</button>
+                    </div>
+                    
+                    <div class="export-card" data-export="general">
+                        <div class="export-icon">📄</div>
+                        <h3>General Export</h3>
+                        <p>Standard export formats for general use</p>
+                        <ul>
+                            <li>PDF reports</li>
+                            <li>Excel spreadsheets</li>
+                            <li>Word documents</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportGeneral()">Export Files</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflows Panel -->
+            <div id="workflowsPanel" class="content-panel">
+                <div class="workflows-header">
+                    <h2>⚙️ Active Workflows</h2>
+                    <button id="createWorkflowBtn" class="btn-primary">+ Create New Workflow</button>
+                </div>
+                
+                <div id="workflowsList" class="workflows-list">
+                    <!-- Workflows will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Dependencies -->
+    <script src="{{ url_for('static', filename='admin/js/mcp-sdk.js') }}"></script>
+    <script src="{{ url_for('static', filename='admin/js/news-analysis-sdk.js') }}"></script>
+    
+    <script>
+        // Initialize News Analysis Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const config = {
+                baseUrl: '{{ base_url or "" }}',
+                userType: '{{ user_type or "general" }}',
+                enableRealTimeUpdates: true,
+                apiKey: '{{ api_key or "" }}'
+            };
+            
+            // Initialize the dashboard
+            window.newsAnalysisDashboard = new NewsAnalysisDashboard('newsAnalysisDashboard', config);
+            
+            // Set up real-time updates
+            setInterval(updateDashboardStats, 30000); // Update every 30 seconds
+            
+            // Initialize tooltips and other UI enhancements
+            initializeUIEnhancements();
+        });
+        
+        // Dashboard functionality
+        function updateDashboardStats() {
+            // This would be implemented to fetch real-time stats
+            if (window.newsAnalysisDashboard && window.newsAnalysisDashboard.client) {
+                window.newsAnalysisDashboard._updateStats();
+            }
+        }
+        
+        function initializeUIEnhancements() {
+            // Add tooltips, keyboard shortcuts, etc.
+            console.log('News Analysis Dashboard initialized successfully');
+        }
+        
+        // Quick action functions
+        function quickIngestArticle() {
+            const url = prompt('Enter article URL to ingest:');
+            if (url) {
+                document.getElementById('articleUrl').value = url;
+                document.querySelector('[data-view="ingest"]').click();
+            }
+        }
+        
+        function generateQuickTimeline() {
+            const query = prompt('Enter search query for timeline:');
+            if (query) {
+                document.getElementById('timelineQuery').value = query;
+                document.querySelector('[data-view="timeline"]').click();
+            }
+        }
+        
+        function findConflicts() {
+            const topic = prompt('Enter topic to analyze for conflicts:');
+            if (topic) {
+                document.getElementById('conflictTopic').value = topic;
+                document.querySelector('[data-view="analyze"]').click();
+            }
+        }
+        
+        function exportData() {
+            document.querySelector('[data-view="export"]').click();
+        }
+        
+        // Export functions
+        function exportForDataScience() {
+            if (window.newsAnalysisDashboard) {
+                window.newsAnalysisDashboard.client.exportForDataScience('current_dataset', 'csv', {
+                    includeEmbeddings: true,
+                    includeMetadata: true
+                }).then(blob => {
+                    downloadBlob(blob, 'news_dataset.csv');
+                });
+            }
+        }
+        
+        function exportForAcademic() {
+            if (window.newsAnalysisDashboard) {
+                window.newsAnalysisDashboard.client.exportForAcademicResearch('current_research', {
+                    citationStyle: 'apa',
+                    includeBibliography: true
+                }).then(blob => {
+                    downloadBlob(blob, 'research_export.pdf');
+                });
+            }
+        }
+        
+        function exportForLegal() {
+            if (window.newsAnalysisDashboard) {
+                window.newsAnalysisDashboard.client.exportForLegalResearch('current_case', {
+                    citationFormat: 'bluebook',
+                    includeChainOfCustody: true
+                }).then(blob => {
+                    downloadBlob(blob, 'legal_evidence.pdf');
+                });
+            }
+        }
+        
+        function exportGeneral() {
+            // Implementation for general export
+            alert('General export functionality would be implemented here');
+        }
+        
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        
+        function clearForm(formId) {
+            document.getElementById(formId).reset();
+        }
+    </script>
+</body>
+</html>
