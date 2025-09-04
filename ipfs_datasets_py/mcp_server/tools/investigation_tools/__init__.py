@@ -1,0 +1,1 @@
+"""Investigation Tools for MCP Server - Init module."""
