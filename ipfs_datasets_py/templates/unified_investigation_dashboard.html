@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigation Dashboard - Entity Analysis Platform</title>
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/mcp-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/investigation-dashboard.css') }}">
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- D3.js for advanced visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <style>
+        :root {
+            /* Unified Color Scheme - Investigation Theme */
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #6366f1;
+            --accent: #06b6d4;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --info: #0891b2;
+            
+            /* Investigation-specific colors */
+            --entity-person: #8b5cf6;
+            --entity-org: #06b6d4;
+            --entity-location: #10b981;
+            --entity-event: #f59e0b;
+            --entity-concept: #ef4444;
+            --relationship-strong: #059669;
+            --relationship-medium: #f59e0b;
+            --relationship-weak: #6b7280;
+            
+            /* Surface colors */
+            --surface: #ffffff;
+            --surface-secondary: #f8fafc;
+            --surface-tertiary: #e2e8f0;
+            --surface-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            
+            /* Text colors */
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-inverse: #ffffff;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--surface-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .sidebar-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .navigation {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+        
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-sm);
+            padding: 0 var(--spacing-sm);
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .nav-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+        
+        .nav-icon {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .main-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: var(--spacing-md) var(--spacing-xl);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .page-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .content-area {
+            flex: 1;
+            overflow: auto;
+            padding: var(--spacing-xl);
+        }
+        
+        /* Status Indicators */
+        .status-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: var(--spacing-sm) var(--spacing-xl);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-connected { background: var(--success); }
+        .status-processing { background: var(--warning); }
+        .status-error { background: var(--danger); }
+        
+        /* Card Components */
+        .card {
+            background: var(--surface);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-content {
+            padding: var(--spacing-lg);
+        }
+        
+        /* Grid Layouts */
+        .grid {
+            display: grid;
+            gap: var(--spacing-lg);
+        }
+        
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Statistics Cards */
+        .stat-card {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 0.75rem;
+            margin-top: var(--spacing-xs);
+        }
+        
+        .stat-change.positive { color: var(--success); }
+        .stat-change.negative { color: var(--danger); }
+        .stat-change.neutral { color: var(--text-muted); }
+        
+        /* Entity Visualization */
+        .entity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .entity-person { background: var(--entity-person); color: white; }
+        .entity-organization { background: var(--entity-org); color: white; }
+        .entity-location { background: var(--entity-location); color: white; }
+        .entity-event { background: var(--entity-event); color: white; }
+        .entity-concept { background: var(--entity-concept); color: white; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 0.5rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--surface-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgb(30 64 175 / 0.1);
+        }
+        
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">🔍 Investigation Hub</h1>
+                <p class="sidebar-subtitle">Entity Analysis & Research Platform</p>
+            </div>
+            
+            <nav class="navigation">
+                <!-- Core Investigation Tools -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Investigation</div>
+                    <button class="nav-item active" data-view="overview">
+                        <span class="nav-icon">📊</span>
+                        Overview & Stats
+                    </button>
+                    <button class="nav-item" data-view="entities">
+                        <span class="nav-icon">🎯</span>
+                        Entity Explorer
+                    </button>
+                    <button class="nav-item" data-view="relationships">
+                        <span class="nav-icon">🕸️</span>
+                        Relationship Map
+                    </button>
+                    <button class="nav-item" data-view="timeline">
+                        <span class="nav-icon">📈</span>
+                        Timeline Analysis
+                    </button>
+                </div>
+                
+                <!-- Data Management -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Data Management</div>
+                    <button class="nav-item" data-view="ingest">
+                        <span class="nav-icon">📥</span>
+                        Data Ingestion
+                    </button>
+                    <button class="nav-item" data-view="corpus">
+                        <span class="nav-icon">📚</span>
+                        Corpus Browser
+                    </button>
+                    <button class="nav-item" data-view="sources">
+                        <span class="nav-icon">🌐</span>
+                        Source Management
+                    </button>
+                </div>
+                
+                <!-- Analysis Tools -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Analysis Tools</div>
+                    <button class="nav-item" data-view="search">
+                        <span class="nav-icon">🔍</span>
+                        Advanced Search
+                    </button>
+                    <button class="nav-item" data-view="patterns">
+                        <span class="nav-icon">📋</span>
+                        Pattern Detection
+                    </button>
+                    <button class="nav-item" data-view="conflicts">
+                        <span class="nav-icon">⚖️</span>
+                        Conflict Analysis
+                    </button>
+                    <button class="nav-item" data-view="deontological">
+                        <span class="nav-icon">⚔️</span>
+                        Legal/Ethical Analysis
+                    </button>
+                    <button class="nav-item" data-view="provenance">
+                        <span class="nav-icon">🔗</span>
+                        Data Provenance
+                    </button>
+                </div>
+                
+                <!-- Export & Reports -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Export & Reports</div>
+                    <button class="nav-item" data-view="export">
+                        <span class="nav-icon">📤</span>
+                        Export Data
+                    </button>
+                    <button class="nav-item" data-view="reports">
+                        <span class="nav-icon">📝</span>
+                        Generate Reports
+                    </button>
+                    <button class="nav-item" data-view="citations">
+                        <span class="nav-icon">📖</span>
+                        Citation Manager
+                    </button>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div style="display: flex; gap: 1rem;">
+                    <div class="status-item">
+                        <div class="status-dot status-connected"></div>
+                        <span>Connected</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Last Update: <span id="lastUpdate">{{ current_time or 'Never' }}</span></span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span>Processing: <span id="activeProcessing">{{ processing_count or 0 }}</span> tasks</span>
+                </div>
+            </div>
+            
+            <!-- Main Header -->
+            <header class="main-header">
+                <div>
+                    <h1 class="page-title" id="pageTitle">Investigation Overview</h1>
+                    <p class="page-subtitle" id="pageSubtitle">Analyze entities, relationships, and patterns across your corpus</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="searchBtn">
+                        <span>🔍</span>
+                        Quick Search
+                    </button>
+                    <button class="btn btn-primary" id="ingestBtn">
+                        <span>📥</span>
+                        Add Data
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Overview Panel -->
+                <div id="overviewPanel" class="content-panel active">
+                    <!-- Key Statistics -->
+                    <div class="grid grid-4" style="margin-bottom: 2rem;">
+                        <div class="card stat-card">
+                            <div class="card-content">
+                                <div class="stat-value" id="documentsCount">{{ stats.documents_processed or 0 }}</div>
+                                <div class="stat-label">Documents Analyzed</div>
+                                <div class="stat-change positive">+{{ stats.documents_today or 0 }} today</div>
+                            </div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="card-content">
+                                <div class="stat-value" id="entitiesCount">{{ stats.entities_extracted or 0 }}</div>
+                                <div class="stat-label">Entities Discovered</div>
+                                <div class="stat-change neutral">{{ stats.entity_types or 0 }} types</div>
+                            </div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="card-content">
+                                <div class="stat-value" id="relationshipsCount">{{ stats.relationships_mapped or 0 }}</div>
+                                <div class="stat-label">Relationships Mapped</div>
+                                <div class="stat-change positive">{{ stats.strong_relationships or 0 }} strong</div>
+                            </div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="card-content">
+                                <div class="stat-value" id="sourcesCount">{{ stats.sources_analyzed or 0 }}</div>
+                                <div class="stat-label">Sources Analyzed</div>
+                                <div class="stat-change neutral">{{ stats.reliability_avg or 0 }}% reliable</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Investigation Dashboard Grid -->
+                    <div class="grid grid-2">
+                        <!-- Recent Discoveries -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">🔍 Recent Discoveries</h2>
+                                <button class="btn btn-secondary btn-sm">View All</button>
+                            </div>
+                            <div class="card-content">
+                                <div id="recentDiscoveries">
+                                    <!-- Content will be populated by JavaScript -->
+                                    <div class="discovery-item" style="padding: 1rem; border-left: 3px solid var(--entity-person); margin-bottom: 1rem;">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">New Entity Cluster</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                            Identified 12 connected entities in financial documents
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <span class="entity-badge entity-organization">Corp A</span>
+                                            <span class="entity-badge entity-person">John Smith</span>
+                                            <span class="entity-badge entity-location">New York</span>
+                                        </div>
+                                    </div>
+                                    <div class="discovery-item" style="padding: 1rem; border-left: 3px solid var(--entity-event); margin-bottom: 1rem;">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Temporal Pattern</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                            Detected significant activity spike in March 2024
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <span class="entity-badge entity-event">Market Event</span>
+                                            <span class="entity-badge entity-concept">Volatility</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Active Investigations -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">⚡ Active Investigations</h2>
+                                <button class="btn btn-primary btn-sm">New Investigation</button>
+                            </div>
+                            <div class="card-content">
+                                <div id="activeInvestigations">
+                                    <div class="investigation-item" style="padding: 1rem; background: var(--surface-secondary); border-radius: 0.5rem; margin-bottom: 1rem;">
+                                        <div style="display: flex; align-items: center; justify-content: between; margin-bottom: 0.5rem;">
+                                            <div style="font-weight: 600;">Financial Network Analysis</div>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div class="status-dot status-processing"></div>
+                                                <span style="font-size: 0.75rem;">Processing</span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                            Analyzing relationships between 247 financial entities
+                                        </div>
+                                        <div style="width: 100%; background: var(--surface-tertiary); border-radius: 0.25rem; height: 4px;">
+                                            <div style="background: var(--warning); height: 100%; border-radius: 0.25rem; width: 65%;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="investigation-item" style="padding: 1rem; background: var(--surface-secondary); border-radius: 0.5rem;">
+                                        <div style="display: flex; align-items: center; justify-content: between; margin-bottom: 0.5rem;">
+                                            <div style="font-weight: 600;">Government Document Review</div>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div class="status-dot status-connected"></div>
+                                                <span style="font-size: 0.75rem;">Complete</span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                            Successfully processed 89 government documents
+                                        </div>
+                                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">View Results</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Entity Explorer Panel -->
+                <div id="entitiesPanel" class="content-panel" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">🎯 Entity Explorer</h2>
+                            <div class="header-actions">
+                                <input type="search" placeholder="Search entities..." class="form-input" style="width: 300px;">
+                                <button class="btn btn-primary">Advanced Filter</button>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <!-- Entity explorer content will be populated by JavaScript -->
+                            <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+                                <h3>Entity Explorer Coming Soon</h3>
+                                <p>Advanced entity visualization and analysis tools</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Deontological Analysis Panel -->
+                <div id="deontologicalPanel" class="content-panel" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Legal & Ethical Analysis</h2>
+                            <p>Detect conflicts in what entities can/cannot, should/should not, must/must not do</p>
+                        </div>
+                        <div class="card-content">
+                            <!-- Analysis Configuration -->
+                            <div style="margin-bottom: 2rem;">
+                                <h3>Analysis Configuration</h3>
+                                <div class="grid grid-2" style="gap: 1rem;">
+                                    <div>
+                                        <label for="analysisScope">Analysis Scope</label>
+                                        <select id="analysisScope" class="form-control">
+                                            <option value="all_documents">All Documents</option>
+                                            <option value="selected_corpus">Selected Corpus</option>
+                                            <option value="date_range">Date Range</option>
+                                            <option value="entity_specific">Entity Specific</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="conflictSeverity">Minimum Conflict Severity</label>
+                                        <select id="conflictSeverity" class="form-control">
+                                            <option value="low">Low</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <label for="entityFilter">Entity Filter (optional)</label>
+                                    <input type="text" id="entityFilter" class="form-control" placeholder="Filter by specific entity (e.g., 'banks', 'employees', 'government')">
+                                </div>
+                                <button class="btn btn-primary" onclick="investigationDashboard.runDeontologicalAnalysis()" style="margin-top: 1rem;">
+                                    🚀 Run Legal/Ethical Analysis
+                                </button>
+                            </div>
+                            
+                            <!-- Analysis Results -->
+                            <div id="deontologicalResults" style="display: none;">
+                                <h3>Analysis Results</h3>
+                                
+                                <!-- Summary Statistics -->
+                                <div class="grid grid-4" style="margin-bottom: 2rem;">
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="totalStatements">0</div>
+                                            <div class="stat-label">Deontic Statements</div>
+                                            <div class="stat-change neutral" id="statementBreakdown">0 obligations</div>
+                                        </div>
+                                    </div>
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="totalConflicts">0</div>
+                                            <div class="stat-label">Conflicts Detected</div>
+                                            <div class="stat-change negative" id="highSeverityConflicts">0 high severity</div>
+                                        </div>
+                                    </div>
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="entitiesAnalyzed">0</div>
+                                            <div class="stat-label">Entities Analyzed</div>
+                                            <div class="stat-change neutral" id="conflictingEntities">0 with conflicts</div>
+                                        </div>
+                                    </div>
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="documentsProcessed">0</div>
+                                            <div class="stat-label">Documents Processed</div>
+                                            <div class="stat-change positive" id="processingTime">0s processing</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- High Priority Conflicts -->
+                                <div class="card" style="margin-bottom: 2rem;">
+                                    <div class="card-header">
+                                        <h4>🚨 High Priority Conflicts</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div id="highPriorityConflicts">
+                                            <p style="color: var(--text-muted);">No high priority conflicts detected.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Deontic Statement Categories -->
+                                <div class="grid grid-2" style="gap: 2rem;">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4>⚖️ Obligations & Prohibitions</h4>
+                                        </div>
+                                        <div class="card-content">
+                                            <div id="obligationsChart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                                Chart will appear after analysis
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4>✅ Permissions & Rights</h4>
+                                        </div>
+                                        <div class="card-content">
+                                            <div id="permissionsChart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                                Chart will appear after analysis
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Entity-Specific Conflicts -->
+                                <div class="card" style="margin-top: 2rem;">
+                                    <div class="card-header">
+                                        <h4>🎯 Entity-Specific Conflicts</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div id="entityConflicts">
+                                            <p style="color: var(--text-muted);">Entity conflict analysis will appear here.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Query Interface -->
+                                <div class="card" style="margin-top: 2rem;">
+                                    <div class="card-header">
+                                        <h4>🔍 Query Deontic Statements</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="grid grid-3" style="gap: 1rem; margin-bottom: 1rem;">
+                                            <div>
+                                                <label for="queryEntity">Entity</label>
+                                                <input type="text" id="queryEntity" class="form-control" placeholder="e.g., banks, employees">
+                                            </div>
+                                            <div>
+                                                <label for="queryModality">Modality</label>
+                                                <select id="queryModality" class="form-control">
+                                                    <option value="">All Modalities</option>
+                                                    <option value="obligation">Obligations (must, shall)</option>
+                                                    <option value="permission">Permissions (may, can)</option>
+                                                    <option value="prohibition">Prohibitions (cannot, must not)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="queryKeywords">Action Keywords</label>
+                                                <input type="text" id="queryKeywords" class="form-control" placeholder="e.g., report, disclose">
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-secondary" onclick="investigationDashboard.queryDeonticStatements()">
+                                            🔍 Query Statements
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="investigationDashboard.queryDeonticConflicts()">
+                                            ⚔️ Query Conflicts
+                                        </button>
+                                        <div id="queryResults" style="margin-top: 1rem; display: none;">
+                                            <!-- Query results will appear here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional panels would be added here for other views -->
+                
+            </div>
+        </main>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Unified Investigation Dashboard JavaScript
+        class InvestigationDashboard {
+            constructor() {
+                this.currentView = 'overview';
+                this.initializeEventListeners();
+                this.updateTimestamps();
+            }
+            
+            initializeEventListeners() {
+                // Navigation items
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const view = e.currentTarget.dataset.view;
+                        this.switchView(view);
+                    });
+                });
+                
+                // Header action buttons
+                document.getElementById('searchBtn')?.addEventListener('click', () => {
+                    this.openQuickSearch();
+                });
+                
+                document.getElementById('ingestBtn')?.addEventListener('click', () => {
+                    this.switchView('ingest');
+                });
+                
+                // Auto-refresh data
+                setInterval(() => {
+                    this.refreshData();
+                }, 30000); // Refresh every 30 seconds
+            }
+            
+            switchView(viewName) {
+                if (this.currentView === viewName) return;
+                
+                // Update navigation
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`[data-view="${viewName}"]`)?.classList.add('active');
+                
+                // Update content panels
+                document.querySelectorAll('.content-panel').forEach(panel => {
+                    panel.style.display = 'none';
+                });
+                
+                const targetPanel = document.getElementById(`${viewName}Panel`);
+                if (targetPanel) {
+                    targetPanel.style.display = 'block';
+                } else {
+                    // Create placeholder for views not yet implemented
+                    this.showPlaceholder(viewName);
+                }
+                
+                // Update page title
+                this.updatePageTitle(viewName);
+                
+                this.currentView = viewName;
+            }
+            
+            updatePageTitle(viewName) {
+                const titles = {
+                    'overview': 'Investigation Overview',
+                    'entities': 'Entity Explorer',
+                    'relationships': 'Relationship Mapping',
+                    'timeline': 'Timeline Analysis',
+                    'ingest': 'Data Ingestion',
+                    'corpus': 'Corpus Browser',
+                    'sources': 'Source Management',
+                    'search': 'Advanced Search',
+                    'patterns': 'Pattern Detection',
+                    'conflicts': 'Conflict Analysis',
+                    'provenance': 'Data Provenance',
+                    'export': 'Export Data',
+                    'reports': 'Generate Reports',
+                    'citations': 'Citation Manager'
+                };
+                
+                const subtitles = {
+                    'overview': 'Analyze entities, relationships, and patterns across your corpus',
+                    'entities': 'Explore and analyze discovered entities',
+                    'relationships': 'Visualize connections between entities',
+                    'timeline': 'Track events and changes over time',
+                    'ingest': 'Import and process new data sources',
+                    'corpus': 'Browse and manage your document collection',
+                    'sources': 'Monitor and configure data sources',
+                    'search': 'Find specific information across all documents',
+                    'patterns': 'Detect recurring patterns and anomalies',
+                    'conflicts': 'Identify conflicting information',
+                    'provenance': 'Track data lineage and transformations',
+                    'export': 'Export findings in various formats',
+                    'reports': 'Create comprehensive analysis reports',
+                    'citations': 'Manage references and citations'
+                };
+                
+                document.getElementById('pageTitle').textContent = titles[viewName] || 'Investigation Hub';
+                document.getElementById('pageSubtitle').textContent = subtitles[viewName] || 'Advanced analysis tools';
+            }
+            
+            showPlaceholder(viewName) {
+                // Create a placeholder for views not yet implemented
+                const contentArea = document.querySelector('.content-area');
+                const placeholder = document.createElement('div');
+                placeholder.className = 'content-panel';
+                placeholder.id = `${viewName}Panel`;
+                placeholder.innerHTML = `
+                    <div class="card">
+                        <div class="card-content" style="text-align: center; padding: 3rem;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🚧</div>
+                            <h3>${this.getViewTitle(viewName)}</h3>
+                            <p>This feature is being developed and will be available soon.</p>
+                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="this.closest('.content-panel').remove(); investigationDashboard.switchView('overview');">
+                                Return to Overview
+                            </button>
+                        </div>
+                    </div>
+                `;
+                contentArea.appendChild(placeholder);
+            }
+            
+            getViewTitle(viewName) {
+                const titles = {
+                    'entities': 'Entity Explorer',
+                    'relationships': 'Relationship Mapping',
+                    'timeline': 'Timeline Analysis',
+                    'ingest': 'Data Ingestion',
+                    'corpus': 'Corpus Browser',
+                    'sources': 'Source Management',
+                    'search': 'Advanced Search',
+                    'patterns': 'Pattern Detection',
+                    'conflicts': 'Conflict Analysis',
+                    'deontological': 'Legal/Ethical Analysis',
+                    'provenance': 'Data Provenance',
+                    'export': 'Export Data',
+                    'reports': 'Generate Reports',
+                    'citations': 'Citation Manager'
+                };
+                return titles[viewName] || 'Feature';
+            }
+            
+            openQuickSearch() {
+                // Implementation for quick search modal
+                console.log('Opening quick search...');
+            }
+            
+            refreshData() {
+                // Refresh dashboard data
+                this.updateTimestamps();
+                // Add API calls to refresh statistics and other data
+            }
+            
+            updateTimestamps() {
+                const now = new Date();
+                const lastUpdateElement = document.getElementById('lastUpdate');
+                if (lastUpdateElement) {
+                    lastUpdateElement.textContent = now.toLocaleTimeString();
+                }
+            }
+            
+            // Deontological Analysis Methods
+            async runDeontologicalAnalysis() {
+                const resultsDiv = document.getElementById('deontologicalResults');
+                const analysisScope = document.getElementById('analysisScope').value;
+                const conflictSeverity = document.getElementById('conflictSeverity').value;
+                const entityFilter = document.getElementById('entityFilter').value;
+                
+                try {
+                    // Show loading state
+                    this.showLoadingState('Running legal/ethical analysis...');
+                    
+                    // Prepare request data
+                    const requestData = {
+                        documents: await this.getDocumentsForAnalysis(analysisScope),
+                        config: {
+                            severity_threshold: conflictSeverity,
+                            entity_filter: entityFilter || null
+                        }
+                    };
+                    
+                    // Call deontological analysis API
+                    const response = await fetch('/api/investigation/analyze/deontological', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    // Display results
+                    this.displayDeontologicalResults(result);
+                    resultsDiv.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Deontological analysis failed:', error);
+                    this.showError('Analysis failed: ' + error.message);
+                } finally {
+                    this.hideLoadingState();
+                }
+            }
+            
+            async getDocumentsForAnalysis(scope) {
+                // Mock document retrieval - in real implementation, this would
+                // fetch documents based on the specified scope
+                return [
+                    {
+                        id: 'sample_legal_doc',
+                        content: 'Financial institutions must maintain records of all transactions. Banks cannot disclose customer information without consent.'
+                    }
+                ];
+            }
+            
+            displayDeontologicalResults(result) {
+                const analysis = result.result;
+                if (!analysis) return;
+                
+                // Update summary statistics
+                const statements = analysis.statements_summary || {};
+                const conflicts = analysis.conflicts_summary || {};
+                const entities = analysis.entity_reports || {};
+                
+                document.getElementById('totalStatements').textContent = statements.total_statements || 0;
+                document.getElementById('totalConflicts').textContent = conflicts.total_conflicts || 0;
+                document.getElementById('entitiesAnalyzed').textContent = Object.keys(entities).length;
+                document.getElementById('documentsProcessed').textContent = result.documents_analyzed || 0;
+                
+                // Update breakdowns
+                const modalities = statements.by_modality || {};
+                document.getElementById('statementBreakdown').textContent = 
+                    `${modalities.obligation || 0} obligations, ${modalities.permission || 0} permissions, ${modalities.prohibition || 0} prohibitions`;
+                
+                const severity = conflicts.by_severity || {};
+                document.getElementById('highSeverityConflicts').textContent = `${severity.high || 0} high severity`;
+                
+                // Display high priority conflicts
+                this.displayHighPriorityConflicts(analysis.high_priority_conflicts || []);
+                
+                // Display entity-specific conflicts
+                this.displayEntityConflicts(entities);
+                
+                // Create charts
+                this.createDeontologicalCharts(modalities);
+            }
+            
+            displayHighPriorityConflicts(conflicts) {
+                const container = document.getElementById('highPriorityConflicts');
+                
+                if (conflicts.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No high priority conflicts detected.</p>';
+                    return;
+                }
+                
+                const conflictHtml = conflicts.map((conflict, index) => `
+                    <div class="conflict-item" style="border-left: 3px solid var(--danger); padding: 1rem; margin-bottom: 1rem; background: var(--surface-secondary);">
+                        <h5>Conflict ${index + 1}: ${conflict.type || 'Unknown Type'}</h5>
+                        <p><strong>Entity:</strong> ${conflict.entity || 'Unknown'}</p>
+                        <p><strong>Issue:</strong> ${conflict.explanation || 'No explanation provided'}</p>
+                        <div style="margin-top: 0.5rem;">
+                            <strong>Statements:</strong>
+                            <ul>
+                                <li>📝 "${conflict.statement1_text || 'N/A'}" (${conflict.sources[0] || 'Unknown source'})</li>
+                                <li>📝 "${conflict.statement2_text || 'N/A'}" (${conflict.sources[1] || 'Unknown source'})</li>
+                            </ul>
+                        </div>
+                        ${conflict.resolution_suggestions && conflict.resolution_suggestions.length > 0 ? `
+                            <div style="margin-top: 0.5rem;">
+                                <strong>Suggestions:</strong>
+                                <ul>
+                                    ${conflict.resolution_suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+                container.innerHTML = conflictHtml;
+            }
+            
+            displayEntityConflicts(entities) {
+                const container = document.getElementById('entityConflicts');
+                
+                if (Object.keys(entities).length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No entity-specific conflicts found.</p>';
+                    return;
+                }
+                
+                const entityHtml = Object.entries(entities).map(([entity, report]) => `
+                    <div class="entity-report" style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; border-radius: 6px;">
+                        <h5>📍 ${entity}</h5>
+                        <div class="grid grid-3" style="gap: 1rem; margin-top: 0.5rem;">
+                            <div><strong>Statements:</strong> ${report.total_statements}</div>
+                            <div><strong>Conflicts:</strong> ${report.total_conflicts}</div>
+                            <div><strong>High Priority:</strong> ${report.conflict_severity?.high || 0}</div>
+                        </div>
+                        ${report.top_conflicts && report.top_conflicts.length > 0 ? `
+                            <div style="margin-top: 1rem;">
+                                <strong>Top Conflicts:</strong>
+                                <ul>
+                                    ${report.top_conflicts.map(conflict => `<li>${conflict.explanation}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+                container.innerHTML = entityHtml;
+            }
+            
+            createDeontologicalCharts(modalities) {
+                // Simple text-based charts for now - could be enhanced with Chart.js
+                const obligationsContainer = document.getElementById('obligationsChart');
+                const permissionsContainer = document.getElementById('permissionsChart');
+                
+                const obligations = modalities.obligation || 0;
+                const prohibitions = modalities.prohibition || 0;
+                const permissions = modalities.permission || 0;
+                
+                obligationsContainer.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--danger);">${obligations}</div>
+                        <div>Obligations</div>
+                        <div style="font-size: 1.5rem; color: var(--warning); margin-top: 1rem;">${prohibitions}</div>
+                        <div>Prohibitions</div>
+                    </div>
+                `;
+                
+                permissionsContainer.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--success);">${permissions}</div>
+                        <div>Permissions</div>
+                        <div style="margin-top: 1rem; color: var(--text-muted);">
+                            Rights & Allowances
+                        </div>
+                    </div>
+                `;
+            }
+            
+            async queryDeonticStatements() {
+                const entity = document.getElementById('queryEntity').value;
+                const modality = document.getElementById('queryModality').value;
+                const keywords = document.getElementById('queryKeywords').value;
+                
+                try {
+                    const params = new URLSearchParams();
+                    if (entity) params.append('entity', entity);
+                    if (modality) params.append('modality', modality);
+                    if (keywords) {
+                        keywords.split(',').forEach(keyword => {
+                            params.append('action_keywords', keyword.trim());
+                        });
+                    }
+                    
+                    const response = await fetch(`/api/investigation/query/deontic_statements?${params}`);
+                    const result = await response.json();
+                    
+                    this.displayQueryResults(result, 'statements');
+                    
+                } catch (error) {
+                    console.error('Query failed:', error);
+                    this.showError('Query failed: ' + error.message);
+                }
+            }
+            
+            async queryDeonticConflicts() {
+                const entity = document.getElementById('queryEntity').value;
+                const severity = document.getElementById('conflictSeverity').value;
+                
+                try {
+                    const params = new URLSearchParams();
+                    if (entity) params.append('entity', entity);
+                    if (severity) params.append('min_severity', severity);
+                    
+                    const response = await fetch(`/api/investigation/query/deontic_conflicts?${params}`);
+                    const result = await response.json();
+                    
+                    this.displayQueryResults(result, 'conflicts');
+                    
+                } catch (error) {
+                    console.error('Query failed:', error);
+                    this.showError('Query failed: ' + error.message);
+                }
+            }
+            
+            displayQueryResults(result, type) {
+                const container = document.getElementById('queryResults');
+                container.style.display = 'block';
+                
+                if (result.error) {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+                    return;
+                }
+                
+                const totalResults = result.total_results || 0;
+                const items = result.statements || result.conflicts || [];
+                
+                let html = `<h5>Query Results: ${totalResults} ${type} found</h5>`;
+                
+                if (totalResults === 0) {
+                    html += '<p style="color: var(--text-muted);">No results found matching your criteria.</p>';
+                } else {
+                    html += '<div style="max-height: 400px; overflow-y: auto;">';
+                    
+                    items.slice(0, 10).forEach((item, index) => {
+                        if (type === 'statements') {
+                            html += `
+                                <div class="query-result-item" style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px;">
+                                    <div><strong>Entity:</strong> ${item.entity}</div>
+                                    <div><strong>Action:</strong> ${item.action}</div>
+                                    <div><strong>Modality:</strong> ${item.modality}</div>
+                                    <div><strong>Source:</strong> ${item.source_document}</div>
+                                    <div style="margin-top: 0.5rem; font-style: italic;">"${item.source_text}"</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted);">Confidence: ${(item.confidence * 100).toFixed(1)}%</div>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div class="query-result-item" style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px;">
+                                    <div><strong>Type:</strong> ${item.type}</div>
+                                    <div><strong>Entity:</strong> ${item.entity}</div>
+                                    <div><strong>Severity:</strong> ${item.severity}</div>
+                                    <div style="margin-top: 0.5rem;">${item.explanation}</div>
+                                    <div style="margin-top: 0.5rem;">
+                                        <strong>Statement 1:</strong> ${item.statement1.text}
+                                    </div>
+                                    <div style="margin-top: 0.25rem;">
+                                        <strong>Statement 2:</strong> ${item.statement2.text}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    html += '</div>';
+                    
+                    if (totalResults > 10) {
+                        html += `<p style="color: var(--text-muted); margin-top: 1rem;">Showing first 10 of ${totalResults} results.</p>`;
+                    }
+                }
+                
+                container.innerHTML = html;
+            }
+            
+            showLoadingState(message) {
+                // Implementation for loading state
+                console.log('Loading:', message);
+            }
+            
+            hideLoadingState() {
+                // Implementation to hide loading state
+                console.log('Loading complete');
+            }
+            
+            showError(message) {
+                // Implementation for error display
+                console.error('Error:', message);
+                alert('Error: ' + message);
+            }
+        }
+        
+        // Initialize dashboard when page loads
+        let investigationDashboard;
+        document.addEventListener('DOMContentLoaded', () => {
+            investigationDashboard = new InvestigationDashboard();
+        });
+    </script>
+</body>
+</html>
