@@ -9,6 +9,14 @@
     <link href="{{ url_for('static', filename='admin/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='admin/css/dashboard.css') }}" rel="stylesheet">
     
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <!-- Investigation-specific styles -->
     <style>
         .investigation-header {
@@ -159,6 +167,43 @@
             color: white;
             transform: translateY(-2px);
         }
+        
+        /* Map-specific styles */
+        .event-marker {
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #investigationMap {
+            border-radius: 0.5rem;
+        }
+        
+        .leaflet-popup-content h6 {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .leaflet-popup-content p {
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .map-controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .timeline-controls {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .map-statistics {
+            font-size: 0.875rem;
+        }
+        
+        .map-statistics h5, .map-statistics h6 {
+            margin-bottom: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -227,6 +272,11 @@
                 <li class="nav-item">
                     <a class="nav-link" id="legal-tab" data-bs-toggle="tab" href="#legal" role="tab">
                         <i class="fas fa-balance-scale"></i> Legal Analysis
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="maps-tab" data-bs-toggle="tab" href="#maps" role="tab">
+                        <i class="fas fa-map-marked-alt"></i> Maps
                     </a>
                 </li>
                 <li class="nav-item">
@@ -706,6 +756,205 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Maps Tab -->
+            <div class="tab-pane fade" id="maps" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Map Controls</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Query Input -->
+                                <div class="mb-3">
+                                    <label class="form-label">Query Location/Events</label>
+                                    <input type="text" class="form-control" id="mapQuery" placeholder="Enter location, entity, or event...">
+                                </div>
+                                
+                                <!-- Geographic Filters -->
+                                <div class="mb-3">
+                                    <label class="form-label">Center Location</label>
+                                    <input type="text" class="form-control" id="centerLocation" placeholder="e.g., New York, Washington DC">
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Radius (km)</label>
+                                            <input type="number" class="form-control" id="searchRadius" value="100" min="1" max="5000">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Cluster Distance</label>
+                                            <input type="number" class="form-control" id="clusterDistance" value="50" min="1" max="500">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Temporal Filters -->
+                                <div class="mb-3">
+                                    <label class="form-label">Time Range</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <input type="date" class="form-control" id="startDate">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="date" class="form-control" id="endDate">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Entity Type Filters -->
+                                <div class="mb-3">
+                                    <label class="form-label">Entity Types</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterPersons" checked>
+                                        <label class="form-check-label" for="filterPersons">Persons</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterOrganizations" checked>
+                                        <label class="form-check-label" for="filterOrganizations">Organizations</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterEvents" checked>
+                                        <label class="form-check-label" for="filterEvents">Events</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filterLocations" checked>
+                                        <label class="form-check-label" for="filterLocations">Locations</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Map View Options -->
+                                <div class="mb-3">
+                                    <label class="form-label">Map View</label>
+                                    <select class="form-select" id="mapViewType">
+                                        <option value="street">Street View</option>
+                                        <option value="satellite">Satellite</option>
+                                        <option value="terrain">Terrain</option>
+                                        <option value="hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-investigation" onclick="searchGeospatialData()">
+                                        <i class="fas fa-search"></i> Search Map
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="extractGeographicEntities()">
+                                        <i class="fas fa-map-marker"></i> Extract Locations
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="analyzeSpationTemporal()">
+                                        <i class="fas fa-clock"></i> Temporal Analysis
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="exportMapData()">
+                                        <i class="fas fa-download"></i> Export Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Map Statistics -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>Map Statistics</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-6">
+                                        <h5 id="mapEntityCount" class="text-primary">0</h5>
+                                        <small class="text-muted">Entities</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5 id="mapEventCount" class="text-success">0</h5>
+                                        <small class="text-muted">Events</small>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row text-center">
+                                    <div class="col-md-6">
+                                        <h6 id="mapClusterCount" class="text-info">0</h6>
+                                        <small class="text-muted">Clusters</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 id="mapTimeSpan" class="text-warning">0d</h6>
+                                        <small class="text-muted">Time Span</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <!-- Map Container -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5>Geospatial Investigation Map</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleTimeline()">
+                                        <i class="fas fa-play"></i> Timeline
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleClustering()">
+                                        <i class="fas fa-layer-group"></i> Clusters
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetMapView()">
+                                        <i class="fas fa-home"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <!-- Map will be rendered here -->
+                                <div id="investigationMap" style="height: 600px; width: 100%;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline Slider (initially hidden) -->
+                        <div class="card mt-3" id="timelineCard" style="display: none;">
+                            <div class="card-header">
+                                <h6>Temporal Filter</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        <small id="timelineStart" class="text-muted">Start</small>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="range" class="form-range" id="timelineSlider" min="0" max="100" value="100">
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <small id="timelineEnd" class="text-muted">End</small>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small id="currentTimelineValue" class="text-primary">Current: All Time</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map Results -->
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Map Analysis Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="mapResults" class="results-container">
+                                    <div class="text-muted text-center">
+                                        <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                                        <p>Use the map controls to search for geographic entities and events.</p>
+                                        <p>Click "Search Map" to begin geospatial analysis.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -724,6 +973,9 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
     <script src="{{ url_for('static', filename='admin/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='admin/js/unified-investigation-mcp-sdk.js') }}"></script>
     
@@ -1277,6 +1529,584 @@
         function updateRelationshipCount(count) {
             document.getElementById('relationshipCount').textContent = count;
         }
+
+        // Map functionality
+        let investigationMap = null;
+        let mapMarkers = [];
+        let mapClusters = [];
+        let currentMapData = null;
+        let timelineData = null;
+        let isTimelineVisible = false;
+
+        // Initialize map when Maps tab is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for Maps tab
+            const mapsTab = document.getElementById('maps-tab');
+            if (mapsTab) {
+                mapsTab.addEventListener('shown.bs.tab', function () {
+                    initializeMap();
+                });
+            }
+        });
+
+        function initializeMap() {
+            if (investigationMap) return; // Already initialized
+
+            // Initialize Leaflet map
+            investigationMap = L.map('investigationMap').setView([40.7128, -74.0060], 4); // Default to New York
+
+            // Add OpenStreetMap tiles (no API key required)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(investigationMap);
+
+            // Add click handler for map
+            investigationMap.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                console.log('Map clicked at:', lat, lng);
+            });
+
+            addActivity('Map initialized successfully');
+        }
+
+        function changeMapView() {
+            if (!investigationMap) return;
+
+            const viewType = document.getElementById('mapViewType').value;
+            
+            // Clear existing tile layers
+            investigationMap.eachLayer(function(layer) {
+                if (layer instanceof L.TileLayer) {
+                    investigationMap.removeLayer(layer);
+                }
+            });
+
+            let tileLayer;
+            switch(viewType) {
+                case 'satellite':
+                    tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri'
+                    });
+                    break;
+                case 'terrain':
+                    tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenTopoMap contributors'
+                    });
+                    break;
+                case 'hybrid':
+                    tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri'
+                    });
+                    break;
+                default: // street
+                    tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    });
+            }
+            
+            tileLayer.addTo(investigationMap);
+        }
+
+        async function searchGeospatialData() {
+            if (!mcpClient) {
+                alert('Please connect to MCP server first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const query = document.getElementById('mapQuery').value;
+                const centerLocation = document.getElementById('centerLocation').value;
+                const radius = parseFloat(document.getElementById('searchRadius').value);
+                
+                const result = await mcpClient.call_tool('query_geographic_context', {
+                    query: query || 'map all entities',
+                    corpus_data: JSON.stringify(currentCorpus),
+                    radius_km: radius,
+                    center_location: centerLocation,
+                    include_related_entities: true,
+                    temporal_context: true
+                });
+
+                if (result.isError) {
+                    throw new Error(result.content[0]?.text || 'Geographic query failed');
+                }
+
+                displayMapResults(result.content[0]?.text ? JSON.parse(result.content[0].text) : result);
+                addActivity(`Geographic search completed: ${result.total_results || 0} results`);
+
+            } catch (error) {
+                console.error('Error searching geospatial data:', error);
+                alert('Error searching geospatial data: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function extractGeographicEntities() {
+            if (!mcpClient) {
+                alert('Please connect to MCP server first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const result = await mcpClient.call_tool('extract_geographic_entities', {
+                    corpus_data: JSON.stringify(currentCorpus),
+                    confidence_threshold: 0.7,
+                    include_coordinates: true
+                });
+
+                if (result.isError) {
+                    throw new Error(result.content[0]?.text || 'Entity extraction failed');
+                }
+
+                const entities = result.content[0]?.text ? JSON.parse(result.content[0].text) : result;
+                displayExtractedEntities(entities);
+                addActivity(`Extracted ${entities.total_entities || 0} geographic entities`);
+
+            } catch (error) {
+                console.error('Error extracting geographic entities:', error);
+                alert('Error extracting geographic entities: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function analyzeSpationTemporal() {
+            if (!mcpClient) {
+                alert('Please connect to MCP server first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const clusterDistance = parseFloat(document.getElementById('clusterDistance').value);
+
+                const timeRange = startDate && endDate ? {
+                    start: startDate + 'T00:00:00Z',
+                    end: endDate + 'T23:59:59Z'
+                } : null;
+
+                const result = await mcpClient.call_tool('map_spatiotemporal_events', {
+                    corpus_data: JSON.stringify(currentCorpus),
+                    time_range: timeRange,
+                    clustering_distance: clusterDistance,
+                    temporal_resolution: 'day'
+                });
+
+                if (result.isError) {
+                    throw new Error(result.content[0]?.text || 'Spatiotemporal analysis failed');
+                }
+
+                const events = result.content[0]?.text ? JSON.parse(result.content[0].text) : result;
+                displaySpatiotemporalEvents(events);
+                addActivity(`Analyzed ${events.total_events || 0} spatiotemporal events`);
+
+            } catch (error) {
+                console.error('Error analyzing spatiotemporal events:', error);
+                alert('Error analyzing spatiotemporal events: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayMapResults(result) {
+            currentMapData = result;
+            
+            // Update statistics
+            document.getElementById('mapEntityCount').textContent = result.total_results || 0;
+            document.getElementById('mapEventCount').textContent = result.results?.length || 0;
+
+            // Clear existing markers
+            clearMapMarkers();
+
+            // Add markers to map
+            if (result.results && investigationMap) {
+                result.results.forEach((entity, index) => {
+                    if (entity.coordinates) {
+                        const [lat, lng] = entity.coordinates;
+                        
+                        const marker = L.marker([lat, lng])
+                            .bindPopup(`
+                                <div>
+                                    <h6>${entity.entity}</h6>
+                                    <p><strong>Type:</strong> ${entity.entity_type}</p>
+                                    <p><strong>Confidence:</strong> ${(entity.confidence * 100).toFixed(1)}%</p>
+                                    <p><strong>Context:</strong> ${entity.context_snippet || 'N/A'}</p>
+                                    ${entity.related_entities ? `<p><strong>Related:</strong> ${entity.related_entities.map(r => r.entity).join(', ')}</p>` : ''}
+                                </div>
+                            `)
+                            .addTo(investigationMap);
+                            
+                        mapMarkers.push(marker);
+                    }
+                });
+
+                // Fit map to markers if any exist
+                if (mapMarkers.length > 0) {
+                    const group = new L.featureGroup(mapMarkers);
+                    investigationMap.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // Display results in table
+            const container = document.getElementById('mapResults');
+            container.innerHTML = '';
+            
+            if (result.results && result.results.length > 0) {
+                const table = document.createElement('table');
+                table.className = 'table table-striped';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Location</th>
+                            <th>Confidence</th>
+                            <th>Context</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${result.results.map(entity => `
+                            <tr>
+                                <td>${entity.entity}</td>
+                                <td>${entity.coordinates ? `${entity.coordinates[0].toFixed(4)}, ${entity.coordinates[1].toFixed(4)}` : 'N/A'}</td>
+                                <td><span class="badge bg-primary">${(entity.confidence * 100).toFixed(1)}%</span></td>
+                                <td>${entity.context_snippet ? entity.context_snippet.substring(0, 100) + '...' : 'N/A'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="focusMapOnEntity('${entity.entity}')">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                container.appendChild(table);
+            } else {
+                container.innerHTML = '<p class="text-muted">No geographic entities found</p>';
+            }
+        }
+
+        function displayExtractedEntities(entities) {
+            // Update statistics
+            document.getElementById('mapEntityCount').textContent = entities.total_entities || 0;
+            document.getElementById('mapClusterCount').textContent = entities.mappable_entities || 0;
+
+            // Clear existing markers
+            clearMapMarkers();
+
+            // Add markers to map
+            if (entities.entities && investigationMap) {
+                entities.entities.forEach(entity => {
+                    if (entity.coordinates) {
+                        const [lat, lng] = entity.coordinates;
+                        
+                        const marker = L.marker([lat, lng])
+                            .bindPopup(`
+                                <div>
+                                    <h6>${entity.entity}</h6>
+                                    <p><strong>Frequency:</strong> ${entity.frequency}</p>
+                                    <p><strong>Confidence:</strong> ${(entity.confidence * 100).toFixed(1)}%</p>
+                                    <p><strong>Documents:</strong> ${entity.documents?.length || 0}</p>
+                                    <p><strong>Context:</strong> ${entity.context_snippet || 'N/A'}</p>
+                                </div>
+                            `)
+                            .addTo(investigationMap);
+                            
+                        mapMarkers.push(marker);
+                    }
+                });
+
+                // Fit map to markers if any exist
+                if (mapMarkers.length > 0) {
+                    const group = new L.featureGroup(mapMarkers);
+                    investigationMap.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // Display results
+            const container = document.getElementById('mapResults');
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Extraction Summary</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total Entities:</strong> ${entities.total_entities}</li>
+                            <li><strong>Mappable Entities:</strong> ${entities.mappable_entities}</li>
+                            <li><strong>Geographic Coverage:</strong> ${entities.geographic_coverage?.regions?.length || 0} regions</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Top Locations</h6>
+                        <div class="list-group list-group-flush">
+                            ${entities.entities?.slice(0, 5).map(entity => `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${entity.entity}</span>
+                                    <span class="badge bg-primary rounded-pill">${entity.frequency}</span>
+                                </div>
+                            `).join('') || '<p class="text-muted">No entities found</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displaySpatiotemporalEvents(events) {
+            timelineData = events;
+            
+            // Update statistics
+            document.getElementById('mapEventCount').textContent = events.total_events || 0;
+            document.getElementById('mapClusterCount').textContent = Object.keys(events.spatial_clusters || {}).length;
+            
+            if (events.events && events.events.length > 0) {
+                const timeSpan = calculateTimeSpan(events.events);
+                document.getElementById('mapTimeSpan').textContent = timeSpan;
+            }
+
+            // Clear existing markers
+            clearMapMarkers();
+
+            // Add event markers to map
+            if (events.events && investigationMap) {
+                events.events.forEach(event => {
+                    if (event.latitude && event.longitude) {
+                        const eventIcon = L.divIcon({
+                            className: 'event-marker',
+                            html: `<div style="background-color: #ff6b6b; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-calendar"></i></div>`,
+                            iconSize: [20, 20]
+                        });
+                        
+                        const marker = L.marker([event.latitude, event.longitude], {icon: eventIcon})
+                            .bindPopup(`
+                                <div>
+                                    <h6>${event.entity} - ${event.event_type}</h6>
+                                    <p><strong>Time:</strong> ${new Date(event.timestamp).toLocaleDateString()}</p>
+                                    <p><strong>Confidence:</strong> ${(event.confidence * 100).toFixed(1)}%</p>
+                                    <p><strong>Context:</strong> ${event.context ? event.context.substring(0, 150) + '...' : 'N/A'}</p>
+                                    <p><strong>Clusters:</strong> ${event.temporal_cluster}, ${event.spatial_cluster}</p>
+                                </div>
+                            `)
+                            .addTo(investigationMap);
+                            
+                        mapMarkers.push(marker);
+                    }
+                });
+
+                // Fit map to markers if any exist
+                if (mapMarkers.length > 0) {
+                    const group = new L.featureGroup(mapMarkers);
+                    investigationMap.fitBounds(group.getBounds().pad(0.1));
+                }
+            }
+
+            // Display analysis results
+            const container = document.getElementById('mapResults');
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Event Statistics</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total Events:</strong> ${events.total_events}</li>
+                            <li><strong>Temporal Clusters:</strong> ${Object.keys(events.temporal_clusters || {}).length}</li>
+                            <li><strong>Spatial Clusters:</strong> ${Object.keys(events.spatial_clusters || {}).length}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Event Types</h6>
+                        <div class="list-group list-group-flush">
+                            ${Object.entries(events.statistics?.event_types || {}).slice(0, 5).map(([type, count]) => `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${type}</span>
+                                    <span class="badge bg-secondary rounded-pill">${count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Top Locations</h6>
+                        <div class="list-group list-group-flush">
+                            ${Object.entries(events.statistics?.top_locations || {}).slice(0, 5).map(([location, count]) => `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>${location}</span>
+                                    <span class="badge bg-info rounded-pill">${count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function focusMapOnEntity(entityName) {
+            if (!currentMapData || !investigationMap) return;
+
+            const entity = currentMapData.results?.find(e => e.entity === entityName);
+            if (entity && entity.coordinates) {
+                investigationMap.setView(entity.coordinates, 10);
+                
+                // Find and open the marker popup
+                mapMarkers.forEach(marker => {
+                    const popup = marker.getPopup();
+                    if (popup && popup.getContent().includes(entityName)) {
+                        marker.openPopup();
+                    }
+                });
+            }
+        }
+
+        function toggleTimeline() {
+            const timelineCard = document.getElementById('timelineCard');
+            isTimelineVisible = !isTimelineVisible;
+            
+            if (isTimelineVisible) {
+                timelineCard.style.display = 'block';
+                setupTimelineSlider();
+            } else {
+                timelineCard.style.display = 'none';
+            }
+        }
+
+        function toggleClustering() {
+            // Toggle marker clustering (simplified implementation)
+            if (mapMarkers.length > 0) {
+                const cluster = document.getElementById('clusterDistance').value;
+                addActivity(`Clustering toggled with ${cluster}km distance`);
+            }
+        }
+
+        function resetMapView() {
+            if (investigationMap) {
+                investigationMap.setView([40.7128, -74.0060], 4);
+                clearMapMarkers();
+                document.getElementById('mapResults').innerHTML = `
+                    <div class="text-muted text-center">
+                        <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                        <p>Map reset. Use the map controls to search for geographic entities and events.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearMapMarkers() {
+            mapMarkers.forEach(marker => {
+                if (investigationMap) {
+                    investigationMap.removeLayer(marker);
+                }
+            });
+            mapMarkers = [];
+        }
+
+        function setupTimelineSlider() {
+            if (!timelineData || !timelineData.events) return;
+
+            const events = timelineData.events;
+            const timestamps = events.map(e => new Date(e.timestamp)).sort((a, b) => a - b);
+            
+            if (timestamps.length === 0) return;
+
+            const startTime = timestamps[0];
+            const endTime = timestamps[timestamps.length - 1];
+            
+            document.getElementById('timelineStart').textContent = startTime.toLocaleDateString();
+            document.getElementById('timelineEnd').textContent = endTime.toLocaleDateString();
+            
+            const slider = document.getElementById('timelineSlider');
+            slider.oninput = function() {
+                const percentage = this.value / 100;
+                const currentTime = new Date(startTime.getTime() + (endTime.getTime() - startTime.getTime()) * percentage);
+                
+                document.getElementById('currentTimelineValue').textContent = `Current: ${currentTime.toLocaleDateString()}`;
+                
+                // Filter markers based on timeline
+                filterMarkersByTime(currentTime);
+            };
+        }
+
+        function filterMarkersByTime(currentTime) {
+            if (!timelineData || !timelineData.events) return;
+
+            clearMapMarkers();
+            
+            timelineData.events.forEach(event => {
+                const eventTime = new Date(event.timestamp);
+                if (eventTime <= currentTime && event.latitude && event.longitude) {
+                    const eventIcon = L.divIcon({
+                        className: 'event-marker',
+                        html: `<div style="background-color: #28a745; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-calendar"></i></div>`,
+                        iconSize: [20, 20]
+                    });
+                    
+                    const marker = L.marker([event.latitude, event.longitude], {icon: eventIcon})
+                        .bindPopup(`
+                            <div>
+                                <h6>${event.entity} - ${event.event_type}</h6>
+                                <p><strong>Time:</strong> ${eventTime.toLocaleDateString()}</p>
+                                <p><strong>Context:</strong> ${event.context ? event.context.substring(0, 150) + '...' : 'N/A'}</p>
+                            </div>
+                        `)
+                        .addTo(investigationMap);
+                        
+                    mapMarkers.push(marker);
+                }
+            });
+        }
+
+        function calculateTimeSpan(events) {
+            if (!events || events.length === 0) return '0d';
+            
+            const timestamps = events.map(e => new Date(e.timestamp));
+            const earliest = Math.min(...timestamps);
+            const latest = Math.max(...timestamps);
+            const diffDays = Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24));
+            
+            return `${diffDays}d`;
+        }
+
+        function exportMapData() {
+            if (!currentMapData) {
+                alert('No map data to export');
+                return;
+            }
+
+            const exportData = {
+                query_results: currentMapData,
+                timeline_data: timelineData,
+                export_timestamp: new Date().toISOString(),
+                map_view: investigationMap ? {
+                    center: investigationMap.getCenter(),
+                    zoom: investigationMap.getZoom()
+                } : null
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `map_analysis_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            addActivity('Map data exported successfully');
+        }
+
+        // Add map view change listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapViewSelect = document.getElementById('mapViewType');
+            if (mapViewSelect) {
+                mapViewSelect.addEventListener('change', changeMapView);
+            }
+        });
 
         function updateUI() {
             // Initialize any UI state

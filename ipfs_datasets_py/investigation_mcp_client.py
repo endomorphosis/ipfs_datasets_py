@@ -151,6 +151,59 @@ class InvestigationMCPClient:
             )
 
 
+    # Convenience methods for geospatial analysis tools
+    async def extract_geographic_entities(
+        self,
+        corpus_data: str,
+        confidence_threshold: float = 0.8,
+        include_coordinates: bool = True,
+        geographic_scope: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Extract geographic entities from corpus data for mapping."""
+        return await self.call_tool('extract_geographic_entities', {
+            'corpus_data': corpus_data,
+            'confidence_threshold': confidence_threshold,
+            'include_coordinates': include_coordinates,
+            'geographic_scope': geographic_scope
+        })
+
+    async def map_spatiotemporal_events(
+        self,
+        corpus_data: str,
+        time_range: Optional[Dict[str, str]] = None,
+        geographic_bounds: Optional[Dict[str, float]] = None,
+        clustering_distance: float = 50.0,
+        temporal_resolution: str = "day"
+    ) -> Dict[str, Any]:
+        """Map events with spatial and temporal dimensions."""
+        return await self.call_tool('map_spatiotemporal_events', {
+            'corpus_data': corpus_data,
+            'time_range': time_range,
+            'geographic_bounds': geographic_bounds,
+            'clustering_distance': clustering_distance,
+            'temporal_resolution': temporal_resolution
+        })
+
+    async def query_geographic_context(
+        self,
+        query: str,
+        corpus_data: str,
+        radius_km: float = 100.0,
+        center_location: Optional[str] = None,
+        include_related_entities: bool = True,
+        temporal_context: bool = True
+    ) -> Dict[str, Any]:
+        """Query geographic context and relationships."""
+        return await self.call_tool('query_geographic_context', {
+            'query': query,
+            'corpus_data': corpus_data,
+            'radius_km': radius_km,
+            'center_location': center_location,
+            'include_related_entities': include_related_entities,
+            'temporal_context': temporal_context
+        })
+
+
 # Factory function for easy client creation
 def create_investigation_mcp_client(
     base_url: str = "http://localhost:8080",
