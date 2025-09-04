@@ -494,6 +494,10 @@
                         <span class="nav-icon">⚖️</span>
                         Conflict Analysis
                     </button>
+                    <button class="nav-item" data-view="deontological">
+                        <span class="nav-icon">⚔️</span>
+                        Legal/Ethical Analysis
+                    </button>
                     <button class="nav-item" data-view="provenance">
                         <span class="nav-icon">🔗</span>
                         Data Provenance
@@ -690,6 +694,170 @@
                     </div>
                 </div>
                 
+                <!-- Deontological Analysis Panel -->
+                <div id="deontologicalPanel" class="content-panel" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Legal & Ethical Analysis</h2>
+                            <p>Detect conflicts in what entities can/cannot, should/should not, must/must not do</p>
+                        </div>
+                        <div class="card-content">
+                            <!-- Analysis Configuration -->
+                            <div style="margin-bottom: 2rem;">
+                                <h3>Analysis Configuration</h3>
+                                <div class="grid grid-2" style="gap: 1rem;">
+                                    <div>
+                                        <label for="analysisScope">Analysis Scope</label>
+                                        <select id="analysisScope" class="form-control">
+                                            <option value="all_documents">All Documents</option>
+                                            <option value="selected_corpus">Selected Corpus</option>
+                                            <option value="date_range">Date Range</option>
+                                            <option value="entity_specific">Entity Specific</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="conflictSeverity">Minimum Conflict Severity</label>
+                                        <select id="conflictSeverity" class="form-control">
+                                            <option value="low">Low</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <label for="entityFilter">Entity Filter (optional)</label>
+                                    <input type="text" id="entityFilter" class="form-control" placeholder="Filter by specific entity (e.g., 'banks', 'employees', 'government')">
+                                </div>
+                                <button class="btn btn-primary" onclick="investigationDashboard.runDeontologicalAnalysis()" style="margin-top: 1rem;">
+                                    🚀 Run Legal/Ethical Analysis
+                                </button>
+                            </div>
+                            
+                            <!-- Analysis Results -->
+                            <div id="deontologicalResults" style="display: none;">
+                                <h3>Analysis Results</h3>
+                                
+                                <!-- Summary Statistics -->
+                                <div class="grid grid-4" style="margin-bottom: 2rem;">
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="totalStatements">0</div>
+                                            <div class="stat-label">Deontic Statements</div>
+                                            <div class="stat-change neutral" id="statementBreakdown">0 obligations</div>
+                                        </div>
+                                    </div>
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="totalConflicts">0</div>
+                                            <div class="stat-label">Conflicts Detected</div>
+                                            <div class="stat-change negative" id="highSeverityConflicts">0 high severity</div>
+                                        </div>
+                                    </div>
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="entitiesAnalyzed">0</div>
+                                            <div class="stat-label">Entities Analyzed</div>
+                                            <div class="stat-change neutral" id="conflictingEntities">0 with conflicts</div>
+                                        </div>
+                                    </div>
+                                    <div class="card stat-card">
+                                        <div class="card-content">
+                                            <div class="stat-value" id="documentsProcessed">0</div>
+                                            <div class="stat-label">Documents Processed</div>
+                                            <div class="stat-change positive" id="processingTime">0s processing</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- High Priority Conflicts -->
+                                <div class="card" style="margin-bottom: 2rem;">
+                                    <div class="card-header">
+                                        <h4>🚨 High Priority Conflicts</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div id="highPriorityConflicts">
+                                            <p style="color: var(--text-muted);">No high priority conflicts detected.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Deontic Statement Categories -->
+                                <div class="grid grid-2" style="gap: 2rem;">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4>⚖️ Obligations & Prohibitions</h4>
+                                        </div>
+                                        <div class="card-content">
+                                            <div id="obligationsChart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                                Chart will appear after analysis
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4>✅ Permissions & Rights</h4>
+                                        </div>
+                                        <div class="card-content">
+                                            <div id="permissionsChart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                                Chart will appear after analysis
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Entity-Specific Conflicts -->
+                                <div class="card" style="margin-top: 2rem;">
+                                    <div class="card-header">
+                                        <h4>🎯 Entity-Specific Conflicts</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div id="entityConflicts">
+                                            <p style="color: var(--text-muted);">Entity conflict analysis will appear here.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Query Interface -->
+                                <div class="card" style="margin-top: 2rem;">
+                                    <div class="card-header">
+                                        <h4>🔍 Query Deontic Statements</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="grid grid-3" style="gap: 1rem; margin-bottom: 1rem;">
+                                            <div>
+                                                <label for="queryEntity">Entity</label>
+                                                <input type="text" id="queryEntity" class="form-control" placeholder="e.g., banks, employees">
+                                            </div>
+                                            <div>
+                                                <label for="queryModality">Modality</label>
+                                                <select id="queryModality" class="form-control">
+                                                    <option value="">All Modalities</option>
+                                                    <option value="obligation">Obligations (must, shall)</option>
+                                                    <option value="permission">Permissions (may, can)</option>
+                                                    <option value="prohibition">Prohibitions (cannot, must not)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="queryKeywords">Action Keywords</label>
+                                                <input type="text" id="queryKeywords" class="form-control" placeholder="e.g., report, disclose">
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-secondary" onclick="investigationDashboard.queryDeonticStatements()">
+                                            🔍 Query Statements
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="investigationDashboard.queryDeonticConflicts()">
+                                            ⚔️ Query Conflicts
+                                        </button>
+                                        <div id="queryResults" style="margin-top: 1rem; display: none;">
+                                            <!-- Query results will appear here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Additional panels would be added here for other views -->
                 
             </div>
@@ -829,6 +997,7 @@
                     'search': 'Advanced Search',
                     'patterns': 'Pattern Detection',
                     'conflicts': 'Conflict Analysis',
+                    'deontological': 'Legal/Ethical Analysis',
                     'provenance': 'Data Provenance',
                     'export': 'Export Data',
                     'reports': 'Generate Reports',
@@ -854,6 +1023,310 @@
                 if (lastUpdateElement) {
                     lastUpdateElement.textContent = now.toLocaleTimeString();
                 }
+            }
+            
+            // Deontological Analysis Methods
+            async runDeontologicalAnalysis() {
+                const resultsDiv = document.getElementById('deontologicalResults');
+                const analysisScope = document.getElementById('analysisScope').value;
+                const conflictSeverity = document.getElementById('conflictSeverity').value;
+                const entityFilter = document.getElementById('entityFilter').value;
+                
+                try {
+                    // Show loading state
+                    this.showLoadingState('Running legal/ethical analysis...');
+                    
+                    // Prepare request data
+                    const requestData = {
+                        documents: await this.getDocumentsForAnalysis(analysisScope),
+                        config: {
+                            severity_threshold: conflictSeverity,
+                            entity_filter: entityFilter || null
+                        }
+                    };
+                    
+                    // Call deontological analysis API
+                    const response = await fetch('/api/investigation/analyze/deontological', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    // Display results
+                    this.displayDeontologicalResults(result);
+                    resultsDiv.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Deontological analysis failed:', error);
+                    this.showError('Analysis failed: ' + error.message);
+                } finally {
+                    this.hideLoadingState();
+                }
+            }
+            
+            async getDocumentsForAnalysis(scope) {
+                // Mock document retrieval - in real implementation, this would
+                // fetch documents based on the specified scope
+                return [
+                    {
+                        id: 'sample_legal_doc',
+                        content: 'Financial institutions must maintain records of all transactions. Banks cannot disclose customer information without consent.'
+                    }
+                ];
+            }
+            
+            displayDeontologicalResults(result) {
+                const analysis = result.result;
+                if (!analysis) return;
+                
+                // Update summary statistics
+                const statements = analysis.statements_summary || {};
+                const conflicts = analysis.conflicts_summary || {};
+                const entities = analysis.entity_reports || {};
+                
+                document.getElementById('totalStatements').textContent = statements.total_statements || 0;
+                document.getElementById('totalConflicts').textContent = conflicts.total_conflicts || 0;
+                document.getElementById('entitiesAnalyzed').textContent = Object.keys(entities).length;
+                document.getElementById('documentsProcessed').textContent = result.documents_analyzed || 0;
+                
+                // Update breakdowns
+                const modalities = statements.by_modality || {};
+                document.getElementById('statementBreakdown').textContent = 
+                    `${modalities.obligation || 0} obligations, ${modalities.permission || 0} permissions, ${modalities.prohibition || 0} prohibitions`;
+                
+                const severity = conflicts.by_severity || {};
+                document.getElementById('highSeverityConflicts').textContent = `${severity.high || 0} high severity`;
+                
+                // Display high priority conflicts
+                this.displayHighPriorityConflicts(analysis.high_priority_conflicts || []);
+                
+                // Display entity-specific conflicts
+                this.displayEntityConflicts(entities);
+                
+                // Create charts
+                this.createDeontologicalCharts(modalities);
+            }
+            
+            displayHighPriorityConflicts(conflicts) {
+                const container = document.getElementById('highPriorityConflicts');
+                
+                if (conflicts.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No high priority conflicts detected.</p>';
+                    return;
+                }
+                
+                const conflictHtml = conflicts.map((conflict, index) => `
+                    <div class="conflict-item" style="border-left: 3px solid var(--danger); padding: 1rem; margin-bottom: 1rem; background: var(--surface-secondary);">
+                        <h5>Conflict ${index + 1}: ${conflict.type || 'Unknown Type'}</h5>
+                        <p><strong>Entity:</strong> ${conflict.entity || 'Unknown'}</p>
+                        <p><strong>Issue:</strong> ${conflict.explanation || 'No explanation provided'}</p>
+                        <div style="margin-top: 0.5rem;">
+                            <strong>Statements:</strong>
+                            <ul>
+                                <li>📝 "${conflict.statement1_text || 'N/A'}" (${conflict.sources[0] || 'Unknown source'})</li>
+                                <li>📝 "${conflict.statement2_text || 'N/A'}" (${conflict.sources[1] || 'Unknown source'})</li>
+                            </ul>
+                        </div>
+                        ${conflict.resolution_suggestions && conflict.resolution_suggestions.length > 0 ? `
+                            <div style="margin-top: 0.5rem;">
+                                <strong>Suggestions:</strong>
+                                <ul>
+                                    ${conflict.resolution_suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+                container.innerHTML = conflictHtml;
+            }
+            
+            displayEntityConflicts(entities) {
+                const container = document.getElementById('entityConflicts');
+                
+                if (Object.keys(entities).length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No entity-specific conflicts found.</p>';
+                    return;
+                }
+                
+                const entityHtml = Object.entries(entities).map(([entity, report]) => `
+                    <div class="entity-report" style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; border-radius: 6px;">
+                        <h5>📍 ${entity}</h5>
+                        <div class="grid grid-3" style="gap: 1rem; margin-top: 0.5rem;">
+                            <div><strong>Statements:</strong> ${report.total_statements}</div>
+                            <div><strong>Conflicts:</strong> ${report.total_conflicts}</div>
+                            <div><strong>High Priority:</strong> ${report.conflict_severity?.high || 0}</div>
+                        </div>
+                        ${report.top_conflicts && report.top_conflicts.length > 0 ? `
+                            <div style="margin-top: 1rem;">
+                                <strong>Top Conflicts:</strong>
+                                <ul>
+                                    ${report.top_conflicts.map(conflict => `<li>${conflict.explanation}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+                container.innerHTML = entityHtml;
+            }
+            
+            createDeontologicalCharts(modalities) {
+                // Simple text-based charts for now - could be enhanced with Chart.js
+                const obligationsContainer = document.getElementById('obligationsChart');
+                const permissionsContainer = document.getElementById('permissionsChart');
+                
+                const obligations = modalities.obligation || 0;
+                const prohibitions = modalities.prohibition || 0;
+                const permissions = modalities.permission || 0;
+                
+                obligationsContainer.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--danger);">${obligations}</div>
+                        <div>Obligations</div>
+                        <div style="font-size: 1.5rem; color: var(--warning); margin-top: 1rem;">${prohibitions}</div>
+                        <div>Prohibitions</div>
+                    </div>
+                `;
+                
+                permissionsContainer.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--success);">${permissions}</div>
+                        <div>Permissions</div>
+                        <div style="margin-top: 1rem; color: var(--text-muted);">
+                            Rights & Allowances
+                        </div>
+                    </div>
+                `;
+            }
+            
+            async queryDeonticStatements() {
+                const entity = document.getElementById('queryEntity').value;
+                const modality = document.getElementById('queryModality').value;
+                const keywords = document.getElementById('queryKeywords').value;
+                
+                try {
+                    const params = new URLSearchParams();
+                    if (entity) params.append('entity', entity);
+                    if (modality) params.append('modality', modality);
+                    if (keywords) {
+                        keywords.split(',').forEach(keyword => {
+                            params.append('action_keywords', keyword.trim());
+                        });
+                    }
+                    
+                    const response = await fetch(`/api/investigation/query/deontic_statements?${params}`);
+                    const result = await response.json();
+                    
+                    this.displayQueryResults(result, 'statements');
+                    
+                } catch (error) {
+                    console.error('Query failed:', error);
+                    this.showError('Query failed: ' + error.message);
+                }
+            }
+            
+            async queryDeonticConflicts() {
+                const entity = document.getElementById('queryEntity').value;
+                const severity = document.getElementById('conflictSeverity').value;
+                
+                try {
+                    const params = new URLSearchParams();
+                    if (entity) params.append('entity', entity);
+                    if (severity) params.append('min_severity', severity);
+                    
+                    const response = await fetch(`/api/investigation/query/deontic_conflicts?${params}`);
+                    const result = await response.json();
+                    
+                    this.displayQueryResults(result, 'conflicts');
+                    
+                } catch (error) {
+                    console.error('Query failed:', error);
+                    this.showError('Query failed: ' + error.message);
+                }
+            }
+            
+            displayQueryResults(result, type) {
+                const container = document.getElementById('queryResults');
+                container.style.display = 'block';
+                
+                if (result.error) {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+                    return;
+                }
+                
+                const totalResults = result.total_results || 0;
+                const items = result.statements || result.conflicts || [];
+                
+                let html = `<h5>Query Results: ${totalResults} ${type} found</h5>`;
+                
+                if (totalResults === 0) {
+                    html += '<p style="color: var(--text-muted);">No results found matching your criteria.</p>';
+                } else {
+                    html += '<div style="max-height: 400px; overflow-y: auto;">';
+                    
+                    items.slice(0, 10).forEach((item, index) => {
+                        if (type === 'statements') {
+                            html += `
+                                <div class="query-result-item" style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px;">
+                                    <div><strong>Entity:</strong> ${item.entity}</div>
+                                    <div><strong>Action:</strong> ${item.action}</div>
+                                    <div><strong>Modality:</strong> ${item.modality}</div>
+                                    <div><strong>Source:</strong> ${item.source_document}</div>
+                                    <div style="margin-top: 0.5rem; font-style: italic;">"${item.source_text}"</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted);">Confidence: ${(item.confidence * 100).toFixed(1)}%</div>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div class="query-result-item" style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px;">
+                                    <div><strong>Type:</strong> ${item.type}</div>
+                                    <div><strong>Entity:</strong> ${item.entity}</div>
+                                    <div><strong>Severity:</strong> ${item.severity}</div>
+                                    <div style="margin-top: 0.5rem;">${item.explanation}</div>
+                                    <div style="margin-top: 0.5rem;">
+                                        <strong>Statement 1:</strong> ${item.statement1.text}
+                                    </div>
+                                    <div style="margin-top: 0.25rem;">
+                                        <strong>Statement 2:</strong> ${item.statement2.text}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    html += '</div>';
+                    
+                    if (totalResults > 10) {
+                        html += `<p style="color: var(--text-muted); margin-top: 1rem;">Showing first 10 of ${totalResults} results.</p>`;
+                    }
+                }
+                
+                container.innerHTML = html;
+            }
+            
+            showLoadingState(message) {
+                // Implementation for loading state
+                console.log('Loading:', message);
+            }
+            
+            hideLoadingState() {
+                // Implementation to hide loading state
+                console.log('Loading complete');
+            }
+            
+            showError(message) {
+                // Implementation for error display
+                console.error('Error:', message);
+                alert('Error: ' + message);
             }
         }
         
