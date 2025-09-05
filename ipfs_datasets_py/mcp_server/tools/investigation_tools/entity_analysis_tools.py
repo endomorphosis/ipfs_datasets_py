@@ -68,9 +68,9 @@ async def analyze_entities(
         if "documents" in corpus:
             for doc_id, doc in enumerate(corpus["documents"]):
                 doc_entities = await _extract_entities_from_document(
-                    doc, 
-                    entity_types, 
-                    confidence_threshold
+                    doc,
+                    entity_types or ["PERSON", "ORG", "GPE", "EVENT"],
+                    confidence_threshold,
                 )
                 for entity in doc_entities:
                     entity["document_id"] = doc_id
@@ -192,11 +192,12 @@ async def explore_entity(
 
 # Helper functions for entity analysis
 
-async def _extract_entities_from_document(document: Dict[str, Any], entity_types: List[str], threshold: float) -> List[Dict[str, Any]]:
+async def _extract_entities_from_document(document: Dict[str, Any], entity_types: Optional[List[str]], threshold: float) -> List[Dict[str, Any]]:
     """Extract entities from a single document."""
     # Simulate entity extraction - in real implementation would use spaCy/transformers
     text = document.get("content", "")
     title = document.get("title", "")
+    entity_types = entity_types or ["PERSON", "ORG", "GPE", "EVENT"]
     
     # Mock entity extraction results
     entities = [
