@@ -40,6 +40,11 @@ Choose your path based on what you want to accomplish:
 git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
+# 🔧 QUICK DEPENDENCY SETUP (NEW!)
+python install.py --quick                    # Install core dependencies
+python install.py --profile ml              # Install ML features
+python dependency_health_checker.py check   # Verify installation
+
 # Install all theorem provers and dependencies automatically
 python scripts/demo/demonstrate_complete_pipeline.py --install-all --prove-long-statements
 
@@ -94,6 +99,36 @@ python comprehensive_cli_test.py               # Complete test suite
 - ✅ **Dynamic tool discovery** - automatically finds all available functionality
 
 See [CLI_README.md](CLI_README.md) for complete documentation.
+
+### 🔧 **Dependency Management: Semi-Automated Installation**
+
+**NEW**: Comprehensive dependency management system prevents installation issues:
+
+```bash
+# Quick setup for core functionality
+python install.py --quick                       # Install essentials
+
+# Interactive wizard with recommendations  
+python install.py                              # Guided setup
+
+# Install specific feature sets
+python install.py --profile pdf               # PDF processing
+python install.py --profile ml                # Machine learning
+python install.py --profile web               # Web scraping
+
+# Health monitoring and diagnostics
+python dependency_health_checker.py check     # Verify installation
+python dependency_manager.py analyze          # Scan for issues
+```
+
+**Benefits:**
+- ✅ **Prevents dependency errors** that cause CLI tools to fail
+- ✅ **Smart recommendations** based on your usage patterns  
+- ✅ **Health monitoring** with continuous dependency validation
+- ✅ **Profile-based installation** for different use cases
+- ✅ **Auto-detection** of missing packages with guided fixes
+
+See [DEPENDENCY_TOOLS_README.md](DEPENDENCY_TOOLS_README.md) for complete documentation.
 
 ## Overview
 

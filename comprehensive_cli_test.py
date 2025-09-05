@@ -2,13 +2,18 @@
 """
 Comprehensive test suite for IPFS Datasets CLI tools.
 Tests all available tools to identify bugs and functionality issues.
+Enhanced with dependency management integration.
 """
 
 import subprocess
 import json
 import sys
 import time
+import os
 from pathlib import Path
+
+# Enable auto-installation for testing
+os.environ.setdefault('IPFS_DATASETS_AUTO_INSTALL', 'true')
 
 def run_command(cmd, timeout=30, expect_success=True):
     """Run a command and return the result."""
