@@ -1,0 +1,172 @@
+{
+  "timestamp": "2025-09-05 17:53:31",
+  "summary": {
+    "total_tests": 21,
+    "passed": 11,
+    "failed": 10,
+    "warnings": 0
+  },
+  "categories": {
+    "basic_cli": [
+      {
+        "test": "Original CLI help",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py --help",
+        "error": null
+      },
+      {
+        "test": "Original CLI status",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py info status",
+        "error": null
+      },
+      {
+        "test": "Original CLI list tools",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py info list-tools",
+        "error": null
+      },
+      {
+        "test": "Original CLI JSON output",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py --format json info status",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI help",
+        "success": true,
+        "cmd": "python enhanced_cli.py --help",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI list categories",
+        "success": true,
+        "cmd": "python enhanced_cli.py --list-categories",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI list dataset tools",
+        "success": true,
+        "cmd": "python enhanced_cli.py --list-tools dataset_tools",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI JSON categories",
+        "success": true,
+        "cmd": "python enhanced_cli.py --format json --list-categories",
+        "error": null
+      }
+    ],
+    "tool_categories": [
+      {
+        "category": "dataset_tools",
+        "tool": "load_dataset",
+        "description": "Load test dataset",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 372
+      },
+      {
+        "category": "ipfs_tools",
+        "tool": "get_from_ipfs",
+        "description": "IPFS get",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 372
+      },
+      {
+        "category": "ipfs_tools",
+        "tool": "pin_to_ipfs",
+        "description": "IPFS pin",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 381
+      },
+      {
+        "category": "vector_tools",
+        "tool": "create_vector_index",
+        "description": "Create vector index",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 382
+      },
+      {
+        "category": "bespoke_tools",
+        "tool": "system_status",
+        "description": "System status",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 283
+      },
+      {
+        "category": "bespoke_tools",
+        "tool": "system_health",
+        "description": "System health",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 283
+      },
+      {
+        "category": "analysis_tools",
+        "tool": "analysis_tools",
+        "description": "Analysis tools",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 392
+      },
+      {
+        "category": "media_tools",
+        "tool": "ffmpeg_info",
+        "description": "FFmpeg info",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 380
+      },
+      {
+        "category": "pdf_tools",
+        "tool": "pdf_analyze_relationships",
+        "description": "PDF analyze",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 392
+      },
+      {
+        "category": "web_archive_tools",
+        "tool": "common_crawl_search",
+        "description": "Common crawl search",
+        "success": false,
+        "returncode": 0,
+        "error": "None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.\n[nltk_data] Downloading package punkt to /home/runner/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n[nltk_data] Downloading package averaged_perceptron_tagger_eng to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package averaged_perceptron_tagger_eng is already up-to-\n[nltk_data]       date!\n[nltk_data] Downloading package maxent_ne_chunker_tab to\n[nltk_data]     /home/runner/nltk_data...\n[nltk_data]   Package maxent_ne_chunker_tab is already up-to-date!\n[nltk_data] Downloading package words to /home/runner/nltk_data...\n[nltk_data]   Package words is already up-to-date!\n",
+        "stdout_length": 400
+      }
+    ],
+    "wrapper_scripts": [
+      {
+        "script": "ipfs-datasets",
+        "success": true,
+        "error": null
+      }
+    ],
+    "data_processing": [
+      {
+        "test": "Load JSON dataset",
+        "success": true,
+        "error": null
+      },
+      {
+        "test": "Convert dataset",
+        "success": true,
+        "error": null
+      }
+    ]
+  }
+}

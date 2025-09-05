@@ -202,7 +202,7 @@ class CLICommands:
         """Execute a command through the CLI interface."""
         setup_sys_path()
         try:
-            from ipfs_datasets_py.mcp_server.tools.cli import execute_command
+            from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
             return await execute_command(command=command, args=args, timeout_seconds=timeout)
         except ImportError as e:
             return {"status": "error", "error": f"Failed to import CLI tools: {e}"}

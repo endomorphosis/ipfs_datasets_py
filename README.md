@@ -64,6 +64,37 @@ pip install reportlab numpy
 python scripts/demo/demonstrate_graphrag_pdf.py --create-sample --show-architecture --test-queries
 ```
 
+### 🖥️ **CLI Tools: Access Everything From Command Line**
+
+**NEW**: Comprehensive command line interface with access to all 31+ tool categories:
+
+```bash
+# Basic CLI - curated common functions
+./ipfs-datasets info status                    # System status
+./ipfs-datasets dataset load squad             # Load datasets  
+./ipfs-datasets ipfs pin "data"               # IPFS operations
+./ipfs-datasets vector search "query"         # Vector search
+
+# Enhanced CLI - access to ALL 100+ tools
+python enhanced_cli.py --list-categories       # See all 31 categories
+python enhanced_cli.py dataset_tools load_dataset --source squad
+python enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
+python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
+python enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
+
+# Test all CLI functionality
+python comprehensive_cli_test.py               # Complete test suite
+```
+
+**Features:**
+- ✅ **31+ tool categories** with 100+ individual tools accessible
+- ✅ **Multiple interfaces**: Basic CLI, Enhanced CLI, wrapper scripts
+- ✅ **JSON/Pretty output** formats for both human and machine use
+- ✅ **Comprehensive testing** with detailed reporting
+- ✅ **Dynamic tool discovery** - automatically finds all available functionality
+
+See [CLI_README.md](CLI_README.md) for complete documentation.
+
 ## Overview
 
 IPFS Datasets Python is a **production-ready** unified interface to multiple data processing and storage libraries with **comprehensive implementations** across all major components.
