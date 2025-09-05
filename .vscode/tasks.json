@@ -98,7 +98,7 @@
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
 				"-c",
-				"import asyncio; from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index; result = asyncio.run(create_vector_index(\"test_index\", [{\"text\": \"test\", \"metadata\": {}}])); print(\"Vector Index Result:\", result.get(\"status\"))"
+				"import asyncio, numpy as np; from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index; vectors=[[0.1,0.2,0.3],[0.4,0.5,0.6]]; result = asyncio.run(create_vector_index(vectors, dimension=3, metric=\"cosine\", index_id=\"test_index\", index_name=\"Test Index\")); print(\"Vector Index Result:\", result.get(\"status\"))"
 			],
 			"group": "test",
 			"isBackground": false,

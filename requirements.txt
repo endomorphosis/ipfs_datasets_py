@@ -15,6 +15,7 @@ pytest-xdist>=3.8.0
 # Basic utilities
 tqdm>=4.60.0,<5.0.0
 pyyaml>=6.0.0,<7.0.0
+nltk>=3.8.1
 
 # Development tools
 coverage>=7.0.0,<8.0.0
@@ -69,6 +70,8 @@ scrapy>=2.11.0  # Advanced web scraping framework
 aiohttp>=3.8.0  # Async HTTP client for web archiving
 
 # Add these one by one after basic setup works:
-# datasets>=2.10.0,<3.0.0
+datasets>=2.10.0,<3.0.0
+# Vector store backend
+faiss-cpu>=1.8.0
 # transformers>=4.0.0,<5.0.0
 # torch>=1.9.0,<3.0.0
