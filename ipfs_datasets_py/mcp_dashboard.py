@@ -484,8 +484,8 @@ class MCPDashboard(AdminDashboard):
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
         $(document).ready(function() {
@@ -534,14 +534,83 @@ class MCPDashboard(AdminDashboard):
 
     def _create_mcp_templates(self) -> None:
         """Create MCP-specific template files."""
-        templates_dir = Path(self.config.data_dir) / "templates"
-        templates_dir.mkdir(exist_ok=True)
-        
-        # Create MCP dashboard template
+        if not self.app:
+            return
+
+        templates_dir = Path(self.app.template_folder)
+        static_dir = Path(self.app.static_folder)
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        static_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create MCP dashboard template in Flask templates folder
         mcp_template_path = templates_dir / "mcp_dashboard.html"
         if not mcp_template_path.exists():
             with open(mcp_template_path, 'w') as f:
                 f.write(self.create_mcp_dashboard_template())
+
+        # Ensure MCP JavaScript SDK exists in static/js
+        js_dir = static_dir / "js"
+        js_dir.mkdir(parents=True, exist_ok=True)
+        mcp_sdk_path = js_dir / "mcp-sdk.js"
+        if not mcp_sdk_path.exists():
+            mcp_sdk_path.write_text(
+                """
+// Minimal MCP JavaScript SDK stub
+class MCPError extends Error {
+    constructor(message, status = 500, data = null) {
+        super(message);
+        this.name = 'MCPError';
+        this.status = status;
+        this.data = data;
+    }
+}
+
+class MCPClient {
+    constructor(baseUrl, options = {}) {
+        this.baseUrl = baseUrl.replace(/\/$/, '');
+        this.timeout = options.timeout || 30000;
+    }
+
+    async _request(path, options = {}) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), this.timeout);
+        try {
+            const res = await fetch(`${this.baseUrl}${path}`, { ...options, signal: controller.signal });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new MCPError(data.error || res.statusText, res.status, data);
+            return data;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    getServerStatus() { return this._request('/status'); }
+    getTools() { return this._request('/tools'); }
+    getTool(category, tool) { return this._request(`/tools/${encodeURIComponent(category)}/${encodeURIComponent(tool)}`); }
+    executeTool(category, tool, params = {}) {
+        return this._request(`/tools/${encodeURIComponent(category)}/${encodeURIComponent(tool)}/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+    }
+
+    startStatusPolling(intervalMs = 5000, cb = () => {}) {
+        let stopped = false;
+        const tick = async () => {
+            if (stopped) return;
+            try { cb(null, await this.getServerStatus()); } catch (e) { cb(e); }
+            setTimeout(tick, intervalMs);
+        };
+        setTimeout(tick, 0);
+        return () => { stopped = true; };
+    }
+}
+
+window.MCPClient = MCPClient;
+window.MCPError = MCPError;
+                """.strip()
+            )
 
 
 def start_mcp_dashboard(config: Optional[MCPDashboardConfig] = None) -> MCPDashboard:
@@ -571,3 +640,8 @@ if __name__ == "__main__":
     
     dashboard = start_mcp_dashboard(config)
     print(f"MCP Dashboard running at http://{config.host}:{config.port}/mcp")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass

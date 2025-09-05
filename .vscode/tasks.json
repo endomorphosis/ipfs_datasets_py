@@ -93,7 +93,7 @@
 			}
 		},
 		{
-			"label": "Test Vector Tools", 
+			"label": "Test Vector Tools",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
@@ -181,6 +181,18 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
+		},
+		{
+			"label": "Start MCP Dashboard",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	],
 	"inputs": [

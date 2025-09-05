@@ -43,6 +43,13 @@ ffmpeg-python>=0.2.0
 openai>=1.97.1
 toml>=0.10.2
 
+# Model Context Protocol (MCP)
+# Provides `mcp.server.FastMCP` and `mcp.types` used by the MCP server
+mcp>=1.2.0
+
+# System monitoring utilities
+psutil>=5.9.0
+
 # For testing only
 Faker>=37.4.2
 reportlab>=4.4.3
