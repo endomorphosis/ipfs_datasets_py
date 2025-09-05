@@ -22,9 +22,20 @@ import argparse
 import asyncio
 import json
 import sys
+import subprocess
+import signal
+import os
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import traceback
+
+# Optional imports for better process management
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 
 def setup_sys_path():
@@ -210,6 +221,408 @@ class CLICommands:
             return {"status": "error", "error": f"Failed to execute command: {e}"}
 
 
+class MCPCommands:
+    """MCP server and dashboard management commands."""
+    
+    @staticmethod
+    def _get_pid_file_path(service: str) -> Path:
+        """Get the PID file path for a service."""
+        return Path.home() / ".ipfs_datasets" / f"{service}.pid"
+    
+    @staticmethod
+    def _ensure_pid_dir():
+        """Ensure the PID directory exists."""
+        pid_dir = Path.home() / ".ipfs_datasets"
+        pid_dir.mkdir(exist_ok=True)
+        return pid_dir
+    
+    @staticmethod
+    def _is_process_running(pid: int) -> bool:
+        """Check if a process with given PID is running."""
+        if PSUTIL_AVAILABLE:
+            try:
+                return psutil.pid_exists(pid)
+            except:
+                pass
+        
+        # Fallback to os.kill for systems without psutil
+        try:
+            os.kill(pid, 0)
+            return True
+        except OSError:
+            return False
+    
+    @staticmethod
+    def _kill_process(pid: int, service_name: str) -> bool:
+        """Safely kill a process."""
+        try:
+            if MCPCommands._is_process_running(pid):
+                os.kill(pid, signal.SIGTERM)
+                
+                # Wait up to 10 seconds for graceful shutdown
+                for _ in range(100):
+                    if not MCPCommands._is_process_running(pid):
+                        return True
+                    time.sleep(0.1)
+                
+                # Force kill if still running
+                if MCPCommands._is_process_running(pid):
+                    os.kill(pid, signal.SIGKILL)
+                    time.sleep(0.5)
+                    return not MCPCommands._is_process_running(pid)
+                return True
+            return False
+        except Exception as e:
+            print(f"Error killing {service_name} process {pid}: {e}")
+            return False
+    
+    @staticmethod
+    async def start_server(host: str = "127.0.0.1", port: int = 8000, 
+                          background: bool = True) -> Dict[str, Any]:
+        """Start the MCP server."""
+        try:
+            MCPCommands._ensure_pid_dir()
+            pid_file = MCPCommands._get_pid_file_path("mcp_server")
+            
+            # Check if already running
+            if pid_file.exists():
+                with open(pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    return {
+                        "status": "success",
+                        "message": f"MCP server already running (PID: {pid})",
+                        "pid": pid,
+                        "endpoint": f"http://{host}:{port}"
+                    }
+                else:
+                    # Remove stale PID file
+                    pid_file.unlink()
+            
+            # Check dependencies first
+            setup_sys_path()
+            try:
+                # Try basic import test
+                from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
+            except ImportError as e:
+                return {
+                    "status": "error", 
+                    "error": f"MCP server dependencies not available: {e}. Install required packages first."
+                }
+            
+            # Start the server
+            current_dir = Path(__file__).parent
+            
+            cmd = [
+                sys.executable, "-m", "ipfs_datasets_py.mcp_server",
+                "--host", host,
+                "--port", str(port),
+                "--http"
+            ]
+            
+            if background:
+                # Start in background
+                env = os.environ.copy()
+                env['PYTHONPATH'] = str(current_dir)
+                
+                process = subprocess.Popen(
+                    cmd,
+                    cwd=current_dir,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True
+                )
+                
+                # Write PID file
+                with open(pid_file, 'w') as f:
+                    f.write(str(process.pid))
+                
+                # Give it a moment to start
+                time.sleep(2)
+                
+                if process.poll() is None:  # Still running
+                    return {
+                        "status": "success",
+                        "message": f"MCP server started successfully",
+                        "pid": process.pid,
+                        "endpoint": f"http://{host}:{port}"
+                    }
+                else:
+                    # Process died, get error output
+                    stdout, stderr = process.communicate()
+                    pid_file.unlink(missing_ok=True)
+                    return {
+                        "status": "error",
+                        "error": f"MCP server failed to start: {stderr.decode()}"
+                    }
+            else:
+                # Run in foreground (for debugging)
+                return {
+                    "status": "success",
+                    "message": f"Starting MCP server in foreground on {host}:{port}",
+                    "command": " ".join(cmd)
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to start MCP server: {e}"}
+    
+    @staticmethod
+    async def start_dashboard(host: str = "0.0.0.0", port: int = 8080,
+                             background: bool = True) -> Dict[str, Any]:
+        """Start the MCP dashboard."""
+        try:
+            MCPCommands._ensure_pid_dir()
+            pid_file = MCPCommands._get_pid_file_path("mcp_dashboard")
+            
+            # Check if already running
+            if pid_file.exists():
+                with open(pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    return {
+                        "status": "success",
+                        "message": f"MCP dashboard already running (PID: {pid})",
+                        "pid": pid,
+                        "url": f"http://{host}:{port}/mcp"
+                    }
+                else:
+                    # Remove stale PID file
+                    pid_file.unlink()
+            
+            # Check dependencies first
+            setup_sys_path()
+            try:
+                # Try basic import test
+                from ipfs_datasets_py.mcp_dashboard import MCPDashboard
+            except ImportError as e:
+                return {
+                    "status": "error", 
+                    "error": f"MCP dashboard dependencies not available: {e}. Install Flask and other required packages first."
+                }
+            
+            # Start the dashboard
+            current_dir = Path(__file__).parent
+            
+            cmd = [
+                sys.executable, "-c", 
+                "from ipfs_datasets_py.mcp_dashboard import *; import os; os.environ.get('MCP_DASHBOARD_HOST', '0.0.0.0') or exec(open(__file__).read())",
+                str(current_dir / "ipfs_datasets_py" / "mcp_dashboard.py")
+            ]
+            
+            # Simpler approach: run the module directly
+            cmd = [
+                sys.executable, str(current_dir / "ipfs_datasets_py" / "mcp_dashboard.py")
+            ]
+            
+            if background:
+                # Start in background
+                env = os.environ.copy()
+                env['PYTHONPATH'] = str(current_dir)
+                env['MCP_DASHBOARD_HOST'] = host
+                env['MCP_DASHBOARD_PORT'] = str(port)
+                
+                process = subprocess.Popen(
+                    cmd,
+                    cwd=current_dir,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True
+                )
+                
+                # Write PID file
+                with open(pid_file, 'w') as f:
+                    f.write(str(process.pid))
+                
+                # Give it a moment to start
+                time.sleep(3)
+                
+                if process.poll() is None:  # Still running
+                    return {
+                        "status": "success",
+                        "message": f"MCP dashboard started successfully",
+                        "pid": process.pid,
+                        "url": f"http://{host}:{port}/mcp"
+                    }
+                else:
+                    # Process died, get error output
+                    stdout, stderr = process.communicate()
+                    pid_file.unlink(missing_ok=True)
+                    return {
+                        "status": "error",
+                        "error": f"MCP dashboard failed to start: {stderr.decode()}"
+                    }
+            else:
+                # Run in foreground (for debugging)
+                return {
+                    "status": "success",
+                    "message": f"Starting MCP dashboard in foreground on {host}:{port}",
+                    "command": " ".join(cmd)
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to start MCP dashboard: {e}"}
+    
+    @staticmethod
+    async def stop_server() -> Dict[str, Any]:
+        """Stop the MCP server."""
+        try:
+            pid_file = MCPCommands._get_pid_file_path("mcp_server")
+            
+            if not pid_file.exists():
+                return {
+                    "status": "success",
+                    "message": "MCP server is not running"
+                }
+            
+            with open(pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            if MCPCommands._kill_process(pid, "MCP server"):
+                pid_file.unlink()
+                return {
+                    "status": "success",
+                    "message": f"MCP server stopped (PID: {pid})"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Failed to stop MCP server (PID: {pid})"
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to stop MCP server: {e}"}
+    
+    @staticmethod
+    async def stop_dashboard() -> Dict[str, Any]:
+        """Stop the MCP dashboard."""
+        try:
+            pid_file = MCPCommands._get_pid_file_path("mcp_dashboard")
+            
+            if not pid_file.exists():
+                return {
+                    "status": "success",
+                    "message": "MCP dashboard is not running"
+                }
+            
+            with open(pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            if MCPCommands._kill_process(pid, "MCP dashboard"):
+                pid_file.unlink()
+                return {
+                    "status": "success",
+                    "message": f"MCP dashboard stopped (PID: {pid})"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Failed to stop MCP dashboard (PID: {pid})"
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to stop MCP dashboard: {e}"}
+    
+    @staticmethod
+    async def status() -> Dict[str, Any]:
+        """Get MCP services status."""
+        try:
+            MCPCommands._ensure_pid_dir()
+            
+            services = {}
+            
+            # Check server status
+            server_pid_file = MCPCommands._get_pid_file_path("mcp_server")
+            if server_pid_file.exists():
+                with open(server_pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    services["mcp_server"] = {
+                        "status": "running",
+                        "pid": pid,
+                        "endpoint": "http://127.0.0.1:8000"
+                    }
+                else:
+                    services["mcp_server"] = {"status": "stopped (stale PID file)"}
+                    server_pid_file.unlink()
+            else:
+                services["mcp_server"] = {"status": "stopped"}
+            
+            # Check dashboard status
+            dashboard_pid_file = MCPCommands._get_pid_file_path("mcp_dashboard")
+            if dashboard_pid_file.exists():
+                with open(dashboard_pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    services["mcp_dashboard"] = {
+                        "status": "running",
+                        "pid": pid,
+                        "url": "http://0.0.0.0:8080/mcp"
+                    }
+                else:
+                    services["mcp_dashboard"] = {"status": "stopped (stale PID file)"}
+                    dashboard_pid_file.unlink()
+            else:
+                services["mcp_dashboard"] = {"status": "stopped"}
+            
+            return {
+                "status": "success",
+                "services": services,
+                "message": "MCP services status retrieved"
+            }
+            
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to get MCP status: {e}"}
+    
+    @staticmethod
+    async def start(server_host: str = "127.0.0.1", server_port: int = 8000,
+                   dashboard_host: str = "0.0.0.0", dashboard_port: int = 8080) -> Dict[str, Any]:
+        """Start both MCP server and dashboard."""
+        results = {}
+        
+        # Start server first
+        server_result = await MCPCommands.start_server(server_host, server_port)
+        results["server"] = server_result
+        
+        # Start dashboard
+        dashboard_result = await MCPCommands.start_dashboard(dashboard_host, dashboard_port)
+        results["dashboard"] = dashboard_result
+        
+        # Overall success if both succeed
+        success = (server_result.get("status") == "success" and 
+                  dashboard_result.get("status") == "success")
+        
+        return {
+            "status": "success" if success else "partial",
+            "results": results,
+            "message": "MCP services started" if success else "Some MCP services failed to start"
+        }
+    
+    @staticmethod
+    async def stop() -> Dict[str, Any]:
+        """Stop both MCP server and dashboard."""
+        results = {}
+        
+        # Stop dashboard first
+        dashboard_result = await MCPCommands.stop_dashboard()
+        results["dashboard"] = dashboard_result
+        
+        # Stop server
+        server_result = await MCPCommands.stop_server()
+        results["server"] = server_result
+        
+        return {
+            "status": "success",
+            "results": results,
+            "message": "MCP services stopped"
+        }
+
+
 class InfoCommands:
     """Information and status commands."""
     
@@ -231,6 +644,9 @@ class InfoCommands:
                     if item.is_dir() and not item.name.startswith('_'):
                         tool_categories.append(item.name)
             
+            # Get MCP services status
+            mcp_status = await MCPCommands.status()
+            
             return {
                 "status": "success",
                 "system": {
@@ -242,6 +658,7 @@ class InfoCommands:
                     "tool_categories": sorted(tool_categories),
                     "total_categories": len(tool_categories)
                 },
+                "mcp_services": mcp_status.get("services", {}),
                 "message": "IPFS Datasets CLI is operational"
             }
         except Exception as e:
@@ -296,6 +713,15 @@ Examples:
   ipfs-datasets-cli info status
   ipfs-datasets-cli info list-tools
   
+  # MCP server and dashboard management
+  ipfs-datasets-cli mcp start
+  ipfs-datasets-cli mcp stop
+  ipfs-datasets-cli mcp status
+  ipfs-datasets-cli mcp start-server --host 127.0.0.1 --port 8000
+  ipfs-datasets-cli mcp start-dashboard --host 0.0.0.0 --port 8080
+  ipfs-datasets-cli mcp stop-server
+  ipfs-datasets-cli mcp stop-dashboard
+  
   # CLI operations
   ipfs-datasets-cli cli execute echo "Hello World"
   
@@ -334,6 +760,41 @@ Examples:
     
     # Info list-tools
     info_subparsers.add_parser("list-tools", help="List all available tools")
+    
+    # MCP commands
+    mcp_parser = subparsers.add_parser("mcp", help="MCP server and dashboard management")
+    mcp_subparsers = mcp_parser.add_subparsers(dest="mcp_action")
+    
+    # MCP start
+    start_parser = mcp_subparsers.add_parser("start", help="Start MCP server and dashboard")
+    start_parser.add_argument("--server-host", default="127.0.0.1", help="MCP server host (default: 127.0.0.1)")
+    start_parser.add_argument("--server-port", type=int, default=8000, help="MCP server port (default: 8000)")
+    start_parser.add_argument("--dashboard-host", default="0.0.0.0", help="Dashboard host (default: 0.0.0.0)")
+    start_parser.add_argument("--dashboard-port", type=int, default=8080, help="Dashboard port (default: 8080)")
+    
+    # MCP stop
+    mcp_subparsers.add_parser("stop", help="Stop MCP server and dashboard")
+    
+    # MCP status
+    mcp_subparsers.add_parser("status", help="Show MCP services status")
+    
+    # MCP start-server
+    start_server_parser = mcp_subparsers.add_parser("start-server", help="Start MCP server only")
+    start_server_parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)")
+    start_server_parser.add_argument("--port", type=int, default=8000, help="Port to bind to (default: 8000)")
+    start_server_parser.add_argument("--foreground", action="store_true", help="Run in foreground")
+    
+    # MCP start-dashboard
+    start_dashboard_parser = mcp_subparsers.add_parser("start-dashboard", help="Start MCP dashboard only")
+    start_dashboard_parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
+    start_dashboard_parser.add_argument("--port", type=int, default=8080, help="Port to bind to (default: 8080)")
+    start_dashboard_parser.add_argument("--foreground", action="store_true", help="Run in foreground")
+    
+    # MCP stop-server
+    mcp_subparsers.add_parser("stop-server", help="Stop MCP server only")
+    
+    # MCP stop-dashboard
+    mcp_subparsers.add_parser("stop-dashboard", help="Stop MCP dashboard only")
     
     # CLI commands
     cli_parser = subparsers.add_parser("cli", help="Command execution")
@@ -434,6 +895,31 @@ async def main():
                 result = await CLICommands.execute(args.exec_command, args.exec_args, args.timeout)
             else:
                 parser.error("Invalid CLI action")
+        
+        elif args.command == "mcp":
+            if args.mcp_action == "start":
+                result = await MCPCommands.start(
+                    args.server_host, args.server_port,
+                    args.dashboard_host, args.dashboard_port
+                )
+            elif args.mcp_action == "stop":
+                result = await MCPCommands.stop()
+            elif args.mcp_action == "status":
+                result = await MCPCommands.status()
+            elif args.mcp_action == "start-server":
+                result = await MCPCommands.start_server(
+                    args.host, args.port, not args.foreground
+                )
+            elif args.mcp_action == "start-dashboard":
+                result = await MCPCommands.start_dashboard(
+                    args.host, args.port, not args.foreground
+                )
+            elif args.mcp_action == "stop-server":
+                result = await MCPCommands.stop_server()
+            elif args.mcp_action == "stop-dashboard":
+                result = await MCPCommands.stop_dashboard()
+            else:
+                parser.error("Invalid MCP action")
         
         elif args.command == "dataset":
             if args.dataset_action == "load":
