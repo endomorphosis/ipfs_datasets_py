@@ -834,20 +834,6 @@ class MCPDashboard(AdminDashboard):
             "parameters_received": params,
             "execution_time": 0.5,
             "timestamp": datetime.now().isoformat()
-    
-    def _execute_tool_sync(self, category: str, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a tool synchronously (placeholder implementation)."""
-        # This is a placeholder - in a real implementation, this would
-        # call the actual MCP tool execution logic
-        
-        # Simulate some processing time
-        time.sleep(0.5)
-        
-        return {
-            "message": f"Tool {category}/{tool_name} executed successfully",
-            "parameters_received": params,
-            "execution_time": 0.5,
-            "timestamp": datetime.now().isoformat()
         }
         
     def _get_comprehensive_status(self) -> Dict[str, Any]:
@@ -2057,7 +2043,7 @@ class MCPDashboard(AdminDashboard):
     
     def create_enhanced_mcp_sdk(self) -> str:
         """Create enhanced MCP JavaScript SDK with GraphRAG support."""
-        return """
+        return r"""
 // Enhanced MCP JavaScript SDK with GraphRAG Support
 class MCPError extends Error {
     constructor(message, status = 500, data = null) {
