@@ -40,9 +40,9 @@ services:
     volumes:
       - ipfs_data:/data/ipfs
     ports:
-      - "4001:4001"     # libp2p swarm
-      - "5001:5001"     # API
-      - "8080:8080"     # Gateway
+      - "${IPFS_SWARM_PORT:-4001}:4001"     # libp2p swarm
+      - "${IPFS_API_PORT:-5001}:5001"       # API
+      - "${IPFS_GATEWAY_PORT:-8080}:8080"   # Gateway
     healthcheck:
       test: ["CMD", "ipfs", "id"]
       interval: 30s

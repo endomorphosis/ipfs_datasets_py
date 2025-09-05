@@ -13,6 +13,7 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -632,14 +633,22 @@ def start_mcp_dashboard(config: Optional[MCPDashboardConfig] = None) -> MCPDashb
 
 if __name__ == "__main__":
     # Start the MCP dashboard
-    config = MCPDashboardConfig(
-        host="0.0.0.0",
-        port=8080,
-        mcp_server_port=8001
-    )
+    host = os.environ.get("MCP_DASHBOARD_HOST", "0.0.0.0")
+    try:
+        port = int(os.environ.get("MCP_DASHBOARD_PORT", "8080"))
+    except ValueError:
+        port = 8080
+
+    config = MCPDashboardConfig(host=host, port=port, mcp_server_port=8001)
     
     dashboard = start_mcp_dashboard(config)
-    print(f"MCP Dashboard running at http://{config.host}:{config.port}/mcp")
+    if dashboard and dashboard.get_status().get("running"):
+        print(f"MCP Dashboard running at http://{config.host}:{config.port}/mcp")
+    else:
+        print(
+            f"Failed to start MCP Dashboard on http://{config.host}:{config.port}. "
+            "Check logs for details or choose a different port via MCP_DASHBOARD_PORT."
+        )
     try:
         while True:
             time.sleep(1)
