@@ -40,6 +40,11 @@ Choose your path based on what you want to accomplish:
 git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
+# 🔧 QUICK DEPENDENCY SETUP (NEW!)
+python install.py --quick                    # Install core dependencies
+python install.py --profile ml              # Install ML features
+python dependency_health_checker.py check   # Verify installation
+
 # Install all theorem provers and dependencies automatically
 python scripts/demo/demonstrate_complete_pipeline.py --install-all --prove-long-statements
 
@@ -63,6 +68,67 @@ pip install reportlab numpy
 # Run the comprehensive GraphRAG demo (creates sample PDF automatically)
 python scripts/demo/demonstrate_graphrag_pdf.py --create-sample --show-architecture --test-queries
 ```
+
+### 🖥️ **CLI Tools: Access Everything From Command Line**
+
+**NEW**: Comprehensive command line interface with access to all 31+ tool categories:
+
+```bash
+# Basic CLI - curated common functions
+./ipfs-datasets info status                    # System status
+./ipfs-datasets dataset load squad             # Load datasets  
+./ipfs-datasets ipfs pin "data"               # IPFS operations
+./ipfs-datasets vector search "query"         # Vector search
+
+# Enhanced CLI - access to ALL 100+ tools
+python enhanced_cli.py --list-categories       # See all 31 categories
+python enhanced_cli.py dataset_tools load_dataset --source squad
+python enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
+python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
+python enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
+
+# Test all CLI functionality
+python comprehensive_cli_test.py               # Complete test suite
+```
+
+**Features:**
+- ✅ **31+ tool categories** with 100+ individual tools accessible
+- ✅ **Multiple interfaces**: Basic CLI, Enhanced CLI, wrapper scripts
+- ✅ **JSON/Pretty output** formats for both human and machine use
+- ✅ **Comprehensive testing** with detailed reporting
+- ✅ **Dynamic tool discovery** - automatically finds all available functionality
+
+See [CLI_README.md](CLI_README.md) for complete documentation.
+
+### 🔧 **Dependency Management: Semi-Automated Installation**
+
+**NEW**: Comprehensive dependency management system prevents installation issues:
+
+```bash
+# Quick setup for core functionality
+python install.py --quick                       # Install essentials
+
+# Interactive wizard with recommendations  
+python install.py                              # Guided setup
+
+# Install specific feature sets
+python install.py --profile pdf               # PDF processing
+python install.py --profile ml                # Machine learning
+python install.py --profile web               # Web scraping
+
+# Health monitoring and diagnostics
+python dependency_health_checker.py check     # Verify installation
+python dependency_manager.py analyze          # Scan for issues
+```
+
+**Benefits:**
+- ✅ **Prevents dependency errors** that cause CLI tools to fail
+- ✅ **Smart recommendations** based on your usage patterns  
+- ✅ **Health monitoring** with continuous dependency validation
+- ✅ **Profile-based installation** for different use cases
+- ✅ **Auto-detection** of missing packages with guided fixes
+
+See [DEPENDENCY_TOOLS_README.md](DEPENDENCY_TOOLS_README.md) for complete documentation.
 
 ## Overview
 
