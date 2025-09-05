@@ -194,6 +194,53 @@
 			"problemMatcher": [],
 			"group": "build"
 		}
+		,
+		{
+			"label": "Start MCP Dashboard (8899)",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"MCP_DASHBOARD_HOST": "127.0.0.1",
+					"MCP_DASHBOARD_PORT": "8899",
+					"MCP_DASHBOARD_BLOCKING": "1"
+				}
+			},
+			"group": "build"
+		},
+		{
+			"label": "Test MCP Dashboard Status (raw)",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"curl -sS -o /dev/null -w \"HTTP %{http_code}\\n\" http://127.0.0.1:8899/api/mcp/status && curl -sS http://127.0.0.1:8899/api/mcp/status | head -c 300"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Test MCP Dashboard Status",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"curl -sS http://127.0.0.1:8899/api/mcp/status | python - <<'PY'\nimport sys, json\ntry:\n    d = json.load(sys.stdin)\n    print(json.dumps({'status': d.get('status'), 'tools_available': d.get('tools_available')}))\nexcept Exception as e:\n    print(json.dumps({'error': str(e)}))\nPY"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		}
 	],
 	"inputs": [
 		{

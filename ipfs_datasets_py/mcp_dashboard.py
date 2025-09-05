@@ -641,16 +641,34 @@ if __name__ == "__main__":
 
     config = MCPDashboardConfig(host=host, port=port, mcp_server_port=8001)
     
-    dashboard = start_mcp_dashboard(config)
-    if dashboard and dashboard.get_status().get("running"):
-        print(f"MCP Dashboard running at http://{config.host}:{config.port}/mcp")
+    if os.environ.get("MCP_DASHBOARD_BLOCKING", "0") in ("1", "true", "True"):
+        dash = MCPDashboard()
+        dash.configure(config)
+        dash._create_mcp_templates()
+        print(f"Starting MCP Dashboard (blocking) on http://{config.host}:{config.port}/mcp")
+        dash.app.run(host=config.host, port=config.port, debug=False, use_reloader=False, threaded=True)
     else:
-        print(
-            f"Failed to start MCP Dashboard on http://{config.host}:{config.port}. "
-            "Check logs for details or choose a different port via MCP_DASHBOARD_PORT."
-        )
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        pass
+        dashboard = start_mcp_dashboard(config)
+        # Best-effort readiness probe
+        ready = False
+        for _ in range(20):
+            try:
+                import urllib.request
+                with urllib.request.urlopen(f"http://{config.host}:{config.port}/api/mcp/status", timeout=0.5) as r:
+                    if r.status == 200:
+                        ready = True
+                        break
+            except Exception:
+                time.sleep(0.2)
+        if ready:
+            print(f"MCP Dashboard running at http://{config.host}:{config.port}/mcp")
+        else:
+            print(
+                f"Failed to confirm MCP Dashboard on http://{config.host}:{config.port}. "
+                "Check logs or run with MCP_DASHBOARD_BLOCKING=1 for diagnostics."
+            )
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
