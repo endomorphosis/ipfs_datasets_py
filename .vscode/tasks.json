@@ -193,6 +193,173 @@
 			"isBackground": true,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Start MCP Dashboard (8899)",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"MCP_DASHBOARD_HOST": "127.0.0.1",
+					"MCP_DASHBOARD_PORT": "8899",
+					"MCP_DASHBOARD_BLOCKING": "1"
+				}
+			},
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Test MCP Dashboard Status",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-s",
+				"http://127.0.0.1:8899/api/mcp/status"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test MCP Dashboard Status (raw)",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-sS",
+				"http://127.0.0.1:8899/api/mcp/status"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Smoke",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"smoke",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Comprehensive",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"comprehensive",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Performance",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"performance",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Docker",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"comprehensive",
+				"--docker",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Start Docker MCP Services",
+			"type": "shell",
+			"command": "docker-compose",
+			"args": [
+				"-f",
+				"docker-compose.mcp.yml",
+				"up",
+				"-d"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Stop Docker MCP Services",
+			"type": "shell",
+			"command": "docker-compose",
+			"args": [
+				"-f",
+				"docker-compose.mcp.yml",
+				"down"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Install Playwright Browsers",
+			"type": "shell",
+			"command": "playwright",
+			"args": [
+				"install",
+				"chromium"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		}
 		,
 		{
