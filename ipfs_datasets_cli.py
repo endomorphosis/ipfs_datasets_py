@@ -22,9 +22,22 @@ import argparse
 import asyncio
 import json
 import sys
+import subprocess
+import signal
+import os
+import time
+import importlib
+import inspect
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Callable
 import traceback
+
+# Optional imports for better process management
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 
 def setup_sys_path():
@@ -34,14 +47,154 @@ def setup_sys_path():
         sys.path.insert(0, str(current_dir))
 
 
+def discover_mcp_tools() -> Dict[str, Dict[str, Any]]:
+    """Discover all available MCP tools from the mcp_server.tools directory."""
+    setup_sys_path()
+    
+    tools_by_category = {}
+    base_tools_path = Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools"
+    
+    if not base_tools_path.exists():
+        return tools_by_category
+    
+    # Scan for tool categories (directories)
+    for category_dir in base_tools_path.iterdir():
+        if not category_dir.is_dir() or category_dir.name.startswith('_'):
+            continue
+            
+        category_name = category_dir.name
+        tools_by_category[category_name] = {}
+        
+        # Scan for Python files in the category
+        for tool_file in category_dir.glob("*.py"):
+            if tool_file.name.startswith('_') or tool_file.name == "__init__.py":
+                continue
+                
+            tool_name = tool_file.stem
+            module_path = f"ipfs_datasets_py.mcp_server.tools.{category_name}.{tool_name}"
+            
+            try:
+                # Try to import the module
+                module = importlib.import_module(module_path)
+                
+                # Look for callable functions in the module
+                functions = []
+                for name, obj in inspect.getmembers(module, inspect.isfunction):
+                    if not name.startswith('_') and name not in ['main', 'setup', 'test']:
+                        sig = inspect.signature(obj)
+                        functions.append({
+                            'name': name,
+                            'signature': str(sig),
+                            'doc': obj.__doc__ or "No description available"
+                        })
+                
+                if functions:
+                    tools_by_category[category_name][tool_name] = {
+                        'module_path': module_path,
+                        'functions': functions,
+                        'file_path': str(tool_file)
+                    }
+                    
+            except Exception as e:
+                # Skip modules that can't be imported
+                pass
+                
+    return tools_by_category
+
+
+def convert_cli_args_to_kwargs(args: List[str]) -> Dict[str, Any]:
+    """Convert CLI arguments to keyword arguments for tool functions."""
+    kwargs = {}
+    i = 0
+    
+    while i < len(args):
+        arg = args[i]
+        
+        if arg.startswith('--'):
+            key = arg[2:]  # Remove --
+            
+            # Check if next arg is a value or another flag
+            if i + 1 < len(args) and not args[i + 1].startswith('--'):
+                value = args[i + 1]
+                
+                # Try to parse as JSON, number, or boolean
+                try:
+                    if value.lower() in ['true', 'false']:
+                        kwargs[key] = value.lower() == 'true'
+                    elif value.startswith('{') or value.startswith('['):
+                        kwargs[key] = json.loads(value)
+                    elif value.isdigit():
+                        kwargs[key] = int(value)
+                    elif '.' in value and value.replace('.', '').isdigit():
+                        kwargs[key] = float(value)
+                    else:
+                        kwargs[key] = value
+                except:
+                    kwargs[key] = value
+                    
+                i += 2
+            else:
+                # Boolean flag without value
+                kwargs[key] = True
+                i += 1
+        else:
+            # Positional argument - use as 'data' or 'input'
+            if 'data' not in kwargs and 'input' not in kwargs:
+                kwargs['data'] = arg
+            i += 1
+    
+    return kwargs
+
+
+async def execute_tool(category: str, tool_name: str, function_name: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """Execute a specific tool function with given arguments."""
+    try:
+        module_path = f"ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}"
+        module = importlib.import_module(module_path)
+        
+        if not hasattr(module, function_name):
+            return {
+                "status": "error",
+                "error": f"Function '{function_name}' not found in {tool_name}",
+                "available_functions": [name for name, obj in inspect.getmembers(module, inspect.isfunction) 
+                                      if not name.startswith('_')]
+            }
+        
+        func = getattr(module, function_name)
+        
+        # Handle async and sync functions
+        if asyncio.iscoroutinefunction(func):
+            result = await func(**kwargs)
+        else:
+            result = func(**kwargs)
+            
+        return {
+            "status": "success",
+            "tool": f"{category}.{tool_name}.{function_name}",
+            "result": result
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "tool": f"{category}.{tool_name}.{function_name}",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
 def print_result(result: Dict[str, Any], format_type: str = "pretty") -> None:
     """Print results in a user-friendly format."""
     if format_type == "json":
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2, default=str))
         return
     
-    if result.get("status") == "success":
+    status = result.get("status", "unknown")
+    
+    if status == "success":
         print("✅ Success!")
+        if "tool" in result:
+            print(f"Tool: {result['tool']}")
         if "message" in result:
             print(f"Message: {result['message']}")
         if "dataset_id" in result:
@@ -50,13 +203,166 @@ def print_result(result: Dict[str, Any], format_type: str = "pretty") -> None:
             summary = result["summary"]
             print(f"Summary: {summary}")
         if "result" in result and result["result"] != result.get("message"):
-            print(f"Result: {result['result']}")
+            result_data = result["result"]
+            if isinstance(result_data, dict):
+                for key, value in result_data.items():
+                    print(f"  {key}: {value}")
+            else:
+                print(f"Result: {result_data}")
     else:
         print("❌ Error!")
+        if "tool" in result:
+            print(f"Tool: {result['tool']}")
         if "error" in result:
             print(f"Error: {result['error']}")
         if "message" in result:
             print(f"Message: {result['message']}")
+        if "available_functions" in result:
+            print("Available functions:")
+            for func in result["available_functions"]:
+                print(f"  - {func}")
+
+
+def print_available_categories(tools_by_category: Dict[str, Dict[str, Any]]) -> None:
+    """Print all available tool categories."""
+    print("Available MCP Tool Categories:")
+    print("=" * 40)
+    
+    for category, tools in sorted(tools_by_category.items()):
+        tool_count = len(tools)
+        print(f"  {category:<25} ({tool_count} tools)")
+    
+    print(f"\nTotal: {len(tools_by_category)} categories")
+    print("\nUse 'ipfs-datasets tools list <category>' to see tools in a specific category")
+
+
+def print_tools_in_category(category: str, tools_by_category: Dict[str, Dict[str, Any]]) -> None:
+    """Print all tools in a specific category."""
+    if category not in tools_by_category:
+        print(f"Error: Category '{category}' not found")
+        return
+        
+    tools = tools_by_category[category]
+    print(f"Tools in category '{category}':")
+    print("=" * 50)
+    
+    for tool_name, tool_info in sorted(tools.items()):
+        print(f"\n  {tool_name}:")
+        for func_info in tool_info['functions']:
+            print(f"    • {func_info['name']}{func_info['signature']}")
+            if func_info['doc']:
+                doc_preview = func_info['doc'].split('\n')[0][:80]
+                print(f"      {doc_preview}...")
+
+
+class ToolCommands:
+    """Enhanced tool discovery and execution commands."""
+    
+    @staticmethod
+    async def list_categories() -> Dict[str, Any]:
+        """List all available tool categories."""
+        try:
+            tools_by_category = discover_mcp_tools()
+            return {
+                "status": "success",
+                "categories": list(tools_by_category.keys()),
+                "total_categories": len(tools_by_category),
+                "tools_by_category": {
+                    category: len(tools) for category, tools in tools_by_category.items()
+                },
+                "message": f"Found {len(tools_by_category)} tool categories"
+            }
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to list categories: {e}"}
+    
+    @staticmethod
+    async def list_tools(category: Optional[str] = None) -> Dict[str, Any]:
+        """List tools in a specific category or all tools."""
+        try:
+            tools_by_category = discover_mcp_tools()
+            
+            if category:
+                if category not in tools_by_category:
+                    return {
+                        "status": "error", 
+                        "error": f"Category '{category}' not found",
+                        "available_categories": list(tools_by_category.keys())
+                    }
+                
+                tools = tools_by_category[category]
+                return {
+                    "status": "success",
+                    "category": category,
+                    "tools": list(tools.keys()),
+                    "total_tools": len(tools),
+                    "tool_details": {
+                        tool_name: [f['name'] for f in tool_info['functions']]
+                        for tool_name, tool_info in tools.items()
+                    },
+                    "message": f"Found {len(tools)} tools in category '{category}'"
+                }
+            else:
+                # Return all categories and their tools
+                return {
+                    "status": "success",
+                    "all_categories": {
+                        cat: list(tools.keys()) for cat, tools in tools_by_category.items()
+                    },
+                    "total_categories": len(tools_by_category),
+                    "total_tools": sum(len(tools) for tools in tools_by_category.values()),
+                    "message": "Listed all available tools"
+                }
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to list tools: {e}"}
+    
+    @staticmethod
+    async def execute(category: str, tool: str, function: Optional[str] = None, 
+                     args: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Execute a tool with dynamic arguments."""
+        try:
+            tools_by_category = discover_mcp_tools()
+            
+            # Validate category and tool
+            if category not in tools_by_category:
+                return {
+                    "status": "error",
+                    "error": f"Category '{category}' not found",
+                    "available_categories": list(tools_by_category.keys())
+                }
+                
+            if tool not in tools_by_category[category]:
+                return {
+                    "status": "error",
+                    "error": f"Tool '{tool}' not found in category '{category}'",
+                    "available_tools": list(tools_by_category[category].keys())
+                }
+            
+            # Determine function to call
+            tool_info = tools_by_category[category][tool]
+            available_functions = [f['name'] for f in tool_info['functions']]
+            
+            if function and function not in available_functions:
+                return {
+                    "status": "error",
+                    "error": f"Function '{function}' not found in {tool}",
+                    "available_functions": available_functions
+                }
+            
+            function_name = function or (available_functions[0] if available_functions else None)
+            if not function_name:
+                return {
+                    "status": "error",
+                    "error": f"No callable functions found in {tool}"
+                }
+            
+            # Convert CLI args to kwargs
+            kwargs = convert_cli_args_to_kwargs(args or [])
+            
+            # Execute the tool
+            return await execute_tool(category, tool, function_name, kwargs)
+            
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to execute tool: {e}"}
 
 
 class DatasetCommands:
@@ -210,6 +516,408 @@ class CLICommands:
             return {"status": "error", "error": f"Failed to execute command: {e}"}
 
 
+class MCPCommands:
+    """MCP server and dashboard management commands."""
+    
+    @staticmethod
+    def _get_pid_file_path(service: str) -> Path:
+        """Get the PID file path for a service."""
+        return Path.home() / ".ipfs_datasets" / f"{service}.pid"
+    
+    @staticmethod
+    def _ensure_pid_dir():
+        """Ensure the PID directory exists."""
+        pid_dir = Path.home() / ".ipfs_datasets"
+        pid_dir.mkdir(exist_ok=True)
+        return pid_dir
+    
+    @staticmethod
+    def _is_process_running(pid: int) -> bool:
+        """Check if a process with given PID is running."""
+        if PSUTIL_AVAILABLE:
+            try:
+                return psutil.pid_exists(pid)
+            except:
+                pass
+        
+        # Fallback to os.kill for systems without psutil
+        try:
+            os.kill(pid, 0)
+            return True
+        except OSError:
+            return False
+    
+    @staticmethod
+    def _kill_process(pid: int, service_name: str) -> bool:
+        """Safely kill a process."""
+        try:
+            if MCPCommands._is_process_running(pid):
+                os.kill(pid, signal.SIGTERM)
+                
+                # Wait up to 10 seconds for graceful shutdown
+                for _ in range(100):
+                    if not MCPCommands._is_process_running(pid):
+                        return True
+                    time.sleep(0.1)
+                
+                # Force kill if still running
+                if MCPCommands._is_process_running(pid):
+                    os.kill(pid, signal.SIGKILL)
+                    time.sleep(0.5)
+                    return not MCPCommands._is_process_running(pid)
+                return True
+            return False
+        except Exception as e:
+            print(f"Error killing {service_name} process {pid}: {e}")
+            return False
+    
+    @staticmethod
+    async def start_server(host: str = "127.0.0.1", port: int = 8000, 
+                          background: bool = True) -> Dict[str, Any]:
+        """Start the MCP server."""
+        try:
+            MCPCommands._ensure_pid_dir()
+            pid_file = MCPCommands._get_pid_file_path("mcp_server")
+            
+            # Check if already running
+            if pid_file.exists():
+                with open(pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    return {
+                        "status": "success",
+                        "message": f"MCP server already running (PID: {pid})",
+                        "pid": pid,
+                        "endpoint": f"http://{host}:{port}"
+                    }
+                else:
+                    # Remove stale PID file
+                    pid_file.unlink()
+            
+            # Check dependencies first
+            setup_sys_path()
+            try:
+                # Try basic import test
+                from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
+            except ImportError as e:
+                return {
+                    "status": "error", 
+                    "error": f"MCP server dependencies not available: {e}. Install required packages first."
+                }
+            
+            # Start the server
+            current_dir = Path(__file__).parent
+            
+            cmd = [
+                sys.executable, "-m", "ipfs_datasets_py.mcp_server",
+                "--host", host,
+                "--port", str(port),
+                "--http"
+            ]
+            
+            if background:
+                # Start in background
+                env = os.environ.copy()
+                env['PYTHONPATH'] = str(current_dir)
+                
+                process = subprocess.Popen(
+                    cmd,
+                    cwd=current_dir,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True
+                )
+                
+                # Write PID file
+                with open(pid_file, 'w') as f:
+                    f.write(str(process.pid))
+                
+                # Give it a moment to start
+                time.sleep(2)
+                
+                if process.poll() is None:  # Still running
+                    return {
+                        "status": "success",
+                        "message": f"MCP server started successfully",
+                        "pid": process.pid,
+                        "endpoint": f"http://{host}:{port}"
+                    }
+                else:
+                    # Process died, get error output
+                    stdout, stderr = process.communicate()
+                    pid_file.unlink(missing_ok=True)
+                    return {
+                        "status": "error",
+                        "error": f"MCP server failed to start: {stderr.decode()}"
+                    }
+            else:
+                # Run in foreground (for debugging)
+                return {
+                    "status": "success",
+                    "message": f"Starting MCP server in foreground on {host}:{port}",
+                    "command": " ".join(cmd)
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to start MCP server: {e}"}
+    
+    @staticmethod
+    async def start_dashboard(host: str = "0.0.0.0", port: int = 8080,
+                             background: bool = True) -> Dict[str, Any]:
+        """Start the MCP dashboard."""
+        try:
+            MCPCommands._ensure_pid_dir()
+            pid_file = MCPCommands._get_pid_file_path("mcp_dashboard")
+            
+            # Check if already running
+            if pid_file.exists():
+                with open(pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    return {
+                        "status": "success",
+                        "message": f"MCP dashboard already running (PID: {pid})",
+                        "pid": pid,
+                        "url": f"http://{host}:{port}/mcp"
+                    }
+                else:
+                    # Remove stale PID file
+                    pid_file.unlink()
+            
+            # Check dependencies first
+            setup_sys_path()
+            try:
+                # Try basic import test
+                from ipfs_datasets_py.mcp_dashboard import MCPDashboard
+            except ImportError as e:
+                return {
+                    "status": "error", 
+                    "error": f"MCP dashboard dependencies not available: {e}. Install Flask and other required packages first."
+                }
+            
+            # Start the dashboard
+            current_dir = Path(__file__).parent
+            
+            cmd = [
+                sys.executable, "-c", 
+                "from ipfs_datasets_py.mcp_dashboard import *; import os; os.environ.get('MCP_DASHBOARD_HOST', '0.0.0.0') or exec(open(__file__).read())",
+                str(current_dir / "ipfs_datasets_py" / "mcp_dashboard.py")
+            ]
+            
+            # Simpler approach: run the module directly
+            cmd = [
+                sys.executable, str(current_dir / "ipfs_datasets_py" / "mcp_dashboard.py")
+            ]
+            
+            if background:
+                # Start in background
+                env = os.environ.copy()
+                env['PYTHONPATH'] = str(current_dir)
+                env['MCP_DASHBOARD_HOST'] = host
+                env['MCP_DASHBOARD_PORT'] = str(port)
+                
+                process = subprocess.Popen(
+                    cmd,
+                    cwd=current_dir,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True
+                )
+                
+                # Write PID file
+                with open(pid_file, 'w') as f:
+                    f.write(str(process.pid))
+                
+                # Give it a moment to start
+                time.sleep(3)
+                
+                if process.poll() is None:  # Still running
+                    return {
+                        "status": "success",
+                        "message": f"MCP dashboard started successfully",
+                        "pid": process.pid,
+                        "url": f"http://{host}:{port}/mcp"
+                    }
+                else:
+                    # Process died, get error output
+                    stdout, stderr = process.communicate()
+                    pid_file.unlink(missing_ok=True)
+                    return {
+                        "status": "error",
+                        "error": f"MCP dashboard failed to start: {stderr.decode()}"
+                    }
+            else:
+                # Run in foreground (for debugging)
+                return {
+                    "status": "success",
+                    "message": f"Starting MCP dashboard in foreground on {host}:{port}",
+                    "command": " ".join(cmd)
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to start MCP dashboard: {e}"}
+    
+    @staticmethod
+    async def stop_server() -> Dict[str, Any]:
+        """Stop the MCP server."""
+        try:
+            pid_file = MCPCommands._get_pid_file_path("mcp_server")
+            
+            if not pid_file.exists():
+                return {
+                    "status": "success",
+                    "message": "MCP server is not running"
+                }
+            
+            with open(pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            if MCPCommands._kill_process(pid, "MCP server"):
+                pid_file.unlink()
+                return {
+                    "status": "success",
+                    "message": f"MCP server stopped (PID: {pid})"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Failed to stop MCP server (PID: {pid})"
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to stop MCP server: {e}"}
+    
+    @staticmethod
+    async def stop_dashboard() -> Dict[str, Any]:
+        """Stop the MCP dashboard."""
+        try:
+            pid_file = MCPCommands._get_pid_file_path("mcp_dashboard")
+            
+            if not pid_file.exists():
+                return {
+                    "status": "success",
+                    "message": "MCP dashboard is not running"
+                }
+            
+            with open(pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            if MCPCommands._kill_process(pid, "MCP dashboard"):
+                pid_file.unlink()
+                return {
+                    "status": "success",
+                    "message": f"MCP dashboard stopped (PID: {pid})"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Failed to stop MCP dashboard (PID: {pid})"
+                }
+                
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to stop MCP dashboard: {e}"}
+    
+    @staticmethod
+    async def status() -> Dict[str, Any]:
+        """Get MCP services status."""
+        try:
+            MCPCommands._ensure_pid_dir()
+            
+            services = {}
+            
+            # Check server status
+            server_pid_file = MCPCommands._get_pid_file_path("mcp_server")
+            if server_pid_file.exists():
+                with open(server_pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    services["mcp_server"] = {
+                        "status": "running",
+                        "pid": pid,
+                        "endpoint": "http://127.0.0.1:8000"
+                    }
+                else:
+                    services["mcp_server"] = {"status": "stopped (stale PID file)"}
+                    server_pid_file.unlink()
+            else:
+                services["mcp_server"] = {"status": "stopped"}
+            
+            # Check dashboard status
+            dashboard_pid_file = MCPCommands._get_pid_file_path("mcp_dashboard")
+            if dashboard_pid_file.exists():
+                with open(dashboard_pid_file, 'r') as f:
+                    pid = int(f.read().strip())
+                
+                if MCPCommands._is_process_running(pid):
+                    services["mcp_dashboard"] = {
+                        "status": "running",
+                        "pid": pid,
+                        "url": "http://0.0.0.0:8080/mcp"
+                    }
+                else:
+                    services["mcp_dashboard"] = {"status": "stopped (stale PID file)"}
+                    dashboard_pid_file.unlink()
+            else:
+                services["mcp_dashboard"] = {"status": "stopped"}
+            
+            return {
+                "status": "success",
+                "services": services,
+                "message": "MCP services status retrieved"
+            }
+            
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to get MCP status: {e}"}
+    
+    @staticmethod
+    async def start(server_host: str = "127.0.0.1", server_port: int = 8000,
+                   dashboard_host: str = "0.0.0.0", dashboard_port: int = 8080) -> Dict[str, Any]:
+        """Start both MCP server and dashboard."""
+        results = {}
+        
+        # Start server first
+        server_result = await MCPCommands.start_server(server_host, server_port)
+        results["server"] = server_result
+        
+        # Start dashboard
+        dashboard_result = await MCPCommands.start_dashboard(dashboard_host, dashboard_port)
+        results["dashboard"] = dashboard_result
+        
+        # Overall success if both succeed
+        success = (server_result.get("status") == "success" and 
+                  dashboard_result.get("status") == "success")
+        
+        return {
+            "status": "success" if success else "partial",
+            "results": results,
+            "message": "MCP services started" if success else "Some MCP services failed to start"
+        }
+    
+    @staticmethod
+    async def stop() -> Dict[str, Any]:
+        """Stop both MCP server and dashboard."""
+        results = {}
+        
+        # Stop dashboard first
+        dashboard_result = await MCPCommands.stop_dashboard()
+        results["dashboard"] = dashboard_result
+        
+        # Stop server
+        server_result = await MCPCommands.stop_server()
+        results["server"] = server_result
+        
+        return {
+            "status": "success",
+            "results": results,
+            "message": "MCP services stopped"
+        }
+
+
 class InfoCommands:
     """Information and status commands."""
     
@@ -223,13 +931,12 @@ class InfoCommands:
             import sys
             from pathlib import Path
             
-            # Try to get MCP tools status
-            tool_categories = []
-            tools_dir = Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools"
-            if tools_dir.exists():
-                for item in tools_dir.iterdir():
-                    if item.is_dir() and not item.name.startswith('_'):
-                        tool_categories.append(item.name)
+            # Get MCP tools status using enhanced discovery
+            tools_by_category = discover_mcp_tools()
+            total_tools = sum(len(tools) for tools in tools_by_category.values())
+            
+            # Get MCP services status
+            mcp_status = await MCPCommands.status()
             
             return {
                 "status": "success",
@@ -239,10 +946,15 @@ class InfoCommands:
                     "ipfs_datasets_py_path": str(Path(__file__).parent)
                 },
                 "mcp_tools": {
-                    "tool_categories": sorted(tool_categories),
-                    "total_categories": len(tool_categories)
+                    "tool_categories": sorted(tools_by_category.keys()),
+                    "total_categories": len(tools_by_category),
+                    "total_tools": total_tools,
+                    "tools_by_category": {
+                        category: len(tools) for category, tools in tools_by_category.items()
+                    }
                 },
-                "message": "IPFS Datasets CLI is operational"
+                "mcp_services": mcp_status.get("services", {}),
+                "message": f"IPFS Datasets CLI is operational with {len(tools_by_category)} tool categories and {total_tools} tools"
             }
         except Exception as e:
             return {"status": "error", "error": f"Failed to get status: {e}"}
@@ -250,38 +962,7 @@ class InfoCommands:
     @staticmethod
     async def list_tools() -> Dict[str, Any]:
         """List all available tool categories and their functions."""
-        setup_sys_path()
-        try:
-            from pathlib import Path
-            
-            tools_info = {}
-            tools_dir = Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools"
-            
-            if not tools_dir.exists():
-                return {"status": "error", "error": "MCP tools directory not found"}
-            
-            for category_dir in sorted(tools_dir.iterdir()):
-                if category_dir.is_dir() and not category_dir.name.startswith('_'):
-                    category_name = category_dir.name
-                    tools = []
-                    
-                    # Look for Python files that might be tools
-                    for tool_file in category_dir.glob("*.py"):
-                        if not tool_file.name.startswith('_') and tool_file.name != "__init__.py":
-                            tool_name = tool_file.stem
-                            tools.append(tool_name)
-                    
-                    if tools:
-                        tools_info[category_name] = sorted(tools)
-            
-            return {
-                "status": "success",
-                "tool_categories": tools_info,
-                "total_categories": len(tools_info),
-                "message": f"Found {len(tools_info)} tool categories"
-            }
-        except Exception as e:
-            return {"status": "error", "error": f"Failed to list tools: {e}"}
+        return await ToolCommands.list_tools()
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -295,6 +976,21 @@ Examples:
   # System information
   ipfs-datasets-cli info status
   ipfs-datasets-cli info list-tools
+  
+  # Enhanced tool discovery and execution
+  ipfs-datasets-cli tools categories
+  ipfs-datasets-cli tools list dataset_tools
+  ipfs-datasets-cli tools execute dataset_tools load_dataset --source "test" --format json
+  ipfs-datasets-cli tools execute vector_tools create_vector_index --dimension 768 --metric cosine
+  
+  # MCP server and dashboard management
+  ipfs-datasets-cli mcp start
+  ipfs-datasets-cli mcp stop
+  ipfs-datasets-cli mcp status
+  ipfs-datasets-cli mcp start-server --host 127.0.0.1 --port 8000
+  ipfs-datasets-cli mcp start-dashboard --host 0.0.0.0 --port 8080
+  ipfs-datasets-cli mcp stop-server
+  ipfs-datasets-cli mcp stop-dashboard
   
   # CLI operations
   ipfs-datasets-cli cli execute echo "Hello World"
@@ -325,6 +1021,24 @@ Examples:
     
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
+    # Enhanced Tools commands
+    tools_parser = subparsers.add_parser("tools", help="Enhanced tool discovery and execution")
+    tools_subparsers = tools_parser.add_subparsers(dest="tools_action")
+    
+    # Tools categories
+    tools_subparsers.add_parser("categories", help="List all available tool categories")
+    
+    # Tools list
+    list_tools_parser = tools_subparsers.add_parser("list", help="List tools in a category")
+    list_tools_parser.add_argument("category", nargs="?", help="Category to list tools for")
+    
+    # Tools execute
+    execute_tools_parser = tools_subparsers.add_parser("execute", help="Execute a tool dynamically")
+    execute_tools_parser.add_argument("category", help="Tool category")
+    execute_tools_parser.add_argument("tool", help="Tool name")
+    execute_tools_parser.add_argument("function", nargs="?", help="Function name (optional)")
+    execute_tools_parser.add_argument("args", nargs="*", help="Tool arguments (--key value format)")
+    
     # Info commands
     info_parser = subparsers.add_parser("info", help="Information and status")
     info_subparsers = info_parser.add_subparsers(dest="info_action")
@@ -334,6 +1048,41 @@ Examples:
     
     # Info list-tools
     info_subparsers.add_parser("list-tools", help="List all available tools")
+    
+    # MCP commands
+    mcp_parser = subparsers.add_parser("mcp", help="MCP server and dashboard management")
+    mcp_subparsers = mcp_parser.add_subparsers(dest="mcp_action")
+    
+    # MCP start
+    start_parser = mcp_subparsers.add_parser("start", help="Start MCP server and dashboard")
+    start_parser.add_argument("--server-host", default="127.0.0.1", help="MCP server host (default: 127.0.0.1)")
+    start_parser.add_argument("--server-port", type=int, default=8000, help="MCP server port (default: 8000)")
+    start_parser.add_argument("--dashboard-host", default="0.0.0.0", help="Dashboard host (default: 0.0.0.0)")
+    start_parser.add_argument("--dashboard-port", type=int, default=8080, help="Dashboard port (default: 8080)")
+    
+    # MCP stop
+    mcp_subparsers.add_parser("stop", help="Stop MCP server and dashboard")
+    
+    # MCP status
+    mcp_subparsers.add_parser("status", help="Show MCP services status")
+    
+    # MCP start-server
+    start_server_parser = mcp_subparsers.add_parser("start-server", help="Start MCP server only")
+    start_server_parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)")
+    start_server_parser.add_argument("--port", type=int, default=8000, help="Port to bind to (default: 8000)")
+    start_server_parser.add_argument("--foreground", action="store_true", help="Run in foreground")
+    
+    # MCP start-dashboard
+    start_dashboard_parser = mcp_subparsers.add_parser("start-dashboard", help="Start MCP dashboard only")
+    start_dashboard_parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
+    start_dashboard_parser.add_argument("--port", type=int, default=8080, help="Port to bind to (default: 8080)")
+    start_dashboard_parser.add_argument("--foreground", action="store_true", help="Run in foreground")
+    
+    # MCP stop-server
+    mcp_subparsers.add_parser("stop-server", help="Stop MCP server only")
+    
+    # MCP stop-dashboard
+    mcp_subparsers.add_parser("stop-dashboard", help="Stop MCP dashboard only")
     
     # CLI commands
     cli_parser = subparsers.add_parser("cli", help="Command execution")
@@ -421,7 +1170,31 @@ async def main():
     try:
         result = None
         
-        if args.command == "info":
+        if args.command == "tools":
+            if args.tools_action == "categories":
+                result = await ToolCommands.list_categories()
+                # Use pretty printing for categories
+                if result.get("status") == "success" and args.format == "pretty":
+                    tools_by_category = discover_mcp_tools()
+                    print_available_categories(tools_by_category)
+                    return
+                    
+            elif args.tools_action == "list":
+                result = await ToolCommands.list_tools(args.category)
+                # Use pretty printing for tools list
+                if result.get("status") == "success" and args.format == "pretty" and args.category:
+                    tools_by_category = discover_mcp_tools()
+                    print_tools_in_category(args.category, tools_by_category)
+                    return
+                    
+            elif args.tools_action == "execute":
+                result = await ToolCommands.execute(
+                    args.category, args.tool, args.function, args.args
+                )
+            else:
+                parser.error("Invalid tools action")
+        
+        elif args.command == "info":
             if args.info_action == "status":
                 result = await InfoCommands.status()
             elif args.info_action == "list-tools":
@@ -434,6 +1207,31 @@ async def main():
                 result = await CLICommands.execute(args.exec_command, args.exec_args, args.timeout)
             else:
                 parser.error("Invalid CLI action")
+        
+        elif args.command == "mcp":
+            if args.mcp_action == "start":
+                result = await MCPCommands.start(
+                    args.server_host, args.server_port,
+                    args.dashboard_host, args.dashboard_port
+                )
+            elif args.mcp_action == "stop":
+                result = await MCPCommands.stop()
+            elif args.mcp_action == "status":
+                result = await MCPCommands.status()
+            elif args.mcp_action == "start-server":
+                result = await MCPCommands.start_server(
+                    args.host, args.port, not args.foreground
+                )
+            elif args.mcp_action == "start-dashboard":
+                result = await MCPCommands.start_dashboard(
+                    args.host, args.port, not args.foreground
+                )
+            elif args.mcp_action == "stop-server":
+                result = await MCPCommands.stop_server()
+            elif args.mcp_action == "stop-dashboard":
+                result = await MCPCommands.stop_dashboard()
+            else:
+                parser.error("Invalid MCP action")
         
         elif args.command == "dataset":
             if args.dataset_action == "load":

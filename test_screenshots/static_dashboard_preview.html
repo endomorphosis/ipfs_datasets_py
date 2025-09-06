@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Dashboard - Static Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { 
+            background: rgba(255,255,255,0.1); 
+            backdrop-filter: blur(10px); 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 30px; 
+            text-align: center;
+        }
+        .header h1 { color: white; font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { color: rgba(255,255,255,0.8); font-size: 1.1rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 15px; 
+            padding: 25px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { color: #333; margin-bottom: 15px; font-size: 1.3rem; }
+        .card p { color: #666; line-height: 1.6; margin-bottom: 15px; }
+        .tool-list { list-style: none; }
+        .tool-list li { 
+            padding: 8px 0; 
+            border-bottom: 1px solid #eee; 
+            color: #555;
+        }
+        .tool-list li:last-child { border-bottom: none; }
+        .status-badge { 
+            display: inline-block; 
+            padding: 4px 12px; 
+            background: #28a745; 
+            color: white; 
+            border-radius: 20px; 
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .execute-btn { 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .execute-btn:hover { background: #5a6fd8; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 8px 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 1rem;
+        }
+        .footer { 
+            text-align: center; 
+            margin-top: 40px; 
+            color: rgba(255,255,255,0.7); 
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MCP Dashboard</h1>
+            <p>Model Context Protocol Server for IPFS Datasets Python</p>
+            <div class="status-badge">✓ Server Running</div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>📊 Tool Categories</h3>
+                <p>Available MCP tool categories for dataset and IPFS operations.</p>
+                <ul class="tool-list">
+                    <li>📁 Dataset Tools (5 tools)</li>
+                    <li>🌐 IPFS Tools (3 tools)</li>
+                    <li>🔍 Vector Tools (4 tools)</li>
+                    <li>📈 Analysis Tools (6 tools)</li>
+                    <li>🔐 Security Tools (3 tools)</li>
+                    <li>⚙️ Admin Tools (2 tools)</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>🔧 Tool Execution</h3>
+                <p>Execute MCP tools with custom parameters.</p>
+                <div class="form-group">
+                    <label>Tool Category</label>
+                    <select>
+                        <option>dataset_tools</option>
+                        <option>ipfs_tools</option>
+                        <option>vector_tools</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tool Name</label>
+                    <select>
+                        <option>load_dataset</option>
+                        <option>save_dataset</option>
+                        <option>process_dataset</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Parameters (JSON)</label>
+                    <input type="text" placeholder='{"source": "test", "format": "json"}'>
+                </div>
+                <button class="execute-btn">Execute Tool</button>
+            </div>
+            
+            <div class="card">
+                <h3>📈 Server Status</h3>
+                <p>Real-time MCP server monitoring and health checks.</p>
+                <ul class="tool-list">
+                    <li>Status: <strong>Running</strong></li>
+                    <li>Tools Available: <strong>31</strong></li>
+                    <li>Active Connections: <strong>1</strong></li>
+                    <li>Uptime: <strong>00:15:23</strong></li>
+                    <li>Memory Usage: <strong>245 MB</strong></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>🔍 Recent Executions</h3>
+                <p>Latest tool executions and their results.</p>
+                <ul class="tool-list">
+                    <li>✅ dataset_tools.load_dataset - Success</li>
+                    <li>✅ ipfs_tools.get_from_ipfs - Success</li>
+                    <li>⚠️ vector_tools.create_index - Warning</li>
+                    <li>❌ analysis_tools.process - Failed</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>📚 API Endpoints</h3>
+                <p>Available REST API endpoints for programmatic access.</p>
+                <ul class="tool-list">
+                    <li>GET /api/mcp/status</li>
+                    <li>GET /api/mcp/tools</li>
+                    <li>POST /api/mcp/execute</li>
+                    <li>GET /api/mcp/health</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>🎯 Quick Actions</h3>
+                <p>Common operations and shortcuts.</p>
+                <button class="execute-btn" style="margin: 5px;">Load Sample Dataset</button>
+                <button class="execute-btn" style="margin: 5px;">Check IPFS Status</button>
+                <button class="execute-btn" style="margin: 5px;">Create Vector Index</button>
+                <button class="execute-btn" style="margin: 5px;">Run Health Check</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>MCP Dashboard - Static Preview | Install Playwright for interactive testing</p>
+        </div>
+    </div>
+    
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.execute-btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.style.background = '#28a745';
+                    this.textContent = 'Executed ✓';
+                    setTimeout(() => {
+                        this.style.background = '#667eea';
+                        this.textContent = this.textContent.replace(' ✓', '');
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
