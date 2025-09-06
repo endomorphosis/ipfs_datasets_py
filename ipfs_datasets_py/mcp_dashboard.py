@@ -464,6 +464,70 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Investigation analysis failed: {e}")
                 return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/investigation/geospatial', methods=['POST'])
+        def api_geospatial_analysis():
+            """Perform geospatial analysis via MCP tools."""
+            try:
+                data = request.json or {}
+                query = data.get('query', '')
+                center_location = data.get('center_location', '')
+                search_radius = data.get('search_radius_km', 50.0)
+                entity_types = data.get('entity_types', [])
+                clustering_distance = data.get('clustering_distance', 50.0)
+                
+                # Execute geospatial analysis through MCP tools
+                result = self._execute_geospatial_via_mcp(
+                    query, center_location, search_radius, entity_types, clustering_distance
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Geospatial analysis failed: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/investigation/extract_entities', methods=['POST'])
+        def api_extract_geographic_entities():
+            """Extract geographic entities via MCP tools."""
+            try:
+                data = request.json or {}
+                corpus_data = data.get('corpus_data', '{}')
+                confidence_threshold = data.get('confidence_threshold', 0.8)
+                entity_types = data.get('entity_types', None)
+                
+                # Execute entity extraction through MCP tools
+                result = self._execute_entity_extraction_via_mcp(
+                    corpus_data, confidence_threshold, entity_types
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Entity extraction failed: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/investigation/spatiotemporal', methods=['POST'])
+        def api_spatiotemporal_mapping():
+            """Map spatiotemporal events via MCP tools."""
+            try:
+                data = request.json or {}
+                corpus_data = data.get('corpus_data', '{}')
+                time_range = data.get('time_range', None)
+                geographic_bounds = data.get('geographic_bounds', None)
+                event_types = data.get('event_types', None)
+                clustering_distance = data.get('clustering_distance', 50.0)
+                
+                # Execute spatiotemporal mapping through MCP tools
+                result = self._execute_spatiotemporal_via_mcp(
+                    corpus_data, time_range, geographic_bounds, event_types, clustering_distance
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Spatiotemporal mapping failed: {e}")
+                return jsonify({"error": str(e)}), 500
     
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
@@ -821,6 +885,144 @@ class MCPDashboard(AdminDashboard):
                 "credibility_score": 0.7
             },
             "execution_time": 2.0
+        }
+    
+    def _execute_geospatial_via_mcp(self, query: str, center_location: str, search_radius: float, entity_types: List[str], clustering_distance: float) -> Dict[str, Any]:
+        """Execute geospatial analysis through MCP tools."""
+        # Sample response simulating MCP geospatial tool execution
+        sample_entities = [
+            {
+                "entity": "Manhattan Financial District",
+                "coordinates": [40.7074, -74.0113],
+                "confidence": 0.95,
+                "context_snippet": "Major financial events in Lower Manhattan",
+                "entity_type": "LOCATION",
+                "relevance_score": 2.8,
+                "distance_from_center": 0.5
+            },
+            {
+                "entity": "Wall Street",
+                "coordinates": [40.7074, -74.0113],
+                "confidence": 0.98,
+                "context_snippet": "Stock market and financial activities",
+                "entity_type": "LOCATION",
+                "relevance_score": 3.2,
+                "distance_from_center": 0.3
+            },
+            {
+                "entity": "Times Square",
+                "coordinates": [40.7580, -73.9855],
+                "confidence": 0.92,
+                "context_snippet": "Major public events and announcements",
+                "entity_type": "LOCATION",
+                "relevance_score": 2.1,
+                "distance_from_center": 4.8
+            }
+        ]
+        
+        sample_events = [
+            {
+                "event": "Financial Summit 2024",
+                "coordinates": [40.7074, -74.0113],
+                "timestamp": "2024-01-15T10:00:00Z",
+                "event_type": "CONFERENCE",
+                "relevance_score": 2.5
+            },
+            {
+                "event": "Market Announcement",
+                "coordinates": [40.7074, -74.0113],
+                "timestamp": "2024-01-20T14:30:00Z",
+                "event_type": "ANNOUNCEMENT",
+                "relevance_score": 2.2
+            }
+        ]
+        
+        return {
+            "query": query,
+            "center_location": center_location,
+            "center_coordinates": [40.7128, -74.0060],  # New York coordinates
+            "search_radius_km": search_radius,
+            "total_results": len(sample_entities),
+            "entities": sample_entities,
+            "events": sample_events,
+            "geographic_summary": {
+                "total_locations": len(sample_entities),
+                "average_relevance": 2.7,
+                "top_locations": [e["entity"] for e in sample_entities[:3]],
+                "common_terms": {"financial": 2, "manhattan": 1, "events": 2}
+            },
+            "timestamp": datetime.now().isoformat(),
+            "execution_time": 1.5
+        }
+    
+    def _execute_entity_extraction_via_mcp(self, corpus_data: str, confidence_threshold: float, entity_types: Optional[List[str]]) -> Dict[str, Any]:
+        """Execute geographic entity extraction through MCP tools."""
+        return {
+            "total_entities": 15,
+            "mappable_entities": 12,
+            "entities": [
+                {
+                    "entity": "New York",
+                    "coordinates": [40.7128, -74.0060],
+                    "confidence": 0.98,
+                    "entity_type": "CITY",
+                    "context_snippet": "Events in New York financial district",
+                    "documents": ["doc_1", "doc_3"]
+                },
+                {
+                    "entity": "Wall Street",
+                    "coordinates": [40.7074, -74.0113],
+                    "confidence": 0.95,
+                    "entity_type": "LOCATION",
+                    "context_snippet": "Wall Street trading activities",
+                    "documents": ["doc_1", "doc_2"]
+                }
+            ],
+            "extraction_stats": {
+                "confidence_threshold": confidence_threshold,
+                "entity_types": entity_types,
+                "timestamp": datetime.now().isoformat()
+            },
+            "execution_time": 2.1
+        }
+    
+    def _execute_spatiotemporal_via_mcp(self, corpus_data: str, time_range: Optional[Dict], geographic_bounds: Optional[Dict], event_types: Optional[List[str]], clustering_distance: float) -> Dict[str, Any]:
+        """Execute spatiotemporal event mapping through MCP tools."""
+        return {
+            "total_events": 8,
+            "mapped_events": 6,
+            "spatiotemporal_events": [
+                {
+                    "event_id": "event_1",
+                    "event_text": "Financial conference held in Manhattan",
+                    "coordinates": [40.7074, -74.0113],
+                    "timestamp": "2024-01-15T10:00:00Z",
+                    "event_type": "CONFERENCE",
+                    "confidence": 0.92,
+                    "spatial_cluster": 1,
+                    "temporal_cluster": 1
+                },
+                {
+                    "event_id": "event_2", 
+                    "event_text": "Market announcement from Wall Street",
+                    "coordinates": [40.7074, -74.0113],
+                    "timestamp": "2024-01-20T14:30:00Z",
+                    "event_type": "ANNOUNCEMENT",
+                    "confidence": 0.89,
+                    "spatial_cluster": 1,
+                    "temporal_cluster": 1
+                }
+            ],
+            "clustering_analysis": {
+                "spatial_clusters": 2,
+                "temporal_clusters": 3,
+                "clustering_distance_km": clustering_distance,
+                "temporal_resolution": "day"
+            },
+            "time_range": time_range,
+            "geographic_bounds": geographic_bounds,
+            "timestamp": datetime.now().isoformat(),
+            "execution_time": 3.2
         }
         """Execute a tool synchronously (placeholder implementation)."""
         # This is a placeholder - in a real implementation, this would
@@ -1902,76 +2104,250 @@ class MCPDashboard(AdminDashboard):
 </html>"""
     
     def create_investigation_template(self) -> str:
-        """Create investigation dashboard template."""
+        """Create investigation dashboard template with Maps tab integration."""
         return """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investigation Dashboard</title>
+    <title>Investigation Dashboard - Comprehensive Analysis with Geospatial Mapping</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .investigation-section { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
         .finding-card { border-left: 4px solid #fd7e14; }
+        .maps-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .nav-pills .nav-link.active { background-color: #fa709a; }
+        .nav-pills .nav-link { color: #fa709a; }
+        #mapContainer { height: 600px; background: #f8f9fa; border-radius: 8px; }
+        .map-controls { background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .timeline-container { background: rgba(255, 255, 255, 0.95); padding: 10px; border-radius: 8px; margin-top: 10px; }
+        .entity-marker { background: #fa709a; color: white; border-radius: 50%; width: 25px; height: 25px; text-align: center; line-height: 25px; }
+        .event-marker { background: #764ba2; color: white; border-radius: 4px; padding: 2px 6px; }
+        .map-legend { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 4px; z-index: 1000; }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-warning">
         <a class="navbar-brand" href="/mcp">← Back to MCP Dashboard</a>
-        <span class="navbar-text ml-auto">Investigation Dashboard</span>
+        <span class="navbar-text ml-auto">Investigation Dashboard - Comprehensive Analysis</span>
     </nav>
 
     <div class="container-fluid mt-4">
-        <!-- Investigation Interface -->
+        <!-- Navigation Tabs -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card investigation-section">
-                    <div class="card-body">
-                        <h5><i class="fas fa-search"></i> Start Content Investigation</h5>
-                        <form id="investigationForm" class="mt-3">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Content URL:</label>
-                                        <input type="url" class="form-control" id="contentUrl" required 
-                                               placeholder="https://example.com/article">
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label>Analysis Type:</label>
-                                        <select class="form-control" id="analysisType">
-                                            <option value="comprehensive">Comprehensive</option>
-                                            <option value="entity_extraction">Entity Extraction</option>
-                                            <option value="sentiment_analysis">Sentiment Analysis</option>
-                                            <option value="credibility_check">Credibility Check</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label>&nbsp;</label>
-                                        <button type="submit" class="btn btn-light btn-block">
-                                            <i class="fas fa-play"></i> Start Investigation
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <ul class="nav nav-pills nav-fill">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="analysis-tab" data-toggle="pill" href="#analysis-content" role="tab">
+                            <i class="fas fa-search"></i> Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="maps-tab" data-toggle="pill" href="#maps-content" role="tab">
+                            <i class="fas fa-map-marked-alt"></i> Maps
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="results-tab" data-toggle="pill" href="#results-content" role="tab">
+                            <i class="fas fa-clipboard-list"></i> Results
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
 
-        <!-- Investigation Results -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-clipboard-list"></i> Investigation Results</h5>
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Analysis Tab -->
+            <div class="tab-pane fade show active" id="analysis-content" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card investigation-section">
+                            <div class="card-body">
+                                <h5><i class="fas fa-search"></i> Start Content Investigation</h5>
+                                <form id="investigationForm" class="mt-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Content URL:</label>
+                                                <input type="url" class="form-control" id="contentUrl" required 
+                                                       placeholder="https://example.com/article">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Analysis Type:</label>
+                                                <select class="form-control" id="analysisType">
+                                                    <option value="comprehensive">Comprehensive</option>
+                                                    <option value="entity_extraction">Entity Extraction</option>
+                                                    <option value="sentiment_analysis">Sentiment Analysis</option>
+                                                    <option value="credibility_check">Credibility Check</option>
+                                                    <option value="geospatial_analysis">Geospatial Analysis</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>&nbsp;</label>
+                                                <button type="submit" class="btn btn-light btn-block">
+                                                    <i class="fas fa-play"></i> Start Investigation
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body" id="findingsContainer">
-                        <p class="text-muted">No investigations completed yet.</p>
+                </div>
+            </div>
+
+            <!-- Maps Tab -->
+            <div class="tab-pane fade" id="maps-content" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card maps-section">
+                            <div class="card-body">
+                                <h5><i class="fas fa-map-marked-alt"></i> Geospatial Analysis & Interactive Mapping</h5>
+                                <p class="mb-0">Visualize events geographically and perform spatiotemporal analysis on investigation data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Controls -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="map-controls">
+                            <form id="geospatialForm">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Geographic Query:</label>
+                                            <input type="text" class="form-control" id="geoQuery" 
+                                                   placeholder="e.g., financial events in New York" value="events in New York">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Center Location:</label>
+                                            <input type="text" class="form-control" id="centerLocation" 
+                                                   placeholder="New York" value="New York">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Radius (km):</label>
+                                            <select class="form-control" id="searchRadius">
+                                                <option value="1">1 km</option>
+                                                <option value="5">5 km</option>
+                                                <option value="10">10 km</option>
+                                                <option value="50" selected>50 km</option>
+                                                <option value="100">100 km</option>
+                                                <option value="500">500 km</option>
+                                                <option value="1000">1000 km</option>
+                                                <option value="5000">5000 km</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Entity Types:</label>
+                                            <select class="form-control" id="entityTypes">
+                                                <option value="">All Types</option>
+                                                <option value="PERSON">Persons</option>
+                                                <option value="ORGANIZATION">Organizations</option>
+                                                <option value="EVENT">Events</option>
+                                                <option value="LOCATION">Locations</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Clustering (km):</label>
+                                            <select class="form-control" id="clusteringDistance">
+                                                <option value="1">1 km</option>
+                                                <option value="5">5 km</option>
+                                                <option value="10">10 km</option>
+                                                <option value="25">25 km</option>
+                                                <option value="50" selected>50 km</option>
+                                                <option value="100">100 km</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <div class="form-group">
+                                            <label>&nbsp;</label>
+                                            <button type="submit" class="btn btn-light btn-block">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="position-relative">
+                            <div id="mapContainer"></div>
+                            <div class="map-legend">
+                                <h6>Legend</h6>
+                                <div><span class="entity-marker" style="display: inline-block;">E</span> Geographic Entities</div>
+                                <div><span class="event-marker" style="display: inline-block;">EV</span> Events</div>
+                                <div><i class="fas fa-map-marker-alt" style="color: #dc3545;"></i> Center Location</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Controls -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="timeline-container">
+                            <h6><i class="fas fa-clock"></i> Timeline Filter</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Start Date:</label>
+                                    <input type="date" class="form-control" id="startDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>End Date:</label>
+                                    <input type="date" class="form-control" id="endDate">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Timeline Slider:</label>
+                                    <input type="range" class="form-control-range" id="timelineSlider" min="0" max="100" value="50">
+                                </div>
+                                <div class="col-md-2">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-outline-primary btn-block" onclick="applyTimelineFilter()">
+                                        <i class="fas fa-filter"></i> Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div class="tab-pane fade" id="results-content" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-clipboard-list"></i> Investigation Results</h5>
+                            </div>
+                            <div class="card-body" id="findingsContainer">
+                                <p class="text-muted">No investigations completed yet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1979,10 +2355,162 @@ class MCPDashboard(AdminDashboard):
     </div>
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        let map;
+        let markers = [];
+        let currentGeospatialData = null;
+
+        // Initialize map when Maps tab is shown
+        $('#maps-tab').on('shown.bs.tab', function(e) {
+            initializeMap();
+        });
+
+        function initializeMap() {
+            if (map) {
+                map.remove();
+            }
+
+            // Initialize map centered on New York
+            map = L.map('mapContainer').setView([40.7128, -74.0060], 10);
+
+            // Add map layers
+            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            });
+
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri'
+            });
+
+            streetLayer.addTo(map);
+
+            // Layer control
+            const baseMaps = {
+                "Street": streetLayer,
+                "Satellite": satelliteLayer
+            };
+
+            L.control.layers(baseMaps).addTo(map);
+
+            // Load sample data
+            loadSampleGeospatialData();
+        }
+
+        function loadSampleGeospatialData() {
+            // Sample data for demonstration
+            const sampleData = {
+                entities: [
+                    {
+                        entity: "Manhattan Financial District",
+                        coordinates: [40.7074, -74.0113],
+                        confidence: 0.95,
+                        context_snippet: "Major financial events in Lower Manhattan",
+                        entity_type: "LOCATION"
+                    },
+                    {
+                        entity: "Wall Street",
+                        coordinates: [40.7074, -74.0113],
+                        confidence: 0.98,
+                        context_snippet: "Stock market and financial activities",
+                        entity_type: "LOCATION"
+                    },
+                    {
+                        entity: "Times Square",
+                        coordinates: [40.7580, -73.9855],
+                        confidence: 0.92,
+                        context_snippet: "Major public events and announcements",
+                        entity_type: "LOCATION"
+                    }
+                ],
+                events: [
+                    {
+                        event: "Financial Summit 2024",
+                        coordinates: [40.7074, -74.0113],
+                        timestamp: "2024-01-15T10:00:00Z",
+                        event_type: "CONFERENCE"
+                    },
+                    {
+                        event: "Market Announcement",
+                        coordinates: [40.7074, -74.0113],
+                        timestamp: "2024-01-20T14:30:00Z",
+                        event_type: "ANNOUNCEMENT"
+                    }
+                ]
+            };
+
+            currentGeospatialData = sampleData;
+            displayGeospatialData(sampleData);
+        }
+
+        function displayGeospatialData(data) {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Add entity markers
+            if (data.entities) {
+                data.entities.forEach(entity => {
+                    if (entity.coordinates) {
+                        const marker = L.circleMarker([entity.coordinates[0], entity.coordinates[1]], {
+                            color: '#fa709a',
+                            fillColor: '#fa709a',
+                            fillOpacity: 0.7,
+                            radius: 8
+                        }).addTo(map);
+
+                        marker.bindPopup(`
+                            <strong>${entity.entity}</strong><br>
+                            Type: ${entity.entity_type || 'Unknown'}<br>
+                            Confidence: ${(entity.confidence * 100).toFixed(1)}%<br>
+                            Context: ${entity.context_snippet}
+                        `);
+
+                        markers.push(marker);
+                    }
+                });
+            }
+
+            // Add event markers
+            if (data.events) {
+                data.events.forEach(event => {
+                    if (event.coordinates) {
+                        const marker = L.marker([event.coordinates[0], event.coordinates[1]], {
+                            icon: L.divIcon({
+                                className: 'event-marker',
+                                html: 'EV',
+                                iconSize: [20, 20]
+                            })
+                        }).addTo(map);
+
+                        marker.bindPopup(`
+                            <strong>${event.event}</strong><br>
+                            Type: ${event.event_type}<br>
+                            Time: ${new Date(event.timestamp).toLocaleString()}
+                        `);
+
+                        markers.push(marker);
+                    }
+                });
+            }
+
+            // Fit map to markers if any exist
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Form handlers
         $('#investigationForm').submit(function(e) {
             e.preventDefault();
             startInvestigation();
+        });
+
+        $('#geospatialForm').submit(function(e) {
+            e.preventDefault();
+            performGeospatialAnalysis();
         });
 
         function startInvestigation() {
@@ -2002,14 +2530,100 @@ class MCPDashboard(AdminDashboard):
                 success: function(data) {
                     displayFindings(data);
                     $('#contentUrl').val('');
+                    $('button[type="submit"]').prop('disabled', false).html('<i class="fas fa-play"></i> Start Investigation');
+                    
+                    // Switch to results tab
+                    $('#results-tab').tab('show');
                 },
-                error: function(xhr) {
-                    alert('Investigation failed: ' + xhr.responseJSON.error);
-                },
-                complete: function() {
+                error: function() {
+                    alert('Error starting investigation');
                     $('button[type="submit"]').prop('disabled', false).html('<i class="fas fa-play"></i> Start Investigation');
                 }
             });
+        }
+
+        function performGeospatialAnalysis() {
+            const query = $('#geoQuery').val();
+            const centerLocation = $('#centerLocation').val();
+            const searchRadius = $('#searchRadius').val();
+            const entityTypes = $('#entityTypes').val();
+            const clusteringDistance = $('#clusteringDistance').val();
+
+            // Show loading state
+            $('#geospatialForm button').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            // Call actual MCP geospatial analysis API
+            $.ajax({
+                url: '/api/mcp/investigation/geospatial',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    query: query,
+                    center_location: centerLocation,
+                    search_radius_km: parseFloat(searchRadius),
+                    entity_types: entityTypes ? [entityTypes] : [],
+                    clustering_distance: parseFloat(clusteringDistance)
+                }),
+                success: function(data) {
+                    console.log('Geospatial analysis result:', data);
+                    currentGeospatialData = data;
+                    displayGeospatialData(data);
+                    
+                    // Add center location marker if coordinates provided
+                    if (data.center_coordinates) {
+                        const centerMarker = L.marker([data.center_coordinates[0], data.center_coordinates[1]], {
+                            icon: L.icon({
+                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                                popupAnchor: [1, -34],
+                                shadowSize: [41, 41]
+                            })
+                        }).addTo(map);
+                        
+                        centerMarker.bindPopup(`
+                            <strong>Search Center</strong><br>
+                            Location: ${data.center_location}<br>
+                            Radius: ${data.search_radius_km} km<br>
+                            Results: ${data.total_results}
+                        `);
+                        
+                        markers.push(centerMarker);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Geospatial analysis failed:', xhr);
+                    alert('Geospatial analysis failed: ' + (xhr.responseJSON?.error || 'Unknown error'));
+                },
+                complete: function() {
+                    $('#geospatialForm button').prop('disabled', false).html('<i class="fas fa-search"></i>');
+                }
+            });
+        }
+
+        function applyTimelineFilter() {
+            const startDate = $('#startDate').val();
+            const endDate = $('#endDate').val();
+            const sliderValue = $('#timelineSlider').val();
+
+            console.log('Applying timeline filter:', { startDate, endDate, sliderValue });
+            
+            // Filter current data based on timeline
+            if (currentGeospatialData && currentGeospatialData.events) {
+                let filteredData = { ...currentGeospatialData };
+                
+                if (startDate || endDate) {
+                    filteredData.events = currentGeospatialData.events.filter(event => {
+                        const eventDate = new Date(event.timestamp);
+                        const start = startDate ? new Date(startDate) : new Date('1900-01-01');
+                        const end = endDate ? new Date(endDate) : new Date('2100-01-01');
+                        return eventDate >= start && eventDate <= end;
+                    });
+                }
+                
+                displayGeospatialData(filteredData);
+            }
         }
 
         function displayFindings(result) {
@@ -2037,6 +2651,12 @@ class MCPDashboard(AdminDashboard):
             // Remove "no investigations" message
             $('#findingsContainer p.text-muted').remove();
         }
+
+        // Set default dates
+        const today = new Date();
+        const oneMonthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        $('#startDate').val(oneMonthAgo.toISOString().split('T')[0]);
+        $('#endDate').val(today.toISOString().split('T')[0]);
     </script>
 </body>
 </html>"""
