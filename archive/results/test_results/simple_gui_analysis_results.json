@@ -1,0 +1,501 @@
+{
+  "timestamp": "2025-09-04T04:14:08.471591",
+  "screenshots": [
+    {
+      "filename": "news_analysis_dashboard_screenshot.png",
+      "source_template": "ipfs_datasets_py/templates/news_analysis_dashboard.html",
+      "description": "Screenshot of news_analysis_dashboard",
+      "timestamp": "2025-09-04T04:14:31.219352",
+      "path": "gui_analysis_screenshots/news_analysis_dashboard_screenshot.png"
+    },
+    {
+      "filename": "enhanced_news_analysis_dashboard_screenshot.png",
+      "source_template": "gui_analysis_screenshots/enhanced_news_analysis_dashboard.html",
+      "description": "Screenshot of enhanced_news_analysis_dashboard",
+      "timestamp": "2025-09-04T04:14:32.285054",
+      "path": "gui_analysis_screenshots/enhanced_news_analysis_dashboard_screenshot.png"
+    },
+    {
+      "filename": "news_analysis_dashboard_improved_screenshot.png",
+      "source_template": "ipfs_datasets_py/templates/news_analysis_dashboard_improved.html",
+      "description": "Screenshot of news_analysis_dashboard_improved",
+      "timestamp": "2025-09-04T04:14:33.336446",
+      "path": "gui_analysis_screenshots/news_analysis_dashboard_improved_screenshot.png"
+    },
+    {
+      "filename": "enhanced_news_analysis_dashboard_improved_screenshot.png",
+      "source_template": "gui_analysis_screenshots/enhanced_news_analysis_dashboard_improved.html",
+      "description": "Screenshot of enhanced_news_analysis_dashboard_improved",
+      "timestamp": "2025-09-04T04:14:34.383805",
+      "path": "gui_analysis_screenshots/enhanced_news_analysis_dashboard_improved_screenshot.png"
+    },
+    {
+      "filename": "overview_tab_screenshot.png",
+      "source_template": "gui_screenshots/overview_tab.html",
+      "description": "Screenshot of overview_tab",
+      "timestamp": "2025-09-04T04:14:35.413388",
+      "path": "gui_analysis_screenshots/overview_tab_screenshot.png"
+    },
+    {
+      "filename": "enhanced_overview_tab_screenshot.png",
+      "source_template": "gui_analysis_screenshots/enhanced_overview_tab.html",
+      "description": "Screenshot of enhanced_overview_tab",
+      "timestamp": "2025-09-04T04:14:36.449230",
+      "path": "gui_analysis_screenshots/enhanced_overview_tab_screenshot.png"
+    },
+    {
+      "filename": "query_tab_screenshot.png",
+      "source_template": "gui_screenshots/query_tab.html",
+      "description": "Screenshot of query_tab",
+      "timestamp": "2025-09-04T04:14:37.487194",
+      "path": "gui_analysis_screenshots/query_tab_screenshot.png"
+    },
+    {
+      "filename": "enhanced_query_tab_screenshot.png",
+      "source_template": "gui_analysis_screenshots/enhanced_query_tab.html",
+      "description": "Screenshot of enhanced_query_tab",
+      "timestamp": "2025-09-04T04:14:38.523842",
+      "path": "gui_analysis_screenshots/enhanced_query_tab_screenshot.png"
+    },
+    {
+      "filename": "historian_theme_screenshot.png",
+      "source_template": "gui_screenshots/historian_theme.html",
+      "description": "Screenshot of historian_theme",
+      "timestamp": "2025-09-04T04:14:39.581859",
+      "path": "gui_analysis_screenshots/historian_theme_screenshot.png"
+    },
+    {
+      "filename": "enhanced_historian_theme_screenshot.png",
+      "source_template": "gui_analysis_screenshots/enhanced_historian_theme.html",
+      "description": "Screenshot of enhanced_historian_theme",
+      "timestamp": "2025-09-04T04:14:40.618644",
+      "path": "gui_analysis_screenshots/enhanced_historian_theme_screenshot.png"
+    }
+  ],
+  "gui_issues": [
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "documentFiles"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "conflictTopic"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "conflictStartDate"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "conflictEndDate"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "claimToTrace"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "sentimentQuery"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "pathStart"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "pathEnd"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "sourceEntity"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "targetEntity"
+    },
+    {
+      "type": "accessibility",
+      "severity": "low",
+      "element": "h3",
+      "issue": "Heading level skipped from h1 to h3",
+      "location": "<h3>Articles Processed</h3>..."
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "documentFiles"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "conflictTopic"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "conflictStartDate"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "conflictEndDate"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "claimToTrace"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "sentimentQuery"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "pathStart"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "pathEnd"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "sourceEntity"
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "element": "input",
+      "issue": "Input without associated label",
+      "location": "targetEntity"
+    },
+    {
+      "type": "accessibility",
+      "severity": "low",
+      "element": "h3",
+      "issue": "Heading level skipped from h1 to h3",
+      "location": "<h3>Articles Processed</h3>..."
+    },
+    {
+      "type": "maintainability",
+      "severity": "low",
+      "element": "style",
+      "issue": "Excessive inline styles found (15 instances)",
+      "location": "throughout template"
+    },
+    {
+      "type": "maintainability",
+      "severity": "low",
+      "element": "style",
+      "issue": "Excessive inline styles found (15 instances)",
+      "location": "throughout template"
+    },
+    {
+      "type": "maintainability",
+      "severity": "low",
+      "element": "style",
+      "issue": "Excessive inline styles found (15 instances)",
+      "location": "throughout template"
+    }
+  ],
+  "improvements": [
+    {
+      "priority": "high",
+      "category": "Accessibility",
+      "recommendation": "Improve accessibility compliance",
+      "details": [
+        "Add alt attributes to all images",
+        "Associate labels with form inputs",
+        "Ensure proper heading hierarchy",
+        "Add ARIA labels to interactive elements"
+      ],
+      "affected_elements": 22,
+      "implementation": "Update HTML templates with proper accessibility attributes"
+    },
+    {
+      "priority": "medium",
+      "category": "Code Maintainability",
+      "recommendation": "Improve code organization and maintainability",
+      "details": [
+        "Move inline styles to external CSS files",
+        "Organize CSS with proper naming conventions",
+        "Use consistent design patterns",
+        "Minimize code duplication"
+      ],
+      "affected_elements": 3,
+      "implementation": "Refactor templates to use external stylesheets and design system"
+    },
+    {
+      "priority": "medium",
+      "category": "Performance",
+      "recommendation": "Optimize dashboard performance",
+      "details": [
+        "Implement lazy loading for large datasets",
+        "Use virtual scrolling for long lists",
+        "Optimize image loading and sizing",
+        "Minimize JavaScript bundle size",
+        "Add loading states and progress indicators"
+      ],
+      "affected_elements": 0,
+      "implementation": "Add performance optimization techniques and monitoring"
+    }
+  ],
+  "template_analysis": {
+    "ipfs_datasets_py/templates/news_analysis_dashboard.html": {
+      "issues_found": 11,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "documentFiles"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "conflictTopic"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "conflictStartDate"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "conflictEndDate"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "claimToTrace"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "sentimentQuery"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "pathStart"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "pathEnd"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "sourceEntity"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "targetEntity"
+        },
+        {
+          "type": "accessibility",
+          "severity": "low",
+          "element": "h3",
+          "issue": "Heading level skipped from h1 to h3",
+          "location": "<h3>Articles Processed</h3>..."
+        }
+      ],
+      "screenshot": "gui_analysis_screenshots/news_analysis_dashboard_screenshot.png"
+    },
+    "ipfs_datasets_py/templates/news_analysis_dashboard_improved.html": {
+      "issues_found": 11,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "documentFiles"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "conflictTopic"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "conflictStartDate"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "conflictEndDate"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "claimToTrace"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "sentimentQuery"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "pathStart"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "pathEnd"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "sourceEntity"
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "element": "input",
+          "issue": "Input without associated label",
+          "location": "targetEntity"
+        },
+        {
+          "type": "accessibility",
+          "severity": "low",
+          "element": "h3",
+          "issue": "Heading level skipped from h1 to h3",
+          "location": "<h3>Articles Processed</h3>..."
+        }
+      ],
+      "screenshot": "gui_analysis_screenshots/news_analysis_dashboard_improved_screenshot.png"
+    },
+    "gui_screenshots/overview_tab.html": {
+      "issues_found": 1,
+      "issues": [
+        {
+          "type": "maintainability",
+          "severity": "low",
+          "element": "style",
+          "issue": "Excessive inline styles found (15 instances)",
+          "location": "throughout template"
+        }
+      ],
+      "screenshot": "gui_analysis_screenshots/overview_tab_screenshot.png"
+    },
+    "gui_screenshots/query_tab.html": {
+      "issues_found": 1,
+      "issues": [
+        {
+          "type": "maintainability",
+          "severity": "low",
+          "element": "style",
+          "issue": "Excessive inline styles found (15 instances)",
+          "location": "throughout template"
+        }
+      ],
+      "screenshot": "gui_analysis_screenshots/query_tab_screenshot.png"
+    },
+    "gui_screenshots/historian_theme.html": {
+      "issues_found": 1,
+      "issues": [
+        {
+          "type": "maintainability",
+          "severity": "low",
+          "element": "style",
+          "issue": "Excessive inline styles found (15 instances)",
+          "location": "throughout template"
+        }
+      ],
+      "screenshot": "gui_analysis_screenshots/historian_theme_screenshot.png"
+    }
+  }
+}

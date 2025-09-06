@@ -1,0 +1,18 @@
+#!/bin/bash
+# IPFS Datasets CLI Wrapper
+# Provides easier access to the IPFS Datasets Python CLI tool
+
+set -e
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_SCRIPT="$SCRIPT_DIR/ipfs_datasets_cli.py"
+
+# Check if the CLI script exists
+if [ ! -f "$CLI_SCRIPT" ]; then
+    echo "Error: CLI script not found at $CLI_SCRIPT"
+    exit 1
+fi
+
+# Run the Python CLI with all arguments
+python3 "$CLI_SCRIPT" "$@"

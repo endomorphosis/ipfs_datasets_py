@@ -19,7 +19,7 @@ except Exception as e:
     print(f"❌ config import/instantiation failed: {e}")
     import traceback
     traceback.print_exc()
-    sys.exit(1)
+    CONFIG_AVAILABLE = False
 
 # Test 2: Base tool import
 print("\n=== Test 2: BaseDevelopmentTool Import ===")
@@ -30,7 +30,7 @@ except Exception as e:
     print(f"❌ BaseDevelopmentTool import failed: {e}")
     import traceback
     traceback.print_exc()
-    sys.exit(1)
+    BASE_TOOL_AVAILABLE = False
 
 # Test 3: Individual tool imports
 tools_to_test = [

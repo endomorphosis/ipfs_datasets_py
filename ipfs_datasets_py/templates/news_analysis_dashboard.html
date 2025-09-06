@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Analysis Dashboard - IPFS Datasets</title>
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/mcp-dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/css/news-analysis-dashboard.css') }}">
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- D3.js for advanced visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <style>
+        /* Additional styles for this template */
+        .professional-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-data-scientist {
+            background: var(--ds-primary);
+            color: white;
+        }
+        
+        .badge-historian {
+            background: var(--hist-primary);
+            color: white;
+        }
+        
+        .badge-lawyer {
+            background: var(--law-primary);
+            color: white;
+        }
+        
+        .workflow-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-running { background: #3b82f6; }
+        .status-completed { background: #10b981; }
+        .status-failed { background: #ef4444; }
+        .status-pending { background: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div id="newsAnalysisDashboard" class="news-dashboard">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="header-left">
+                <h1>📰 News Analysis Dashboard</h1>
+                <div class="professional-badge badge-{{ user_type or 'general' }}">
+                    {{ (user_type or 'general').replace('_', ' ').title() }}
+                </div>
+            </div>
+            
+            <div class="user-controls">
+                <select id="userTypeSelector" class="user-type-selector">
+                    <option value="general" {{ 'selected' if user_type == 'general' else '' }}>General User</option>
+                    <option value="data_scientist" {{ 'selected' if user_type == 'data_scientist' else '' }}>Data Scientist</option>
+                    <option value="historian" {{ 'selected' if user_type == 'historian' else '' }}>Historian</option>
+                    <option value="lawyer" {{ 'selected' if user_type == 'lawyer' else '' }}>Lawyer</option>
+                </select>
+                
+                <div class="connection-status" id="connectionStatus">
+                    <div class="status-indicator status-running"></div>
+                    <span>Connected</span>
+                </div>
+                
+                <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+                <button id="helpBtn" class="settings-btn" title="Help">❓</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="dashboard-nav">
+            <button class="nav-btn active" data-view="overview">📊 Overview</button>
+            <button class="nav-btn" data-view="ingest">📥 Ingest</button>
+            <button class="nav-btn" data-view="timeline">📈 Timeline</button>
+            <button class="nav-btn" data-view="analyze">🔍 Analyze</button>
+            <button class="nav-btn" data-view="query">🔎 Query</button>
+            <button class="nav-btn" data-view="graph">🕸️ Graph Explorer</button>
+            <button class="nav-btn" data-view="export">📤 Export</button>
+            <button class="nav-btn" data-view="workflows">⚙️ Workflows</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+            <!-- Overview Panel -->
+            <div id="overviewPanel" class="content-panel active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Articles Processed</h3>
+                        <div class="stat-value" id="articlesCount">{{ stats.articles_processed or 0 }}</div>
+                        <div class="stat-change">+{{ stats.articles_today or 0 }} today</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Entities Extracted</h3>
+                        <div class="stat-value" id="entitiesCount">{{ stats.entities_extracted or 0 }}</div>
+                        <div class="stat-change">{{ stats.entity_types or 0 }} types</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Workflows</h3>
+                        <div class="stat-value" id="workflowsCount">{{ stats.active_workflows or 0 }}</div>
+                        <div class="stat-change">{{ stats.completed_workflows or 0 }} completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Sources Analyzed</h3>
+                        <div class="stat-value" id="sourcesCount">{{ stats.sources_analyzed or 0 }}</div>
+                        <div class="stat-change">{{ stats.reliability_avg or 0 }}% avg reliability</div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div id="activityList" class="activity-list">
+                            <!-- Activity items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <h3>Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button class="btn-primary" onclick="quickIngestArticle()">📰 Ingest Article</button>
+                            <button class="btn-secondary" onclick="generateQuickTimeline()">📊 Quick Timeline</button>
+                            <button class="btn-secondary" onclick="findConflicts()">⚖️ Find Conflicts</button>
+                            <button class="btn-secondary" onclick="exportData()">📤 Export Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingestion Panel -->
+            <div id="ingestPanel" class="content-panel">
+                <div class="ingestion-tabs">
+                    <button class="tab-btn active" data-tab="single">Single Article</button>
+                    <button class="tab-btn" data-tab="batch">Batch/Feed</button>
+                    <button class="tab-btn" data-tab="website">🌐 Website</button>
+                    <button class="tab-btn" data-tab="documents">Documents</button>
+                    <button class="tab-btn" data-tab="monitoring">Monitoring</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Single Article Tab -->
+                    <div id="singleTab" class="tab-panel active">
+                        <h3>📰 Ingest Single Article</h3>
+                        <form id="singleArticleForm">
+                            <div class="form-group">
+                                <label for="articleUrl">Article URL *</label>
+                                <input type="url" id="articleUrl" placeholder="https://example.com/article" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="articleTags">Tags (comma-separated)</label>
+                                <input type="text" id="articleTags" placeholder="technology, ai, news">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="articleMetadata">Additional Metadata (JSON)</label>
+                                <textarea id="articleMetadata" placeholder='{"importance": "high", "category": "technology"}'></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary loading" id="ingestBtn">
+                                    <span>Ingest Article</span>
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="clearForm('singleArticleForm')">Clear</button>
+                            </div>
+                        </form>
+                        
+                        <div id="singleIngestResults" class="results-section"></div>
+                    </div>
+
+                    <!-- Batch Ingestion Tab -->
+                    <div id="batchTab" class="tab-panel">
+                        <h3>📦 Batch Ingest from Feed</h3>
+                        <form id="batchIngestForm">
+                            <div class="form-group">
+                                <label for="feedUrl">RSS/JSON Feed URL *</label>
+                                <input type="url" id="feedUrl" placeholder="https://example.com/rss.xml" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="maxArticles">Max Articles</label>
+                                    <input type="number" id="maxArticles" placeholder="50" min="1" max="1000">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="batchKeywords">Keywords Filter</label>
+                                    <input type="text" id="batchKeywords" placeholder="technology, AI, science">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="batchFilters">Advanced Filters (JSON)</label>
+                                <textarea id="batchFilters" placeholder='{"min_word_count": 100, "exclude_duplicates": true}'></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Start Batch Ingestion</button>
+                                <button type="button" class="btn-secondary" onclick="clearForm('batchIngestForm')">Clear</button>
+                            </div>
+                        </form>
+                        
+                        <div id="batchIngestResults" class="results-section"></div>
+                    </div>
+
+                    <!-- Website Crawling Tab -->
+                    <div id="websiteTab" class="tab-panel">
+                        <h3>🌐 Crawl Entire Website</h3>
+                        <form id="websiteCrawlForm">
+                            <div class="form-group">
+                                <label for="websiteUrl">Website URL *</label>
+                                <input type="url" id="websiteUrl" placeholder="https://example.com" required>
+                                <small>Enter the root URL of the website to crawl</small>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="maxPages">Max Pages</label>
+                                    <input type="number" id="maxPages" placeholder="50" min="1" max="500" value="50">
+                                    <small>Maximum number of pages to crawl</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="maxDepth">Max Depth</label>
+                                    <input type="number" id="maxDepth" placeholder="3" min="1" max="10" value="3">
+                                    <small>Maximum link depth from starting page</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="includePatterns">Include URL Patterns</label>
+                                    <input type="text" id="includePatterns" placeholder="/news/, /articles/, /blog/">
+                                    <small>URL patterns to include (comma-separated)</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="excludePatterns">Exclude URL Patterns</label>
+                                    <input type="text" id="excludePatterns" placeholder="/admin/, /login/, /api/">
+                                    <small>URL patterns to exclude (comma-separated)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contentTypes">Content Types</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" value="html" checked> HTML Pages</label>
+                                    <label><input type="checkbox" value="pdf"> PDF Documents</label>
+                                    <label><input type="checkbox" value="images"> Images</label>
+                                    <label><input type="checkbox" value="videos"> Videos</label>
+                                    <label><input type="checkbox" value="audio"> Audio</label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="crawlMetadata">Crawl Metadata (JSON)</label>
+                                <textarea id="crawlMetadata" placeholder='{"respect_robots": true, "delay": 1, "timeout": 30}'></textarea>
+                                <small>Advanced crawling options</small>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary loading" id="crawlBtn">
+                                    <span>Start Website Crawl</span>
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="clearForm('websiteCrawlForm')">Clear</button>
+                                <button type="button" class="btn-secondary" onclick="previewWebsite()">Preview Site</button>
+                            </div>
+                        </form>
+                        
+                        <div id="websiteCrawlResults" class="results-section">
+                            <div id="crawlProgress" class="progress-section" style="display: none;">
+                                <h4>Crawl Progress</h4>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="crawlProgressFill"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span id="crawledPages">0</span> / <span id="totalPages">0</span> pages crawled
+                                </div>
+                                <div id="crawlLog" class="crawl-log"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Upload Tab -->
+                    <div id="documentsTab" class="tab-panel">
+                        <h3>📄 Upload Document Collection</h3>
+                        <div id="documentDropZone" class="drop-zone">
+                            <div class="drop-zone-content">
+                                <div class="drop-icon">📁</div>
+                                <p>Drop documents here or click to select</p>
+                                <p class="drop-hint">Supports: PDF, TXT, DOC, DOCX, HTML</p>
+                                <input type="file" id="documentFiles" multiple accept=".pdf,.txt,.doc,.docx,.html">
+                            </div>
+                        </div>
+                        
+                        <div id="documentList" class="document-list"></div>
+                        
+                        <div class="form-actions">
+                            <button id="uploadDocuments" class="btn-primary" disabled>Upload Documents</button>
+                            <button id="clearDocuments" class="btn-secondary">Clear All</button>
+                        </div>
+                    </div>
+
+                    <!-- Monitoring Tab -->
+                    <div id="monitoringTab" class="tab-panel">
+                        <h3>📡 Source Monitoring</h3>
+                        <p>Set up automated monitoring of news sources for specific topics or keywords.</p>
+                        
+                        <form id="monitoringForm">
+                            <div class="form-group">
+                                <label for="monitorKeywords">Keywords to Monitor *</label>
+                                <input type="text" id="monitorKeywords" placeholder="artificial intelligence, machine learning" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="monitorSources">Sources (URLs, comma-separated)</label>
+                                <textarea id="monitorSources" placeholder="https://example.com/rss1, https://example.com/rss2"></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="monitorFrequency">Check Frequency</label>
+                                    <select id="monitorFrequency">
+                                        <option value="15min">Every 15 minutes</option>
+                                        <option value="1hour">Every hour</option>
+                                        <option value="6hours">Every 6 hours</option>
+                                        <option value="daily">Daily</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="monitorAlerts">Alert Method</label>
+                                    <select id="monitorAlerts">
+                                        <option value="dashboard">Dashboard notification</option>
+                                        <option value="email">Email alert</option>
+                                        <option value="webhook">Webhook</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Start Monitoring</button>
+                                <button type="button" class="btn-secondary">Save as Template</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline Panel -->
+            <div id="timelinePanel" class="content-panel">
+                <div class="timeline-controls">
+                    <div class="control-group">
+                        <label for="timelineQuery">Search Query *</label>
+                        <input type="text" id="timelineQuery" placeholder="artificial intelligence" required>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="timelineStartDate">Start Date</label>
+                        <input type="date" id="timelineStartDate" value="{{ default_start_date }}">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="timelineEndDate">End Date</label>
+                        <input type="date" id="timelineEndDate" value="{{ default_end_date }}">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="timelineGranularity">Granularity</label>
+                        <select id="timelineGranularity">
+                            <option value="hour">Hourly</option>
+                            <option value="day" selected>Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-actions">
+                        <button id="generateTimelineBtn" class="btn-primary">Generate Timeline</button>
+                        <button id="exportTimelineBtn" class="btn-secondary">Export</button>
+                    </div>
+                </div>
+                
+                <div class="timeline-container">
+                    <div id="timelineVisualization" class="timeline-viz">
+                        <div class="timeline-placeholder">
+                            <div class="placeholder-icon">📈</div>
+                            <h3>Timeline Visualization</h3>
+                            <p>Enter a search query and date range to generate an interactive timeline of news events.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="timelineInsights" class="timeline-insights">
+                        <h3>Key Insights</h3>
+                        <div id="insightsList" class="insights-list">
+                            <!-- Insights will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Panel -->
+            <div id="analyzePanel" class="content-panel">
+                <div class="analysis-tools">
+                    <div class="tool-section">
+                        <div class="tool-header">
+                            <h3>⚖️ Cross-Document Conflict Analysis</h3>
+                            <p>Identify conflicting information across multiple news sources</p>
+                        </div>
+                        
+                        <div class="tool-controls">
+                            <input type="text" id="conflictTopic" placeholder="Topic to analyze (e.g., 'COVID-19 vaccine effectiveness')">
+                            <div class="control-row">
+                                <input type="date" id="conflictStartDate" placeholder="Start date">
+                                <input type="date" id="conflictEndDate" placeholder="End date">
+                            </div>
+                            <button id="findConflictsBtn" class="btn-primary">Find Conflicting Reports</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header">
+                            <h3>🔗 Information Flow Tracing</h3>
+                            <p>Track how information spreads and mutates across sources</p>
+                        </div>
+                        
+                        <div class="tool-controls">
+                            <input type="text" id="claimToTrace" placeholder="Claim to trace (e.g., 'AI will replace human jobs')">
+                            <button id="traceFlowBtn" class="btn-primary">Trace Information Flow</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-section">
+                        <div class="tool-header">
+                            <h3>📊 Sentiment Analysis</h3>
+                            <p>Analyze sentiment trends across time and sources</p>
+                        </div>
+                        
+                        <div class="tool-controls">
+                            <input type="text" id="sentimentQuery" placeholder="Topic for sentiment analysis">
+                            <select id="sentimentTimeframe">
+                                <option value="week">Past week</option>
+                                <option value="month" selected>Past month</option>
+                                <option value="quarter">Past quarter</option>
+                                <option value="year">Past year</option>
+                            </select>
+                            <button id="analyzeSentimentBtn" class="btn-primary">Analyze Sentiment</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="analysisResults" class="analysis-results">
+                    <div class="results-placeholder">
+                        <div class="placeholder-icon">🔍</div>
+                        <h3>Analysis Results</h3>
+                        <p>Select an analysis tool above to get started. Results will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph Explorer Panel -->
+            <div id="graphPanel" class="content-panel">
+                <div class="graph-controls">
+                    <div class="control-row">
+                        <div class="control-group">
+                            <label for="graphLayout">Layout Algorithm</label>
+                            <select id="graphLayout">
+                                <option value="force">Force-Directed</option>
+                                <option value="hierarchical">Hierarchical</option>
+                                <option value="circular">Circular</option>
+                                <option value="grid">Grid</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="nodeFilter">Node Filter</label>
+                            <select id="nodeFilter" multiple>
+                                <option value="PERSON">People</option>
+                                <option value="ORG">Organizations</option>
+                                <option value="GPE">Locations</option>
+                                <option value="EVENT">Events</option>
+                                <option value="TOPIC">Topics</option>
+                                <option value="DOCUMENT">Documents</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="relationshipFilter">Relationship Types</label>
+                            <select id="relationshipFilter" multiple>
+                                <option value="mentions">Mentions</option>
+                                <option value="related_to">Related To</option>
+                                <option value="works_for">Works For</option>
+                                <option value="located_in">Located In</option>
+                                <option value="participates_in">Participates In</option>
+                                <option value="similar_to">Similar To</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="control-row">
+                        <div class="control-group">
+                            <label for="timeRangeSlider">Time Range</label>
+                            <div class="time-slider-container">
+                                <input type="range" id="timeRangeSlider" min="0" max="100" value="100">
+                                <div class="time-labels">
+                                    <span id="timeStart">All Time</span>
+                                    <span id="timeEnd">Now</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="nodeSize">Node Size By</label>
+                            <select id="nodeSize">
+                                <option value="degree">Connection Count</option>
+                                <option value="importance">Importance Score</option>
+                                <option value="mentions">Mention Frequency</option>
+                                <option value="uniform">Uniform Size</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="edgeWeight">Edge Weight By</label>
+                            <select id="edgeWeight">
+                                <option value="frequency">Co-occurrence Frequency</option>
+                                <option value="strength">Relationship Strength</option>
+                                <option value="recency">Recency</option>
+                                <option value="uniform">Uniform Weight</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="control-actions">
+                        <button id="refreshGraphBtn" class="btn-primary">🔄 Refresh Graph</button>
+                        <button id="centerGraphBtn" class="btn-secondary">🎯 Center View</button>
+                        <button id="findPathBtn" class="btn-secondary">🔍 Find Path</button>
+                        <button id="clusterGraphBtn" class="btn-secondary">🔗 Detect Communities</button>
+                        <button id="exportGraphBtn" class="btn-secondary">📤 Export Graph</button>
+                    </div>
+                </div>
+                
+                <div class="graph-main">
+                    <div class="graph-sidebar">
+                        <div class="graph-stats">
+                            <h3>Graph Statistics</h3>
+                            <div class="stat-item">
+                                <label>Nodes:</label>
+                                <span id="nodeCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Edges:</label>
+                                <span id="edgeCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Communities:</label>
+                                <span id="communityCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Density:</label>
+                                <span id="graphDensity">0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="selected-node-info">
+                            <h3>Selected Node</h3>
+                            <div id="nodeInfo" class="node-info">
+                                <p>Click on a node to see details</p>
+                            </div>
+                        </div>
+                        
+                        <div class="path-finder">
+                            <h3>Path Finder</h3>
+                            <div class="path-inputs">
+                                <input type="text" id="pathStart" placeholder="Start node">
+                                <input type="text" id="pathEnd" placeholder="End node">
+                                <button id="findShortestPath" class="btn-secondary">Find Path</button>
+                            </div>
+                            <div id="pathResults" class="path-results"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-visualization">
+                        <div id="knowledgeGraph" class="knowledge-graph">
+                            <div class="graph-placeholder">
+                                <div class="placeholder-icon">🕸️</div>
+                                <h3>Knowledge Graph Explorer</h3>
+                                <p>Interactive exploration of entities and relationships extracted from news articles.</p>
+                                <button id="loadGraphBtn" class="btn-primary">Load Graph Data</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GraphRAG Query Panel -->
+            <div id="queryPanel" class="content-panel">
+                <div class="query-interface">
+                    <div class="query-header">
+                        <h2>🔎 GraphRAG Query Interface</h2>
+                        <div class="query-type-toggle">
+                            <button class="type-btn active" data-type="semantic">Semantic Query</button>
+                            <button class="type-btn" data-type="entity">Entity Query</button>
+                            <button class="type-btn" data-type="relationship">Relationship Query</button>
+                            <button class="type-btn" data-type="temporal">Temporal Query</button>
+                            <button class="type-btn" data-type="cross_doc">Cross-Document</button>
+                        </div>
+                    </div>
+                    
+                    <div class="query-form">
+                        <!-- Semantic Query Tab -->
+                        <div id="semanticQueryTab" class="query-tab active">
+                            <div class="query-input-group">
+                                <label for="semanticQuery">Natural Language Query</label>
+                                <textarea id="semanticQuery" placeholder="Ask questions like: 'What are the main themes discussed about artificial intelligence?' or 'Show me connections between climate change and economic policy'"></textarea>
+                            </div>
+                            
+                            <div class="query-options">
+                                <div class="option-group">
+                                    <label for="semanticContext">Context Window</label>
+                                    <select id="semanticContext">
+                                        <option value="local">Local Context</option>
+                                        <option value="global">Global Context</option>
+                                        <option value="community">Community Context</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="option-group">
+                                    <label for="resultLimit">Result Limit</label>
+                                    <input type="number" id="resultLimit" value="10" min="1" max="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Entity Query Tab -->
+                        <div id="entityQueryTab" class="query-tab">
+                            <div class="query-input-group">
+                                <label for="entityQueryInput">Entity Name or Pattern</label>
+                                <input type="text" id="entityQueryInput" placeholder="Enter entity name or use wildcards (e.g., 'Biden*', '*Corporation')">
+                            </div>
+                            
+                            <div class="query-options">
+                                <div class="option-group">
+                                    <label for="entityTypes">Entity Types</label>
+                                    <select id="entityTypes" multiple>
+                                        <option value="PERSON">People</option>
+                                        <option value="ORG">Organizations</option>
+                                        <option value="GPE">Locations</option>
+                                        <option value="EVENT">Events</option>
+                                        <option value="TOPIC">Topics</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="option-group">
+                                    <label for="entityHops">Relationship Hops</label>
+                                    <select id="entityHops">
+                                        <option value="0">Direct Only</option>
+                                        <option value="1">1 Hop</option>
+                                        <option value="2">2 Hops</option>
+                                        <option value="3">3 Hops</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Relationship Query Tab -->
+                        <div id="relationshipQueryTab" class="query-tab">
+                            <div class="relationship-builder">
+                                <div class="rel-input-group">
+                                    <input type="text" id="sourceEntity" placeholder="Source entity">
+                                    <select id="relationshipType">
+                                        <option value="any">Any Relationship</option>
+                                        <option value="mentions">Mentions</option>
+                                        <option value="works_for">Works For</option>
+                                        <option value="located_in">Located In</option>
+                                        <option value="participates_in">Participates In</option>
+                                        <option value="similar_to">Similar To</option>
+                                    </select>
+                                    <input type="text" id="targetEntity" placeholder="Target entity">
+                                </div>
+                                
+                                <div class="query-options">
+                                    <div class="option-group">
+                                        <label for="relationshipStrength">Minimum Strength</label>
+                                        <input type="range" id="relationshipStrength" min="0" max="100" value="0">
+                                        <span id="strengthValue">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Temporal Query Tab -->
+                        <div id="temporalQueryTab" class="query-tab">
+                            <div class="temporal-controls">
+                                <div class="query-input-group">
+                                    <label for="temporalQuery">Query with Time Context</label>
+                                    <textarea id="temporalQuery" placeholder="Ask questions like: 'How did the discussion about vaccines evolve over time?' or 'What events preceded the policy change?'"></textarea>
+                                </div>
+                                
+                                <div class="time-range-controls">
+                                    <div class="option-group">
+                                        <label for="timeStartDate">Start Date</label>
+                                        <input type="date" id="timeStartDate">
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="timeEndDate">End Date</label>
+                                        <input type="date" id="timeEndDate">
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="timeGranularity">Time Granularity</label>
+                                        <select id="timeGranularity">
+                                            <option value="day">Daily</option>
+                                            <option value="week">Weekly</option>
+                                            <option value="month">Monthly</option>
+                                            <option value="quarter">Quarterly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cross-Document Query Tab -->
+                        <div id="crossDocQueryTab" class="query-tab">
+                            <div class="query-input-group">
+                                <label for="crossDocQuery">Cross-Document Analysis Query</label>
+                                <textarea id="crossDocQuery" placeholder="Find patterns, conflicts, or consensus across documents: 'Compare how different sources report on the same event' or 'Find conflicting claims about a topic'"></textarea>
+                            </div>
+                            
+                            <div class="cross-doc-options">
+                                <div class="option-group">
+                                    <label for="analysisType">Analysis Type</label>
+                                    <select id="analysisType">
+                                        <option value="consensus">Consensus Detection</option>
+                                        <option value="conflict">Conflict Detection</option>
+                                        <option value="evolution">Information Evolution</option>
+                                        <option value="bias">Bias Analysis</option>
+                                        <option value="completeness">Completeness Analysis</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="option-group">
+                                    <label for="documentSources">Specific Sources (optional)</label>
+                                    <input type="text" id="documentSources" placeholder="BBC, Reuters, NYTimes (leave empty for all)">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="query-actions">
+                            <button id="executeQueryBtn" class="btn-primary">🔍 Execute Query</button>
+                            <button id="saveQueryBtn" class="btn-secondary">💾 Save Query</button>
+                            <button id="loadQueryBtn" class="btn-secondary">📂 Load Query</button>
+                            <button id="clearQueryBtn" class="btn-secondary">🗑️ Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div id="queryResults" class="query-results">
+                        <div class="results-header">
+                            <h3>Query Results</h3>
+                            <div class="results-controls">
+                                <select id="resultFormat">
+                                    <option value="detailed">Detailed View</option>
+                                    <option value="summary">Summary View</option>
+                                    <option value="graph">Graph View</option>
+                                    <option value="timeline">Timeline View</option>
+                                </select>
+                                <button id="exportResultsBtn" class="btn-secondary">📤 Export</button>
+                            </div>
+                        </div>
+                        
+                        <div class="results-placeholder">
+                            <div class="placeholder-icon">🔍</div>
+                            <h3>GraphRAG Query Results</h3>
+                            <p>Execute a query above to see intelligent, context-aware results from your knowledge graph.</p>
+                        </div>
+                        
+                        <div id="queryResultsContent" class="results-content" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Panel -->
+            <div id="exportPanel" class="content-panel">
+                <div class="export-options">
+                    <div class="export-card" data-export="data-science">
+                        <div class="export-icon">📊</div>
+                        <h3>Data Science Export</h3>
+                        <p>Structured datasets for machine learning and statistical analysis</p>
+                        <ul>
+                            <li>CSV, JSON, Parquet formats</li>
+                            <li>Embeddings included</li>
+                            <li>Feature engineering ready</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportForDataScience()">Export Dataset</button>
+                    </div>
+                    
+                    <div class="export-card" data-export="academic">
+                        <div class="export-icon">📚</div>
+                        <h3>Academic Research Export</h3>
+                        <p>Properly cited research materials for academic use</p>
+                        <ul>
+                            <li>APA, Chicago, MLA citations</li>
+                            <li>Bibliography generation</li>
+                            <li>Source validation included</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportForAcademic()">Export Research</button>
+                    </div>
+                    
+                    <div class="export-card" data-export="legal">
+                        <div class="export-icon">⚖️</div>
+                        <h3>Legal Research Export</h3>
+                        <p>Evidence packages with chain of custody documentation</p>
+                        <ul>
+                            <li>Legal citation format</li>
+                            <li>Chain of custody tracking</li>
+                            <li>Evidence authenticity verification</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportForLegal()">Export Evidence</button>
+                    </div>
+                    
+                    <div class="export-card" data-export="general">
+                        <div class="export-icon">📄</div>
+                        <h3>General Export</h3>
+                        <p>Standard export formats for general use</p>
+                        <ul>
+                            <li>PDF reports</li>
+                            <li>Excel spreadsheets</li>
+                            <li>Word documents</li>
+                        </ul>
+                        <button class="btn-primary" onclick="exportGeneral()">Export Files</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflows Panel -->
+            <div id="workflowsPanel" class="content-panel">
+                <div class="workflows-header">
+                    <h2>⚙️ Active Workflows</h2>
+                    <button id="createWorkflowBtn" class="btn-primary">+ Create New Workflow</button>
+                </div>
+                
+                <div id="workflowsList" class="workflows-list">
+                    <!-- Workflows will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Dependencies -->
+    <script src="{{ url_for('static', filename='admin/js/mcp-sdk.js') }}"></script>
+    <script src="{{ url_for('static', filename='admin/js/news-analysis-sdk.js') }}"></script>
+    
+    <script>
+        // Initialize News Analysis Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const config = {
+                baseUrl: '{{ base_url or "" }}',
+                userType: '{{ user_type or "general" }}',
+                enableRealTimeUpdates: true,
+                apiKey: '{{ api_key or "" }}'
+            };
+            
+            // Initialize the dashboard
+            window.newsAnalysisDashboard = new NewsAnalysisDashboard('newsAnalysisDashboard', config);
+            
+            // Initialize new extended components
+            window.websiteCrawlingComponent = new WebsiteCrawlingComponent('#websiteTab', window.newsAnalysisDashboard.client);
+            window.graphRAGQueryComponent = new GraphRAGQueryComponent('#queryPanel', window.newsAnalysisDashboard.client);
+            window.graphExplorerComponent = new GraphExplorerComponent('#graphPanel', window.newsAnalysisDashboard.client);
+            
+            // Set up real-time updates
+            setInterval(updateDashboardStats, 30000); // Update every 30 seconds
+            
+            // Initialize tooltips and other UI enhancements
+            initializeUIEnhancements();
+            
+            // Initialize new tab switching functionality
+            initializeExtendedTabSwitching();
+        });
+        
+        // Dashboard functionality
+        function updateDashboardStats() {
+            // This would be implemented to fetch real-time stats
+            if (window.newsAnalysisDashboard && window.newsAnalysisDashboard.client) {
+                window.newsAnalysisDashboard._updateStats();
+            }
+        }
+        
+        function initializeUIEnhancements() {
+            // Add tooltips, keyboard shortcuts, etc.
+            console.log('News Analysis Dashboard initialized successfully');
+        }
+        
+        // Quick action functions
+        function quickIngestArticle() {
+            const url = prompt('Enter article URL to ingest:');
+            if (url) {
+                document.getElementById('articleUrl').value = url;
+                document.querySelector('[data-view="ingest"]').click();
+            }
+        }
+        
+        function generateQuickTimeline() {
+            const query = prompt('Enter search query for timeline:');
+            if (query) {
+                document.getElementById('timelineQuery').value = query;
+                document.querySelector('[data-view="timeline"]').click();
+            }
+        }
+        
+        function findConflicts() {
+            const topic = prompt('Enter topic to analyze for conflicts:');
+            if (topic) {
+                document.getElementById('conflictTopic').value = topic;
+                document.querySelector('[data-view="analyze"]').click();
+            }
+        }
+        
+        function exportData() {
+            document.querySelector('[data-view="export"]').click();
+        }
+        
+        // Export functions
+        function exportForDataScience() {
+            if (window.newsAnalysisDashboard) {
+                window.newsAnalysisDashboard.client.exportForDataScience('current_dataset', 'csv', {
+                    includeEmbeddings: true,
+                    includeMetadata: true
+                }).then(blob => {
+                    downloadBlob(blob, 'news_dataset.csv');
+                });
+            }
+        }
+        
+        function exportForAcademic() {
+            if (window.newsAnalysisDashboard) {
+                window.newsAnalysisDashboard.client.exportForAcademicResearch('current_research', {
+                    citationStyle: 'apa',
+                    includeBibliography: true
+                }).then(blob => {
+                    downloadBlob(blob, 'research_export.pdf');
+                });
+            }
+        }
+        
+        function exportForLegal() {
+            if (window.newsAnalysisDashboard) {
+                window.newsAnalysisDashboard.client.exportForLegalResearch('current_case', {
+                    citationFormat: 'bluebook',
+                    includeChainOfCustody: true
+                }).then(blob => {
+                    downloadBlob(blob, 'legal_evidence.pdf');
+                });
+            }
+        }
+        
+        function exportGeneral() {
+            // Implementation for general export
+            alert('General export functionality would be implemented here');
+        }
+        
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        
+        function clearForm(formId) {
+            document.getElementById(formId).reset();
+        }
+        
+        // ============== EXTENDED FUNCTIONALITY ==============
+        
+        function initializeExtendedTabSwitching() {
+            // Website crawling tab switching
+            const ingestTabs = document.querySelectorAll('.ingestion-tabs .tab-btn');
+            const ingestPanels = document.querySelectorAll('.tab-content .tab-panel');
+            
+            ingestTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    // Update tab buttons
+                    ingestTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update panels
+                    ingestPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                        if (panel.id === tabId + 'Tab') {
+                            panel.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Main navigation update for new views
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const view = this.dataset.view;
+                    
+                    // Update navigation
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update panels
+                    document.querySelectorAll('.content-panel').forEach(panel => {
+                        panel.classList.remove('active');
+                    });
+                    
+                    const targetPanel = document.getElementById(view + 'Panel');
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+                });
+            });
+        }
+        
+        // Website preview functionality
+        function previewWebsite() {
+            const url = document.getElementById('websiteUrl').value;
+            if (url) {
+                window.open(url, '_blank', 'width=1200,height=800');
+            } else {
+                alert('Please enter a website URL first');
+            }
+        }
+        
+        // Quick action functions for the new features
+        function quickCrawlWebsite() {
+            // Switch to website crawling tab
+            document.querySelector('[data-view="ingest"]').click();
+            document.querySelector('[data-tab="website"]').click();
+            
+            // Focus on URL input
+            setTimeout(() => {
+                document.getElementById('websiteUrl').focus();
+            }, 100);
+        }
+        
+        function quickGraphQuery() {
+            // Switch to query tab
+            document.querySelector('[data-view="query"]').click();
+            
+            // Focus on query input
+            setTimeout(() => {
+                document.getElementById('semanticQuery').focus();
+            }, 100);
+        }
+        
+        function quickGraphExplore() {
+            // Switch to graph explorer tab
+            document.querySelector('[data-view="graph"]').click();
+            
+            // Load graph data if not loaded
+            if (window.graphExplorerComponent) {
+                setTimeout(() => {
+                    window.graphExplorerComponent.loadGraphData();
+                }, 100);
+            }
+        }
+        
+        // Enhanced UI functionality
+        function initializeUIEnhancements() {
+            // Add tooltips for complex controls
+            addTooltips();
+            
+            // Initialize drag and drop for document upload
+            initializeDragAndDrop();
+            
+            // Initialize keyboard shortcuts
+            initializeKeyboardShortcuts();
+        }
+        
+        function addTooltips() {
+            const tooltipElements = document.querySelectorAll('[title]');
+            tooltipElements.forEach(element => {
+                element.addEventListener('mouseenter', showTooltip);
+                element.addEventListener('mouseleave', hideTooltip);
+            });
+        }
+        
+        function showTooltip(event) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = event.target.title;
+            tooltip.style.position = 'absolute';
+            tooltip.style.background = '#333';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '4px 8px';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.zIndex = '1000';
+            tooltip.style.pointerEvents = 'none';
+            
+            document.body.appendChild(tooltip);
+            
+            const rect = event.target.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+            
+            // Remove title to prevent browser tooltip
+            event.target.dataset.originalTitle = event.target.title;
+            event.target.title = '';
+        }
+        
+        function hideTooltip(event) {
+            const tooltip = document.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+            
+            // Restore original title
+            if (event.target.dataset.originalTitle) {
+                event.target.title = event.target.dataset.originalTitle;
+                delete event.target.dataset.originalTitle;
+            }
+        }
+        
+        function initializeDragAndDrop() {
+            const dropZone = document.getElementById('documentDropZone');
+            if (dropZone) {
+                dropZone.addEventListener('dragover', handleDragOver);
+                dropZone.addEventListener('drop', handleDrop);
+                dropZone.addEventListener('click', () => {
+                    document.getElementById('documentFiles').click();
+                });
+            }
+        }
+        
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+        
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                // Handle file drop
+                console.log('Files dropped:', files);
+                // Implementation would handle file upload
+            }
+        }
+        
+        function initializeKeyboardShortcuts() {
+            document.addEventListener('keydown', function(event) {
+                // Ctrl+1-8 for tab switching
+                if (event.ctrlKey && event.key >= '1' && event.key <= '8') {
+                    event.preventDefault();
+                    const tabIndex = parseInt(event.key) - 1;
+                    const navButtons = document.querySelectorAll('.nav-btn');
+                    if (navButtons[tabIndex]) {
+                        navButtons[tabIndex].click();
+                    }
+                }
+                
+                // Ctrl+Enter for quick actions in focused inputs
+                if (event.ctrlKey && event.key === 'Enter') {
+                    const focused = document.activeElement;
+                    if (focused.id === 'semanticQuery' || focused.id === 'temporalQuery' || focused.id === 'crossDocQuery') {
+                        document.getElementById('executeQueryBtn').click();
+                    } else if (focused.id === 'websiteUrl') {
+                        document.getElementById('crawlBtn').click();
+                    } else if (focused.id === 'articleUrl') {
+                        document.getElementById('ingestBtn').click();
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

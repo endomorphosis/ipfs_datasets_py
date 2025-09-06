@@ -52,7 +52,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = extract_metadata_from_warc(warc_path)
+        result = await extract_metadata_from_warc(warc_path)
 
         if result.get("status") == "success":
             print("✓ extract_metadata_from_warc")
@@ -74,7 +74,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = extract_links_from_warc(warc_path)
+        result = await extract_links_from_warc(warc_path)
 
         if result.get("status") == "success":
             print("✓ extract_links_from_warc")
@@ -96,7 +96,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = index_warc(warc_path)
+        result = await index_warc(warc_path)
 
         if result.get("status") == "success":
             print("✓ index_warc")

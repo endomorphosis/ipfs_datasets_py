@@ -2,7 +2,7 @@
 
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from abc import ABC, abstractmethod
 
 
@@ -69,7 +69,7 @@ class ClaudeMCPTool(ABC):
         self.category: str = "general"
         self.tags: List[str] = []
         self.version: str = "1.0.0"
-        self.created_at = datetime.now(tz='UTC')
+        self.created_at = datetime.now(tz=timezone.utc)
         self.last_used = None
         self.usage_count = 0
     
@@ -186,7 +186,7 @@ class ClaudeMCPTool(ABC):
             {'status': 'success', 'data': {...}}
         """
         self.usage_count += 1
-        self.last_used = datetime.now(tz='UTC')
+        self.last_used = datetime.now(tz=timezone.utc)
         return await self.execute(kwargs)
 
 

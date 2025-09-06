@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, Any, Generator
 import json
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 
 
 # Test configuration
@@ -234,4 +234,16 @@ def mock_embedding_service():
 
 @pytest.fixture
 def mock_vector_service():
-    return Mock()
+    """Mock vector service with async methods."""
+    mock = AsyncMock()
+    # Set up common async methods to return values
+    mock.create_index.return_value = {"status": "created", "index_id": "test_index"}
+    mock.update_index.return_value = {"status": "updated"}
+    mock.delete_index.return_value = {"status": "deleted"}
+    mock.get_index_info.return_value = {"status": "active", "size": 100}
+    mock.retrieve_vectors.return_value = {"vectors": []}
+    mock.get_vector_metadata.return_value = {"metadata": {}}
+    mock.update_vector_metadata.return_value = {"status": "updated"}
+    mock.delete_vector_metadata.return_value = {"status": "deleted"}
+    mock.list_vector_metadata.return_value = {"items": []}
+    return mock

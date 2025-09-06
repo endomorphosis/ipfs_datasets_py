@@ -1,0 +1,227 @@
+{
+  "feature_coverage": {
+    "dataset_operations": {
+      "present_tools": [
+        "dataset_tools/load_dataset.py",
+        "dataset_tools/save_dataset.py",
+        "dataset_tools/process_dataset.py",
+        "dataset_tools/convert_dataset_format.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "ipfs_operations": {
+      "present_tools": [
+        "ipfs_tools/get_from_ipfs.py",
+        "ipfs_tools/pin_to_ipfs.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "vector_operations": {
+      "present_tools": [
+        "vector_tools/create_vector_index.py",
+        "vector_tools/search_vector_index.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "graph_operations": {
+      "present_tools": [
+        "graph_tools/query_knowledge_graph.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "audit_operations": {
+      "present_tools": [
+        "audit_tools/record_audit_event.py",
+        "audit_tools/generate_audit_report.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "security_operations": {
+      "present_tools": [
+        "security_tools/check_access_permission.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "provenance_operations": {
+      "present_tools": [
+        "provenance_tools/record_provenance.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    },
+    "web_archive_operations": {
+      "present_tools": [
+        "web_archive_tools/create_warc.py",
+        "web_archive_tools/index_warc.py",
+        "web_archive_tools/extract_dataset_from_cdxj.py",
+        "web_archive_tools/extract_text_from_warc.py",
+        "web_archive_tools/extract_links_from_warc.py",
+        "web_archive_tools/extract_metadata_from_warc.py"
+      ],
+      "missing_tools": [],
+      "coverage_percentage": 100.0
+    }
+  },
+  "available_tools": {
+    "sparse_embedding_tools": [
+      "sparse_embedding_tools.py"
+    ],
+    "monitoring_tools": [
+      "enhanced_monitoring_tools.py",
+      "monitoring_tools.py"
+    ],
+    "dataset_tools": [
+      "load_dataset.py",
+      "save_dataset.py",
+      "legal_text_to_deontic.py",
+      "process_dataset.py",
+      "dataset_tools_claudes.py",
+      "text_to_fol.py",
+      "convert_dataset_format.py"
+    ],
+    "bespoke_tools": [
+      "execute_workflow.py",
+      "delete_index.py",
+      "list_indices.py",
+      "system_status.py",
+      "create_vector_store.py",
+      "cache_stats.py",
+      "system_health.py"
+    ],
+    "workflow_tools": [
+      "workflow_tools.py",
+      "enhanced_workflow_tools.py"
+    ],
+    "data_processing_tools": [
+      "data_processing_tools.py"
+    ],
+    "admin_tools": [
+      "enhanced_admin_tools.py",
+      "admin_tools.py"
+    ],
+    "functions": [
+      "execute_python_snippet.py"
+    ],
+    "lizardpersons_function_tools": [],
+    "embedding_tools": [
+      "shard_embeddings.py",
+      "advanced_embedding_generation.py",
+      "embedding_generation.py",
+      "tool_registration.py",
+      "advanced_search.py",
+      "enhanced_embedding_tools.py",
+      "cluster_management.py"
+    ],
+    "media_tools": [
+      "ffmpeg_mux_demux.py",
+      "ffmpeg_utils.py",
+      "ytdlp_download.py",
+      "ffmpeg_convert.py",
+      "ffmpeg_filters.py",
+      "ffmpeg_batch.py",
+      "ffmpeg_edit.py",
+      "ffmpeg_stream.py",
+      "ffmpeg_info.py"
+    ],
+    "ipfs_tools": [
+      "get_from_ipfs.py",
+      "ipfs_tools_claudes.py",
+      "pin_to_ipfs.py"
+    ],
+    "index_management_tools": [
+      "index_management_tools.py"
+    ],
+    "cli": [
+      "execute_command.py"
+    ],
+    "ipfs_cluster_tools": [
+      "enhanced_ipfs_cluster_tools.py"
+    ],
+    "graph_tools": [
+      "query_knowledge_graph.py"
+    ],
+    "auth_tools": [
+      "auth_tools.py",
+      "enhanced_auth_tools.py"
+    ],
+    "provenance_tools": [
+      "provenance_tools_claudes.py",
+      "record_provenance.py"
+    ],
+    "cache_tools": [
+      "cache_tools.py",
+      "enhanced_cache_tools.py"
+    ],
+    "pdf_tools": [
+      "pdf_batch_process.py",
+      "pdf_query_corpus.py",
+      "pdf_optimize_for_llm.py",
+      "pdf_cross_document_analysis.py",
+      "pdf_ingest_to_graphrag.py",
+      "pdf_extract_entities.py",
+      "pdf_analyze_relationships.py"
+    ],
+    "session_tools": [
+      "enhanced_session_tools.py",
+      "session_tools.py"
+    ],
+    "background_task_tools": [
+      "background_task_tools.py",
+      "enhanced_background_task_tools.py"
+    ],
+    "development_tools": [
+      "documentation_generator.py",
+      "linting_tools.py",
+      "test_runner.py",
+      "test_generator.py",
+      "documentation_generator_simple.py",
+      "config.py",
+      "base_tool.py",
+      "codebase_search.py"
+    ],
+    "rate_limiting_tools": [
+      "rate_limiting_tools.py"
+    ],
+    "security_tools": [
+      "check_access_permission.py"
+    ],
+    "audit_tools": [
+      "generate_audit_report.py",
+      "record_audit_event.py",
+      "audit_tools.py"
+    ],
+    "lizardperson_argparse_programs": [],
+    "analysis_tools": [
+      "analysis_tools.py"
+    ],
+    "web_archive_tools": [
+      "extract_links_from_warc.py",
+      "extract_metadata_from_warc.py",
+      "index_warc.py",
+      "extract_text_from_warc.py",
+      "create_warc.py",
+      "extract_dataset_from_cdxj.py"
+    ],
+    "vector_store_tools": [
+      "enhanced_vector_store_tools.py"
+    ],
+    "vector_tools": [
+      "search_vector_index.py",
+      "vector_stores.py",
+      "shared_state.py",
+      "create_vector_index.py",
+      "vector_store_management.py"
+    ],
+    "storage_tools": [
+      "storage_tools.py"
+    ]
+  },
+  "overall_coverage": 100.0,
+  "missing_features": []
+}

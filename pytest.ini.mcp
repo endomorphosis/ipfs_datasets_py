@@ -1,0 +1,56 @@
+# MCP Dashboard Browser Testing Configuration
+
+[pytest]
+# Test discovery patterns
+python_files = test_*.py *_test.py comprehensive_*_test.py
+python_classes = Test* *Test *Tester
+python_functions = test_*
+
+# Test execution options
+addopts = 
+    -v
+    --tb=short
+    --strict-markers
+    --disable-warnings
+    --html=test_outputs/report.html
+    --self-contained-html
+    --capture=no
+
+# Async testing configuration
+asyncio_mode = auto
+asyncio_default_fixture_loop_scope = session
+
+# Markers for test categorization
+markers =
+    ui: UI and visual testing
+    api: API endpoint testing  
+    performance: Performance and load testing
+    accessibility: Accessibility compliance testing
+    integration: Full integration testing
+    smoke: Basic smoke testing
+    regression: Visual regression testing
+    responsive: Responsive design testing
+    slow: Tests that take a long time to run
+    docker: Tests that require Docker
+
+# Test timeout (30 minutes for comprehensive tests)
+timeout = 1800
+
+# Minimum version requirements
+minversion = 6.0
+
+# Test directories
+testpaths = tests/integration/dashboard
+
+# Log configuration
+log_cli = true
+log_cli_level = INFO
+log_cli_format = %(asctime)s [%(levelname)8s] %(name)s: %(message)s
+log_cli_date_format = %Y-%m-%d %H:%M:%S
+
+# Playwright configuration
+playwright_base_url = http://localhost:8899
+playwright_browser = chromium
+playwright_headless = true
+playwright_video = retain-on-failure
+playwright_screenshot = only-on-failure

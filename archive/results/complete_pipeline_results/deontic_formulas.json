@@ -1,0 +1,110 @@
+[
+  {
+    "id": "3085c99c4f62",
+    "operator": "O",
+    "agent": "Board of Directors",
+    "proposition": "exercise_diligent_oversight",
+    "fol_string": "O[board_of_directors](exercise_diligent_oversight)",
+    "source_text": "The board of directors of any publicly traded corporation shall exercise diligent oversight",
+    "confidence": 0.95
+  },
+  {
+    "id": "cbf882edd050",
+    "operator": "O",
+    "agent": "Directors",
+    "proposition": "each_individual_director_has_a_personal_fiduciary",
+    "fol_string": "O[directors](each_individual_director_has_a_personal_fiduciary)",
+    "source_text": "Each individual director has a personal fiduciary duty to exercise reasonable care",
+    "confidence": 0.9
+  },
+  {
+    "id": "56c272c2db2c",
+    "operator": "O",
+    "agent": "Audit Committee",
+    "proposition": "be_comprised_entirely_of_independent_directors",
+    "fol_string": "O[audit_committee](be_comprised_entirely_of_independent_directors)",
+    "source_text": "The audit committee, which must be comprised entirely of independent directors",
+    "confidence": 0.95
+  },
+  {
+    "id": "88b16435f06a",
+    "operator": "O",
+    "agent": "Employers",
+    "proposition": "provide_a_workplace_that_is_free_from_recognized_hazards",
+    "fol_string": "O[employers](provide_a_workplace_that_is_free_from_recognized_hazards)",
+    "source_text": "Every employer shall provide a workplace that is free from recognized hazards",
+    "confidence": 0.95
+  },
+  {
+    "id": "08f7de2b59ae",
+    "operator": "P",
+    "agent": "Employees",
+    "proposition": "all_employees_have_the_right_to_organize_form_jo",
+    "fol_string": "P[employees](all_employees_have_the_right_to_organize_form_jo)",
+    "source_text": "All employees have the right to organize, form, join, or assist labor organizations",
+    "confidence": 0.85
+  },
+  {
+    "id": "6b808fa45d63",
+    "operator": "O",
+    "agent": "corporation",
+    "proposition": "exercise_diligent_oversight_of_the_corporations_operations",
+    "fol_string": "O[agent_1894](exercise_diligent_oversight_of_the_corporations_operations)",
+    "source_text": "shall exercise diligent oversight of the corporation's operations, strategic planning, and risk management",
+    "confidence": 0.95
+  },
+  {
+    "id": "35daaa98c09e",
+    "operator": "O",
+    "agent": null,
+    "proposition": "has_a_personal_fiduciary_duty_to_exercise_reasonab",
+    "fol_string": "O(has_a_personal_fiduciary_duty_to_exercise_reasonab)",
+    "source_text": "has a personal fiduciary duty to exercise reasonable care, skill, and diligence",
+    "confidence": 0.9
+  },
+  {
+    "id": "3028299f16ab",
+    "operator": "O",
+    "agent": null,
+    "proposition": "provide_a_workplace_that_is_free_from_recognized_hazards",
+    "fol_string": "O(provide_a_workplace_that_is_free_from_recognized_hazards)",
+    "source_text": "shall provide a workplace that is free from recognized hazards",
+    "confidence": 0.95
+  },
+  {
+    "id": "09da4e8a7409",
+    "operator": "F",
+    "agent": null,
+    "proposition": "are_prohibited_from_discriminating_against_employe",
+    "fol_string": "F(are_prohibited_from_discriminating_against_employe)",
+    "source_text": "are prohibited from discriminating against employees or job applicants on the basis of race, color, religion, sex",
+    "confidence": 0.9
+  },
+  {
+    "id": "7bdcce2f2e7a",
+    "operator": "P",
+    "agent": null,
+    "proposition": "have_the_right_to_organize_form_join_or_assist",
+    "fol_string": "P(have_the_right_to_organize_form_join_or_assist)",
+    "source_text": "have the right to organize, form, join, or assist labor organizations",
+    "confidence": 0.85
+  },
+  {
+    "id": "aef8bc573097",
+    "operator": "O",
+    "agent": null,
+    "proposition": "comply_with_all_applicable_export_control_laws",
+    "fol_string": "O(comply_with_all_applicable_export_control_laws)",
+    "source_text": "Any person or entity engaged in the export or re-export of goods, technology, or software must comply with all applicable export control laws",
+    "confidence": 0.95
+  },
+  {
+    "id": "957a99a4fe52",
+    "operator": "O",
+    "agent": null,
+    "proposition": "implement_appropriate_technical_and_organizational_measures",
+    "fol_string": "O(implement_appropriate_technical_and_organizational_measures)",
+    "source_text": "Organizations that collect, process, or store personal information must implement appropriate technical and organizational measures",
+    "confidence": 0.95
+  }
+]
