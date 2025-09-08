@@ -1,57 +1,60 @@
 #!/usr/bin/env python3
+"""Test development tools import functionality."""
 
 import sys
 from pathlib import Path
+import pytest
 
 # Add current directory to path
 sys.path.insert(0, str(Path.cwd()))
 
-print("Starting development tools import test...")
 
-try:
-    print("1. Testing base_tool import...")
+def test_base_tool_import():
+    """Test that base_tool can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseDevelopmentTool
-    print("   ✓ base_tool imported")
+    assert BaseDevelopmentTool is not None
 
-    print("2. Testing config import...")
+
+def test_config_import():
+    """Test that config can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.config import get_config
-    print("   ✓ config imported")
+    assert get_config is not None
 
-    print("3. Testing test_generator import...")
+
+def test_test_generator_import():
+    """Test that test_generator can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import test_generator
-    print("   ✓ test_generator imported")
+    assert test_generator is not None
 
-    print("4. Testing codebase_search import...")
+
+def test_codebase_search_import():
+    """Test that codebase_search can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
-    print("   ✓ codebase_search imported")
+    assert codebase_search is not None
 
-    print("5. Testing documentation_generator import...")
+
+def test_documentation_generator_import():
+    """Test that documentation_generator can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import documentation_generator
-    print("   ✓ documentation_generator imported")
+    assert documentation_generator is not None
 
-    print("6. Testing linting_tools import...")
+
+def test_linting_tools_import():
+    """Test that linting_tools can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
-    print("   ✓ lint_python_codebase imported")
+    assert lint_python_codebase is not None
 
-    print("7. Testing test_runner import...")
+
+def test_test_runner_import():
+    """Test that test_runner can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import run_comprehensive_tests
-    print("   ✓ run_comprehensive_tests imported")
+    assert run_comprehensive_tests is not None
 
-    print("\n✓ All development tools imported successfully!")
 
-    # Test the tool discovery mechanism
-    print("\n8. Testing tool discovery...")
+def test_tool_discovery():
+    """Test the tool discovery mechanism."""
     from ipfs_datasets_py.mcp_server.server import import_tools_from_directory
     tools_path = Path('ipfs_datasets_py/mcp_server/tools/development_tools')
     tools = import_tools_from_directory(tools_path)
-    print(f"   Found {len(tools)} tools:")
-    for tool_name in sorted(tools.keys()):
-        print(f"     - {tool_name}")
-
-    print("\n✓ All tests completed successfully!")
-
-except Exception as e:
-    print(f"\n✗ Error: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    assert isinstance(tools, dict)
+    assert len(tools) > 0

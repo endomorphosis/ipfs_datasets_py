@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Ingestion Interface</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 2rem; background: #f8fafc; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #1e40af, #6366f1); color: white; padding: 2rem; text-align: center; }
+        .form-section { padding: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151; }
+        .form-input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.925rem; }
+        .form-input:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .btn-primary { background: #1e40af; color: white; padding: 0.875rem 2rem; border: none; border-radius: 0.5rem; font-weight: 500; cursor: pointer; }
+        .feature-highlight { background: #f0f9ff; padding: 1rem; border-left: 4px solid #1e40af; margin: 1.5rem 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📥 Data Ingestion Interface</h1>
+            <p>Universal investigation data ingestion with comprehensive source support</p>
+        </div>
+        
+        <div class="form-section">
+            <div class="feature-highlight">
+                <strong>Unified Approach:</strong> Single ingestion interface supports all investigation types - no separate forms for different professions.
+            </div>
+            
+            <form>
+                <div class="form-group">
+                    <label class="form-label">Investigation Source Type</label>
+                    <select class="form-input">
+                        <option>Document Collection</option>
+                        <option>Website/URL Archive</option>
+                        <option>News Articles</option>
+                        <option>Government Records</option>
+                        <option>Financial Reports</option>
+                        <option>Social Media Data</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Source Location</label>
+                    <input type="text" class="form-input" placeholder="URL, file path, or data source identifier" />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Analysis Focus</label>
+                    <select class="form-input">
+                        <option>Comprehensive Analysis</option>
+                        <option>Entity Extraction</option>
+                        <option>Relationship Mapping</option>
+                        <option>Timeline Analysis</option>
+                        <option>Pattern Detection</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Investigation Context</label>
+                    <textarea class="form-input" rows="4" placeholder="Provide context, research questions, or specific focus areas for this investigation..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">🚀 Start Investigation</button>
+            </form>
+            
+            <div class="feature-highlight" style="margin-top: 2rem;">
+                <strong>Universal Compatibility:</strong> This single interface serves data scientists (ML dataset creation), historians (archival research), and lawyers (evidence gathering) through unified investigation workflows.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+        

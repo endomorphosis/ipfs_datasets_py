@@ -1,0 +1,59 @@
+{
+  "sources": [
+    "White House",
+    "Congress",
+    "Federal Register"
+  ],
+  "metrics": {
+    "articles": 75,
+    "entities": 20,
+    "processing_rate": "65048.1 docs/sec"
+  },
+  "knowledge_graph": {
+    "nodes": 20,
+    "edges": 46,
+    "communities": 12,
+    "graph_density": 0.242,
+    "modularity_score": 0.682,
+    "node_types": {
+      "organizations": 11,
+      "people": 4,
+      "locations": 2,
+      "government_entities": 3
+    }
+  },
+  "queries": 5,
+  "professional_analysis": {
+    "data_scientists": {
+      "articles_analyzed": 75,
+      "government_entity_classification": {
+        "executive": 25,
+        "legislative": 25,
+        "regulatory": 25
+      },
+      "topic_clusters": 12,
+      "model_accuracy": 0.82,
+      "dataset_exports": [
+        "CSV",
+        "JSON",
+        "Parquet"
+      ]
+    },
+    "historians": {
+      "temporal_coverage": "7 days of government activity",
+      "sources_verified": 3,
+      "significant_events": 8,
+      "cross_references": 53,
+      "citations_generated": 75,
+      "archive_quality": "government_standard"
+    },
+    "legal_professionals": {
+      "document_portfolio": 75,
+      "sources_verified": 3,
+      "chain_of_custody": "maintained",
+      "evidence_integrity": "verified",
+      "admissible_documents": 72,
+      "admissibility_rate": "96.0%"
+    }
+  }
+}

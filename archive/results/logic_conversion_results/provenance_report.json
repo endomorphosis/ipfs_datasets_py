@@ -1,0 +1,313 @@
+{
+  "report_timestamp": "2025-08-31T19:16:24.358719",
+  "total_formulas": 20,
+  "storage_statistics": {
+    "total_formulas": 20,
+    "total_documents": 1,
+    "total_translations": 30,
+    "storage_backend": "filesystem",
+    "storage_path": "logic_conversion_results/ipld_storage"
+  },
+  "provenance_chains": [
+    {
+      "formula_cid": "07108b00e87b6ed3d6991412d87e5efe",
+      "verification": {
+        "verified": true,
+        "formula_id": "7a354f52f4b8",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.347708",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "07108b00e87b6ed3d6991412d87e5efe",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.347708"
+      }
+    },
+    {
+      "formula_cid": "f2b2253ce6fd2b789f2a0c512eb1b497",
+      "verification": {
+        "verified": true,
+        "formula_id": "66968508ba3a",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.348052",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "f2b2253ce6fd2b789f2a0c512eb1b497",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.348052"
+      }
+    },
+    {
+      "formula_cid": "03649239f8c2a7b86a1bab25656b0f49",
+      "verification": {
+        "verified": true,
+        "formula_id": "86678e82f15b",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.348399",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "03649239f8c2a7b86a1bab25656b0f49",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.348399"
+      }
+    },
+    {
+      "formula_cid": "283a9b2fd066a3c0f07dfcf55f79bfc5",
+      "verification": {
+        "verified": true,
+        "formula_id": "f4082bef632b",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.348719",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "283a9b2fd066a3c0f07dfcf55f79bfc5",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.348719"
+      }
+    },
+    {
+      "formula_cid": "0fc3fd462f4319b6d1b3f1769b328d15",
+      "verification": {
+        "verified": true,
+        "formula_id": "ea1a95d26ece",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.349006",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "0fc3fd462f4319b6d1b3f1769b328d15",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.349006"
+      }
+    },
+    {
+      "formula_cid": "743bda12c16b2e2116a08866347bc442",
+      "verification": {
+        "verified": true,
+        "formula_id": "b88d30bbdb6d",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.349307",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "743bda12c16b2e2116a08866347bc442",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.349307"
+      }
+    },
+    {
+      "formula_cid": "a03ede14040b74c4de8f71ca172945b5",
+      "verification": {
+        "verified": true,
+        "formula_id": "2690e9024e9b",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.349591",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "a03ede14040b74c4de8f71ca172945b5",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.349591"
+      }
+    },
+    {
+      "formula_cid": "66e9502321a7242885aa4ad69532751a",
+      "verification": {
+        "verified": true,
+        "formula_id": "cd1c0b812ab7",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.349878",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "66e9502321a7242885aa4ad69532751a",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.349878"
+      }
+    },
+    {
+      "formula_cid": "877b58ed5a57daa035a62f69b9a04abf",
+      "verification": {
+        "verified": true,
+        "formula_id": "7721d579ab53",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.350148",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "877b58ed5a57daa035a62f69b9a04abf",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.350148"
+      }
+    },
+    {
+      "formula_cid": "546cd7b6c9b67817832e0360ac4392de",
+      "verification": {
+        "verified": true,
+        "formula_id": "e5b63ec1da26",
+        "source_document": "sample_contract.txt",
+        "creation_timestamp": "2025-08-31T19:16:24.350438",
+        "lineage_complete": true,
+        "entity_count": 3,
+        "translation_count": 3,
+        "confidence_score": 0.95
+      },
+      "provenance": {
+        "source_document_path": "sample_contract.txt",
+        "source_document_cid": null,
+        "graphrag_entity_cids": [
+          "entity_0",
+          "entity_1",
+          "entity_2"
+        ],
+        "knowledge_graph_cid": "mock_kg_cid",
+        "conversion_context": {
+          "extraction_method": "graphrag_to_deontic",
+          "processor_version": "2.0"
+        },
+        "formula_cid": "546cd7b6c9b67817832e0360ac4392de",
+        "translation_cids": {},
+        "creation_timestamp": "2025-08-31T19:16:24.350438"
+      }
+    }
+  ]
+}

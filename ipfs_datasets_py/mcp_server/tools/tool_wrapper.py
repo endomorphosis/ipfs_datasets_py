@@ -357,44 +357,55 @@ class FunctionToolWrapper(BaseMCPTool):
             }
 
 
-def wrap_function_as_tool(function: Callable, 
-                         tool_name: str,
-                         category: str = "general",
-                         description: Optional[str] = None,
-                         tags: Optional[list] = None) -> FunctionToolWrapper:
+def wrap_function_as_tool(*args, **kwargs):
     """
-    Convenience function to wrap a standalone function as an MCP tool.
-    
-    Args:
-        function: The function to wrap (sync or async)
-        tool_name: Name for the tool
-        category: Category for the tool (e.g., "embedding", "storage", "search")
-        description: Optional description (uses function docstring if not provided)
-        tags: Optional tags for the tool
-    
-    Returns:
-        FunctionToolWrapper instance ready for registration
-    
-    Example:
-        ```python
-        from ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools import authenticate_user
-        
-        auth_tool = wrap_function_as_tool(
-            authenticate_user, 
-            "authenticate_user",
-            category="auth",
-            description="Authenticate a user with credentials",
-            tags=["authentication", "security"]
+    Wrap functions as MCP tools with dual usage styles.
+
+    Supports two patterns:
+    1) Helper style (existing behavior):
+       wrap_function_as_tool(function, tool_name, category="general", description=None, tags=None)
+       -> returns FunctionToolWrapper
+
+    2) Decorator style (new, for convenience):
+       @wrap_function_as_tool(name="tool_name", category="general", description=None, tags=None)
+       async def my_tool(...):
+           ...
+       -> returns the original function with metadata attributes set
+    """
+    if args and callable(args[0]):
+        function: Callable = args[0]
+        tool_name: str = args[1] if len(args) > 1 else function.__name__
+        category: str = args[2] if len(args) > 2 else kwargs.get("category", "general")
+        description: Optional[str] = kwargs.get("description")
+        tags: Optional[list] = kwargs.get("tags")
+
+        return FunctionToolWrapper(
+            function=function,
+            tool_name=tool_name,
+            category=category,
+            description=description,
+            tags=tags
         )
-        ```
-    """
-    return FunctionToolWrapper(
-        function=function,
-        tool_name=tool_name,
-        category=category,
-        description=description,
-        tags=tags
-    )
+
+    # Decorator usage
+    name: Optional[str] = kwargs.get("name") or (args[0] if args else None)
+    category: str = kwargs.get("category", "general")
+    description: Optional[str] = kwargs.get("description")
+    tags: Optional[list] = kwargs.get("tags")
+
+    def decorator(function: Callable):
+        try:
+            setattr(function, "__mcp_tool_name__", name or function.__name__)
+            setattr(function, "__mcp_tool_category__", category)
+            if description:
+                setattr(function, "__mcp_tool_description__", description)
+            if tags:
+                setattr(function, "__mcp_tool_tags__", tags)
+        except Exception:
+            pass
+        return function
+
+    return decorator
 
 
 def wrap_function_with_metadata(function: Callable, 

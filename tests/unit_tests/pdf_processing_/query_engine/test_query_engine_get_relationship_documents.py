@@ -15,9 +15,9 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/query_engine.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
+work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
+file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine.py")
+md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
 assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."

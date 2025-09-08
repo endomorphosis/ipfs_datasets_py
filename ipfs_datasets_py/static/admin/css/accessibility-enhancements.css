@@ -1,0 +1,75 @@
+
+/* Enhanced Accessibility Styles */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --primary: #000000;
+        --background: #ffffff;
+        --text: #000000;
+        --border: #000000;
+    }
+    
+    .btn-primary {
+        background: #000000;
+        color: #ffffff;
+        border: 2px solid #000000;
+    }
+    
+    .nav-tab.active {
+        background: #000000;
+        color: #ffffff;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus visible for better keyboard navigation */
+.nav-tab:focus-visible,
+.btn:focus-visible,
+.form-input:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+/* Improved color contrast */
+.text-muted {
+    color: #4a5568;
+}
+
+/* Skip links for screen readers */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #667eea;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 0 0 4px 4px;
+}
+
+.skip-link:focus {
+    top: 6px;
+}

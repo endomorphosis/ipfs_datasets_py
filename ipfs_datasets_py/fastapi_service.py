@@ -30,19 +30,26 @@ import uvicorn
 try:
     from .embeddings.core import IPFSEmbeddings
     from .embeddings.schema import EmbeddingRequest, EmbeddingResponse
-    from .vector_stores import BaseVectorStore, QdrantVectorStore, FAISSVectorStore
-    from .mcp_server.server import MCPServer
+    from .vector_stores.base import BaseVectorStore
+    from .vector_stores.qdrant_store import QdrantVectorStore
+    from .vector_stores.faiss_store import FAISSVectorStore
+    from .mcp_server.server import IPFSDatasetsMCPServer
     from .fastapi_config import FastAPISettings
 except ImportError:
     # Fallback imports for development
     import sys
     import os
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from .embeddings.core import IPFSEmbeddings
-    from .embeddings.schema import EmbeddingRequest, EmbeddingResponse
-    from vector_stores import BaseVectorStore, QdrantVectorStore, FAISSVectorStore
-    from mcp_server.server import MCPServer
-    from fastapi_config import FastAPISettings
+    try:
+        from embeddings.core import IPFSEmbeddings
+        from embeddings.schema import EmbeddingRequest, EmbeddingResponse
+        from vector_stores.base import BaseVectorStore
+        from vector_stores.qdrant_store import QdrantVectorStore 
+        from vector_stores.faiss_store import FAISSVectorStore
+        from mcp_server.server import IPFSDatasetsMCPServer
+        from fastapi_config import FastAPISettings
+    except ImportError as e:
+        logger.warning(f"Some imports failed, using mock implementations: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +99,7 @@ class VectorSearchRequest(BaseModel):
     
 class AnalysisRequest(BaseModel):
     vectors: List[List[float]]
-    analysis_type: str = Field(..., regex="^(clustering|quality|similarity|drift)$")
+    analysis_type: str = Field(..., pattern="^(clustering|quality|similarity|drift)$")
     parameters: Optional[Dict[str, Any]] = None
 
 # Additional Pydantic models
@@ -139,7 +146,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting IPFS Datasets FastAPI Service...")
     
     # Initialize MCP server
-    app.state.mcp_server = MCPServer()
+    app.state.mcp_server = IPFSDatasetsMCPServer()
     
     # Initialize vector stores
     app.state.vector_stores = {}

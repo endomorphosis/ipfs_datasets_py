@@ -1,0 +1,17 @@
+{
+  "target": "smt-lib",
+  "translated_formula": "(permitted agent_5373 terminate_agreement)",
+  "success": true,
+  "confidence": 0.9,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "logic": "QF_UF",
+    "deontic_operator": "P"
+  },
+  "dependencies": [
+    "z3",
+    "cvc4",
+    "smt-lib2"
+  ]
+}

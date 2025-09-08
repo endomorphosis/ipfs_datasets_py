@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional news analysis dashboard for data scientists, historians, and lawyers">
+    <title>News Analysis Dashboard - Enhanced Version</title>
+    
+    <!-- Accessibility and Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Skip Link for Screen Readers -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Color System - WCAG AA Compliant */
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.3);
+            
+            /* Typography */
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            
+            /* Spacing */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            
+            /* Animation */
+            --transition-base: all 0.15s ease-in-out;
+            --transition-colors: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+        }
+        
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            z-index: 1000;
+            transition: var(--transition-base);
+        }
+        
+        .skip-link:focus {
+            top: 6px;
+        }
+        
+        /* Base Typography */
+        body {
+            font-family: var(--font-family);
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--background-color);
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            margin-bottom: var(--space-4);
+        }
+        
+        h2 {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-3);
+            color: var(--text-primary);
+        }
+        
+        h3 {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            color: var(--text-primary);
+        }
+        
+        /* Loading States and Skeletons */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Header Component */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            padding: var(--space-6) var(--space-4);
+            margin-bottom: var(--space-6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-4);
+        }
+        
+        .header-title {
+            margin: 0;
+        }
+        
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+        }
+        
+        .user-type-selector {
+            display: flex;
+            gap: var(--space-2);
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--space-1);
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .user-type-btn {
+            padding: var(--space-2) var(--space-3);
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition-base);
+            font-size: var(--font-size-sm);
+            min-height: 44px; /* Touch target compliance */
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-type-btn:hover,
+        .user-type-btn:focus {
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+        
+        .user-type-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-color);
+            border-color: transparent;
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-4);
+        }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+            padding: var(--space-2);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-tab {
+            padding: var(--space-3) var(--space-4);
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-colors);
+            font-weight: 500;
+            min-height: 44px; /* Touch target compliance */
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        
+        .nav-tab:hover {
+            background: var(--background-color);
+            color: var(--primary-color);
+        }
+        
+        .nav-tab:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+        
+        .nav-tab.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .nav-tab-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Content Areas */
+        .content {
+            background: var(--surface-color);
+            padding: var(--space-6);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: var(--space-6);
+            min-height: 60vh;
+        }
+        
+        .content[aria-hidden="true"] {
+            display: none;
+        }
+        
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, var(--surface-color), #f1f5f9);
+            padding: var(--space-6);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: var(--space-2);
+            display: block;
+        }
+        
+        .stats-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: var(--space-1);
+        }
+        
+        .stats-description {
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+        }
+        
+        /* Form Components */
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: var(--space-2);
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+        }
+        
+        .form-label.required::after {
+            content: ' *';
+            color: var(--error-color);
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--surface-color);
+            color: var(--text-primary);
+            transition: var(--transition-colors);
+            font-size: var(--font-size-base);
+            min-height: 44px; /* Touch target compliance */
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--focus-ring);
+        }
+        
+        .form-input:invalid,
+        .form-select:invalid,
+        .form-textarea:invalid {
+            border-color: var(--error-color);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        /* Button Components */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-6);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-base);
+            text-decoration: none;
+            min-height: 44px; /* Touch target compliance */
+            justify-content: center;
+        }
+        
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* Progress Indicators */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: var(--space-4) 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: var(--space-4);
+            right: var(--space-4);
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: var(--surface-color);
+            padding: var(--space-4);
+            border-radius: 8px;
+            border-left: 4px solid var(--success-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: var(--space-2);
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Interactive Elements */
+        .interactive-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-6) 0;
+        }
+        
+        .demo-card {
+            background: var(--surface-color);
+            padding: var(--space-6);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition-base);
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-type-selector {
+                order: -1;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav-tab {
+                justify-content: center;
+                min-height: 48px; /* Larger touch targets on mobile */
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .content {
+                padding: var(--space-4);
+            }
+            
+            .container {
+                padding: 0 var(--space-3);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: var(--space-4) var(--space-3);
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .form-input,
+            .form-select,
+            .form-textarea {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+        
+        /* High Contrast Mode Support */
+        @media (prefers-contrast: high) {
+            :root {
+                --border-color: #000000;
+                --text-secondary: #000000;
+            }
+            
+            .nav-tab {
+                border: 2px solid currentColor;
+            }
+            
+            .form-input,
+            .form-select,
+            .form-textarea {
+                border-width: 3px;
+            }
+        }
+        
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #0f172a;
+                --surface-color: #1e293b;
+                --text-primary: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+    
+    <!-- Header -->
+    <header class="header" role="banner">
+        <div class="header-content">
+            <div>
+                <h1 class="header-title">News Analysis Dashboard</h1>
+                <p class="header-subtitle">Professional analysis for data scientists, historians, and lawyers</p>
+            </div>
+            
+            <div class="user-type-selector" role="radiogroup" aria-label="Select user type">
+                <button class="user-type-btn active" 
+                        role="radio" 
+                        aria-checked="true" 
+                        aria-label="Data Scientist mode"
+                        data-user-type="data-scientist">
+                    Data Scientist
+                </button>
+                <button class="user-type-btn" 
+                        role="radio" 
+                        aria-checked="false" 
+                        aria-label="Historian mode"
+                        data-user-type="historian">
+                    Historian
+                </button>
+                <button class="user-type-btn" 
+                        role="radio" 
+                        aria-checked="false" 
+                        aria-label="Lawyer mode"
+                        data-user-type="lawyer">
+                    Lawyer
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <main id="main-content" class="container" role="main">
+        <!-- Navigation -->
+        <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
+            <a href="#overview" 
+               class="nav-tab active" 
+               role="tab" 
+               aria-selected="true"
+               aria-controls="overview-content">
+                <span class="nav-tab-icon" aria-hidden="true">📊</span>
+                Overview
+            </a>
+            <a href="#ingest" 
+               class="nav-tab" 
+               role="tab" 
+               aria-selected="false"
+               aria-controls="ingest-content">
+                <span class="nav-tab-icon" aria-hidden="true">📥</span>
+                Ingest
+            </a>
+            <a href="#timeline" 
+               class="nav-tab" 
+               role="tab" 
+               aria-selected="false"
+               aria-controls="timeline-content">
+                <span class="nav-tab-icon" aria-hidden="true">⏰</span>
+                Timeline
+            </a>
+            <a href="#query" 
+               class="nav-tab" 
+               role="tab" 
+               aria-selected="false"
+               aria-controls="query-content">
+                <span class="nav-tab-icon" aria-hidden="true">🔍</span>
+                Query
+            </a>
+            <a href="#graph" 
+               class="nav-tab" 
+               role="tab" 
+               aria-selected="false"
+               aria-controls="graph-content">
+                <span class="nav-tab-icon" aria-hidden="true">🕸️</span>
+                Graph Explorer
+            </a>
+            <a href="#export" 
+               class="nav-tab" 
+               role="tab" 
+               aria-selected="false"
+               aria-controls="export-content">
+                <span class="nav-tab-icon" aria-hidden="true">💾</span>
+                Export
+            </a>
+        </nav>
+        
+        <!-- Overview Content -->
+        <div id="overview-content" class="content" role="tabpanel" aria-labelledby="overview">
+            <h2>Dashboard Overview</h2>
+            
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <span class="stats-number">1,247</span>
+                    <div class="stats-label">Articles Processed</div>
+                    <div class="stats-description">Total news articles analyzed across all sources</div>
+                </div>
+                
+                <div class="stats-card">
+                    <span class="stats-number">3,891</span>
+                    <div class="stats-label">Entities Extracted</div>
+                    <div class="stats-description">Named entities identified and categorized</div>
+                </div>
+                
+                <div class="stats-card">
+                    <span class="stats-number">127</span>
+                    <div class="stats-label">Active Workflows</div>
+                    <div class="stats-description">Currently running analysis processes</div>
+                </div>
+                
+                <div class="stats-card">
+                    <span class="stats-number">92%</span>
+                    <div class="stats-label">Processing Success Rate</div>
+                    <div class="stats-description">Successfully analyzed articles</div>
+                </div>
+            </div>
+            
+            <div class="interactive-demo">
+                <div class="demo-card">
+                    <h3>Recent Activity</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            ✅ Processed 15 Reuters articles on economic policy
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            📈 Generated timeline analysis for election coverage
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            🏛️ Extracted 127 entities from government documents
+                        </li>
+                        <li style="padding: 8px 0;">
+                            🔍 Completed cross-document conflict analysis
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3>Processing Status</h3>
+                    <div style="margin: var(--space-4) 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-2);">
+                            <span>Reuters Processing</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin: var(--space-4) 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-2);">
+                            <span>Entity Analysis</span>
+                            <span>92%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 92%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ingest Content -->
+        <div id="ingest-content" class="content" role="tabpanel" aria-labelledby="ingest" aria-hidden="true">
+            <h2>Article Ingestion</h2>
+            
+            <form class="form" role="form" aria-label="Article ingestion form">
+                <div class="form-group">
+                    <label for="article-url" class="form-label required">Article URL</label>
+                    <input type="url" 
+                           id="article-url" 
+                           class="form-input"
+                           placeholder="https://example.com/news-article"
+                           aria-describedby="url-help"
+                           required>
+                    <small id="url-help" class="form-help">Enter the full URL of the news article to analyze</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="source-type" class="form-label required">Source Type</label>
+                    <select id="source-type" class="form-select" required aria-describedby="source-help">
+                        <option value="">Select source type</option>
+                        <option value="news-website">News Website</option>
+                        <option value="government">Government Document</option>
+                        <option value="academic">Academic Paper</option>
+                        <option value="social-media">Social Media</option>
+                    </select>
+                    <small id="source-help" class="form-help">Choose the type of source you're analyzing</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="analysis-type" class="form-label required">Analysis Type</label>
+                    <select id="analysis-type" class="form-select" required>
+                        <option value="full">Full Analysis</option>
+                        <option value="entities">Entity Extraction Only</option>
+                        <option value="timeline">Timeline Analysis</option>
+                        <option value="sentiment">Sentiment Analysis</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="additional-notes" class="form-label">Additional Notes</label>
+                    <textarea id="additional-notes" 
+                              class="form-textarea"
+                              placeholder="Any additional context or specific requirements..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn" aria-describedby="submit-help">
+                    <span aria-hidden="true">🚀</span>
+                    Process Article
+                </button>
+                <small id="submit-help" class="form-help">This will start the analysis process</small>
+            </form>
+        </div>
+        
+        <!-- Other content areas would follow the same pattern... -->
+        <div id="timeline-content" class="content" role="tabpanel" aria-labelledby="timeline" aria-hidden="true">
+            <h2>Timeline Analysis</h2>
+            <p>Timeline analysis interface would be implemented here with proper accessibility and responsiveness.</p>
+        </div>
+        
+        <div id="query-content" class="content" role="tabpanel" aria-labelledby="query" aria-hidden="true">
+            <h2>GraphRAG Query</h2>
+            <p>Query interface would be implemented here with proper form labels and ARIA attributes.</p>
+        </div>
+        
+        <div id="graph-content" class="content" role="tabpanel" aria-labelledby="graph" aria-hidden="true">
+            <h2>Graph Explorer</h2>
+            <p>Interactive graph explorer would be implemented here with keyboard navigation support.</p>
+        </div>
+        
+        <div id="export-content" class="content" role="tabpanel" aria-labelledby="export" aria-hidden="true">
+            <h2>Professional Export</h2>
+            <p>Export interface would be implemented here with accessible form controls.</p>
+        </div>
+    </main>
+    
+    <script>
+        // Enhanced JavaScript with Accessibility Support
+        
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            
+            if (type === 'error') {
+                toast.style.borderLeftColor = 'var(--error-color)';
+            }
+            
+            toast.innerHTML = `
+                <strong>${type === 'error' ? 'Error:' : 'Success:'}</strong>
+                ${message}
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        // Tab Management with Keyboard Support
+        class TabManager {
+            constructor() {
+                this.tabs = document.querySelectorAll('.nav-tab');
+                this.panels = document.querySelectorAll('.content');
+                this.currentTab = 0;
+                this.init();
+            }
+            
+            init() {
+                this.tabs.forEach((tab, index) => {
+                    tab.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.showTab(index);
+                    });
+                    
+                    tab.addEventListener('keydown', (e) => {
+                        this.handleKeydown(e, index);
+                    });
+                });
+                
+                // Set initial ARIA attributes
+                this.updateARIA();
+            }
+            
+            handleKeydown(e, index) {
+                let targetIndex = index;
+                
+                switch(e.key) {
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        targetIndex = (index + 1) % this.tabs.length;
+                        break;
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        targetIndex = (index - 1 + this.tabs.length) % this.tabs.length;
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        targetIndex = 0;
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        targetIndex = this.tabs.length - 1;
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        this.showTab(index);
+                        return;
+                    default:
+                        return;
+                }
+                
+                this.tabs[targetIndex].focus();
+                this.showTab(targetIndex);
+            }
+            
+            showTab(index) {
+                this.currentTab = index;
+                
+                // Update visual state
+                this.tabs.forEach((tab, i) => {
+                    tab.classList.toggle('active', i === index);
+                });
+                
+                this.panels.forEach((panel, i) => {
+                    if (i === index) {
+                        panel.removeAttribute('aria-hidden');
+                        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        panel.setAttribute('aria-hidden', 'true');
+                    }
+                });
+                
+                this.updateARIA();
+                showToast(`Switched to ${this.tabs[index].textContent.trim()} tab`);
+            }
+            
+            updateARIA() {
+                this.tabs.forEach((tab, i) => {
+                    tab.setAttribute('aria-selected', i === this.currentTab);
+                    tab.setAttribute('tabindex', i === this.currentTab ? '0' : '-1');
+                });
+            }
+        }
+        
+        // User Type Management
+        class UserTypeManager {
+            constructor() {
+                this.buttons = document.querySelectorAll('.user-type-btn');
+                this.currentType = 'data-scientist';
+                this.init();
+            }
+            
+            init() {
+                this.buttons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        this.setUserType(button.dataset.userType);
+                    });
+                    
+                    button.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.setUserType(button.dataset.userType);
+                        }
+                    });
+                });
+            }
+            
+            setUserType(type) {
+                this.currentType = type;
+                
+                this.buttons.forEach(button => {
+                    const isActive = button.dataset.userType === type;
+                    button.classList.toggle('active', isActive);
+                    button.setAttribute('aria-checked', isActive);
+                });
+                
+                document.body.setAttribute('data-user-type', type);
+                showToast(`Switched to ${type.replace('-', ' ')} mode`);
+            }
+        }
+        
+        // Form Enhancement
+        class FormEnhancer {
+            constructor() {
+                this.forms = document.querySelectorAll('form');
+                this.init();
+            }
+            
+            init() {
+                this.forms.forEach(form => {
+                    form.addEventListener('submit', (e) => {
+                        if (!this.validateForm(form)) {
+                            e.preventDefault();
+                            showToast('Please check the form for errors', 'error');
+                        }
+                    });
+                    
+                    // Auto-save functionality
+                    const inputs = form.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                        input.addEventListener('change', () => {
+                            this.autoSave(form);
+                        });
+                    });
+                    
+                    // Restore saved data
+                    this.restoreForm(form);
+                });
+            }
+            
+            validateForm(form) {
+                let isValid = true;
+                const inputs = form.querySelectorAll('[required]');
+                
+                inputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        input.setAttribute('aria-invalid', 'true');
+                        isValid = false;
+                    } else {
+                        input.removeAttribute('aria-invalid');
+                    }
+                });
+                
+                return isValid;
+            }
+            
+            autoSave(form) {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                localStorage.setItem(`form_${form.id || 'default'}`, JSON.stringify(data));
+            }
+            
+            restoreForm(form) {
+                const savedData = localStorage.getItem(`form_${form.id || 'default'}`);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    Object.keys(data).forEach(key => {
+                        const input = form.querySelector(`[name="${key}"]`);
+                        if (input) {
+                            input.value = data[key];
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Initialize all components when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new TabManager();
+            new UserTypeManager();
+            new FormEnhancer();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showToast('Welcome to the enhanced News Analysis Dashboard!');
+            }, 1000);
+        });
+        
+        // Service Worker for Offline Support (Basic)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(console.error);
+        }
+    </script>
+</body>
+</html>

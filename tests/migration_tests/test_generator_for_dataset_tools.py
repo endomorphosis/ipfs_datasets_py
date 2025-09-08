@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -15,6 +16,7 @@ import sys
 import inspect
 import importlib
 from unittest.mock import patch, MagicMock
+import pytest
 
 # Add the parent directory to the path so we can import the tools
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,9 +27,10 @@ try:
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import process_dataset
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.convert_dataset_format import convert_dataset_format
+    DATASET_TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing Dataset tools: {e}")
-    sys.exit(1)
+    DATASET_TOOLS_AVAILABLE = False
 
 # Function to analyze the function signature
 def analyze_function_signature(func):

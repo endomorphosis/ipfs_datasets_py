@@ -26,13 +26,17 @@ This directory contains all the documentation for the IPFS Datasets Python proje
   - [implementation_notes/](implementation_notes/): Technical implementation details
   - [rag_optimizer/](rag_optimizer/): RAG Query Optimizer documentation
   - [tutorials/](tutorials/): Step-by-step guides for specific features
-  - Component documentation:
-    - [ipfs_kit_py/](ipfs_kit_py/): IPFS Kit Py documentation
-    - [ipfs_model_manager_py/](ipfs_model_manager_py/): IPFS Model Manager Py documentation
-    - [ipwb/](ipwb/): IPWB documentation
-    - [py-ipld-car/](py-ipld-car/): IPLD CAR documentation
-    - [py-ipld-dag-pb/](py-ipld-dag-pb/): IPLD DAG-PB documentation
-    - [py-ipld-unixfs/](py-ipld-unixfs/): IPLD UnixFS documentation
+- Component documentation:
+    - [Vector Stores](../ipfs_datasets_py/vector_stores/) - Vector database implementations
+    - [Embeddings](../ipfs_datasets_py/embeddings/) - Embedding generation and management
+    - [Search](../ipfs_datasets_py/search/) - Advanced search capabilities
+    - [RAG](../ipfs_datasets_py/rag/) - Retrieval-augmented generation
+    - [PDF Processing](../ipfs_datasets_py/pdf_processing/) - PDF analysis and processing
+    - [Multimedia](../ipfs_datasets_py/multimedia/) - Media processing capabilities
+    - [LLM](../ipfs_datasets_py/llm/) - Language model integration
+    - [MCP Tools](../ipfs_datasets_py/mcp_tools/) - MCP tool integration
+    - [IPLD](../ipfs_datasets_py/ipld/) - InterPlanetary Linked Data
+    - [Audit](../ipfs_datasets_py/audit/) - Security and audit logging
 
 ## Documentation Maintenance Guidelines
 
