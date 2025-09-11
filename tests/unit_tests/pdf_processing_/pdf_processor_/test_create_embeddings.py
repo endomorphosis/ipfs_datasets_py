@@ -117,53 +117,128 @@ class TestCreateEmbeddings:
             ]
         }
 
+    @pytest.mark.parametrize("expected_key", [
+        "chunk_embeddings",
+        "document_embedding",
+        "embedding_model"
+    ])
     @pytest.mark.asyncio
-    async def test_create_embeddings_complete_vector_generation(self, processor, mock_optimized_content, mock_entities_and_relations):
+    async def test_create_embeddings_returns_required_keys(self, processor, mock_optimized_content, mock_entities_and_relations, expected_key):
         """
         GIVEN LLM-optimized content and extracted entities/relationships
         WHEN _create_embeddings extracts vector embeddings from LLM document
-        THEN expect returned dict contains:
-            - chunk_embeddings: list of per-chunk embeddings with metadata
-            - document_embedding: document-level embedding vector
-            - embedding_model: identifier of the embedding model used
+        THEN the returned dict contains the required keys.
         """
-        # The actual implementation extracts embeddings from the LLM document, not generates new ones
         result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
-        
-        assert 'chunk_embeddings' in result
-        assert 'document_embedding' in result
-        assert 'embedding_model' in result
+        assert expected_key in result
+
+    @pytest.mark.asyncio
+    async def test_create_embeddings_chunk_embeddings_is_list(self, processor, mock_optimized_content, mock_entities_and_relations):
+        """
+        GIVEN LLM-optimized content and extracted entities/relationships
+        WHEN _create_embeddings extracts vector embeddings from LLM document
+        THEN the 'chunk_embeddings' value is a list.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
         assert isinstance(result['chunk_embeddings'], list)
+
+    @pytest.mark.asyncio
+    async def test_create_embeddings_chunk_embeddings_has_correct_length(self, processor, mock_optimized_content, mock_entities_and_relations):
+        """
+        GIVEN LLM-optimized content with 3 chunks
+        WHEN _create_embeddings extracts vector embeddings from LLM document
+        THEN the 'chunk_embeddings' list has a length of 3.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
         assert len(result['chunk_embeddings']) == 3
-        # Since LLM document has mock embeddings, they will be Mock objects when converted to list
-        assert result['document_embedding'] is not None or result['document_embedding'] is None
+
+    @pytest.mark.asyncio
+    async def test_create_embeddings_document_embedding_is_not_none(self, processor, mock_optimized_content, mock_entities_and_relations):
+        """
+        GIVEN LLM-optimized content with a document embedding
+        WHEN _create_embeddings extracts vector embeddings from LLM document
+        THEN the 'document_embedding' is not None.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
+        assert result['document_embedding'] is not None
+
+    @pytest.mark.asyncio
+    async def test_create_embeddings_returns_correct_model_identifier(self, processor, mock_optimized_content, mock_entities_and_relations):
+        """
+        GIVEN the default embedding model configuration
+        WHEN _create_embeddings is called
+        THEN the 'embedding_model' identifier is correct.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
         assert result['embedding_model'] == 'sentence-transformers/all-MiniLM-L6-v2'
 
     @pytest.mark.asyncio
-    async def test_create_embeddings_chunk_level_vector_generation(self, processor, mock_optimized_content, mock_entities_and_relations):
+    async def test_create_embeddings_chunk_level_vector_generation_has_correct_length(
+        self, processor, mock_optimized_content, mock_entities_and_relations):
         """
         GIVEN content chunks from LLM optimization
         WHEN _create_embeddings processes individual chunks
-        THEN expect:
-            - Each chunk gets embedding from LLM document
-            - Chunk metadata preserved with embeddings
-            - Consistent embedding dimensionality across chunks
-            - Semantic content captured in vector space
+        THEN the resulting 'chunk_embeddings' list has the correct length.
         """
         result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
-        
         chunk_embeds = result['chunk_embeddings']
         assert len(chunk_embeds) == 3
-        
-        # Check each chunk has consistent structure
-        for i, chunk_embed in enumerate(chunk_embeds):
-            assert 'embedding' in chunk_embed
-            assert 'chunk_id' in chunk_embed
-            assert 'content' in chunk_embed
-            assert chunk_embed['chunk_id'] == f"chunk_{i+1:04d}"
-            # Embedding should be a list (converted from numpy array)
-            assert isinstance(chunk_embed['embedding'], list)
-            assert len(chunk_embed['embedding']) == 3  # Consistent dimensionality
+
+    @pytest.mark.parametrize("chunk_index, key", [
+        (0, 'embedding'), (1, 'embedding'), (2, 'embedding'),
+        (0, 'chunk_id'), (1, 'chunk_id'), (2, 'chunk_id'),
+        (0, 'content'), (1, 'content'), (2, 'content'),
+    ])
+    @pytest.mark.asyncio
+    async def test_create_embeddings_chunk_level_vector_generation_has_required_keys(
+        self, processor, mock_optimized_content, mock_entities_and_relations, chunk_index, key):
+        """
+        GIVEN content chunks from LLM optimization
+        WHEN _create_embeddings processes individual chunks
+        THEN each chunk dictionary contains the required keys.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
+        chunk_embeds = result['chunk_embeddings']
+        assert key in chunk_embeds[chunk_index]
+
+    @pytest.mark.parametrize("chunk_index", [0, 1, 2])
+    @pytest.mark.asyncio
+    async def test_create_embeddings_chunk_level_vector_generation_has_correct_chunk_id(
+        self, processor, mock_optimized_content, mock_entities_and_relations, chunk_index):
+        """
+        GIVEN content chunks from LLM optimization
+        WHEN _create_embeddings processes individual chunks
+        THEN each chunk has the correct 'chunk_id'.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
+        chunk_embeds = result['chunk_embeddings']
+        assert chunk_embeds[chunk_index]['chunk_id'] == f"chunk_{chunk_index+1:04d}"
+
+    @pytest.mark.parametrize("chunk_index", [0, 1, 2])
+    @pytest.mark.asyncio
+    async def test_create_embeddings_chunk_level_vector_generation_embedding_is_list(
+        self, processor, mock_optimized_content, mock_entities_and_relations, chunk_index):
+        """
+        GIVEN content chunks from LLM optimization
+        WHEN _create_embeddings processes individual chunks
+        THEN each chunk's embedding is a list.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
+        chunk_embeds = result['chunk_embeddings']
+        assert isinstance(chunk_embeds[chunk_index]['embedding'], list)
+
+    @pytest.mark.parametrize("chunk_index", [0, 1, 2])
+    @pytest.mark.asyncio
+    async def test_create_embeddings_chunk_level_vector_generation_has_consistent_dimensionality(
+        self, processor, mock_optimized_content, mock_entities_and_relations, chunk_index):
+        """
+        GIVEN content chunks from LLM optimization
+        WHEN _create_embeddings processes individual chunks
+        THEN each chunk's embedding has a consistent dimensionality.
+        """
+        result = await processor._create_embeddings(mock_optimized_content, mock_entities_and_relations)
+        chunk_embeds = result['chunk_embeddings']
+        assert len(chunk_embeds[chunk_index]['embedding']) == 3
 
     @pytest.mark.asyncio
     async def test_create_embeddings_document_level_representation(self, processor, mock_optimized_content, mock_entities_and_relations):

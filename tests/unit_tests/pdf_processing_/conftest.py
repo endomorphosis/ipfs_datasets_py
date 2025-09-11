@@ -44,14 +44,16 @@ from ipfs_datasets_py.monitoring import MonitoringSystem
 from ipfs_datasets_py.ipld import IPLDStorage
 
 
-import reportlab
 import PIL
-from reportlab.pdfgen import canvas
+
+try:
+    from reportlab.pdfgen import canvas
+except ImportError as e:
+    raise ImportError(f"reportlab library is required to run this test suite: {e}")
 
 
 import pytest
-from pathlib import Path
-from reportlab.pdfgen import canvas
+
 
 
 VALID_METADATA = {
@@ -210,12 +212,24 @@ def no_read_permissions_file(tmp_path) -> str:
     """Create file with no read permissions."""
     test_file = tmp_path / "no_read_perms.pdf"
     test_file.write_text("test content")
-    
+
     # Remove read permissions
     current_mode = test_file.stat().st_mode
     test_file.chmod(current_mode & ~stat.S_IREAD)
-    
-    return test_file
+
+    return str(test_file)
+
+
+@pytest.fixture
+def nonexistent_file_path(self) -> str:
+    """Provide path to non-existent file."""
+    return "nonexistent.pdf"
+
+
+@pytest.fixture
+def expected_file_not_found_message(self) -> str:
+    """Expected error message for file not found."""
+    return "nonexistent.pdf"
 
 
 @pytest.fixture
@@ -226,6 +240,7 @@ def default_ipld_storage():
 @pytest.fixture
 def default_logger():
     return logging.getLogger("pdf_processor")
+
 
 @pytest.fixture
 def default_pdf_processor_parameters(default_logger):

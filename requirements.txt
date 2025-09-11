@@ -49,6 +49,23 @@ reportlab>=4.4.3
 pyfakefs
 moviepy
 
+# ipld crap
+ipld-car
+ipld-dag-pb
+dag-cbor>=0.3.3
+
+# All this other crap in order to get the debugger to fucking work.
+slugify
+llama-index>=0.13.5
+qdrant-client
+elasticsearch
+pysbd
+PyJWT
+fastapi
+keyring
+passlib
+uvicorn
+
 # Add these one by one after basic setup works:
 # datasets>=2.10.0,<3.0.0
 # transformers>=4.0.0,<5.0.0

@@ -59,566 +59,909 @@ except ImportError as e:
     raise ImportError(f"Could into import the module's dependencies: {e}") 
 
 
+@pytest.fixture
+def expected_node_counts():
+    return {
+        "isolated": 1,
+        "depth_one": 3,
+        "depth_two": 5,
+        "large_graph_min": 103
+    }
 
+
+@pytest.fixture
+def expected_edge_counts():
+    return {
+        "isolated": 0,
+        "large_graph_min": 103
+    }
+
+@pytest.fixture
+def entity_ids():
+    return {
+        "entity": "entity_1",
+        "isolated": "isolated_1",
+        "nonexistent": "nonexistent_entity",
+        "any": "any_entity"
+    }
+
+
+@pytest.fixture
+def entity_id(entity_ids):
+    return entity_ids['entity']
+
+DEPTH_0 = 0
+DEPTH_1 = 1
+DEPTH_2 = 2
+DEPTH_3 = 3
+DEPTH_10 = 10
+
+@pytest.fixture
+def depths():
+    return {
+        "zero": DEPTH_0,
+        "one": DEPTH_1,
+        "two": DEPTH_2,
+        "three": DEPTH_3,
+        "ten": DEPTH_10
+    }
+
+@pytest.fixture
+def expected_node_ids_set():
+    return {
+        "length_3": {"entity_1", "entity_2", "entity_3"},
+        "length_5": {"entity_1", "entity_2", "entity_3", "entity_4", "entity_5"}
+    }
+
+@pytest.fixture
+def test_constants(
+    expected_node_counts, 
+    expected_edge_counts, 
+    entity_ids, 
+    depths, 
+    expected_node_ids_set) -> dict[str, dict[str, Any]]:
+
+    return {
+        "node_counts": expected_node_counts,
+        "edge_counts": expected_edge_counts,
+        "entity_ids": entity_ids,
+        "depths": depths,
+        "node_ids_set": expected_node_ids_set
+    }
+
+
+def _get_first_entity_node(result, entity_id):
+    """Helper to extract first entity node from result by ID."""
+    return next(node for node in result["nodes"] if node["id"] == entity_id)
+
+def _get_node_ids(result):
+    """Helper to extract set of node IDs from result."""
+    return {node["id"] for node in result["nodes"]}
+
+def _get_edge_from_source_to_target(result, source_id, target_id):
+    """Helper to extract edge from result by source and target IDs."""
+    return next(
+        edge for edge in result["edges"] 
+        if edge["source"] == source_id and edge["target"] == target_id
+    )
 
 class TestGetEntityNeighborhood:
     """Test class for GraphRAGIntegrator.get_entity_neighborhood method."""
 
-    def setup_method(self):
-        """Set up test fixtures before each test method."""
-        self.integrator = GraphRAGIntegrator()
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("expected_field,expected_value", [
+        ("center_entity_id", "entity_1"),
+        ("node_count", 3),
+        ("depth", 1),
+    ])
+    async def test_when_getting_neighborhood_with_depth_one_then_result_fields_are_correct(
+        self, integrator_with_test_graph, entity_id, expected_field, expected_value
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and entity with direct neighbors
+        WHEN get_entity_neighborhood method is called with depth=1
+        THEN expect result fields to have correct values
+        """
+        # Arrange
+        depth = 1
         
-        # Create a test graph with known structure
-        self.setup_test_graph()
-
-    def setup_test_graph(self):
-        """Set up a test graph with entities and relationships."""
-        # Create entities
-        self.entity1 = Entity(
-            id="entity_1", name="John Smith", type="person",
-            description="CEO", confidence=0.9, source_chunks=["chunk_1"], properties={}
-        )
-        self.entity2 = Entity(
-            id="entity_2", name="ACME Corp", type="organization", 
-            description="Company", confidence=0.8, source_chunks=["chunk_1"], properties={}
-        )
-        self.entity3 = Entity(
-            id="entity_3", name="Jane Doe", type="person",
-            description="CTO", confidence=0.85, source_chunks=["chunk_2"], properties={}
-        )
-        self.entity4 = Entity(
-            id="entity_4", name="TechCorp", type="organization",
-            description="Partner company", confidence=0.7, source_chunks=["chunk_3"], properties={}
-        )
-        self.entity5 = Entity(
-            id="entity_5", name="San Francisco", type="location",
-            description="City", confidence=0.9, source_chunks=["chunk_1"], properties={}
-        )
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
         
-        # Add entities to global registry
-        self.integrator.global_entities = {
-            "entity_1": self.entity1,
-            "entity_2": self.entity2, 
-            "entity_3": self.entity3,
-            "entity_4": self.entity4,
-            "entity_5": self.entity5
-        }
-        
-        # Create graph structure:
-        # entity_1 -> entity_2 -> entity_4
-        # entity_1 -> entity_3 -> entity_2
-        # entity_2 -> entity_5
-        self.integrator.global_graph = nx.DiGraph()
-        
-        # Add nodes with attributes
-        self.integrator.global_graph.add_node("entity_1", **{
-            "name": self.entity1.name, "type": self.entity1.type, 
-            "confidence": self.entity1.confidence, "source_chunks": self.entity1.source_chunks
-        })
-        self.integrator.global_graph.add_node("entity_2", **{
-            "name": self.entity2.name, "type": self.entity2.type,
-            "confidence": self.entity2.confidence, "source_chunks": self.entity2.source_chunks
-        })
-        self.integrator.global_graph.add_node("entity_3", **{
-            "name": self.entity3.name, "type": self.entity3.type,
-            "confidence": self.entity3.confidence, "source_chunks": self.entity3.source_chunks
-        })
-        self.integrator.global_graph.add_node("entity_4", **{
-            "name": self.entity4.name, "type": self.entity4.type,
-            "confidence": self.entity4.confidence, "source_chunks": self.entity4.source_chunks
-        })
-        self.integrator.global_graph.add_node("entity_5", **{
-            "name": self.entity5.name, "type": self.entity5.type,
-            "confidence": self.entity5.confidence, "source_chunks": self.entity5.source_chunks
-        })
-        
-        # Add edges with attributes
-        self.integrator.global_graph.add_edge("entity_1", "entity_2", 
-                                            relationship_type="leads", confidence=0.9, source_chunks=["chunk_1"])
-        self.integrator.global_graph.add_edge("entity_1", "entity_3",
-                                            relationship_type="manages", confidence=0.8, source_chunks=["chunk_1"])
-        self.integrator.global_graph.add_edge("entity_3", "entity_2",
-                                            relationship_type="works_for", confidence=0.85, source_chunks=["chunk_2"])
-        self.integrator.global_graph.add_edge("entity_2", "entity_4",
-                                            relationship_type="partners_with", confidence=0.7, source_chunks=["chunk_1"])
-        self.integrator.global_graph.add_edge("entity_2", "entity_5",
-                                            relationship_type="located_in", confidence=0.9, source_chunks=["chunk_1"])
+        # Assert
+        assert result[expected_field] == expected_value, f"Expected {expected_field} to be {expected_value}, got {result[expected_field]}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_valid_entity_depth_1(self):
+    async def test_when_getting_neighborhood_with_depth_one_then_contains_expected_nodes(
+        self, integrator_with_test_graph, entity_id
+    ):
         """
-        GIVEN a valid entity_id that exists in the global graph and depth=1
-        WHEN get_entity_neighborhood is called
-        THEN a subgraph containing the entity and its direct neighbors should be returned
-        AND the subgraph should include all nodes within depth 1
-        AND all connecting edges should be included
+        GIVEN GraphRAGIntegrator instance with populated test graph and entity with known neighbors
+        WHEN get_entity_neighborhood method is called with depth=1
+        THEN expect nodes list to contain exactly entity_1, entity_2, and entity_3
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
+        # Arrange
+
+        depth = 1
+        expected_node_ids = {"entity_1", "entity_2", "entity_3"}
         
-        # Should include entity_1, entity_2, entity_3 (direct neighbors)
-        assert result["center_entity_id"] == "entity_1"
-        assert result["depth"] == 1
-        assert result["node_count"] == 3
-        assert result["edge_count"] == 3  # All edges within the subgraph
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
+        node_ids = _get_node_ids(result)
         
-        node_ids = {node["id"] for node in result["nodes"]}
-        assert node_ids == {"entity_1", "entity_2", "entity_3"}
-        
-        edge_pairs = {(edge["source"], edge["target"]) for edge in result["edges"]}
-        assert edge_pairs == {("entity_1", "entity_2"), ("entity_1", "entity_3"), ("entity_3", "entity_2")}
+        # Assert
+        assert node_ids == expected_node_ids, f"Expected node_ids to be {expected_node_ids}, got {node_ids}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_valid_entity_depth_2(self):
+    async def test_when_getting_neighborhood_with_depth_two_then_center_entity_is_correct(
+        self, integrator_with_test_graph, entity_id
+    ):
         """
-        GIVEN a valid entity_id that exists in the global graph and depth=2
-        WHEN get_entity_neighborhood is called
-        THEN a subgraph containing neighbors up to 2 hops away should be returned
-        AND all intermediate nodes and edges should be included
+        GIVEN GraphRAGIntegrator instance with populated test graph and entity with neighbors
+        WHEN get_entity_neighborhood method is called with depth=2
+        THEN expect center_entity_id to match input entity_id
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=2)
+        # Arrange
+
+        depth = 2
         
-        # Should include entity_1 + direct neighbors + their neighbors
-        assert result["center_entity_id"] == "entity_1"
-        assert result["depth"] == 2
-        assert result["node_count"] == 5  # All entities
-        assert result["edge_count"] == 5  # All edges
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
         
-        node_ids = {node["id"] for node in result["nodes"]}
-        assert node_ids == {"entity_1", "entity_2", "entity_3", "entity_4", "entity_5"}
+        # Assert
+        assert result["center_entity_id"] == entity_id, f"Expected center_entity_id to be {entity_id}, got {result['center_entity_id']}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_valid_entity_default_depth(self):
+    async def test_when_getting_neighborhood_with_depth_two_then_includes_all_reachable_nodes(
+        self, integrator_with_test_graph, entity_id
+    ):
         """
-        GIVEN a valid entity_id and no depth parameter specified
-        WHEN get_entity_neighborhood is called
-        THEN depth should default to 2
-        AND the neighborhood should include nodes up to 2 hops away
+        GIVEN GraphRAGIntegrator instance with populated test graph and depth=2
+        WHEN get_entity_neighborhood method is called
+        THEN expect all reachable nodes within 2 hops to be included
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1")
+        # Arrange
+
+        depth = 2
+        expected_node_count = 5
         
-        assert result["depth"] == 2
-        assert result["node_count"] == 5  # All entities within depth 2
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
+        
+        # Assert
+        assert result["node_count"] == expected_node_count, f"Expected node_count to be {expected_node_count}, got {result['node_count']}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_isolated_entity(self):
+    async def test_when_getting_neighborhood_with_depth_two_then_contains_all_entities(
+        self, integrator_with_test_graph, entity_id
+    ):
         """
-        GIVEN an entity_id that exists but has no connections
-        WHEN get_entity_neighborhood is called
-        THEN the result should contain only the center entity
-        AND nodes list should have one element and edges list should be empty
+        GIVEN GraphRAGIntegrator instance with populated test graph and depth=2
+        WHEN get_entity_neighborhood method is called from entity_1
+        THEN expect nodes list to contain all five entities in the graph
         """
-        # Add isolated entity
-        isolated_entity = Entity(
-            id="isolated_1", name="Isolated Entity", type="concept",
-            description="No connections", confidence=0.5, source_chunks=["chunk_5"], properties={}
-        )
-        self.integrator.global_entities["isolated_1"] = isolated_entity
-        self.integrator.global_graph.add_node("isolated_1", **{
-            "name": isolated_entity.name, "type": isolated_entity.type,
-            "confidence": isolated_entity.confidence, "source_chunks": isolated_entity.source_chunks
-        })
+        # Arrange
+
+        depth = 2
+        expected_node_ids = {"entity_1", "entity_2", "entity_3", "entity_4", "entity_5"}
         
-        result = await self.integrator.get_entity_neighborhood("isolated_1", depth=2)
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
+        node_ids = _get_node_ids(result)
         
-        assert result["center_entity_id"] == "isolated_1"
-        assert result["node_count"] == 1
-        assert result["edge_count"] == 0
-        assert len(result["nodes"]) == 1
-        assert len(result["edges"]) == 0
-        assert result["nodes"][0]["id"] == "isolated_1"
+        # Assert
+        assert node_ids == expected_node_ids, f"Expected node_ids to be {expected_node_ids}, got {node_ids}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_nonexistent_entity(self):
+    async def test_when_getting_neighborhood_without_depth_parameter_then_defaults_to_two(
+        self, integrator_with_test_graph, entity_id
+    ):
         """
-        GIVEN an entity_id that does not exist in the global graph
-        WHEN get_entity_neighborhood is called
-        THEN an error dictionary should be returned
-        AND it should contain an 'error' key with appropriate message
+        GIVEN GraphRAGIntegrator instance with populated test graph and no depth parameter
+        WHEN get_entity_neighborhood method is called
+        THEN expect depth field to equal default value of 2
         """
-        result = await self.integrator.get_entity_neighborhood("nonexistent_entity")
+        # Arrange
+        expected_depth = 2
+
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id)
         
-        assert "error" in result
-        assert "not found" in result["error"].lower()
+        # Assert
+        assert result["depth"] == expected_depth, f"Expected depth to be {expected_depth}, got {result['depth']}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_depth_zero(self):
+    async def test_when_getting_neighborhood_without_depth_parameter_then_includes_all_reachable_nodes(
+        self, integrator_with_test_graph, entity_id
+    ):
         """
-        GIVEN a valid entity_id and depth=0
-        WHEN get_entity_neighborhood is called
-        THEN only the center entity should be returned
-        AND no neighbors should be included regardless of connections
+        GIVEN GraphRAGIntegrator instance with populated test graph and no depth parameter
+        WHEN get_entity_neighborhood method is called
+        THEN expect node_count to include all entities reachable within default depth
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=0)
+        # Arrange
+        expected_node_count = 5
+
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id)
         
-        assert result["center_entity_id"] == "entity_1"
-        assert result["depth"] == 0
-        assert result["node_count"] == 1
-        assert result["edge_count"] == 0
-        assert len(result["nodes"]) == 1
-        assert result["nodes"][0]["id"] == "entity_1"
+        # Assert
+        assert result["node_count"] == expected_node_count, f"Expected node_count to be {expected_node_count}, got {result['node_count']}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_large_depth(self):
+    @pytest.mark.parametrize("expected_field,expected_value", [
+        ("node_count", 1),
+        ("edge_count", 0),
+        ("center_entity_id", "isolated_1"),
+    ])
+    async def test_when_getting_neighborhood_of_isolated_entity_then_result_fields_are_correct(
+        self, integrator_with_isolated_entity, expected_field, expected_value
+    ):
         """
-        GIVEN a valid entity_id and a large depth value (e.g., 10)
-        WHEN get_entity_neighborhood is called
-        THEN all reachable nodes should be included up to the specified depth
-        AND performance should remain reasonable even with large depths
+        GIVEN GraphRAGIntegrator instance with isolated entity that has no connections
+        WHEN get_entity_neighborhood method is called
+        THEN expect result fields to have correct values for isolated entity
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=10)
+        # Arrange
+        entity_id = "isolated_1"
+        depth = 2
         
-        # Should still return all reachable nodes (which is all 5 in our test graph)
-        assert result["center_entity_id"] == "entity_1"
-        assert result["depth"] == 10
-        assert result["node_count"] == 5
-        assert result["edge_count"] == 5
+        # Act
+        result = await integrator_with_isolated_entity.get_entity_neighborhood(entity_id, depth=depth)
+        
+        # Assert
+        assert result[expected_field] == expected_value, f"Expected {expected_field} to be {expected_value}, got {result[expected_field]}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_return_structure_validation(self):
+    async def test_when_getting_neighborhood_of_isolated_entity_then_contains_only_isolated_entity(
+        self, integrator_with_isolated_entity
+    ):
         """
-        GIVEN a valid entity_id
-        WHEN get_entity_neighborhood is called
-        THEN the return dictionary should contain:
-            - center_entity_id: the input entity ID
-            - depth: the depth used for traversal
-            - nodes: list of node dictionaries with 'id' field
-            - edges: list of edge dictionaries with 'source' and 'target' fields
-            - node_count: integer count of nodes
-            - edge_count: integer count of edges
+        GIVEN GraphRAGIntegrator instance with isolated entity that has no connections
+        WHEN get_entity_neighborhood method is called
+        THEN expect nodes list to contain only the isolated entity
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
+        # Arrange
+        entity_id = "isolated_1"
         
-        # Validate structure
-        assert isinstance(result, dict)
-        assert "center_entity_id" in result
-        assert "depth" in result
-        assert "nodes" in result
-        assert "edges" in result
-        assert "node_count" in result
-        assert "edge_count" in result
+        # Act
+        result = await integrator_with_isolated_entity.get_entity_neighborhood(entity_id, depth=2)
         
-        # Validate types
-        assert isinstance(result["center_entity_id"], str)
-        assert isinstance(result["depth"], int)
-        assert isinstance(result["nodes"], list)
-        assert isinstance(result["edges"], list)
-        assert isinstance(result["node_count"], int)
-        assert isinstance(result["edge_count"], int)
-        
-        # Validate node structure
-        for node in result["nodes"]:
-            assert isinstance(node, dict)
-            assert "id" in node
-        
-        # Validate edge structure
-        for edge in result["edges"]:
-            assert isinstance(edge, dict)
-            assert "source" in edge
-            assert "target" in edge
+        # Assert
+        assert result["nodes"][0]["id"] == entity_id, f"Expected first node id to be {entity_id}, got {result['nodes'][0]['id']}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_node_data_serialization(self):
+    async def test_when_getting_neighborhood_of_nonexistent_entity_then_returns_error(
+        self, integrator_with_test_graph
+    ):
         """
-        GIVEN entities with various attributes in the neighborhood
-        WHEN get_entity_neighborhood is called
-        THEN node data should be properly serialized to dictionaries
-        AND all node attributes should be preserved
-        AND each node should include an 'id' field
+        GIVEN GraphRAGIntegrator instance with populated test graph and nonexistent entity_id
+        WHEN get_entity_neighborhood method is called
+        THEN expect result to contain error key
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
+        # Arrange
+        nonexistent_entity_id = "nonexistent_entity"
         
-        # Find entity_1 node in results
-        entity1_node = next(node for node in result["nodes"] if node["id"] == "entity_1")
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(nonexistent_entity_id)
         
-        # Validate serialization
-        assert entity1_node["name"] == "John Smith"
-        assert entity1_node["type"] == "person"
-        assert entity1_node["confidence"] == 0.9
-        assert entity1_node["source_chunks"] == ["chunk_1"]
+        # Assert
+        assert "error" in result, f"Expected result to contain 'error' key, got keys: {list(result.keys())}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_edge_data_serialization(self):
+    async def test_when_getting_neighborhood_of_nonexistent_entity_then_error_message_mentions_not_found(
+        self, integrator_with_test_graph
+    ):
         """
-        GIVEN relationships connecting entities in the neighborhood
-        WHEN get_entity_neighborhood is called
-        THEN edge data should be properly serialized to dictionaries
-        AND all edge attributes should be preserved
-        AND each edge should include 'source' and 'target' fields
+        GIVEN GraphRAGIntegrator instance with populated test graph and nonexistent entity_id
+        WHEN get_entity_neighborhood method is called
+        THEN expect error message to contain 'not found' phrase
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
+        # Arrange
+        nonexistent_entity_id = "nonexistent_entity"
         
-        # Find specific edge
-        edge = next(edge for edge in result["edges"] if edge["source"] == "entity_1" and edge["target"] == "entity_2")
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(nonexistent_entity_id)
         
-        # Validate serialization
-        assert edge["relationship_type"] == "leads"
-        assert edge["confidence"] == 0.9
-        assert edge["source_chunks"] == ["chunk_1"]
+        # Assert
+        assert "not found" in result["error"].lower(), f"Expected error message to contain 'not found', got: {result['error']}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_breadth_first_traversal(self):
+    @pytest.mark.parametrize("expected_field,expected_value", [
+        ("node_count", 1),
+        ("edge_count", 0),
+        ("center_entity_id", "entity_1"),
+    ])
+    async def test_when_getting_neighborhood_with_depth_zero_then_result_fields_are_correct(
+        self, integrator_with_test_graph, entity_id, expected_field, expected_value
+    ):
         """
-        GIVEN a graph with multiple paths to the same node
-        WHEN get_entity_neighborhood is called
-        THEN breadth-first traversal should be used
-        AND nodes should be included at their shortest distance from center
+        GIVEN GraphRAGIntegrator instance with populated test graph and depth=0
+        WHEN get_entity_neighborhood method is called
+        THEN expect result fields to have correct values for depth zero
         """
-        # Create a graph with multiple paths: entity_1 -> entity_2 -> entity_3 and entity_1 -> entity_3
-        # entity_3 should be at depth 1 (shortest path) not depth 2
+        # Arrange
+        depth = 0
+
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
         
-        # Add direct edge from entity_1 to entity_3 (already exists in setup)
-        # entity_3 is reachable at depth 1 via direct connection and depth 2 via entity_2
-        
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
-        
-        # entity_3 should be included at depth 1 due to direct connection
-        node_ids = {node["id"] for node in result["nodes"]}
-        assert "entity_3" in node_ids
+        # Assert
+        assert result[expected_field] == expected_value, f"Expected {expected_field} to be {expected_value}, got {result[expected_field]}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_predecessors_and_successors(self):
+    @pytest.mark.parametrize("expected_field,expected_value", [
+        ("node_count", 5),
+        ("depth", 10),
+    ])
+    async def test_when_getting_neighborhood_with_large_depth_then_result_fields_are_correct(
+        self, integrator_with_test_graph, entity_ids, 
+        depths, expected_field, expected_value
+    ):
         """
-        GIVEN a directed graph with incoming and outgoing edges
-        WHEN get_entity_neighborhood is called
-        THEN both predecessors and successors should be included
-        AND directionality should be preserved in the subgraph
+        GIVEN GraphRAGIntegrator instance with populated test graph and large depth value
+        WHEN get_entity_neighborhood method is called with depth=10
+        THEN expect result fields to have correct values
         """
-        # Test from entity_2 which has both incoming and outgoing edges
-        result = await self.integrator.get_entity_neighborhood("entity_2", depth=1)
+        # Arrange
+        depth, entity_id = depths["ten"], entity_ids["entity"]
         
-        node_ids = {node["id"] for node in result["nodes"]}
-        # Should include entity_1 (predecessor), entity_4 and entity_5 (successors)
-        assert "entity_1" in node_ids  # incoming edge
-        assert "entity_3" in node_ids  # incoming edge 
-        assert "entity_4" in node_ids  # outgoing edge
-        assert "entity_5" in node_ids  # outgoing edge
-
-    @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_node_count_accuracy(self):
-        """
-        GIVEN a neighborhood result
-        WHEN checking the node_count field
-        THEN it should exactly match the length of the nodes list
-        AND the count should be accurate for any depth
-        """
-        for depth in [0, 1, 2, 3]:
-            result = await self.integrator.get_entity_neighborhood("entity_1", depth=depth)
-            assert result["node_count"] == len(result["nodes"])
-
-    @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_edge_count_accuracy(self):
-        """
-        GIVEN a neighborhood result
-        WHEN checking the edge_count field
-        THEN it should exactly match the length of the edges list
-        AND the count should include all edges within the subgraph
-        """
-        for depth in [0, 1, 2, 3]:
-            result = await self.integrator.get_entity_neighborhood("entity_1", depth=depth)
-            assert result["edge_count"] == len(result["edges"])
-
-    @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_empty_global_graph(self):
-        """
-        GIVEN an empty global graph
-        WHEN get_entity_neighborhood is called with any entity_id
-        THEN an error dictionary should be returned
-        AND it should indicate the entity was not found
-        """
-        # Clear the global graph
-        self.integrator.global_graph = nx.DiGraph()
-        self.integrator.global_entities = {}
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
         
-        result = await self.integrator.get_entity_neighborhood("any_entity")
+        # Assert
+        assert result[expected_field] == expected_value, f"Expected {expected_field} to be {expected_value}, got {result[expected_field]}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_then_result_is_dictionary(
+        self, integrator_with_test_graph, entity_ids, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph
+        WHEN get_entity_neighborhood method is called
+        THEN expect result to be dictionary type
+        """
+        # Arrange
+        depth, entity_id = depths["one"], entity_ids["entity"]
         
-        assert "error" in result
-        assert "not found" in result["error"].lower()
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
+        
+        # Assert
+        assert isinstance(result, dict), f"Expected result to be dict, got {type(result).__name__}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_none_entity_id(self):
+    @pytest.mark.parametrize("field_name", [
+        "center_entity_id",
+        "depth", 
+        "nodes",
+        "edges",
+        "node_count",
+        "edge_count"
+    ])
+    async def test_when_getting_neighborhood_then_contains_required_field(
+        self, integrator_with_test_graph, entity_id, field_name, depths
+    ):
         """
-        GIVEN None as the entity_id parameter
-        WHEN get_entity_neighborhood is called
-        THEN a TypeError should be raised
-        AND the error should indicate invalid entity_id type
+        GIVEN GraphRAGIntegrator instance with populated test graph
+        WHEN get_entity_neighborhood method is called
+        THEN expect result to contain all required fields
         """
-        with pytest.raises(TypeError, match="entity_id must be a string\\."):
-            await self.integrator.get_entity_neighborhood(None)
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths["one"])
+
+        # Assert
+        assert field_name in result, f"Expected result to contain '{field_name}' field, got keys: {list(result.keys())}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_empty_entity_id(self):
+    @pytest.mark.parametrize("field_name,expected_type", [
+        ("center_entity_id", str),
+        ("nodes", list),
+        ("edges", list),
+        ("depth", int),
+        ("node_count", int),
+        ("edge_count", int),
+    ])
+    async def test_when_getting_neighborhood_then_result_fields_have_correct_types(
+        self, integrator_with_test_graph, entity_id, field_name, expected_type, depths
+    ):
         """
-        GIVEN an empty string as entity_id
-        WHEN get_entity_neighborhood is called
-        THEN a ValueError should be raised
-        AND the error should indicate invalid entity_id value
+        GIVEN GraphRAGIntegrator instance with populated test graph
+        WHEN get_entity_neighborhood method is called
+        THEN expect all result fields to have correct data types
         """
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths["one"])
+
+        # Assert
+        assert isinstance(result[field_name], expected_type), f"Expected {field_name} to be {expected_type.__name__}, got {type(result[field_name]).__name__}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("attribute_name,expected_value", [
+        ("name", "John Smith"),
+        ("type", "person"),
+        ("confidence", 0.9),
+        ("source_chunks", ["chunk_1"]),
+    ])
+    async def test_when_getting_neighborhood_then_entity_node_contains_correct_attributes(
+        self, integrator_with_test_graph, entity_id, attribute_name, expected_value, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and entity with known attributes
+        WHEN get_entity_neighborhood method is called
+        THEN expect entity_1 node to contain correct attribute values
+        """
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths["one"])
+        entity1_node = _get_first_entity_node(result, entity_id)
+
+        # Assert
+        assert entity1_node[attribute_name] == expected_value, f"Expected entity {attribute_name} to be {expected_value}, got {entity1_node[attribute_name]}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("attribute_name,expected_value", [
+        ("relationship_type", "leads"),
+        ("confidence", 0.9),
+        ("source_chunks", ["chunk_1"]),
+    ])
+    async def test_when_getting_neighborhood_then_edge_contains_correct_attributes(
+        self, integrator_with_test_graph, entity_id, depths, attribute_name, expected_value
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and relationship with known attributes
+        WHEN get_entity_neighborhood method is called
+        THEN expect edge from entity_1 to entity_2 to contain correct attribute values
+        """
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths['one'])
+        edge = next(edge for edge in result["edges"] if edge["source"] == entity_id and edge["target"] == "entity_2")
+
+        # Assert
+        assert edge[attribute_name] == expected_value, f"Expected edge {attribute_name} to be {expected_value}, got {edge[attribute_name]}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_depth_one_then_includes_directly_connected_entity(
+        self, integrator_with_test_graph, entity_id, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph where entity_3 is directly connected to entity_1
+        WHEN get_entity_neighborhood method is called with depth=1
+        THEN expect entity_3 to be included in results due to direct connection
+        """
+        # Arrange
+        expected_entity = "entity_3"
+
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths['one'])
+        node_ids = _get_node_ids(result)
+
+        # Assert
+        assert expected_entity in node_ids, f"Expected {expected_entity} to be in node_ids {node_ids}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_from_entity_with_incoming_edges_then_includes_predecessors(
+        self, integrator_with_test_graph, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and entity_2 having incoming edges
+        WHEN get_entity_neighborhood method is called from entity_2 with depth=1
+        THEN expect entity_1 predecessor to be included
+        """
+        # Arrange
+        center_entity = "entity_2"
+        expected_predecessor = "entity_1"
+
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(center_entity, depth=depths['one'])
+        node_ids = _get_node_ids(result)
+        
+        # Assert
+        assert expected_predecessor in node_ids, f"Expected predecessor {expected_predecessor} to be in node_ids {node_ids}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_from_entity_with_outgoing_edges_then_includes_successors(
+        self, integrator_with_test_graph, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and entity_2 having outgoing edges
+        WHEN get_entity_neighborhood method is called from entity_2 with depth=1
+        THEN expect entity_4 successor to be included
+        """
+        # Arrange
+        center_entity = "entity_2"
+        expected_successor = "entity_4"
+        
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(center_entity, depth=depths['one'])
+        node_ids = _get_node_ids(result)
+        
+        # Assert
+        assert expected_successor in node_ids, f"Expected successor {expected_successor} to be in node_ids {node_ids}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("depth", [0, 1, 2, 3])
+    async def test_when_getting_neighborhood_then_node_count_matches_nodes_list_length(
+        self, integrator_with_test_graph, entity_id, depth
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and various depth values
+        WHEN get_entity_neighborhood method is called
+        THEN expect node_count field to exactly match length of nodes list
+        """
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
+        
+        # Assert
+        assert result["node_count"] == len(result["nodes"]), f"Expected node_count {result['node_count']} to match nodes list length {len(result['nodes'])}"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("depth", [0, 1, 2, 3])
+    async def test_when_getting_neighborhood_then_edge_count_matches_edges_list_length(
+        self, integrator_with_test_graph, entity_id, depth
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph and various depth values
+        WHEN get_entity_neighborhood method is called
+        THEN expect edge_count field to exactly match length of edges list
+        """
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
+        
+        # Assert
+        assert result["edge_count"] == len(result["edges"]), f"Expected edge_count {result['edge_count']} to match edges list length {len(result['edges'])}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_from_empty_graph_then_returns_error(
+        self, empty_integrator, entity_ids
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with empty global graph
+        WHEN get_entity_neighborhood method is called with any entity_id
+        THEN expect result to contain error key
+        """
+        # Act
+        result = await empty_integrator.get_entity_neighborhood(entity_ids['any'])
+        
+        # Assert
+        assert "error" in result, f"Expected result to contain 'error' key, got keys: {list(result.keys())}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_from_empty_graph_then_error_mentions_not_found(
+        self, empty_integrator, entity_ids
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with empty global graph
+        WHEN get_entity_neighborhood method is called with any entity_id
+        THEN expect error message to contain 'not found' phrase
+        """
+        # Act
+        result = await empty_integrator.get_entity_neighborhood(entity_ids['any'])
+
+        # Assert
+        assert "not found" in result["error"].lower(), f"Expected error message to contain 'not found', got: {result['error']}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_none_entity_id_then_raises_type_error(
+        self, integrator_default
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance and None as entity_id parameter
+        WHEN get_entity_neighborhood method is called
+        THEN expect TypeError with message containing 'entity_id must be a string'
+        """
+        # Act & Assert
+        with pytest.raises(TypeError, match="entity_id must be a string"):
+            await integrator_default.get_entity_neighborhood(None)
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_empty_entity_id_then_raises_value_error(
+        self, integrator_default
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance and empty string as entity_id
+        WHEN get_entity_neighborhood method is called
+        THEN expect ValueError with message containing 'entity_id must be a non-empty string'
+        """
+        # Arrange
+        empty_entity_id = ""
+        
+        # Act & Assert
         with pytest.raises(ValueError, match="entity_id must be a non-empty string."):
-            await self.integrator.get_entity_neighborhood("")
+            await integrator_default.get_entity_neighborhood(empty_entity_id)
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_negative_depth(self):
+    async def test_when_getting_neighborhood_with_negative_depth_then_raises_value_error(
+        self, integrator_default, entity_id
+    ):
         """
-        GIVEN a negative depth value
-        WHEN get_entity_neighborhood is called
-        THEN a ValueError should be raised
-        AND the error should indicate invalid depth range
+        GIVEN GraphRAGIntegrator instance and negative depth value
+        WHEN get_entity_neighborhood method is called
+        THEN expect ValueError with message containing 'depth must be a non-negative integer'
         """
+        # Arrange
+        negative_depth = -1
+        
+        # Act & Assert
         with pytest.raises(ValueError, match="depth must be a non-negative integer"):
-            await self.integrator.get_entity_neighborhood("entity_1", depth=-1)
+            await integrator_default.get_entity_neighborhood(entity_id, depth=negative_depth)
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_non_integer_depth(self):
+    async def test_when_getting_neighborhood_with_non_integer_depth_then_raises_type_error(
+        self, integrator_default, entity_id
+    ):
         """
-        GIVEN a non-integer depth parameter
-        WHEN get_entity_neighborhood is called
-        THEN a TypeError should be raised
-        AND the error should indicate expected integer type
+        GIVEN GraphRAGIntegrator instance and non-integer depth parameter
+        WHEN get_entity_neighborhood method is called
+        THEN expect TypeError with message containing 'depth must be an integer'
         """
+        # Arrange
+        float_depth = 1.5
+        
+        # Act & Assert
         with pytest.raises(TypeError, match="depth must be an integer"):
-            await self.integrator.get_entity_neighborhood("entity_1", depth=1.5)
+            await integrator_default.get_entity_neighborhood(entity_id, depth=float_depth)
+
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_serialization_compatibility(self):
+    async def test_when_getting_neighborhood_result_then_is_json_serializable(
+        self, integrator_with_test_graph, entity_id, depths
+    ):
         """
-        GIVEN any valid neighborhood result
-        WHEN the result is serialized to JSON
-        THEN it should be fully serializable without errors
-        AND all data types should be JSON-compatible
+        GIVEN GraphRAGIntegrator instance with populated test graph
+        WHEN get_entity_neighborhood method is called and result is serialized to JSON
+        THEN expect serialization to complete without exceptions
         """
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=2)
-        
-        # Should not raise any exceptions
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths['two'])
         json_str = json.dumps(result)
-        assert isinstance(json_str, str)
         
-        # Should be able to deserialize back
+        # Assert
+        assert isinstance(json_str, str), f"Expected JSON string, got {type(json_str).__name__}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_result_then_json_is_deserializable(
+        self, integrator_with_test_graph, entity_id, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with populated test graph
+        WHEN get_entity_neighborhood method is called and result is serialized then deserialized
+        THEN expect deserialized result to equal original result
+        """
+        # Act
+        result = await integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depths['two'])
+        json_str = json.dumps(result)
         deserialized = json.loads(json_str)
-        assert deserialized == result
+        
+        # Assert
+        assert deserialized == result, f"Expected deserialized result to match original, got differences"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_large_neighborhood(self):
+    @pytest.mark.parametrize("expected_field,expected_value", [
+        ("node_count", 103),
+        ("edge_count", 103),
+    ])
+    async def test_when_getting_neighborhood_with_large_graph_then_result_fields_are_correct(
+        self, integrator_with_large_graph, entity_id, expected_field, expected_value, depths, 
+    ):
         """
-        GIVEN an entity with a very large neighborhood (>1000 nodes)
-        WHEN get_entity_neighborhood is called
-        THEN all nodes should be included correctly
-        AND performance should remain reasonable
-        AND memory usage should be manageable
+        GIVEN GraphRAGIntegrator instance with large graph (100 additional entities)
+        WHEN get_entity_neighborhood method is called with depth=1
+        THEN expect result fields to have correct values for large graph
         """
-        # Create a large graph
-        large_graph = nx.DiGraph()
-        large_entities = {}
+        # Act
+        result = await integrator_with_large_graph.get_entity_neighborhood(entity_id, depth=depths['one'])
         
-        # Create 1000 entities connected to entity_1
-        for i in range(1000):
-            entity_id = f"large_entity_{i}"
-            entity = Entity(
-                id=entity_id, name=f"Entity {i}", type="concept",
-                description=f"Entity number {i}", confidence=0.5, 
-                source_chunks=[f"chunk_{i}"], properties={}
-            )
-            large_entities[entity_id] = entity
-            large_graph.add_node(entity_id, **{
-                "name": entity.name, "type": entity.type,
-                "confidence": entity.confidence, "source_chunks": entity.source_chunks
-            })
-            large_graph.add_edge("entity_1", entity_id, relationship_type="related_to", confidence=0.5)
-        
-        # Temporarily replace global graph
-        original_graph = self.integrator.global_graph
-        original_entities = self.integrator.global_entities
-        
-        self.integrator.global_graph = nx.compose(original_graph, large_graph)
-        self.integrator.global_entities.update(large_entities)
-        
-        try:
-            result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
-            
-            # Should include entity_1 + original neighbors + 1000 new entities
-            assert result["node_count"] >= 1000
-            assert result["edge_count"] >= 1000
-        finally:
-            # Restore original graph
-            self.integrator.global_graph = original_graph
-            self.integrator.global_entities = original_entities
+        # Assert
+        assert result[expected_field] == expected_value, f"Expected {expected_field} to be {expected_value}, got {result[expected_field]}"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_cyclic_graph(self):
+    async def test_when_getting_neighborhood_with_performance_graph_then_completes_efficiently(
+        self, integrator_with_performance_graph, entity_id, depths
+    ):
         """
-        GIVEN a graph with cycles that could cause infinite traversal
-        WHEN get_entity_neighborhood is called
-        THEN the traversal should handle cycles correctly
-        AND each node should be visited only once
-        AND the algorithm should terminate properly
+        GIVEN GraphRAGIntegrator instance with performance graph (50 additional entities)
+        WHEN get_entity_neighborhood method is called
+        THEN expect operation to complete without performance issues
         """
-        # Add a cycle: entity_4 -> entity_1 (completing a cycle)
-        self.integrator.global_graph.add_edge("entity_4", "entity_1", 
-                                            relationship_type="related_to", confidence=0.6)
+        # Act
+        result = await integrator_with_performance_graph.get_entity_neighborhood(entity_id, depth=depths['one'])
         
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=3)
-        
-        # Should terminate and not include duplicates
+        # Assert
+        assert "error" not in result, f"Expected successful result, got error: {result.get('error', 'No error key')}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_large_graph_then_center_entity_is_preserved(
+        self, integrator_with_large_graph, entity_id, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with large graph (100 additional entities)
+        WHEN get_entity_neighborhood method is called
+        THEN expect center_entity_id to remain correct
+        """
+        # Act
+        result = await integrator_with_large_graph.get_entity_neighborhood(entity_id, depth=depths['one'])
+
+        # Assert
+        assert result["center_entity_id"] == entity_id, f"Expected center_entity_id to be {entity_id}, got {result['center_entity_id']}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_from_cyclic_graph_then_terminates_properly(
+        self, cyclic_graph_integrator, entity_id, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with cyclic graph that could cause infinite traversal
+        WHEN get_entity_neighborhood method is called with depth=3
+        THEN expect algorithm to terminate properly without infinite loops
+        """
+        # Act
+        result = await cyclic_graph_integrator.get_entity_neighborhood(entity_id, depth=depths["three"])
+
+        # Assert
+        assert "error" not in result, \
+            f"Expected successful result, got error: {result.get('error', 'No error key')}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_from_cyclic_graph_then_no_duplicate_nodes(
+        self, cyclic_graph_integrator, entity_id, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with cyclic graph containing cycles
+        WHEN get_entity_neighborhood method is called
+        THEN expect each node to be visited only once with no duplicates
+        """
+        # Act
+        result = await cyclic_graph_integrator.get_entity_neighborhood(entity_id, depth=depths["three"])
         node_ids = [node["id"] for node in result["nodes"]]
         unique_node_ids = set(node_ids)
-        
-        assert len(node_ids) == len(unique_node_ids)  # No duplicates
-        assert result["node_count"] == len(unique_node_ids)
+
+        # Assert
+        assert len(node_ids) == len(unique_node_ids), \
+            f"Expected no duplicate nodes, got {len(node_ids)} total vs {len(unique_node_ids)} unique"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_self_loops(self):
+    async def test_when_getting_neighborhood_from_cyclic_graph_then_node_count_matches_unique_nodes(
+        self, cyclic_graph_integrator, entity_id, depths
+    ):
         """
-        GIVEN an entity that has self-referencing edges
-        WHEN get_entity_neighborhood is called
-        THEN self-loops should be handled correctly
-        AND the entity should not be duplicated in results
+        GIVEN GraphRAGIntegrator instance with cyclic graph containing cycles
+        WHEN get_entity_neighborhood method is called
+        THEN expect node_count field to match actual number of unique nodes
         """
-        # Add self-loop
-        self.integrator.global_graph.add_edge("entity_1", "entity_1", 
-                                            relationship_type="self_reference", confidence=0.5)
+        # Act
+        result = await cyclic_graph_integrator.get_entity_neighborhood(entity_id, depth=depths["three"])
+        unique_node_ids = set(node["id"] for node in result["nodes"])
         
-        result = await self.integrator.get_entity_neighborhood("entity_1", depth=1)
-        
-        # Should not duplicate entity_1
+        # Assert
+        assert result["node_count"] == len(unique_node_ids), f"Expected node_count {result['node_count']} to match unique nodes {len(unique_node_ids)}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_self_loops_then_entity_not_duplicated(
+        self, self_loop_integrator, entity_id, depths
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with entity that has self-referencing edges
+        WHEN get_entity_neighborhood method is called
+        THEN expect entity to not be duplicated in results
+        """
+        # Act
+        result = await self_loop_integrator.get_entity_neighborhood(entity_id, depth=depths["one"])
         node_ids = [node["id"] for node in result["nodes"]]
-        entity_1_count = node_ids.count("entity_1")
-        assert entity_1_count == 1
+        entity_1_count = node_ids.count(entity_id)
         
-        # Should include the self-loop edge
-        self_loops = [edge for edge in result["edges"] 
-                     if edge["source"] == "entity_1" and edge["target"] == "entity_1"]
-        assert len(self_loops) == 1
+        # Assert
+        assert entity_1_count == 1, f"Expected entity {entity_id} to appear exactly once, got {entity_1_count} occurrences"
 
     @pytest.mark.asyncio
-    async def test_get_entity_neighborhood_concurrent_access(self):
+    async def test_when_getting_neighborhood_with_self_loops_then_includes_self_loop_edge(
+        self, self_loop_integrator, entity_id
+    ):
         """
-        GIVEN multiple concurrent calls to get_entity_neighborhood
-        WHEN executed simultaneously
-        THEN all calls should complete successfully
-        AND results should be independent and correct
-        AND no race conditions should occur
+        GIVEN GraphRAGIntegrator instance with entity that has self-referencing edges
+        WHEN get_entity_neighborhood method is called
+        THEN expect self-loop edge to be included in results
         """
-        # Create multiple concurrent tasks
-        tasks = []
-        for i in range(10):
-            task = asyncio.create_task(
-                self.integrator.get_entity_neighborhood("entity_1", depth=1)
-            )
-            tasks.append(task)
+        depth = 1
+
+        # Act
+        result = await self_loop_integrator.get_entity_neighborhood(entity_id, depth=depth)
+        self_loops = [edge for edge in result["edges"] 
+                     if edge["source"] == entity_id and edge["target"] == entity_id]
         
-        # Wait for all tasks to complete
+        # Assert
+        assert len(self_loops) == 1, f"Expected exactly one self-loop edge, got {len(self_loops)}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_concurrent_calls_then_all_complete_successfully(
+        self, get_entity_neighborhood_concurrent_tasks, entity_id
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with multiple concurrent calls to get_entity_neighborhood
+        WHEN executed simultaneously
+        THEN expect all calls to complete successfully without errors
+        """
+        # Arrange
+        tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
+        
+        # Act
         results = await asyncio.gather(*tasks)
         
-        # All results should be identical and successful
-        for result in results:
-            assert "error" not in result
-            assert result["center_entity_id"] == "entity_1"
-            assert result["depth"] == 1
-            assert result["node_count"] == 3
+        # Assert
+        assert all("error" not in result for result in results), f"Expected all results to be successful, got errors in some results"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_concurrent_calls_then_results_have_correct_center_entity(
+        self, get_entity_neighborhood_concurrent_tasks, entity_id
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with multiple concurrent calls to get_entity_neighborhood
+        WHEN executed simultaneously
+        THEN expect all results to have correct center_entity_id
+        """
+        # Arrange
+        tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
         
-        # All results should be identical
+        # Act
+        results = await asyncio.gather(*tasks)
+        
+        # Assert
+        assert all(result["center_entity_id"] == entity_id for result in results), f"Expected all results to have center_entity_id {entity_id}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_concurrent_calls_then_results_have_correct_depth(
+        self, get_entity_neighborhood_concurrent_tasks, entity_id
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with multiple concurrent calls to get_entity_neighborhood
+        WHEN executed simultaneously
+        THEN expect all results to have correct depth value
+        """
+        # Arrange
+        expected_depth = 1
+        tasks = await get_entity_neighborhood_concurrent_tasks(entity_id, depth=expected_depth)
+        
+        # Act
+        results = await asyncio.gather(*tasks)
+        
+        # Assert
+        assert all(result["depth"] == expected_depth for result in results), f"Expected all results to have depth {expected_depth}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_concurrent_calls_then_results_have_correct_node_count(
+        self, get_entity_neighborhood_concurrent_tasks, entity_id
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with multiple concurrent calls to get_entity_neighborhood
+        WHEN executed simultaneously
+        THEN expect all results to have correct node_count
+        """
+        # Arrange
+        expected_node_count = 3
+        tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
+        
+        # Act
+        results = await asyncio.gather(*tasks)
+        
+        # Assert
+        assert all(result["node_count"] == expected_node_count for result in results), f"Expected all results to have node_count {expected_node_count}"
+
+    @pytest.mark.asyncio
+    async def test_when_getting_neighborhood_with_concurrent_calls_then_all_results_identical(
+        self, get_entity_neighborhood_concurrent_tasks, entity_id
+    ):
+        """
+        GIVEN GraphRAGIntegrator instance with multiple concurrent calls to get_entity_neighborhood
+        WHEN executed simultaneously
+        THEN expect all results to be identical with no race conditions
+        """
+        # Arrange
+        tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
+        
+        # Act
+        results = await asyncio.gather(*tasks)
         first_result = results[0]
-        for result in results[1:]:
-            assert result == first_result
+        
+        # Assert
+        assert all(result == first_result for result in results[1:]), f"Expected all results to be identical, got differences"
 
 
 if __name__ == "__main__":

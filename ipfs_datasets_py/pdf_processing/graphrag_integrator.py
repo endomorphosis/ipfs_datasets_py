@@ -22,7 +22,7 @@ import networkx as nx
 import numpy as np
 from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
 import openai
-import ipfs_multiformats
+import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
 
 get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
 
@@ -287,10 +287,89 @@ import nltk
 
 from nltk.corpus import brown
 
+
+def _confirm_match_with_nltk(text: str, type_: str) -> str:
+    """
+    Confirm entity types from text using NLTK.
+    
+    Args:
+        text: a string of text. Should be just an entity (e.g. Apple Inc, New York, etc.)
+        type_: the expected type of the entity (e.g. 'person', 'organization', 'location')
+    
+    Returns:
+        str: Either the original entity label, or the confirmed NLTK label.
+            Conflicts default to the NLTK label.
+    """
+    nltk_entities = []
+    
+    # Tokenize, POS tag, and NER chunk
+    tokens = word_tokenize(text)
+    pos_tags = pos_tag(tokens)
+    ner_tree = ne_chunk(pos_tags, binary=False)
+
+    # Convert tree to IOB tags for easier processing
+    iob_tags = tree2conlltags(ner_tree)
+
+    current_entity = []
+    current_label = None
+
+    # Map NLTK labels to internal types
+    label_map = {
+        'PERSON': 'person',
+        'ORGANIZATION': 'organization',
+        'GPE': 'location',  # Geopolitical Entity
+        'LOCATION': 'location',
+        'FACILITY': 'location',
+        'DATE': 'date',
+        'MONEY': 'currency'
+    }
+
+    # Process IOB tags to find entities
+    for word, pos, ner in iob_tags:
+        if ner.startswith('B-'):  # Beginning of a new entity
+            if current_entity:
+                # This case is unlikely if the input text is a single entity, but good to handle
+                nltk_entities.append((' '.join(current_entity), current_label))
+            current_entity = [word]
+            current_label = ner[2:]
+        elif ner.startswith('I-') and current_label == ner[2:]: # Inside the same entity
+            current_entity.append(word)
+        else: # Outside an entity or a different entity starts without 'B-' tag
+            if current_entity:
+                nltk_entities.append((' '.join(current_entity), current_label))
+            current_entity = []
+            current_label = None
+
+    # Add the last entity if it exists
+    if current_entity:
+        nltk_entities.append((' '.join(current_entity), current_label))
+
+    # If NLTK found an entity, use its type
+    if nltk_entities:
+        # Assuming the most prominent entity in the text is the correct one
+        # For a short text that is supposed to be one entity, there should ideally be only one.
+        # We take the first one found.
+        _, nltk_label = nltk_entities[0]
+        
+        # Map the NLTK label to our internal type system
+        confirmed_type = label_map.get(nltk_label, type_)
+        
+        # If NLTK's type is different, prefer NLTK's classification.
+        if confirmed_type != type_:
+            return confirmed_type
+
+    # If NLTK did not find any entity or confirmed the type, return the original type
+    return type_
+
+
+
+
+
+
 @dataclass
 class Entity:
     """
-    Represents an entity extracted from documents for knowledge graph construction.
+    An entity extracted from documents for knowledge graph construction, structured as a dataclass.
 
     An entity is a distinct object, concept, person, organization, or location
     identified within text chunks during the document processing pipeline.
@@ -328,7 +407,7 @@ class Entity:
         ...     properties={"role": "engineer", "company": "Tech Corp"}
         ... )
     """
-    id: str
+    id: str # NOTE Should be CID
     name: str
     type: str  # 'person', 'organization', 'concept', 'location', etc.
     description: str
@@ -336,6 +415,59 @@ class Entity:
     source_chunks: List[str]  # Chunk IDs where entity appears
     properties: Dict[str, Any]
     embedding: Optional[np.ndarray] = None
+    gateway_url: str = "ipfs_datasets_py.com"
+
+    @property
+    def ipfs_uri(self):
+        """
+        IPFS uri for the entity
+        Immutable pointer to the resources itself.
+        """
+        uri_string = f"<https://{self.gateway_url}/ipfs/{self.id}/{self.name}>"
+        return uri_string
+
+    @property
+    def ipns_uri(self): # TODO
+        """
+        IPNS uri for the entity. Basically a mutable pointer to the IPFS uri.
+        See: https://docs.ipfs.tech/concepts/ipns/#how-ipns-works
+        """
+        pass
+
+from enum import StrEnum
+
+class OwlFamily(StrEnum):
+    """
+    From: https://en.wikipedia.org/wiki/Web_Ontology_Language, accessed 9/8/2025
+    """
+    OWL2_FUNCTIONAL_SYNTAX = "OWL2 Functional Syntax"
+    OWL2_XML_STYLE = "OWL2 XML Syntax"
+    MANCHESTER_SYNTAX = "Manchester Syntax"
+    RDF_XML_SYNTAX = "RDF/XML Syntax"
+    RDF_TURTLE = "RDF/Turtle"
+
+
+@dataclass
+class Owl:
+    """
+    See: https://en.wikipedia.org/wiki/Web_Ontology_Language
+    """
+    entity: Entity
+    spec: OwlFamily = OwlFamily.MANCHESTER_SYNTAX
+
+    def __str__(self):
+        match self.spec.value:
+            case OwlFamily.MANCHESTER_SYNTAX:
+                owl_string = f"""
+Ontology: {self.entity.ipfs_uri}
+Class: {self.entity.name}
+
+
+"""
+            case _:
+                raise NotImplementedError("This ontology style is not yet supported")
+        return owl_string
+
 
 @dataclass
 class Relationship:
@@ -383,6 +515,7 @@ class Relationship:
     confidence: float
     source_chunks: List[str]
     properties: Dict[str, Any]
+
 
 @dataclass
 class KnowledgeGraph:
@@ -673,10 +806,10 @@ class GraphRAGIntegrator:
         self.similarity_threshold = similarity_threshold
         self.entity_extraction_confidence = entity_extraction_confidence
 
-        for attr, type_ in [("storage", IPLDStorage), ("logger", logging.Logger)]:
-            attr = getattr(self, attr)
-            if not isinstance(attr, type_):
-                raise TypeError(f"{attr} must be an instance of {type_.__name__}, got {type(attr).__name__}")
+        for attr_name, type_ in [("storage", IPLDStorage), ("logger", logging.Logger)]:
+            attr_value = getattr(self, attr_name)
+            if not isinstance(attr_value, type_):
+                raise TypeError(f"{attr_name} must be an instance of {type_.__name__}, got {type(attr_value).__name__}")
 
         # Graph storage
         self.knowledge_graphs: Dict[str, KnowledgeGraph] = {}
@@ -1020,16 +1153,19 @@ class GraphRAGIntegrator:
                 if not (match['end'] <= accepted['start'] or match['start'] >= accepted['end']):
                     overlaps = True
                     break
-            
+
             if not overlaps:
                 non_overlapping.append(match)
         self.logger.debug(f"non_overlapping:\n{non_overlapping}")
 
         # Convert to entity format
         for match in non_overlapping:
+
+            type_ = _confirm_match_with_nltk(match['text'], match['type'])
+
             entities.append({
                 'name': match['text'],
-                'type': match['type'],
+                'type': type_,
                 'description': f'{match["type"].capitalize()} found in chunk {chunk_id}',
                 'confidence': 0.7,  # Base confidence for pattern matching
                 'properties': {
@@ -1037,7 +1173,7 @@ class GraphRAGIntegrator:
                     'source_chunk': chunk_id
                 }
             })
-        
+
         # Remove duplicates by name (case-insensitive)
         unique_entities = []
         seen_names = set()
@@ -1046,9 +1182,9 @@ class GraphRAGIntegrator:
             if name_key not in seen_names:
                 seen_names.add(name_key)
                 unique_entities.append(entity)
-        
+
         return unique_entities
-    
+
     async def _extract_relationships(self, 
                                    entities: List[Entity], 
                                    chunks: List[LLMChunk]) -> List[Relationship]:
@@ -1945,12 +2081,12 @@ class GraphRAGIntegrator:
             - Performance scales with graph size and depth - use smaller depths for large graphs
         """
         if not isinstance(entity_id, str):
-            raise TypeError("entity_id must be a string.")
+            raise TypeError(f"entity_id must be a string, got {type(entity_id).__name__} instead.")
         if not entity_id:
             raise ValueError("entity_id must be a non-empty string.")
         
         if not isinstance(depth, int):
-            raise TypeError("depth must be an integer")
+            raise TypeError(f"depth must be an integer, got {type(depth).__name__} instead.")
         if depth < 0:
             raise ValueError("depth must be a non-negative integer")
 

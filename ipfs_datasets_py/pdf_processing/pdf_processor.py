@@ -16,6 +16,7 @@ from typing import Any, Optional, Union
 from contextlib import nullcontext
 from dataclasses import dataclass
 import traceback
+import os
 
 
 try:
@@ -46,6 +47,10 @@ import json
 
 class InitializationError(RuntimeError):
     """Custom exception for errors that occur during the __init__ method in the PDFProcessor."""
+
+class DependencyError(RuntimeError):
+    """Custom exception for errors that occur/are raised from dependencies in the PDFProcessor."""
+
 
 
 class PDFProcessor:
@@ -308,8 +313,28 @@ class PDFProcessor:
             except Exception as e:
                 raise InitializationError(f"Failed to initialize LLMOptimizer: {e}") from e
 
-    def _validate_process_pdf_inputs(pdf_path: Any, metadata: Optional[Any] = None):
+    def _validate_process_pdf_inputs(
+            self, 
+            pdf_path: str | Path, 
+            metadata: Optional[dict[str, Any]] = None
+            ) -> tuple[Path, dict[str, Any]]:
+        """Validates the inputs for processing a PDF file.
 
+        This function uses Pydantic to ensure that the provided PDF path is a valid,
+        existing file and that the metadata, if provided, is a dictionary.
+
+        Args:
+            pdf_path (Union[str, Path]): The path to the PDF file.
+            metadata (Optional[dict[str, Any]], optional): A dictionary of metadata
+                associated with the PDF. Defaults to an empty dictionary if None.
+        Raises:
+            TypeError: If `pdf_path` is not a string or a `pathlib.Path` object.
+            ValueError: If `pdf_path` does not point to an existing file or if
+                        `metadata` is not a dictionary.
+        Returns:
+            tuple[Path, dict[str, Any]]: A tuple containing the validated `Path`
+                                            object for the PDF and the metadata dictionary.
+    """
         if not isinstance(pdf_path, (str, Path)):
             raise TypeError(f"pdf_path must be a string or Path object, got {type(pdf_path).__name__}")
 
@@ -412,9 +437,9 @@ class PDFProcessor:
             # Check for invalid or unsafe characters in the string path
             if not pdf_path.strip():
                 raise ValueError("pdf_path cannot be empty or whitespace")
-            invalid_chars = set('<>:"/\\|?*')
+
             # Also check for control characters (ASCII 0-31 and 127)
-            if any(char in invalid_chars or ord(char) < 32 or ord(char) == 127 for char in pdf_path):
+            if any(ord(char) < 32 or ord(char) == 127 for char in pdf_path):
                 raise ValueError("pdf_path contains invalid characters")
 
         pdf_path = Path(pdf_path)
@@ -639,6 +664,10 @@ class PDFProcessor:
         if file_size == 0:
             raise ValueError("PDF file is empty")
 
+        # Check for permission issues
+        if not os.access(pdf_path, os.R_OK):
+            raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
+
         # Open with PyMuPDF for analysis
         try:
             doc = pymupdf.open(str(pdf_path))
@@ -648,13 +677,11 @@ class PDFProcessor:
             raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
         except FileNotFoundError:
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
-        except pymupdf.FileDataError as e:
-            raise ValueError(f"Invalid PDF file format for '{pdf_path.name}: {e}") from e
-        except pymupdf.mupdf.FzErrorFormat as e:
-            raise ValueError(f"Corrupted PDF file for '{pdf_path.name}': {e}") from e
+        except (pymupdf.FileDataError, pymupdf.mupdf.FzErrorFormat) as e:
+            raise e
         except Exception as e:
             raise RuntimeError(f"Unexpected error opening PDF file '{pdf_path}': {e}") from e
-        
+
         return {
             'file_path': str(pdf_path),
             'file_size': file_size,
@@ -662,7 +689,7 @@ class PDFProcessor:
             'file_hash': self._calculate_file_hash(pdf_path),
             'analysis_timestamp': datetime.datetime.now().isoformat()
         }
-    
+
     async def _decompose_pdf(self, pdf_path: Path) -> dict[str, Any]:
         """
         Stage 2: Decompose PDF into constituent elements and content layers.
@@ -704,7 +731,7 @@ class PDFProcessor:
             Vector graphics and drawing elements are preserved with bounding boxes.
         """
         self.logger.info(f"Stage 2: Decomposing PDF {pdf_path}")
-        
+
         decomposed_content = {
             'pages': [],
             'metadata': {},
@@ -713,11 +740,11 @@ class PDFProcessor:
             'fonts': [],
             'annotations': []
         }
-        
+
         try:
             # Use PyMuPDF for comprehensive extraction
             doc = pymupdf.open(str(pdf_path))
-            
+
             # Extract document metadata
             decomposed_content['metadata'] = {
                 'title': doc.metadata.get('title', ''),
@@ -1335,7 +1362,11 @@ class PDFProcessor:
             Results integrate seamlessly with GraphRAG knowledge graph construction.
         """
         self.logger.info("Stage 6: Extracting entities and relationships")
-        
+        if not isinstance(optimized_content, dict):
+            raise ValueError(
+                f"Optimized content must be a dictionary, got {type(optimized_content).__name__} instead"
+            )
+
         # Get LLM document from optimized content
         llm_document: LLMDocument = optimized_content.get('llm_document')
         

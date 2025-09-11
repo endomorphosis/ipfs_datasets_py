@@ -190,10 +190,5 @@ def _infer_relationship_type(self, entity1: Entity, entity2: Entity, context: st
         'acquired'
         >>> _infer_relationship_type(person1_entity, person2_entity, "They work as colleagues")
         'collaborates_with'
-
-    Note:
-        The method performs case-insensitive keyword matching and prioritizes more specific
-        relationships over generic ones. The relationship direction is implied by the order
-        of entities (entity1 -> entity2).
         """
 ```

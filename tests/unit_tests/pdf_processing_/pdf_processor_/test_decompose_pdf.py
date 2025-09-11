@@ -82,9 +82,13 @@ class TestDecomposePdf:
     @pytest.fixture
     def pdf_processor(self):
         """Create a PDFProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.IPLDStorage'):
-            processor = PDFProcessor(enable_monitoring=False, enable_audit=False)
-            return processor
+        mock_ipld_storage = MagicMock(spec=IPLDStorage)
+        processor = PDFProcessor(
+            storage=mock_ipld_storage,
+            enable_monitoring=False, 
+            enable_audit=False
+        )
+        return processor
 
     @pytest.fixture
     def sample_text_pdf(self):

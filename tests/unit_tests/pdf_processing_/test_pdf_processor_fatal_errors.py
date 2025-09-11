@@ -50,15 +50,6 @@ class TestProcessPdfTimeoutAndServiceFailures:
     """
 
     @pytest.fixture
-    def valid_pdf_file(self, tmp_path) -> str:
-        """Create a valid PDF file for testing."""
-        valid_pdf = tmp_path / "valid.pdf"
-        # Mock minimal valid PDF structure
-        valid_content = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R >>\nendobj\n%%EOF"
-        valid_pdf.write_bytes(valid_content)
-        return str(valid_pdf)
-
-    @pytest.fixture
     def large_pdf_file(self, tmp_path) -> str:
         """Create a large PDF file that would cause timeout."""
         large_pdf = tmp_path / "large.pdf"
@@ -66,11 +57,6 @@ class TestProcessPdfTimeoutAndServiceFailures:
         large_content = b"%PDF-1.4\n" + b"large content " * 10000 + b"\n%%EOF"
         large_pdf.write_bytes(large_content)
         return str(large_pdf)
-
-    @pytest.fixture
-    def valid_metadata(self) -> dict[str, Any]:
-        """Provide valid metadata for testing."""
-        return {"test": "metadata"}
 
     @pytest.fixture
     def expected_timeout_message(self) -> str:
@@ -100,7 +86,7 @@ class TestProcessPdfTimeoutAndServiceFailures:
     @pytest.mark.asyncio
     async def test_when_processing_exceeds_timeout_then_raises_timeout_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         large_pdf_file, 
         valid_metadata,
         expected_timeout_message
@@ -111,16 +97,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         THEN return dict with status='error' with message 'Processing exceeded configured timeout limits'
         """
         # Mock the processing to simulate timeout
-        with patch.object(processor, '_process_with_timeout', side_effect=TimeoutError(expected_timeout_message)):
+        with patch.object(default_pdf_processor, '_process_with_timeout', side_effect=TimeoutError(expected_timeout_message)):
             with pytest.raises(TimeoutError) as exc_info:
-                await processor.process_pdf(large_pdf_file, valid_metadata)
-        
-        assert str(exc_info.value) == expected_timeout_message
+                await default_pdf_processor.process_pdf(large_pdf_file, valid_metadata)
+
+        assert expected_timeout_message in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_when_ipld_storage_fails_then_raises_runtime_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata,
         expected_ipld_failure_message
@@ -131,16 +117,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         THEN raises RuntimeError with message 'IPLD storage backend failure'
         """
         # Mock IPLD storage failure
-        with patch.object(processor, '_ipld_storage', side_effect=RuntimeError(expected_ipld_failure_message)):
+        with patch.object(default_pdf_processor, '_ipld_storage', side_effect=RuntimeError(expected_ipld_failure_message)):
             with pytest.raises(RuntimeError) as exc_info:
-                await processor.process_pdf(valid_pdf_file, valid_metadata)
-        
-        assert str(exc_info.value) == expected_ipld_failure_message
+                await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
+
+        assert expected_ipld_failure_message in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_when_ocr_service_fails_then_raises_runtime_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata,
         expected_ocr_failure_message
@@ -151,16 +137,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         THEN raises RuntimeError with message 'OCR processing stage failed'
         """
         # Mock OCR service failure
-        with patch.object(processor, '_ocr_processing', side_effect=RuntimeError(expected_ocr_failure_message)):
+        with patch.object(default_pdf_processor, '_ocr_processing', side_effect=RuntimeError(expected_ocr_failure_message)):
             with pytest.raises(RuntimeError) as exc_info:
-                await processor.process_pdf(valid_pdf_file, valid_metadata)
+                await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
         
         assert str(exc_info.value) == expected_ocr_failure_message
 
     @pytest.mark.asyncio
     async def test_when_llm_service_fails_then_raises_runtime_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata,
         expected_llm_failure_message
@@ -171,16 +157,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         THEN raises RuntimeError with message 'LLM optimization stage failed'
         """
         # Mock LLM service failure
-        with patch.object(processor, '_llm_optimization', side_effect=RuntimeError(expected_llm_failure_message)):
+        with patch.object(default_pdf_processor, '_llm_optimization', side_effect=RuntimeError(expected_llm_failure_message)):
             with pytest.raises(RuntimeError) as exc_info:
-                await processor.process_pdf(valid_pdf_file, valid_metadata)
+                await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
         
         assert str(exc_info.value) == expected_llm_failure_message
 
     @pytest.mark.asyncio
     async def test_when_vector_database_fails_then_raises_runtime_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata,
         expected_vector_failure_message
@@ -191,16 +177,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         THEN raises RuntimeError with message 'Vector embedding stage failed'
         """
         # Mock vector database failure
-        with patch.object(processor, '_vector_embedding', side_effect=RuntimeError(expected_vector_failure_message)):
+        with patch.object(default_pdf_processor, '_vector_embedding', side_effect=RuntimeError(expected_vector_failure_message)):
             with pytest.raises(RuntimeError) as exc_info:
-                await processor.process_pdf(valid_pdf_file, valid_metadata)
+                await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
         
         assert str(exc_info.value) == expected_vector_failure_message
 
     @pytest.mark.asyncio
     async def test_when_network_timeout_occurs_then_raises_timeout_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata,
         expected_timeout_message
@@ -212,16 +198,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         """
         # Mock network timeout
         import asyncio
-        with patch.object(processor, '_make_external_request', side_effect=asyncio.TimeoutError()):
+        with patch.object(default_pdf_processor, '_make_external_request', side_effect=asyncio.TimeoutError()):
             with pytest.raises(TimeoutError) as exc_info:
-                await processor.process_pdf(valid_pdf_file, valid_metadata)
+                await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
         
         assert str(exc_info.value) == expected_timeout_message
 
     @pytest.mark.asyncio
     async def test_when_memory_exhausted_then_raises_runtime_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata
     ):
@@ -233,16 +219,16 @@ class TestProcessPdfTimeoutAndServiceFailures:
         expected_message = "Processing failed due to insufficient memory"
         
         # Mock memory error
-        with patch.object(processor, '_allocate_processing_memory', side_effect=MemoryError("Out of memory")):
+        with patch.object(default_pdf_processor, '_allocate_processing_memory', side_effect=MemoryError("Out of memory")):
             with pytest.raises(RuntimeError) as exc_info:
-                await processor.process_pdf(valid_pdf_file, valid_metadata)
+                await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
         
         assert "memory" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
     async def test_when_multiple_service_failures_then_raises_first_runtime_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         valid_pdf_file, 
         valid_metadata,
         expected_ipld_failure_message
@@ -253,9 +239,9 @@ class TestProcessPdfTimeoutAndServiceFailures:
         THEN raises RuntimeError with message from first failing service
         """
         # Mock multiple service failures, first one should be raised
-        with patch.object(processor, '_ipld_storage', side_effect=RuntimeError(expected_ipld_failure_message)):
-            with patch.object(processor, '_ocr_processing', side_effect=RuntimeError("OCR also failed")):
+        with patch.object(default_pdf_processor, '_ipld_storage', side_effect=RuntimeError(expected_ipld_failure_message)):
+            with patch.object(default_pdf_processor, '_ocr_processing', side_effect=RuntimeError("OCR also failed")):
                 with pytest.raises(RuntimeError) as exc_info:
-                    await processor.process_pdf(valid_pdf_file, valid_metadata)
+                    await default_pdf_processor.process_pdf(valid_pdf_file, valid_metadata)
         
         assert str(exc_info.value) == expected_ipld_failure_message

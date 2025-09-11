@@ -4,6 +4,7 @@ import multiprocessing
 from datasets import Dataset, load_dataset, concatenate_datasets, load_from_disk
 import random
 import numpy as np
+from typing import Any, Dict, List, Optional, Union, Tuple
 try:
     from .ipfs_parquet_to_car import ipfs_parquet_to_car_py
 except Exception as e:
@@ -28,7 +29,7 @@ except Exception as e:
     pass
 
 # def process_hashed_dataset_shard(shard, datatype=None, split="train"):
-def process_hashed_dataset_shard(shard, datatype=None, split=None):
+def process_hashed_dataset_shard(shard: Union[str, List[Any], Dict[str, Any]], datatype: Optional[str] = None, split: Optional[str] = None) -> Union[List[Any], ValueError]:
     items = None
     cids = None
     schema = None
@@ -123,7 +124,7 @@ def process_hashed_dataset_shard(shard, datatype=None, split=None):
 
     return [ cids , items, schema ]
 
-def process_index_shard(shard, datatype=None, split="train"):
+def process_index_shard(shard: Union[str, List[Any], Dict[str, Any]], datatype: Optional[str] = None, split: str = "train") -> Union[List[Any], ValueError]:
     items = None
     cids = None
     schema = None
@@ -345,7 +346,7 @@ class ipfs_datasets_py:
         - IPFS integration requires network connectivity for distributed operations
         - Memory usage scales with dataset size and should be monitored for large corpora
     """
-    def __init__(self, resources, metadata):
+    def __init__(self, resources: Any, metadata: Any) -> None:
         """
         Initialize IPFS Dataset Management Platform with Comprehensive Configuration
 
@@ -1170,10 +1171,10 @@ class ipfs_datasets_py:
         self.cid_set = self.ipfs_cid_set
         return cluster_cids_dataset, ipfs_cid_clusters_list, ipfs_cid_clusters_set, ipfs_cid_list, ipfs_cid_set
 
-    def test(self):
+    def test(self) -> None:
         return None
 
-    def process_chunk_files(path, datatype="cids"):
+    def process_chunk_files(path: str, datatype: str = "cids") -> Any:
         cids = None
         items = None
         schema = None

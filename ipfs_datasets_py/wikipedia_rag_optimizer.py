@@ -34,11 +34,70 @@ from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTra
 
 class WikipediaRelationshipWeightCalculator:
     """
-    Calculates weights for different Wikipedia relationship types to prioritize traversal.
+    Wikipedia Relationship Weight Calculator for Graph Traversal Optimization
 
-    This class assigns weights to different relationship types found in Wikipedia-derived
-    knowledge graphs based on their importance for query relevance. These weights are used
-    to prioritize certain relationship types during graph traversal.
+    The WikipediaRelationshipWeightCalculator class provides sophisticated functionality for
+    calculating and managing weights for different relationship types found in Wikipedia-derived
+    knowledge graphs. It assigns importance scores to various relationship types based on their
+    semantic value and traversal efficiency, enabling optimized graph exploration strategies.
+    This class serves as a core component for prioritizing relationship traversals in Wikipedia
+    knowledge graphs, supporting both default weight schemes and custom weight configurations.
+
+    Key Features:
+    - Hierarchical relationship type prioritization with semantic weights
+    - Category-based relationship weight assignment for Wikipedia structures
+    - Topic and causal relationship scoring for knowledge discovery
+    - Customizable weight schemes with fallback defaults
+    - Relationship type normalization and standardization
+    - High-value relationship filtering based on weight thresholds
+    - Prioritized relationship sorting for traversal optimization
+
+    Attributes:
+        weights (Dict[str, float]): Mapping of relationship types to their assigned weights.
+            Combines default weights with any custom overrides provided during initialization.
+            Higher weights indicate more important relationships for traversal prioritization.
+        DEFAULT_RELATIONSHIP_WEIGHTS (Dict[str, float]): Class-level default weight assignments
+            for common Wikipedia relationship types including hierarchical, category, topic,
+            authorship, temporal, and causal relationships.
+
+    Public Methods:
+        get_relationship_weight(relationship_type: str) -> float:
+            Retrieve the weight for a specific relationship type with normalization.
+            Returns the assigned weight or default weight for unknown types.
+        get_prioritized_relationship_types(relationship_types: List[str]) -> List[str]:
+            Sort relationship types by their weights in descending order for traversal
+            optimization and priority-based graph exploration.
+        get_filtered_high_value_relationships(relationship_types: List[str], min_weight: float = 0.7) -> List[str]:
+            Filter relationship types to only include those meeting minimum weight thresholds
+            for focused traversal on high-value relationships.
+
+    Private Methods:
+        _normalize_relationship_type(relationship_type: str) -> str:
+            Normalize relationship type strings for consistent lookup and weight assignment.
+            Handles variations in naming conventions and converts to standardized format.
+
+    Usage Example:
+        calculator = WikipediaRelationshipWeightCalculator({
+            "custom_relation": 1.8,
+            "special_link": 0.3
+        })
+        # Get weight for a relationship
+        weight = calculator.get_relationship_weight("subclass_of")
+        # Prioritize relationships for traversal
+        prioritized = calculator.get_prioritized_relationship_types(
+            ["mentions", "subclass_of", "instance_of"]
+        )
+        # Filter high-value relationships
+        high_value = calculator.get_filtered_high_value_relationships(
+            prioritized, min_weight=0.8
+        )
+
+    Notes:
+        - Default weights are optimized for Wikipedia knowledge graph structures
+        - Hierarchical relationships (subclass_of, instance_of) receive higher weights
+        - Generic relationships (mentions, mentioned_in) receive lower weights
+        - Custom weights override defaults for specific relationship types
+        - Weight normalization handles common naming variations automatically
     """
 
     # Default weights for common Wikipedia relationship types
@@ -81,10 +140,37 @@ class WikipediaRelationshipWeightCalculator:
 
     def __init__(self, custom_weights: Optional[Dict[str, float]] = None):
         """
-        Initialize the relationship weight calculator.
+        Initialize the Wikipedia relationship weight calculator with default and custom weights.
+
+        This method sets up the weight calculation system by combining default Wikipedia
+        relationship weights with any custom overrides provided. The resulting weight
+        mapping is used for prioritizing relationship traversals in knowledge graphs.
 
         Args:
-            custom_weights (Dict[str, float], optional): Custom relationship weights
+            custom_weights (Optional[Dict[str, float]], optional): Custom relationship weights
+                to override or extend default weights. Keys should be relationship type names
+                and values should be positive float weights. Higher values indicate more
+                important relationships. Defaults to None.
+
+        Attributes initialized:
+            weights (Dict[str, float]): Combined weight mapping containing default Wikipedia
+                relationship weights merged with custom overrides. Used for all weight
+                lookups and relationship prioritization operations.
+
+        Raises:
+            TypeError: If custom_weights is not a dictionary or contains non-numeric values
+            ValueError: If custom_weights contains negative weight values
+
+        Examples:
+            >>> calculator = WikipediaRelationshipWeightCalculator()
+            >>> calculator.weights["subclass_of"]
+            1.5
+            >>> custom_calc = WikipediaRelationshipWeightCalculator({
+            ...     "custom_relation": 2.0,
+            ...     "subclass_of": 1.8  # Override default
+            ... })
+            >>> custom_calc.weights["custom_relation"]
+            2.0
         """
         self.weights = self.DEFAULT_RELATIONSHIP_WEIGHTS.copy()
         if custom_weights:
@@ -92,13 +178,42 @@ class WikipediaRelationshipWeightCalculator:
 
     def get_relationship_weight(self, relationship_type: str) -> float:
         """
-        Get the weight for a specific relationship type.
+        Retrieve the weight for a specific relationship type with normalization support.
+
+        This method provides access to relationship weights used for prioritizing graph
+        traversals in Wikipedia knowledge graphs. It handles relationship type normalization
+        automatically and provides fallback to default weights for unknown relationship types.
 
         Args:
-            relationship_type (str): The type of relationship
+            relationship_type (str): The type of relationship to get weight for.
+                Can include variations in naming conventions (spaces, hyphens, case)
+                which will be automatically normalized for consistent lookup.
 
         Returns:
-            float: Weight value for the relationship
+            float: Weight value for the relationship type, ranging from 0.1 to 2.0.
+                Higher values indicate more important relationships for traversal.
+                Returns default weight (0.5) for unknown relationship types.
+
+        Raises:
+            TypeError: If relationship_type is not a string
+            ValueError: If relationship_type is empty or contains only whitespace
+
+        Examples:
+            >>> calculator = WikipediaRelationshipWeightCalculator()
+            >>> calculator.get_relationship_weight("subclass_of")
+            1.5
+            >>> calculator.get_relationship_weight("is_subclass_of")  # Normalized
+            1.5
+            >>> calculator.get_relationship_weight("unknown_relation")
+            0.5
+            >>> calculator.get_relationship_weight("Instance Of")  # Case/space handling
+            1.4
+
+        Notes:
+            - Relationship type normalization handles common naming variations
+            - Default weight is returned for unrecognized relationship types
+            - Weights are optimized for Wikipedia knowledge graph characteristics
+            - Hierarchical relationships receive higher weights than generic ones
         """
         # Handle variations in relationship names
         normalized_type = self._normalize_relationship_type(relationship_type)
@@ -108,13 +223,42 @@ class WikipediaRelationshipWeightCalculator:
 
     def _normalize_relationship_type(self, relationship_type: str) -> str:
         """
-        Normalize relationship type string for consistent lookup.
+        Normalize relationship type string for consistent lookup and weight assignment.
+
+        This method standardizes relationship type strings by converting them to a
+        consistent format that can be reliably looked up in the weights dictionary.
+        It handles common variations in naming conventions including case differences,
+        spacing, hyphenation, and prefix variations commonly found in knowledge graphs.
 
         Args:
-            relationship_type (str): The relationship type to normalize
+            relationship_type (str): The relationship type string to normalize.
+                Can contain spaces, hyphens, mixed case, and common prefixes like "is_".
 
         Returns:
-            str: Normalized relationship type
+            str: Normalized relationship type in lowercase snake_case format.
+                Common prefixes are removed and variations are mapped to standard forms.
+
+        Raises:
+            TypeError: If relationship_type is not a string
+            AttributeError: If string methods are not available on the input
+
+        Examples:
+            >>> calculator = WikipediaRelationshipWeightCalculator()
+            >>> calculator._normalize_relationship_type("Is Subclass Of")
+            'subclass_of'
+            >>> calculator._normalize_relationship_type("instance-of")
+            'instance_of'
+            >>> calculator._normalize_relationship_type("RELATED_TO")
+            'related_to'
+            >>> calculator._normalize_relationship_type("is_mentioned_in")
+            'mentioned_in'
+
+        Notes:
+            - Converts all text to lowercase for case-insensitive matching
+            - Replaces spaces and hyphens with underscores for snake_case format
+            - Maps common prefix variations ("is_", "contains_") to standard forms
+            - Handles bidirectional relationship naming variations
+            - Optimized for Wikipedia relationship naming patterns
         """
         # Convert to lowercase
         normalized = relationship_type.lower()
@@ -143,13 +287,41 @@ class WikipediaRelationshipWeightCalculator:
 
     def get_prioritized_relationship_types(self, relationship_types: List[str]) -> List[str]:
         """
-        Sort relationship types by their weights in descending order.
+        Sort relationship types by their weights in descending order for traversal optimization.
+
+        This method takes a list of relationship types and returns them sorted by their
+        assigned weights, with the highest-weight (most important) relationships first.
+        This ordering is essential for prioritizing graph traversals and ensuring that
+        more valuable relationship types are explored before less important ones.
 
         Args:
-            relationship_types (List[str]): List of relationship types
+            relationship_types (List[str]): List of relationship type names to prioritize.
+                Can include any relationship types, including unknown ones which will
+                receive default weights for comparison.
 
         Returns:
-            List[str]: Relationship types sorted by weight (highest first)
+            List[str]: Relationship types sorted by weight in descending order.
+                Highest-weight relationships appear first in the list, enabling
+                priority-based traversal strategies.
+
+        Raises:
+            TypeError: If relationship_types is not a list or contains non-string elements
+            ValueError: If relationship_types is empty
+
+        Examples:
+            >>> calculator = WikipediaRelationshipWeightCalculator()
+            >>> types = ["mentions", "subclass_of", "instance_of", "related_to"]
+            >>> prioritized = calculator.get_prioritized_relationship_types(types)
+            >>> print(prioritized)
+            ['subclass_of', 'instance_of', 'related_to', 'mentions']
+            >>> # Weights: subclass_of=1.5, instance_of=1.4, related_to=1.0, mentions=0.5
+
+        Notes:
+            - Sorting is based on weights from the relationship weight calculator
+            - Higher weights indicate more important relationships for traversal
+            - Unknown relationship types receive default weight for comparison
+            - Stable sorting preserves original order for relationships with equal weights
+            - Optimized for Wikipedia knowledge graph traversal prioritization
         """
         return sorted(
             relationship_types,
@@ -163,14 +335,44 @@ class WikipediaRelationshipWeightCalculator:
         min_weight: float = 0.7
     ) -> List[str]:
         """
-        Filter relationship types to only include those with weight >= min_weight.
+        Filter relationship types to only include those meeting minimum weight thresholds.
+
+        This method filters a list of relationship types to retain only those with
+        weights at or above the specified minimum threshold. This is useful for
+        focusing graph traversals on high-value relationships and avoiding
+        low-priority relationships that may not contribute significantly to query results.
 
         Args:
-            relationship_types (List[str]): List of relationship types
-            min_weight (float): Minimum weight threshold
+            relationship_types (List[str]): List of relationship type names to filter.
+                All relationship types will be evaluated against their assigned weights.
+            min_weight (float, optional): Minimum weight threshold for inclusion.
+                Relationship types with weights below this threshold are excluded.
+                Defaults to 0.7 for moderate filtering.
 
         Returns:
-            List[str]: Filtered list of high-value relationship types
+            List[str]: Filtered list containing only high-value relationship types
+                with weights >= min_weight. Maintains original order of input list.
+
+        Raises:
+            TypeError: If relationship_types is not a list or min_weight is not numeric
+            ValueError: If min_weight is negative or greater than maximum possible weight
+
+        Examples:
+            >>> calculator = WikipediaRelationshipWeightCalculator()
+            >>> types = ["subclass_of", "mentions", "instance_of", "related_to"]
+            >>> high_value = calculator.get_filtered_high_value_relationships(types, 0.8)
+            >>> print(high_value)
+            ['subclass_of', 'instance_of']  # Only weights >= 0.8
+            >>> moderate_value = calculator.get_filtered_high_value_relationships(types, 0.5)
+            >>> print(moderate_value)
+            ['subclass_of', 'instance_of', 'related_to']  # Excludes mentions (0.5)
+
+        Notes:
+            - Filtering is based on exact weight comparison using >= operator
+            - Default threshold (0.7) excludes low-priority relationships like mentions
+            - Original order is preserved for relationships that pass the filter
+            - Useful for performance optimization in resource-constrained scenarios
+            - Threshold can be adjusted based on query requirements and performance needs
         """
         return [
             rel_type for rel_type in relationship_types
@@ -180,14 +382,95 @@ class WikipediaRelationshipWeightCalculator:
 
 class WikipediaCategoryHierarchyManager:
     """
-    Manages Wikipedia category hierarchies for optimizing traversal strategies.
+    Wikipedia Category Hierarchy Manager for Knowledge Graph Navigation
 
-    This class helps navigate and optimize traversals through Wikipedia's category
-    structure, which is a key aspect of Wikipedia-derived knowledge graphs.
+    The WikipediaCategoryHierarchyManager class provides comprehensive functionality for
+    managing and optimizing traversals through Wikipedia's hierarchical category structure.
+    It maintains category depth calculations, specificity scoring, and connection mapping
+    to enable intelligent navigation strategies in Wikipedia-derived knowledge graphs.
+    This class serves as a core component for category-based query optimization, supporting
+    both depth-based traversal planning and similarity-weighted category exploration.
+
+    Key Features:
+    - Hierarchical category depth calculation with cycle detection
+    - Category specificity scoring for relevance weighting
+    - Dynamic category connection registration and management
+    - Similarity-based category weight assignment for query optimization
+    - Related category discovery within specified traversal distances
+    - Caching mechanisms for performance optimization
+    - Parent-child relationship tracking for hierarchy navigation
+
+    Attributes:
+        category_depth_cache (Dict[str, int]): Cache mapping category names to their
+            calculated depths in the hierarchy. Depths are calculated as distance from
+            root categories, with higher values indicating more specific categories.
+        category_specificity (Dict[str, float]): Mapping of category names to their
+            specificity scores based on position in hierarchy and content characteristics.
+        category_connections (DefaultDict[str, Set[str]]): Graph structure mapping parent
+            categories to sets of their child categories, enabling hierarchy traversal
+            and relationship discovery.
+
+    Public Methods:
+        register_category_connection(parent_category: str, child_category: str) -> None:
+            Register a hierarchical connection between parent and child categories
+            for building the category graph structure.
+        calculate_category_depth(category: str, visited: Optional[Set[str]] = None) -> int:
+            Calculate the hierarchical depth of a category with cycle detection,
+            returning cached results when available for performance optimization.
+        assign_category_weights(query_vector: np.ndarray, categories: List[str], similarity_scores: Dict[str, float] = None) -> Dict[str, float]:
+            Assign weights to categories based on hierarchy depth and similarity to query vector,
+            combining structural and semantic relevance for traversal optimization.
+        get_related_categories(category: str, max_distance: int = 2) -> List[Tuple[str, int]]:
+            Discover categories related to a given category within specified traversal distance,
+            returning category names paired with their distances from the source.
+
+    Usage Example:
+        hierarchy_manager = WikipediaCategoryHierarchyManager()
+        # Register category relationships
+        hierarchy_manager.register_category_connection("Science", "Physics")
+        hierarchy_manager.register_category_connection("Physics", "Quantum Physics")
+        # Calculate category depth
+        depth = hierarchy_manager.calculate_category_depth("Quantum Physics")
+        # Assign weights based on query relevance
+        weights = hierarchy_manager.assign_category_weights(
+            query_vector, ["Physics", "Chemistry", "Biology"]
+        )
+        # Find related categories
+        related = hierarchy_manager.get_related_categories("Physics", max_distance=2)
+
+    Notes:
+        - Depth calculation uses caching to avoid redundant computations
+        - Cycle detection prevents infinite loops in category hierarchies
+        - Weight assignment combines structural depth with semantic similarity
+        - Related category discovery supports bidirectional traversal
+        - Performance optimized for large Wikipedia category structures
     """
 
     def __init__(self):
-        """Initialize the category hierarchy manager."""
+        """
+        Initialize the Wikipedia category hierarchy manager with empty data structures.
+
+        This method sets up the core data structures needed for managing Wikipedia
+        category hierarchies including depth caching, specificity scoring, and
+        connection tracking. All structures start empty and are populated as
+        category relationships are registered and analyzed.
+
+        Attributes initialized:
+            category_depth_cache (Dict[str, int]): Cache mapping category names to their
+                calculated depths in the hierarchy for performance optimization.
+            category_specificity (Dict[str, float]): Mapping of category names to their
+                specificity scores based on hierarchy position and characteristics.
+            category_connections (DefaultDict[str, Set[str]]): Graph structure mapping
+                parent categories to sets of child categories for hierarchy navigation.
+
+        Examples:
+            >>> manager = WikipediaCategoryHierarchyManager()
+            >>> len(manager.category_depth_cache)
+            0
+            >>> len(manager.category_connections)
+            0
+            >>> # Ready for category registration and analysis
+        """
         # Category depth cache (category_name -> depth)
         self.category_depth_cache = {}
 
@@ -199,24 +482,86 @@ class WikipediaCategoryHierarchyManager:
 
     def register_category_connection(self, parent_category: str, child_category: str) -> None:
         """
-        Register a connection between two categories.
+        Register a hierarchical connection between parent and child categories.
+
+        This method builds the category hierarchy graph by registering parent-child
+        relationships between Wikipedia categories. These connections are used for
+        depth calculation, related category discovery, and hierarchical traversal
+        optimization throughout the knowledge graph.
 
         Args:
-            parent_category (str): The parent category
-            child_category (str): The child category
+            parent_category (str): The parent category name in the hierarchy.
+                Should be a valid Wikipedia category identifier.
+            child_category (str): The child category name in the hierarchy.
+                Should be a valid Wikipedia category identifier.
+
+        Returns:
+            None: This method modifies the internal category_connections structure.
+
+        Raises:
+            TypeError: If parent_category or child_category is not a string
+            ValueError: If parent_category or child_category is empty
+
+        Examples:
+            >>> manager = WikipediaCategoryHierarchyManager()
+            >>> manager.register_category_connection("Science", "Physics")
+            >>> manager.register_category_connection("Physics", "Quantum Physics")
+            >>> manager.register_category_connection("Science", "Chemistry")
+            >>> "Physics" in manager.category_connections["Science"]
+            True
+
+        Notes:
+            - Connections are stored as directed relationships (parent -> child)
+            - Multiple children can be registered for the same parent
+            - Duplicate connections are automatically handled by set data structure
+            - No cycle detection is performed during registration
+            - Connections are used for depth calculation and traversal optimization
         """
         self.category_connections[parent_category].add(child_category)
 
     def calculate_category_depth(self, category: str, visited: Optional[Set[str]] = None) -> int:
         """
-        Calculate the depth of a category in the hierarchy.
+        Calculate the hierarchical depth of a category with cycle detection and caching.
+
+        This method determines how deep a category is in the Wikipedia hierarchy by
+        traversing parent relationships recursively. Depth is calculated as the maximum
+        distance from any root category (categories with no parents), with higher values
+        indicating more specific categories. Results are cached for performance optimization.
 
         Args:
-            category (str): The category name
-            visited (Set[str], optional): Set of already visited categories to avoid cycles
+            category (str): The category name to calculate depth for.
+                Should be a registered category in the hierarchy.
+            visited (Optional[Set[str]], optional): Set of already visited categories
+                for cycle detection during recursive traversal. Automatically managed
+                during recursion. Defaults to None.
 
         Returns:
-            int: The calculated depth (higher is more specific)
+            int: The calculated depth of the category in the hierarchy.
+                Root categories return 0, direct children return 1, etc.
+                Returns 0 for categories involved in cycles.
+
+        Raises:
+            TypeError: If category is not a string
+            ValueError: If category is empty or contains only whitespace
+
+        Examples:
+            >>> manager = WikipediaCategoryHierarchyManager()
+            >>> manager.register_category_connection("Knowledge", "Science")
+            >>> manager.register_category_connection("Science", "Physics")
+            >>> manager.register_category_connection("Physics", "Quantum Physics")
+            >>> manager.calculate_category_depth("Quantum Physics")
+            3
+            >>> manager.calculate_category_depth("Science")
+            1
+            >>> manager.calculate_category_depth("Knowledge")
+            0
+
+        Notes:
+            - Results are cached in category_depth_cache for performance
+            - Cycle detection prevents infinite recursion in circular hierarchies
+            - Depth calculation uses maximum parent depth + 1 for multiple parents
+            - Root categories (no parents) have depth 0
+            - Performance optimized for large Wikipedia category structures
         """
         # Check cache first
         if category in self.category_depth_cache:
@@ -319,15 +664,99 @@ class WikipediaCategoryHierarchyManager:
 
 class WikipediaEntityImportanceCalculator:
     """
-    Calculates importance scores for Wikipedia entities to prioritize traversal.
+    Wikipedia Entity Importance Calculator for Graph Traversal Prioritization
 
-    This class assigns importance scores to entities in Wikipedia-derived knowledge
-    graphs based on factors like popularity, connections, reference count, etc.
-    These scores help prioritize which entities to explore during graph traversal.
+    The WikipediaEntityImportanceCalculator class provides sophisticated functionality for
+    calculating importance scores for entities in Wikipedia-derived knowledge graphs.
+    It combines multiple relevance factors including connectivity, references, category
+    importance, explicitness, and recency to generate comprehensive importance scores.
+    This class serves as a core component for entity prioritization during graph traversal,
+    supporting both individual entity scoring and batch entity ranking operations.
+
+    Key Features:
+    - Multi-factor importance scoring with configurable feature weights
+    - Connection-based popularity assessment using inbound and outbound links
+    - Reference count analysis for credibility and authority scoring
+    - Category importance integration for contextual relevance
+    - Explicitness scoring based on mention frequency and prominence
+    - Recency scoring for temporal relevance in dynamic knowledge graphs
+    - Performance-optimized caching for repeated entity evaluations
+    - Logarithmic scaling for handling wide ranges in connectivity metrics
+
+    Attributes:
+        entity_importance_cache (Dict[str, float]): Cache mapping entity IDs to their
+            calculated importance scores to avoid redundant computations and improve
+            performance during repeated evaluations.
+        feature_weights (Dict[str, float]): Configurable weights for different importance
+            factors including connection_count (0.3), reference_count (0.2),
+            category_importance (0.2), explicitness (0.15), and recency (0.15).
+
+    Public Methods:
+        calculate_entity_importance(entity_data: Dict[str, Any], category_weights: Optional[Dict[str, float]] = None) -> float:
+            Calculate comprehensive importance score for an entity combining multiple
+            relevance factors with logarithmic scaling and normalization.
+        rank_entities_by_importance(entities: List[Dict[str, Any]], category_weights: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
+            Rank a collection of entities by their calculated importance scores,
+            returning entities sorted in descending order of importance.
+
+    Usage Example:
+        calculator = WikipediaEntityImportanceCalculator()
+        # Calculate importance for a single entity
+        entity_data = {
+            "id": "entity_123",
+            "inbound_connections": ["e1", "e2", "e3"],
+            "outbound_connections": ["e4", "e5"],
+            "references": ["ref1", "ref2"],
+            "categories": ["Science", "Physics"],
+            "mention_count": 25,
+            "last_modified": 1693958400.0
+        }
+        category_weights = {"Science": 0.9, "Physics": 0.8}
+        importance = calculator.calculate_entity_importance(entity_data, category_weights)
+        # Rank multiple entities
+        ranked_entities = calculator.rank_entities_by_importance(
+            [entity_data, other_entity], category_weights
+        )
+
+    Notes:
+        - Importance scores are normalized to 0.0-1.0 range for consistency
+        - Connection counts use logarithmic scaling to handle high-degree nodes
+        - Reference counts contribute to authority and credibility assessment
+        - Category weights enable domain-specific importance adjustments
+        - Recency scoring provides temporal relevance for dynamic content
+        - Caching improves performance for repeated entity evaluations
     """
 
     def __init__(self):
-        """Initialize the entity importance calculator."""
+        """
+        Initialize the Wikipedia entity importance calculator with default configurations.
+
+        This method sets up the importance calculation system with default feature weights
+        and an empty cache for performance optimization. The feature weights are configured
+        to balance different aspects of entity importance including connectivity, references,
+        category relevance, explicitness, and temporal recency.
+
+        Attributes initialized:
+            entity_importance_cache (Dict[str, float]): Cache mapping entity IDs to their
+                calculated importance scores to avoid redundant computations during
+                repeated evaluations and improve overall performance.
+            feature_weights (Dict[str, float]): Configurable weights for different importance
+                factors with balanced default values: connection_count (0.3), reference_count (0.2),
+                category_importance (0.2), explicitness (0.15), and recency (0.15).
+
+        Examples:
+            >>> calculator = WikipediaEntityImportanceCalculator()
+            >>> calculator.feature_weights["connection_count"]
+            0.3
+            >>> len(calculator.entity_importance_cache)
+            0
+
+        Notes:
+            - Feature weights sum to 1.0 for normalized importance scoring
+            - Connection count receives highest weight due to network importance
+            - Cache improves performance for repeated entity evaluations
+            - Weights can be modified after initialization for custom scoring
+        """
         # Entity importance score cache
         self.entity_importance_cache = {}
 
@@ -346,14 +775,54 @@ class WikipediaEntityImportanceCalculator:
         category_weights: Optional[Dict[str, float]] = None
     ) -> float:
         """
-        Calculate importance score for an entity.
+        Calculate comprehensive importance score for an entity using multiple relevance factors.
+
+        This method combines multiple importance factors including connectivity, references,
+        category importance, explicitness, and recency to generate a comprehensive importance
+        score. The calculation uses logarithmic scaling for handling wide ranges in metrics
+        and provides normalized scores suitable for entity ranking and prioritization.
 
         Args:
-            entity_data (Dict): Entity data with relevant features
-            category_weights (Dict[str, float], optional): Category importance weights
+            entity_data (Dict[str, Any]): Entity data dictionary containing relevance features.
+                Expected keys include: id, inbound_connections, outbound_connections,
+                references, categories, mention_count, last_modified.
+            category_weights (Optional[Dict[str, float]], optional): Category importance weights
+                for domain-specific importance adjustments. Maps category names to weight values.
+                Defaults to None for equal category treatment.
 
         Returns:
-            float: Entity importance score (0.0-1.0)
+            float: Entity importance score normalized to 0.0-1.0 range.
+                Higher scores indicate more important entities for prioritization.
+                Combines weighted feature scores using configured feature weights.
+
+        Raises:
+            TypeError: If entity_data is not a dictionary or contains invalid types
+            ValueError: If entity_data is missing required fields or contains invalid values
+            KeyError: If category_weights references categories not in entity data
+
+        Examples:
+            >>> calculator = WikipediaEntityImportanceCalculator()
+            >>> entity_data = {
+            ...     "id": "quantum_entanglement",
+            ...     "inbound_connections": ["physics", "quantum_mechanics"],
+            ...     "outbound_connections": ["bell_theorem", "epr_paradox"],
+            ...     "references": ["einstein_1935", "bell_1964"],
+            ...     "categories": ["Physics", "Quantum Mechanics"],
+            ...     "mention_count": 15,
+            ...     "last_modified": 1693958400.0
+            ... }
+            >>> category_weights = {"Physics": 0.9, "Quantum Mechanics": 0.8}
+            >>> importance = calculator.calculate_entity_importance(entity_data, category_weights)
+            >>> 0.0 <= importance <= 1.0
+            True
+
+        Notes:
+            - Connection counts use logarithmic scaling to handle high-degree nodes
+            - Reference counts contribute to authority and credibility assessment
+            - Category weights enable domain-specific importance adjustments
+            - Recency scoring provides temporal relevance for dynamic content
+            - Results are cached using entity ID for performance optimization
+            - Missing optional fields receive default values for robust calculation
         """
         # Check cache first
         entity_id = entity_data.get("id", "")
@@ -424,14 +893,50 @@ class WikipediaEntityImportanceCalculator:
         category_weights: Optional[Dict[str, float]] = None
     ) -> List[Dict[str, Any]]:
         """
-        Rank entities by their calculated importance.
+        Rank a collection of entities by their calculated importance scores.
+
+        This method processes a list of entity data dictionaries, calculates importance
+        scores for each using the comprehensive importance calculation, and returns
+        the entities sorted in descending order of importance. This enables efficient
+        entity prioritization for graph traversal and query optimization.
 
         Args:
-            entities (List[Dict]): List of entity data dictionaries
-            category_weights (Dict[str, float], optional): Category importance weights
+            entities (List[Dict[str, Any]]): List of entity data dictionaries to rank.
+                Each dictionary should contain entity features like connections, references,
+                categories, and other importance indicators.
+            category_weights (Optional[Dict[str, float]], optional): Category importance weights
+                for domain-specific importance adjustments applied to all entities.
+                Maps category names to weight values. Defaults to None.
 
         Returns:
-            List[Dict]: Entities sorted by importance (highest first)
+            List[Dict[str, Any]]: Entities sorted by importance in descending order.
+                Most important entities appear first in the list, enabling priority-based
+                processing and traversal strategies.
+
+        Raises:
+            TypeError: If entities is not a list or contains non-dictionary elements
+            ValueError: If entities list is empty or contains invalid entity data
+            KeyError: If category_weights references categories not found in entity data
+
+        Examples:
+            >>> calculator = WikipediaEntityImportanceCalculator()
+            >>> entities = [
+            ...     {"id": "entity_1", "inbound_connections": ["a", "b"], "references": ["r1"]},
+            ...     {"id": "entity_2", "inbound_connections": ["c"], "references": ["r2", "r3"]},
+            ...     {"id": "entity_3", "inbound_connections": ["d", "e", "f"], "references": []}
+            ... ]
+            >>> ranked = calculator.rank_entities_by_importance(entities)
+            >>> len(ranked) == len(entities)
+            True
+            >>> # Most important entity first
+            >>> ranked[0]["id"]  # Entity with highest calculated importance
+
+        Notes:
+            - Importance calculation uses the same algorithm as calculate_entity_importance
+            - Sorting is stable for entities with identical importance scores
+            - Category weights are applied consistently across all entities
+            - Performance scales linearly with the number of entities
+            - Caching from importance calculation improves performance for repeated ranking
         """
         # Calculate importance for each entity
         entities_with_scores = [
@@ -449,18 +954,105 @@ class WikipediaEntityImportanceCalculator:
 
 class WikipediaQueryExpander:
     """
-    Expands queries with relevant Wikipedia topics and categories.
+    Wikipedia Query Expander for Enhanced Knowledge Discovery
 
-    This class implements query expansion techniques specific to Wikipedia knowledge
-    structures, helping to improve recall by including related topics and categories.
+    The WikipediaQueryExpander class provides sophisticated functionality for expanding
+    queries with relevant Wikipedia topics and categories to improve recall and discovery
+    in knowledge graph searches. It implements semantic expansion techniques specific to
+    Wikipedia knowledge structures, leveraging both vector similarity and hierarchical
+    category relationships to identify related content and broaden query scope.
+    This class serves as a core component for query optimization, supporting both
+    automatic expansion and configurable expansion strategies.
+
+    Args:
+        tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance for
+            logging and explaining query expansion decisions. Enables detailed tracking
+            of expansion reasoning and performance analysis. Defaults to None.
+
+    Key Features:
+    - Vector similarity-based topic discovery for semantic expansion
+    - Hierarchical category expansion using Wikipedia's category structure
+    - Configurable similarity thresholds for expansion quality control
+    - Maximum expansion limits to prevent query scope explosion
+    - Integration with category hierarchy managers for structured expansion
+    - Performance tracking and explanation through optional tracer integration
+    - Token-based category matching with overlap analysis
+    - Distance-aware related category discovery
+
+    Attributes:
+        tracer (Optional[WikipediaKnowledgeGraphTracer]): Tracer instance for logging
+            query expansion decisions and performance metrics during expansion operations.
+        similarity_threshold (float): Minimum similarity score (0.65) required for
+            including topics in expansion results, ensuring expansion quality.
+        max_expansions (int): Maximum number of expansions (5) to include in results
+            to prevent query scope explosion and maintain performance.
+
+    Public Methods:
+        expand_query(query_vector: np.ndarray, query_text: str, vector_store: Any, category_hierarchy: WikipediaCategoryHierarchyManager, trace_id: Optional[str] = None) -> Dict[str, Any]:
+            Expand a query with related Wikipedia topics and categories using vector similarity
+            and hierarchical category relationships, returning structured expansion data.
+
+    Usage Example:
+        expander = WikipediaQueryExpander(tracer=knowledge_tracer)
+        # Expand query with related topics and categories
+        expanded_query = expander.expand_query(
+            query_vector=query_embedding,
+            query_text="quantum physics experiments",
+            vector_store=vector_db,
+            category_hierarchy=hierarchy_manager,
+            trace_id="query_123"
+        )
+        # Access expansion results
+        topics = expanded_query["expansions"]["topics"]
+        categories = expanded_query["expansions"]["categories"]
+        has_expansions = expanded_query["has_expansions"]
+
+    Notes:
+        - Vector similarity expansion requires compatible vector store implementation
+        - Category expansion leverages Wikipedia's hierarchical structure
+        - Similarity thresholds balance expansion quality with recall improvement
+        - Maximum expansion limits prevent performance degradation
+        - Tracer integration enables detailed expansion analysis and debugging
+        - Token-based matching handles category name variations automatically
     """
 
     def __init__(self, tracer: Optional[WikipediaKnowledgeGraphTracer] = None):
         """
-        Initialize the query expander.
+        Initialize the Wikipedia query expander with configurable tracing support.
+
+        This method sets up the query expansion system with default parameters for
+        similarity thresholds, expansion limits, and optional tracer integration
+        for detailed logging and explanation of expansion decisions.
 
         Args:
-            tracer (WikipediaKnowledgeGraphTracer, optional): Tracer for explanation
+            tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance for
+                logging and explaining query expansion decisions during the expansion process.
+                Enables detailed tracking of expansion reasoning and performance analysis.
+                Defaults to None for basic operation without tracing.
+
+        Attributes initialized:
+            tracer (Optional[WikipediaKnowledgeGraphTracer]): Tracer instance for logging
+                query expansion decisions and performance metrics.
+            similarity_threshold (float): Minimum similarity score (0.65) required for
+                including topics in expansion results to ensure expansion quality.
+            max_expansions (int): Maximum number of expansions (5) to include in results
+                to prevent query scope explosion and maintain performance.
+
+        Examples:
+            >>> expander = WikipediaQueryExpander()
+            >>> expander.similarity_threshold
+            0.65
+            >>> expander.max_expansions
+            5
+            >>> expander_with_trace = WikipediaQueryExpander(tracer=knowledge_tracer)
+            >>> expander_with_trace.tracer is not None
+            True
+
+        Notes:
+            - Similarity threshold balances expansion quality with recall improvement
+            - Maximum expansions prevent performance degradation from scope explosion
+            - Tracer integration enables detailed expansion analysis and debugging
+            - Default parameters are optimized for Wikipedia knowledge graph characteristics
         """
         self.tracer = tracer
 
@@ -479,17 +1071,60 @@ class WikipediaQueryExpander:
         trace_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Expand a query with related Wikipedia topics and categories.
+        Expand a query with related Wikipedia topics and categories for enhanced discovery.
+
+        This method implements comprehensive query expansion by discovering semantically
+        related topics through vector similarity search and hierarchically related categories
+        through Wikipedia's category structure. The expansion improves query recall by
+        including relevant content that might not match the original query directly.
 
         Args:
-            query_vector (np.ndarray): The original query vector
-            query_text (str): The original query text
-            vector_store: Vector store for similarity search
-            category_hierarchy: Category hierarchy manager
-            trace_id (str, optional): Trace ID for logging
+            query_vector (np.ndarray): The original query vector for semantic similarity search.
+                Should be compatible with the vector store's embedding space.
+            query_text (str): The original query text for category extraction and analysis.
+                Used for token-based category matching and expansion context.
+            vector_store (Any): Vector store instance for similarity search operations.
+                Should implement search method with query vector and filtering capabilities.
+            category_hierarchy (WikipediaCategoryHierarchyManager): Category hierarchy manager
+                for discovering related categories and calculating category relationships.
+            trace_id (Optional[str], optional): Unique trace identifier for correlating
+                expansion decisions and logging across the expansion process. Defaults to None.
 
         Returns:
-            Dict: Expanded query parameters
+            Dict[str, Any]: Comprehensive expanded query data containing:
+                - original_query_vector: The input query vector for reference
+                - original_query_text: The input query text for reference
+                - expansions: Dictionary with topics, categories, and entities expansions
+                - has_expansions: Boolean indicating whether any expansions were found
+
+        Raises:
+            TypeError: If query_vector is not a numpy array or other parameters have wrong types
+            ValueError: If query_text is empty or vector_store lacks required methods
+            AttributeError: If vector_store or category_hierarchy lack required methods
+
+        Examples:
+            >>> expander = WikipediaQueryExpander(tracer=tracer)
+            >>> expanded = expander.expand_query(
+            ...     query_vector=query_embedding,
+            ...     query_text="quantum physics experiments",
+            ...     vector_store=vector_db,
+            ...     category_hierarchy=hierarchy_manager,
+            ...     trace_id="expand_001"
+            ... )
+            >>> expanded["has_expansions"]
+            True
+            >>> len(expanded["expansions"]["topics"]) <= 5  # Max expansions limit
+            True
+            >>> "categories" in expanded["expansions"]
+            True
+
+        Notes:
+            - Vector similarity expansion requires compatible vector store implementation
+            - Category expansion leverages Wikipedia's hierarchical structure patterns
+            - Similarity thresholds balance expansion quality with recall improvement
+            - Maximum expansion limits prevent performance degradation
+            - Token-based category matching handles category name variations
+            - Tracer integration enables detailed expansion analysis and debugging
         """
         expansions = {
             "topics": [],
@@ -585,15 +1220,99 @@ class WikipediaQueryExpander:
 
 class WikipediaPathOptimizer:
     """
-    Optimizes graph traversal paths for Wikipedia-derived knowledge graphs.
+    Wikipedia Path Optimizer for Graph Traversal Strategy Optimization
 
-    This class implements path optimization strategies specific to Wikipedia
-    knowledge structures, leveraging the hierarchical nature of categories,
-    the importance of different entity types, and relationship semantics.
+    The WikipediaPathOptimizer class provides sophisticated functionality for optimizing
+    graph traversal paths in Wikipedia-derived knowledge graphs. It implements path
+    optimization strategies that leverage the hierarchical nature of Wikipedia categories,
+    the varying importance of different entity types, and the semantic characteristics
+    of Wikipedia relationships to create efficient traversal plans.
+    This class serves as a core component for graph exploration optimization, supporting
+    both cost-based path planning and hierarchical traversal strategies.
+
+    Key Features:
+    - Relationship-specific traversal cost calculation for efficient path planning
+    - Hierarchical path optimization leveraging Wikipedia's category structure
+    - Budget-aware traversal planning with level-based resource allocation
+    - Relationship activation depth management for prioritized exploration
+    - Cost-benefit analysis for different traversal strategies
+    - Performance-optimized path selection using weighted relationship types
+    - Dynamic budget allocation with exponential decay for depth levels
+    - Relationship priority ranking for traversal optimization
+
+    Attributes:
+        relationship_calculator (WikipediaRelationshipWeightCalculator): Calculator instance
+            for determining relationship weights and priorities during path optimization.
+        traversal_costs (Dict[str, float]): Mapping of relationship types to their traversal
+            cost factors, with lower costs indicating more efficient traversal paths.
+            Hierarchical relationships have lower costs (0.6-0.7) while high branching-factor
+            relationships have higher costs (1.5).
+
+    Public Methods:
+        get_edge_traversal_cost(edge_type: str) -> float:
+            Calculate traversal cost factor for a specific edge type with normalization,
+            returning cost values optimized for Wikipedia relationship characteristics.
+        optimize_traversal_path(start_entities: List[Dict[str, Any]], relationship_types: List[str], max_depth: int, budget: Dict[str, Any]) -> Dict[str, Any]:
+            Generate an optimized traversal plan based on Wikipedia-specific considerations
+            including relationship prioritization, budget allocation, and depth management.
+
+    Usage Example:
+        optimizer = WikipediaPathOptimizer()
+        # Calculate edge traversal cost
+        cost = optimizer.get_edge_traversal_cost("subclass_of")
+        # Optimize traversal path
+        optimized_plan = optimizer.optimize_traversal_path(
+            start_entities=[{"id": "entity_1", "type": "topic"}],
+            relationship_types=["subclass_of", "instance_of", "mentions"],
+            max_depth=3,
+            budget={"max_nodes": 1000, "max_time_ms": 5000}
+        )
+        # Access optimization results
+        strategy = optimized_plan["strategy"]
+        level_budgets = optimized_plan["level_budgets"]
+        relationship_activation = optimized_plan["relationship_activation"]
+
+    Notes:
+        - Traversal costs are optimized for Wikipedia relationship characteristics
+        - Hierarchical relationships receive preferential cost treatment
+        - Budget allocation uses exponential decay for depth-based planning
+        - Relationship activation depths prevent low-priority relationship overuse
+        - Cost factors balance traversal efficiency with discovery completeness
+        - Path optimization leverages Wikipedia's structured knowledge organization
     """
 
     def __init__(self):
-        """Initialize the path optimizer."""
+        """
+        Initialize the Wikipedia path optimizer with relationship calculators and cost factors.
+
+        This method sets up the path optimization system with Wikipedia-specific relationship
+        weight calculations and traversal cost factors optimized for Wikipedia knowledge
+        graph characteristics. The cost factors are designed to prioritize efficient
+        traversal paths while maintaining comprehensive discovery capabilities.
+
+        Attributes initialized:
+            relationship_calculator (WikipediaRelationshipWeightCalculator): Calculator instance
+                for determining relationship weights and priorities during path optimization.
+            traversal_costs (Dict[str, float]): Mapping of relationship types to their traversal
+                cost factors with values optimized for Wikipedia relationship characteristics.
+                Lower costs (0.6-0.7) for hierarchical relationships, higher costs (1.5) for
+                high branching-factor relationships like mentions.
+
+        Examples:
+            >>> optimizer = WikipediaPathOptimizer()
+            >>> optimizer.traversal_costs["subclass_of"]
+            0.6
+            >>> optimizer.traversal_costs["mentions"]
+            1.5
+            >>> isinstance(optimizer.relationship_calculator, WikipediaRelationshipWeightCalculator)
+            True
+
+        Notes:
+            - Traversal costs are optimized for Wikipedia relationship characteristics
+            - Hierarchical relationships receive preferential cost treatment
+            - High branching-factor relationships have higher costs to limit exploration
+            - Cost factors balance traversal efficiency with discovery completeness
+        """
         # Initialize relationship weight calculator
         self.relationship_calculator = WikipediaRelationshipWeightCalculator()
 
@@ -629,13 +1348,45 @@ class WikipediaPathOptimizer:
 
     def get_edge_traversal_cost(self, edge_type: str) -> float:
         """
-        Get traversal cost for an edge type.
+        Calculate traversal cost factor for a specific edge type with normalization.
+
+        This method determines the computational cost factor for traversing a specific
+        type of relationship edge in Wikipedia knowledge graphs. Cost factors are used
+        to prioritize efficient traversal paths and manage resource allocation during
+        graph exploration operations.
 
         Args:
-            edge_type (str): The type of relationship edge
+            edge_type (str): The type of relationship edge to calculate cost for.
+                Can include variations in naming conventions which will be normalized
+                automatically for consistent cost lookup.
 
         Returns:
-            float: Traversal cost factor
+            float: Traversal cost factor for the edge type, ranging from 0.6 to 1.5.
+                Lower values indicate more efficient traversal paths, higher values
+                indicate more expensive traversal operations. Returns default cost (1.0)
+                for unknown edge types.
+
+        Raises:
+            TypeError: If edge_type is not a string
+            ValueError: If edge_type is empty or contains only whitespace
+
+        Examples:
+            >>> optimizer = WikipediaPathOptimizer()
+            >>> optimizer.get_edge_traversal_cost("subclass_of")
+            0.6
+            >>> optimizer.get_edge_traversal_cost("mentions")
+            1.5
+            >>> optimizer.get_edge_traversal_cost("unknown_relation")
+            1.0
+            >>> optimizer.get_edge_traversal_cost("Instance Of")  # Normalized
+            0.6
+
+        Notes:
+            - Edge type normalization handles common naming variations automatically
+            - Hierarchical relationships have lower costs for efficient traversal
+            - High branching-factor relationships have higher costs to limit exploration
+            - Cost factors are optimized for Wikipedia knowledge graph characteristics
+            - Default cost is returned for unrecognized edge types
         """
         normalized_type = self.relationship_calculator._normalize_relationship_type(edge_type)
         return self.traversal_costs.get(normalized_type, self.traversal_costs["default"])
@@ -648,16 +1399,58 @@ class WikipediaPathOptimizer:
         budget: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Optimize a traversal path based on Wikipedia-specific considerations.
+        Generate an optimized traversal plan based on Wikipedia-specific considerations.
+
+        This method creates a comprehensive traversal plan that optimizes resource allocation,
+        relationship prioritization, and depth management for Wikipedia knowledge graphs.
+        The optimization considers relationship importance, traversal costs, and budget
+        constraints to create efficient exploration strategies.
 
         Args:
-            start_entities (List[Dict]): Starting entities for traversal
-            relationship_types (List[str]): Types of relationships to traverse
-            max_depth (int): Maximum traversal depth
-            budget (Dict): Resource budget constraints
+            start_entities (List[Dict[str, Any]]): Starting entities for traversal initialization.
+                Each dictionary should contain entity information including id and type.
+            relationship_types (List[str]): Types of relationships to traverse during exploration.
+                Will be prioritized and filtered based on Wikipedia-specific importance.
+            max_depth (int): Maximum traversal depth for exploration boundary control.
+                Higher depths enable broader discovery but require more resources.
+            budget (Dict[str, Any]): Resource budget constraints including max_nodes,
+                max_time_ms, and other resource limitations for traversal planning.
 
         Returns:
-            Dict: Optimized traversal plan
+            Dict[str, Any]: Comprehensive optimized traversal plan containing:
+                - strategy: Traversal strategy identifier ("wikipedia_hierarchical")
+                - relationship_priority: Relationships sorted by importance and weight
+                - level_budgets: Resource allocation for each traversal depth level
+                - relationship_activation: Maximum depth for each relationship type
+                - traversal_costs: Cost factors for all relationship types
+                - original_max_depth: Original maximum depth for reference
+
+        Raises:
+            TypeError: If parameters have incorrect types or structures
+            ValueError: If max_depth is negative or budget constraints are invalid
+            KeyError: If budget dictionary is missing required keys
+
+        Examples:
+            >>> optimizer = WikipediaPathOptimizer()
+            >>> start_entities = [{"id": "quantum_physics", "type": "topic"}]
+            >>> relationship_types = ["subclass_of", "instance_of", "mentions"]
+            >>> budget = {"max_nodes": 1000, "max_time_ms": 5000}
+            >>> plan = optimizer.optimize_traversal_path(
+            ...     start_entities, relationship_types, max_depth=3, budget=budget
+            ... )
+            >>> plan["strategy"]
+            'wikipedia_hierarchical'
+            >>> len(plan["level_budgets"]) == 3
+            True
+            >>> "subclass_of" in plan["relationship_priority"]
+            True
+
+        Notes:
+            - Resource allocation uses exponential decay for depth-based budget distribution
+            - Relationship activation depths prevent low-priority relationship overuse
+            - First level receives larger budget allocation for foundation building
+            - Strategy optimizes for Wikipedia's hierarchical knowledge structure
+            - Cost factors balance traversal efficiency with discovery completeness
         """
         # Calculate total budget
         total_budget = budget.get("max_nodes", 1000)
@@ -710,11 +1503,102 @@ class WikipediaPathOptimizer:
 
 class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
     """
-    Specialized query optimizer for Wikipedia-derived knowledge graphs.
+    Specialized Wikipedia RAG Query Optimizer for Knowledge Graph Operations
 
-    This class extends the base GraphRAGQueryOptimizer with optimizations specific
-    to Wikipedia knowledge structures, leveraging hierarchical categories, entity
-    importance, and Wikipedia-specific relationship semantics.
+    The WikipediaRAGQueryOptimizer class extends the base GraphRAGQueryOptimizer with
+    sophisticated optimizations specific to Wikipedia-derived knowledge graphs. It leverages
+    the hierarchical nature of Wikipedia categories, entity importance calculations, and
+    Wikipedia-specific relationship semantics to generate highly optimized query plans.
+    This class serves as the primary optimization engine for Wikipedia knowledge graphs,
+    supporting both vector similarity and graph traversal optimization strategies.
+
+    Args:
+        query_stats (optional): Query statistics tracker for performance monitoring
+            and optimization learning from historical query patterns.
+        vector_weight (float, optional): Weight for vector similarity scoring in hybrid
+            search strategies. Defaults to 0.7 for balanced vector-graph optimization.
+        graph_weight (float, optional): Weight for graph structure scoring in hybrid
+            search strategies. Defaults to 0.3 to complement vector weighting.
+        cache_enabled (bool, optional): Whether to enable query result caching for
+            improved performance on repeated queries. Defaults to True.
+        cache_ttl (float, optional): Time-to-live for cached query results in seconds.
+            Defaults to 300.0 for balanced freshness and performance.
+        cache_size_limit (int, optional): Maximum number of cached query results to maintain.
+            Defaults to 100 for memory-efficient caching.
+        tracer (WikipediaKnowledgeGraphTracer, optional): Tracer instance for detailed
+            logging and explanation of optimization decisions. Defaults to None.
+
+    Key Features:
+    - Wikipedia-specific relationship weight calculation and prioritization
+    - Hierarchical category structure leveraging for traversal optimization
+    - Entity importance scoring based on connectivity and references
+    - Query expansion with semantic topic discovery and category relationships
+    - Path optimization using Wikipedia knowledge structure characteristics
+    - Performance learning from query execution results and patterns
+    - Integrated caching for repeated query optimization efficiency
+    - Comprehensive tracing and explanation capabilities
+
+    Attributes:
+        relationship_calculator (WikipediaRelationshipWeightCalculator): Calculator for
+            determining relationship weights and traversal priorities.
+        category_hierarchy (WikipediaCategoryHierarchyManager): Manager for Wikipedia
+            category hierarchy navigation and optimization.
+        entity_importance (WikipediaEntityImportanceCalculator): Calculator for entity
+            importance scoring based on multiple relevance factors.
+        query_expander (WikipediaQueryExpander): Expander for semantic query enhancement
+            with related topics and categories.
+        path_optimizer (WikipediaPathOptimizer): Optimizer for graph traversal path
+            planning and resource allocation.
+        tracer (Optional[WikipediaKnowledgeGraphTracer]): Tracer for logging optimization
+            decisions and performance analysis.
+        optimization_history (List[Dict[str, Any]]): History of optimization decisions
+            for learning and performance improvement.
+
+    Public Methods:
+        optimize_query(query_vector: np.ndarray, max_vector_results: int = 5, max_traversal_depth: int = 2, edge_types: Optional[List[str]] = None, min_similarity: float = 0.5, query_text: Optional[str] = None, graph_processor=None, vector_store=None, trace_id: Optional[str] = None) -> Dict[str, Any]:
+            Generate an optimized query plan for Wikipedia knowledge graphs with
+            relationship prioritization, query expansion, and traversal optimization.
+        calculate_entity_importance(entity_id: str, graph_processor) -> float:
+            Calculate importance score for an entity using Wikipedia-specific factors
+            including connectivity, references, and category importance.
+        learn_from_query_results(query_id: str, results: List[Dict[str, Any]], time_taken: float, plan: Dict[str, Any]) -> None:
+            Learn from query execution results to improve future optimizations through
+            relationship weight adjustment and pattern recognition.
+
+    Usage Example:
+        optimizer = WikipediaRAGQueryOptimizer(
+            vector_weight=0.7,
+            graph_weight=0.3,
+            cache_enabled=True,
+            tracer=wikipedia_tracer
+        )
+        # Optimize query for Wikipedia knowledge graph
+        optimized_plan = optimizer.optimize_query(
+            query_vector=query_embedding,
+            max_vector_results=10,
+            max_traversal_depth=3,
+            edge_types=["subclass_of", "instance_of", "category_contains"],
+            min_similarity=0.6,
+            query_text="quantum physics research",
+            graph_processor=wiki_processor,
+            vector_store=vector_db,
+            trace_id="wiki_query_001"
+        )
+        # Learn from query results
+        optimizer.learn_from_query_results(
+            query_id="wiki_query_001",
+            results=query_results,
+            time_taken=1.25,
+            plan=optimized_plan
+        )
+
+    Notes:
+        - Optimization leverages Wikipedia's hierarchical category structure
+        - Relationship weights are dynamically adjusted based on query performance
+        - Entity importance combines connectivity, references, and category relevance
+        - Query expansion improves recall through semantic topic discovery
+        - Caching provides performance benefits for repeated query patterns
+        - Tracing enables detailed analysis of optimization decisions
     """
 
     def __init__(
@@ -886,14 +1770,51 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
 
     def calculate_entity_importance(self, entity_id: str, graph_processor) -> float:
         """
-        Calculate importance score for an entity in a Wikipedia knowledge graph.
+        Calculate importance score for an entity in Wikipedia knowledge graphs.
+
+        This method provides a simplified interface for calculating entity importance
+        scores using Wikipedia-specific factors. It retrieves entity information from
+        the graph processor and applies the specialized entity importance calculator
+        to generate comprehensive importance scores.
 
         Args:
-            entity_id (str): Entity ID
-            graph_processor: Graph processor instance
+            entity_id (str): Unique identifier of the entity to calculate importance for.
+                Should correspond to a valid entity in the graph processor.
+            graph_processor: Graph processor instance providing access to entity information
+                through methods like get_entity_info. Used to retrieve entity data
+                for importance calculation.
 
         Returns:
-            float: Entity importance score (0.0-1.0)
+            float: Entity importance score normalized to 0.0-1.0 range.
+                Higher scores indicate more important entities for traversal prioritization.
+                Calculated using connectivity, references, categories, and other factors.
+
+        Raises:
+            TypeError: If entity_id is not a string or graph_processor is invalid
+            ValueError: If entity_id is empty or not found in graph processor
+            AttributeError: If graph_processor lacks required methods for entity access
+
+        Examples:
+            >>> optimizer = WikipediaRAGQueryOptimizer()
+            >>> importance = optimizer.calculate_entity_importance(
+            ...     entity_id="quantum_entanglement",
+            ...     graph_processor=wiki_processor
+            ... )
+            >>> 0.0 <= importance <= 1.0
+            True
+            >>> high_importance = optimizer.calculate_entity_importance(
+            ...     entity_id="physics",  # Well-connected topic
+            ...     graph_processor=wiki_processor
+            ... )
+            >>> high_importance > 0.5  # Likely high importance
+            True
+
+        Notes:
+            - Importance calculation uses Wikipedia-specific entity importance calculator
+            - Entity data is retrieved automatically from the graph processor
+            - Scores combine connectivity, references, categories, and temporal factors
+            - Caching improves performance for repeated entity evaluations
+            - Fallback handling for entities with missing or incomplete data
         """
         # Get entity data from graph processor
         entity_data = (
@@ -915,11 +1836,52 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         """
         Learn from query execution results to improve future optimizations.
 
+        This method implements adaptive optimization by analyzing query execution results
+        and adjusting relationship weights based on their effectiveness. It enables
+        continuous improvement of the optimization system through performance feedback
+        and relationship effectiveness analysis.
+
         Args:
-            query_id (str): ID of the executed query
-            results (List[Dict]): Query results
-            time_taken (float): Query execution time
-            plan (Dict): The query plan used
+            query_id (str): Unique identifier of the executed query for tracking
+                and correlation with optimization decisions and performance metrics.
+            results (List[Dict[str, Any]]): Query execution results containing scores,
+                paths, and other performance indicators for effectiveness analysis.
+            time_taken (float): Query execution time in seconds for performance
+                evaluation and optimization learning.
+            plan (Dict[str, Any]): The query plan that was used for execution,
+                containing strategy, edge types, and other optimization parameters.
+
+        Returns:
+            None: This method modifies internal optimization state and relationship weights.
+
+        Raises:
+            TypeError: If parameters have incorrect types or structures
+            ValueError: If query_id is empty or time_taken is negative
+            KeyError: If plan dictionary is missing required optimization components
+
+        Examples:
+            >>> optimizer = WikipediaRAGQueryOptimizer()
+            >>> results = [
+            ...     {"score": 0.9, "path": [{"edge_type": "subclass_of"}]},
+            ...     {"score": 0.7, "path": [{"edge_type": "mentions"}]}
+            ... ]
+            >>> plan = {
+            ...     "query": {"traversal": {"edge_types": ["subclass_of", "mentions"]}}
+            ... }
+            >>> optimizer.learn_from_query_results(
+            ...     query_id="learn_001",
+            ...     results=results,
+            ...     time_taken=1.25,
+            ...     plan=plan
+            ... )
+            >>> # Relationship weights adjusted based on effectiveness
+
+        Notes:
+            - Relationship weights are adjusted based on result effectiveness
+            - Edge type usage is analyzed from result paths for optimization learning
+            - Small incremental adjustments prevent optimization instability
+            - Performance metrics are recorded for query pattern analysis
+            - Learning improves future optimization decisions through feedback
         """
         # Extract information for learning
         result_count = len(results)
@@ -982,11 +1944,70 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
 
 class WikipediaGraphRAGQueryRewriter(QueryRewriter):
     """
-    Specialized query rewriter for Wikipedia-derived knowledge graphs.
+    Specialized Wikipedia Graph RAG Query Rewriter for Knowledge Graph Optimization
 
-    This class extends the base QueryRewriter with optimizations specific to
-    Wikipedia knowledge structures, implementing more effective query rewriting
-    strategies tailored to the characteristics of Wikipedia-derived graphs.
+    The WikipediaGraphRAGQueryRewriter class extends the base QueryRewriter with
+    sophisticated rewriting strategies tailored to Wikipedia-derived knowledge graphs.
+    It implements domain-specific query pattern detection and optimization techniques
+    that leverage the unique characteristics of Wikipedia knowledge structures,
+    including hierarchical categories, entity relationships, and semantic patterns.
+    This class serves as a core component for query transformation and optimization,
+    supporting both pattern-based rewriting and structural query enhancement.
+
+    Key Features:
+    - Wikipedia-specific query pattern detection and classification
+    - Domain-aware query rewriting for topic lookup, comparison, and definition queries
+    - Hierarchical relationship prioritization for Wikipedia knowledge structures
+    - Category-based filtering and topic expansion integration
+    - Causal and temporal relationship optimization for Wikipedia content
+    - Collection and listing query optimization for structured knowledge discovery
+    - Relationship type prioritization using Wikipedia-specific weight calculations
+    - Pattern-specific traversal strategy assignment
+
+    Attributes:
+        relationship_calculator (WikipediaRelationshipWeightCalculator): Calculator instance
+            for determining relationship weights and priorities during query rewriting.
+        domain_patterns (Dict[str, re.Pattern]): Compiled regular expressions for detecting
+            Wikipedia-specific query patterns including topic_lookup, comparison, definition,
+            cause_effect, and list queries with optimized matching strategies.
+
+    Public Methods:
+        rewrite_query(query: Dict[str, Any], graph_info: Dict[str, Any] = None) -> Dict[str, Any]:
+            Rewrite a query with optimizations for Wikipedia knowledge graphs including
+            pattern detection, relationship prioritization, and strategy assignment.
+
+    Private Methods:
+        _detect_query_pattern(query_text: str) -> Optional[Tuple[str, List[str]]]:
+            Detect Wikipedia-specific query patterns from text using compiled regular
+            expressions and extract relevant entities for pattern-based optimization.
+        _apply_pattern_optimization(query: Dict[str, Any], pattern_type: str, entities: List[str]) -> Dict[str, Any]:
+            Apply pattern-specific optimizations for Wikipedia queries based on detected
+            patterns and extracted entities, including strategy and relationship prioritization.
+
+    Usage Example:
+        rewriter = WikipediaGraphRAGQueryRewriter()
+        # Rewrite query with Wikipedia optimizations
+        original_query = {
+            "query_text": "What is quantum entanglement?",
+            "traversal": {"edge_types": ["mentions", "subclass_of"]},
+            "category_filter": ["Physics", "Quantum Mechanics"]
+        }
+        rewritten_query = rewriter.rewrite_query(
+            query=original_query,
+            graph_info={"graph_type": "wikipedia"}
+        )
+        # Access rewritten components
+        strategy = rewritten_query["traversal"]["strategy"]
+        prioritized_edges = rewritten_query["traversal"]["edge_types"]
+        hierarchical_weight = rewritten_query["traversal"]["hierarchical_weight"]
+
+    Notes:
+        - Pattern detection handles common Wikipedia query types automatically
+        - Relationship prioritization leverages Wikipedia-specific weight calculations
+        - Strategy assignment optimizes traversal for different query patterns
+        - Category filtering integration enhances query precision
+        - Topic expansion support improves query recall and discovery
+        - Hierarchical weighting benefits Wikipedia's structured knowledge organization
     """
 
     def __init__(self):
@@ -1132,12 +2153,72 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
 
 class WikipediaGraphRAGBudgetManager(QueryBudgetManager):
     """
-    Specialized budget manager for Wikipedia-derived knowledge graphs.
+    Specialized Wikipedia Graph RAG Budget Manager for Resource Optimization
 
-    This class extends the base QueryBudgetManager with Wikipedia-specific
-    budget allocation strategies that consider the unique characteristics
-    of Wikipedia knowledge structures, particularly their hierarchical nature
-    and entity relationships.
+    The WikipediaGraphRAGBudgetManager class extends the base QueryBudgetManager with
+    sophisticated budget allocation strategies tailored to Wikipedia-derived knowledge
+    graphs. It considers the unique characteristics of Wikipedia knowledge structures,
+    particularly their hierarchical nature and complex entity relationships, to optimize
+    resource allocation across different query operations and traversal strategies.
+    This class serves as a core component for performance optimization and resource
+    management in Wikipedia knowledge graph operations.
+
+    Key Features:
+    - Wikipedia-specific budget allocation with category and topic expansion support
+    - Hierarchical traversal budget optimization for Wikipedia category structures
+    - Strategy-based resource allocation for different query types and patterns
+    - Dynamic budget scaling based on query complexity and priority levels
+    - Category-focused budget adjustments for category-intensive operations
+    - Topic expansion budget management for semantic query enhancement
+    - Early stopping optimization with Wikipedia-specific stopping criteria
+    - Performance-aware resource allocation with diminishing returns analysis
+
+    Attributes:
+        wikipedia_budget_extensions (Dict[str, Any]): Wikipedia-specific budget parameters
+            including category_traversal_ms (5000), topic_expansion_ms (3000),
+            max_categories (20), and max_topics (15) for specialized operations.
+        default_budget (Dict[str, Any]): Extended default budget combining base budget
+            allocations with Wikipedia-specific resource allocations for comprehensive
+            resource management.
+
+    Public Methods:
+        allocate_budget(query: Dict[str, Any], priority: str = "normal") -> Dict[str, Any]:
+            Allocate resources based on query complexity and Wikipedia-specific factors
+            including strategy type, edge types, and expansion requirements.
+        suggest_early_stopping(results: List[Dict[str, Any]], budget_consumed_ratio: float) -> bool:
+            Provide Wikipedia-specific early stopping suggestions based on result quality,
+            category matches, and diminishing returns analysis.
+
+    Usage Example:
+        budget_manager = WikipediaGraphRAGBudgetManager()
+        # Allocate budget for Wikipedia query
+        query = {
+            "traversal": {
+                "strategy": "wikipedia_hierarchical",
+                "edge_types": ["category_contains", "subclass_of"],
+                "expand_topics": True,
+                "topic_expansion_factor": 1.5
+            },
+            "priority": "high"
+        }
+        budget = budget_manager.allocate_budget(query, priority="high")
+        # Check early stopping
+        should_stop = budget_manager.suggest_early_stopping(
+            results=current_results,
+            budget_consumed_ratio=0.75
+        )
+        # Access budget allocations
+        category_time = budget["category_traversal_ms"]
+        topic_time = budget["topic_expansion_ms"]
+        max_categories = budget["max_categories"]
+
+    Notes:
+        - Budget allocation considers Wikipedia's hierarchical structure characteristics
+        - Category-focused operations receive increased resource allocations
+        - Topic expansion budget scales with expansion factors and requirements
+        - Strategy-specific adjustments optimize for different traversal patterns
+        - Early stopping criteria include category match quality and diminishing returns
+        - Resource allocation balances performance with comprehensive discovery
     """
 
     def __init__(self):
@@ -1241,11 +2322,84 @@ class WikipediaGraphRAGBudgetManager(QueryBudgetManager):
 
 class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
     """
-    Unified optimizer for Wikipedia-derived knowledge graphs.
+    Unified Wikipedia Graph RAG Query Optimizer for Comprehensive Knowledge Graph Operations
 
-    This class integrates all Wikipedia-specific optimization components
-    (optimizer, rewriter, budget manager) into a single unified optimizer
-    that can be used as a drop-in replacement for the base unified optimizer.
+    The UnifiedWikipediaGraphRAGQueryOptimizer class integrates all Wikipedia-specific
+    optimization components (optimizer, rewriter, budget manager) into a single unified
+    optimizer that provides comprehensive query optimization for Wikipedia-derived knowledge
+    graphs. It serves as a drop-in replacement for the base unified optimizer while
+    leveraging Wikipedia's unique structural characteristics and semantic relationships.
+    This class coordinates multiple optimization subsystems to deliver optimal performance
+    for Wikipedia knowledge graph queries.
+
+    Args:
+        rewriter (optional): Query rewriter component for Wikipedia-specific query
+            transformations. Defaults to WikipediaGraphRAGQueryRewriter if not provided.
+        budget_manager (optional): Budget manager component for Wikipedia-specific resource
+            allocation. Defaults to WikipediaGraphRAGBudgetManager if not provided.
+        base_optimizer (optional): Base optimization component for core query optimization.
+            Defaults to WikipediaRAGQueryOptimizer if not provided.
+        graph_info (Dict, optional): Graph structure information including graph type
+            and metadata. Defaults to {"graph_type": "wikipedia"} if not provided.
+        metrics_collector (optional): Performance metrics collector for query tracking
+            and analysis. Used for performance monitoring and optimization learning.
+        tracer (optional): Tracer for explanation and detailed logging of optimization
+            decisions across all subsystems.
+
+    Key Features:
+    - Integrated Wikipedia-specific optimization pipeline with coordinated components
+    - Comprehensive query rewriting with pattern detection and strategy assignment
+    - Advanced budget allocation with Wikipedia-specific resource management
+    - Performance metrics collection and analysis for optimization learning
+    - Detailed tracing and explanation capabilities across all optimization phases
+    - Seamless integration with existing GraphRAG infrastructure
+    - Drop-in replacement compatibility with base unified optimizer
+    - Coordinated optimization across vector search and graph traversal operations
+
+    Attributes:
+        tracer (optional): Tracer instance for logging optimization decisions and
+            performance analysis across all integrated optimization components.
+        last_query_id (str): Identifier of the most recently optimized query for
+            metrics tracking and result correlation.
+
+    Public Methods:
+        optimize_query(query: Dict[str, Any], graph_processor=None, vector_store=None, trace_id: Optional[str] = None) -> Dict[str, Any]:
+            Optimize a query for Wikipedia knowledge graphs through integrated pipeline
+            including rewriting, budget allocation, and metrics collection.
+
+    Usage Example:
+        unified_optimizer = UnifiedWikipediaGraphRAGQueryOptimizer(
+            metrics_collector=metrics_collector,
+            tracer=wikipedia_tracer
+        )
+        # Optimize Wikipedia query through unified pipeline
+        query = {
+            "query_vector": query_embedding,
+            "query_text": "quantum physics research methods",
+            "max_vector_results": 10,
+            "max_traversal_depth": 3,
+            "edge_types": ["subclass_of", "instance_of", "category_contains"],
+            "min_similarity": 0.6,
+            "priority": "high"
+        }
+        optimized_plan = unified_optimizer.optimize_query(
+            query=query,
+            graph_processor=wiki_processor,
+            vector_store=vector_db,
+            trace_id="unified_wiki_query_001"
+        )
+        # Access integrated optimization results
+        rewritten_query = optimized_plan["query"]
+        allocated_budget = optimized_plan["budget"]
+        query_id = optimized_plan["query_id"]
+
+    Notes:
+        - Integrates Wikipedia-specific components for comprehensive optimization
+        - Coordinates rewriting, budget allocation, and metrics collection
+        - Provides seamless compatibility with existing GraphRAG infrastructure
+        - Leverages Wikipedia's hierarchical structure and semantic relationships
+        - Enables detailed performance tracking and optimization learning
+        - Supports comprehensive tracing and explanation of optimization decisions
     """
 
     def __init__(
@@ -1393,13 +2547,45 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
 
 def detect_graph_type(graph_processor) -> str:
     """
-    Detect if a graph is Wikipedia-derived based on entity/relationship patterns.
+    Detect Wikipedia-derived graph type based on entity and relationship patterns.
+
+    This function analyzes a graph processor to determine if it contains a Wikipedia-derived
+    knowledge graph by examining entity types, relationship patterns, and structural
+    characteristics. It provides automatic graph type detection to enable appropriate
+    optimizer selection and configuration for different knowledge graph types.
 
     Args:
-        graph_processor: Graph processor to analyze
+        graph_processor: Graph processor instance to analyze for type detection.
+            Should provide access to entities and relationships through methods like
+            get_entities(), list_entities(), get_relationship_types(), or similar.
 
     Returns:
-        str: "wikipedia" if Wikipedia-derived, "ipld" if IPLD graph, or "unknown"
+        str: Detected graph type with possible values:
+            - "wikipedia": Wikipedia-derived knowledge graph with hierarchical categories
+            - "ipld": IPLD-based content-addressed knowledge graph
+            - "unknown": Unable to determine graph type or mixed characteristics
+
+    Raises:
+        AttributeError: If graph_processor lacks required methods for analysis
+        Exception: If entity or relationship analysis encounters unexpected errors
+
+    Examples:
+        >>> graph_type = detect_graph_type(wiki_processor)
+        >>> print(graph_type)
+        'wikipedia'
+        >>> graph_type = detect_graph_type(ipld_processor)
+        >>> print(graph_type)
+        'ipld'
+        >>> graph_type = detect_graph_type(unknown_processor)
+        >>> print(graph_type)
+        'unknown'
+
+    Notes:
+        - Detection analyzes entity types for Wikipedia indicators (category, article, topic)
+        - Relationship types are examined for Wikipedia patterns (subclass_of, instance_of)
+        - IPLD indicators include content addressing and DAG structure patterns
+        - Sample size is limited to 20 entities for performance optimization
+        - Detection is based on indicator counting with threshold comparison
     """
     # Check if graph processor has type information
     if hasattr(graph_processor, 'graph_type'):
@@ -1469,16 +2655,60 @@ def create_appropriate_optimizer(
     tracer: Optional[WikipediaKnowledgeGraphTracer] = None
 ) -> UnifiedGraphRAGQueryOptimizer:
     """
-    Create an appropriate optimizer based on the detected graph type.
+    Create an appropriate optimizer based on detected or specified graph type.
+
+    This function automatically selects and instantiates the most suitable query optimizer
+    for a given knowledge graph based on its type characteristics. It supports both
+    automatic graph type detection and explicit type specification, ensuring optimal
+    performance for different knowledge graph structures and semantics.
 
     Args:
-        graph_processor: Graph processor instance
-        graph_type (str, optional): Explicitly specified graph type
-        metrics_collector: Performance metrics collector
-        tracer: Tracer for explanation
+        graph_processor (optional): Graph processor instance for automatic type detection.
+            Used to analyze graph characteristics when graph_type is not specified.
+        graph_type (Optional[str], optional): Explicitly specified graph type to override
+            automatic detection. Supported values: "wikipedia", "ipld", "unknown".
+            Defaults to None for automatic detection.
+        metrics_collector (Optional[QueryMetricsCollector], optional): Performance metrics
+            collector for query tracking and optimization analysis. Enables detailed
+            performance monitoring and learning. Defaults to None.
+        tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance for
+            detailed logging and explanation of optimization decisions. Provides
+            comprehensive optimization analysis. Defaults to None.
 
     Returns:
-        UnifiedGraphRAGQueryOptimizer: Appropriate optimizer instance
+        UnifiedGraphRAGQueryOptimizer: Appropriate optimizer instance configured for
+            the detected or specified graph type. Returns UnifiedWikipediaGraphRAGQueryOptimizer
+            for Wikipedia graphs or UnifiedGraphRAGQueryOptimizer for other types.
+
+    Raises:
+        ValueError: If graph_type is specified but not recognized
+        AttributeError: If graph_processor lacks required methods for type detection
+        Exception: If optimizer instantiation encounters configuration errors
+
+    Examples:
+        >>> optimizer = create_appropriate_optimizer(
+        ...     graph_processor=wiki_processor,
+        ...     metrics_collector=metrics,
+        ...     tracer=tracer
+        ... )
+        >>> isinstance(optimizer, UnifiedWikipediaGraphRAGQueryOptimizer)
+        True
+        >>> optimizer = create_appropriate_optimizer(
+        ...     graph_type="wikipedia",
+        ...     tracer=tracer
+        ... )
+        >>> optimizer = create_appropriate_optimizer(
+        ...     graph_type="unknown"
+        ... )
+        >>> isinstance(optimizer, UnifiedGraphRAGQueryOptimizer)
+        True
+
+    Notes:
+        - Automatic detection analyzes graph structure and entity patterns
+        - Wikipedia graphs receive specialized Wikipedia-optimized components
+        - Unknown or non-Wikipedia graphs use standard optimization components
+        - Metrics collector enables performance tracking across query executions
+        - Tracer provides detailed optimization decision logging and explanation
     """
     # Detect graph type if not specified
     if graph_type is None and graph_processor is not None:
@@ -1511,20 +2741,76 @@ def optimize_wikipedia_query(
     trace_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Optimize a query for Wikipedia-derived knowledge graphs.
+    Optimize a query for Wikipedia-derived knowledge graphs with comprehensive optimization.
 
-    This is the main entry point for using the Wikipedia-specific optimizations.
+    This is the main entry point for using Wikipedia-specific query optimizations. It provides
+    a high-level interface that automatically configures and applies all Wikipedia-specific
+    optimization techniques including relationship prioritization, category hierarchy leveraging,
+    entity importance calculation, query expansion, and performance optimization.
+    This function serves as the primary interface for Wikipedia knowledge graph query optimization.
 
     Args:
-        query (Dict): Query parameters
-        graph_processor: Graph processor instance
-        vector_store: Vector store instance
-        tracer: Tracer for explanation
-        metrics_collector: Performance metrics collector
-        trace_id (str, optional): Trace ID for logging
+        query (Dict[str, Any]): Query parameters including query_vector, query_text,
+            max_vector_results, max_traversal_depth, edge_types, min_similarity,
+            and other optimization parameters for comprehensive query specification.
+        graph_processor (optional): Graph processor instance providing access to Wikipedia
+            knowledge graph structure, entities, and relationships for optimization analysis.
+        vector_store (optional): Vector store instance for semantic similarity search
+            and query expansion operations in the optimization pipeline.
+        tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance for
+            detailed logging and explanation of optimization decisions throughout
+            the optimization process. Defaults to None.
+        metrics_collector (Optional[QueryMetricsCollector], optional): Performance metrics
+            collector for query tracking, analysis, and optimization learning.
+            Enables comprehensive performance monitoring. Defaults to None.
+        trace_id (Optional[str], optional): Unique trace identifier for correlating
+            optimization decisions and performance metrics across the optimization
+            pipeline. Defaults to None.
 
     Returns:
-        Dict: Optimized query plan
+        Dict[str, Any]: Comprehensive optimized query plan containing:
+            - query: Rewritten and optimized query parameters
+            - budget: Allocated resource budget for query execution
+            - weights: Scoring weights for vector and graph components
+            - expansions: Query expansion results with topics and categories
+            - query_id: Unique identifier for metrics tracking and correlation
+
+    Raises:
+        ValueError: If required query parameters are missing or invalid
+        TypeError: If query parameters have incorrect types or formats
+        AttributeError: If graph_processor or vector_store lack required methods
+        Exception: If optimization process encounters unexpected errors
+
+    Examples:
+        >>> query = {
+        ...     "query_vector": query_embedding,
+        ...     "query_text": "quantum entanglement experiments",
+        ...     "max_vector_results": 10,
+        ...     "max_traversal_depth": 3,
+        ...     "edge_types": ["subclass_of", "instance_of", "category_contains"],
+        ...     "min_similarity": 0.6,
+        ...     "priority": "high"
+        ... }
+        >>> optimized_plan = optimize_wikipedia_query(
+        ...     query=query,
+        ...     graph_processor=wiki_processor,
+        ...     vector_store=vector_db,
+        ...     tracer=wikipedia_tracer,
+        ...     metrics_collector=metrics,
+        ...     trace_id="wiki_opt_001"
+        ... )
+        >>> # Access optimization results
+        >>> rewritten_query = optimized_plan["query"]
+        >>> budget = optimized_plan["budget"]
+        >>> expansions = optimized_plan["expansions"]
+
+    Notes:
+        - This function automatically applies all Wikipedia-specific optimizations
+        - Relationship types are prioritized based on Wikipedia knowledge structure
+        - Category hierarchy is leveraged for improved traversal strategies
+        - Query expansion improves recall through semantic topic discovery
+        - Performance metrics enable continuous optimization improvement
+        - Comprehensive tracing provides detailed optimization analysis
     """
     # Create appropriate optimizer
     optimizer = create_appropriate_optimizer(

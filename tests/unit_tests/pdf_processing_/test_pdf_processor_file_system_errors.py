@@ -28,34 +28,6 @@ class TestProcessPdfFileSystemErrors:
     - "permission error": Insufficient rights to perform file operations
     - "locked file": File currently in use by another process
     """
-
-    @pytest.fixture
-    def valid_metadata(self) -> dict[str, Any]:
-        """Provide valid metadata for testing."""
-        return {"test": "metadata"}
-
-    @pytest.fixture
-    def nonexistent_file_path(self) -> str:
-        """Provide path to non-existent file."""
-        return "nonexistent.pdf"
-
-    @pytest.fixture
-    def no_read_permissions_file(self, tmp_path) -> str:
-        """Create file with no read permissions."""
-        test_file = tmp_path / "no_read_perms.pdf"
-        test_file.write_text("test content")
-        
-        # Remove read permissions
-        current_mode = test_file.stat().st_mode
-        test_file.chmod(current_mode & ~stat.S_IREAD)
-        
-        return str(test_file)
-
-    @pytest.fixture
-    def expected_file_not_found_message(self) -> str:
-        """Expected error message for file not found."""
-        return "nonexistent.pdf"
-
     @pytest.fixture
     def expected_permission_denied_message(self) -> str:
         """Expected error message for permission denied."""
@@ -69,7 +41,7 @@ class TestProcessPdfFileSystemErrors:
     @pytest.mark.asyncio
     async def test_when_nonexistent_file_provided_then_raises_file_not_found_error(
         self, 
-        processor, 
+        default_pdf_processor, 
         nonexistent_file_path, 
         valid_metadata,
         expected_file_not_found_message
@@ -80,14 +52,14 @@ class TestProcessPdfFileSystemErrors:
         THEN raises FileNotFoundError with message containing the file path
         """
         with pytest.raises(FileNotFoundError) as exc_info:
-            await processor.process_pdf(nonexistent_file_path, valid_metadata)
+            await default_pdf_processor.process_pdf(nonexistent_file_path, valid_metadata)
         
         assert expected_file_not_found_message in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_when_file_has_no_read_permissions_then_returns_error_status(
         self, 
-        processor, 
+        default_pdf_processor, 
         no_read_permissions_file, 
         valid_metadata
     ):
@@ -96,14 +68,14 @@ class TestProcessPdfFileSystemErrors:
         WHEN process_pdf is called
         THEN returns dictionary with status='error'
         """
-        result = await processor.process_pdf(no_read_permissions_file, valid_metadata)
+        result = await default_pdf_processor.process_pdf(no_read_permissions_file, valid_metadata)
         
-        assert result['status'] == 'error'
+        assert result['status'] == 'error', f"Expected status to be error, got {result['status']} instead."
 
     @pytest.mark.asyncio
     async def test_when_file_has_no_read_permissions_then_error_message_contains_permission_text(
         self, 
-        processor, 
+        default_pdf_processor, 
         no_read_permissions_file, 
         valid_metadata,
         expected_permission_denied_message
@@ -113,14 +85,15 @@ class TestProcessPdfFileSystemErrors:
         WHEN process_pdf is called
         THEN error message contains appropriate permission denied text
         """
-        result = await processor.process_pdf(no_read_permissions_file, valid_metadata)
+        result = await default_pdf_processor.process_pdf(no_read_permissions_file, valid_metadata)
         
-        assert expected_permission_denied_message in result['error']
+        assert expected_permission_denied_message in result['error'], \
+            f"Expected error message to be '{expected_permission_denied_message}', got '{result['error']}' instead."
 
     @pytest.mark.asyncio
     async def test_when_file_is_locked_then_returns_error_status(
         self, 
-        processor, 
+        default_pdf_processor, 
         tmp_path,
         valid_metadata
     ):
@@ -134,14 +107,14 @@ class TestProcessPdfFileSystemErrors:
         
         # Simulate file being locked by patching open to raise PermissionError
         with patch("builtins.open", side_effect=PermissionError("File is locked")):
-            result = await processor.process_pdf(str(locked_file), valid_metadata)
+            result = await default_pdf_processor.process_pdf(str(locked_file), valid_metadata)
         
         assert result['status'] == 'error'
 
     @pytest.mark.asyncio
     async def test_when_file_is_locked_then_error_message_contains_locked_text(
         self, 
-        processor, 
+        default_pdf_processor, 
         tmp_path,
         valid_metadata,
         expected_locked_file_message
@@ -153,17 +126,18 @@ class TestProcessPdfFileSystemErrors:
         """
         locked_file = tmp_path / "locked.pdf"
         locked_file.write_text("test content")
-        
+
         # Simulate file being locked by patching open to raise PermissionError
         with patch("builtins.open", side_effect=PermissionError("File is locked")):
-            result = await processor.process_pdf(str(locked_file), valid_metadata)
-        
-        assert expected_locked_file_message in result['error']
+            result = await default_pdf_processor.process_pdf(str(locked_file), valid_metadata)
+
+        assert expected_locked_file_message in result['error'], \
+            f"Expected '{expected_locked_file_message}' to be in error, got {result['error']} instead"
 
     @pytest.mark.asyncio
     async def test_when_file_deleted_during_processing_then_returns_error_status(
         self, 
-        processor, 
+        default_pdf_processor, 
         tmp_path,
         valid_metadata
     ):
@@ -184,16 +158,16 @@ class TestProcessPdfFileSystemErrors:
                 test_file.unlink()
                 raise FileNotFoundError(f"No such file: {file_path}")
             return original_open(*args, **kwargs)
-        
+
         with patch("builtins.open", side_effect=mock_open_with_deletion):
-            result = await processor.process_pdf(file_path, valid_metadata)
+            result = await default_pdf_processor.process_pdf(file_path, valid_metadata)
         
         assert result['status'] == 'error'
 
     @pytest.mark.asyncio
     async def test_when_file_deleted_during_processing_then_error_message_contains_file_path(
         self, 
-        processor, 
+        default_pdf_processor, 
         tmp_path,
         valid_metadata
     ):
@@ -216,14 +190,14 @@ class TestProcessPdfFileSystemErrors:
             return original_open(*args, **kwargs)
         
         with patch("builtins.open", side_effect=mock_open_with_deletion):
-            result = await processor.process_pdf(file_path, valid_metadata)
+            result = await default_pdf_processor.process_pdf(file_path, valid_metadata)
         
         assert file_path in result['error']
 
     @pytest.mark.asyncio
     async def test_when_network_file_unavailable_then_returns_error_status(
         self, 
-        processor,
+        default_pdf_processor,
         valid_metadata
     ):
         """
@@ -233,14 +207,14 @@ class TestProcessPdfFileSystemErrors:
         """
         network_path = "//unreachable-server/share/file.pdf"
         
-        result = await processor.process_pdf(network_path, valid_metadata)
+        result = await default_pdf_processor.process_pdf(network_path, valid_metadata)
         
         assert result['status'] == 'error'
 
     @pytest.mark.asyncio
     async def test_when_network_file_unavailable_then_error_message_contains_network_path(
         self, 
-        processor,
+        default_pdf_processor,
         valid_metadata
     ):
         """
@@ -250,6 +224,6 @@ class TestProcessPdfFileSystemErrors:
         """
         network_path = "//unreachable-server/share/file.pdf"
         
-        result = await processor.process_pdf(network_path, valid_metadata)
+        result = await default_pdf_processor.process_pdf(network_path, valid_metadata)
         
         assert network_path in result['error']

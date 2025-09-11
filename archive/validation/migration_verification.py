@@ -27,7 +27,7 @@ def test_imports():
     
     # Test chunker
     try:
-        from ipfs_datasets_py.embeddings.chunker import TextChunker, ChunkingConfig
+        from ipfs_datasets_py.embeddings.chunker import Chunker, ChunkingConfig
         results['chunker'] = True
         print("✅ Text chunker imported successfully")
     except Exception as e:
@@ -60,8 +60,8 @@ def test_basic_functionality():
     
     # Test chunker functionality
     try:
-        from ipfs_datasets_py.embeddings.chunker import TextChunker
-        chunker = TextChunker()
+        from ipfs_datasets_py.embeddings.chunker import Chunker
+        chunker = Chunker()
         text = "This is a test text. It has multiple sentences. We will chunk it."
         chunks = chunker.chunk_text(text, max_chunk_size=50)
         if len(chunks) > 0:

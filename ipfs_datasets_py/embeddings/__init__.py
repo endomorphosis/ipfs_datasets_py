@@ -11,55 +11,91 @@ This module includes:
 - Integration with multiple vector stores
 """
 
+# Import from core module
 from .core import (
-    EmbeddingCore, 
-    generate_embeddings,
-    create_embedding_instance,
-    get_available_models
+    IPFSEmbeddings,
+    EmbeddingConfig as CoreEmbeddingConfig,
+    PerformanceMetrics,
+    MemoryMonitor,
+    AdaptiveBatchProcessor,
+    ipfs_embeddings_py
 )
 
+# Import from schema module  
 from .schema import (
-    EmbeddingRequest,
-    EmbeddingResponse,
+    BaseComponent,
+    DocumentChunk,
+    Document,
+    EmbeddingResult,
+    SearchResult,
     ChunkingStrategy,
-    VectorSearchRequest,
-    VectorSearchResponse,
-    SimilarityMetric
+    VectorStoreType,
+    EmbeddingConfig,
+    VectorStoreConfig,
+    ImageType,
+    DEFAULT_TEXT_NODE_TMPL,
+    DEFAULT_METADATA_TMPL,
+    TRUNCATE_LENGTH,
+    WRAP_WIDTH
 )
 
+# Import from chunker module
 from .chunker import (
-    TextChunker,
+    BaseChunker,
+    Chunker,
     FixedSizeChunker,
     SentenceChunker,
+    SlidingWindowChunker,
     SemanticChunker,
-    ChunkingConfig,
-    chunk_text,
-    create_chunker
+    chunker,
+    CHUNKING_STRATEGIES
+)
+
+# Import from create_embeddings module
+from .create_embeddings import (
+    create_embeddings,
+    CreateEmbeddingsProcessor
 )
 
 __all__ = [
     # Core functionality
-    'EmbeddingCore',
-    'generate_embeddings',
-    'create_embedding_instance',  
-    'get_available_models',
+    'IPFSEmbeddings',
+    'CoreEmbeddingConfig',
+    'PerformanceMetrics',
+    'MemoryMonitor', 
+    'AdaptiveBatchProcessor',
+    'ipfs_embeddings_py',
     
     # Schema classes
-    'EmbeddingRequest',
-    'EmbeddingResponse', 
+    'BaseComponent',
+    'DocumentChunk',
+    'Document',
+    'EmbeddingResult',
+    'SearchResult',
     'ChunkingStrategy',
-    'VectorSearchRequest',
-    'VectorSearchResponse',
-    'SimilarityMetric',
+    'VectorStoreType',
+    'EmbeddingConfig',
+    'VectorStoreConfig',
+    'ImageType',
+    'DEFAULT_TEXT_NODE_TMPL',
+    'DEFAULT_METADATA_TMPL',
+    'TRUNCATE_LENGTH',
+    'WRAP_WIDTH',
     
     # Chunking functionality
-    'TextChunker',
+    'BaseChunker',
+    'Chunker',
     'FixedSizeChunker',
-    'SentenceChunker', 
+    'SentenceChunker',
+    'SlidingWindowChunker',
     'SemanticChunker',
-    'ChunkingConfig',
-    'chunk_text',
-    'create_chunker'
+    'chunker',
+    'CHUNKING_STRATEGIES',
+    
+    # Embedding creation
+    'create_embeddings',
+    'CreateEmbeddingsProcessor'
 ]
 
 __version__ = "1.0.0"
+

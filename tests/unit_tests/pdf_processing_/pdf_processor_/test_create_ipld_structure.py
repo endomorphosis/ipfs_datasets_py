@@ -91,13 +91,11 @@ class TestCreateIpldStructure:
     @pytest.fixture
     def processor(self):
         """Create PDFProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.IPLDStorage') as mock_storage_class:
-            mock_storage = Mock()
-            mock_storage_class.return_value = mock_storage
-            processor = PDFProcessor()
-            # Set up default mock behavior for store_json
-            mock_storage.store_json.return_value = "QmTestCID123"
-            return processor
+        mock_storage = MagicMock(spec=IPLDStorage)
+        mock_storage.store_json = Mock()
+        mock_storage.store_json.return_value = "QmTestCID123"
+        processor = PDFProcessor(storage=mock_storage)
+        return processor
 
     @pytest.fixture
     def sample_decomposed_content(self):
@@ -155,46 +153,119 @@ class TestCreateIpldStructure:
             ]
         }
 
-    @pytest.mark.asyncio
-    async def test_create_ipld_structure_complete_hierarchical_storage(self, processor, sample_decomposed_content):
-        """
-        GIVEN decomposed PDF content with pages, metadata, and content elements
-        WHEN _create_ipld_structure is called
-        THEN expect returned dict contains:
-            - document: document-level metadata and page references
-            - content_map: mapping of content keys to IPLD CIDs
-            - root_cid: content identifier for document root node
-        """
-        # Mock IPLD storage methods
+    @pytest.fixture
+    async def ipld_structure_result(self, processor, sample_decomposed_content):
+        """Fixture to run _create_ipld_structure and return its result."""
         mock_storage = processor.storage
         mock_storage.store_json.return_value = "QmTestCID123"
-        
-        # Execute the method
         result = await processor._create_ipld_structure(sample_decomposed_content)
-        
-        # Verify return structure
+        return result, mock_storage
+
+    @pytest.mark.asyncio
+    async def test_create_ipld_structure_returns_dict(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the result is a dictionary.
+        """
+        result, _ = ipld_structure_result
         assert isinstance(result, dict)
-        assert 'document' in result
-        assert 'content_map' in result
-        assert 'root_cid' in result
-        
-        # Verify document structure
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("key", ["document", "content_map", "root_cid"])
+    async def test_create_ipld_structure_has_required_keys(self, ipld_structure_result, key):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the result contains the required keys.
+        """
+        result, _ = ipld_structure_result
+        assert key in result
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("key", ["metadata", "pages"])
+    async def test_document_node_has_required_keys(self, ipld_structure_result, key):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the 'document' node contains the required keys.
+        """
+        result, _ = ipld_structure_result
         document = result['document']
-        assert 'metadata' in document
-        assert 'pages' in document
+        assert key in document
+
+    @pytest.mark.asyncio
+    async def test_document_metadata_preserves_title(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the document metadata correctly preserves the title.
+        """
+        result, _ = ipld_structure_result
+        document = result['document']
         assert document['metadata']['title'] == 'Test Document'
+
+    @pytest.mark.asyncio
+    async def test_document_contains_correct_number_of_pages(self, ipld_structure_result):
+        """
+        GIVEN decomposed content with two pages
+        WHEN _create_ipld_structure is called
+        THEN the document structure references two pages.
+        """
+        result, _ = ipld_structure_result
+        document = result['document']
         assert len(document['pages']) == 2
-        
-        # Verify content map structure
+
+    @pytest.mark.asyncio
+    async def test_content_map_is_a_dictionary(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the 'content_map' is a dictionary.
+        """
+        result, _ = ipld_structure_result
         content_map = result['content_map']
         assert isinstance(content_map, dict)
+
+    @pytest.mark.asyncio
+    async def test_content_map_is_not_empty(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the 'content_map' is not empty.
+        """
+        result, _ = ipld_structure_result
+        content_map = result['content_map']
         assert len(content_map) > 0
-        
-        # Verify root CID
+
+    @pytest.mark.asyncio
+    async def test_root_cid_is_a_string(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the 'root_cid' is a string.
+        """
+        result, _ = ipld_structure_result
         assert isinstance(result['root_cid'], str)
+
+    @pytest.mark.asyncio
+    async def test_root_cid_has_valid_prefix(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the 'root_cid' starts with 'Qm'.
+        """
+        result, _ = ipld_structure_result
         assert result['root_cid'].startswith('Qm')
-        
-        # Verify storage was called
+
+    @pytest.mark.asyncio
+    async def test_storage_was_called(self, ipld_structure_result):
+        """
+        GIVEN decomposed content
+        WHEN _create_ipld_structure is called
+        THEN the storage method was called.
+        """
+        _, mock_storage = ipld_structure_result
         assert mock_storage.store_json.called
 
     @pytest.mark.asyncio

@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 # Ensure required NLTK data is available
-CORPORA = ['punkt', 'averaged_perceptron_tagger_eng', 'maxent_ne_chunker_tab', 'words']
+CORPORA = ['tokenizers/punkt', 'taggers/averaged_perceptron_tagger', 'chunkers/maxent_ne_chunker', 'corpora/words']
 for corpus in CORPORA:
     try:
         nltk.data.find(corpus)

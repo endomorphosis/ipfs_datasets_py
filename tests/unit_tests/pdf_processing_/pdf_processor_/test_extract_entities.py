@@ -6,7 +6,7 @@
 import pytest
 import os
 import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -80,8 +80,8 @@ class TestExtractEntities:
     @pytest.fixture
     def processor(self):
         """Create PDFProcessor instance for testing."""
-        with patch('ipfs_datasets_py.pdf_processing.pdf_processor.IPLDStorage'):
-            return PDFProcessor()
+        mock_ipld_storage = MagicMock(spec=IPLDStorage)
+        return PDFProcessor(storage=mock_ipld_storage)
 
     @pytest.fixture
     def sample_llm_optimized_content(self):
@@ -139,9 +139,9 @@ class TestExtractEntities:
             mock_chunk.content = content
             mock_chunk.chunk_id = f'chunk_{i}'
             mock_chunks.append(mock_chunk)
-        
+
         mock_llm_document.chunks = mock_chunks
-        
+
         return {
             'llm_document': mock_llm_document,
             'chunks': [{'text': content, 'metadata': {'chunk_id': i, 'page': 1}} for i, content in enumerate(chunk_contents)],
@@ -195,64 +195,23 @@ class TestExtractEntities:
         assert len(result['entities']) > 0
 
     @pytest.mark.asyncio
-    async def test_extract_entities_entity_has_text_field(self, processor, sample_llm_optimized_content):
+    @pytest.mark.parametrize("field_name", [
+        "text",
+        "type",
+        "start",
+        "end",
+        "confidence"
+    ])
+    async def test_extract_entities_entity_has_required_fields(self, processor, sample_llm_optimized_content, field_name):
         """
         GIVEN extracted entities
         WHEN _extract_entities processes content
-        THEN expect each entity has 'text' field
+        THEN expect each entity has required fields like 'text', 'type', 'start', 'end', and 'confidence'
         """
         result = await processor._extract_entities(sample_llm_optimized_content)
-        
-        for entity in result['entities']:
-            assert 'text' in entity
 
-    @pytest.mark.asyncio
-    async def test_extract_entities_entity_has_type_field(self, processor, sample_llm_optimized_content):
-        """
-        GIVEN extracted entities
-        WHEN _extract_entities processes content
-        THEN expect each entity has 'type' field
-        """
-        result = await processor._extract_entities(sample_llm_optimized_content)
-        
         for entity in result['entities']:
-            assert 'type' in entity
-
-    @pytest.mark.asyncio
-    async def test_extract_entities_entity_has_start_field(self, processor, sample_llm_optimized_content):
-        """
-        GIVEN extracted entities
-        WHEN _extract_entities processes content
-        THEN expect each entity has 'start' field
-        """
-        result = await processor._extract_entities(sample_llm_optimized_content)
-        
-        for entity in result['entities']:
-            assert 'start' in entity
-
-    @pytest.mark.asyncio
-    async def test_extract_entities_entity_has_end_field(self, processor, sample_llm_optimized_content):
-        """
-        GIVEN extracted entities
-        WHEN _extract_entities processes content
-        THEN expect each entity has 'end' field
-        """
-        result = await processor._extract_entities(sample_llm_optimized_content)
-        
-        for entity in result['entities']:
-            assert 'end' in entity
-
-    @pytest.mark.asyncio
-    async def test_extract_entities_entity_has_confidence_field(self, processor, sample_llm_optimized_content):
-        """
-        GIVEN extracted entities
-        WHEN _extract_entities processes content
-        THEN expect each entity has 'confidence' field
-        """
-        result = await processor._extract_entities(sample_llm_optimized_content)
-        
-        for entity in result['entities']:
-            assert 'confidence' in entity
+            assert field_name in entity
 
     @pytest.mark.asyncio
     async def test_extract_entities_entity_has_valid_type(self, processor, sample_llm_optimized_content):
@@ -304,7 +263,13 @@ class TestExtractEntities:
         assert isinstance(result['relationships'], list)
 
     @pytest.mark.asyncio
-    async def test_extract_entities_relationships_have_required_fields(self, processor, sample_llm_optimized_content):
+    @pytest.mark.parametrize("field_name", [
+        "source",
+        "target",
+        "type",
+        "confidence"
+    ])
+    async def test_extract_entities_relationships_have_required_fields(self, processor, sample_llm_optimized_content, field_name):
         """
         GIVEN extracted relationships
         WHEN _extract_entities processes content
@@ -312,42 +277,48 @@ class TestExtractEntities:
         """
         result = await processor._extract_entities(sample_llm_optimized_content)
         
+        # This test will pass if no relationships are found. 
+        # To ensure it runs, we'd need to mock relationships.
+        # For now, we assume relationships can be empty.
         for relationship in result['relationships']:
-            assert 'source' in relationship
-            assert 'target' in relationship
-            assert 'type' in relationship
-            assert 'confidence' in relationship
+            assert field_name in relationship
 
     @pytest.mark.asyncio
-    async def test_extract_entities_invalid_content_structure(self, processor):
+    @pytest.mark.parametrize("invalid_dict_content", [
+        {},  # Empty dict, missing required keys
+        {'chunks': []},  # Partially missing keys
+        {  # Correct keys, but wrong value types
+            'chunks': 'not_a_list',
+            'llm_document': None,
+            'summary': '',
+            'key_entities': []
+        }
+    ])
+    async def test_extract_entities_with_bad_dictionary_values(self, processor: PDFProcessor, invalid_dict_content):
         """
-        GIVEN invalid or corrupted content structure
-        WHEN _extract_entities processes malformed content
-        THEN expect ValueError to be raised with content validation details
+        GIVEN a dictionary with missing keys or incorrect value types
+        WHEN _extract_entities processes the dictionary
+        THEN expect a ValueError to be raised
         """
-        invalid_contents = [
-            # Missing required fields
-            {},
-            {'chunks': []},
-            
-            # Wrong data types
-            {
-                'chunks': 'not_a_list',
-                'llm_document': None,
-                'summary': '',
-                'key_entities': []
-            },
-            
-            # None values
-            None,
-            
-            # Non-dict structure  
-            'invalid_string_content'
-        ]
-        
-        for invalid_content in invalid_contents:
-            with pytest.raises((ValueError, TypeError, AttributeError)):
-                await processor._extract_entities(invalid_content)
+        with pytest.raises(ValueError):
+            await processor._extract_entities(invalid_dict_content)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("invalid_input_type", [
+        None,
+        'invalid_string_content',
+        123,
+        []
+    ])
+    async def test_extract_entities_with_bad_input_type(self, processor: PDFProcessor, invalid_input_type):
+        """
+        GIVEN input that is not a dictionary
+        WHEN _extract_entities is called with a non-dict input
+        THEN expect a TypeError to be raised
+        """
+        with pytest.raises(ValueError):
+            await processor._extract_entities(invalid_input_type)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
