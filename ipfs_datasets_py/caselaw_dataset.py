@@ -481,13 +481,19 @@ class CaselawDatasetLoader:
         
         # Enhanced fallback to comprehensive mock data
         logger.info("Using enhanced comprehensive caselaw data for demonstration")
+        logger.info("Note: HuggingFace datasets are not accessible due to network restrictions")
+        logger.info("The mock dataset simulates the structure and content of the real datasets:")
+        logger.info("• justicedao/Caselaw_Access_Project_embeddings")
+        logger.info("• TeraflopAI/Caselaw-Access-Project")  
+        logger.info("• endomorphosis/Caselaw_Access_Project_JSON")
         mock_dataset = self._create_comprehensive_mock_dataset(max_samples or 1000)
         return {
             "status": "success",
             "source": "comprehensive_mock",
             "dataset": mock_dataset,
             "count": len(mock_dataset),
-            "embedding_dim": self.embedding_dim
+            "embedding_dim": self.embedding_dim,
+            "note": "Using comprehensive mock data - simulates HuggingFace dataset structure"
         }
     
     def _detect_embedding_dimension(self, sample_case: Optional[Dict[str, Any]]) -> int:
@@ -629,59 +635,135 @@ class CaselawDatasetLoader:
         mock_data = []
         base_cases = self._legal_case_templates.copy()
         
-        # Create variations to reach the requested count
+        # Enhanced to create a much larger, more realistic dataset
+        # This simulates what you would get from the actual HuggingFace datasets
+        
+        # Create comprehensive variations to reach the requested count
         case_variations = [
-            # Additional landmark cases
+            # Supreme Court landmark cases  
             {
                 "title_suffix": "",
                 "court_variations": ["Supreme Court of the United States", "U.S. Supreme Court"],
                 "topic_modifiers": {},
                 "year_range": (1803, 2023)
             },
+            # Federal Circuit Courts
             {
-                "title_suffix": " (Rehearing)",
-                "court_variations": ["Supreme Court of the United States", "Court of Appeals"],
-                "topic_modifiers": {"procedural": True},
-                "year_range": (1850, 2020)
+                "title_suffix": "",
+                "court_variations": ["U.S. Court of Appeals for the First Circuit", "U.S. Court of Appeals for the Second Circuit", 
+                                   "U.S. Court of Appeals for the Third Circuit", "U.S. Court of Appeals for the Fourth Circuit",
+                                   "U.S. Court of Appeals for the Fifth Circuit", "U.S. Court of Appeals for the Sixth Circuit",
+                                   "U.S. Court of Appeals for the Seventh Circuit", "U.S. Court of Appeals for the Eighth Circuit",
+                                   "U.S. Court of Appeals for the Ninth Circuit", "U.S. Court of Appeals for the Tenth Circuit",
+                                   "U.S. Court of Appeals for the Eleventh Circuit", "U.S. Court of Appeals for the D.C. Circuit"],
+                "topic_modifiers": {"federal_circuit": True},
+                "year_range": (1950, 2023)
             },
+            # Federal District Courts
             {
-                "title_suffix": " v. State",
-                "court_variations": ["State Supreme Court", "State Appellate Court"],
-                "topic_modifiers": {"state_law": True},
+                "title_suffix": "",
+                "court_variations": ["U.S. District Court for the Southern District of New York", 
+                                   "U.S. District Court for the Northern District of California",
+                                   "U.S. District Court for the Eastern District of Virginia",
+                                   "U.S. District Court for the District of Columbia",
+                                   "U.S. District Court for the Central District of California"],
+                "topic_modifiers": {"federal_district": True},
+                "year_range": (1960, 2023)
+            },
+            # State Supreme Courts
+            {
+                "title_suffix": "",
+                "court_variations": ["Supreme Court of California", "New York Court of Appeals", 
+                                   "Supreme Court of Texas", "Supreme Court of Florida",
+                                   "Supreme Court of Illinois", "Supreme Court of Pennsylvania"],
+                "topic_modifiers": {"state_supreme": True},
                 "year_range": (1900, 2023)
             }
         ]
         
         # Generate additional federal circuit and state cases
         additional_case_templates = [
+            # Civil Rights Cases
             {
-                "base_title": "United States v.",
-                "topics": ["criminal procedure", "federal jurisdiction", "constitutional law"],
+                "base_title": "{} v. {}",
+                "plaintiffs": ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez"],
+                "defendants": ["City of Austin", "State of California", "Board of Education", "Police Department", "County Sheriff", "State University", "Public School District"],
+                "topics": ["civil rights", "discrimination", "equal protection", "due process"],
+                "courts": ["U.S. Court of Appeals", "U.S. District Court", "State Supreme Court"],
+                "concepts_pool": [
+                    ["civil rights", "section 1983", "constitutional violation", "damages"],
+                    ["discrimination", "equal protection", "suspect class", "strict scrutiny"],
+                    ["due process", "procedural rights", "substantive rights", "liberty interest"],
+                    ["employment discrimination", "title vii", "disparate impact", "hostile environment"]
+                ]
+            },
+            # Criminal Law Cases  
+            {
+                "base_title": "United States v. {}",
+                "defendants": ["Anderson", "Thompson", "Jackson", "White", "Harris", "Clark", "Lewis", "Robinson", "Walker", "Perez"],
+                "topics": ["criminal procedure", "fourth amendment", "search and seizure", "miranda rights", "sentencing"],
                 "courts": ["U.S. Court of Appeals", "U.S. District Court"],
                 "concepts_pool": [
-                    ["federal jurisdiction", "criminal law", "constitutional rights"],
-                    ["interstate commerce", "federal regulation", "due process"],
-                    ["search and seizure", "fourth amendment", "criminal procedure"]
+                    ["criminal procedure", "miranda rights", "custodial interrogation", "fifth amendment"],
+                    ["search and seizure", "fourth amendment", "probable cause", "warrant requirement"],
+                    ["sentencing", "federal guidelines", "constitutional limits", "cruel and unusual"],
+                    ["evidence", "exclusionary rule", "fruit of poisonous tree", "good faith exception"]
                 ]
             },
+            # Constitutional Law Cases
             {
-                "base_title": "State of {} v.",
-                "topics": ["criminal law", "state jurisdiction", "civil procedure"],
-                "courts": ["State Supreme Court", "State Appellate Court"],
+                "base_title": "{} v. {}",
+                "plaintiffs": ["ACLU", "Electronic Frontier Foundation", "Citizens for Privacy", "Free Speech Coalition"],
+                "defendants": ["Federal Communications Commission", "Department of Homeland Security", "Attorney General", "Secretary of State"],
+                "topics": ["first amendment", "privacy rights", "constitutional law", "federal regulation"],
+                "courts": ["U.S. Court of Appeals for the D.C. Circuit", "U.S. District Court for the District of Columbia"],
                 "concepts_pool": [
-                    ["state criminal law", "evidence", "trial procedure"],
-                    ["state constitutional law", "local jurisdiction", "appeals"],
-                    ["civil procedure", "state courts", "jurisdiction"]
+                    ["first amendment", "free speech", "content regulation", "strict scrutiny"],
+                    ["privacy rights", "fourth amendment", "reasonable expectation", "digital privacy"],
+                    ["administrative law", "agency authority", "constitutional limits", "separation of powers"],
+                    ["religious freedom", "establishment clause", "free exercise", "accommodation"]
                 ]
             },
+            # Corporate and Commercial Law
             {
-                "base_title": "{} County v.",
-                "topics": ["local government", "zoning", "municipal law"],
-                "courts": ["County Court", "Municipal Court"],
+                "base_title": "{} v. {}",
+                "plaintiffs": ["SEC", "Federal Trade Commission", "Department of Justice", "Consumer Financial Protection Bureau"],
+                "defendants": ["Tech Corporation", "Financial Services Inc", "Manufacturing LLC", "Pharmaceutical Company"],
+                "topics": ["securities law", "antitrust", "consumer protection", "corporate governance"],
+                "courts": ["U.S. Court of Appeals", "U.S. District Court"],
                 "concepts_pool": [
-                    ["local government", "zoning law", "municipal authority"],
-                    ["property rights", "local regulation", "administrative law"],
-                    ["municipal powers", "county jurisdiction", "local ordinance"]
+                    ["securities fraud", "material misstatement", "scienter", "reliance"],
+                    ["antitrust", "monopolization", "restraint of trade", "consumer harm"],
+                    ["consumer protection", "unfair practices", "deceptive advertising", "regulatory compliance"],
+                    ["corporate governance", "fiduciary duty", "shareholder rights", "business judgment"]
+                ]
+            },
+            # Immigration Law
+            {
+                "base_title": "{} v. {}",
+                "plaintiffs": ["Petitioner Immigration Case", "Asylum Seeker", "Permanent Resident", "Immigration Advocacy Group"],
+                "defendants": ["Immigration and Naturalization Service", "Board of Immigration Appeals", "Department of Homeland Security", "U.S. Citizenship and Immigration Services"],
+                "topics": ["immigration law", "asylum", "deportation", "constitutional rights"],
+                "courts": ["U.S. Court of Appeals", "U.S. District Court", "Board of Immigration Appeals"],
+                "concepts_pool": [
+                    ["asylum", "persecution", "particular social group", "credibility"],
+                    ["deportation", "removal proceedings", "due process", "ineffective assistance"],
+                    ["naturalization", "citizenship", "constitutional requirements", "equal protection"],
+                    ["immigration detention", "habeas corpus", "due process", "prolonged detention"]
+                ]
+            },
+            # Environmental Law
+            {
+                "base_title": "{} v. {}",
+                "plaintiffs": ["Environmental Protection Agency", "Sierra Club", "Natural Resources Defense Council", "State of California"],
+                "defendants": ["Chemical Corporation", "Oil and Gas Company", "Mining Corporation", "Manufacturing Plant"],
+                "topics": ["environmental law", "clean air act", "clean water act", "toxic substances"],
+                "courts": ["U.S. Court of Appeals", "U.S. District Court"],
+                "concepts_pool": [
+                    ["environmental protection", "clean air act", "emission standards", "regulatory compliance"],
+                    ["water pollution", "clean water act", "discharge permits", "environmental harm"],
+                    ["toxic substances", "superfund", "liability", "remediation costs"],
+                    ["endangered species", "habitat protection", "federal preemption", "environmental review"]
                 ]
             }
         ]
@@ -721,48 +803,114 @@ class CaselawDatasetLoader:
     
     def _generate_synthetic_case(self, index: int, template: Dict[str, Any]) -> Dict[str, Any]:
         """Generate a synthetic legal case based on template"""
-        states = ["California", "New York", "Texas", "Florida", "Illinois", "Pennsylvania"]
-        counties = ["Jefferson", "Washington", "Madison", "Lincoln", "Franklin", "Jackson"]
+        import random
         
-        # Generate case title
-        if "{}" in template["base_title"]:
-            if "State of" in template["base_title"]:
-                title = template["base_title"].format(random.choice(states))
-            elif "County" in template["base_title"]:
-                title = template["base_title"].format(random.choice(counties))
-            else:
-                title = template["base_title"] + f"Defendant {index}"
+        # Generate case title based on template type
+        if "plaintiffs" in template and "defendants" in template:
+            plaintiff = random.choice(template["plaintiffs"])
+            defendant = random.choice(template["defendants"])
+            title = template["base_title"].format(plaintiff, defendant)
+            full_caption = f"{plaintiff} v. {defendant}"
+        elif "defendants" in template:
+            defendant = random.choice(template["defendants"])
+            title = template["base_title"].format(defendant)
+            full_caption = f"United States v. {defendant}"
         else:
-            title = template["base_title"] + f"Case {index}"
+            # Fallback for older templates
+            states = ["California", "New York", "Texas", "Florida", "Illinois", "Pennsylvania"]
+            counties = ["Jefferson", "Washington", "Madison", "Lincoln", "Franklin", "Jackson"]
+            
+            if "{}" in template["base_title"]:
+                if "State of" in template["base_title"]:
+                    title = template["base_title"].format(random.choice(states))
+                    full_caption = title
+                elif "County" in template["base_title"]:
+                    title = template["base_title"].format(random.choice(counties))
+                    full_caption = title
+                else:
+                    title = template["base_title"] + f"Defendant {index}"
+                    full_caption = title
+            else:
+                title = template["base_title"] + f"Case {index}"
+                full_caption = title
         
         # Generate other fields
-        year = random.randint(1950, 2023)
+        year = random.randint(1970, 2023)  # More recent cases
         court = random.choice(template["courts"])
         topic = random.choice(template["topics"])
         legal_concepts = random.choice(template["concepts_pool"])
         
-        # Generate citation
-        if "U.S." in court:
-            citation = f"{200 + index} F.3d {100 + (index * 13) % 900}"
+        # Generate more realistic citation based on court type
+        if "Supreme Court of the United States" in court or "U.S. Supreme Court" in court:
+            # Supreme Court citation format: Volume U.S. Page (Year)
+            volume = random.randint(400, 600)
+            page = random.randint(1, 999)
+            citation = f"{volume} U.S. {page} ({year})"
+            short_citation = f"{volume} U.S. {page}"
+        elif "Court of Appeals" in court:
+            # Federal appellate citation format: Volume F.3d Page (Circuit Year)
+            volume = random.randint(800, 1000)
+            page = random.randint(1, 999)
+            circuit_match = re.search(r'(First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth|Eleventh|D\.C\.)', court)
+            circuit = circuit_match.group(1) if circuit_match else "9th"
+            citation = f"{volume} F.3d {page} ({circuit} Cir. {year})"
+            short_citation = f"{volume} F.3d {page}"
+        elif "District Court" in court:
+            # Federal district citation format: Volume F.Supp.3d Page (District Year)
+            volume = random.randint(400, 600)
+            page = random.randint(1, 999)
+            citation = f"{volume} F.Supp.3d {page} (D.D.C. {year})"
+            short_citation = f"{volume} F.Supp.3d {page}"
+        elif "State" in court or "Supreme Court of" in court:
+            # State court citation - varies by state
+            volume = random.randint(100, 300)
+            page = random.randint(1, 999)
+            citation = f"{volume} State {page} ({year})"
+            short_citation = f"{volume} State {page}"
         else:
-            citation = f"{100 + index} State {50 + (index * 7) % 300}"
+            # Generic citation
+            volume = random.randint(100, 500)
+            page = random.randint(1, 999)
+            citation = f"{volume} Misc. {page} ({year})"
+            short_citation = f"{volume} Misc. {page}"
         
-        # Generate case text
-        text_templates = [
-            f"The court held that the defendant's actions constituted a violation of established {topic} principles. The evidence presented demonstrated clear intent and established liability under relevant statutes.",
-            f"In this {topic} case, the court applied established precedent to determine that the plaintiff's claims were supported by sufficient evidence and legal authority.",
-            f"The appellate court reversed the lower court's decision, finding that proper {topic} procedures were not followed and that constitutional rights were violated."
-        ]
+        # Generate more detailed case text based on topic
+        case_texts = {
+            "civil rights": [
+                f"The plaintiff brought this action under 42 U.S.C. § 1983, alleging violations of constitutional rights. The court examined whether the defendant's conduct violated clearly established law and whether qualified immunity applies. After reviewing precedent and the specific facts, the court found that...",
+                f"This civil rights case involves claims of discrimination and equal protection violations. The court applied the appropriate level of scrutiny and examined whether the challenged policy serves a compelling government interest. The evidence presented showed...",
+                f"The case arises from allegations of constitutional violations in the employment context. The court considered federal civil rights statutes and constitutional provisions to determine liability and appropriate remedies."
+            ],
+            "criminal procedure": [
+                f"The defendant challenges the admission of evidence obtained during a search, arguing Fourth Amendment violations. The court examined whether probable cause existed and whether the search fell within recognized exceptions to the warrant requirement...",
+                f"This case involves the admissibility of statements made during custodial interrogation. The court analyzed whether Miranda warnings were properly given and whether the defendant's waiver was knowing and voluntary...",
+                f"The defendant appeals the sentence imposed, arguing it violates the Eighth Amendment's prohibition on cruel and unusual punishment. The court reviewed sentencing guidelines and constitutional limits..."
+            ],
+            "constitutional law": [
+                f"The case presents significant First Amendment questions regarding content-based restrictions on speech. The court applied strict scrutiny analysis and examined whether the regulation serves compelling interests through narrowly tailored means...",
+                f"This constitutional challenge involves the scope of federal regulatory authority and state sovereignty. The court examined Commerce Clause jurisprudence and the limits of congressional power...",
+                f"The plaintiff challenges government action on due process grounds, arguing both procedural and substantive violations. The court analyzed the level of process required and whether fundamental rights were implicated..."
+            ]
+        }
         
-        text = random.choice(text_templates)
-        summary = f"Court decision regarding {topic} establishing precedent for future cases"
+        default_text = f"The court held that the defendant's actions constituted a violation of established {topic} principles. The evidence presented demonstrated the legal standards applicable to this type of case and the court applied relevant precedent."
+        
+        text = random.choice(case_texts.get(topic, [default_text]))
+        summary = f"Court decision regarding {topic} establishing important precedent for future cases in this area of law"
+        
+        # Generate case number
+        case_number = f"No. {year-1900}-{random.randint(1000, 9999)}"
         
         return {
-            "id": f"synthetic-case-{index}",
+            "id": f"synthetic-case-{index}-{year}",
             "title": title,
-            "court": court,
-            "year": year,
+            "full_caption": full_caption,
             "citation": citation,
+            "short_citation": short_citation,
+            "case_number": case_number,
+            "court": court,
+            "court_abbrev": self._get_court_abbreviation(court),
+            "year": year,
             "topic": topic,
             "jurisdiction": "state" if "State" in court else "federal",
             "text": text,
@@ -770,9 +918,34 @@ class CaselawDatasetLoader:
             "legal_concepts": legal_concepts,
             "precedent_value": random.choice(["high", "medium", "low"]),
             "case_type": topic.replace(" ", "_"),
-            "outcome": random.choice(["granted", "denied", "reversed", "affirmed"]),
-            "cited_by_count": random.randint(5, 1000)
+            "outcome": random.choice(["granted", "denied", "reversed", "affirmed", "remanded", "dismissed"]),
+            "cited_by_count": random.randint(5, 1000),
+            "precedent_citations": [],  # Could be populated with related cases
+            "citing_cases": [],
+            "legal_doctrines": legal_concepts[:2]  # Top legal doctrines
         }
+        
+    def _get_court_abbreviation(self, court_name: str) -> str:
+        """Generate appropriate court abbreviation"""
+        if "Supreme Court of the United States" in court_name:
+            return "SCOTUS"
+        elif "Court of Appeals" in court_name:
+            if "D.C." in court_name:
+                return "D.C. Cir."
+            elif "First" in court_name:
+                return "1st Cir."
+            elif "Second" in court_name:
+                return "2d Cir."
+            elif "Third" in court_name:
+                return "3d Cir."
+            else:
+                return "Cir."
+        elif "District Court" in court_name:
+            return "D.D.C." if "D.C." in court_name else "Dist."
+        elif "State" in court_name and "Supreme" in court_name:
+            return "State Sup. Ct."
+        else:
+            return "Ct."
     
     def _generate_ipld_metadata(self, case: Dict[str, Any], index: int) -> Dict[str, Any]:
         """Generate IPLD-compatible metadata for knowledge graph integration"""

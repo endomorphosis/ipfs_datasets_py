@@ -1,0 +1,122 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting datasets
+  Downloading datasets-4.0.0-py3-none-any.whl.metadata
+     - 19.3 kB 191.7 MB/s 0:00:00
+Collecting huggingface_hub
+  Downloading huggingface_hub-0.34.4-py3-none-any.whl.metadata
+     - 14.7 kB 140.5 MB/s 0:00:00
+Collecting filelock (from datasets)
+  Downloading filelock-3.19.1-py3-none-any.whl.metadata
+     - 2.1 kB ? 0:00:00
+Collecting numpy>=1.17 (from datasets)
+  Downloading numpy-2.3.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata
+     - 62.1 kB 248.3 MB/s 0:00:00
+Collecting pyarrow>=15.0.0 (from datasets)
+  Downloading pyarrow-21.0.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata
+     - 3.3 kB ? 0:00:00
+Collecting dill<0.3.9,>=0.3.0 (from datasets)
+  Downloading dill-0.3.8-py3-none-any.whl.metadata
+     - 10.1 kB ? 0:00:00
+Collecting pandas (from datasets)
+  Downloading pandas-2.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 91.2 kB 261.7 MB/s 0:00:00
+Collecting requests>=2.32.2 (from datasets)
+  Downloading requests-2.32.5-py3-none-any.whl.metadata
+     - 4.9 kB ? 0:00:00
+Collecting tqdm>=4.66.3 (from datasets)
+  Downloading tqdm-4.67.1-py3-none-any.whl.metadata
+     - 57.7 kB 250.6 MB/s 0:00:00
+Collecting xxhash (from datasets)
+  Downloading xxhash-3.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 12.6 kB 97.4 MB/s 0:00:00
+Collecting multiprocess<0.70.17 (from datasets)
+  Downloading multiprocess-0.70.16-py312-none-any.whl.metadata
+     - 7.2 kB ? 0:00:00
+Collecting fsspec<=2025.3.0,>=2023.1.0 (from fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading fsspec-2025.3.0-py3-none-any.whl.metadata
+     - 11.7 kB 69.3 MB/s 0:00:00
+Requirement already satisfied: packaging in /usr/lib/python3/dist-packages (from datasets) (24.0)
+Requirement already satisfied: pyyaml>=5.1 in /usr/lib/python3/dist-packages (from datasets) (6.0.1)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/lib/python3/dist-packages (from huggingface_hub) (4.10.0)
+Collecting hf-xet<2.0.0,>=1.1.3 (from huggingface_hub)
+  Downloading hf_xet-1.1.10-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 4.7 kB ? 0:00:00
+Collecting aiohttp!=4.0.0a0,!=4.0.0a1 (from fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 7.7 kB ? 0:00:00
+Collecting charset_normalizer<4,>=2 (from requests>=2.32.2->datasets)
+  Downloading charset_normalizer-3.4.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata
+     - 36.7 kB 232.4 MB/s 0:00:00
+Requirement already satisfied: idna<4,>=2.5 in /usr/lib/python3/dist-packages (from requests>=2.32.2->datasets) (3.6)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/lib/python3/dist-packages (from requests>=2.32.2->datasets) (2.0.7)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/lib/python3/dist-packages (from requests>=2.32.2->datasets) (2023.11.17)
+Requirement already satisfied: python-dateutil>=2.8.2 in /usr/lib/python3/dist-packages (from pandas->datasets) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /usr/lib/python3/dist-packages (from pandas->datasets) (2024.1)
+Collecting tzdata>=2022.7 (from pandas->datasets)
+  Downloading tzdata-2025.2-py2.py3-none-any.whl.metadata
+     - 1.4 kB ? 0:00:00
+Collecting aiohappyeyeballs>=2.5.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata
+     - 5.9 kB ? 0:00:00
+Collecting aiosignal>=1.4.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading aiosignal-1.4.0-py3-none-any.whl.metadata
+     - 3.7 kB ? 0:00:00
+Requirement already satisfied: attrs>=17.3.0 in /usr/lib/python3/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets) (23.2.0)
+Collecting frozenlist>=1.1.1 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 18.6 kB 176.2 MB/s 0:00:00
+Collecting multidict<7.0,>=4.5 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata
+     - 5.3 kB ? 0:00:00
+Collecting propcache>=0.2.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 12.0 kB 81.6 MB/s 0:00:00
+Collecting yarl<2.0,>=1.17.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2025.3.0,>=2023.1.0->datasets)
+  Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 73.9 kB 247.8 MB/s 0:00:00
+Downloading datasets-4.0.0-py3-none-any.whl
+   - 494.8 kB 139.2 MB/s 0:00:00
+Downloading huggingface_hub-0.34.4-py3-none-any.whl
+   - 561.5 kB 207.8 MB/s 0:00:00
+Downloading dill-0.3.8-py3-none-any.whl
+   - 116.3 kB 174.7 MB/s 0:00:00
+Downloading fsspec-2025.3.0-py3-none-any.whl
+   - 193.6 kB 177.1 MB/s 0:00:00
+Downloading hf_xet-1.1.10-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 3.2 MB 204.2 MB/s 0:00:00
+Downloading multiprocess-0.70.16-py312-none-any.whl
+   - 146.7 kB 163.6 MB/s 0:00:00
+Downloading numpy-2.3.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
+   \ 16.6 MB 228.3 MB/s 0:00:00
+Downloading pyarrow-21.0.0-cp312-cp312-manylinux_2_28_x86_64.whl
+   / 42.8 MB 216.6 MB/s 0:00:00
+Downloading requests-2.32.5-py3-none-any.whl
+   - 64.7 kB 206.7 MB/s 0:00:00
+Downloading tqdm-4.67.1-py3-none-any.whl
+   - 78.5 kB 213.2 MB/s 0:00:00
+Downloading filelock-3.19.1-py3-none-any.whl
+   - 16.0 kB 66.2 MB/s 0:00:00
+Downloading pandas-2.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 12.0 MB 208.0 MB/s 0:00:00
+Downloading xxhash-3.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 194.4 kB 182.2 MB/s 0:00:00
+Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 1.7 MB 211.4 MB/s 0:00:00
+Downloading charset_normalizer-3.4.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+   - 151.8 kB 176.4 MB/s 0:00:00
+Downloading tzdata-2025.2-py2.py3-none-any.whl
+   - 347.8 kB 192.3 MB/s 0:00:00
+Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl
+   - 15.3 kB 83.3 MB/s 0:00:00
+Downloading aiosignal-1.4.0-py3-none-any.whl
+   - 7.5 kB ? 0:00:00
+Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 241.8 kB 182.3 MB/s 0:00:00
+Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+   - 256.1 kB 165.9 MB/s 0:00:00
+Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 224.4 kB 178.9 MB/s 0:00:00
+Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 355.6 kB 199.5 MB/s 0:00:00
+Installing collected packages: xxhash, tzdata, tqdm, pyarrow, propcache, numpy, multidict, hf-xet, fsspec, frozenlist, filelock, dill, charset_normalizer, aiohappyeyeballs, yarl, requests, pandas, multiprocess, aiosignal, huggingface_hub, aiohttp, datasets
+Successfully installed aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 charset_normalizer-3.4.3 datasets-4.0.0 dill-0.3.8 filelock-3.19.1 frozenlist-1.7.0 fsspec-2025.3.0 hf-xet-1.1.10 huggingface_hub-0.34.4 multidict-6.6.4 multiprocess-0.70.16 numpy-2.3.3 pandas-2.3.2 propcache-0.3.2 pyarrow-21.0.0 requests-2.32.5 tqdm-4.67.1 tzdata-2025.2 xxhash-3.5.0 yarl-1.20.1
