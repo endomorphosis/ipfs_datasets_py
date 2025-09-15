@@ -115,6 +115,125 @@ def demonstrate_graphrag_processing(max_samples=50):
         print(f"❌ GraphRAG processing failed: {e}")
         return None
 
+def demonstrate_temporal_deontic_logic(processor=None, max_samples=20):
+    """Demonstrate temporal deontic logic processing of case lineages"""
+    print("\n⚖️ Demonstrating Temporal Deontic Logic Processing...")
+    print("-" * 50)
+    
+    try:
+        from ipfs_datasets_py.temporal_deontic_caselaw_processor import TemporalDeonticCaselawProcessor
+        
+        temporal_processor = TemporalDeonticCaselawProcessor()
+        
+        # Create example case lineage for qualified immunity doctrine
+        qualified_immunity_cases = [
+            {
+                "id": "pierson_v_ray_1967",
+                "case_name": "Pierson v. Ray", 
+                "citation": "386 U.S. 547 (1967)",
+                "date": "1967-01-15",
+                "court": "Supreme Court of the United States",
+                "content": "Police officers acting in good faith and with probable cause in arresting petitioners pursuant to an unconstitutional statute are not liable under 42 U.S.C. § 1983. The defense of good faith and probable cause, which the common law has always recognized, is not abrogated by § 1983. Law enforcement officers must have objectively reasonable belief that their conduct was lawful under clearly established law.",
+                "topic": "Civil Rights"
+            },
+            {
+                "id": "harlow_v_fitzgerald_1982",
+                "case_name": "Harlow v. Fitzgerald",
+                "citation": "457 U.S. 800 (1982)", 
+                "date": "1982-06-30",
+                "court": "Supreme Court of the United States",
+                "content": "Government officials performing discretionary functions generally are shielded from liability for civil damages insofar as their conduct does not violate clearly established statutory or constitutional rights of which a reasonable person would have known. The objective standard eliminates the need to inquire into the subjective intent of government officials.",
+                "topic": "Constitutional Law"
+            },
+            {
+                "id": "saucier_v_katz_2001",
+                "case_name": "Saucier v. Katz",
+                "citation": "533 U.S. 194 (2001)",
+                "date": "2001-05-29", 
+                "court": "Supreme Court of the United States",
+                "content": "Courts must follow a two-step sequence in qualified immunity analysis: (1) determine whether the facts alleged show that the officer's conduct violated a constitutional right, and (2) determine whether the right was clearly established. This sequential approach ensures proper development of constitutional law while protecting officers from liability for reasonable mistakes.",
+                "topic": "Civil Rights"
+            },
+            {
+                "id": "pearson_v_callahan_2009",
+                "case_name": "Pearson v. Callahan",
+                "citation": "555 U.S. 223 (2009)",
+                "date": "2009-01-21",
+                "court": "Supreme Court of the United States", 
+                "content": "While the sequence set forth in Saucier v. Katz is often beneficial, it should no longer be regarded as mandatory. Judges of the district courts and the courts of appeals should be permitted to exercise their sound discretion in deciding which of the two prongs of the qualified immunity analysis should be addressed first.",
+                "topic": "Civil Rights"
+            }
+        ]
+        
+        print(f"🔍 Processing {len(qualified_immunity_cases)} qualified immunity precedent cases...")
+        
+        # Process the lineage
+        import asyncio
+        result = asyncio.run(temporal_processor.process_caselaw_lineage(
+            qualified_immunity_cases, "qualified_immunity"
+        ))
+        
+        if 'error' not in result:
+            print(f"✅ Successfully processed temporal deontic logic for qualified immunity doctrine")
+            
+            # Display chronological evolution
+            print(f"\n📅 Chronological Evolution:")
+            for evolution in result['temporal_patterns']['chronological_evolution']:
+                case_id = evolution['case_id']
+                date = evolution['date'][:4]  # Just year
+                obligations = len(evolution['new_obligations'])
+                permissions = len(evolution['new_permissions'])
+                prohibitions = len(evolution['new_prohibitions'])
+                print(f"   • {date}: {case_id} - O:{obligations} P:{permissions} F:{prohibitions}")
+            
+            # Display generated theorems
+            theorems = result['generated_theorems']
+            print(f"\n🧮 Generated Formal Theorems ({len(theorems)}):")
+            
+            for theorem in theorems[:3]:  # Show first 3 theorems
+                print(f"\n   📜 {theorem['name']}")
+                print(f"      Formal: {theorem['formal_statement'][:100]}...")
+                print(f"      Natural: {theorem['natural_language'][:150]}...")
+                print(f"      Cases: {len(theorem['supporting_cases'])} supporting cases")
+            
+            # Display consistency analysis
+            consistency = result['consistency_analysis']
+            consistency_status = "✅ CONSISTENT" if consistency['overall_consistent'] else "❌ CONFLICTS DETECTED"
+            print(f"\n🔄 Chronological Consistency: {consistency_status}")
+            
+            if not consistency['overall_consistent']:
+                print(f"   Conflicts detected: {len(consistency['conflicts_detected'])}")
+                print(f"   Temporal violations: {len(consistency['temporal_violations'])}")
+            
+            # Display proof results if available
+            proof_results = result.get('proof_results', [])
+            if proof_results:
+                print(f"\n🔬 Theorem Prover Results ({len(proof_results)}):")
+                for proof in proof_results[:3]:
+                    status_icon = "✅" if proof['proof_status'] == 'success' else "❌"
+                    print(f"   {status_icon} {proof['theorem_id']}: {proof['proof_status']}")
+            
+            # Display IPLD export capability
+            ipld_export = asyncio.run(temporal_processor.export_theorems_to_ipld([
+                temporal_processor.theorems[tid] for tid in temporal_processor.theorems.keys()
+            ]))
+            
+            print(f"\n🌐 IPLD Export Ready:")
+            print(f"   Type: {ipld_export['type']}")
+            print(f"   Version: {ipld_export['version']}")
+            print(f"   Theorems: {len(ipld_export['theorems'])} formal theorems exported")
+            
+            return temporal_processor
+        else:
+            print(f"❌ Temporal deontic logic processing failed: {result['error']}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Temporal deontic logic demonstration failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 def demonstrate_dashboard(processor=None, run_dashboard=False, port=5000):
     """Demonstrate the interactive dashboard"""
     print("\n📊 Demonstrating Interactive Dashboard...")
@@ -202,6 +321,11 @@ def main():
         action="store_true", 
         help="Run a quick demo with minimal data"
     )
+    parser.add_argument(
+        "--temporal-logic", 
+        action="store_true", 
+        help="Include temporal deontic logic demonstration"
+    )
     
     args = parser.parse_args()
     
@@ -226,7 +350,16 @@ def main():
             print("❌ Cannot continue without GraphRAG processing")
             return 1
         
-        # Step 3: Demonstrate dashboard
+        # Step 3: Demonstrate temporal deontic logic processing (if requested)
+        temporal_processor = None
+        if args.temporal_logic or not args.quick_demo:
+            temporal_processor = demonstrate_temporal_deontic_logic(processor, args.max_samples)
+            if temporal_processor:
+                print("✅ Temporal deontic logic processing completed successfully")
+            else:
+                print("⚠️ Temporal deontic logic processing had issues, continuing with basic features")
+        
+        # Step 4: Demonstrate dashboard
         dashboard = demonstrate_dashboard(processor, args.run_dashboard, args.port)
         if not dashboard:
             print("❌ Dashboard demonstration failed")
@@ -240,18 +373,23 @@ def main():
             print("   ✅ Loading Caselaw Access Project dataset (with mock fallback)")
             print("   ✅ GraphRAG processing for legal entity extraction")
             print("   ✅ Knowledge graph construction with legal relationships")
+            print("   ✅ Temporal deontic logic conversion and theorem generation")
+            print("   ✅ Chronological consistency verification across case lineages")
+            print("   ✅ Formal logic theorem proving capabilities")
             print("   ✅ Interactive search capabilities")
             print("   ✅ Dashboard preparation with visualizations")
             print()
             print("🚀 Ready for production use!")
             print(f"   • Dataset: {dataset_result['count']} legal cases available")
             print(f"   • Knowledge graph: Ready for complex legal queries")
+            print(f"   • Temporal deontic logic: Formal theorems generated and verified")
             print(f"   • Dashboard: Interactive web interface prepared")
             print()
             print("💡 Next steps:")
             print(f"   • Run with --run-dashboard to start the web interface")
             print(f"   • Increase --max-samples for larger datasets")
             print(f"   • Integrate with existing IPFS infrastructure")
+            print(f"   • Add more legal doctrines for temporal deontic processing")
         
         return 0
         

@@ -182,6 +182,46 @@ class CaselawDashboard:
                     'message': str(e)
                 })
 
+        @self.app.route('/api/temporal-deontic/<doctrine>')
+        def temporal_deontic_analysis(doctrine):
+            """Get temporal deontic logic analysis for a doctrine"""
+            if not self.processed_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Data not initialized'
+                })
+            
+            try:
+                # Get cases related to the doctrine
+                related_cases = self._get_doctrine_cases(doctrine)
+                
+                if not related_cases:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'No cases found for doctrine: {doctrine}'
+                    })
+                
+                # Process through temporal deontic logic
+                from .temporal_deontic_caselaw_processor import TemporalDeonticCaselawProcessor
+                temporal_processor = TemporalDeonticCaselawProcessor()
+                
+                # Run the analysis asynchronously
+                import asyncio
+                result = asyncio.run(temporal_processor.process_caselaw_lineage(related_cases, doctrine))
+                
+                return jsonify({
+                    'status': 'success',
+                    'doctrine': doctrine,
+                    'temporal_deontic_analysis': result
+                })
+                
+            except Exception as e:
+                logger.error(f"Temporal deontic analysis failed for {doctrine}: {e}")
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
+
         @self.app.route('/api/legal-doctrines')
         def legal_doctrines():
             """Get all legal doctrines with case counts and clustering data"""
@@ -554,6 +594,103 @@ class CaselawDashboard:
                     .tab-navigation {{ padding: 5px; }}
                     .tab-button {{ padding: 10px 16px; font-size: 0.9em; }}
                 }}
+                
+                /* Temporal Deontic Logic Styles */
+                .temporal-logic-section {{
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                    padding: 40px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                }}
+                .temporal-header {{
+                    text-align: center; margin-bottom: 30px;
+                }}
+                .temporal-header h2 {{
+                    color: #2c3e50; margin-bottom: 10px;
+                }}
+                .doctrine-selector {{
+                    background: white; padding: 25px; border-radius: 15px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px;
+                    display: flex; align-items: center; gap: 15px; flex-wrap: wrap;
+                }}
+                .doctrine-selector label {{
+                    font-weight: bold; color: #495057; min-width: 200px;
+                }}
+                .doctrine-selector select {{
+                    flex: 1; min-width: 250px; padding: 12px; border: 2px solid #dee2e6;
+                    border-radius: 8px; font-size: 16px;
+                }}
+                .analyze-btn {{
+                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                    color: white; padding: 12px 24px; border: none; border-radius: 8px;
+                    cursor: pointer; font-weight: bold; transition: all 0.3s ease;
+                }}
+                .analyze-btn:hover {{
+                    transform: translateY(-2px); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                }}
+                .logic-results {{
+                    display: grid; gap: 30px;
+                }}
+                .chronological-evolution, .formal-theorems, .consistency-analysis, .proof-results {{
+                    background: white; padding: 25px; border-radius: 15px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                }}
+                .timeline {{
+                    display: flex; flex-direction: column; gap: 15px;
+                }}
+                .timeline-item {{
+                    display: flex; align-items: center; gap: 20px;
+                    padding: 15px; background: #f8f9fa; border-radius: 10px;
+                    border-left: 4px solid #007bff;
+                }}
+                .timeline-date {{
+                    background: #007bff; color: white; padding: 8px 12px;
+                    border-radius: 20px; font-weight: bold; min-width: 60px; text-align: center;
+                }}
+                .timeline-content {{
+                    flex: 1; line-height: 1.5;
+                }}
+                .theorem-card {{
+                    background: #f8f9fa; padding: 20px; border-radius: 10px;
+                    border: 2px solid #dee2e6; margin-bottom: 20px;
+                }}
+                .theorem-card h4 {{
+                    color: #495057; margin-bottom: 15px;
+                }}
+                .theorem-formal, .theorem-natural, .theorem-cases {{
+                    margin-bottom: 15px;
+                }}
+                .theorem-formal code {{
+                    background: #e9ecef; padding: 10px; border-radius: 5px;
+                    display: block; font-family: 'Courier New', monospace; overflow-x: auto;
+                }}
+                .consistency-status {{
+                    text-align: center; font-size: 1.2em; font-weight: bold; margin-bottom: 20px;
+                }}
+                .status-success {{
+                    color: #28a745;
+                }}
+                .status-error {{
+                    color: #dc3545;
+                }}
+                .consistency-details {{
+                    background: #f8f9fa; padding: 15px; border-radius: 8px;
+                }}
+                .resolution-suggestions {{
+                    margin-top: 15px;
+                }}
+                .resolution-suggestions ul {{
+                    list-style-type: none; padding: 0;
+                }}
+                .resolution-suggestions li {{
+                    background: #fff3cd; padding: 10px; margin: 8px 0;
+                    border-left: 4px solid #ffc107; border-radius: 5px;
+                }}
+                .proof-list {{
+                    display: grid; gap: 10px;
+                }}
+                .proof-result {{
+                    background: #f8f9fa; padding: 15px; border-radius: 8px;
+                    border-left: 4px solid #6c757d;
+                }}
             </style>
         </head>
         <body>
@@ -590,6 +727,7 @@ class CaselawDashboard:
                 <div class="tab-navigation">
                     <button class="tab-button active" onclick="switchTab('search')">🔍 Case Search</button>
                     <button class="tab-button" onclick="switchTab('doctrines')">🏷️ Legal Doctrines</button>
+                    <button class="tab-button" onclick="switchTab('temporal-logic')">⚖️ Temporal Logic</button>
                     <button class="tab-button" onclick="switchTab('analytics')">📊 Analytics</button>
                 </div>
                 
@@ -645,6 +783,60 @@ class CaselawDashboard:
                     </div>
                 </div>
                 
+                <!-- Temporal Deontic Logic Tab Content -->
+                <div id="temporal-logic-tab" class="tab-content">
+                    <div class="temporal-logic-section">
+                        <div class="temporal-header">
+                            <h2>⚖️ Temporal Deontic Logic Analysis</h2>
+                            <p>Convert case law precedents into formal temporal deontic logic with chronologically consistent theorems</p>
+                        </div>
+                        
+                        <div class="doctrine-selector">
+                            <label for="doctrineSelect">Select Legal Doctrine for Analysis:</label>
+                            <select id="doctrineSelect" onchange="loadTemporalAnalysis()">
+                                <option value="">Choose a doctrine...</option>
+                                <option value="qualified_immunity">Qualified Immunity</option>
+                                <option value="civil_rights">Civil Rights</option>
+                                <option value="due_process">Due Process</option>
+                                <option value="equal_protection">Equal Protection</option>
+                                <option value="fourth_amendment">Fourth Amendment</option>
+                                <option value="miranda_rights">Miranda Rights</option>
+                                <option value="commerce_clause">Commerce Clause</option>
+                            </select>
+                            <button onclick="loadTemporalAnalysis()" class="analyze-btn">🔬 Analyze Logic</button>
+                        </div>
+                        
+                        <div id="temporalLoadingIndicator" class="loading" style="display: none;">
+                            <p>🧮 Processing temporal deontic logic conversion...</p>
+                            <p><small>This may take a moment as we convert cases to first-order logic</small></p>
+                        </div>
+                        
+                        <div id="temporalAnalysisResults" style="display: none;">
+                            <div class="logic-results">
+                                <div class="chronological-evolution">
+                                    <h3>📅 Chronological Evolution</h3>
+                                    <div id="evolutionTimeline"></div>
+                                </div>
+                                
+                                <div class="formal-theorems">
+                                    <h3>🧮 Generated Theorems</h3>
+                                    <div id="theoremsContainer"></div>
+                                </div>
+                                
+                                <div class="consistency-analysis">
+                                    <h3>🔄 Consistency Verification</h3>
+                                    <div id="consistencyResults"></div>
+                                </div>
+                                
+                                <div class="proof-results">
+                                    <h3>🔬 Theorem Prover Results</h3>
+                                    <div id="proofResults"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Analytics Tab Content -->
                 <div id="analytics-tab" class="tab-content">
                     <div class="viz-section">
@@ -689,7 +881,137 @@ class CaselawDashboard:
                         loadLegalDoctrines();
                     }} else if (tabName === 'analytics') {{
                         loadVisualizations();
+                    }} else if (tabName === 'temporal-logic') {{
+                        // Temporal logic tab loaded on demand
+                        console.log('Temporal logic tab activated');
                     }}
+                }}
+                
+                // Temporal Deontic Logic functionality
+                function loadTemporalAnalysis() {{
+                    const doctrine = document.getElementById('doctrineSelect').value;
+                    if (!doctrine) {{
+                        alert('Please select a legal doctrine to analyze');
+                        return;
+                    }}
+                    
+                    // Show loading indicator
+                    document.getElementById('temporalLoadingIndicator').style.display = 'block';
+                    document.getElementById('temporalAnalysisResults').style.display = 'none';
+                    
+                    fetch(`/api/temporal-deontic/${{doctrine}}`)
+                        .then(response => response.json())
+                        .then(data => {{
+                            document.getElementById('temporalLoadingIndicator').style.display = 'none';
+                            
+                            if (data.status === 'success') {{
+                                displayTemporalAnalysisResults(data.temporal_deontic_analysis);
+                                document.getElementById('temporalAnalysisResults').style.display = 'block';
+                            }} else {{
+                                alert('Temporal analysis failed: ' + data.message);
+                            }}
+                        }})
+                        .catch(error => {{
+                            document.getElementById('temporalLoadingIndicator').style.display = 'none';
+                            alert('Error: ' + error);
+                        }});
+                }}
+                
+                function displayTemporalAnalysisResults(analysis) {{
+                    // Display chronological evolution
+                    let evolutionHtml = '<div class="timeline">';
+                    if (analysis.temporal_patterns && analysis.temporal_patterns.chronological_evolution) {{
+                        analysis.temporal_patterns.chronological_evolution.forEach(evolution => {{
+                            const year = evolution.date.substring(0, 4);
+                            const caseId = evolution.case_id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            evolutionHtml += `
+                                <div class="timeline-item">
+                                    <div class="timeline-date">${{year}}</div>
+                                    <div class="timeline-content">
+                                        <strong>${{caseId}}</strong><br>
+                                        O: ${{evolution.new_obligations.length}} obligations<br>
+                                        P: ${{evolution.new_permissions.length}} permissions<br>
+                                        F: ${{evolution.new_prohibitions.length}} prohibitions
+                                    </div>
+                                </div>
+                            `;
+                        }});
+                    }}
+                    evolutionHtml += '</div>';
+                    document.getElementById('evolutionTimeline').innerHTML = evolutionHtml;
+                    
+                    // Display generated theorems
+                    let theoremsHtml = '';
+                    if (analysis.generated_theorems) {{
+                        analysis.generated_theorems.forEach((theorem, index) => {{
+                            theoremsHtml += `
+                                <div class="theorem-card">
+                                    <h4>${{theorem.name}}</h4>
+                                    <div class="theorem-formal">
+                                        <strong>Formal Statement:</strong><br>
+                                        <code>${{theorem.formal_statement}}</code>
+                                    </div>
+                                    <div class="theorem-natural">
+                                        <strong>Natural Language:</strong><br>
+                                        ${{theorem.natural_language}}
+                                    </div>
+                                    <div class="theorem-cases">
+                                        <strong>Supporting Cases:</strong> ${{theorem.supporting_cases.length}}
+                                    </div>
+                                </div>
+                            `;
+                        }});
+                    }} else {{
+                        theoremsHtml = '<p>No formal theorems generated.</p>';
+                    }}
+                    document.getElementById('theoremsContainer').innerHTML = theoremsHtml;
+                    
+                    // Display consistency analysis
+                    let consistencyHtml = '';
+                    if (analysis.consistency_analysis) {{
+                        const consistency = analysis.consistency_analysis;
+                        const status = consistency.overall_consistent ? 
+                            '<span class="status-success">✅ CONSISTENT</span>' : 
+                            '<span class="status-error">❌ CONFLICTS DETECTED</span>';
+                        
+                        consistencyHtml = `
+                            <div class="consistency-status">${{status}}</div>
+                            <div class="consistency-details">
+                                <p><strong>Conflicts Detected:</strong> ${{consistency.conflicts_detected ? consistency.conflicts_detected.length : 0}}</p>
+                                <p><strong>Temporal Violations:</strong> ${{consistency.temporal_violations ? consistency.temporal_violations.length : 0}}</p>
+                            </div>
+                        `;
+                        
+                        if (consistency.resolution_suggestions && consistency.resolution_suggestions.length > 0) {{
+                            consistencyHtml += '<div class="resolution-suggestions"><h5>Resolution Suggestions:</h5><ul>';
+                            consistency.resolution_suggestions.forEach(suggestion => {{
+                                consistencyHtml += `<li>${{suggestion}}</li>`;
+                            }});
+                            consistencyHtml += '</ul></div>';
+                        }}
+                    }} else {{
+                        consistencyHtml = '<p>Consistency analysis not available.</p>';
+                    }}
+                    document.getElementById('consistencyResults').innerHTML = consistencyHtml;
+                    
+                    // Display proof results
+                    let proofHtml = '';
+                    if (analysis.proof_results && analysis.proof_results.length > 0) {{
+                        proofHtml = '<div class="proof-list">';
+                        analysis.proof_results.forEach(proof => {{
+                            const statusIcon = proof.proof_status === 'success' ? '✅' : '❌';
+                            proofHtml += `
+                                <div class="proof-result">
+                                    ${{statusIcon}} <strong>${{proof.theorem_id}}</strong>: ${{proof.proof_status}}
+                                    ${{proof.execution_time ? ` (${{{proof.execution_time.toFixed(2)}}}s)` : ''}}
+                                </div>
+                            `;
+                        }});
+                        proofHtml += '</div>';
+                    }} else {{
+                        proofHtml = '<p>No theorem prover results available.</p>';
+                    }}
+                    document.getElementById('proofResults').innerHTML = proofHtml;
                 }}
                 
                 // Legal doctrines functionality
@@ -1510,6 +1832,62 @@ class CaselawDashboard:
                 'layout': courts_fig.layout
             }
         }
+
+    def _get_doctrine_cases(self, doctrine: str) -> List[Dict[str, Any]]:
+        """Get cases related to a specific legal doctrine"""
+        if not self.processed_data:
+            return []
+        
+        # Get cases from the processor's internal data
+        cases = getattr(self.processor, 'processed_data', {}).get('cases', [])
+        if not cases:
+            # Fallback: try to get cases from knowledge graph nodes
+            kg_nodes = self.processed_data.get('knowledge_graph', {}).get('nodes', [])
+            cases = [node for node in kg_nodes if node.get('type') == 'case']
+        
+        doctrine_cases = []
+        doctrine_lower = doctrine.lower().replace('_', ' ')
+        
+        for case in cases:
+            # Check if doctrine appears in case content, title, topic, or summary
+            case_text = (
+                case.get('title', '') + ' ' +
+                case.get('content', '') + ' ' + 
+                case.get('topic', '') + ' ' +
+                case.get('summary', '') + ' ' +
+                ' '.join(case.get('legal_topics', []))
+            ).lower()
+            
+            if doctrine_lower in case_text or any(doctrine_lower in topic.lower() 
+                                                for topic in case.get('legal_topics', [])):
+                # Format case for temporal deontic logic processing
+                formatted_case = {
+                    'id': case.get('id', case.get('case_id', str(len(doctrine_cases)))),
+                    'case_name': case.get('title', case.get('case_name', 'Unknown Case')),
+                    'citation': case.get('citation', ''),
+                    'date': case.get('date', case.get('year', '')),
+                    'court': case.get('court', ''),
+                    'content': case.get('content', case.get('full_text', '')),
+                    'topic': case.get('topic', ''),
+                    'summary': case.get('summary', ''),
+                    'legal_topics': case.get('legal_topics', [])
+                }
+                doctrine_cases.append(formatted_case)
+        
+        # Sort by date if available
+        def extract_year(case):
+            date_str = case.get('date', '')
+            try:
+                if isinstance(date_str, str) and len(date_str) >= 4:
+                    return int(date_str[:4])
+                elif isinstance(date_str, int):
+                    return date_str
+            except (ValueError, TypeError):
+                pass
+            return 0
+        
+        doctrine_cases.sort(key=extract_year)
+        return doctrine_cases
 
     def _get_legal_doctrines_with_clustering(self) -> Dict[str, Any]:
         """Get all legal doctrines from the knowledge graph with k-means clustering"""
