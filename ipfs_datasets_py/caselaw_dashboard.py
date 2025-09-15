@@ -1000,10 +1000,11 @@ class CaselawDashboard:
                         proofHtml = '<div class="proof-list">';
                         analysis.proof_results.forEach(proof => {{
                             const statusIcon = proof.proof_status === 'success' ? '✅' : '❌';
+                            const executionTime = proof.execution_time ? ` (${{proof.execution_time.toFixed(2)}}s)` : '';
                             proofHtml += `
                                 <div class="proof-result">
                                     ${{statusIcon}} <strong>${{proof.theorem_id}}</strong>: ${{proof.proof_status}}
-                                    ${{proof.execution_time ? ` (${{{proof.execution_time.toFixed(2)}}}s)` : ''}}
+                                    ${{executionTime}}
                                 </div>
                             `;
                         }});
