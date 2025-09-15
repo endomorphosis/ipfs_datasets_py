@@ -30,9 +30,266 @@ try:
 except ImportError:
     NUMPY_AVAILABLE = False
 
+try:
+    import eyecite
+    from eyecite import get_citations
+    EYECITE_AVAILABLE = True
+except ImportError:
+    EYECITE_AVAILABLE = False
+
 from .caselaw_dataset import CaselawDatasetLoader
 
 logger = logging.getLogger(__name__)
+
+
+class LegalCitationParser:
+    """Enhanced legal citation parser using eyecite library"""
+    
+    def __init__(self):
+        self.eyecite_available = EYECITE_AVAILABLE
+        if not self.eyecite_available:
+            logger.warning("eyecite library not available, using fallback citation parsing")
+    
+    def extract_citations_from_text(self, text: str) -> List[Dict[str, Any]]:
+        """Extract legal citations from text using eyecite"""
+        citations = []
+        
+        if self.eyecite_available:
+            try:
+                found_citations = get_citations(text)
+                for citation in found_citations:
+                    citation_info = {
+                        'raw_text': str(citation),
+                        'type': type(citation).__name__,
+                        'volume': getattr(citation, 'volume', None),
+                        'reporter': getattr(citation, 'reporter', None), 
+                        'page': getattr(citation, 'page', None),
+                        'year': getattr(citation, 'year', None),
+                        'court': getattr(citation.metadata, 'court', None) if hasattr(citation, 'metadata') else None,
+                        'plaintiff': getattr(citation.metadata, 'plaintiff', None) if hasattr(citation, 'metadata') else None,
+                        'defendant': getattr(citation.metadata, 'defendant', None) if hasattr(citation, 'metadata') else None
+                    }
+                    
+                    # Generate full citation if possible
+                    if hasattr(citation, 'corrected_citation_full'):
+                        citation_info['full_citation'] = citation.corrected_citation_full()
+                    
+                    citations.append(citation_info)
+            except Exception as e:
+                logger.warning(f"Error extracting citations with eyecite: {e}")
+                
+        # Fallback to regex parsing if eyecite fails or unavailable
+        if not citations:
+            citations = self._fallback_citation_extraction(text)
+            
+        return citations
+    
+    def _fallback_citation_extraction(self, text: str) -> List[Dict[str, Any]]:
+        """Fallback citation extraction using regex patterns"""
+        citation_patterns = [
+            r'(\d+)\s+(U\.?S\.?)\s+(\d+)(?:\s+\((\d{4})\))?',  # Supreme Court
+            r'(\d+)\s+(F\.?\s?(?:2d|3d)?)\s+(\d+)(?:\s+\((\w+\.?\s+Cir\.?)\s+(\d{4})\))?',  # Federal
+            r'(\d+)\s+(S\.?\s?Ct\.?)\s+(\d+)(?:\s+\((\d{4})\))?',  # Supreme Court Reporter
+        ]
+        
+        citations = []
+        for pattern in citation_patterns:
+            matches = re.finditer(pattern, text, re.IGNORECASE)
+            for match in matches:
+                groups = match.groups()
+                citation_info = {
+                    'raw_text': match.group(0),
+                    'type': 'FullCaseCitation',
+                    'volume': groups[0] if groups[0] else None,
+                    'reporter': groups[1] if groups[1] else None,
+                    'page': groups[2] if groups[2] else None,
+                    'year': groups[3] if len(groups) > 3 and groups[3] else groups[4] if len(groups) > 4 and groups[4] else None,
+                    'court': groups[3] if len(groups) > 3 and not groups[3].isdigit() else None,
+                    'full_citation': match.group(0)
+                }
+                citations.append(citation_info)
+        
+        return citations
+
+
+class EnhancedPrecedentAnalyzer:
+    """Analyzes legal precedent relationships for case shepherding"""
+    
+    def __init__(self):
+        self.citation_parser = LegalCitationParser()
+        
+    def build_precedent_network(self, cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Build a comprehensive precedent network for case shepherding"""
+        precedent_graph = {
+            'nodes': [],
+            'edges': [],
+            'doctrines': {},
+            'lineages': {}
+        }
+        
+        # Create case nodes with enhanced metadata
+        for case in cases:
+            node = {
+                'id': case.get('id', ''),
+                'title': case.get('title', ''),
+                'full_caption': case.get('full_caption', case.get('title', '')),
+                'citation': case.get('citation', ''),
+                'short_citation': case.get('short_citation', ''),
+                'year': case.get('year', 0),
+                'court': case.get('court', ''),
+                'court_abbrev': case.get('court_abbrev', ''),
+                'precedent_value': case.get('precedent_value', 'unknown'),
+                'legal_doctrines': case.get('legal_doctrines', []),
+                'topic': case.get('topic', ''),
+                'node_type': 'case'
+            }
+            precedent_graph['nodes'].append(node)
+            
+            # Track legal doctrines
+            for doctrine in case.get('legal_doctrines', []):
+                if doctrine not in precedent_graph['doctrines']:
+                    precedent_graph['doctrines'][doctrine] = []
+                precedent_graph['doctrines'][doctrine].append(case.get('id'))
+        
+        # Build precedent relationships
+        for case in cases:
+            case_id = case.get('id', '')
+            
+            # Direct precedent citations
+            precedent_citations = case.get('precedent_citations', [])
+            for precedent_cite in precedent_citations:
+                # Find matching case by citation
+                target_case = self._find_case_by_citation(precedent_cite, cases)
+                if target_case:
+                    edge = {
+                        'source': case_id,
+                        'target': target_case.get('id'),
+                        'relationship': 'cites_precedent',
+                        'citation_text': precedent_cite,
+                        'weight': self._calculate_precedent_weight(case, target_case)
+                    }
+                    precedent_graph['edges'].append(edge)
+            
+            # Citing cases (reverse citations)
+            citing_cases = case.get('citing_cases', [])
+            for citing_cite in citing_cases:
+                target_case = self._find_case_by_citation(citing_cite, cases)
+                if target_case:
+                    edge = {
+                        'source': target_case.get('id'),
+                        'target': case_id,
+                        'relationship': 'cited_by',
+                        'citation_text': citing_cite,
+                        'weight': self._calculate_precedent_weight(target_case, case)
+                    }
+                    precedent_graph['edges'].append(edge)
+            
+            # Legal doctrine relationships
+            for other_case in cases:
+                if case != other_case:
+                    shared_doctrines = set(case.get('legal_doctrines', [])) & set(other_case.get('legal_doctrines', []))
+                    if shared_doctrines:
+                        edge = {
+                            'source': case_id,
+                            'target': other_case.get('id'),
+                            'relationship': 'shares_doctrine',
+                            'shared_doctrines': list(shared_doctrines),
+                            'weight': len(shared_doctrines) * 0.3
+                        }
+                        precedent_graph['edges'].append(edge)
+        
+        # Build doctrine lineages for shepherding
+        precedent_graph['lineages'] = self._build_doctrine_lineages(cases, precedent_graph['edges'])
+        
+        return precedent_graph
+    
+    def _find_case_by_citation(self, citation: str, cases: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Find a case by its citation string"""
+        # Extract key citation elements
+        citation_clean = citation.split(',')[0].strip()  # Remove parenthetical year/court
+        
+        for case in cases:
+            case_citation = case.get('citation', '')
+            short_citation = case.get('short_citation', '')
+            
+            if (citation_clean in case_citation or 
+                citation_clean in short_citation or
+                case_citation.split('(')[0].strip() == citation_clean):
+                return case
+        
+        return None
+    
+    def _calculate_precedent_weight(self, source_case: Dict, target_case: Dict) -> float:
+        """Calculate the strength of precedent relationship"""
+        weight = 0.5  # Base weight
+        
+        # Higher weight for Supreme Court cases
+        if 'Supreme Court' in target_case.get('court', ''):
+            weight += 0.4
+        
+        # Higher weight for landmark precedents
+        if target_case.get('precedent_value') == 'high':
+            weight += 0.3
+        
+        # Time-based weight (older precedents generally stronger)
+        year_diff = source_case.get('year', 2000) - target_case.get('year', 2000)
+        if year_diff > 0:  # Source case is newer
+            weight += min(0.2, year_diff / 100.0)
+        
+        return min(1.0, weight)
+    
+    def _build_doctrine_lineages(self, cases: List[Dict[str, Any]], edges: List[Dict]) -> Dict[str, Any]:
+        """Build lineage trees for legal doctrines (e.g., qualified immunity evolution)"""
+        lineages = {}
+        
+        # Key doctrines to track
+        key_doctrines = [
+            'qualified immunity doctrine',
+            'clearly established law standard',
+            'Miranda rights',
+            'equal protection',
+            'due process',
+            'judicial review'
+        ]
+        
+        for doctrine in key_doctrines:
+            # Find all cases involving this doctrine
+            doctrine_cases = [case for case in cases if doctrine in case.get('legal_doctrines', [])]
+            
+            if len(doctrine_cases) > 1:
+                # Sort by year to build timeline
+                doctrine_cases.sort(key=lambda x: x.get('year', 0))
+                
+                lineage = {
+                    'doctrine': doctrine,
+                    'timeline': [],
+                    'key_developments': [],
+                    'current_standard': ''
+                }
+                
+                for case in doctrine_cases:
+                    timeline_entry = {
+                        'case_id': case.get('id'),
+                        'year': case.get('year'),
+                        'title': case.get('title'),
+                        'citation': case.get('citation'),
+                        'development': case.get('summary', ''),
+                        'precedent_value': case.get('precedent_value', '')
+                    }
+                    lineage['timeline'].append(timeline_entry)
+                    
+                    # Mark key developments
+                    if case.get('precedent_value') == 'high' or 'landmark' in case.get('outcome', ''):
+                        lineage['key_developments'].append(timeline_entry)
+                
+                # Set current standard (most recent high-precedent case)
+                high_precedent_cases = [c for c in reversed(doctrine_cases) if c.get('precedent_value') == 'high']
+                if high_precedent_cases:
+                    lineage['current_standard'] = high_precedent_cases[0].get('summary', '')
+                
+                lineages[doctrine] = lineage
+        
+        return lineages
 
 
 class EnhancedLegalEntityExtractor:
@@ -703,6 +960,8 @@ class EnhancedCaselawGraphRAGProcessor:
     def __init__(self, cache_dir: Optional[str] = None, embedding_dim: int = 768):
         self.dataset_loader = CaselawDatasetLoader(cache_dir=cache_dir, embedding_dim=embedding_dim)
         self.knowledge_graph = IPLDCaselawKnowledgeGraph()
+        self.citation_parser = LegalCitationParser()
+        self.precedent_analyzer = EnhancedPrecedentAnalyzer()
         self.processed_data = None
         self.embedding_dim = embedding_dim
         

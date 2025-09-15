@@ -383,6 +383,16 @@ class CaselawDashboard:
                 }}
                 .case-result:hover::before {{ opacity: 1; }}
                 .case-title {{ font-weight: 700; color: #2c3e50; margin-bottom: 8px; font-size: 1.1em; }}
+                .case-citation {{
+                    font-size: 0.95em;
+                    color: #34495e;
+                    margin-bottom: 10px;
+                    font-family: 'Courier New', monospace;
+                    background: #f8f9fa;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    border-left: 3px solid #007bff;
+                }}
                 .case-meta {{ 
                     color: #666; font-size: 0.95em; display: flex; 
                     align-items: center; gap: 15px; flex-wrap: wrap;
@@ -544,12 +554,15 @@ class CaselawDashboard:
                             html += `
                                 <div class="case-result">
                                     <div class="case-title">
-                                        ⚖️ ${{case_data.title}}
+                                        ⚖️ ${{case_data.full_caption || case_data.title}}
+                                    </div>
+                                    <div class="case-citation">
+                                        <strong>${{case_data.citation || case_data.short_citation || 'No citation'}}</strong>
                                     </div>
                                     <div class="case-meta">
                                         <div class="meta-item">
                                             <span>🏛️</span>
-                                            <span>${{case_data.court}}</span>
+                                            <span>${{case_data.court_abbrev || case_data.court}}</span>
                                         </div>
                                         <div class="meta-item">
                                             <span>📅</span>
