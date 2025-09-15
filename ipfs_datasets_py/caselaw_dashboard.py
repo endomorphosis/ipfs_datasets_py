@@ -9,6 +9,7 @@ import os
 import json
 import logging
 import asyncio
+import requests
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
@@ -1839,7 +1840,38 @@ class CaselawDashboard:
         if not self.processed_data:
             return []
         
-        # Get cases from the processor's internal data
+        # Use the search API to get related cases
+        try:
+            import requests
+            response = requests.get(f'http://localhost:5000/api/search?query={doctrine}')
+            if response.status_code == 200:
+                search_data = response.json()
+                cases_found = search_data.get('results', [])
+                logger.info(f"Found {len(cases_found)} cases for doctrine: {doctrine}")
+                
+                doctrine_cases = []
+                for result in cases_found[:10]:  # Limit to top 10 results
+                    case = result.get('case', {})
+                    
+                    # Format case for temporal deontic logic processing
+                    formatted_case = {
+                        'id': case.get('id', case.get('case_id', str(len(doctrine_cases)))),
+                        'case_name': case.get('title', case.get('case_name', case.get('full_caption', 'Unknown Case'))),
+                        'citation': case.get('citation', ''),
+                        'date': str(case.get('year', '')) if case.get('year') else '',
+                        'court': case.get('court', ''),
+                        'content': case.get('text', case.get('content', case.get('summary', ''))),
+                        'topic': case.get('topic', ''),
+                        'summary': case.get('summary', ''),
+                        'legal_topics': case.get('legal_concepts', [])
+                    }
+                    doctrine_cases.append(formatted_case)
+                
+                return doctrine_cases
+        except Exception as e:
+            logger.warning(f"Could not use search API for doctrine cases: {e}")
+        
+        # Fallback: Get cases from the processor's internal data
         cases = getattr(self.processor, 'processed_data', {}).get('cases', [])
         if not cases:
             # Fallback: try to get cases from knowledge graph nodes
