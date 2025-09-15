@@ -186,6 +186,18 @@ class CaselawDashboard:
                     'status': 'error',
                     'message': str(e)
                 })
+        
+        @self.app.route('/api/initialize', methods=['POST'])
+        def initialize():
+            """Initialize the dashboard with data"""
+            try:
+                result = self.initialize_data(max_samples=100)
+                return jsonify(result)
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
     
     def _render_dashboard(self) -> str:
         """Render the main dashboard HTML"""
@@ -266,65 +278,200 @@ class CaselawDashboard:
         <head>
             <title>Caselaw Access Project - GraphRAG Dashboard</title>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }}
-                .header {{ background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }}
-                .stats-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }}
-                .stat-card {{ background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-                .stat-number {{ font-size: 2em; font-weight: bold; color: #3498db; }}
-                .search-section {{ background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-                .search-input {{ width: 70%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }}
-                .search-button {{ padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }}
-                .search-button:hover {{ background: #2980b9; }}
-                .results-section {{ background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-                .case-result {{ border-left: 4px solid #3498db; padding: 15px; margin: 10px 0; background: #f8f9fa; border-radius: 0 4px 4px 0; }}
-                .case-title {{ font-weight: bold; color: #2c3e50; margin-bottom: 5px; }}
-                .case-meta {{ color: #666; font-size: 14px; }}
-                .viz-section {{ background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-                .loading {{ display: none; text-align: center; color: #666; }}
+                * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+                body {{ 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+                    margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: #333; line-height: 1.6;
+                }}
+                .header {{ 
+                    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+                    color: white; padding: 30px 20px; text-align: center; 
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                }}
+                .header h1 {{ font-size: 2.5em; margin-bottom: 10px; font-weight: 700; }}
+                .header p {{ font-size: 1.1em; opacity: 0.9; }}
+                .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+                .stats-grid {{ 
+                    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+                    gap: 20px; margin: 30px 0; 
+                }}
+                .stat-card {{ 
+                    background: white; padding: 30px; border-radius: 15px; 
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+                    text-align: center; transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }}
+                .stat-card:hover {{ transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }}
+                .stat-number {{ 
+                    font-size: 3em; font-weight: 900; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                    background-clip: text; margin-bottom: 10px;
+                }}
+                .stat-label {{ font-size: 1.1em; color: #666; font-weight: 500; }}
+                .stat-icon {{ font-size: 2.5em; margin-bottom: 15px; opacity: 0.7; }}
+                .search-section {{ 
+                    background: white; padding: 40px; border-radius: 20px; 
+                    margin: 30px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                }}
+                .search-section h2 {{ 
+                    margin-bottom: 25px; font-size: 1.8em; 
+                    color: #2c3e50; display: flex; align-items: center; gap: 10px;
+                }}
+                .search-container {{ display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }}
+                .search-input {{ 
+                    flex: 1; min-width: 300px; padding: 15px 20px; border: 2px solid #e1e5e9; 
+                    border-radius: 25px; font-size: 16px; transition: border-color 0.3s ease;
+                    outline: none;
+                }}
+                .search-input:focus {{ border-color: #667eea; }}
+                .search-button {{ 
+                    padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: white; border: none; border-radius: 25px; cursor: pointer; 
+                    font-size: 16px; font-weight: 600; transition: transform 0.3s ease;
+                }}
+                .search-button:hover {{ transform: translateY(-2px); }}
+                .search-suggestions {{ 
+                    margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;
+                    justify-content: center;
+                }}
+                .suggestion-tag {{ 
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+                    padding: 10px 20px; border-radius: 25px; 
+                    font-size: 0.9em; color: #495057; cursor: pointer;
+                    transition: all 0.3s ease; border: 2px solid transparent;
+                }}
+                .suggestion-tag:hover {{ 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: white; transform: translateY(-2px);
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                }}
+                .results-section {{ 
+                    background: white; padding: 30px; border-radius: 20px; 
+                    margin: 30px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                }}
+                .case-result {{ 
+                    border-left: 5px solid #667eea; padding: 20px; margin: 15px 0; 
+                    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%); 
+                    border-radius: 0 10px 10px 0; transition: all 0.3s ease;
+                    cursor: pointer; position: relative; overflow: hidden;
+                }}
+                .case-result:hover {{ 
+                    transform: translateX(5px); 
+                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+                    border-left-color: #764ba2;
+                }}
+                .case-result::before {{
+                    content: '';
+                    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+                    opacity: 0; transition: opacity 0.3s ease;
+                }}
+                .case-result:hover::before {{ opacity: 1; }}
+                .case-title {{ font-weight: 700; color: #2c3e50; margin-bottom: 8px; font-size: 1.1em; }}
+                .case-meta {{ 
+                    color: #666; font-size: 0.95em; display: flex; 
+                    align-items: center; gap: 15px; flex-wrap: wrap;
+                }}
+                .meta-item {{ display: flex; align-items: center; gap: 5px; }}
+                .viz-section {{ 
+                    background: white; padding: 40px; border-radius: 20px; 
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin: 30px 0;
+                }}
+                .viz-section h2 {{ 
+                    margin-bottom: 30px; font-size: 1.8em; color: #2c3e50; 
+                    display: flex; align-items: center; gap: 10px;
+                }}
+                .loading {{ 
+                    display: none; text-align: center; color: #666; 
+                    padding: 20px; font-size: 1.1em;
+                }}
+                .loading i {{ animation: spin 1s linear infinite; margin-right: 10px; }}
+                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+                .no-results {{ 
+                    text-align: center; padding: 40px; color: #666; 
+                    background: #f8f9fa; border-radius: 15px;
+                }}
+                .footer {{ 
+                    background: #2c3e50; color: white; padding: 30px 20px; 
+                    text-align: center; margin-top: 50px;
+                }}
+                @media (max-width: 768px) {{
+                    .container {{ padding: 10px; }}
+                    .stats-grid {{ grid-template-columns: 1fr 1fr; }}
+                    .search-container {{ flex-direction: column; }}
+                    .search-input {{ min-width: auto; }}
+                    .case-meta {{ flex-direction: column; align-items: flex-start; gap: 8px; }}
+                }}
             </style>
         </head>
         <body>
             <div class="header">
-                <h1>🏛️ Caselaw Access Project - GraphRAG Dashboard</h1>
-                <p>Search and explore {stats['case_nodes']:,} legal cases using knowledge graph technology</p>
+                <h1><i class="fas fa-gavel"></i> Caselaw Access Project</h1>
+                <p>Explore {stats['case_nodes']:,} legal cases using advanced GraphRAG technology</p>
             </div>
             
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">{stats['case_nodes']:,}</div>
-                    <div>Legal Cases</div>
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-file-text"></i></div>
+                        <div class="stat-number">{stats['case_nodes']:,}</div>
+                        <div class="stat-label">Legal Cases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-sitemap"></i></div>
+                        <div class="stat-number">{stats['total_nodes']:,}</div>
+                        <div class="stat-label">Knowledge Entities</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-project-diagram"></i></div>
+                        <div class="stat-number">{stats['total_edges']:,}</div>
+                        <div class="stat-label">Relationships</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="stat-number">{stats['year_range']['span']}</div>
+                        <div class="stat-label">Years Covered</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{stats['total_nodes']:,}</div>
-                    <div>Total Entities</div>
+                
+                <div class="search-section">
+                    <h2><i class="fas fa-search"></i> Intelligent Legal Search</h2>
+                    <div class="search-container">
+                        <input type="text" id="searchQuery" class="search-input" 
+                               placeholder="Search legal cases, topics, or concepts...">
+                        <button class="search-button" onclick="searchCases()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    <div class="search-suggestions">
+                        <div class="suggestion-tag" onclick="quickSearch('civil rights')">Civil Rights</div>
+                        <div class="suggestion-tag" onclick="quickSearch('Supreme Court')">Supreme Court</div>
+                        <div class="suggestion-tag" onclick="quickSearch('constitutional law')">Constitutional Law</div>
+                        <div class="suggestion-tag" onclick="quickSearch('criminal procedure')">Criminal Procedure</div>
+                        <div class="suggestion-tag" onclick="quickSearch('privacy rights')">Privacy Rights</div>
+                    </div>
+                    <div class="loading" id="searchLoading">
+                        <i class="fas fa-spinner"></i> Analyzing legal knowledge graph...
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{stats['total_edges']:,}</div>
-                    <div>Relationships</div>
+                
+                <div class="results-section" id="searchResults" style="display: none;">
+                    <h2><i class="fas fa-list-alt"></i> Search Results</h2>
+                    <div id="resultsContainer"></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{stats['year_range']['span']}</div>
-                    <div>Year Span</div>
+                
+                <div class="viz-section">
+                    <h2><i class="fas fa-chart-pie"></i> Dataset Analytics</h2>
+                    <div id="topicsChart" style="height: 400px;"></div>
+                    <div id="courtsChart" style="height: 400px; margin-top: 30px;"></div>
                 </div>
             </div>
             
-            <div class="search-section">
-                <h2>🔍 Search Legal Cases</h2>
-                <input type="text" id="searchQuery" class="search-input" placeholder="Enter search query (e.g., 'civil rights', 'Supreme Court', 'constitutional law')">
-                <button class="search-button" onclick="searchCases()">Search</button>
-                <div class="loading" id="searchLoading">Searching...</div>
-            </div>
-            
-            <div class="results-section" id="searchResults" style="display: none;">
-                <h2>Search Results</h2>
-                <div id="resultsContainer"></div>
-            </div>
-            
-            <div class="viz-section">
-                <h2>📊 Dataset Visualizations</h2>
-                <div id="topicsChart" style="height: 400px;"></div>
-                <div id="courtsChart" style="height: 400px; margin-top: 20px;"></div>
+            <div class="footer">
+                <p>&copy; 2024 Caselaw Access Project GraphRAG Dashboard | Powered by IPFS Datasets Python</p>
             </div>
             
             <script>
@@ -332,6 +479,11 @@ class CaselawDashboard:
                 window.onload = function() {{
                     loadVisualizations();
                 }};
+                
+                function quickSearch(query) {{
+                    document.getElementById('searchQuery').value = query;
+                    searchCases();
+                }}
                 
                 function searchCases() {{
                     const query = document.getElementById('searchQuery').value.trim();
@@ -364,18 +516,42 @@ class CaselawDashboard:
                     const container = document.getElementById('resultsContainer');
                     
                     if (results.length === 0) {{
-                        container.innerHTML = `<p>No cases found for query: "${{query}}"</p>`;
+                        container.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-search" style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;"></i>
+                                <p>No cases found for: "<strong>${{query}}</strong>"</p>
+                                <p>Try different keywords or browse suggested topics above.</p>
+                            </div>
+                        `;
                     }} else {{
-                        let html = `<p>Found ${{results.length}} cases for query: "${{query}}"</p>`;
+                        let html = `<p style="margin-bottom: 20px; font-size: 1.1em;">
+                            <strong>${{results.length}}</strong> cases found for: "<strong>${{query}}</strong>"
+                        </p>`;
                         
-                        results.forEach(result => {{
+                        results.forEach((result, index) => {{
                             const case_data = result.case;
                             html += `
                                 <div class="case-result">
-                                    <div class="case-title">${{case_data.title}}</div>
+                                    <div class="case-title">
+                                        <i class="fas fa-gavel"></i> ${{case_data.title}}
+                                    </div>
                                     <div class="case-meta">
-                                        ${{case_data.court}} • ${{case_data.year}} • Topic: ${{case_data.topic}} • 
-                                        Relevance: ${{result.relevance_score}}/3
+                                        <div class="meta-item">
+                                            <i class="fas fa-university"></i>
+                                            <span>${{case_data.court}}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>${{case_data.year}}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-tag"></i>
+                                            <span>${{case_data.topic}}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-star"></i>
+                                            <span>Relevance: ${{result.relevance_score}}/3</span>
+                                        </div>
                                     </div>
                                 </div>
                             `;
@@ -385,6 +561,7 @@ class CaselawDashboard:
                     }}
                     
                     document.getElementById('searchResults').style.display = 'block';
+                    document.getElementById('searchResults').scrollIntoView({{ behavior: 'smooth' }});
                 }}
                 
                 function loadVisualizations() {{
@@ -394,11 +571,21 @@ class CaselawDashboard:
                             if (data.status === 'success') {{
                                 // Topics chart
                                 const topicsData = data.visualizations.topics_chart;
-                                Plotly.newPlot('topicsChart', topicsData.data, topicsData.layout);
+                                Plotly.newPlot('topicsChart', topicsData.data, {{
+                                    ...topicsData.layout,
+                                    paper_bgcolor: 'transparent',
+                                    plot_bgcolor: 'transparent',
+                                    font: {{ family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto' }}
+                                }});
                                 
                                 // Courts chart  
                                 const courtsData = data.visualizations.courts_chart;
-                                Plotly.newPlot('courtsChart', courtsData.data, courtsData.layout);
+                                Plotly.newPlot('courtsChart', courtsData.data, {{
+                                    ...courtsData.layout,
+                                    paper_bgcolor: 'transparent',
+                                    plot_bgcolor: 'transparent',
+                                    font: {{ family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto' }}
+                                }});
                             }}
                         }})
                         .catch(error => console.error('Visualization error:', error));
@@ -409,6 +596,16 @@ class CaselawDashboard:
                     if (e.key === 'Enter') {{
                         searchCases();
                     }}
+                }});
+                
+                // Add smooth scrolling for all internal links
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {{
+                    anchor.addEventListener('click', function (e) {{
+                        e.preventDefault();
+                        document.querySelector(this.getAttribute('href')).scrollIntoView({{
+                            behavior: 'smooth'
+                        }});
+                    }});
                 }});
             </script>
         </body>
