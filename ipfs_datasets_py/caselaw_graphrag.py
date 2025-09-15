@@ -1142,6 +1142,222 @@ class EnhancedCaselawGraphRAGProcessor:
         results.sort(key=lambda x: x['relevance_score'], reverse=True)
         return results[:max_results]
     
+    def get_case_relationships(self, case_id: str) -> Dict[str, Any]:
+        """Get detailed relationships for a specific case"""
+        if not self.processed_data:
+            return {'status': 'error', 'message': 'No data available'}
+        
+        cases = self.processed_data['cases']
+        target_case = None
+        
+        # Find the target case
+        for case in cases:
+            if case.get('id') == case_id:
+                target_case = case
+                break
+        
+        if not target_case:
+            return {'status': 'error', 'message': 'Case not found'}
+        
+        # Get similar cases using the relationship mapper
+        relationship_mapper = self.knowledge_graph.relationship_mapper
+        similar_cases = []
+        
+        try:
+            if target_case.get('embedding') and NUMPY_AVAILABLE:
+                similar_cases = relationship_mapper._find_similar_cases_by_embedding(target_case, cases)
+            else:
+                similar_cases = relationship_mapper._find_similar_cases_by_content(target_case, cases)
+        except Exception as e:
+            logger.warning(f"Error finding similar cases: {e}")
+            # Fallback to simple content matching
+            similar_cases = self._simple_case_matching(target_case, cases)
+        
+        # Extract legal issues/tags
+        legal_issues = self._extract_legal_issues(target_case)
+        
+        # Get shepherding information
+        shepherding_info = self._get_shepherding_info(target_case, cases)
+        
+        # Get precedent relationships (simplified)
+        precedent_relationships = {
+            'precedent_citations': target_case.get('precedent_citations', []),
+            'citing_cases': target_case.get('citing_cases', [])
+        }
+        
+        return {
+            'status': 'success',
+            'case_id': case_id,
+            'case': target_case,
+            'similar_cases': similar_cases,
+            'precedent_relationships': precedent_relationships,
+            'legal_issues': legal_issues,
+            'shepherding_info': shepherding_info
+        }
+    
+    def _simple_case_matching(self, target_case: Dict[str, Any], all_cases: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Simple fallback case matching"""
+        similar_cases = []
+        target_topic = target_case.get('topic', '').lower()
+        target_court = target_case.get('court', '').lower()
+        
+        for case in all_cases:
+            if case.get('id') == target_case.get('id'):
+                continue
+                
+            similarity = 0
+            
+            # Topic similarity
+            if target_topic and target_topic == case.get('topic', '').lower():
+                similarity += 0.6
+            
+            # Court similarity  
+            if target_court and target_court == case.get('court', '').lower():
+                similarity += 0.3
+            
+            # Year proximity
+            target_year = target_case.get('year', 0)
+            case_year = case.get('year', 0)
+            if target_year and case_year:
+                year_diff = abs(target_year - case_year)
+                if year_diff < 10:
+                    similarity += 0.1
+            
+            if similarity > 0.3:
+                similar_cases.append({
+                    'id': case.get('id'),
+                    'title': case.get('title', ''),
+                    'year': case.get('year', 0),
+                    'court': case.get('court', ''),
+                    'similarity': similarity
+                })
+        
+        # Sort by similarity
+        similar_cases.sort(key=lambda x: x['similarity'], reverse=True)
+        return similar_cases[:5]
+    
+    def _extract_legal_issues(self, case: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract legal issues and tags from a case"""
+        legal_issues = []
+        
+        # Common legal doctrine patterns
+        doctrine_patterns = {
+            'qualified_immunity': [
+                'qualified immunity', 'harlow', 'saucier', 'pearson',
+                'objective reasonableness', 'clearly established'
+            ],
+            'fourth_amendment': [
+                'fourth amendment', 'search and seizure', 'reasonable expectation',
+                'probable cause', 'warrant requirement'
+            ],
+            'first_amendment': [
+                'first amendment', 'free speech', 'freedom of religion',
+                'establishment clause', 'free exercise'
+            ],
+            'due_process': [
+                'due process', 'fundamental fairness', 'procedural due process',
+                'substantive due process'
+            ],
+            'equal_protection': [
+                'equal protection', 'discrimination', 'rational basis',
+                'strict scrutiny', 'intermediate scrutiny'
+            ],
+            'miranda_rights': [
+                'miranda', 'right to remain silent', 'custodial interrogation',
+                'waiver of rights'
+            ],
+            'civil_rights': [
+                'section 1983', 'civil rights', 'constitutional violation',
+                'federal civil rights'
+            ]
+        }
+        
+        case_text = f"{case.get('title', '')} {case.get('summary', '')} {case.get('text', '')}".lower()
+        
+        for issue_name, patterns in doctrine_patterns.items():
+            matches = 0
+            for pattern in patterns:
+                if pattern.lower() in case_text:
+                    matches += 1
+            
+            if matches > 0:
+                legal_issues.append({
+                    'issue': issue_name.replace('_', ' ').title(),
+                    'slug': issue_name,
+                    'matches': matches,
+                    'confidence': min(matches / len(patterns), 1.0)
+                })
+        
+        # Sort by confidence
+        legal_issues.sort(key=lambda x: x['confidence'], reverse=True)
+        return legal_issues
+    
+    def _get_shepherding_info(self, case: Dict[str, Any], all_cases: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+        """Get case shepherding information for tracking precedent lineage"""
+        case_year = case.get('year', 0)
+        case_concepts = set(case.get('legal_concepts', []))
+        
+        citing_cases = []
+        cited_cases = []
+        related_doctrine_cases = []
+        
+        for other_case in all_cases:
+            if other_case.get('id') == case.get('id'):
+                continue
+                
+            other_year = other_case.get('year', 0)
+            other_concepts = set(other_case.get('legal_concepts', []))
+            
+            # Cases that cite this case (later cases)
+            if other_year > case_year:
+                concept_overlap = len(case_concepts.intersection(other_concepts))
+                if concept_overlap >= 2:  # Significant conceptual overlap
+                    citing_cases.append({
+                        'id': other_case.get('id'),
+                        'title': other_case.get('title'),
+                        'year': other_year,
+                        'court': other_case.get('court', ''),
+                        'shared_concepts': concept_overlap,
+                        'relationship': 'citing'
+                    })
+            
+            # Cases cited by this case (earlier cases)
+            elif other_year < case_year:
+                concept_overlap = len(case_concepts.intersection(other_concepts))
+                if concept_overlap >= 2:
+                    cited_cases.append({
+                        'id': other_case.get('id'),
+                        'title': other_case.get('title'),
+                        'year': other_year,
+                        'court': other_case.get('court', ''),
+                        'shared_concepts': concept_overlap,
+                        'relationship': 'cited'
+                    })
+            
+            # Related doctrine cases (same time period)
+            else:
+                concept_overlap = len(case_concepts.intersection(other_concepts))
+                if concept_overlap >= 3:  # Higher threshold for contemporary cases
+                    related_doctrine_cases.append({
+                        'id': other_case.get('id'),
+                        'title': other_case.get('title'),
+                        'year': other_year,
+                        'court': other_case.get('court', ''),
+                        'shared_concepts': concept_overlap,
+                        'relationship': 'related_doctrine'
+                    })
+        
+        # Sort by relevance (shared concepts)
+        citing_cases.sort(key=lambda x: x['shared_concepts'], reverse=True)
+        cited_cases.sort(key=lambda x: x['shared_concepts'], reverse=True)
+        related_doctrine_cases.sort(key=lambda x: x['shared_concepts'], reverse=True)
+        
+        return {
+            'citing_cases': citing_cases[:5],  # Limit to top 5
+            'cited_cases': cited_cases[:5],
+            'related_doctrine_cases': related_doctrine_cases[:3]
+        }
+
     def get_ipld_structure(self) -> Optional[Dict[str, Any]]:
         """Get the IPLD structure for integration with IPFS"""
         if not self.processed_data:
