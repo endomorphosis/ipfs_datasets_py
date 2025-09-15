@@ -1840,17 +1840,15 @@ class CaselawDashboard:
         if not self.processed_data:
             return []
         
-        # Use the search API to get related cases
+        # Use the processor directly instead of making HTTP request (avoiding circular dependency)
         try:
-            import requests
-            response = requests.get(f'http://localhost:5000/api/search?query={doctrine}')
-            if response.status_code == 200:
-                search_data = response.json()
-                cases_found = search_data.get('results', [])
-                logger.info(f"Found {len(cases_found)} cases for doctrine: {doctrine}")
+            # Use query_knowledge_graph method directly
+            results = self.processor.query_knowledge_graph(doctrine, max_results=15)
+            if results:
+                logger.info(f"Found {len(results)} cases for doctrine: {doctrine}")
                 
                 doctrine_cases = []
-                for result in cases_found[:10]:  # Limit to top 10 results
+                for result in results:
                     case = result.get('case', {})
                     
                     # Format case for temporal deontic logic processing
@@ -1869,7 +1867,7 @@ class CaselawDashboard:
                 
                 return doctrine_cases
         except Exception as e:
-            logger.warning(f"Could not use search API for doctrine cases: {e}")
+            logger.warning(f"Could not use direct processor query for doctrine cases: {e}")
         
         # Fallback: Get cases from the processor's internal data
         cases = getattr(self.processor, 'processed_data', {}).get('cases', [])
