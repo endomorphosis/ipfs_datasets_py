@@ -12,6 +12,7 @@ import asyncio
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
+from collections import defaultdict
 
 try:
     from flask import Flask, render_template, request, jsonify, send_from_directory
@@ -27,6 +28,12 @@ try:
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
 
 from .caselaw_graphrag import CaselawGraphRAGProcessor
 
@@ -174,6 +181,58 @@ class CaselawDashboard:
                     'status': 'error',
                     'message': str(e)
                 })
+
+        @self.app.route('/api/legal-doctrines')
+        def legal_doctrines():
+            """Get all legal doctrines with case counts and clustering data"""
+            if not self.processed_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Data not initialized'
+                })
+            
+            try:
+                doctrines_data = self._get_legal_doctrines_with_clustering()
+                # Return the data structure directly with status
+                result = {
+                    'status': 'success',
+                    **doctrines_data  # Unpack the doctrines data (doctrines, clusters, etc.)
+                }
+                return jsonify(result)
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
+
+        @self.app.route('/api/legal-doctrines/search')
+        def search_doctrines():
+            """Search and filter legal doctrines with dynamic clustering"""
+            query = request.args.get('q', '').lower()
+            if not self.processed_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Data not initialized'
+                })
+            
+            try:
+                filtered_doctrines = self._search_and_cluster_doctrines(query)
+                # Return the data structure directly with status
+                result = {
+                    'status': 'success',
+                    **filtered_doctrines  # Unpack the filtered doctrines data
+                }
+                return jsonify(result)
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
+
+        @self.app.route('/doctrine/<doctrine_name>')
+        def doctrine_page(doctrine_name):
+            """Individual doctrine page showing case shepherding lineage"""
+            return self._render_doctrine_page(doctrine_name)
         
         @self.app.route('/api/initialize', methods=['POST'])
         def initialize():
@@ -404,6 +463,84 @@ class CaselawDashboard:
                     text-align: center; padding: 40px; color: #666; 
                     background: #f8f9fa; border-radius: 15px;
                 }}
+                
+                /* Tab Navigation Styles */
+                .tab-navigation {{
+                    background: white; border-radius: 15px; padding: 10px; 
+                    margin: 20px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+                }}
+                .tab-button {{
+                    padding: 12px 24px; border-radius: 25px; border: none;
+                    background: #f8f9fa; color: #495057; cursor: pointer;
+                    font-weight: 500; transition: all 0.3s ease;
+                }}
+                .tab-button.active {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white; transform: translateY(-2px);
+                }}
+                .tab-button:hover:not(.active) {{
+                    background: #e9ecef; transform: translateY(-1px);
+                }}
+                .tab-content {{
+                    display: none;
+                }}
+                .tab-content.active {{
+                    display: block;
+                }}
+                
+                /* Tag Cloud Styles */
+                .tag-cloud-section {{
+                    background: white; padding: 40px; border-radius: 20px; 
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin: 30px 0;
+                }}
+                .tag-cloud-header {{
+                    margin-bottom: 30px; text-align: center;
+                }}
+                .doctrine-search {{
+                    max-width: 500px; margin: 0 auto 30px; position: relative;
+                }}
+                .doctrine-search input {{
+                    width: 100%; padding: 15px 20px; border: 2px solid #e1e5e9;
+                    border-radius: 25px; font-size: 16px; outline: none;
+                    transition: border-color 0.3s ease;
+                }}
+                .doctrine-search input:focus {{
+                    border-color: #667eea;
+                }}
+                .tag-cloud {{
+                    text-align: center; line-height: 2.5;
+                }}
+                .doctrine-tag {{
+                    display: inline-block; margin: 5px; padding: 8px 16px;
+                    border-radius: 20px; text-decoration: none;
+                    transition: all 0.3s ease; cursor: pointer;
+                    border: 2px solid transparent; font-weight: 500;
+                }}
+                .doctrine-tag.size-small {{
+                    font-size: 0.9em; background: #f8f9fa; color: #6c757d;
+                }}
+                .doctrine-tag.size-medium {{
+                    font-size: 1.1em; background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+                    color: #5e35b1;
+                }}
+                .doctrine-tag.size-large {{
+                    font-size: 1.3em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white; font-weight: 600;
+                }}
+                .doctrine-tag:hover {{
+                    transform: translateY(-3px) scale(1.05);
+                    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+                }}
+                .cluster-section {{
+                    margin: 30px 0; padding: 25px; background: #f8f9fa;
+                    border-radius: 15px; border-left: 4px solid #667eea;
+                }}
+                .cluster-title {{
+                    font-size: 1.2em; font-weight: 600; color: #2c3e50;
+                    margin-bottom: 15px; display: flex; align-items: center; gap: 10px;
+                }}
+                
                 .footer {{ 
                     background: #2c3e50; color: white; padding: 30px 20px; 
                     text-align: center; margin-top: 50px;
@@ -414,6 +551,8 @@ class CaselawDashboard:
                     .search-container {{ flex-direction: column; }}
                     .search-input {{ min-width: auto; }}
                     .case-meta {{ flex-direction: column; align-items: flex-start; gap: 8px; }}
+                    .tab-navigation {{ padding: 5px; }}
+                    .tab-button {{ padding: 10px 16px; font-size: 0.9em; }}
                 }}
             </style>
         </head>
@@ -447,36 +586,75 @@ class CaselawDashboard:
                     </div>
                 </div>
                 
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-button active" onclick="switchTab('search')">🔍 Case Search</button>
+                    <button class="tab-button" onclick="switchTab('doctrines')">🏷️ Legal Doctrines</button>
+                    <button class="tab-button" onclick="switchTab('analytics')">📊 Analytics</button>
+                </div>
+                
+                <!-- Search Tab Content -->
+                <div id="search-tab" class="tab-content active">
+                    <div class="search-section">
+                        <h2><span class="icon-search"></span> Intelligent Legal Search</h2>
+                        <div class="search-container">
+                            <input type="text" id="searchQuery" class="search-input" 
+                                   placeholder="Search legal cases, topics, or concepts...">
+                            <button class="search-button" onclick="searchCases()">
+                                <span class="icon-search"></span> Search
+                            </button>
+                        </div>
+                        <div class="search-suggestions">
+                            <div class="suggestion-tag" onclick="quickSearch('civil rights')">Civil Rights</div>
+                            <div class="suggestion-tag" onclick="quickSearch('Supreme Court')">Supreme Court</div>
+                            <div class="suggestion-tag" onclick="quickSearch('constitutional law')">Constitutional Law</div>
+                            <div class="suggestion-tag" onclick="quickSearch('criminal procedure')">Criminal Procedure</div>
+                            <div class="suggestion-tag" onclick="quickSearch('privacy rights')">Privacy Rights</div>
+                        </div>
+                        <div class="loading" id="searchLoading">
+                            <span class="icon-spinner"></span> Analyzing legal knowledge graph...
+                        </div>
+                    </div>
+                    
+                    <div class="results-section" id="searchResults" style="display: none;">
+                        <h2><span class="icon-list"></span> Search Results</h2>
+                        <div id="resultsContainer"></div>
+                    </div>
+                </div>
+                
+                <!-- Legal Doctrines Tab Content -->
+                <div id="doctrines-tab" class="tab-content">
+                    <div class="tag-cloud-section">
+                        <div class="tag-cloud-header">
+                            <h2>🏷️ Legal Doctrines Explorer</h2>
+                            <p>Explore legal doctrines through an interactive tag cloud with intelligent clustering</p>
+                        </div>
+                        
+                        <div class="doctrine-search">
+                            <input type="text" id="doctrineSearchQuery" placeholder="Filter legal doctrines..." 
+                                   oninput="searchDoctrines()" />
+                        </div>
+                        
+                        <div id="doctrinesLoading" class="loading">
+                            <span class="icon-spinner"></span> Loading legal doctrines...
+                        </div>
+                        
+                        <div id="tagCloudContainer">
+                            <!-- Tag cloud will be dynamically loaded -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analytics Tab Content -->
+                <div id="analytics-tab" class="tab-content">
+                    <div class="viz-section">
+                        <h2><span class="icon-chart"></span> Dataset Analytics</h2>
+                        <div id="visualizationContainer"></div>
+                    </div>
+                </div>
+                
                 <div class="search-section">
-                    <h2><span class="icon-search"></span> Intelligent Legal Search</h2>
-                    <div class="search-container">
-                        <input type="text" id="searchQuery" class="search-input" 
-                               placeholder="Search legal cases, topics, or concepts...">
-                        <button class="search-button" onclick="searchCases()">
-                            <span class="icon-search"></span> Search
-                        </button>
-                    </div>
-                    <div class="search-suggestions">
-                        <div class="suggestion-tag" onclick="quickSearch('civil rights')">Civil Rights</div>
-                        <div class="suggestion-tag" onclick="quickSearch('Supreme Court')">Supreme Court</div>
-                        <div class="suggestion-tag" onclick="quickSearch('constitutional law')">Constitutional Law</div>
-                        <div class="suggestion-tag" onclick="quickSearch('criminal procedure')">Criminal Procedure</div>
-                        <div class="suggestion-tag" onclick="quickSearch('privacy rights')">Privacy Rights</div>
-                    </div>
-                    <div class="loading" id="searchLoading">
-                        <span class="icon-spinner"></span> Analyzing legal knowledge graph...
-                    </div>
-                </div>
                 
-                <div class="results-section" id="searchResults" style="display: none;">
-                    <h2><span class="icon-list"></span> Search Results</h2>
-                    <div id="resultsContainer"></div>
-                </div>
-                
-                <div class="viz-section">
-                    <h2><span class="icon-chart"></span> Dataset Analytics</h2>
-                    <div id="visualizationContainer"></div>
-                </div>
             </div>
             
             <div class="footer">
@@ -484,11 +662,146 @@ class CaselawDashboard:
             </div>
             
             <script>
-                // Initialize visualizations
+                // Initialize dashboard
                 window.onload = function() {{
                     loadVisualizations();
+                    loadLegalDoctrines();
                 }};
                 
+                // Tab switching functionality
+                function switchTab(tabName) {{
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(tab => {{
+                        tab.classList.remove('active');
+                    }});
+                    
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.tab-button').forEach(btn => {{
+                        btn.classList.remove('active');
+                    }});
+                    
+                    // Show selected tab and activate button
+                    document.getElementById(tabName + '-tab').classList.add('active');
+                    event.target.classList.add('active');
+                    
+                    // Load content if needed
+                    if (tabName === 'doctrines') {{
+                        loadLegalDoctrines();
+                    }} else if (tabName === 'analytics') {{
+                        loadVisualizations();
+                    }}
+                }}
+                
+                // Legal doctrines functionality
+                let currentDoctrines = [];
+                
+                function loadLegalDoctrines() {{
+                    document.getElementById('doctrinesLoading').style.display = 'block';
+                    document.getElementById('tagCloudContainer').innerHTML = '';
+                    
+                    fetch('/api/legal-doctrines')
+                        .then(response => response.json())
+                        .then(data => {{
+                            document.getElementById('doctrinesLoading').style.display = 'none';
+                            
+                            if (data.status === 'success') {{
+                                currentDoctrines = data.doctrines;
+                                displayTagCloud(data);
+                            }} else {{
+                                document.getElementById('tagCloudContainer').innerHTML = 
+                                    '<p style="text-align: center; color: #666;">Failed to load legal doctrines</p>';
+                            }}
+                        }})
+                        .catch(error => {{
+                            document.getElementById('doctrinesLoading').style.display = 'none';
+                            document.getElementById('tagCloudContainer').innerHTML = 
+                                '<p style="text-align: center; color: #666;">Error loading doctrines: ' + error + '</p>';
+                        }});
+                }}
+                
+                function searchDoctrines() {{
+                    const query = document.getElementById('doctrineSearchQuery').value.trim();
+                    
+                    if (!query) {{
+                        loadLegalDoctrines();
+                        return;
+                    }}
+                    
+                    document.getElementById('doctrinesLoading').style.display = 'block';
+                    
+                    fetch(`/api/legal-doctrines/search?q=${{encodeURIComponent(query)}}`)
+                        .then(response => response.json())
+                        .then(data => {{
+                            document.getElementById('doctrinesLoading').style.display = 'none';
+                            
+                            if (data.status === 'success') {{
+                                displayTagCloud(data);
+                            }} else {{
+                                document.getElementById('tagCloudContainer').innerHTML = 
+                                    '<p style="text-align: center; color: #666;">No doctrines found for: ' + query + '</p>';
+                            }}
+                        }})
+                        .catch(error => {{
+                            document.getElementById('doctrinesLoading').style.display = 'none';
+                            console.error('Search error:', error);
+                        }});
+                }}
+                
+                function displayTagCloud(data) {{
+                    const container = document.getElementById('tagCloudContainer');
+                    let html = '';
+                    
+                    // Display clusters if available
+                    if (data.clusters && data.clusters.length > 0) {{
+                        data.clusters.forEach(cluster => {{
+                            html += `
+                                <div class="cluster-section">
+                                    <div class="cluster-title">
+                                        📂 ${{cluster.name}} (${{cluster.total_cases}} cases)
+                                    </div>
+                                    <div class="tag-cloud">
+                            `;
+                            
+                            cluster.doctrines.forEach(doctrine => {{
+                                const sizeClass = doctrine.case_count > 5 ? 'size-large' : 
+                                                doctrine.case_count > 2 ? 'size-medium' : 'size-small';
+                                html += `
+                                    <a href="/doctrine/${{doctrine.url_name}}" class="doctrine-tag ${{sizeClass}}"
+                                       title="${{doctrine.case_count}} cases">
+                                        ${{doctrine.display_name}} (${{doctrine.case_count}})
+                                    </a>
+                                `;
+                            }});
+                            
+                            html += `
+                                    </div>
+                                </div>
+                            `;
+                        }});
+                    }} else {{
+                        // Fallback: display all doctrines in one cloud
+                        html += '<div class="tag-cloud">';
+                        data.doctrines.forEach(doctrine => {{
+                            const sizeClass = doctrine.case_count > 5 ? 'size-large' : 
+                                            doctrine.case_count > 2 ? 'size-medium' : 'size-small';
+                            html += `
+                                <a href="/doctrine/${{doctrine.url_name}}" class="doctrine-tag ${{sizeClass}}"
+                                   title="${{doctrine.case_count}} cases">
+                                    ${{doctrine.display_name}} (${{doctrine.case_count}})
+                                </a>
+                            `;
+                        }});
+                        html += '</div>';
+                    }}
+                    
+                    if (data.doctrines.length === 0) {{
+                        html = '<div class="no-results"><p>No legal doctrines found.</p></div>';
+                    }}
+                    
+                    container.innerHTML = html;
+                }}
+                
+                // Case search functionality
                 function quickSearch(query) {{
                     document.getElementById('searchQuery').value = query;
                     searchCases();
@@ -613,19 +926,17 @@ class CaselawDashboard:
                 }}
                 
                 // Allow search on Enter key
-                document.getElementById('searchQuery').addEventListener('keypress', function(e) {{
-                    if (e.key === 'Enter') {{
-                        searchCases();
-                    }}
-                }});
-                
-                // Add smooth scrolling for all internal links
-                document.querySelectorAll('a[href^="#"]').forEach(anchor => {{
-                    anchor.addEventListener('click', function (e) {{
-                        e.preventDefault();
-                        document.querySelector(this.getAttribute('href')).scrollIntoView({{
-                            behavior: 'smooth'
-                        }});
+                document.addEventListener('DOMContentLoaded', function() {{
+                    document.getElementById('searchQuery').addEventListener('keypress', function(e) {{
+                        if (e.key === 'Enter') {{
+                            searchCases();
+                        }}
+                    }});
+                    
+                    document.getElementById('doctrineSearchQuery').addEventListener('keypress', function(e) {{
+                        if (e.key === 'Enter') {{
+                            searchDoctrines();
+                        }}
                     }});
                 }});
             </script>
@@ -1199,6 +1510,409 @@ class CaselawDashboard:
                 'layout': courts_fig.layout
             }
         }
+
+    def _get_legal_doctrines_with_clustering(self) -> Dict[str, Any]:
+        """Get all legal doctrines from the knowledge graph with k-means clustering"""
+        if not self.processed_data:
+            return {'doctrines': [], 'clusters': []}
+        
+        # Get cases from the processor's internal data
+        cases = getattr(self.processor, 'processed_data', {}).get('cases', [])
+        if not cases:
+            # Fallback: try to get cases from knowledge graph nodes
+            kg_nodes = self.processed_data.get('knowledge_graph', {}).get('nodes', [])
+            cases = [node for node in kg_nodes if node.get('type') == 'case']
+        
+        # Extract all legal doctrines from cases
+        doctrine_counts = defaultdict(int)
+        doctrine_cases = defaultdict(list)
+        all_doctrines = set()
+        
+        # Collect doctrines from all cases
+        for case in cases:
+            case_doctrines = case.get('legal_concepts', [])
+            for doctrine in case_doctrines:
+                doctrine_clean = doctrine.lower().strip()
+                doctrine_counts[doctrine_clean] += 1
+                doctrine_cases[doctrine_clean].append(case['id'])
+                all_doctrines.add(doctrine_clean)
+        
+        # Add common legal doctrines that might not be in cases
+        common_doctrines = [
+            'qualified immunity', 'due process', 'equal protection', 'miranda rights',
+            'search and seizure', 'probable cause', 'first amendment', 'fourth amendment',
+            'civil rights', 'constitutional law', 'criminal procedure', 'habeas corpus',
+            'double jeopardy', 'cruel and unusual punishment', 'freedom of speech',
+            'freedom of religion', 'commerce clause', 'supremacy clause', 'interstate commerce',
+            'separation of powers', 'right to counsel', 'eminent domain', 'substantive due process',
+            'procedural due process', 'strict scrutiny', 'intermediate scrutiny', 'rational basis',
+            'incorporation doctrine', 'exclusionary rule', 'fruit of poisonous tree',
+            'good faith exception', 'inevitable discovery', 'plain view doctrine'
+        ]
+        
+        for doctrine in common_doctrines:
+            all_doctrines.add(doctrine)
+            if doctrine not in doctrine_counts:
+                doctrine_counts[doctrine] = 0
+        
+        # Create doctrine data
+        doctrines_data = []
+        for doctrine in all_doctrines:
+            if doctrine and len(doctrine.strip()) > 2:
+                case_count = int(doctrine_counts[doctrine])  # Convert numpy int32 to Python int
+                doctrines_data.append({
+                    'name': doctrine,
+                    'display_name': doctrine.title(),
+                    'case_count': case_count,
+                    'cases': doctrine_cases[doctrine][:10],  # Limit for performance
+                    'url_name': doctrine.replace(' ', '-').replace('&', 'and').lower(),
+                    'size_factor': float(min(max(case_count / 10, 0.5), 3.0) if case_count > 0 else 0.5)  # Convert to float
+                })
+        
+        # Sort by case count
+        doctrines_data.sort(key=lambda x: x['case_count'], reverse=True)
+        
+        # Perform k-means clustering if possible
+        clusters = self._cluster_doctrines(doctrines_data)
+        
+        return {
+            'doctrines': doctrines_data,
+            'clusters': clusters,
+            'total_doctrines': len(doctrines_data),
+            'total_cases': sum(d['case_count'] for d in doctrines_data)
+        }
+    
+    def _cluster_doctrines(self, doctrines_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Cluster legal doctrines using k-means on doctrine names and case counts"""
+        try:
+            if not NUMPY_AVAILABLE or len(doctrines_data) < 3:
+                return self._create_simple_clusters(doctrines_data)
+            
+            # Create feature matrix: doctrine name similarity + case count
+            from sklearn.cluster import KMeans
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            
+            # Extract doctrine names and case counts
+            doctrine_names = [d['name'] for d in doctrines_data]
+            case_counts = np.array([d['case_count'] for d in doctrines_data])
+            
+            # Vectorize doctrine names using TF-IDF
+            vectorizer = TfidfVectorizer(max_features=50, stop_words='english')
+            name_features = vectorizer.fit_transform(doctrine_names).toarray()
+            
+            # Normalize case counts
+            max_count = case_counts.max() if len(case_counts) > 0 else 1
+            normalized_counts = (case_counts / max(max_count, 1)).reshape(-1, 1)
+            
+            # Combine features
+            features = np.hstack([name_features, normalized_counts])
+            
+            # Determine optimal number of clusters (3-8)
+            n_clusters = min(max(len(doctrines_data) // 8, 3), 8)
+            
+            # Perform k-means clustering
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+            cluster_labels = kmeans.fit_predict(features)
+            
+            # Organize clusters
+            clusters = defaultdict(list)
+            for idx, label in enumerate(cluster_labels):
+                clusters[label].append(doctrines_data[idx])
+            
+            # Create cluster data with names
+            cluster_names = [
+                'Constitutional Rights', 'Criminal Law', 'Civil Procedure', 
+                'Administrative Law', 'Commercial Law', 'Property Law',
+                'Evidence & Procedure', 'Federal Jurisdiction'
+            ]
+            
+            cluster_data = []
+            for cluster_id, doctrines in clusters.items():
+                cluster_name = cluster_names[cluster_id % len(cluster_names)]
+                total_cases = sum(int(d['case_count']) for d in doctrines)  # Ensure int conversion
+                cluster_data.append({
+                    'id': int(cluster_id),  # Convert numpy types
+                    'name': cluster_name,
+                    'doctrines': sorted(doctrines, key=lambda x: x['case_count'], reverse=True),
+                    'total_cases': total_cases,
+                    'size': len(doctrines)
+                })
+            
+            return sorted(cluster_data, key=lambda x: x['total_cases'], reverse=True)
+            
+        except ImportError:
+            return self._create_simple_clusters(doctrines_data)
+    
+    def _create_simple_clusters(self, doctrines_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Create simple rule-based clusters when sklearn is not available"""
+        # Simple categorization based on keywords
+        clusters = {
+            'Constitutional Rights': [],
+            'Criminal Law': [],
+            'Civil Rights': [],
+            'Procedure & Evidence': [],
+            'Administrative Law': [],
+            'Other Legal Concepts': []
+        }
+        
+        for doctrine in doctrines_data:
+            name = doctrine['name'].lower()
+            if any(word in name for word in ['amendment', 'constitutional', 'due process', 'equal protection']):
+                clusters['Constitutional Rights'].append(doctrine)
+            elif any(word in name for word in ['criminal', 'miranda', 'search', 'seizure', 'probable cause']):
+                clusters['Criminal Law'].append(doctrine)
+            elif any(word in name for word in ['civil rights', 'discrimination', 'freedom']):
+                clusters['Civil Rights'].append(doctrine)
+            elif any(word in name for word in ['procedure', 'evidence', 'discovery', 'trial']):
+                clusters['Procedure & Evidence'].append(doctrine)
+            elif any(word in name for word in ['administrative', 'regulation', 'agency']):
+                clusters['Administrative Law'].append(doctrine)
+            else:
+                clusters['Other Legal Concepts'].append(doctrine)
+        
+        # Convert to cluster data format
+        cluster_data = []
+        for cluster_id, (cluster_name, doctrines) in enumerate(clusters.items()):
+            if doctrines:  # Only include non-empty clusters
+                total_cases = sum(int(d['case_count']) for d in doctrines)  # Ensure int conversion
+                cluster_data.append({
+                    'id': cluster_id,
+                    'name': cluster_name,
+                    'doctrines': sorted(doctrines, key=lambda x: x['case_count'], reverse=True),
+                    'total_cases': total_cases,
+                    'size': len(doctrines)
+                })
+        
+        return sorted(cluster_data, key=lambda x: x['total_cases'], reverse=True)
+    
+    def _search_and_cluster_doctrines(self, query: str) -> Dict[str, Any]:
+        """Search doctrines and return filtered results with updated clustering"""
+        all_doctrines_data = self._get_legal_doctrines_with_clustering()
+        
+        if not query:
+            return all_doctrines_data
+        
+        # Filter doctrines based on query
+        filtered_doctrines = []
+        for doctrine in all_doctrines_data['doctrines']:
+            if (query in doctrine['name'].lower() or 
+                query in doctrine['display_name'].lower() or
+                any(query in case_id.lower() for case_id in doctrine.get('cases', []))):
+                filtered_doctrines.append(doctrine)
+        
+        # Re-cluster the filtered results
+        if filtered_doctrines:
+            clusters = self._cluster_doctrines(filtered_doctrines)
+        else:
+            clusters = []
+        
+        return {
+            'doctrines': filtered_doctrines,
+            'clusters': clusters,
+            'total_doctrines': len(filtered_doctrines),
+            'total_cases': sum(d['case_count'] for d in filtered_doctrines),
+            'query': query
+        }
+    
+    def _render_doctrine_page(self, doctrine_name: str) -> str:
+        """Render individual doctrine page with case shepherding lineage"""
+        if not self.processed_data:
+            return self._render_error_page("Dashboard not initialized. Please load the data first.")
+        
+        # Clean doctrine name 
+        doctrine_clean = doctrine_name.replace('-', ' ').replace('_', ' ').lower()
+        
+        # Get cases from the processor's internal data
+        cases = getattr(self.processor, 'processed_data', {}).get('cases', [])
+        if not cases:
+            # Fallback: try to get cases from knowledge graph nodes
+            kg_nodes = self.processed_data.get('knowledge_graph', {}).get('nodes', [])
+            cases = [node for node in kg_nodes if node.get('type') == 'case']
+        
+        # Find cases related to this doctrine
+        related_cases = []
+        for case in cases:
+            case_concepts = [c.lower() for c in case.get('legal_concepts', [])]
+            if any(doctrine_clean in concept or concept in doctrine_clean for concept in case_concepts):
+                related_cases.append(case)
+        
+        if not related_cases:
+            return self._render_error_page(f"No cases found for doctrine: {doctrine_name}")
+        
+        # Sort cases chronologically to show lineage
+        related_cases.sort(key=lambda x: x.get('year', 0))
+        
+        return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{doctrine_name.title()} - Legal Doctrine | Caselaw Access Project</title>
+            <style>
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh; color: #2c3e50;
+                }}
+                .header {{
+                    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+                    padding: 20px 0; box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+                    position: sticky; top: 0; z-index: 100;
+                }}
+                .header-content {{
+                    max-width: 1200px; margin: 0 auto; padding: 0 20px;
+                    display: flex; align-items: center; gap: 20px;
+                }}
+                .back-button {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white; border: none; padding: 10px 20px; border-radius: 25px;
+                    text-decoration: none; font-weight: 600; transition: transform 0.3s ease;
+                }}
+                .back-button:hover {{ transform: translateY(-2px); }}
+                .doctrine-title {{
+                    font-size: 2em; color: #2c3e50; flex-grow: 1;
+                }}
+                .container {{
+                    max-width: 1200px; margin: 30px auto; padding: 0 20px;
+                }}
+                .doctrine-info {{
+                    background: white; border-radius: 20px; padding: 40px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 30px;
+                }}
+                .doctrine-description {{
+                    background: #f8f9fa; padding: 25px; border-radius: 10px;
+                    border-left: 4px solid #667eea; margin-bottom: 30px;
+                }}
+                .cases-timeline {{
+                    background: white; border-radius: 20px; padding: 40px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                }}
+                .timeline-header {{
+                    font-size: 1.8em; margin-bottom: 30px; color: #2c3e50;
+                    display: flex; align-items: center; gap: 10px;
+                }}
+                .timeline-case {{
+                    border-left: 4px solid #667eea; padding: 25px; margin: 20px 0;
+                    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+                    border-radius: 0 10px 10px 0; transition: all 0.3s ease;
+                    cursor: pointer; position: relative;
+                }}
+                .timeline-case:hover {{
+                    transform: translateX(5px); border-left-color: #764ba2;
+                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+                }}
+                .case-year {{
+                    position: absolute; left: -30px; top: 20px;
+                    background: #667eea; color: white; padding: 5px 10px;
+                    border-radius: 15px; font-weight: 600; font-size: 0.9em;
+                }}
+                .case-name {{
+                    font-size: 1.3em; font-weight: 700; color: #2c3e50;
+                    margin-bottom: 10px; margin-left: 30px;
+                }}
+                .case-citation {{
+                    font-family: 'Courier New', monospace; color: #495057;
+                    margin-bottom: 15px; font-size: 1.1em; margin-left: 30px;
+                }}
+                .case-significance {{
+                    background: #e3f2fd; padding: 15px; border-radius: 8px;
+                    margin-left: 30px; margin-top: 15px; font-style: italic;
+                }}
+                .stats-grid {{
+                    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px; margin-bottom: 30px;
+                }}
+                .stat-card {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white; padding: 25px; border-radius: 15px; text-align: center;
+                }}
+                .stat-number {{ font-size: 2.5em; font-weight: 900; margin-bottom: 5px; }}
+                .stat-label {{ opacity: 0.9; }}
+                @media (max-width: 768px) {{
+                    .header-content {{ flex-direction: column; text-align: center; }}
+                    .case-year {{ position: static; margin-bottom: 10px; }}
+                    .case-name, .case-citation, .case-significance {{ margin-left: 0; }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="header-content">
+                    <a href="/" class="back-button">⬅️ Back to Dashboard</a>
+                    <div class="doctrine-title">⚖️ {doctrine_name.replace('-', ' ').title()}</div>
+                </div>
+            </div>
+            
+            <div class="container">
+                <div class="doctrine-info">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">{len(related_cases)}</div>
+                            <div class="stat-label">Related Cases</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">{max([c.get('year', 0) for c in related_cases]) - min([c.get('year', 1900) for c in related_cases if c.get('year', 0) > 0])}</div>
+                            <div class="stat-label">Years of Precedent</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">{len(set(c.get('court', '') for c in related_cases))}</div>
+                            <div class="stat-label">Different Courts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">{len(set(c.get('topic', '') for c in related_cases))}</div>
+                            <div class="stat-label">Legal Topics</div>
+                        </div>
+                    </div>
+                    
+                    <div class="doctrine-description">
+                        <h3>📖 About {doctrine_name.replace('-', ' ').title()}</h3>
+                        <p>This legal doctrine encompasses {len(related_cases)} cases spanning from {min([c.get('year', 1900) for c in related_cases if c.get('year', 0) > 0])} to {max([c.get('year', 0) for c in related_cases])}. The cases show the evolution and application of this legal principle across different courts and jurisdictions.</p>
+                    </div>
+                </div>
+                
+                <div class="cases-timeline">
+                    <div class="timeline-header">
+                        📅 Case Shepherding Lineage
+                    </div>
+                    
+                    {self._render_doctrine_timeline(related_cases)}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    
+    def _render_doctrine_timeline(self, cases: List[Dict[str, Any]]) -> str:
+        """Render timeline of cases for a doctrine"""
+        timeline_html = ""
+        
+        for case in cases:
+            year = case.get('year', 'Unknown')
+            title = case.get('title', 'Unknown Case')
+            citation = case.get('citation', 'No citation')
+            summary = case.get('summary', 'No summary available.')
+            case_id = case.get('id', '')
+            
+            # Determine case significance
+            significance = "This case contributed to the development of the legal doctrine."
+            if 'Supreme Court' in case.get('court', ''):
+                significance = "🏛️ Supreme Court precedent - Binding nationwide authority."
+            elif 'Circuit' in case.get('court', ''):
+                significance = "📍 Circuit court decision - Regional precedential value."
+            
+            timeline_html += f"""
+            <div class="timeline-case" onclick="window.location.href='/case/{case_id}';">
+                <div class="case-year">{year}</div>
+                <div class="case-name">{title}</div>
+                <div class="case-citation">{citation}</div>
+                <div>{summary[:300]}{'...' if len(summary) > 300 else ''}</div>
+                <div class="case-significance">{significance}</div>
+            </div>
+            """
+        
+        return timeline_html if timeline_html else "<p>No cases found in the timeline.</p>"
     
     def run(self, host: str = "0.0.0.0", port: int = 5000, initialize_data: bool = True):
         """Run the dashboard web application"""
