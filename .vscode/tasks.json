@@ -442,8 +442,7 @@
 				"focus": false,
 				"panel": "shared"
 			}
-		}
-		,
+		},
 		{
 			"label": "Start MCP Dashboard (8899)",
 			"type": "shell",
@@ -475,7 +474,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Test MCP Dashboard Status",
@@ -488,7 +489,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Stop MCP Dashboard",
@@ -501,7 +504,9 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Run MCP CLI Tool",
@@ -516,7 +521,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "List MCP CLI Categories",
@@ -529,7 +536,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Run MCP Dashboard Playwright Tests",
@@ -544,7 +553,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Start Docker MCP Server",
@@ -564,7 +575,9 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Stop Docker MCP Server",
@@ -581,7 +594,22 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Start Caselaw Dashboard (5000)",
+			"type": "shell",
+			"command": "/home/barberb/ipfs_datasets_py/.venv/bin/python",
+			"args": [
+				"scripts/demo/demonstrate_caselaw_graphrag.py",
+				"--run-dashboard",
+				"--port",
+				"5000"
+			],
+			"isBackground": true,
+			"group": "build"
 		}
 	],
 	"inputs": [

@@ -164,8 +164,10 @@ class MCPDashboard(AdminDashboard):
         Args:
             config: MCP dashboard configuration
         """
-        super().configure(config)
+        # Set config first so _setup_routes (called by super().configure -> _initialize_flask_app)
+        # can see feature flags and register routes.
         self.mcp_config = config
+        super().configure(config)
         
         # Initialize MCP server if available
         if MCP_SERVER_AVAILABLE:
@@ -531,7 +533,15 @@ class MCPDashboard(AdminDashboard):
     
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
-            
+        # Avoid duplicate registration if routes already exist
+        try:
+            if self.app and 'api_mcp_tools' in getattr(self.app, 'view_functions', {}):
+                self.logger.debug("MCP tool routes already registered; skipping re-registration")
+                return
+        except Exception:
+            pass
+
+        
         @self.app.route('/api/mcp/tools')
         def api_mcp_tools():
             """API endpoint to get available MCP tools."""
@@ -639,113 +649,7 @@ class MCPDashboard(AdminDashboard):
                 mimetype='application/javascript'
             )
             
-        @self.app.route('/api/mcp/tools')
-        def api_mcp_tools():
-            """API endpoint to get available MCP tools."""
-            return jsonify(self._discover_mcp_tools())
-            
-        @self.app.route('/api/mcp/tools/<category>/<tool_name>')
-        def api_mcp_tool_info(category, tool_name):
-            """Get detailed information about a specific tool."""
-            tools_info = self._discover_mcp_tools()
-            
-            if category not in tools_info:
-                return jsonify({"error": f"Category '{category}' not found"}), 404
-                
-            tool = next((t for t in tools_info[category] if t['name'] == tool_name), None)
-            if not tool:
-                return jsonify({"error": f"Tool '{tool_name}' not found in category '{category}'"}), 404
-                
-            return jsonify(tool)
-            
-        @self.app.route('/api/mcp/tools/<category>/<tool_name>/execute', methods=['POST'])
-        def api_execute_mcp_tool(category, tool_name):
-            """Execute an MCP tool with given parameters."""
-            if not self.mcp_config or not self.mcp_config.enable_tool_execution:
-                return jsonify({"error": "Tool execution is disabled"}), 403
-                
-            if len(self.active_tool_executions) >= self.mcp_config.max_concurrent_tools:
-                return jsonify({"error": "Maximum concurrent tool executions reached"}), 429
-                
-            # Get parameters from request
-            params = request.json or {}
-            execution_id = f"{category}_{tool_name}_{int(time.time() * 1000)}"
-            
-            # Start tool execution
-            execution_record = {
-                "id": execution_id,
-                "category": category,
-                "tool_name": tool_name,
-                "parameters": params,
-                "start_time": datetime.now().isoformat(),
-                "status": "running",
-                "result": None,
-                "error": None
-            }
-            
-            self.active_tool_executions[execution_id] = execution_record
-            
-            try:
-                # In a real implementation, this would be async
-                # For now, we'll simulate tool execution
-                result = self._execute_tool_sync(category, tool_name, params)
-                
-                execution_record.update({
-                    "status": "completed",
-                    "result": result,
-                    "end_time": datetime.now().isoformat()
-                })
-                
-            except Exception as e:
-                execution_record.update({
-                    "status": "failed",
-                    "error": str(e),
-                    "end_time": datetime.now().isoformat()
-                })
-                
-            # Move to history
-            self.tool_execution_history.append(execution_record.copy())
-            del self.active_tool_executions[execution_id]
-            
-            return jsonify(execution_record)
-            
-        @self.app.route('/api/mcp/executions/<execution_id>')
-        def api_get_execution_status(execution_id):
-            """Get the status of a tool execution."""
-            # Check active executions
-            if execution_id in self.active_tool_executions:
-                return jsonify(self.active_tool_executions[execution_id])
-                
-            # Check history
-            for execution in self.tool_execution_history:
-                if execution['id'] == execution_id:
-                    return jsonify(execution)
-                    
-            return jsonify({"error": "Execution not found"}), 404
-            
-        @self.app.route('/api/mcp/status')
-        def api_mcp_status():
-            """Get MCP server status."""
-            return jsonify(self._get_mcp_server_status())
-            
-        @self.app.route('/api/mcp/history')
-        def api_execution_history():
-            """Get tool execution history."""
-            limit = request.args.get('limit', 50, type=int)
-            return jsonify({
-                "executions": self.tool_execution_history[-limit:],
-                "total": len(self.tool_execution_history)
-            })
-            
-        # JavaScript SDK endpoint
-        @self.app.route('/static/js/mcp-sdk.js')
-        def mcp_sdk():
-            """Serve the MCP JavaScript SDK."""
-            return send_from_directory(
-                self.app.static_folder,
-                'js/mcp-sdk.js',
-                mimetype='application/javascript'
-            )
+        # Note: Avoid duplicating MCP tool routes; comprehensive versions are defined above.
             
     # GraphRAG processing methods
     async def _process_website_graphrag(self, session_id: str, url: str, config: 'CompleteProcessingConfiguration') -> None:
@@ -1024,13 +928,11 @@ class MCPDashboard(AdminDashboard):
             "timestamp": datetime.now().isoformat(),
             "execution_time": 3.2
         }
+
+    def _execute_tool_sync(self, category: str, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a tool synchronously (placeholder implementation)."""
-        # This is a placeholder - in a real implementation, this would
-        # call the actual MCP tool execution logic
-        
-        # Simulate some processing time
+        # TODO: Wire into real MCP tool execution path via self.mcp_server
         time.sleep(0.5)
-        
         return {
             "message": f"Tool {category}/{tool_name} executed successfully",
             "parameters_received": params,
@@ -1077,13 +979,15 @@ class MCPDashboard(AdminDashboard):
             }
         
         return base_status
+
+    def _get_mcp_server_status(self) -> Dict[str, Any]:
         """Get the current status of the MCP server."""
         if not self.mcp_server:
             return {
                 "status": "unavailable",
                 "message": "MCP server not initialized"
             }
-            
+
         return {
             "status": "running",
             "server_type": "SimpleIPFSDatasetsMCPServer",
