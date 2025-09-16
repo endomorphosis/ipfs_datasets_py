@@ -1234,36 +1234,44 @@ class CaselawDashboard:
                     
                     if (data.status === 'success' && data.analysis) {{
                         const analysis = data.analysis;
+                        const chronEvolution = analysis.temporal_patterns?.chronological_evolution || [];
+                        const theorems = analysis.generated_theorems || [];
+                        const consistency = analysis.consistency_analysis || {{}};
+                        
                         const html = `
                             <div class="results-header">
                                 <div class="results-title">Temporal Deontic Logic Analysis</div>
-                                <div class="results-count">${{analysis.chronological_evolution.length}} cases analyzed</div>
+                                <div class="results-count">${{chronEvolution.length}} cases analyzed</div>
                             </div>
                             <div style="padding: 20px;">
                                 <h3>Chronological Evolution:</h3>
-                                ${{analysis.chronological_evolution.map(caseItem => `
+                                ${{chronEvolution.map(caseItem => `
                                     <div class="case-result">
-                                        <div class="case-title">${{caseItem.year}}: ${{caseItem.case_id}}</div>
-                                        <div class="case-meta">O:${{caseItem.obligations}} P:${{caseItem.permissions}} F:${{caseItem.prohibitions}}</div>
+                                        <div class="case-title">${{caseItem.date?.substring(0,4) || 'Unknown'}}: ${{caseItem.case_id || 'Unknown Case'}}</div>
+                                        <div class="case-meta">
+                                            Obligations: ${{caseItem.new_obligations?.length || 0}} | 
+                                            Permissions: ${{caseItem.new_permissions?.length || 0}} | 
+                                            Prohibitions: ${{caseItem.new_prohibitions?.length || 0}}
+                                        </div>
                                     </div>
                                 `).join('')}}
                                 
                                 <h3>Generated Theorems:</h3>
-                                ${{analysis.theorems.map((theorem, index) => `
+                                ${{theorems.map((theorem, index) => `
                                     <div class="case-result">
-                                        <div class="case-title">📜 ${{theorem.name}}</div>
-                                        <div class="case-citation">Formal: ${{theorem.formal_logic.substring(0, 100)}}...</div>
-                                        <div class="case-summary">${{theorem.natural_language}}</div>
+                                        <div class="case-title">📜 ${{theorem.name || 'Theorem ' + (index + 1)}}</div>
+                                        <div class="case-citation">Formal: ${{(theorem.formal_statement || '').substring(0, 100)}}...</div>
+                                        <div class="case-summary">${{theorem.natural_language || 'No description available'}}</div>
                                         <div class="case-meta">
-                                            <div class="meta-item">Supporting Cases: ${{theorem.supporting_cases}}</div>
+                                            <div class="meta-item">Supporting Cases: ${{(theorem.supporting_cases || []).length}}</div>
                                         </div>
                                     </div>
                                 `).join('')}}
                                 
                                 <div class="metric-card">
-                                    <h3>Consistency Analysis: ${{analysis.consistency_check.is_consistent ? '✅ CONSISTENT' : '❌ CONFLICTS DETECTED'}}</h3>
-                                    <p>Conflicts: ${{analysis.consistency_check.conflicts}}</p>
-                                    <p>Temporal Violations: ${{analysis.consistency_check.temporal_violations}}</p>
+                                    <h3>Consistency Analysis: ${{consistency.overall_consistent ? '✅ CONSISTENT' : '❌ CONFLICTS DETECTED'}}</h3>
+                                    <p>Conflicts: ${{(consistency.conflicts_detected || []).length}}</p>
+                                    <p>Temporal Violations: ${{(consistency.temporal_violations || []).length}}</p>
                                 </div>
                             </div>
                         `;
