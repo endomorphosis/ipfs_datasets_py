@@ -45,9 +45,10 @@ class CaselawDashboard:
     """Web dashboard for Caselaw Access Project GraphRAG search"""
     
     def __init__(self, cache_dir: Optional[str] = None, debug: bool = False):
-        self.cache_dir = cache_dir
+        env_cache_dir = os.environ.get('CASELAW_CACHE_DIR')
+        self.cache_dir = cache_dir or env_cache_dir
         self.debug = debug
-        self.processor = CaselawGraphRAGProcessor(cache_dir=cache_dir)
+        self.processor = CaselawGraphRAGProcessor(cache_dir=self.cache_dir)
         self.app = None
         self.processed_data = None
         
@@ -110,12 +111,38 @@ class CaselawDashboard:
                 })
             
             try:
-                results = self.processor.query_knowledge_graph(query, max_results)
+                raw_results = self.processor.query_knowledge_graph(query, max_results)
+
+                def _flatten_result(item: Dict[str, Any]) -> Dict[str, Any]:
+                    case = item.get('case', item)
+                    # Extract reasonable defaults
+                    case_id = case.get('id') or case.get('case_id') or case.get('short_citation') or case.get('citation') or case.get('title') or 'unknown'
+                    title = case.get('title') or case.get('case_name') or case.get('full_caption') or str(case_id)
+                    citation = case.get('citation') or case.get('short_citation') or ''
+                    court = case.get('court') or case.get('court_abbrev') or ''
+                    year = case.get('year') or ''
+                    topic = case.get('topic') or ''
+                    summary = case.get('summary') or case.get('content') or case.get('text', '')
+                    relevance = item.get('relevance') or item.get('relevance_score')
+
+                    return {
+                        'id': case_id,
+                        'title': title,
+                        'citation': citation,
+                        'court': court,
+                        'year': year,
+                        'topic': topic,
+                        'summary': summary,
+                        'relevance': relevance
+                    }
+
+                flat_results = [_flatten_result(r) for r in raw_results]
+
                 return jsonify({
                     'status': 'success',
                     'query': query,
-                    'results': results,
-                    'count': len(results)
+                    'results': flat_results,
+                    'count': len(flat_results)
                 })
             except Exception as e:
                 return jsonify({
@@ -213,7 +240,9 @@ class CaselawDashboard:
                 return jsonify({
                     'status': 'success',
                     'doctrine': doctrine,
-                    'temporal_deontic_analysis': result
+                    'temporal_deontic_analysis': result,
+                    # Provide a generic key expected by some frontends
+                    'analysis': result
                 })
                 
             except Exception as e:
@@ -245,6 +274,11 @@ class CaselawDashboard:
                     'status': 'error',
                     'message': str(e)
                 })
+
+        # Backward-compatible alias for legacy JS that calls /api/doctrines
+        @self.app.route('/api/doctrines')
+        def legal_doctrines_alias():
+            return legal_doctrines()
 
         @self.app.route('/api/legal-doctrines/search')
         def search_doctrines():

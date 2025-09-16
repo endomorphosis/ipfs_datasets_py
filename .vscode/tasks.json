@@ -709,6 +709,61 @@
 			"isBackground": true,
 			"group": "build"
 		}
+		,
+		{
+			"label": "Start Caselaw Dashboard (5000) [teraflop]",
+			"type": "shell",
+			"command": "/home/barberb/ipfs_datasets_py/.venv/bin/python",
+			"args": [
+				"scripts/demo/demonstrate_caselaw_graphrag.py",
+				"--run-dashboard",
+				"--port",
+				"5000"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": { "CASELAW_CACHE_DIR": "/storage/teraflopai" }
+			},
+			"isBackground": true,
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Wait For Caselaw 200",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"for i in {1..60}; do code=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5000/ || true); if [ \"$code\" = \"200\" ]; then echo Ready; exit 0; fi; sleep 1; done; echo Timeout waiting for 200; exit 1"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Open Caselaw Dashboard",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": ["-lc", "xdg-open http://127.0.0.1:5000 >/dev/null 2>&1 || true; echo Opened http://127.0.0.1:5000"],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start + Verify Caselaw Dashboard",
+			"type": "shell",
+			"command": "/bin/true",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Stop Caselaw Dashboard",
+				"Start Caselaw Dashboard (5000) [teraflop]",
+				"Wait For Caselaw 200",
+				"Check Caselaw Dashboard Health",
+				"Open Caselaw Dashboard"
+			],
+			"group": "build",
+			"problemMatcher": []
+		}
 	],
 	"inputs": [
 		{
