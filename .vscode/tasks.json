@@ -234,25 +234,97 @@
 			"type": "shell",
 			"command": "curl",
 			"args": [
-				"-sS",
-				"http://127.0.0.1:8899/api/mcp/status"
-			],
-			"group": "test",
-			"isBackground": false,
-			"problemMatcher": [],
-			"options": {
-				"cwd": "${workspaceFolder}"
-			}
-		},
-		{
-			"label": "Run MCP Dashboard Tests - Smoke",
-			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
-			"args": [
-				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
-				"--mode",
-				"smoke",
-				"--verbose"
+				{
+					"version": "2.0.0",
+					"tasks": [
+						{
+							"label": "Start MCP Dashboard (8899)",
+							"type": "shell",
+							"command": "${workspaceFolder}/.venv/bin/python",
+							"args": ["-m", "ipfs_datasets_py.mcp_dashboard"],
+							"options": {
+								"cwd": "${workspaceFolder}",
+								"env": {
+									"MCP_DASHBOARD_HOST": "127.0.0.1",
+									"MCP_DASHBOARD_PORT": "8899",
+									"MCP_DASHBOARD_BLOCKING": "1"
+								}
+							},
+							"isBackground": true,
+							"group": "build",
+							"problemMatcher": []
+						},
+						{
+							"label": "Test MCP Dashboard Status",
+							"type": "shell",
+							"command": "/bin/bash",
+							"args": ["-lc", "curl -sS http://127.0.0.1:8899/api/mcp/status | head -c 300 && echo"],
+							"group": "test",
+							"isBackground": false,
+							"problemMatcher": []
+						},
+
+						{
+							"label": "Start Caselaw Dashboard (5000)",
+							"type": "shell",
+							"command": "${workspaceFolder}/.venv/bin/python",
+							"args": [
+								"scripts/demo/demonstrate_caselaw_graphrag.py",
+								"--run-dashboard",
+								"--port",
+								"5000"
+							],
+							"options": { "cwd": "${workspaceFolder}" },
+							"isBackground": true,
+							"group": "build",
+							"problemMatcher": []
+						},
+						{
+							"label": "Stop Caselaw Dashboard",
+							"type": "shell",
+							"command": "/bin/bash",
+							"args": ["-lc", "pkill -f ipfs_datasets_py.caselaw_dashboard || true; fuser -k 5000/tcp || true"],
+							"options": { "cwd": "${workspaceFolder}" },
+							"group": "build",
+							"isBackground": false,
+							"problemMatcher": []
+						},
+						{
+							"label": "Check Caselaw Dashboard Health",
+							"type": "shell",
+							"command": "/bin/bash",
+							"args": [
+								"-lc",
+								"echo ROOT:; curl -sS -o /dev/null -w 'HTTP %{http_code}\\n' http://127.0.0.1:5000/; echo DOCTRINES:; curl -sS http://127.0.0.1:5000/api/legal-doctrines | head -c 200; echo; echo SEARCH:; curl -sS 'http://127.0.0.1:5000/api/search?q=civil%20rights&limit=2' | head -c 200; echo"
+							],
+							"options": { "cwd": "${workspaceFolder}" },
+							"group": "test",
+							"isBackground": false,
+							"problemMatcher": []
+						},
+
+						{
+							"label": "Start Docker MCP Services",
+							"type": "shell",
+							"command": "docker-compose",
+							"args": ["-f", "docker-compose.mcp.yml", "up", "-d"],
+							"options": { "cwd": "${workspaceFolder}" },
+							"group": "build",
+							"isBackground": false,
+							"problemMatcher": []
+						},
+						{
+							"label": "Stop Docker MCP Services",
+							"type": "shell",
+							"command": "docker-compose",
+							"args": ["-f", "docker-compose.mcp.yml", "down"],
+							"options": { "cwd": "${workspaceFolder}" },
+							"group": "build",
+							"isBackground": false,
+							"problemMatcher": []
+						}
+					]
+				}
 			],
 			"group": "test",
 			"isBackground": false,
@@ -326,9 +398,7 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": {
-				"cwd": "${workspaceFolder}"
-			}
+			"options": { "cwd": "${workspaceFolder}" }
 		},
 		{
 			"label": "Stop Docker MCP Services",
@@ -336,6 +406,8 @@
 			"command": "docker-compose",
 			"args": [
 				"-f",
+				{
+		
 				"docker-compose.mcp.yml",
 				"down"
 			],
@@ -345,6 +417,32 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
+		},
+		{
+			"label": "Stop Caselaw Dashboard",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"pkill -f ipfs_datasets_py.caselaw_dashboard || true; fuser -k 5000/tcp || true"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Check Caselaw Dashboard Health",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"echo ROOT:; curl -sS -o /dev/null -w 'HTTP %{http_code}\\n' http://127.0.0.1:5000/; echo DOCTRINES:; curl -sS http://127.0.0.1:5000/api/legal-doctrines | head -c 200; echo; echo SEARCH:; curl -sS 'http://127.0.0.1:5000/api/search?q=civil%20rights&limit=2' | head -c 200; echo"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
 		},
 		{
 			"label": "Install Playwright Browsers",
