@@ -445,11 +445,11 @@ class CaselawDashboard:
                 }
                 
                 function showLoading() {
-                    document.getElementById('loadingSpinner').style.display = 'block';
+                    document.getElementById('searchLoading').style.display = 'block';
                 }
                 
                 function hideLoading() {
-                    document.getElementById('loadingSpinner').style.display = 'none';
+                    document.getElementById('searchLoading').style.display = 'none';
                 }
                 
                 function hideResults() {
@@ -957,8 +957,8 @@ class CaselawDashboard:
                         </div>
                         
                         <!-- Loading State -->
-                        <div class="loading" id="searchLoading">
-                            <div class="loading-spinner"></div>
+                        <div class="loading" id="searchLoading" style="display: none;">
+                            <div class="loading-spinner" id="loadingSpinner"></div>
                             <div>Searching legal database...</div>
                         </div>
                         
@@ -1094,16 +1094,16 @@ class CaselawDashboard:
                     if (data.results && data.results.length > 0) {{
                         countDiv.textContent = `${{data.results.length}} cases found for "${{data.query}}"`;
                         
-                        const casesHTML = data.results.map(case => `
-                            <div class="case-result" onclick="viewCase('${{case.id}}')">
-                                <div class="case-title">${{case.title || case.name}}</div>
-                                <div class="case-citation">${{case.citation}}</div>
-                                <div class="case-summary">${{case.summary || 'Legal case summary unavailable.'}}</div>
+                        const casesHTML = data.results.map(caseItem => `
+                            <div class="case-result" onclick="viewCase('${{caseItem.id}}')">
+                                <div class="case-title">${{caseItem.title || caseItem.name}}</div>
+                                <div class="case-citation">${{caseItem.citation}}</div>
+                                <div class="case-summary">${{caseItem.summary || 'Legal case summary unavailable.'}}</div>
                                 <div class="case-meta">
-                                    <div class="meta-item">Court: ${{case.court}}</div>
-                                    <div class="meta-item">Year: ${{case.year}}</div>
-                                    <div class="meta-item">Topic: ${{case.topic}}</div>
-                                    <div class="meta-item">Relevance: ${{(case.relevance * 100).toFixed(1)}}%</div>
+                                    <div class="meta-item">Court: ${{caseItem.court}}</div>
+                                    <div class="meta-item">Year: ${{caseItem.year}}</div>
+                                    <div class="meta-item">Topic: ${{caseItem.topic}}</div>
+                                    <div class="meta-item">Relevance: ${{(caseItem.relevance * 100).toFixed(1)}}%</div>
                                 </div>
                             </div>
                         `).join('');
@@ -1207,10 +1207,10 @@ class CaselawDashboard:
                             </div>
                             <div style="padding: 20px;">
                                 <h3>Chronological Evolution:</h3>
-                                ${{analysis.chronological_evolution.map(case => `
+                                ${{analysis.chronological_evolution.map(caseItem => `
                                     <div class="case-result">
-                                        <div class="case-title">${{case.year}}: ${{case.case_id}}</div>
-                                        <div class="case-meta">O:${{case.obligations}} P:${{case.permissions}} F:${{case.prohibitions}}</div>
+                                        <div class="case-title">${{caseItem.year}}: ${{caseItem.case_id}}</div>
+                                        <div class="case-meta">O:${{caseItem.obligations}} P:${{caseItem.permissions}} F:${{caseItem.prohibitions}}</div>
                                     </div>
                                 `).join('')}}
                                 
