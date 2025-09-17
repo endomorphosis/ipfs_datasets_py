@@ -175,6 +175,60 @@ class CaselawDashboard:
                     'message': str(e)
                 })
         
+        @self.app.route('/api/case/<case_id>/deontic-logic')
+        def case_deontic_logic(case_id):
+            """Get deontic first-order logic analysis for a specific case"""
+            if not self.processed_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Data not initialized'
+                })
+            
+            try:
+                deontic_analysis = self._get_case_deontic_logic(case_id)
+                return jsonify(deontic_analysis)
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
+        
+        @self.app.route('/api/case/<case_id>/citations')
+        def case_citations(case_id):
+            """Get citation connections and network for a specific case"""
+            if not self.processed_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Data not initialized'
+                })
+            
+            try:
+                citation_network = self._get_case_citation_network(case_id)
+                return jsonify(citation_network)
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
+        
+        @self.app.route('/api/case/<case_id>/subsequent-quotes')
+        def case_subsequent_quotes(case_id):
+            """Get quotes from subsequent cases citing this case"""
+            if not self.processed_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Data not initialized'
+                })
+            
+            try:
+                subsequent_quotes = self._get_case_subsequent_quotes(case_id)
+                return jsonify(subsequent_quotes)
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'message': str(e)
+                })
+        
         @self.app.route('/api/statistics')
         def statistics():
             """Get dataset statistics"""
@@ -1785,6 +1839,266 @@ class CaselawDashboard:
                     font-style: italic;
                     padding: 20px;
                 }}
+
+                /* Tab Navigation Styles */
+                .tab-navigation {{
+                    display: flex;
+                    background: #f8f9fa;
+                    border-radius: 10px 10px 0 0;
+                    padding: 5px;
+                    margin-bottom: 0;
+                    border-bottom: 2px solid #e9ecef;
+                }}
+                
+                .tab-button {{
+                    flex: 1;
+                    padding: 15px 20px;
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    font-weight: 500;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    color: #6c757d;
+                    font-size: 0.95em;
+                }}
+                
+                .tab-button:hover {{
+                    background: rgba(102, 126, 234, 0.1);
+                    color: #495057;
+                }}
+                
+                .tab-button.active {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                }}
+
+                /* Tab Content Styles */
+                .tab-content {{
+                    display: none;
+                    animation: fadeIn 0.3s ease-in-out;
+                }}
+                
+                .tab-content.active {{
+                    display: block;
+                }}
+                
+                @keyframes fadeIn {{
+                    from {{ opacity: 0; transform: translateY(10px); }}
+                    to {{ opacity: 1; transform: translateY(0); }}
+                }}
+
+                .loading-message {{
+                    text-align: center;
+                    padding: 40px;
+                    color: #6c757d;
+                    font-style: italic;
+                }}
+
+                /* Deontic Logic Panel Styles */
+                .deontic-statement {{
+                    background: #f8f9fa;
+                    border-left: 4px solid #007bff;
+                    padding: 15px 20px;
+                    margin: 10px 0;
+                    border-radius: 0 8px 8px 0;
+                }}
+
+                .deontic-statement.obligation {{
+                    border-left-color: #dc3545;
+                }}
+
+                .deontic-statement.permission {{
+                    border-left-color: #28a745;
+                }}
+
+                .deontic-statement.prohibition {{
+                    border-left-color: #ffc107;
+                }}
+
+                .formal-logic {{
+                    font-family: 'Courier New', monospace;
+                    background: #2c3e50;
+                    color: #ecf0f1;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin: 10px 0;
+                    font-size: 0.9em;
+                    overflow-x: auto;
+                }}
+
+                .logic-explanation {{
+                    font-size: 0.9em;
+                    color: #6c757d;
+                    margin-top: 8px;
+                    font-style: italic;
+                }}
+
+                /* Citation Network Styles */
+                #citation-network {{
+                    width: 100%;
+                    height: 400px;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }}
+
+                .citation-stats {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 15px;
+                    margin: 20px 0;
+                }}
+
+                .citation-stat {{
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                    border-left: 4px solid #007bff;
+                }}
+
+                .citation-stat-value {{
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    color: #495057;
+                }}
+
+                .citation-stat-label {{
+                    font-size: 0.9em;
+                    color: #6c757d;
+                    margin-top: 5px;
+                }}
+
+                /* Quote Panel Styles */
+                .quote-item {{
+                    background: #f8f9fa;
+                    border-left: 4px solid #17a2b8;
+                    padding: 20px;
+                    margin: 15px 0;
+                    border-radius: 0 8px 8px 0;
+                    position: relative;
+                }}
+
+                .quote-text {{
+                    font-style: italic;
+                    font-size: 1.1em;
+                    line-height: 1.6;
+                    color: #495057;
+                    margin-bottom: 15px;
+                }}
+
+                .quote-citation {{
+                    font-size: 0.9em;
+                    color: #6c757d;
+                    margin-bottom: 10px;
+                }}
+
+                .quote-meta {{
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 0.85em;
+                    color: #6c757d;
+                }}
+
+                .quote-type {{
+                    background: #e9ecef;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                }}
+
+                .quote-type.holding {{
+                    background: #dc3545;
+                    color: white;
+                }}
+
+                .quote-type.rationale {{
+                    background: #28a745;
+                    color: white;
+                }}
+
+                .quote-type.dicta {{
+                    background: #ffc107;
+                    color: #212529;
+                }}
+
+                .central-holding {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin: 20px 0;
+                }}
+
+                .central-holding h3 {{
+                    margin: 0 0 15px 0;
+                    font-size: 1.2em;
+                }}
+
+                .holding-text {{
+                    font-size: 1.1em;
+                    line-height: 1.6;
+                    font-style: italic;
+                }}
+
+                .quotes-by-principle {{
+                    margin: 20px 0;
+                }}
+
+                .principle-group {{
+                    background: white;
+                    border: 1px solid #e9ecef;
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    overflow: hidden;
+                }}
+
+                .principle-header {{
+                    background: #f8f9fa;
+                    padding: 15px 20px;
+                    border-bottom: 1px solid #e9ecef;
+                    font-weight: 600;
+                    color: #495057;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                }}
+
+                .principle-header:hover {{
+                    background: #e9ecef;
+                }}
+
+                .principle-quotes {{
+                    padding: 0;
+                }}
+
+                .expandable {{
+                    cursor: pointer;
+                    user-select: none;
+                }}
+
+                .expandable::after {{
+                    content: ' ▼';
+                    float: right;
+                    transition: transform 0.3s ease;
+                }}
+
+                .expandable.collapsed::after {{
+                    transform: rotate(-90deg);
+                }}
+
+                .collapsible {{
+                    max-height: 0;
+                    overflow: hidden;
+                    transition: max-height 0.3s ease;
+                }}
+
+                .collapsible.expanded {{
+                    max-height: 1000px;
+                }}
             </style>
         </head>
         <body>
@@ -1823,18 +2137,53 @@ class CaselawDashboard:
                     </div>
                     
                     <div class="case-content">
-                        <div class="section">
-                            <h2>📋 Case Summary</h2>
-                            <div class="case-summary">
-                                {case.get('summary', 'No summary available for this case.')}
+                        <!-- Tab Navigation -->
+                        <div class="tab-navigation">
+                            <button class="tab-button active" data-tab="summary">📋 Case Summary</button>
+                            <button class="tab-button" data-tab="deontic">⚖️ Deontic Logic</button>
+                            <button class="tab-button" data-tab="citations">🔗 Citation Network</button>
+                            <button class="tab-button" data-tab="quotes">💬 Subsequent Quotes</button>
+                        </div>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content active" id="summary-tab">
+                            <div class="section">
+                                <h2>📋 Case Summary</h2>
+                                <div class="case-summary">
+                                    {case.get('summary', 'No summary available for this case.')}
+                                </div>
+                            </div>
+                            
+                            <div class="section">
+                                <h2>📖 Full Case Text</h2>
+                                <div style="background: #f8f9fa; padding: 25px; border-radius: 10px; line-height: 1.6; color: #495057;">
+                                    {case.get('text', 'Full case text not available.')[:2000]}
+                                    {'...' if len(case.get('text', '')) > 2000 else ''}
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="section">
-                            <h2>📖 Full Case Text</h2>
-                            <div style="background: #f8f9fa; padding: 25px; border-radius: 10px; line-height: 1.6; color: #495057;">
-                                {case.get('text', 'Full case text not available.')[:2000]}
-                                {'...' if len(case.get('text', '')) > 2000 else ''}
+
+                        <div class="tab-content" id="deontic-tab">
+                            <div class="section">
+                                <h2>⚖️ Deontic First-Order Logic Analysis</h2>
+                                <div class="loading-message">Loading deontic logic analysis...</div>
+                                <div id="deontic-content" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="citations-tab">
+                            <div class="section">
+                                <h2>🔗 Citation Network & Connections</h2>
+                                <div class="loading-message">Loading citation network...</div>
+                                <div id="citations-content" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="quotes-tab">
+                            <div class="section">
+                                <h2>💬 Subsequent Quotes & Central Holdings</h2>
+                                <div class="loading-message">Loading subsequent quotes...</div>
+                                <div id="quotes-content" style="display: none;"></div>
                             </div>
                         </div>
                     </div>
@@ -1889,6 +2238,384 @@ class CaselawDashboard:
             </div>
             
             <script>
+                const caseId = '{case.get("id", "")}';
+                
+                // Tab switching functionality
+                document.querySelectorAll('.tab-button').forEach(button => {{
+                    button.addEventListener('click', function() {{
+                        const tabName = this.getAttribute('data-tab');
+                        
+                        // Update active button
+                        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Update active content
+                        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                        document.getElementById(tabName + '-tab').classList.add('active');
+                        
+                        // Load content for the tab
+                        loadTabContent(tabName);
+                    }});
+                }});
+                
+                // Load content for different tabs
+                function loadTabContent(tabName) {{
+                    switch(tabName) {{
+                        case 'deontic':
+                            loadDeonticLogic();
+                            break;
+                        case 'citations':
+                            loadCitationNetwork();
+                            break;
+                        case 'quotes':
+                            loadSubsequentQuotes();
+                            break;
+                    }}
+                }}
+                
+                // Load deontic logic analysis
+                function loadDeonticLogic() {{
+                    const contentDiv = document.getElementById('deontic-content');
+                    const loadingDiv = document.querySelector('#deontic-tab .loading-message');
+                    
+                    if (contentDiv.innerHTML.trim() !== '') {{
+                        contentDiv.style.display = 'block';
+                        loadingDiv.style.display = 'none';
+                        return;
+                    }}
+                    
+                    fetch(`/api/case/${{caseId}}/deontic-logic`)
+                        .then(response => response.json())
+                        .then(data => {{
+                            loadingDiv.style.display = 'none';
+                            if (data.status === 'success') {{
+                                renderDeonticLogic(data.deontic_analysis);
+                            }} else {{
+                                contentDiv.innerHTML = `<div class="error-message">Error loading deontic logic: ${{data.message}}</div>`;
+                            }}
+                            contentDiv.style.display = 'block';
+                        }})
+                        .catch(error => {{
+                            loadingDiv.style.display = 'none';
+                            contentDiv.innerHTML = `<div class="error-message">Failed to load deontic logic analysis</div>`;
+                            contentDiv.style.display = 'block';
+                        }});
+                }}
+                
+                // Load citation network
+                function loadCitationNetwork() {{
+                    const contentDiv = document.getElementById('citations-content');
+                    const loadingDiv = document.querySelector('#citations-tab .loading-message');
+                    
+                    if (contentDiv.innerHTML.trim() !== '') {{
+                        contentDiv.style.display = 'block';
+                        loadingDiv.style.display = 'none';
+                        return;
+                    }}
+                    
+                    fetch(`/api/case/${{caseId}}/citations`)
+                        .then(response => response.json())
+                        .then(data => {{
+                            loadingDiv.style.display = 'none';
+                            if (data.status === 'success') {{
+                                renderCitationNetwork(data.citation_network, data.citation_details);
+                            }} else {{
+                                contentDiv.innerHTML = `<div class="error-message">Error loading citations: ${{data.message}}</div>`;
+                            }}
+                            contentDiv.style.display = 'block';
+                        }})
+                        .catch(error => {{
+                            loadingDiv.style.display = 'none';
+                            contentDiv.innerHTML = `<div class="error-message">Failed to load citation network</div>`;
+                            contentDiv.style.display = 'block';
+                        }});
+                }}
+                
+                // Load subsequent quotes
+                function loadSubsequentQuotes() {{
+                    const contentDiv = document.getElementById('quotes-content');
+                    const loadingDiv = document.querySelector('#quotes-tab .loading-message');
+                    
+                    if (contentDiv.innerHTML.trim() !== '') {{
+                        contentDiv.style.display = 'block';
+                        loadingDiv.style.display = 'none';
+                        return;
+                    }}
+                    
+                    fetch(`/api/case/${{caseId}}/subsequent-quotes`)
+                        .then(response => response.json())
+                        .then(data => {{
+                            loadingDiv.style.display = 'none';
+                            if (data.status === 'success') {{
+                                renderSubsequentQuotes(data.subsequent_quotes);
+                            }} else {{
+                                contentDiv.innerHTML = `<div class="error-message">Error loading quotes: ${{data.message}}</div>`;
+                            }}
+                            contentDiv.style.display = 'block';
+                        }})
+                        .catch(error => {{
+                            loadingDiv.style.display = 'none';
+                            contentDiv.innerHTML = `<div class="error-message">Failed to load subsequent quotes</div>`;
+                            contentDiv.style.display = 'block';
+                        }});
+                }}
+                
+                // Render deontic logic analysis
+                function renderDeonticLogic(analysis) {{
+                    const contentDiv = document.getElementById('deontic-content');
+                    let html = '';
+                    
+                    // Central holdings
+                    if (analysis.central_holdings && analysis.central_holdings.length > 0) {{
+                        html += '<div class="central-holding">';
+                        html += '<h3>🎯 Central Legal Holdings</h3>';
+                        analysis.central_holdings.forEach(holding => {{
+                            html += `<div class="holding-text">"${{holding.holding_text}}"</div>`;
+                            if (holding.type) {{
+                                html += `<div style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Type: ${{holding.type}} (Confidence: ${{Math.round((holding.confidence || 0.5) * 100)}}%)</div>`;
+                            }}
+                        }});
+                        html += '</div>';
+                    }}
+                    
+                    // Deontic statements
+                    if (analysis.deontic_statements && analysis.deontic_statements.length > 0) {{
+                        html += '<h3>📜 Deontic Statements</h3>';
+                        analysis.deontic_statements.forEach(statement => {{
+                            html += `<div class="deontic-statement ${{statement.type}}">`;
+                            html += `<strong>${{statement.type.toUpperCase()}}</strong>: ${{statement.content}}`;
+                            html += `<div class="logic-explanation">Confidence: ${{Math.round((statement.confidence || 0.5) * 100)}}%</div>`;
+                            html += '</div>';
+                        }});
+                    }}
+                    
+                    // Formal logic expressions
+                    if (analysis.formal_logic_expressions && analysis.formal_logic_expressions.length > 0) {{
+                        html += '<h3>🔬 Formal Logic Expressions</h3>';
+                        analysis.formal_logic_expressions.forEach(expr => {{
+                            html += '<div style="margin: 15px 0;">';
+                            html += `<div class="formal-logic">${{expr.formal_statement}}</div>`;
+                            html += `<div class="logic-explanation">${{expr.natural_language}}</div>`;
+                            html += '</div>';
+                        }});
+                    }}
+                    
+                    // Legal modalities
+                    if (analysis.legal_modalities) {{
+                        html += '<h3>⚖️ Legal Modality Distribution</h3>';
+                        html += '<div class="citation-stats">';
+                        Object.entries(analysis.legal_modalities).forEach(([modality, count]) => {{
+                            html += '<div class="citation-stat">';
+                            html += `<div class="citation-stat-value">${{count}}</div>`;
+                            html += `<div class="citation-stat-label">${{modality.charAt(0).toUpperCase() + modality.slice(1)}}s</div>`;
+                            html += '</div>';
+                        }});
+                        html += '</div>';
+                    }}
+                    
+                    // Precedential strength
+                    if (analysis.precedential_strength) {{
+                        const strength = analysis.precedential_strength;
+                        html += '<h3>💪 Precedential Strength Analysis</h3>';
+                        html += '<div class="deontic-statement">';
+                        html += `<strong>Strength Level:</strong> ${{strength.strength_level}} (${{Math.round(strength.strength_score * 100)}}%)<br>`;
+                        html += `<strong>Court:</strong> ${{strength.court}}<br>`;
+                        html += `<strong>Binding Scope:</strong> ${{strength.binding_scope}}`;
+                        html += '</div>';
+                    }}
+                    
+                    if (!html) {{
+                        html = '<div class="no-data">No deontic logic analysis available for this case.</div>';
+                    }}
+                    
+                    contentDiv.innerHTML = html;
+                }}
+                
+                // Render citation network
+                function renderCitationNetwork(network, details) {{
+                    const contentDiv = document.getElementById('citations-content');
+                    let html = '';
+                    
+                    // Statistics
+                    if (network.statistics) {{
+                        html += '<div class="citation-stats">';
+                        html += `<div class="citation-stat">
+                            <div class="citation-stat-value">${{network.statistics.total_citations}}</div>
+                            <div class="citation-stat-label">Cases Cited</div>
+                        </div>`;
+                        html += `<div class="citation-stat">
+                            <div class="citation-stat-value">${{network.statistics.total_cited_by}}</div>
+                            <div class="citation-stat-label">Citing Cases</div>
+                        </div>`;
+                        html += `<div class="citation-stat">
+                            <div class="citation-stat-value">${{network.statistics.related_cases}}</div>
+                            <div class="citation-stat-label">Related Cases</div>
+                        </div>`;
+                        html += `<div class="citation-stat">
+                            <div class="citation-stat-value">${{Math.round(network.statistics.network_density * 100)}}%</div>
+                            <div class="citation-stat-label">Network Density</div>
+                        </div>`;
+                        html += '</div>';
+                    }}
+                    
+                    // Network visualization placeholder
+                    html += '<div id="citation-network"><div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6c757d;">Citation Network Visualization<br><small>(Interactive graph would be rendered here with proper visualization library)</small></div></div>';
+                    
+                    // Citation details
+                    if (details) {{
+                        if (details.backward_citations && details.backward_citations.length > 0) {{
+                            html += '<h3>📉 Cases Cited by This Case</h3>';
+                            details.backward_citations.forEach(caseItem => {{
+                                html += renderCitationCase(caseItem, 'cited');
+                            }});
+                        }}
+                        
+                        if (details.forward_citations && details.forward_citations.length > 0) {{
+                            html += '<h3>📈 Cases Citing This Case</h3>';
+                            details.forward_citations.forEach(caseItem => {{
+                                html += renderCitationCase(caseItem, 'citing');
+                            }});
+                        }}
+                        
+                        if (details.related_cases && details.related_cases.length > 0) {{
+                            html += '<h3>🔗 Topically Related Cases</h3>';
+                            details.related_cases.forEach(caseItem => {{
+                                html += renderCitationCase(caseItem, 'related');
+                            }});
+                        }}
+                    }}
+                    
+                    if (!html || html.trim() === '') {{
+                        html = '<div class="no-data">No citation network data available for this case.</div>';
+                    }}
+                    
+                    contentDiv.innerHTML = html;
+                }}
+                
+                // Render a citation case item
+                function renderCitationCase(caseItem, type) {{
+                    return `<div class="shepherding-case ${{type}}" data-case-id="${{caseItem.id}}">
+                        <div class="shepherding-title">${{caseItem.title || 'Unknown Case'}}</div>
+                        <div class="shepherding-meta">
+                            <span>${{caseItem.citation || 'No citation'}}</span>
+                            <span>${{caseItem.year || 'Unknown year'}}</span>
+                            <span>${{caseItem.court || 'Unknown court'}}</span>
+                        </div>
+                    </div>`;
+                }}
+                
+                // Render subsequent quotes
+                function renderSubsequentQuotes(quotes) {{
+                    const contentDiv = document.getElementById('quotes-content');
+                    let html = '';
+                    
+                    // Central holdings
+                    if (quotes.central_holdings && quotes.central_holdings.length > 0) {{
+                        html += '<div class="central-holding">';
+                        html += '<h3>🎯 Central Holdings of This Case</h3>';
+                        quotes.central_holdings.forEach(holding => {{
+                            html += `<div class="holding-text">"${{holding.holding_text}}"</div>`;
+                        }});
+                        html += '</div>';
+                    }}
+                    
+                    // Quote analysis summary
+                    if (quotes.quote_analysis) {{
+                        html += '<div class="citation-stats">';
+                        html += `<div class="citation-stat">
+                            <div class="citation-stat-value">${{quotes.total_quotes}}</div>
+                            <div class="citation-stat-label">Total Quotes</div>
+                        </div>`;
+                        html += `<div class="citation-stat">
+                            <div class="citation-stat-value">${{quotes.citing_cases_count}}</div>
+                            <div class="citation-stat-label">Citing Cases</div>
+                        </div>`;
+                        if (quotes.quote_analysis.temporal_span) {{
+                            html += `<div class="citation-stat">
+                                <div class="citation-stat-value">${{quotes.quote_analysis.temporal_span.span_years}}</div>
+                                <div class="citation-stat-label">Years Span</div>
+                            </div>`;
+                        }}
+                        html += '</div>';
+                    }}
+                    
+                    // Most quoted holding
+                    if (quotes.quote_analysis && quotes.quote_analysis.most_quoted_holding) {{
+                        html += '<div class="central-holding">';
+                        html += '<h3>🔥 Most Quoted Holding</h3>';
+                        html += `<div class="holding-text">"${{quotes.quote_analysis.most_quoted_holding}}"</div>`;
+                        html += '</div>';
+                    }}
+                    
+                    // Grouped quotes by principle
+                    if (quotes.grouped_quotes) {{
+                        html += '<h3>💬 Quotes Grouped by Legal Principle</h3>';
+                        html += '<div class="quotes-by-principle">';
+                        
+                        Object.entries(quotes.grouped_quotes).forEach(([principle, principleQuotes]) => {{
+                            html += '<div class="principle-group">';
+                            html += `<div class="principle-header expandable" onclick="togglePrinciple(this)">
+                                ${{principle}} (${{principleQuotes.length}} quotes)
+                            </div>`;
+                            html += '<div class="principle-quotes collapsible">';
+                            
+                            principleQuotes.forEach(quote => {{
+                                html += `<div class="quote-item">
+                                    <div class="quote-text">"${{quote.quote_text}}"</div>
+                                    <div class="quote-citation">
+                                        <strong>${{quote.citing_case.title}}</strong>, ${{quote.citing_case.citation}} (${{quote.citing_case.year}})
+                                    </div>
+                                    <div class="quote-meta">
+                                        <span class="quote-type ${{quote.quote_type}}">${{quote.quote_type}}</span>
+                                        <span>Relevance: ${{Math.round((quote.relevance_score || 0) * 100)}}%</span>
+                                    </div>
+                                </div>`;
+                            }});
+                            
+                            html += '</div></div>';
+                        }});
+                        
+                        html += '</div>';
+                    }}
+                    
+                    // All quotes (if no grouping available)
+                    else if (quotes.all_quotes && quotes.all_quotes.length > 0) {{
+                        html += '<h3>💬 All Subsequent Quotes</h3>';
+                        quotes.all_quotes.forEach(quote => {{
+                            html += `<div class="quote-item">
+                                <div class="quote-text">"${{quote.quote_text}}"</div>
+                                <div class="quote-citation">
+                                    <strong>${{quote.citing_case.title}}</strong>, ${{quote.citing_case.citation}} (${{quote.citing_case.year}})
+                                </div>
+                                <div class="quote-meta">
+                                    <span class="quote-type ${{quote.quote_type}}">${{quote.quote_type}}</span>
+                                    <span>Relevance: ${{Math.round((quote.relevance_score || 0) * 100)}}%</span>
+                                </div>
+                            </div>`;
+                        }});
+                    }}
+                    
+                    if (!html) {{
+                        html = '<div class="no-data">No subsequent quotes found for this case.</div>';
+                    }}
+                    
+                    contentDiv.innerHTML = html;
+                }}
+                
+                // Toggle principle group visibility
+                function togglePrinciple(header) {{
+                    const content = header.nextElementSibling;
+                    const isExpanded = content.classList.contains('expanded');
+                    
+                    if (isExpanded) {{
+                        content.classList.remove('expanded');
+                        header.classList.add('collapsed');
+                    }} else {{
+                        content.classList.add('expanded');
+                        header.classList.remove('collapsed');
+                    }}
+                }}
+                
                 // Handle legal issue clicks
                 document.querySelectorAll('.legal-issue').forEach(issue => {{
                     issue.addEventListener('click', function() {{
@@ -1906,6 +2633,17 @@ class CaselawDashboard:
                             window.location.href = `/case/${{caseId}}`;
                         }}
                     }});
+                }});
+                
+                // Handle dynamically added case links
+                document.addEventListener('click', function(e) {{
+                    if (e.target.closest('.shepherding-case')) {{
+                        const caseElement = e.target.closest('.shepherding-case');
+                        const caseId = caseElement.getAttribute('data-case-id');
+                        if (caseId && caseId !== caseId) {{ // Avoid self-reference
+                            window.location.href = `/case/${{caseId}}`;
+                        }}
+                    }}
                 }});
             </script>
         </body>
@@ -2556,6 +3294,637 @@ class CaselawDashboard:
             """
         
         return timeline_html if timeline_html else "<p>No cases found in the timeline.</p>"
+    
+    def _get_case_deontic_logic(self, case_id: str) -> Dict[str, Any]:
+        """Generate deontic first-order logic analysis for a specific case"""
+        try:
+            # Find the case in processed data
+            case_data = None
+            if self.processed_data and 'cases' in self.processed_data:
+                for case in self.processed_data['cases']:
+                    if str(case.get('id', '')) == str(case_id):
+                        case_data = case
+                        break
+            
+            if not case_data:
+                return {
+                    'status': 'error',
+                    'message': 'Case not found'
+                }
+            
+            # Extract legal text content
+            legal_text = case_data.get('content', '') or case_data.get('summary', '') or case_data.get('text', '')
+            if not legal_text:
+                legal_text = case_data.get('title', '') + " - " + case_data.get('citation', '')
+            
+            # Generate deontic logic analysis
+            deontic_statements = self._extract_deontic_statements(legal_text, case_data)
+            formal_logic = self._convert_to_formal_logic(deontic_statements, case_data)
+            temporal_constraints = self._extract_temporal_constraints(legal_text, case_data)
+            
+            return {
+                'status': 'success',
+                'case_id': case_id,
+                'case_name': case_data.get('title', 'Unknown Case'),
+                'deontic_analysis': {
+                    'deontic_statements': deontic_statements,
+                    'formal_logic_expressions': formal_logic,
+                    'temporal_constraints': temporal_constraints,
+                    'legal_modalities': self._identify_legal_modalities(deontic_statements),
+                    'precedential_strength': self._assess_precedential_strength(case_data),
+                    'central_holdings': self._extract_central_holdings(legal_text, case_data)
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error generating deontic logic for case {case_id}: {e}")
+            return {
+                'status': 'error',
+                'message': str(e)
+            }
+    
+    def _get_case_citation_network(self, case_id: str) -> Dict[str, Any]:
+        """Get citation connections and network visualization data for a case"""
+        try:
+            # Find the case in processed data
+            case_data = None
+            if self.processed_data and 'cases' in self.processed_data:
+                for case in self.processed_data['cases']:
+                    if str(case.get('id', '')) == str(case_id):
+                        case_data = case
+                        break
+            
+            if not case_data:
+                return {
+                    'status': 'error',
+                    'message': 'Case not found'
+                }
+            
+            # Build citation network
+            cited_by = self._get_cases_citing_this(case_id)
+            cites_to = self._get_cases_cited_by_this(case_id)
+            related_cases = self._get_topically_related_cases(case_id)
+            
+            # Create network graph data
+            nodes = []
+            edges = []
+            
+            # Add central case node
+            nodes.append({
+                'id': case_id,
+                'label': case_data.get('title', 'Unknown Case')[:50] + '...',
+                'type': 'central',
+                'citation': case_data.get('citation', ''),
+                'year': case_data.get('year', ''),
+                'court': case_data.get('court', ''),
+                'size': 20,
+                'color': '#e74c3c'
+            })
+            
+            # Add cited cases (backward citations)
+            for case in cites_to:
+                nodes.append({
+                    'id': case.get('id', ''),
+                    'label': case.get('title', '')[:50] + '...',
+                    'type': 'cited',
+                    'citation': case.get('citation', ''),
+                    'year': case.get('year', ''),
+                    'court': case.get('court', ''),
+                    'size': 15,
+                    'color': '#3498db'
+                })
+                edges.append({
+                    'from': case_id,
+                    'to': case.get('id', ''),
+                    'type': 'cites',
+                    'label': 'cites'
+                })
+            
+            # Add citing cases (forward citations)
+            for case in cited_by:
+                nodes.append({
+                    'id': case.get('id', ''),
+                    'label': case.get('title', '')[:50] + '...',
+                    'type': 'citing',
+                    'citation': case.get('citation', ''),
+                    'year': case.get('year', ''),
+                    'court': case.get('court', ''),
+                    'size': 15,
+                    'color': '#2ecc71'
+                })
+                edges.append({
+                    'from': case.get('id', ''),
+                    'to': case_id,
+                    'type': 'cites',
+                    'label': 'cites'
+                })
+            
+            return {
+                'status': 'success',
+                'case_id': case_id,
+                'case_name': case_data.get('title', 'Unknown Case'),
+                'citation_network': {
+                    'nodes': nodes,
+                    'edges': edges,
+                    'statistics': {
+                        'total_citations': len(cites_to),
+                        'total_cited_by': len(cited_by),
+                        'related_cases': len(related_cases),
+                        'network_density': len(edges) / max(len(nodes) * (len(nodes) - 1), 1)
+                    }
+                },
+                'citation_details': {
+                    'backward_citations': cites_to,
+                    'forward_citations': cited_by,
+                    'related_cases': related_cases
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error generating citation network for case {case_id}: {e}")
+            return {
+                'status': 'error',
+                'message': str(e)
+            }
+    
+    def _get_case_subsequent_quotes(self, case_id: str) -> Dict[str, Any]:
+        """Get quotes from subsequent cases that cite this case"""
+        try:
+            # Find the case in processed data
+            case_data = None
+            if self.processed_data and 'cases' in self.processed_data:
+                for case in self.processed_data['cases']:
+                    if str(case.get('id', '')) == str(case_id):
+                        case_data = case
+                        break
+            
+            if not case_data:
+                return {
+                    'status': 'error',
+                    'message': 'Case not found'
+                }
+            
+            # Get cases that cite this case
+            citing_cases = self._get_cases_citing_this(case_id)
+            
+            # Extract quotes and their context
+            quotes_data = []
+            central_holdings = self._extract_central_holdings(
+                case_data.get('content', '') or case_data.get('summary', ''), 
+                case_data
+            )
+            
+            for citing_case in citing_cases:
+                quotes = self._extract_quotes_about_case(citing_case, case_data, central_holdings)
+                if quotes:
+                    for quote in quotes:
+                        quotes_data.append({
+                            'quote_text': quote['text'],
+                            'context': quote['context'],
+                            'citing_case': {
+                                'id': citing_case.get('id', ''),
+                                'title': citing_case.get('title', ''),
+                                'citation': citing_case.get('citation', ''),
+                                'year': citing_case.get('year', ''),
+                                'court': citing_case.get('court', '')
+                            },
+                            'quote_type': quote['type'],  # 'holding', 'rationale', 'dicta'
+                            'relevance_score': quote.get('relevance_score', 0.0),
+                            'legal_principle': quote.get('legal_principle', '')
+                        })
+            
+            # Sort by relevance and group by legal principle
+            quotes_data.sort(key=lambda x: x['relevance_score'], reverse=True)
+            
+            # Group quotes by legal principle
+            grouped_quotes = defaultdict(list)
+            for quote in quotes_data:
+                principle = quote['legal_principle'] or 'General Citation'
+                grouped_quotes[principle].append(quote)
+            
+            return {
+                'status': 'success',
+                'case_id': case_id,
+                'case_name': case_data.get('title', 'Unknown Case'),
+                'subsequent_quotes': {
+                    'total_quotes': len(quotes_data),
+                    'citing_cases_count': len(citing_cases),
+                    'grouped_quotes': dict(grouped_quotes),
+                    'all_quotes': quotes_data[:50],  # Limit to 50 most relevant
+                    'central_holdings': central_holdings,
+                    'quote_analysis': {
+                        'most_quoted_holding': self._find_most_quoted_holding(quotes_data),
+                        'citation_frequency': len(citing_cases),
+                        'temporal_span': self._calculate_citation_temporal_span(citing_cases)
+                    }
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error generating subsequent quotes for case {case_id}: {e}")
+            return {
+                'status': 'error',
+                'message': str(e)
+            }
+    
+    # Helper methods for the new functionality
+    def _extract_deontic_statements(self, legal_text: str, case_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract deontic statements from legal text"""
+        statements = []
+        
+        # Look for obligation patterns
+        obligation_patterns = [
+            r'must\s+([^.]+)',
+            r'shall\s+([^.]+)',
+            r'required\s+to\s+([^.]+)',
+            r'obligated\s+to\s+([^.]+)',
+            r'duty\s+to\s+([^.]+)'
+        ]
+        
+        # Look for permission patterns  
+        permission_patterns = [
+            r'may\s+([^.]+)',
+            r'permitted\s+to\s+([^.]+)',
+            r'authorized\s+to\s+([^.]+)',
+            r'right\s+to\s+([^.]+)'
+        ]
+        
+        # Look for prohibition patterns
+        prohibition_patterns = [
+            r'cannot\s+([^.]+)',
+            r'shall\s+not\s+([^.]+)',
+            r'prohibited\s+from\s+([^.]+)',
+            r'forbidden\s+to\s+([^.]+)',
+            r'no\s+right\s+to\s+([^.]+)'
+        ]
+        
+        for pattern in obligation_patterns:
+            matches = re.finditer(pattern, legal_text, re.IGNORECASE)
+            for match in matches:
+                statements.append({
+                    'type': 'obligation',
+                    'content': match.group(1).strip(),
+                    'full_text': match.group(0),
+                    'position': match.start(),
+                    'confidence': 0.8
+                })
+        
+        for pattern in permission_patterns:
+            matches = re.finditer(pattern, legal_text, re.IGNORECASE)
+            for match in matches:
+                statements.append({
+                    'type': 'permission',
+                    'content': match.group(1).strip(),
+                    'full_text': match.group(0),
+                    'position': match.start(),
+                    'confidence': 0.7
+                })
+        
+        for pattern in prohibition_patterns:
+            matches = re.finditer(pattern, legal_text, re.IGNORECASE)
+            for match in matches:
+                statements.append({
+                    'type': 'prohibition',
+                    'content': match.group(1).strip(),
+                    'full_text': match.group(0),
+                    'position': match.start(),
+                    'confidence': 0.8
+                })
+        
+        return statements[:10]  # Return top 10 statements
+    
+    def _convert_to_formal_logic(self, deontic_statements: List[Dict[str, Any]], case_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Convert deontic statements to formal logic expressions"""
+        formal_expressions = []
+        
+        for i, statement in enumerate(deontic_statements):
+            content_preview = statement['content'][:30] + ('...' if len(statement['content']) > 30 else '')
+            
+            if statement['type'] == 'obligation':
+                formal = f"O({content_preview})"
+                natural = f"It is obligatory that {statement['content']}"
+            elif statement['type'] == 'permission':
+                formal = f"P({content_preview})"
+                natural = f"It is permitted that {statement['content']}"
+            elif statement['type'] == 'prohibition':
+                formal = f"F({content_preview})"
+                natural = f"It is forbidden that {statement['content']}"
+            else:
+                formal = f"L({content_preview})"
+                natural = f"Legal statement: {statement['content']}"
+            
+            formal_expressions.append({
+                'id': f"expr_{i}",
+                'formal_statement': formal,
+                'natural_language': natural,
+                'original_statement': statement,
+                'confidence': statement.get('confidence', 0.5),
+                'temporal_scope': 'present'  # Could be enhanced with temporal analysis
+            })
+        
+        return formal_expressions
+    
+    def _extract_temporal_constraints(self, legal_text: str, case_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract temporal constraints from legal text"""
+        constraints = []
+        
+        temporal_patterns = [
+            r'after\s+([^.]+)',
+            r'before\s+([^.]+)', 
+            r'during\s+([^.]+)',
+            r'within\s+(\d+\s+\w+)',
+            r'until\s+([^.]+)',
+            r'from\s+([^.]+)\s+to\s+([^.]+)'
+        ]
+        
+        for pattern in temporal_patterns:
+            matches = re.finditer(pattern, legal_text, re.IGNORECASE)
+            for match in matches:
+                constraints.append({
+                    'type': 'temporal',
+                    'constraint': match.group(1).strip() if len(match.groups()) == 1 else f"{match.group(1)} to {match.group(2)}",
+                    'full_text': match.group(0),
+                    'temporal_operator': match.group(0).split()[0].lower()
+                })
+        
+        return constraints[:5]  # Return top 5 constraints
+    
+    def _identify_legal_modalities(self, deontic_statements: List[Dict[str, Any]]) -> Dict[str, int]:
+        """Identify and count legal modalities in the statements"""
+        modalities = defaultdict(int)
+        for statement in deontic_statements:
+            modalities[statement['type']] += 1
+        return dict(modalities)
+    
+    def _assess_precedential_strength(self, case_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess the precedential strength of a case"""
+        court = case_data.get('court', '').lower()
+        
+        if 'supreme court' in court:
+            strength = 'highest'
+            score = 1.0
+        elif 'circuit' in court or 'appeals' in court:
+            strength = 'high'
+            score = 0.8
+        elif 'district' in court:
+            strength = 'moderate'
+            score = 0.6
+        else:
+            strength = 'unknown'
+            score = 0.5
+        
+        return {
+            'strength_level': strength,
+            'strength_score': score,
+            'court': case_data.get('court', ''),
+            'binding_scope': self._determine_binding_scope(court)
+        }
+    
+    def _determine_binding_scope(self, court: str) -> str:
+        """Determine the binding scope of a court's decision"""
+        court_lower = court.lower()
+        if 'supreme court' in court_lower:
+            return 'nationwide'
+        elif 'circuit' in court_lower:
+            return 'regional'
+        elif 'district' in court_lower:
+            return 'local'
+        else:
+            return 'limited'
+    
+    def _extract_central_holdings(self, legal_text: str, case_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract the central legal holdings from a case"""
+        holdings = []
+        
+        # Look for holding indicators
+        holding_patterns = [
+            r'we\s+hold\s+that\s+([^.]+)',
+            r'the\s+court\s+holds\s+that\s+([^.]+)',
+            r'it\s+is\s+held\s+that\s+([^.]+)',
+            r'our\s+holding\s+is\s+that\s+([^.]+)'
+        ]
+        
+        for pattern in holding_patterns:
+            matches = re.finditer(pattern, legal_text, re.IGNORECASE)
+            for match in matches:
+                holdings.append({
+                    'holding_text': match.group(1).strip(),
+                    'full_statement': match.group(0),
+                    'type': 'primary_holding',
+                    'confidence': 0.9
+                })
+        
+        # If no explicit holdings found, extract key legal principles
+        if not holdings:
+            principle_patterns = [
+                r'the\s+principle\s+that\s+([^.]+)',
+                r'establishes\s+that\s+([^.]+)',
+                r'requires\s+that\s+([^.]+)'
+            ]
+            
+            for pattern in principle_patterns:
+                matches = re.finditer(pattern, legal_text, re.IGNORECASE)
+                for match in matches:
+                    holdings.append({
+                        'holding_text': match.group(1).strip(),
+                        'full_statement': match.group(0),
+                        'type': 'legal_principle',
+                        'confidence': 0.7
+                    })
+        
+        return holdings[:3]  # Return top 3 holdings
+    
+    def _get_cases_citing_this(self, case_id: str) -> List[Dict[str, Any]]:
+        """Get cases that cite the given case"""
+        citing_cases = []
+        if not self.processed_data or 'cases' not in self.processed_data:
+            return citing_cases
+        
+        # Simple implementation - in practice would use citation analysis
+        target_case = None
+        for case in self.processed_data['cases']:
+            if str(case.get('id', '')) == str(case_id):
+                target_case = case
+                break
+        
+        if not target_case:
+            return citing_cases
+        
+        target_citation = target_case.get('citation', '')
+        target_title = target_case.get('title', '')
+        
+        for case in self.processed_data['cases'][:50]:  # Limit search
+            if str(case.get('id', '')) == str(case_id):
+                continue
+                
+            case_text = (case.get('content', '') + ' ' + case.get('summary', '')).lower()
+            
+            # Check if this case mentions the target case
+            if (target_citation.lower() in case_text or 
+                target_title.lower() in case_text or
+                any(word in case_text for word in target_title.lower().split() if len(word) > 3)):
+                citing_cases.append(case)
+        
+        return citing_cases[:10]  # Return up to 10 citing cases
+    
+    def _get_cases_cited_by_this(self, case_id: str) -> List[Dict[str, Any]]:
+        """Get cases cited by the given case"""
+        cited_cases = []
+        if not self.processed_data or 'cases' not in self.processed_data:
+            return cited_cases
+        
+        # Find the target case
+        target_case = None
+        for case in self.processed_data['cases']:
+            if str(case.get('id', '')) == str(case_id):
+                target_case = case
+                break
+        
+        if not target_case:
+            return cited_cases
+        
+        target_text = (target_case.get('content', '') + ' ' + target_case.get('summary', '')).lower()
+        
+        # Look for citations in the target case text
+        for case in self.processed_data['cases'][:50]:  # Limit search
+            if str(case.get('id', '')) == str(case_id):
+                continue
+                
+            case_citation = case.get('citation', '')
+            case_title = case.get('title', '')
+            
+            # Check if target case cites this case
+            if (case_citation.lower() in target_text or
+                case_title.lower() in target_text or
+                any(word in target_text for word in case_title.lower().split() if len(word) > 3)):
+                cited_cases.append(case)
+        
+        return cited_cases[:10]  # Return up to 10 cited cases
+    
+    def _get_topically_related_cases(self, case_id: str) -> List[Dict[str, Any]]:
+        """Get topically related cases"""
+        # This would use the existing similarity search functionality
+        try:
+            relationships = self.processor.get_case_relationships(case_id)
+            if relationships['status'] == 'success':
+                return relationships.get('similar_cases', [])[:5]
+        except:
+            pass
+        return []
+    
+    def _extract_quotes_about_case(self, citing_case: Dict[str, Any], cited_case: Dict[str, Any], central_holdings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Extract quotes from citing case about the cited case"""
+        quotes = []
+        citing_text = citing_case.get('content', '') or citing_case.get('summary', '')
+        cited_title = cited_case.get('title', '')
+        cited_citation = cited_case.get('citation', '')
+        
+        if not citing_text:
+            return quotes
+        
+        # Split into sentences
+        sentences = re.split(r'[.!?]+', citing_text)
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) < 20:  # Skip very short sentences
+                continue
+                
+            # Check if sentence mentions the cited case
+            if (cited_title.lower() in sentence.lower() or 
+                cited_citation.lower() in sentence.lower()):
+                
+                # Determine quote type and relevance
+                quote_type = 'general'
+                relevance_score = 0.5
+                legal_principle = ''
+                
+                # Check for holding references
+                if any(word in sentence.lower() for word in ['held', 'holding', 'ruled', 'decided']):
+                    quote_type = 'holding'
+                    relevance_score = 0.9
+                elif any(word in sentence.lower() for word in ['rationale', 'reasoning', 'because']):
+                    quote_type = 'rationale'
+                    relevance_score = 0.7
+                elif any(word in sentence.lower() for word in ['dicta', 'noted', 'observed']):
+                    quote_type = 'dicta'
+                    relevance_score = 0.4
+                
+                # Try to match with central holdings
+                for holding in central_holdings:
+                    if any(word in sentence.lower() for word in holding['holding_text'].lower().split() if len(word) > 3):
+                        legal_principle = holding['holding_text'][:100] + '...'
+                        relevance_score = min(relevance_score + 0.2, 1.0)
+                        break
+                
+                quotes.append({
+                    'text': sentence,
+                    'context': self._extract_quote_context(citing_text, sentence),
+                    'type': quote_type,
+                    'relevance_score': relevance_score,
+                    'legal_principle': legal_principle
+                })
+        
+        return quotes[:5]  # Return up to 5 quotes per case
+    
+    def _extract_quote_context(self, full_text: str, quote: str) -> str:
+        """Extract context around a quote"""
+        try:
+            start_pos = full_text.find(quote)
+            if start_pos == -1:
+                return ""
+            
+            # Get surrounding text (100 chars before and after)
+            context_start = max(0, start_pos - 100)
+            context_end = min(len(full_text), start_pos + len(quote) + 100)
+            
+            context = full_text[context_start:context_end]
+            if context_start > 0:
+                context = "..." + context
+            if context_end < len(full_text):
+                context = context + "..."
+            
+            return context.strip()
+        except:
+            return ""
+    
+    def _find_most_quoted_holding(self, quotes_data: List[Dict[str, Any]]) -> str:
+        """Find the most frequently quoted holding"""
+        if not quotes_data:
+            return "No specific holding identified as most quoted"
+        
+        # Count quotes by legal principle
+        principle_counts = defaultdict(int)
+        for quote in quotes_data:
+            principle = quote.get('legal_principle', 'General Citation')
+            if principle and principle != 'General Citation':
+                principle_counts[principle] += 1
+        
+        if principle_counts:
+            return max(principle_counts.items(), key=lambda x: x[1])[0]
+        else:
+            return "General citation without specific holding focus"
+    
+    def _calculate_citation_temporal_span(self, citing_cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate temporal span of citations"""
+        if not citing_cases:
+            return {'earliest': None, 'latest': None, 'span_years': 0}
+        
+        years = []
+        for case in citing_cases:
+            year = case.get('year')
+            if year and str(year).isdigit():
+                years.append(int(year))
+        
+        if not years:
+            return {'earliest': None, 'latest': None, 'span_years': 0}
+        
+        earliest = min(years)
+        latest = max(years)
+        
+        return {
+            'earliest': earliest,
+            'latest': latest,
+            'span_years': latest - earliest,
+            'citation_trend': 'increasing' if len([y for y in years if y > (earliest + latest) / 2]) > len(years) / 2 else 'decreasing'
+        }
     
     def run(self, host: str = "0.0.0.0", port: int = 5000, initialize_data: bool = True):
         """Run the dashboard web application"""
