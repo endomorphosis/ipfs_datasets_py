@@ -57,6 +57,7 @@ class CaselawDashboard:
                            template_folder=self._get_template_dir(),
                            static_folder=self._get_static_dir())
             self._setup_routes()
+            self._setup_deontic_logic_endpoints()
     
     def _get_template_dir(self) -> str:
         """Get templates directory"""
@@ -3925,6 +3926,321 @@ class CaselawDashboard:
             'span_years': latest - earliest,
             'citation_trend': 'increasing' if len([y for y in years if y > (earliest + latest) / 2]) > len(years) / 2 else 'decreasing'
         }
+    
+    # Deontic Logic Database API endpoints
+    def _setup_deontic_logic_endpoints(self):
+        """Setup deontic logic database API endpoints"""
+        
+        @self.app.route('/api/deontic/convert', methods=['POST'])
+        def convert_to_deontic_logic():
+            """Convert legal text to deontic logic."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                
+                data = flask.request.get_json()
+                text = data.get('text', '')
+                case_id = data.get('case_id')
+                topic_name = data.get('topic_name')
+                
+                if not text:
+                    return flask.jsonify({'error': 'No text provided'}), 400
+                
+                db = DeonticLogicDatabase()
+                statements = db.convert_document(text, case_id, topic_name)
+                
+                return flask.jsonify({
+                    'statements': [{
+                        'id': stmt.id,
+                        'logic_expression': stmt.logic_expression,
+                        'natural_language': stmt.natural_language,
+                        'confidence': stmt.confidence,
+                        'modality': stmt.modality,
+                        'case_id': stmt.case_id,
+                        'timestamp': stmt.timestamp.isoformat()
+                    } for stmt in statements],
+                    'count': len(statements)
+                })
+                
+            except Exception as e:
+                logger.error(f"Error converting to deontic logic: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/deontic/search', methods=['GET'])
+        def search_deontic_principles():
+            """Search for related deontic logic principles."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                
+                query = flask.request.args.get('q', '')
+                top_k = int(flask.request.args.get('limit', 5))
+                
+                if not query:
+                    return flask.jsonify({'error': 'No query provided'}), 400
+                
+                db = DeonticLogicDatabase()
+                results = db.query_related_principles(query, top_k)
+                
+                return flask.jsonify({
+                    'query': query,
+                    'results': results,
+                    'count': len(results)
+                })
+                
+            except Exception as e:
+                logger.error(f"Error searching deontic principles: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/deontic/lint', methods=['POST'])
+        def lint_document():
+            """Check document for logical conflicts."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                
+                data = flask.request.get_json()
+                text = data.get('text', '')
+                case_id = data.get('case_id')
+                
+                if not text:
+                    return flask.jsonify({'error': 'No text provided'}), 400
+                
+                db = DeonticLogicDatabase()
+                results = db.lint_document(text, case_id)
+                
+                return flask.jsonify(results)
+                
+            except Exception as e:
+                logger.error(f"Error linting document: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/deontic/topics', methods=['GET'])
+        def get_legal_topics():
+            """Get all legal topics with deontic logic mappings."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                import sqlite3
+                
+                db = DeonticLogicDatabase()
+                
+                with sqlite3.connect(db.db_path) as conn:
+                    cursor = conn.execute("""
+                        SELECT t.id, t.name, t.description, COUNT(ds.id) as statement_count
+                        FROM legal_topics t
+                        LEFT JOIN deontic_statements ds ON t.id = ds.topic_id
+                        GROUP BY t.id, t.name, t.description
+                        ORDER BY statement_count DESC
+                    """)
+                    
+                    topics = []
+                    for row in cursor.fetchall():
+                        topics.append({
+                            'id': row[0],
+                            'name': row[1],
+                            'description': row[2],
+                            'statement_count': row[3]
+                        })
+                
+                return flask.jsonify({
+                    'topics': topics,
+                    'count': len(topics)
+                })
+                
+            except Exception as e:
+                logger.error(f"Error getting legal topics: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/deontic/relationships/<int:topic_id>', methods=['GET'])
+        def get_topic_relationships(topic_id):
+            """Get all deontic logic relationships for a topic."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                
+                db = DeonticLogicDatabase()
+                relationships = db.rag_processor.find_topic_relationships(topic_id)
+                
+                return flask.jsonify({
+                    'topic_id': topic_id,
+                    'relationships': {
+                        'obligations': [{
+                            'id': stmt.id,
+                            'logic_expression': stmt.logic_expression,
+                            'natural_language': stmt.natural_language,
+                            'confidence': stmt.confidence,
+                            'case_id': stmt.case_id
+                        } for stmt in relationships['obligations']],
+                        'permissions': [{
+                            'id': stmt.id,
+                            'logic_expression': stmt.logic_expression,
+                            'natural_language': stmt.natural_language,
+                            'confidence': stmt.confidence,
+                            'case_id': stmt.case_id
+                        } for stmt in relationships['permissions']],
+                        'prohibitions': [{
+                            'id': stmt.id,
+                            'logic_expression': stmt.logic_expression,
+                            'natural_language': stmt.natural_language,
+                            'confidence': stmt.confidence,
+                            'case_id': stmt.case_id
+                        } for stmt in relationships['prohibitions']]
+                    },
+                    'total_statements': sum(len(relationships[k]) for k in relationships)
+                })
+                
+            except Exception as e:
+                logger.error(f"Error getting topic relationships: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/shepard/validate', methods=['POST'])
+        def validate_case_status():
+            """Validate case law status using shepherding."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                
+                data = flask.request.get_json()
+                case_id = data.get('case_id')
+                
+                if not case_id:
+                    return flask.jsonify({'error': 'No case_id provided'}), 400
+                
+                db = DeonticLogicDatabase()
+                validation = db.validate_case(case_id)
+                
+                return flask.jsonify(validation)
+                
+            except Exception as e:
+                logger.error(f"Error validating case status: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/shepard/lineage/<case_id>', methods=['GET'])
+        def get_precedent_lineage(case_id):
+            """Get complete precedent lineage for a case."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase, ShepherdCitation
+                import sqlite3
+                from datetime import datetime
+                
+                db = DeonticLogicDatabase()
+                
+                # Get all citations
+                with sqlite3.connect(db.db_path) as conn:
+                    cursor = conn.execute("""
+                        SELECT citing_case, cited_case, treatment, date, precedent_strength
+                        FROM shepard_citations
+                    """)
+                    
+                    citations = []
+                    for row in cursor.fetchall():
+                        citation = ShepherdCitation(
+                            id=None,
+                            citing_case=row[0],
+                            cited_case=row[1],
+                            treatment=row[2],
+                            date=datetime.fromisoformat(row[3]),
+                            precedent_strength=row[4]
+                        )
+                        citations.append(citation)
+                
+                lineage = db.shepherding_engine.trace_precedent_lineage(case_id, citations)
+                
+                return flask.jsonify(lineage)
+                
+            except Exception as e:
+                logger.error(f"Error getting precedent lineage: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/conflicts/detect', methods=['GET'])
+        def detect_conflicts():
+            """Detect conflicts in the deontic logic database."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                import sqlite3
+                
+                db = DeonticLogicDatabase()
+                
+                with sqlite3.connect(db.db_path) as conn:
+                    cursor = conn.execute("""
+                        SELECT id, statement_a, statement_b, conflict_type, severity, 
+                               description, suggested_resolution, resolved
+                        FROM conflict_analysis
+                        WHERE resolved = FALSE
+                        ORDER BY 
+                            CASE severity 
+                                WHEN 'critical' THEN 1 
+                                WHEN 'warning' THEN 2 
+                                ELSE 3 
+                            END
+                    """)
+                    
+                    conflicts = []
+                    for row in cursor.fetchall():
+                        conflicts.append({
+                            'id': row[0],
+                            'statement_a_id': row[1],
+                            'statement_b_id': row[2],
+                            'conflict_type': row[3],
+                            'severity': row[4],
+                            'description': row[5],
+                            'suggested_resolution': row[6],
+                            'resolved': bool(row[7])
+                        })
+                
+                return flask.jsonify({
+                    'conflicts': conflicts,
+                    'count': len(conflicts),
+                    'critical_count': len([c for c in conflicts if c['severity'] == 'critical']),
+                    'warning_count': len([c for c in conflicts if c['severity'] == 'warning'])
+                })
+                
+            except Exception as e:
+                logger.error(f"Error detecting conflicts: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/conflicts/resolve', methods=['POST'])
+        def resolve_conflict():
+            """Mark a conflict as resolved."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                import sqlite3
+                
+                data = flask.request.get_json()
+                conflict_id = data.get('conflict_id')
+                resolution_notes = data.get('resolution_notes', '')
+                
+                if not conflict_id:
+                    return flask.jsonify({'error': 'No conflict_id provided'}), 400
+                
+                db = DeonticLogicDatabase()
+                
+                with sqlite3.connect(db.db_path) as conn:
+                    conn.execute("""
+                        UPDATE conflict_analysis 
+                        SET resolved = TRUE, suggested_resolution = ?
+                        WHERE id = ?
+                    """, (resolution_notes, conflict_id))
+                
+                return flask.jsonify({
+                    'success': True,
+                    'conflict_id': conflict_id,
+                    'resolution_notes': resolution_notes
+                })
+                
+            except Exception as e:
+                logger.error(f"Error resolving conflict: {e}")
+                return flask.jsonify({'error': str(e)}), 500
+        
+        @self.app.route('/api/deontic/stats', methods=['GET'])
+        def get_database_stats():
+            """Get deontic logic database statistics."""
+            try:
+                from .deontic_logic_database import DeonticLogicDatabase
+                
+                db = DeonticLogicDatabase()
+                stats = db.get_database_stats()
+                
+                return flask.jsonify(stats)
+                
+            except Exception as e:
+                logger.error(f"Error getting database stats: {e}")
+                return flask.jsonify({'error': str(e)}), 500
     
     def run(self, host: str = "0.0.0.0", port: int = 5000, initialize_data: bool = True):
         """Run the dashboard web application"""
