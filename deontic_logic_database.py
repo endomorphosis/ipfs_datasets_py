@@ -12,9 +12,20 @@ import logging
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 from dataclasses import dataclass
+from enum import Enum
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+
+class TreatmentType(Enum):
+    """Types of case law treatment"""
+    FOLLOWED = "followed"
+    DISTINGUISHED = "distinguished"
+    CRITICIZED = "criticized"
+    QUESTIONED = "questioned"
+    OVERRULED = "overruled"
+    SUPERSEDED = "superseded"
 
 @dataclass
 class DeonticStatement:
@@ -336,7 +347,7 @@ class LegalRAGProcessor:
     
     def query_related_statements(self, query: str, top_k: int = 5) -> List[Tuple[DeonticStatement, float]]:
         """Find statements related to the query."""
-        if not self.statement_vectors or not self.statements:
+        if self.statement_vectors is None or not self.statements:
             return []
         
         # Vectorize query
@@ -445,6 +456,14 @@ class ShepherdingEngine:
             })
         
         return lineage
+    
+    def get_precedent_lineage(self, case_id: str) -> Dict[str, Any]:
+        """Get precedent lineage for a case (compatibility method)."""
+        return {
+            'case_id': case_id,
+            'precedents_relied_on': [],
+            'subsequent_cases': []
+        }
 
 class DeonticLogicDatabase:
     """Main database class for deontic logic system."""
@@ -743,6 +762,56 @@ class DeonticLogicDatabase:
             stats['total_citations'] = cursor.fetchone()[0]
             
             return stats
+    
+    def add_citation(self, citing_case_id: str, cited_case_id: str, 
+                    treatment: TreatmentType, quote_text: str = None):
+        """Add a citation relationship between cases."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                INSERT INTO shepard_citations 
+                (citing_case, cited_case, treatment, date, precedent_strength)
+                VALUES (?, ?, ?, ?, ?)
+            """, (citing_case_id, cited_case_id, treatment.value, 
+                  datetime.now().isoformat(), 0.8))  # Default strength
+    
+    def get_precedent_lineage(self, case_id: str) -> Dict[str, Any]:
+        """Get the complete precedent lineage for a case."""
+        with sqlite3.connect(self.db_path) as conn:
+            # Get cases this case cites
+            cursor = conn.execute("""
+                SELECT cited_case, treatment, precedent_strength
+                FROM shepard_citations
+                WHERE citing_case = ?
+            """, (case_id,))
+            
+            precedents_relied_on = []
+            for row in cursor.fetchall():
+                precedents_relied_on.append({
+                    'case_id': row[0],
+                    'treatment': row[1],
+                    'strength': row[2]
+                })
+            
+            # Get cases that cite this case
+            cursor = conn.execute("""
+                SELECT citing_case, treatment, precedent_strength
+                FROM shepard_citations
+                WHERE cited_case = ?
+            """, (case_id,))
+            
+            subsequent_cases = []
+            for row in cursor.fetchall():
+                subsequent_cases.append({
+                    'case_id': row[0],
+                    'treatment': row[1],
+                    'strength': row[2]
+                })
+            
+            return {
+                'case_id': case_id,
+                'precedents_relied_on': precedents_relied_on,
+                'subsequent_cases': subsequent_cases
+            }
 
 # Example usage and testing
 if __name__ == "__main__":

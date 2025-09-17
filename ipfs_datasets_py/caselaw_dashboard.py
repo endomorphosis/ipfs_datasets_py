@@ -38,6 +38,16 @@ except ImportError:
 
 from .caselaw_graphrag import CaselawGraphRAGProcessor
 
+# Import the deontic logic database system
+try:
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from deontic_logic_database import DeonticLogicDatabase
+    DEONTIC_LOGIC_AVAILABLE = True
+except ImportError:
+    DEONTIC_LOGIC_AVAILABLE = False
+    DeonticLogicDatabase = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,6 +61,18 @@ class CaselawDashboard:
         self.processor = CaselawGraphRAGProcessor(cache_dir=self.cache_dir)
         self.app = None
         self.processed_data = None
+        
+        # Initialize deontic logic database
+        if DEONTIC_LOGIC_AVAILABLE:
+            try:
+                self.deontic_db = DeonticLogicDatabase()
+                logger.info("Deontic logic database initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize deontic logic database: {e}")
+                self.deontic_db = None
+        else:
+            self.deontic_db = None
+            logger.warning("Deontic logic database not available")
         
         if FLASK_AVAILABLE:
             self.app = Flask(__name__, 
@@ -3934,21 +3956,21 @@ class CaselawDashboard:
         @self.app.route('/api/deontic/convert', methods=['POST'])
         def convert_to_deontic_logic():
             """Convert legal text to deontic logic."""
+            if not self.deontic_db:
+                return jsonify({'error': 'Deontic logic database not available'}), 503
+            
             try:
-                from .deontic_logic_database import DeonticLogicDatabase
-                
-                data = flask.request.get_json()
+                data = request.get_json()
                 text = data.get('text', '')
                 case_id = data.get('case_id')
                 topic_name = data.get('topic_name')
                 
                 if not text:
-                    return flask.jsonify({'error': 'No text provided'}), 400
+                    return jsonify({'error': 'No text provided'}), 400
                 
-                db = DeonticLogicDatabase()
-                statements = db.convert_document(text, case_id, topic_name)
+                statements = self.deontic_db.convert_document(text, case_id, topic_name)
                 
-                return flask.jsonify({
+                return jsonify({
                     'statements': [{
                         'id': stmt.id,
                         'logic_expression': stmt.logic_expression,
@@ -3963,24 +3985,24 @@ class CaselawDashboard:
                 
             except Exception as e:
                 logger.error(f"Error converting to deontic logic: {e}")
-                return flask.jsonify({'error': str(e)}), 500
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/deontic/search', methods=['GET'])
         def search_deontic_principles():
             """Search for related deontic logic principles."""
+            if not self.deontic_db:
+                return jsonify({'error': 'Deontic logic database not available'}), 503
+            
             try:
-                from .deontic_logic_database import DeonticLogicDatabase
-                
-                query = flask.request.args.get('q', '')
-                top_k = int(flask.request.args.get('limit', 5))
+                query = request.args.get('q', '')
+                top_k = int(request.args.get('limit', 5))
                 
                 if not query:
-                    return flask.jsonify({'error': 'No query provided'}), 400
+                    return jsonify({'error': 'No query provided'}), 400
                 
-                db = DeonticLogicDatabase()
-                results = db.query_related_principles(query, top_k)
+                results = self.deontic_db.query_related_principles(query, top_k)
                 
-                return flask.jsonify({
+                return jsonify({
                     'query': query,
                     'results': results,
                     'count': len(results)
@@ -3988,29 +4010,29 @@ class CaselawDashboard:
                 
             except Exception as e:
                 logger.error(f"Error searching deontic principles: {e}")
-                return flask.jsonify({'error': str(e)}), 500
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/deontic/lint', methods=['POST'])
         def lint_document():
             """Check document for logical conflicts."""
+            if not self.deontic_db:
+                return jsonify({'error': 'Deontic logic database not available'}), 503
+            
             try:
-                from .deontic_logic_database import DeonticLogicDatabase
-                
-                data = flask.request.get_json()
+                data = request.get_json()
                 text = data.get('text', '')
                 case_id = data.get('case_id')
                 
                 if not text:
-                    return flask.jsonify({'error': 'No text provided'}), 400
+                    return jsonify({'error': 'No text provided'}), 400
                 
-                db = DeonticLogicDatabase()
-                results = db.lint_document(text, case_id)
+                results = self.deontic_db.lint_document(text, case_id)
                 
-                return flask.jsonify(results)
+                return jsonify(results)
                 
             except Exception as e:
                 logger.error(f"Error linting document: {e}")
-                return flask.jsonify({'error': str(e)}), 500
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/deontic/topics', methods=['GET'])
         def get_legal_topics():
