@@ -541,6 +541,40 @@ class MCPDashboard(AdminDashboard):
         except Exception:
             pass
 
+        # Queue management routes
+        @self.app.route('/api/mcp/queue/status')
+        def api_queue_status():
+            """Get current queue status."""
+            return jsonify(self._get_queue_status())
+            
+        @self.app.route('/api/mcp/queue/tasks')
+        def api_queue_tasks():
+            """Get all queued and active tasks."""
+            return jsonify(self._get_queue_tasks())
+            
+        @self.app.route('/api/mcp/queue/tasks/<task_id>', methods=['GET'])
+        def api_get_task(task_id):
+            """Get specific task details."""
+            task = self._get_task_details(task_id)
+            if not task:
+                return jsonify({"error": "Task not found"}), 404
+            return jsonify(task)
+            
+        @self.app.route('/api/mcp/queue/tasks/<task_id>/cancel', methods=['POST'])
+        def api_cancel_task(task_id):
+            """Cancel a queued or running task."""
+            result = self._cancel_task(task_id)
+            if result["success"]:
+                return jsonify(result)
+            else:
+                return jsonify(result), 400
+                
+        @self.app.route('/api/mcp/queue/tasks', methods=['POST'])
+        def api_queue_task():
+            """Queue a new task for execution."""
+            data = request.json or {}
+            result = self._queue_task(data)
+            return jsonify(result)
         
         @self.app.route('/api/mcp/tools')
         def api_mcp_tools():
@@ -1001,6 +1035,157 @@ class MCPDashboard(AdminDashboard):
                 "tool_execution_enabled": self.mcp_config.enable_tool_execution if self.mcp_config else False
             }
         }
+    
+    def _get_queue_status(self) -> Dict[str, Any]:
+        """Get current task queue status."""
+        return {
+            "queue_length": len(getattr(self, 'task_queue', [])),
+            "active_tasks": len(self.active_tool_executions),
+            "completed_tasks": len(getattr(self, 'completed_tasks', [])),
+            "failed_tasks": len(getattr(self, 'failed_tasks', [])),
+            "max_concurrent": self.mcp_config.max_concurrent_tools if self.mcp_config else 5,
+            "queue_paused": getattr(self, 'queue_paused', False)
+        }
+    
+    def _get_queue_tasks(self) -> Dict[str, Any]:
+        """Get all tasks in queue and active."""
+        # Initialize task storage if not exists
+        if not hasattr(self, 'task_queue'):
+            self.task_queue = []
+        if not hasattr(self, 'completed_tasks'):
+            self.completed_tasks = []
+        if not hasattr(self, 'failed_tasks'):
+            self.failed_tasks = []
+            
+        return {
+            "queued": [task for task in self.task_queue],
+            "active": [task for task in self.active_tool_executions.values()],
+            "completed": self.completed_tasks[-50:],  # Last 50 completed
+            "failed": self.failed_tasks[-50:]  # Last 50 failed
+        }
+    
+    def _get_task_details(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """Get details for a specific task."""
+        # Check active tasks
+        if task_id in self.active_tool_executions:
+            return self.active_tool_executions[task_id]
+            
+        # Check queued tasks
+        if hasattr(self, 'task_queue'):
+            for task in self.task_queue:
+                if task.get('id') == task_id:
+                    return task
+                    
+        # Check completed/failed tasks
+        for task_list in [getattr(self, 'completed_tasks', []), getattr(self, 'failed_tasks', [])]:
+            for task in task_list:
+                if task.get('id') == task_id:
+                    return task
+                    
+        return None
+    
+    def _cancel_task(self, task_id: str) -> Dict[str, Any]:
+        """Cancel a queued or running task."""
+        # Try to cancel active task
+        if task_id in self.active_tool_executions:
+            task = self.active_tool_executions[task_id]
+            task["status"] = "cancelled"
+            task["error"] = "Task cancelled by user"
+            task["end_time"] = datetime.now().isoformat()
+            
+            # Move to failed tasks
+            if not hasattr(self, 'failed_tasks'):
+                self.failed_tasks = []
+            self.failed_tasks.append(task)
+            del self.active_tool_executions[task_id]
+            
+            return {"success": True, "message": f"Task {task_id} cancelled"}
+        
+        # Try to cancel queued task
+        if hasattr(self, 'task_queue'):
+            for i, task in enumerate(self.task_queue):
+                if task.get('id') == task_id:
+                    cancelled_task = self.task_queue.pop(i)
+                    cancelled_task["status"] = "cancelled"
+                    cancelled_task["error"] = "Task cancelled by user"
+                    
+                    if not hasattr(self, 'failed_tasks'):
+                        self.failed_tasks = []
+                    self.failed_tasks.append(cancelled_task)
+                    
+                    return {"success": True, "message": f"Task {task_id} removed from queue"}
+        
+        return {"success": False, "message": f"Task {task_id} not found"}
+    
+    def _queue_task(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Queue a new task for execution."""
+        if not hasattr(self, 'task_queue'):
+            self.task_queue = []
+            
+        task_id = task_data.get('id', f"task_{int(time.time() * 1000)}")
+        
+        task = {
+            "id": task_id,
+            "category": task_data.get('category', 'unknown'),
+            "tool_name": task_data.get('tool_name', 'unknown'),
+            "parameters": task_data.get('parameters', {}),
+            "priority": task_data.get('priority', 'normal'),
+            "created_time": datetime.now().isoformat(),
+            "status": "queued"
+        }
+        
+        self.task_queue.append(task)
+        
+        return {
+            "success": True, 
+            "message": f"Task {task_id} queued successfully",
+            "task_id": task_id,
+            "queue_position": len(self.task_queue)
+        }
+        
+    def _process_task_queue(self):
+        """Process queued tasks (called periodically)."""
+        if not hasattr(self, 'task_queue') or not self.task_queue:
+            return
+            
+        if getattr(self, 'queue_paused', False):
+            return
+            
+        # Check if we can start more tasks
+        max_concurrent = self.mcp_config.max_concurrent_tools if self.mcp_config else 5
+        if len(self.active_tool_executions) >= max_concurrent:
+            return
+            
+        # Start next task in queue
+        task = self.task_queue.pop(0)
+        task["status"] = "running"
+        task["start_time"] = datetime.now().isoformat()
+        
+        self.active_tool_executions[task["id"]] = task
+        
+        # Execute task asynchronously (simplified for demo)
+        try:
+            result = self._execute_tool_sync(task["category"], task["tool_name"], task["parameters"])
+            task["status"] = "completed"
+            task["result"] = result
+            task["end_time"] = datetime.now().isoformat()
+            
+            # Move to completed tasks
+            if not hasattr(self, 'completed_tasks'):
+                self.completed_tasks = []
+            self.completed_tasks.append(task)
+            del self.active_tool_executions[task["id"]]
+            
+        except Exception as e:
+            task["status"] = "failed"
+            task["error"] = str(e)
+            task["end_time"] = datetime.now().isoformat()
+            
+            # Move to failed tasks
+            if not hasattr(self, 'failed_tasks'):
+                self.failed_tasks = []
+            self.failed_tasks.append(task)
+            del self.active_tool_executions[task["id"]]
         
     def create_mcp_dashboard_template(self) -> str:
         """Create the comprehensive MCP dashboard HTML template with GraphRAG integration."""
@@ -2842,7 +3027,10 @@ if __name__ == "__main__":
         print(f"  - RAG Query Interface: {config.enable_rag_query}")
         print(f"  - Investigation Tools: {config.enable_investigation}")
         print(f"  - Real-time Monitoring: {config.enable_real_time_monitoring}")
-        dash.app.run(host=config.host, port=config.port, debug=False, use_reloader=False, threaded=True)
+        if dash.app:
+            dash.app.run(host=config.host, port=config.port, debug=False, use_reloader=False, threaded=True)
+        else:
+            print("Error: Flask app not initialized. Check configure() method.")
     else:
         dashboard = start_mcp_dashboard(config)
         # Best-effort readiness probe
