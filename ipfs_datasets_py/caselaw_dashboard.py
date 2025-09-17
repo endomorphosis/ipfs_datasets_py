@@ -236,13 +236,16 @@ class CaselawDashboard:
                 # Run the analysis asynchronously
                 import asyncio
                 result = asyncio.run(temporal_processor.process_caselaw_lineage(related_cases, doctrine))
+
+                # Normalize for UI schema
+                ui_analysis = self._normalize_temporal_result_for_ui(result)
                 
                 return jsonify({
                     'status': 'success',
                     'doctrine': doctrine,
                     'temporal_deontic_analysis': result,
-                    # Provide a generic key expected by some frontends
-                    'analysis': result
+                    # Provide the UI-friendly structure expected by the frontend
+                    'analysis': ui_analysis
                 })
                 
             except Exception as e:
@@ -260,13 +263,12 @@ class CaselawDashboard:
                     'status': 'error',
                     'message': 'Data not initialized'
                 })
-            
+
             try:
                 doctrines_data = self._get_legal_doctrines_with_clustering()
-                # Return the data structure directly with status
                 result = {
                     'status': 'success',
-                    **doctrines_data  # Unpack the doctrines data (doctrines, clusters, etc.)
+                    **doctrines_data
                 }
                 return jsonify(result)
             except Exception as e:
@@ -289,13 +291,12 @@ class CaselawDashboard:
                     'status': 'error',
                     'message': 'Data not initialized'
                 })
-            
+
             try:
                 filtered_doctrines = self._search_and_cluster_doctrines(query)
-                # Return the data structure directly with status
                 result = {
                     'status': 'success',
-                    **filtered_doctrines  # Unpack the filtered doctrines data
+                    **filtered_doctrines
                 }
                 return jsonify(result)
             except Exception as e:
@@ -308,7 +309,7 @@ class CaselawDashboard:
         def doctrine_page(doctrine_name):
             """Individual doctrine page showing case shepherding lineage"""
             return self._render_doctrine_page(doctrine_name)
-        
+
         @self.app.route('/api/initialize', methods=['POST'])
         def initialize():
             """Initialize the dashboard with data"""
@@ -320,6 +321,98 @@ class CaselawDashboard:
                     'status': 'error',
                     'message': str(e)
                 })
+
+    def _normalize_temporal_result_for_ui(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Map TemporalDeonticCaselawProcessor result into the UI schema.
+        Expected by UI:
+          - analysis.chronological_evolution: list with {case_id, year, obligations, permissions, prohibitions}
+          - analysis.theorems: list with {name, formal_logic, natural_language, supporting_cases}
+          - analysis.consistency_check: {is_consistent, conflicts, temporal_violations}
+        """
+        if not isinstance(result, dict):
+            return {'chronological_evolution': [], 'theorems': [], 'consistency_check': {}}
+
+        precedents = result.get('precedents', []) or []
+        chronological = []
+        for p in precedents:
+            # Extract year
+            year = None
+            date_str = p.get('date') or p.get('date_decided') or ''
+            try:
+                if isinstance(date_str, str) and len(date_str) >= 4:
+                    year = int(date_str[:4])
+            except Exception:
+                year = None
+
+            # Count modalities
+            obligations = permissions = prohibitions = 0
+            stmts = p.get('deontic_statements', []) or []
+            for s in stmts:
+                modality = None
+                if isinstance(s, dict):
+                    modality = s.get('modality') or s.get('type')
+                elif hasattr(s, 'modality'):
+                    modality = getattr(s, 'modality', None)
+
+                m = (str(modality).lower() if modality else '')
+                if 'obligation' in m:
+                    obligations += 1
+                elif 'permission' in m:
+                    permissions += 1
+                elif 'prohibition' in m:
+                    prohibitions += 1
+
+            chronological.append({
+                'case_id': p.get('case_id') or p.get('id') or '',
+                'year': year if year is not None else p.get('year', ''),
+                'obligations': obligations,
+                'permissions': permissions,
+                'prohibitions': prohibitions
+            })
+
+        # Preserve any existing order; if empty years, leave ordering as-is
+        try:
+            chronological.sort(key=lambda x: (x['year'] if isinstance(x['year'], int) else 0))
+        except Exception:
+            pass
+
+        # Map theorems
+        src_theorems = result.get('generated_theorems', []) or []
+        theorems = []
+        for t in src_theorems:
+            if not isinstance(t, dict):
+                continue
+            theorems.append({
+                'name': t.get('name') or t.get('theorem_id') or 'Theorem',
+                'formal_logic': t.get('formal_statement') or t.get('formal_logic') or '',
+                'natural_language': t.get('natural_language') or '',
+                'supporting_cases': t.get('supporting_cases') or []
+            })
+
+        # Consistency mapping
+        ca = result.get('consistency_analysis', {}) or {}
+        def _safe_len(v):
+            try:
+                return len(v)
+            except Exception:
+                try:
+                    return int(v)
+                except Exception:
+                    return 0
+
+        consistency_check = {
+            'is_consistent': bool(ca.get('overall_consistent', True)),
+            'conflicts': _safe_len(ca.get('conflicts_detected', [])),
+            'temporal_violations': _safe_len(ca.get('temporal_violations', [])),
+        }
+
+        return {
+            'chronological_evolution': chronological,
+            'theorems': theorems,
+            'consistency_check': consistency_check
+        }
+
+    
     
     def _render_dashboard(self) -> str:
         """Render the main dashboard HTML"""
@@ -395,6 +488,15 @@ class CaselawDashboard:
         return '''
             <script>
                 // Professional JavaScript functionality for legal research platform
+                function showToast(msg, type='info', timeout=2800) {{
+                    const container = document.getElementById('toastContainer');
+                    if (!container) return;
+                    const t = document.createElement('div');
+                    t.className = `toast ${type}`;
+                    t.textContent = msg;
+                    container.appendChild(t);
+                    setTimeout(() => {{ t.remove(); }}, timeout);
+                }}
                 
                 // Tab management
                 function showTab(tabName) {
@@ -876,6 +978,19 @@ class CaselawDashboard:
                 .footer-text {{
                     font-size: 0.75rem; color: #64748b;
                 }}
+
+                /* Toast */
+                .toast-container {{
+                    position: fixed; top: 16px; right: 16px; z-index: 9999;
+                }}
+                .toast {{
+                    background: #1f2937; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.9rem;
+                }}
+                .toast.info {{ background: #2563eb; }}
+                .toast.warn {{ background: #d97706; }}
+                .toast.error {{ background: #dc2626; }}
+                .toast.success {{ background: #059669; }}
                 
                 /* Responsive design */
                 @media (max-width: 768px) {{
@@ -907,6 +1022,7 @@ class CaselawDashboard:
             
             <!-- Main Container -->
             <div class="container">
+                <div class="toast-container" id="toastContainer"></div>
                 <!-- Key Metrics -->
                 <div class="metrics-grid">
                     <div class="metric-card">
@@ -1213,10 +1329,9 @@ class CaselawDashboard:
                 
                 // Temporal deontic logic analysis
                 function analyzeTemporalLogic() {{
-                    const doctrine = document.getElementById('doctrineSelect').value;
+                    let doctrine = document.getElementById('doctrineSelect').value;
                     if (!doctrine) {{
-                        alert('Please select a legal doctrine to analyze.');
-                        return;
+                        doctrine = 'qualified immunity'; // default fallback
                     }}
                     
                     fetch(`/api/temporal-deontic/${{encodeURIComponent(doctrine)}}`)
@@ -1234,9 +1349,10 @@ class CaselawDashboard:
                     
                     if (data.status === 'success' && data.analysis) {{
                         const analysis = data.analysis;
-                        const chronEvolution = analysis.temporal_patterns?.chronological_evolution || [];
-                        const theorems = analysis.generated_theorems || [];
-                        const consistency = analysis.consistency_analysis || {{}};
+                        // Prefer normalized fields if available, else fallback to raw
+                        const chronEvolution = analysis.chronological_evolution || analysis.temporal_patterns?.chronological_evolution || [];
+                        const theorems = analysis.theorems || analysis.generated_theorems || [];
+                        const consistency = analysis.consistency_check || analysis.consistency_analysis || {{}};
                         
                         const html = `
                             <div class="results-header">
@@ -1247,20 +1363,20 @@ class CaselawDashboard:
                                 <h3>Chronological Evolution:</h3>
                                 ${{chronEvolution.map(caseItem => `
                                     <div class="case-result">
-                                        <div class="case-title">${{caseItem.date?.substring(0,4) || 'Unknown'}}: ${{caseItem.case_id || 'Unknown Case'}}</div>
+                                        <div class="case-title">${{(caseItem.year || caseItem.date?.substring(0,4) || 'Unknown')}}: ${{caseItem.case_id || 'Unknown Case'}}</div>
                                         <div class="case-meta">
-                                            Obligations: ${{caseItem.new_obligations?.length || 0}} | 
-                                            Permissions: ${{caseItem.new_permissions?.length || 0}} | 
-                                            Prohibitions: ${{caseItem.new_prohibitions?.length || 0}}
+                                            Obligations: ${{caseItem.obligations ?? caseItem.new_obligations?.length ?? 0}} | 
+                                            Permissions: ${{caseItem.permissions ?? caseItem.new_permissions?.length ?? 0}} | 
+                                            Prohibitions: ${{caseItem.prohibitions ?? caseItem.new_prohibitions?.length ?? 0}}
                                         </div>
                                     </div>
                                 `).join('')}}
                                 
                                 <h3>Generated Theorems:</h3>
-                                ${{theorems.map((theorem, index) => `
+                                ${{(theorems.length ? theorems : [{{name:'No theorems generated', natural_language:'The analysis completed but did not produce formal theorems for this selection.', formal_logic:'', supporting_cases:[]}}]).map((theorem, index) => `
                                     <div class="case-result">
                                         <div class="case-title">📜 ${{theorem.name || 'Theorem ' + (index + 1)}}</div>
-                                        <div class="case-citation">Formal: ${{(theorem.formal_statement || '').substring(0, 100)}}...</div>
+                                        <div class="case-citation">Formal: ${{(theorem.formal_statement || theorem.formal_logic || '').substring(0, 100)}}...</div>
                                         <div class="case-summary">${{theorem.natural_language || 'No description available'}}</div>
                                         <div class="case-meta">
                                             <div class="meta-item">Supporting Cases: ${{(theorem.supporting_cases || []).length}}</div>
@@ -1269,9 +1385,9 @@ class CaselawDashboard:
                                 `).join('')}}
                                 
                                 <div class="metric-card">
-                                    <h3>Consistency Analysis: ${{consistency.overall_consistent ? '✅ CONSISTENT' : '❌ CONFLICTS DETECTED'}}</h3>
-                                    <p>Conflicts: ${{(consistency.conflicts_detected || []).length}}</p>
-                                    <p>Temporal Violations: ${{(consistency.temporal_violations || []).length}}</p>
+                                    <h3>Consistency Analysis: ${{(consistency.is_consistent ?? consistency.overall_consistent) ? '✅ CONSISTENT' : '❌ CONFLICTS DETECTED'}}</h3>
+                                    <p>Conflicts: ${{consistency.conflicts ?? (consistency.conflicts_detected || []).length || 0}}</p>
+                                    <p>Temporal Violations: ${{consistency.temporal_violations ?? (consistency.temporal_violations || []).length || 0}}</p>
                                 </div>
                             </div>
                         `;
@@ -1298,6 +1414,26 @@ class CaselawDashboard:
                     
                     // Load initial content
                     loadDoctrines();
+
+                    // Persist doctrine selection
+                    try {{
+                        const select = document.getElementById('doctrineSelect');
+                        const saved = localStorage.getItem('caselaw_doctrine');
+                        if (saved && select) {{
+                            for (let i = 0; i < select.options.length; i++) {{
+                                if ((select.options[i].value || '').toLowerCase() === saved.toLowerCase()) {{
+                                    select.selectedIndex = i; break;
+                                }}
+                            }}
+                        }}
+                        if (select) {{
+                            select.addEventListener('change', () => {{
+                                const v = select.value || '';
+                                localStorage.setItem('caselaw_doctrine', v);
+                                if (!v) {{ showToast('Doctrine cleared. Default will be used for analysis.', 'info'); }}
+                            }});
+                        }}
+                    }} catch (e) {{ /* ignore */ }}
                 }});
             </script>
         </body>

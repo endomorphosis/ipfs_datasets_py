@@ -701,12 +701,19 @@
 			"type": "shell",
 			"command": "/home/barberb/ipfs_datasets_py/.venv/bin/python",
 			"args": [
-				"scripts/demo/demonstrate_caselaw_graphrag.py",
-				"--run-dashboard",
+				"scripts/run_caselaw_dashboard.py",
+				"--host",
+				"0.0.0.0",
 				"--port",
-				"5000"
+				"5000",
+				"--max-samples",
+				"100"
 			],
 			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": { "PYTHONPATH": "${workspaceFolder}", "CASELAW_CACHE_DIR": "/storage/teraflopai" }
+			},
 			"group": "build"
 		}
 		,
@@ -715,19 +722,61 @@
 			"type": "shell",
 			"command": "/home/barberb/ipfs_datasets_py/.venv/bin/python",
 			"args": [
-				"scripts/demo/demonstrate_caselaw_graphrag.py",
-				"--run-dashboard",
-				"--port",
-				"5000"
+				"scripts/run_caselaw_dashboard.py",
+				"--host","0.0.0.0","--port","5000","--max-samples","100"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}",
-				"env": { "CASELAW_CACHE_DIR": "/storage/teraflopai" }
+				"env": { "PYTHONPATH": "${workspaceFolder}", "CASELAW_CACHE_DIR": "/storage/teraflopai" }
 			},
 			"isBackground": true,
 			"group": "build",
 			"problemMatcher": []
 		},
+		{
+			"label": "Stop Caselaw Dashboard (Stable)",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": ["-lc", "pkill -f scripts/run_caselaw_dashboard.py || true; fuser -k 5000/tcp || true"],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Wait For Caselaw 200 (Stable)",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": ["-lc", "for i in {1..60}; do code=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5000/ || true); if [ \"$code\" = \"200\" ]; then echo Ready; exit 0; fi; sleep 1; done; echo Timeout waiting for 200; exit 1"],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Check Caselaw Doctrines (Stable)",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": ["-lc", "echo DOCTRINES:; curl -sS http://127.0.0.1:5000/api/doctrines | head -c 200; echo; echo LEGAL-DOCTRINES:; curl -sS http://127.0.0.1:5000/api/legal-doctrines | head -c 200; echo"],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Start + Verify Caselaw Dashboard (Stable)",
+			"type": "shell",
+			"command": "/bin/true",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Stop Caselaw Dashboard (Stable)",
+				"Start Caselaw Dashboard (5000)",
+				"Wait For Caselaw 200 (Stable)",
+				"Check Caselaw Doctrines (Stable)"
+			],
+			"group": "build",
+			"problemMatcher": []
+		}
 		{
 			"label": "Wait For Caselaw 200",
 			"type": "shell",
