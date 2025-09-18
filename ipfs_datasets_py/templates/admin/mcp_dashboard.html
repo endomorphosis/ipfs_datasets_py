@@ -1,237 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IPFS Datasets MCP Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnS5Qp9mYQ0qg4m8n6o9aYy7Q4lJf4m7zXWbq9K1Q5Ff7wzqg7W+2mFJx0f9J7nE/8x0wVhYlQJf4RrK9fK2Ww==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Bootstrap (CDN) + fallback -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+    <style>
+        body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+        .dashboard-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .feature-card { transition: transform .2s; border: 0; border-radius: 12px; }
+        .feature-card:hover { transform: translateY(-2px); }
+        .status-badge { font-size: .85rem; }
+        .graphrag-section { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; }
+        .analytics-section { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; }
+        .rag-section { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #fff; }
+        .investigation-section { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #333; }
+        .metric-value { font-size: 1.8rem; font-weight: 700; }
+    </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-                <div class="sidebar-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">
-                                Main Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{{ url_for('mcp_dashboard') }}">
-                                MCP Dashboard
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">MCP Server Dashboard</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
-                            Refresh
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Server Status -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>MCP Server Status</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <strong>Status:</strong>
-                                        <span class="badge badge-{{ 'success' if server_status.status == 'running' else 'danger' }}">
-                                            {{ server_status.status }}
-                                        </span>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>Tools Available:</strong> {{ server_status.tools_available }}
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>Active Executions:</strong> {{ active_executions }}
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>Total Executions:</strong> {{ server_status.total_executions }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tools Grid -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Available Tools</h5>
-                            </div>
-                            <div class="card-body">
-                                <div id="tools-container">
-                                    {% for category, tools in tools_info.items() %}
-                                    <div class="mb-4">
-                                        <h6>{{ category.replace('_', ' ').title() }}</h6>
-                                        <div class="row">
-                                            {% for tool in tools %}
-                                            <div class="col-md-4 mb-3">
-                                                <div class="card tool-card" data-category="{{ category }}" data-tool="{{ tool.name }}">
-                                                    <div class="card-body">
-                                                        <h6 class="card-title">{{ tool.name }}</h6>
-                                                        <p class="card-text small">{{ tool.description }}</p>
-                                                        <button class="btn btn-sm btn-primary execute-tool-btn">
-                                                            Execute
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Execution History -->
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Execution History</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Tool</th>
-                                                <th>Status</th>
-                                                <th>Start Time</th>
-                                                <th>Duration</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for execution in execution_history %}
-                                            <tr>
-                                                <td>{{ execution.category }}/{{ execution.tool_name }}</td>
-                                                <td>
-                                                    <span class="badge badge-{{ 'success' if execution.status == 'completed' else 'danger' if execution.status == 'failed' else 'warning' }}">
-                                                        {{ execution.status }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ execution.start_time }}</td>
-                                                <td>{{ execution.get('end_time', 'N/A') }}</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary view-execution-btn" data-id="{{ execution.id }}">
-                                                        View
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
+    <nav class="navbar navbar-expand-lg navbar-dark dashboard-nav">
+        <a class="navbar-brand" href="{{ url_for('mcp_dashboard') }}">
+            <i class="fa-solid fa-diagram-project mr-1"></i> IPFS Datasets MCP
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active"><a class="nav-link" href="{{ url_for('mcp_dashboard') }}">Overview</a></li>
+                {% if graphrag_enabled %}<li class="nav-item"><a class="nav-link" href="/mcp/graphrag">GraphRAG</a></li>{% endif %}
+                {% if analytics_enabled %}<li class="nav-item"><a class="nav-link" href="/mcp/analytics">Analytics</a></li>{% endif %}
+                {% if rag_query_enabled %}<li class="nav-item"><a class="nav-link" href="/mcp/rag">RAG Query</a></li>{% endif %}
+                {% if investigation_enabled %}<li class="nav-item"><a class="nav-link" href="/mcp/investigation">Investigation</a></li>{% endif %}
+            </ul>
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('index') }}"><i class="fa-solid fa-gauge"></i> Admin</a>
         </div>
-    </div>
+    </nav>
 
-    <!-- Tool Execution Modal -->
-    <div class="modal fade" id="toolExecutionModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Execute Tool</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+    <div class="container-fluid mt-4">
+        <!-- Status cards -->
+        <div class="row mb-3">
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="metric-value">{{ server_status.status }}</div>
+                        <small class="text-muted">MCP Server</small>
+                        <div class="mt-2"><span class="badge badge-{{ 'success' if server_status.status=='running' else 'danger' }}">{{ server_status.status }}</span></div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form id="toolExecutionForm">
-                        <div class="form-group">
-                            <label>Tool:</label>
-                            <input type="text" class="form-control" id="toolName" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Parameters (JSON):</label>
-                            <textarea class="form-control" id="toolParameters" rows="5" placeholder='{"param1": "value1"}'></textarea>
-                        </div>
-                    </form>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm"><div class="card-body text-center"><div class="metric-value">{{ server_status.tools_available }}</div><small class="text-muted">Tools Available</small></div></div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm"><div class="card-body text-center"><div class="metric-value">{{ active_executions }}</div><small class="text-muted">Active Executions</small></div></div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm"><div class="card-body text-center"><div class="metric-value">{{ server_status.total_executions }}</div><small class="text-muted">Total Executions</small></div></div>
+            </div>
+        </div>
+
+        <!-- Feature sections -->
+        <div class="row mb-4">
+            <!-- External: Caselaw GraphRAG Dashboard -->
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card" style="background: linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color: #fff;">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-scale-balanced fa-2x mb-2"></i>
+                        <h5 class="mb-1">Caselaw GraphRAG</h5>
+                        <p class="mb-2">Legal research demo dashboard</p>
+                        <a class="btn btn-light btn-sm" href="http://127.0.0.1:5000" target="_blank" rel="noopener">Open</a>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="executeToolBtn">Execute</button>
+            </div>
+            {% if graphrag_enabled %}
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card graphrag-section">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-brain fa-2x mb-2"></i>
+                        <h5 class="mb-1">GraphRAG</h5>
+                        <p class="mb-2">Knowledge graph extraction and analysis</p>
+                        <a class="btn btn-light btn-sm" href="/mcp/graphrag">Open</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if analytics_enabled %}
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card analytics-section">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-chart-line fa-2x mb-2"></i>
+                        <h5 class="mb-1">Analytics</h5>
+                        <p class="mb-2">Real-time metrics and performance</p>
+                        <a class="btn btn-light btn-sm" href="/mcp/analytics">View</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if rag_query_enabled %}
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card rag-section">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-magnifying-glass fa-2x mb-2"></i>
+                        <h5 class="mb-1">RAG Query</h5>
+                        <p class="mb-2">Interactive query with context</p>
+                        <a class="btn btn-light btn-sm" href="/mcp/rag">Query</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if investigation_enabled %}
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card investigation-section">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-user-secret fa-2x mb-2"></i>
+                        <h5 class="mb-1">Investigation</h5>
+                        <p class="mb-2">Entity extraction and mapping</p>
+                        <a class="btn btn-dark btn-sm" href="/mcp/investigation">Start</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Tools grid -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="mb-0"><i class="fa-solid fa-screwdriver-wrench mr-2"></i>Available MCP Tools</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category, tools in tools_info.items() %}
+                    <div class="col-12 mb-3">
+                        <h6 class="text-muted">{{ category.replace('_',' ').title() }} ({{ tools|length }})</h6>
+                    </div>
+                    {% for tool in tools %}
+                    <div class="col-md-4 col-lg-3 mb-3">
+                        <div class="card h-100 tool-card" data-category="{{ category }}" data-tool="{{ tool.name }}">
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title mb-2">{{ tool.name }}</h6>
+                                <p class="card-text small text-muted flex-grow-1">{{ tool.description }}</p>
+                                <button class="btn btn-primary btn-sm mt-2 execute-tool-btn"><i class="fa-solid fa-play"></i> Execute</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left mr-2"></i>Recent Executions</h5></div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Tool</th><th>Status</th><th>Start Time</th><th>End Time</th><th></th></tr></thead>
+                        <tbody>
+                        {% for execution in execution_history %}
+                            <tr>
+                                <td>{{ execution.category }}/{{ execution.tool_name }}</td>
+                                <td><span class="badge status-badge badge-{{ 'success' if execution.status=='completed' else 'danger' if execution.status=='failed' else 'warning' }}">{{ execution.status }}</span></td>
+                                <td>{{ execution.start_time }}</td>
+                                <td>{{ execution.get('end_time','N/A') }}</td>
+                                <td><button class="btn btn-outline-primary btn-sm view-execution-btn" data-id="{{ execution.id }}"><i class="fa-solid fa-eye"></i> View</button></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-        <!-- Prefer CDN assets; fallback to local if unavailable -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJ+Y3VQS7B1UhtF0Q5cHGNyE7f3GJZ5b8m1w8=" crossorigin="anonymous"></script>
-        <script>
-            if (!window.jQuery) {
-                var s = document.createElement('script');
-                s.src = "{{ url_for('static', filename='js/jquery.min.js') }}";
-                document.head.appendChild(s);
-            }
-        </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2LcC1iC2eGzZrUpP2iG6aI6Y4GZCXxY1wQnMZ4Zx1N" crossorigin="anonymous"></script>
+    <!-- Modal -->
+    <div class="modal fade" id="toolExecutionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Execute Tool</h5><button class="close" data-dismiss="modal"><span>&times;</span></button></div>
+                <div class="modal-body">
+                    <form id="toolExecutionForm">
+                        <div class="form-group"><label>Tool</label><input class="form-control" id="toolName" readonly></div>
+                        <div class="form-group"><label>Parameters (JSON)</label><textarea class="form-control" id="toolParameters" rows="6" placeholder='{"param1":"value1"}'></textarea></div>
+                    </form>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-dismiss="modal">Cancel</button><button class="btn btn-primary" id="executeToolBtn"><i class="fa-solid fa-play"></i> Execute</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS: CDN with fallback -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script>
+                if (!window.jQuery) {
+                    var s = document.createElement('script');
+                    s.src = "{{ url_for('static', filename='js/jquery.min.js') }}";
+                    document.head.appendChild(s);
+                }
+            </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/portable-mcp-sdk.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/reorganized-dashboard.js') }}"></script>
     <script>
-        $(document).ready(function() {
-            // Initialize MCP SDK
+        $(function(){
+            // Initialize original MCP SDK
             window.mcpSDK = new MCPClient('{{ request.host_url }}api/mcp');
             
-            // Tool execution handlers
-            $('.execute-tool-btn').click(function() {
-                const card = $(this).closest('.tool-card');
-                const category = card.data('category');
-                const tool = card.data('tool');
-                
-                $('#toolName').val(category + '/' + tool);
+            // Initialize Portable MCP SDK with queue management
+            window.portableMCPSDK = new PortableMCPSDK('{{ request.host_url }}api/mcp');
+            
+            // Initialize Reorganized Dashboard
+            window.reorganizedDashboard = new ReorganizedDashboard(window.portableMCPSDK);
+            
+            // Original tool execution handlers
+            $('.execute-tool-btn').on('click', function(){
+                const card=$(this).closest('.tool-card');
+                $('#toolName').val(card.data('category')+'/'+card.data('tool'));
+                $('#toolParameters').val('{}');
                 $('#toolExecutionModal').modal('show');
             });
-            
-            $('#executeToolBtn').click(function() {
-                const toolName = $('#toolName').val().split('/');
-                const category = toolName[0];
-                const tool = toolName[1];
-                const parameters = $('#toolParameters').val();
-                
-                try {
-                    const params = parameters ? JSON.parse(parameters) : {};
-                    window.mcpSDK.executeTool(category, tool, params)
-                        .then(result => {
-                            alert('Tool executed successfully!');
-                            $('#toolExecutionModal').modal('hide');
-                            location.reload();
-                        })
-                        .catch(error => {
-                            alert('Tool execution failed: ' + error.message);
-                        });
-                } catch (e) {
-                    alert('Invalid JSON parameters: ' + e.message);
-                }
+            $('#executeToolBtn').on('click', function(){
+                const [category,tool] = $('#toolName').val().split('/');
+                let params={};
+                try{ params = $('#toolParameters').val()? JSON.parse($('#toolParameters').val()):{}; }catch(e){ return alert('Invalid JSON: '+e.message); }
+                const $btn=$(this).prop('disabled',true).html('<i class="fa-solid fa-spinner fa-spin"></i> Executing');
+                window.mcpSDK.executeTool(category, tool, params)
+                    .then(()=>{ $('#toolExecutionModal').modal('hide'); location.reload(); })
+                    .catch(err=> alert('Execution failed: '+(err.message||err)))
+                    .always(()=> $btn.prop('disabled',false).html('<i class="fa-solid fa-play"></i> Execute'));
             });
         });
-        
-        function refreshDashboard() {
-            location.reload();
-        }
     </script>
 </body>
 </html>

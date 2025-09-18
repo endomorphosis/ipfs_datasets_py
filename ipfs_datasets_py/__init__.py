@@ -3,6 +3,8 @@ IPFS Datasets Python
 
 A unified interface for data processing and distribution across decentralized networks
 with automated dependency installation for full functionality.
+
+NEW: Caselaw Access Project GraphRAG integration for legal document search and analysis.
 """
 
 __version__ = "0.2.0"
@@ -495,3 +497,39 @@ try:
     rag_query_optimizer = rag.rag_query_optimizer
 except AttributeError:
     rag_query_optimizer = None
+
+# Caselaw Access Project GraphRAG Integration
+try:
+    from .caselaw_dataset import CaselawDatasetLoader, load_caselaw_dataset
+    from .caselaw_graphrag import (
+        CaselawGraphRAGProcessor, LegalEntityExtractor, 
+        LegalRelationshipMapper, CaselawKnowledgeGraph,
+        create_caselaw_graphrag_processor
+    )
+    from .caselaw_dashboard import CaselawDashboard, create_caselaw_dashboard
+    HAVE_CASELAW_INTEGRATION = True
+    
+    # Add to __all__ exports
+    __all__.extend([
+        'CaselawDatasetLoader', 'load_caselaw_dataset',
+        'CaselawGraphRAGProcessor', 'LegalEntityExtractor',
+        'LegalRelationshipMapper', 'CaselawKnowledgeGraph', 
+        'create_caselaw_graphrag_processor',
+        'CaselawDashboard', 'create_caselaw_dashboard'
+    ])
+    
+except ImportError as e:
+    HAVE_CASELAW_INTEGRATION = False
+    if installer.verbose:
+        warnings.warn(f"Caselaw GraphRAG integration unavailable due to missing dependencies: {e}")
+    
+    # Provide fallbacks
+    CaselawDatasetLoader = None
+    load_caselaw_dataset = None
+    CaselawGraphRAGProcessor = None
+    LegalEntityExtractor = None
+    LegalRelationshipMapper = None
+    CaselawKnowledgeGraph = None
+    create_caselaw_graphrag_processor = None
+    CaselawDashboard = None
+    create_caselaw_dashboard = None
