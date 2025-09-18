@@ -4,6 +4,7 @@ setup(
     name="ipfs_datasets_py",
     version='0.2.0',
     packages=find_packages(),
+    py_modules=["ipfs_datasets_cli"],
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
