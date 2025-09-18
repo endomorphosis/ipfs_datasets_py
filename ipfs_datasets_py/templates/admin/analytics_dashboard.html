@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+        .metric-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; border: 0; border-radius: 12px; }
+        .chart-container { height: 400px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg,#4facfe 0%, #00f2fe 100%);">
+        <a class="navbar-brand" href="/mcp"><i class="fa-solid fa-arrow-left mr-1"></i> MCP Dashboard</a>
+        <span class="navbar-text ml-auto"><i class="fa-solid fa-chart-line mr-1"></i> Analytics</span>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Metrics Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ metrics.total_websites_processed }}</h3>
+                        <small>Websites Processed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ "%.1f"|format(metrics.success_rate) }}%</h3>
+                        <small>Success Rate</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ metrics.total_rag_queries }}</h3>
+                        <small>RAG Queries</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card metric-card">
+                    <div class="card-body text-center">
+                        <h3>{{ "%.2f"|format(metrics.average_query_time) }}s</h3>
+                        <small>Avg Query Time</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Processing Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="performanceChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Query Analytics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="queryChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            if (!window.jQuery) {
+                var s = document.createElement('script');
+                s.src = "{{ url_for('static', filename='js/jquery.min.js') }}";
+                document.head.appendChild(s);
+            }
+        </script>
+    <script>
+        $(document).ready(function() {
+            loadCharts();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadCharts, 30000);
+        });
+
+        function loadCharts() {
+            // Load performance chart
+            $.get('/api/mcp/analytics/history', function(data) {
+                if (data.history.length > 0) {
+                    createPerformanceChart(data.history);
+                    createQueryChart(data.history);
+                }
+            });
+        }
+
+        function createPerformanceChart(history) {
+            const trace = {
+                x: history.map(h => h.last_updated),
+                y: history.map(h => h.success_rate),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Success Rate'
+            };
+
+            const layout = {
+                title: 'Success Rate Over Time',
+                xaxis: { title: 'Time' },
+                yaxis: { title: 'Success Rate (%)' }
+            };
+
+            Plotly.newPlot('performanceChart', [trace], layout);
+        }
+
+        function createQueryChart(history) {
+            const trace = {
+                x: history.map(h => h.last_updated),
+                y: history.map(h => h.average_query_time),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Query Time'
+            };
+
+            const layout = {
+                title: 'Average Query Time',
+                xaxis: { title: 'Time' },
+                yaxis: { title: 'Time (seconds)' }
+            };
+
+            Plotly.newPlot('queryChart', [trace], layout);
+        }
+    </script>
+</body>
+</html>
