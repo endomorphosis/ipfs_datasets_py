@@ -82,6 +82,12 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="IPFS Datasets Contributors",
+    entry_points={
+        'console_scripts': [
+            'ipfs-datasets=ipfs_datasets_cli:cli_main',
+            'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
