@@ -549,10 +549,54 @@ class MCPDashboard(AdminDashboard):
                 checker = DocumentConsistencyChecker(rag_store=rag_store)
                 
                 dashboard_data = {
+                    "system_status": {
+                        "theorem_count": len(rag_store.theorems),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
+                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
+                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "available_operators": [op.name for op in DeonticOperator],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": True
+                    },
+                    "mcp_enabled": True
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize caselaw dashboard: {e}")
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": 0,
+                        "jurisdictions": [],
+                        "legal_domains": [],
+                        "temporal_periods": 0,
+                        "available_operators": [],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": False,
+                        "error_message": str(e)
+                    },
+                    "mcp_enabled": True
+                }
+            
+            return render_template('admin/caselaw_dashboard_mcp.html', **dashboard_data)
+        
+        @self.app.route('/mcp/caselaw/rest')
+        def caselaw_dashboard_rest():
+            """Render the REST-based caselaw analysis dashboard (legacy)."""
+            # Import temporal deontic logic components
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic_integration.deontic_logic_core import DeonticOperator
+                
+                # Initialize RAG store and get statistics
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                dashboard_data = {
                     "theorem_count": len(rag_store.theorems),
-                    "jurisdictions": len(rag_store.jurisdiction_index),
-                    "legal_domains": len(rag_store.domain_index),
-                    "temporal_periods": len(rag_store.temporal_index),
+                    "jurisdictions": len(getattr(rag_store, 'jurisdiction_index', {})),
+                    "legal_domains": len(getattr(rag_store, 'domain_index', {})),
+                    "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
                     "available_operators": [op.name for op in DeonticOperator],
                     "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "system_ready": True
@@ -1020,6 +1064,99 @@ class MCPDashboard(AdminDashboard):
             session['status'] = 'failed'
             session['error'] = str(e)
             session['end_time'] = datetime.now().isoformat()
+        
+        # Add MCP JSON-RPC endpoints for temporal deontic logic tools
+        @self.app.route('/api/mcp/caselaw/jsonrpc', methods=['POST'])
+        def mcp_caselaw_jsonrpc():
+            """MCP JSON-RPC endpoint for temporal deontic logic tools."""
+            try:
+                from .mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+                
+                request_data = request.json or {}
+                
+                # Basic JSON-RPC validation
+                if 'method' not in request_data:
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "error": {"code": -32600, "message": "Invalid Request - missing method"},
+                        "id": request_data.get('id')
+                    }), 400
+                
+                method = request_data['method']
+                params = request_data.get('params', {})
+                request_id = request_data.get('id', 1)
+                
+                # Map JSON-RPC methods to MCP tools
+                tool_mapping = {
+                    'check_document_consistency': 'check_document_consistency',
+                    'query_theorems': 'query_theorems',
+                    'bulk_process_caselaw': 'bulk_process_caselaw',
+                    'add_theorem': 'add_theorem'
+                }
+                
+                if method not in tool_mapping:
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "error": {"code": -32601, "message": f"Method not found: {method}"},
+                        "id": request_id
+                    }), 404
+                
+                # Execute MCP tool
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                try:
+                    result = loop.run_until_complete(
+                        temporal_deontic_mcp_server.call_tool_direct(tool_mapping[method], params)
+                    )
+                    
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "result": result,
+                        "id": request_id
+                    })
+                    
+                finally:
+                    loop.close()
+                
+            except Exception as e:
+                self.logger.error(f"MCP JSON-RPC call failed: {e}")
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": "Internal error",
+                        "data": str(e)
+                    },
+                    "id": request_data.get('id')
+                }), 500
+        
+        @self.app.route('/api/mcp/caselaw/tools')
+        def mcp_caselaw_tools():
+            """Get available temporal deontic logic MCP tools."""
+            try:
+                from .mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+                
+                tool_schemas = temporal_deontic_mcp_server.get_tool_schemas()
+                
+                return jsonify({
+                    "success": True,
+                    "tools": tool_schemas,
+                    "tool_count": len(tool_schemas),
+                    "server_info": {
+                        "name": "Temporal Deontic Logic MCP Server",
+                        "version": "1.0.0",
+                        "description": "MCP tools for legal document consistency checking"
+                    }
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Failed to get MCP tools: {e}")
+                return jsonify({
+                    "success": False,
+                    "error": str(e)
+                }), 500
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
