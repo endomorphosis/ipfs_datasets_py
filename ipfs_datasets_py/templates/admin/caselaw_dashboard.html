@@ -142,8 +142,8 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="add-theorem-tab" data-toggle="tab" href="#add-theorem" role="tab">
-                                    <i class="fas fa-plus"></i> Add Theorem
+                                <a class="nav-link" id="bulk-process-tab" data-toggle="tab" href="#bulk-process" role="tab">
+                                    <i class="fas fa-database"></i> Bulk Process Caselaw
                                 </a>
                             </li>
                         </ul>
@@ -276,78 +276,140 @@
                         </div>
                     </div>
 
-                    <!-- Add Theorem Tab -->
-                    <div class="tab-pane fade" id="add-theorem" role="tabpanel">
+                    <!-- Bulk Process Caselaw Tab -->
+                    <div class="tab-pane fade" id="bulk-process" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
-                                <h5><i class="fas fa-plus"></i> Add New Theorem from Caselaw</h5>
-                                <small class="text-muted">Add temporal deontic logic theorems derived from legal cases</small>
+                                <h5><i class="fas fa-database"></i> Bulk Process Entire Caselaw Corpus</h5>
+                                <small class="text-muted">Process large volumes of caselaw to construct unified temporal deontic logic system</small>
                             </div>
                             <div class="card-body">
-                                <form id="addTheoremForm">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="theoremOperator">Deontic Operator:</label>
-                                                <select class="form-control" id="theoremOperator" required>
-                                                    <option value="OBLIGATION">Obligation (Must/Shall)</option>
-                                                    <option value="PERMISSION">Permission (May/Can)</option>
-                                                    <option value="PROHIBITION">Prohibition (Must Not/Shall Not)</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="theoremProposition">Proposition:</label>
-                                                <textarea class="form-control" id="theoremProposition" rows="3" 
-                                                    placeholder="Enter the legal proposition..." required>disclose confidential information to unauthorized third parties</textarea>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="theoremAgent">Legal Agent:</label>
-                                                <input type="text" class="form-control" id="theoremAgent" 
-                                                    placeholder="e.g., Employee, Contractor, Professional" value="Professional" required>
-                                            </div>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="caselawDirectories">Caselaw Directories:</label>
+                                            <textarea class="form-control" id="caselawDirectories" rows="4" 
+                                                placeholder="Enter caselaw directory paths (one per line)...">/path/to/federal_cases
+/path/to/state_cases
+/path/to/supreme_court_cases</textarea>
+                                            <small class="form-text text-muted">Specify directories containing caselaw documents in supported formats (TXT, JSON, PDF, XML)</small>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="theoremSourceCase">Source Case:</label>
-                                                <input type="text" class="form-control" id="theoremSourceCase" 
-                                                    placeholder="e.g., Smith v. Jones (2023)" value="Confidentiality Standards Act (2015)" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="theoremJurisdiction">Jurisdiction:</label>
-                                                <select class="form-control" id="theoremJurisdiction" required>
-                                                    <option value="Federal" selected>Federal</option>
-                                                    <option value="State">State</option>
-                                                    <option value="International">International</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="theoremDomain">Legal Domain:</label>
-                                                <select class="form-control" id="theoremDomain" required>
-                                                    <option value="general">General</option>
-                                                    <option value="contract">Contract</option>
-                                                    <option value="employment">Employment</option>
-                                                    <option value="confidentiality" selected>Confidentiality</option>
-                                                    <option value="professional_services">Professional Services</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="theoremPrecedentStrength">Precedent Strength (0.0-1.0):</label>
-                                                <input type="number" class="form-control" id="theoremPrecedentStrength" 
-                                                    min="0" max="1" step="0.1" value="0.9" required>
-                                            </div>
-                                            <button type="submit" class="btn btn-success btn-block">
-                                                <i class="fas fa-plus"></i> Add Theorem
-                                            </button>
+                                        <div class="form-group">
+                                            <label for="outputDirectory">Output Directory:</label>
+                                            <input type="text" class="form-control" id="outputDirectory" 
+                                                placeholder="unified_deontic_logic_system" value="unified_deontic_logic_system">
+                                            <small class="form-text text-muted">Directory to save the unified deontic logic system</small>
                                         </div>
                                     </div>
-                                </form>
-
-                                <div class="loading-spinner" id="addTheoremLoading">
-                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
-                                    <p>Adding theorem to knowledge base...</p>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="maxConcurrent">Max Concurrent Documents:</label>
+                                            <select class="form-control" id="maxConcurrent">
+                                                <option value="3">3 (Conservative)</option>
+                                                <option value="5" selected>5 (Balanced)</option>
+                                                <option value="10">10 (Aggressive)</option>
+                                                <option value="20">20 (High Performance)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="enableParallel">Enable Parallel Processing:</label>
+                                            <select class="form-control" id="enableParallel">
+                                                <option value="true" selected>Yes - Faster Processing</option>
+                                                <option value="false">No - Sequential Processing</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="minPrecedentStrength">Min Precedent Strength:</label>
+                                            <select class="form-control" id="minPrecedentStrength">
+                                                <option value="0.0">0.0 - Include All</option>
+                                                <option value="0.3">0.3 - Low Threshold</option>
+                                                <option value="0.5" selected>0.5 - Medium Threshold</option>
+                                                <option value="0.7">0.7 - High Threshold</option>
+                                                <option value="0.9">0.9 - Only Strong Precedents</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="enableValidation">Enable Consistency Validation:</label>
+                                            <select class="form-control" id="enableValidation">
+                                                <option value="true" selected>Yes - Validate System</option>
+                                                <option value="false">No - Skip Validation</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <h6>Advanced Filters (Optional)</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="jurisdictionFilter">Jurisdictions:</label>
+                                                    <select class="form-control" id="jurisdictionFilter" multiple>
+                                                        <option value="Federal">Federal</option>
+                                                        <option value="State">State</option>
+                                                        <option value="International">International</option>
+                                                        <option value="Supreme Court">Supreme Court</option>
+                                                        <option value="Circuit Court">Circuit Court</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Leave empty to include all jurisdictions</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="legalDomainFilter">Legal Domains:</label>
+                                                    <select class="form-control" id="legalDomainFilter" multiple>
+                                                        <option value="contract">Contract Law</option>
+                                                        <option value="employment">Employment Law</option>
+                                                        <option value="confidentiality">Confidentiality</option>
+                                                        <option value="professional_services">Professional Services</option>
+                                                        <option value="intellectual_property">Intellectual Property</option>
+                                                        <option value="corporate">Corporate Law</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Leave empty to include all domains</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="dateRange">Date Range:</label>
+                                                    <div class="input-group">
+                                                        <input type="date" class="form-control" id="startDate" placeholder="Start Date">
+                                                        <input type="date" class="form-control" id="endDate" placeholder="End Date">
+                                                    </div>
+                                                    <small class="form-text text-muted">Leave empty to include all dates</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-primary btn-lg" id="startBulkProcessing">
+                                            <i class="fas fa-play"></i> Start Bulk Processing
+                                        </button>
+                                        <button type="button" class="btn btn-secondary ml-2" id="stopBulkProcessing" style="display: none;">
+                                            <i class="fas fa-stop"></i> Stop Processing
+                                        </button>
+                                        <button type="button" class="btn btn-info ml-2" id="downloadResults" style="display: none;">
+                                            <i class="fas fa-download"></i> Download Results
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div id="addTheoremResults" style="display: none;">
+                                <div class="loading-spinner" id="bulkProcessingLoading" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Processing caselaw corpus to build unified deontic logic system...</p>
+                                    <div class="progress mt-3">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" id="processingProgress" 
+                                             role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <div id="processingStats" class="mt-3">
+                                        <small class="text-muted">Initializing...</small>
+                                    </div>
+                                </div>
+
+                                <div id="bulkProcessingResults" style="display: none;">
                                     <!-- Results will be populated here -->
                                 </div>
                             </div>
@@ -480,6 +542,232 @@
                     }
                 });
             });
+            
+            // Bulk Processing
+            $('#startBulkProcessing').on('click', function() {
+                const directories = $('#caselawDirectories').val().split('\n').filter(d => d.trim());
+                
+                if (directories.length === 0) {
+                    alert('Please specify at least one caselaw directory');
+                    return;
+                }
+                
+                const formData = {
+                    caselaw_directories: directories,
+                    output_directory: $('#outputDirectory').val() || 'unified_deontic_logic_system',
+                    max_concurrent_documents: parseInt($('#maxConcurrent').val()),
+                    enable_parallel_processing: $('#enableParallel').val() === 'true',
+                    min_precedent_strength: parseFloat($('#minPrecedentStrength').val()),
+                    enable_consistency_validation: $('#enableValidation').val() === 'true',
+                    jurisdictions_filter: $('#jurisdictionFilter').val(),
+                    legal_domains_filter: $('#legalDomainFilter').val(),
+                    start_date: $('#startDate').val() || null,
+                    end_date: $('#endDate').val() || null
+                };
+                
+                $('#startBulkProcessing').hide();
+                $('#stopBulkProcessing').show();
+                $('#bulkProcessingLoading').show();
+                $('#bulkProcessingResults').hide();
+                
+                // Start processing
+                startBulkProcessing(formData);
+            });
+            
+            $('#stopBulkProcessing').on('click', function() {
+                stopBulkProcessing();
+            });
+        });
+        
+        let bulkProcessingInterval = null;
+        let bulkProcessingSessionId = null;
+        
+        function startBulkProcessing(formData) {
+            $.ajax({
+                url: '/api/mcp/caselaw/bulk_process',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function(data) {
+                    if (data.session_id) {
+                        bulkProcessingSessionId = data.session_id;
+                        $('#processingStats').html(`<small class="text-muted">Session ${data.session_id} started...</small>`);
+                        
+                        // Start polling for progress
+                        pollBulkProcessingStatus();
+                    }
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON?.error || 'Failed to start bulk processing';
+                    $('#bulkProcessingResults').html(
+                        `<div class="alert alert-danger"><strong>Error:</strong> ${error}</div>`
+                    ).show();
+                    resetBulkProcessingUI();
+                }
+            });
+        }
+        
+        function pollBulkProcessingStatus() {
+            if (!bulkProcessingSessionId) return;
+            
+            bulkProcessingInterval = setInterval(function() {
+                $.ajax({
+                    url: `/api/mcp/caselaw/bulk_process/${bulkProcessingSessionId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        updateBulkProcessingUI(data);
+                        
+                        if (data.status === 'completed' || data.status === 'failed') {
+                            clearInterval(bulkProcessingInterval);
+                            bulkProcessingInterval = null;
+                            
+                            if (data.status === 'completed') {
+                                showBulkProcessingResults(data);
+                            }
+                            resetBulkProcessingUI();
+                        }
+                    },
+                    error: function() {
+                        clearInterval(bulkProcessingInterval);
+                        resetBulkProcessingUI();
+                    }
+                });
+            }, 2000); // Poll every 2 seconds
+        }
+        
+        function updateBulkProcessingUI(data) {
+            const progress = data.progress || 0;
+            $('#processingProgress').css('width', `${progress}%`);
+            
+            const stats = data.stats || {};
+            const statsHtml = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Documents:</strong> ${stats.processed_documents || 0}/${stats.total_documents || 0}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Theorems:</strong> ${stats.extracted_theorems || 0}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Errors:</strong> ${stats.processing_errors || 0}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Status:</strong> ${data.status || 'processing'}
+                    </div>
+                </div>
+                <small class="text-muted">Jurisdictions: ${(stats.jurisdictions_processed || []).join(', ')}</small>
+            `;
+            
+            $('#processingStats').html(statsHtml);
+        }
+        
+        function showBulkProcessingResults(data) {
+            const stats = data.stats || {};
+            const processingTime = data.processing_time || 'Unknown';
+            
+            const resultsHtml = `
+                <div class="mt-4">
+                    <h5><i class="fas fa-check-circle text-success"></i> Bulk Processing Complete</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3>${stats.extracted_theorems || 0}</h3>
+                                    <small>Theorems Extracted</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3>${stats.processed_documents || 0}</h3>
+                                    <small>Documents Processed</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h3>${(stats.jurisdictions_processed || []).length}</h3>
+                                    <small>Jurisdictions</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h3>${((stats.success_rate || 0) * 100).toFixed(1)}%</h3>
+                                    <small>Success Rate</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <h6>✅ Unified Deontic Logic System Created</h6>
+                        <p>Successfully processed entire caselaw corpus and constructed unified temporal deontic logic system.</p>
+                        <ul>
+                            <li><strong>Processing Time:</strong> ${processingTime}</li>
+                            <li><strong>Jurisdictions:</strong> ${(stats.jurisdictions_processed || []).join(', ')}</li>
+                            <li><strong>Legal Domains:</strong> ${(stats.legal_domains_processed || []).join(', ')}</li>
+                            <li><strong>Output Directory:</strong> ${data.output_directory || 'unified_deontic_logic_system'}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-info" onclick="downloadUnifiedSystem()">
+                            <i class="fas fa-download"></i> Download Unified System
+                        </button>
+                        <button class="btn btn-secondary ml-2" onclick="viewProcessingLog()">
+                            <i class="fas fa-file-alt"></i> View Processing Log
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            $('#bulkProcessingResults').html(resultsHtml).show();
+            $('#downloadResults').show();
+        }
+        
+        function stopBulkProcessing() {
+            if (bulkProcessingInterval) {
+                clearInterval(bulkProcessingInterval);
+                bulkProcessingInterval = null;
+            }
+            
+            if (bulkProcessingSessionId) {
+                // Send stop request
+                $.ajax({
+                    url: `/api/mcp/caselaw/bulk_process/${bulkProcessingSessionId}/stop`,
+                    method: 'POST',
+                    success: function() {
+                        $('#processingStats').html('<small class="text-muted">Processing stopped by user</small>');
+                    }
+                });
+            }
+            
+            resetBulkProcessingUI();
+        }
+        
+        function resetBulkProcessingUI() {
+            $('#startBulkProcessing').show();
+            $('#stopBulkProcessing').hide();
+            $('#bulkProcessingLoading').hide();
+            $('#processingProgress').css('width', '0%');
+        }
+        
+        function downloadUnifiedSystem() {
+            if (bulkProcessingSessionId) {
+                window.location.href = `/api/mcp/caselaw/bulk_process/${bulkProcessingSessionId}/download`;
+            }
+        }
+        
+        function viewProcessingLog() {
+            if (bulkProcessingSessionId) {
+                window.open(`/api/mcp/caselaw/bulk_process/${bulkProcessingSessionId}/log`, '_blank');
+            }
+        }
         });
         
         function displayDocumentResults(data) {

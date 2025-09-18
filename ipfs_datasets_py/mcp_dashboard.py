@@ -714,6 +714,201 @@ class MCPDashboard(AdminDashboard):
                 self.logger.error(f"Document consistency check failed: {e}")
                 return jsonify({"error": str(e)}), 500
         
+        @self.app.route('/api/mcp/caselaw/bulk_process', methods=['POST'])
+        def api_bulk_process_caselaw():
+            """Start bulk processing of caselaw corpus to build unified deontic logic system."""
+            try:
+                from .logic_integration.caselaw_bulk_processor import (
+                    CaselawBulkProcessor, BulkProcessingConfig
+                )
+                from datetime import datetime
+                
+                data = request.json or {}
+                
+                # Extract configuration from request
+                caselaw_directories = data.get('caselaw_directories', [])
+                if not caselaw_directories:
+                    return jsonify({"error": "At least one caselaw directory is required"}), 400
+                
+                # Validate directories exist
+                import os
+                valid_directories = []
+                for directory in caselaw_directories:
+                    directory = directory.strip()
+                    if directory and os.path.exists(directory):
+                        valid_directories.append(directory)
+                    elif directory:
+                        self.logger.warning(f"Directory not found: {directory}")
+                
+                if not valid_directories:
+                    return jsonify({"error": "No valid caselaw directories found"}), 400
+                
+                # Create processing configuration
+                config = BulkProcessingConfig(
+                    caselaw_directories=valid_directories,
+                    output_directory=data.get('output_directory', 'unified_deontic_logic_system'),
+                    max_concurrent_documents=data.get('max_concurrent_documents', 5),
+                    enable_parallel_processing=data.get('enable_parallel_processing', True),
+                    min_precedent_strength=data.get('min_precedent_strength', 0.5),
+                    enable_consistency_validation=data.get('enable_consistency_validation', True),
+                    jurisdictions_filter=data.get('jurisdictions_filter') or None,
+                    legal_domains_filter=data.get('legal_domains_filter') or None
+                )
+                
+                # Handle date filtering
+                if data.get('start_date'):
+                    try:
+                        start_date = datetime.fromisoformat(data['start_date'])
+                        config.date_range = (start_date, config.date_range[1])
+                    except ValueError:
+                        pass
+                
+                if data.get('end_date'):
+                    try:
+                        end_date = datetime.fromisoformat(data['end_date'])
+                        config.date_range = (config.date_range[0], end_date)
+                    except ValueError:
+                        pass
+                
+                # Create session ID for tracking
+                import uuid
+                session_id = str(uuid.uuid4())
+                
+                # Initialize processor
+                processor = CaselawBulkProcessor(config)
+                
+                # Store session for tracking
+                if not hasattr(self, 'bulk_processing_sessions'):
+                    self.bulk_processing_sessions = {}
+                
+                self.bulk_processing_sessions[session_id] = {
+                    "id": session_id,
+                    "processor": processor,
+                    "config": config,
+                    "status": "starting",
+                    "start_time": datetime.now().isoformat(),
+                    "progress": 0.0,
+                    "stats": processor.stats.__dict__,
+                    "output_directory": config.output_directory
+                }
+                
+                # Start async processing
+                asyncio.create_task(self._process_caselaw_bulk(session_id, processor))
+                
+                self.logger.info(f"Started bulk caselaw processing session: {session_id}")
+                
+                return jsonify({
+                    "success": True,
+                    "session_id": session_id,
+                    "status": "started",
+                    "directories": valid_directories,
+                    "output_directory": config.output_directory
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Bulk caselaw processing failed to start: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>')
+        def api_get_bulk_processing_status(session_id):
+            """Get bulk processing session status."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                
+                # Update stats if processor is available
+                if 'processor' in session and session['processor']:
+                    session['stats'] = {
+                        k: v for k, v in session['processor'].stats.__dict__.items()
+                        if not k.startswith('_') and not callable(v)
+                    }
+                    
+                    # Convert sets to lists for JSON serialization
+                    if 'jurisdictions_processed' in session['stats']:
+                        session['stats']['jurisdictions_processed'] = list(session['stats']['jurisdictions_processed'])
+                    if 'legal_domains_processed' in session['stats']:
+                        session['stats']['legal_domains_processed'] = list(session['stats']['legal_domains_processed'])
+                    
+                    # Calculate progress
+                    total = session['stats'].get('total_documents', 0)
+                    processed = session['stats'].get('processed_documents', 0)
+                    if total > 0:
+                        session['progress'] = (processed / total) * 100
+                
+                return jsonify(session)
+            
+            return jsonify({"error": "Session not found"}), 404
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/stop', methods=['POST'])
+        def api_stop_bulk_processing(session_id):
+            """Stop bulk processing session."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                session['status'] = 'stopped'
+                
+                # Note: In a production environment, you would need to implement
+                # proper async task cancellation here
+                
+                return jsonify({"success": True, "status": "stopped"})
+            
+            return jsonify({"error": "Session not found"}), 404
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/download')
+        def api_download_bulk_processing_results(session_id):
+            """Download bulk processing results."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                output_dir = session.get('output_directory', 'unified_deontic_logic_system')
+                
+                # In a production environment, you would create a ZIP file
+                # of the output directory and return it as a download
+                import os
+                if os.path.exists(output_dir):
+                    return jsonify({
+                        "success": True,
+                        "message": f"Results available in {output_dir}",
+                        "files": os.listdir(output_dir) if os.path.exists(output_dir) else []
+                    })
+                else:
+                    return jsonify({"error": "Results not found"}), 404
+            
+            return jsonify({"error": "Session not found"}), 404
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/log')
+        def api_get_bulk_processing_log(session_id):
+            """Get bulk processing log."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                
+                # Return processing log
+                log_data = {
+                    "session_id": session_id,
+                    "start_time": session.get('start_time'),
+                    "status": session.get('status'),
+                    "stats": session.get('stats', {}),
+                    "config": {
+                        "caselaw_directories": session['config'].caselaw_directories,
+                        "output_directory": session['config'].output_directory,
+                        "max_concurrent_documents": session['config'].max_concurrent_documents,
+                        "enable_parallel_processing": session['config'].enable_parallel_processing
+                    } if 'config' in session else {}
+                }
+                
+                return jsonify(log_data)
+            
+            return jsonify({"error": "Session not found"}), 404
+
         @self.app.route('/api/mcp/caselaw/query_theorems', methods=['POST'])
         def api_query_theorems():
             """Query relevant theorems using RAG retrieval."""
@@ -790,6 +985,41 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Theorem query failed: {e}")
                 return jsonify({"error": str(e)}), 500
+
+    async def _process_caselaw_bulk(self, session_id: str, processor) -> None:
+        """Async method to process caselaw bulk."""
+        try:
+            session = self.bulk_processing_sessions[session_id]
+            session['status'] = 'processing'
+            
+            # Run the bulk processing
+            stats = await processor.process_caselaw_corpus()
+            
+            # Update session with results
+            session['status'] = 'completed'
+            session['end_time'] = datetime.now().isoformat()
+            session['final_stats'] = {
+                k: v for k, v in stats.__dict__.items()
+                if not k.startswith('_') and not callable(v)
+            }
+            
+            # Convert sets to lists for JSON serialization
+            if 'jurisdictions_processed' in session['final_stats']:
+                session['final_stats']['jurisdictions_processed'] = list(session['final_stats']['jurisdictions_processed'])
+            if 'legal_domains_processed' in session['final_stats']:
+                session['final_stats']['legal_domains_processed'] = list(session['final_stats']['legal_domains_processed'])
+            
+            session['progress'] = 100.0
+            session['processing_time'] = str(stats.processing_time)
+            
+            self.logger.info(f"Bulk processing completed for session {session_id}: {stats.extracted_theorems} theorems")
+            
+        except Exception as e:
+            self.logger.error(f"Bulk processing failed for session {session_id}: {e}")
+            session = self.bulk_processing_sessions.get(session_id, {})
+            session['status'] = 'failed'
+            session['error'] = str(e)
+            session['end_time'] = datetime.now().isoformat()
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
