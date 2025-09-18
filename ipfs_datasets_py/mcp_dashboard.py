@@ -303,6 +303,9 @@ class MCPDashboard(AdminDashboard):
         if self.mcp_config and self.mcp_config.enable_investigation:
             self._setup_investigation_routes()
             
+        # Caselaw routes - Always enabled for temporal deontic logic RAG system
+        self._setup_caselaw_routes()
+            
         # Original MCP tool routes
         self._setup_mcp_tool_routes()
     
@@ -529,6 +532,265 @@ class MCPDashboard(AdminDashboard):
                 self.logger.error(f"Spatiotemporal mapping failed: {e}")
                 return jsonify({"error": str(e)}), 500
     
+    def _setup_caselaw_routes(self) -> None:
+        """Set up caselaw dashboard routes for temporal deontic logic RAG system."""
+        
+        @self.app.route('/mcp/caselaw')
+        def caselaw_dashboard():
+            """Render the caselaw analysis dashboard for temporal deontic logic RAG system."""
+            # Import temporal deontic logic components
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic_integration.deontic_logic_core import DeonticOperator
+                
+                # Initialize RAG store and get statistics
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                dashboard_data = {
+                    "theorem_count": len(rag_store.theorems),
+                    "jurisdictions": len(rag_store.jurisdiction_index),
+                    "legal_domains": len(rag_store.domain_index),
+                    "temporal_periods": len(rag_store.temporal_index),
+                    "available_operators": [op.name for op in DeonticOperator],
+                    "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "system_ready": True
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize caselaw dashboard: {e}")
+                dashboard_data = {
+                    "theorem_count": 0,
+                    "jurisdictions": 0,
+                    "legal_domains": 0,
+                    "temporal_periods": 0,
+                    "available_operators": [],
+                    "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "system_ready": False,
+                    "error_message": str(e)
+                }
+            
+            return render_template('admin/caselaw_dashboard.html', **dashboard_data)
+        
+        @self.app.route('/api/mcp/caselaw/add_theorem', methods=['POST'])
+        def api_add_theorem():
+            """Add a new temporal deontic logic theorem from caselaw."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from datetime import datetime
+                
+                data = request.json or {}
+                
+                # Extract theorem data from request
+                operator_str = data.get('operator', 'OBLIGATION')
+                proposition = data.get('proposition', '')
+                agent_name = data.get('agent_name', 'Unspecified Party')
+                jurisdiction = data.get('jurisdiction', 'Federal')
+                legal_domain = data.get('legal_domain', 'general')
+                source_case = data.get('source_case', 'Unknown Case')
+                precedent_strength = float(data.get('precedent_strength', 0.8))
+                
+                if not proposition:
+                    return jsonify({"error": "Proposition is required"}), 400
+                
+                # Create deontic formula
+                operator = DeonticOperator[operator_str]
+                agent = LegalAgent(agent_name.lower().replace(' ', '_'), agent_name, "person")
+                
+                formula = DeonticFormula(
+                    operator=operator,
+                    proposition=proposition,
+                    agent=agent,
+                    confidence=0.9,
+                    source_text=f"{agent_name} {operator_str.lower()} {proposition}"
+                )
+                
+                # Add to RAG store
+                rag_store = TemporalDeonticRAGStore()
+                
+                # Parse temporal scope
+                start_date = data.get('start_date')
+                end_date = data.get('end_date')
+                
+                temporal_scope = (
+                    datetime.fromisoformat(start_date) if start_date else datetime(2000, 1, 1),
+                    datetime.fromisoformat(end_date) if end_date else None
+                )
+                
+                theorem_id = rag_store.add_theorem(
+                    formula=formula,
+                    temporal_scope=temporal_scope,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain,
+                    source_case=source_case,
+                    precedent_strength=precedent_strength
+                )
+                
+                self.logger.info(f"Added theorem {theorem_id} from {source_case}")
+                
+                return jsonify({
+                    "success": True,
+                    "theorem_id": theorem_id,
+                    "message": f"Theorem added successfully from {source_case}"
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Failed to add theorem: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/caselaw/check_document', methods=['POST'])
+        def api_check_document_consistency():
+            """Check document consistency against temporal deontic logic theorems."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from datetime import datetime
+                
+                data = request.json or {}
+                document_text = data.get('document_text', '')
+                document_id = data.get('document_id', f'doc_{int(time.time())}')
+                jurisdiction = data.get('jurisdiction', 'Federal')
+                legal_domain = data.get('legal_domain', 'general')
+                
+                if not document_text:
+                    return jsonify({"error": "Document text is required"}), 400
+                
+                # Initialize checker
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                # Parse temporal context
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                # Check document consistency
+                analysis = checker.check_document(
+                    document_text=document_text,
+                    document_id=document_id,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain
+                )
+                
+                # Generate debug report
+                debug_report = checker.generate_debug_report(analysis)
+                
+                # Format response
+                result = {
+                    "document_id": analysis.document_id,
+                    "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                    "confidence_score": analysis.confidence_score,
+                    "formulas_extracted": len(analysis.extracted_formulas),
+                    "issues_found": len(analysis.issues_found),
+                    "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
+                    "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
+                    "processing_time": analysis.processing_time,
+                    "debug_report": {
+                        "total_issues": debug_report.total_issues,
+                        "critical_errors": debug_report.critical_errors,
+                        "warnings": debug_report.warnings,
+                        "suggestions": debug_report.suggestions,
+                        "issues": debug_report.issues[:10],  # Limit to first 10 issues
+                        "summary": debug_report.summary,
+                        "fix_suggestions": debug_report.fix_suggestions
+                    },
+                    "extracted_formulas": [
+                        {
+                            "operator": f.operator.name,
+                            "proposition": f.proposition,
+                            "agent": f.agent.name if f.agent else "Unspecified",
+                            "confidence": f.confidence
+                        } for f in analysis.extracted_formulas[:10]  # Limit to first 10
+                    ]
+                }
+                
+                self.logger.info(f"Document consistency check completed: {document_id}")
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Document consistency check failed: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/caselaw/query_theorems', methods=['POST'])
+        def api_query_theorems():
+            """Query relevant theorems using RAG retrieval."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from datetime import datetime
+                
+                data = request.json or {}
+                query_text = data.get('query_text', '')
+                operator_str = data.get('operator', 'OBLIGATION')
+                jurisdiction = data.get('jurisdiction')
+                legal_domain = data.get('legal_domain')
+                top_k = min(int(data.get('top_k', 10)), 50)  # Limit to 50
+                
+                if not query_text:
+                    return jsonify({"error": "Query text is required"}), 400
+                
+                # Create query formula
+                operator = DeonticOperator[operator_str]
+                agent = LegalAgent("query_agent", "Query Agent", "person")
+                
+                query_formula = DeonticFormula(
+                    operator=operator,
+                    proposition=query_text,
+                    agent=agent
+                )
+                
+                # Query RAG store
+                rag_store = TemporalDeonticRAGStore()
+                
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                relevant_theorems = rag_store.retrieve_relevant_theorems(
+                    query_formula=query_formula,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain,
+                    top_k=top_k
+                )
+                
+                # Format response
+                result = {
+                    "query": {
+                        "text": query_text,
+                        "operator": operator_str,
+                        "jurisdiction": jurisdiction,
+                        "legal_domain": legal_domain
+                    },
+                    "total_results": len(relevant_theorems),
+                    "theorems": [
+                        {
+                            "theorem_id": t.theorem_id,
+                            "operator": t.formula.operator.name,
+                            "proposition": t.formula.proposition,
+                            "agent": t.formula.agent.name if t.formula.agent else "Unspecified",
+                            "jurisdiction": t.jurisdiction,
+                            "legal_domain": t.legal_domain,
+                            "source_case": t.source_case,
+                            "precedent_strength": t.precedent_strength,
+                            "confidence": t.confidence,
+                            "temporal_scope": {
+                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
+                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
+                            }
+                        } for t in relevant_theorems
+                    ]
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Theorem query failed: {e}")
+                return jsonify({"error": str(e)}), 500
+
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
             

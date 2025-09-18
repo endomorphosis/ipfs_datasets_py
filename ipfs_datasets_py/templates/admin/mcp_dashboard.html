@@ -6,6 +6,7 @@
     <title>IPFS Datasets MCP Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container-fluid">
@@ -21,6 +22,11 @@
                         <li class="nav-item">
                             <a class="nav-link active" href="{{ url_for('mcp_dashboard') }}">
                                 MCP Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('caselaw_dashboard') }}">
+                                <i class="fas fa-gavel"></i> Caselaw Analysis
                             </a>
                         </li>
                     </ul>

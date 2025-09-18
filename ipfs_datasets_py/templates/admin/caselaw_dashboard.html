@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporal Deontic Logic RAG - Caselaw Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .caselaw-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 8px;
+        }
+        .theorem-card {
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+        }
+        .deontic-operator {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .obligation { background-color: #dc3545; color: white; }
+        .permission { background-color: #28a745; color: white; }
+        .prohibition { background-color: #ffc107; color: black; }
+        .status-consistent { color: #28a745; }
+        .status-conflicts { color: #dc3545; }
+        .conflict-item {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .demo-note {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0056b3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('index') }}">
+                                <i class="fas fa-home"></i> Main Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('mcp_dashboard') }}">
+                                <i class="fas fa-server"></i> MCP Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('caselaw_dashboard') }}">
+                                <i class="fas fa-gavel"></i> Caselaw Analysis
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <!-- Header -->
+                <div class="caselaw-header">
+                    <h1><i class="fas fa-gavel"></i> Temporal Deontic Logic RAG System</h1>
+                    <p class="lead mb-0">Legal document consistency checker using temporal deontic logic theorems derived from caselaw</p>
+                </div>
+
+                <!-- Demo Note -->
+                <div class="demo-note">
+                    <h5><i class="fas fa-info-circle"></i> Demonstration System</h5>
+                    <p class="mb-0">This dashboard demonstrates the temporal deontic logic RAG system that functions like a legal debugger. 
+                    It checks documents against temporal deontic logic theorems derived from caselaw to identify inconsistencies.</p>
+                </div>
+
+                <!-- System Status -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-database"></i> System Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>System Status:</strong>
+                                        <span class="badge badge-{{ 'success' if system_ready else 'danger' }}">
+                                            {{ 'Ready' if system_ready else 'Error' }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Theorems Loaded:</strong> {{ theorem_count }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Jurisdictions:</strong> {{ jurisdictions }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Legal Domains:</strong> {{ legal_domains }}
+                                    </div>
+                                </div>
+                                {% if not system_ready and error_message %}
+                                <div class="alert alert-warning mt-3">
+                                    <strong>System Error:</strong> {{ error_message }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <ul class="nav nav-tabs" id="caselawTabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="check-document-tab" data-toggle="tab" href="#check-document" role="tab">
+                                    <i class="fas fa-search"></i> Document Analysis
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="query-theorems-tab" data-toggle="tab" href="#query-theorems" role="tab">
+                                    <i class="fas fa-book-open"></i> Query Theorems
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="add-theorem-tab" data-toggle="tab" href="#add-theorem" role="tab">
+                                    <i class="fas fa-plus"></i> Add Theorem
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="caselawTabContent">
+                    <!-- Document Analysis Tab -->
+                    <div class="tab-pane fade show active" id="check-document" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-search"></i> Legal Document Consistency Checker</h5>
+                                <small class="text-muted">Analyze legal documents for consistency against temporal deontic logic theorems</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="documentCheckForm">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label for="documentText">Document Text:</label>
+                                                <textarea class="form-control" id="documentText" rows="8" 
+                                                    placeholder="Enter legal document text for analysis...">Employee may share confidential company information with external partners without any restrictions for business development purposes.</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="documentId">Document ID:</label>
+                                                <input type="text" class="form-control" id="documentId" 
+                                                    placeholder="e.g., contract_v1.0" value="test_document_001">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="jurisdiction">Jurisdiction:</label>
+                                                <select class="form-control" id="jurisdiction">
+                                                    <option value="Federal">Federal</option>
+                                                    <option value="State">State</option>
+                                                    <option value="International">International</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="legalDomain">Legal Domain:</label>
+                                                <select class="form-control" id="legalDomain">
+                                                    <option value="general">General</option>
+                                                    <option value="contract">Contract</option>
+                                                    <option value="employment">Employment</option>
+                                                    <option value="confidentiality">Confidentiality</option>
+                                                    <option value="professional_services">Professional Services</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-block">
+                                                <i class="fas fa-search"></i> Analyze Document
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="loading-spinner" id="documentCheckLoading">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Analyzing document for consistency...</p>
+                                </div>
+
+                                <div id="documentCheckResults" style="display: none;">
+                                    <!-- Results will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Query Theorems Tab -->
+                    <div class="tab-pane fade" id="query-theorems" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-book-open"></i> RAG-Based Theorem Retrieval</h5>
+                                <small class="text-muted">Query relevant legal theorems using semantic similarity</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="theoremQueryForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="queryText">Query Text:</label>
+                                                <textarea class="form-control" id="queryText" rows="4" 
+                                                    placeholder="Enter query to find relevant theorems...">share confidential information with third parties</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="queryOperator">Deontic Operator:</label>
+                                                <select class="form-control" id="queryOperator">
+                                                    <option value="OBLIGATION">Obligation (O)</option>
+                                                    <option value="PERMISSION">Permission (P)</option>
+                                                    <option value="PROHIBITION" selected>Prohibition (F)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="queryJurisdiction">Jurisdiction (Optional):</label>
+                                                <select class="form-control" id="queryJurisdiction">
+                                                    <option value="">Any</option>
+                                                    <option value="Federal">Federal</option>
+                                                    <option value="State">State</option>
+                                                    <option value="International">International</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="queryDomain">Legal Domain (Optional):</label>
+                                                <select class="form-control" id="queryDomain">
+                                                    <option value="">Any</option>
+                                                    <option value="contract">Contract</option>
+                                                    <option value="employment">Employment</option>
+                                                    <option value="confidentiality">Confidentiality</option>
+                                                    <option value="professional_services">Professional Services</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-info btn-block">
+                                                <i class="fas fa-search"></i> Query Theorems
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="loading-spinner" id="theoremQueryLoading">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Searching for relevant theorems...</p>
+                                </div>
+
+                                <div id="theoremQueryResults" style="display: none;">
+                                    <!-- Results will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Theorem Tab -->
+                    <div class="tab-pane fade" id="add-theorem" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-plus"></i> Add New Theorem from Caselaw</h5>
+                                <small class="text-muted">Add temporal deontic logic theorems derived from legal cases</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="addTheoremForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="theoremOperator">Deontic Operator:</label>
+                                                <select class="form-control" id="theoremOperator" required>
+                                                    <option value="OBLIGATION">Obligation (Must/Shall)</option>
+                                                    <option value="PERMISSION">Permission (May/Can)</option>
+                                                    <option value="PROHIBITION">Prohibition (Must Not/Shall Not)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="theoremProposition">Proposition:</label>
+                                                <textarea class="form-control" id="theoremProposition" rows="3" 
+                                                    placeholder="Enter the legal proposition..." required>disclose confidential information to unauthorized third parties</textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="theoremAgent">Legal Agent:</label>
+                                                <input type="text" class="form-control" id="theoremAgent" 
+                                                    placeholder="e.g., Employee, Contractor, Professional" value="Professional" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="theoremSourceCase">Source Case:</label>
+                                                <input type="text" class="form-control" id="theoremSourceCase" 
+                                                    placeholder="e.g., Smith v. Jones (2023)" value="Confidentiality Standards Act (2015)" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="theoremJurisdiction">Jurisdiction:</label>
+                                                <select class="form-control" id="theoremJurisdiction" required>
+                                                    <option value="Federal" selected>Federal</option>
+                                                    <option value="State">State</option>
+                                                    <option value="International">International</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="theoremDomain">Legal Domain:</label>
+                                                <select class="form-control" id="theoremDomain" required>
+                                                    <option value="general">General</option>
+                                                    <option value="contract">Contract</option>
+                                                    <option value="employment">Employment</option>
+                                                    <option value="confidentiality" selected>Confidentiality</option>
+                                                    <option value="professional_services">Professional Services</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="theoremPrecedentStrength">Precedent Strength (0.0-1.0):</label>
+                                                <input type="number" class="form-control" id="theoremPrecedentStrength" 
+                                                    min="0" max="1" step="0.1" value="0.9" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-success btn-block">
+                                                <i class="fas fa-plus"></i> Add Theorem
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="loading-spinner" id="addTheoremLoading">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Adding theorem to knowledge base...</p>
+                                </div>
+
+                                <div id="addTheoremResults" style="display: none;">
+                                    <!-- Results will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Document Check Form
+            $('#documentCheckForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    document_text: $('#documentText').val(),
+                    document_id: $('#documentId').val(),
+                    jurisdiction: $('#jurisdiction').val(),
+                    legal_domain: $('#legalDomain').val(),
+                    temporal_context: new Date().toISOString()
+                };
+                
+                $('#documentCheckLoading').show();
+                $('#documentCheckResults').hide();
+                
+                $.ajax({
+                    url: '/api/mcp/caselaw/check_document', 
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(data) {
+                        displayDocumentResults(data);
+                    },
+                    error: function(xhr) {
+                        const error = xhr.responseJSON?.error || 'Document analysis failed';
+                        $('#documentCheckResults').html(
+                            `<div class="alert alert-danger"><strong>Error:</strong> ${error}</div>`
+                        ).show();
+                    },
+                    complete: function() {
+                        $('#documentCheckLoading').hide();
+                    }
+                });
+            });
+            
+            // Theorem Query Form
+            $('#theoremQueryForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    query_text: $('#queryText').val(),
+                    operator: $('#queryOperator').val(),
+                    jurisdiction: $('#queryJurisdiction').val() || null,
+                    legal_domain: $('#queryDomain').val() || null,
+                    temporal_context: new Date().toISOString(),
+                    top_k: 10
+                };
+                
+                $('#theoremQueryLoading').show();
+                $('#theoremQueryResults').hide();
+                
+                $.ajax({
+                    url: '/api/mcp/caselaw/query_theorems',
+                    method: 'POST', 
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(data) {
+                        displayQueryResults(data);
+                    },
+                    error: function(xhr) {
+                        const error = xhr.responseJSON?.error || 'Theorem query failed';
+                        $('#theoremQueryResults').html(
+                            `<div class="alert alert-danger"><strong>Error:</strong> ${error}</div>`
+                        ).show();
+                    },
+                    complete: function() {
+                        $('#theoremQueryLoading').hide();
+                    }
+                });
+            });
+            
+            // Add Theorem Form
+            $('#addTheoremForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    operator: $('#theoremOperator').val(),
+                    proposition: $('#theoremProposition').val(),
+                    agent_name: $('#theoremAgent').val(),
+                    source_case: $('#theoremSourceCase').val(),
+                    jurisdiction: $('#theoremJurisdiction').val(),
+                    legal_domain: $('#theoremDomain').val(),
+                    precedent_strength: parseFloat($('#theoremPrecedentStrength').val()),
+                    start_date: '2000-01-01T00:00:00',
+                    end_date: null
+                };
+                
+                $('#addTheoremLoading').show();
+                $('#addTheoremResults').hide();
+                
+                $.ajax({
+                    url: '/api/mcp/caselaw/add_theorem',
+                    method: 'POST',
+                    contentType: 'application/json', 
+                    data: JSON.stringify(formData),
+                    success: function(data) {
+                        if (data.success) {
+                            $('#addTheoremResults').html(
+                                `<div class="alert alert-success">
+                                    <strong>Success!</strong> ${data.message}
+                                    <br><small>Theorem ID: ${data.theorem_id}</small>
+                                </div>`
+                            ).show();
+                            $('#addTheoremForm')[0].reset();
+                        }
+                    },
+                    error: function(xhr) {
+                        const error = xhr.responseJSON?.error || 'Failed to add theorem';
+                        $('#addTheoremResults').html(
+                            `<div class="alert alert-danger"><strong>Error:</strong> ${error}</div>`
+                        ).show();
+                    },
+                    complete: function() {
+                        $('#addTheoremLoading').hide();
+                    }
+                });
+            });
+        });
+        
+        function displayDocumentResults(data) {
+            const isConsistent = data.is_consistent;
+            const statusClass = isConsistent ? 'status-consistent' : 'status-conflicts';
+            const statusIcon = isConsistent ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            const statusText = isConsistent ? 'CONSISTENT' : 'CONFLICTS FOUND';
+            
+            let html = `
+                <div class="mt-4">
+                    <h5><i class="fas fa-clipboard-check"></i> Analysis Results</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <strong>Status:</strong>
+                            <span class="${statusClass}">
+                                <i class="fas ${statusIcon}"></i> ${statusText}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Confidence:</strong> ${(data.confidence_score * 100).toFixed(1)}%
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Formulas Extracted:</strong> ${data.formulas_extracted}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Processing Time:</strong> ${(data.processing_time * 1000).toFixed(1)}ms
+                        </div>
+                    </div>
+            `;
+            
+            if (data.debug_report.issues.length > 0) {
+                html += `<h6>Issues Found (${data.debug_report.total_issues}):</h6>`;
+                data.debug_report.issues.forEach(issue => {
+                    const severityClass = issue.severity === 'critical' ? 'danger' : 
+                                        issue.severity === 'medium' ? 'warning' : 'info';
+                    html += `
+                        <div class="alert alert-${severityClass}">
+                            <strong>${issue.severity.toUpperCase()}:</strong> ${issue.message}
+                            ${issue.suggestion ? `<br><small><strong>Fix:</strong> ${issue.suggestion}</small>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            if (data.extracted_formulas.length > 0) {
+                html += `<h6>Extracted Formulas:</h6>`;
+                data.extracted_formulas.forEach(formula => {
+                    const operatorClass = formula.operator.toLowerCase();
+                    html += `
+                        <div class="card theorem-card mb-2">
+                            <div class="card-body py-2">
+                                <span class="deontic-operator ${operatorClass}">${formula.operator}</span>
+                                <strong>${formula.agent}:</strong> ${formula.proposition}
+                                <small class="text-muted float-right">Confidence: ${(formula.confidence * 100).toFixed(1)}%</small>
+                            </div> 
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '</div>';
+            $('#documentCheckResults').html(html).show();
+        }
+        
+        function displayQueryResults(data) {
+            let html = `
+                <div class="mt-4">
+                    <h5><i class="fas fa-search-plus"></i> Query Results</h5>
+                    <p><strong>Found ${data.total_results} relevant theorems</strong> for "${data.query.text}"</p>
+            `;
+            
+            if (data.theorems.length > 0) {
+                data.theorems.forEach(theorem => {
+                    const operatorClass = theorem.operator.toLowerCase();
+                    html += `
+                        <div class="card theorem-card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <span class="deontic-operator ${operatorClass}">${theorem.operator}</span>
+                                        <strong>${theorem.agent}:</strong> ${theorem.proposition}
+                                        <br><small class="text-muted">Source: ${theorem.source_case}</small>
+                                    </div>
+                                    <div class="col-md-4 text-right">
+                                        <small>
+                                            <strong>Jurisdiction:</strong> ${theorem.jurisdiction}<br>
+                                            <strong>Domain:</strong> ${theorem.legal_domain}<br>
+                                            <strong>Precedent Strength:</strong> ${(theorem.precedent_strength * 100).toFixed(0)}%
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div class="alert alert-info">No theorems found matching your query.</div>';
+            }
+            
+            html += '</div>';
+            $('#theoremQueryResults').html(html).show();
+        }
+    </script>
+</body>
+</html>
