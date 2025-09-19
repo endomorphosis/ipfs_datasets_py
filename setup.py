@@ -85,8 +85,8 @@ setup(
     author="IPFS Datasets Contributors",
     entry_points={
         'console_scripts': [
-            'ipfs-datasets=ipfs_datasets_cli:cli_main',
-            'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+            'ipfs-datasets=integrated_cli:cli_main',
+            'ipfs-datasets-cli=integrated_cli:cli_main',
         ],
     },
     classifiers=[

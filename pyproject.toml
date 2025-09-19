@@ -133,5 +133,5 @@ Homepage = "https://github.com/endomorphosis/ipfs_datasets_py"
 Issues = "https://github.com/endomorphosis/ipfs_datasets_py/issues"
 
 [project.scripts]
-ipfs-datasets = "ipfs_datasets_cli:cli_main"
-ipfs-datasets-cli = "ipfs_datasets_cli:cli_main"
+ipfs-datasets = "integrated_cli:cli_main"
+ipfs-datasets-cli = "integrated_cli:cli_main"
