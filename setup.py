@@ -4,6 +4,7 @@ setup(
     name="ipfs_datasets_py",
     version='0.2.0',
     packages=find_packages(),
+    py_modules=["ipfs_datasets_cli"],
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
@@ -82,6 +83,12 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="IPFS Datasets Contributors",
+    entry_points={
+        'console_scripts': [
+            'ipfs-datasets=comprehensive_distributed_cli:cli_main',
+            'ipfs-datasets-cli=comprehensive_distributed_cli:cli_main',
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

@@ -303,6 +303,9 @@ class MCPDashboard(AdminDashboard):
         if self.mcp_config and self.mcp_config.enable_investigation:
             self._setup_investigation_routes()
             
+        # Caselaw routes - Always enabled for temporal deontic logic RAG system
+        self._setup_caselaw_routes()
+            
         # Original MCP tool routes
         self._setup_mcp_tool_routes()
     
@@ -529,6 +532,632 @@ class MCPDashboard(AdminDashboard):
                 self.logger.error(f"Spatiotemporal mapping failed: {e}")
                 return jsonify({"error": str(e)}), 500
     
+    def _setup_caselaw_routes(self) -> None:
+        """Set up caselaw dashboard routes for temporal deontic logic RAG system."""
+        
+        @self.app.route('/mcp/caselaw')
+        def caselaw_dashboard():
+            """Render the caselaw analysis dashboard for temporal deontic logic RAG system."""
+            # Import temporal deontic logic components
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic_integration.deontic_logic_core import DeonticOperator
+                
+                # Initialize RAG store and get statistics
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": len(rag_store.theorems),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
+                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
+                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "available_operators": [op.name for op in DeonticOperator],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": True
+                    },
+                    "mcp_enabled": True
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize caselaw dashboard: {e}")
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": 0,
+                        "jurisdictions": [],
+                        "legal_domains": [],
+                        "temporal_periods": 0,
+                        "available_operators": [],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": False,
+                        "error_message": str(e)
+                    },
+                    "mcp_enabled": True
+                }
+            
+            return render_template('admin/caselaw_dashboard_mcp.html', **dashboard_data)
+        
+        @self.app.route('/mcp/caselaw/rest')
+        def caselaw_dashboard_rest():
+            """Render the REST-based caselaw analysis dashboard (legacy)."""
+            # Import temporal deontic logic components
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic_integration.deontic_logic_core import DeonticOperator
+                
+                # Initialize RAG store and get statistics
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                dashboard_data = {
+                    "theorem_count": len(rag_store.theorems),
+                    "jurisdictions": len(getattr(rag_store, 'jurisdiction_index', {})),
+                    "legal_domains": len(getattr(rag_store, 'domain_index', {})),
+                    "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                    "available_operators": [op.name for op in DeonticOperator],
+                    "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "system_ready": True
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize caselaw dashboard: {e}")
+                dashboard_data = {
+                    "theorem_count": 0,
+                    "jurisdictions": 0,
+                    "legal_domains": 0,
+                    "temporal_periods": 0,
+                    "available_operators": [],
+                    "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "system_ready": False,
+                    "error_message": str(e)
+                }
+            
+            return render_template('admin/caselaw_dashboard.html', **dashboard_data)
+        
+        @self.app.route('/api/mcp/caselaw/add_theorem', methods=['POST'])
+        def api_add_theorem():
+            """Add a new temporal deontic logic theorem from caselaw."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from datetime import datetime
+                
+                data = request.json or {}
+                
+                # Extract theorem data from request
+                operator_str = data.get('operator', 'OBLIGATION')
+                proposition = data.get('proposition', '')
+                agent_name = data.get('agent_name', 'Unspecified Party')
+                jurisdiction = data.get('jurisdiction', 'Federal')
+                legal_domain = data.get('legal_domain', 'general')
+                source_case = data.get('source_case', 'Unknown Case')
+                precedent_strength = float(data.get('precedent_strength', 0.8))
+                
+                if not proposition:
+                    return jsonify({"error": "Proposition is required"}), 400
+                
+                # Create deontic formula
+                operator = DeonticOperator[operator_str]
+                agent = LegalAgent(agent_name.lower().replace(' ', '_'), agent_name, "person")
+                
+                formula = DeonticFormula(
+                    operator=operator,
+                    proposition=proposition,
+                    agent=agent,
+                    confidence=0.9,
+                    source_text=f"{agent_name} {operator_str.lower()} {proposition}"
+                )
+                
+                # Add to RAG store
+                rag_store = TemporalDeonticRAGStore()
+                
+                # Parse temporal scope
+                start_date = data.get('start_date')
+                end_date = data.get('end_date')
+                
+                temporal_scope = (
+                    datetime.fromisoformat(start_date) if start_date else datetime(2000, 1, 1),
+                    datetime.fromisoformat(end_date) if end_date else None
+                )
+                
+                theorem_id = rag_store.add_theorem(
+                    formula=formula,
+                    temporal_scope=temporal_scope,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain,
+                    source_case=source_case,
+                    precedent_strength=precedent_strength
+                )
+                
+                self.logger.info(f"Added theorem {theorem_id} from {source_case}")
+                
+                return jsonify({
+                    "success": True,
+                    "theorem_id": theorem_id,
+                    "message": f"Theorem added successfully from {source_case}"
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Failed to add theorem: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/caselaw/check_document', methods=['POST'])
+        def api_check_document_consistency():
+            """Check document consistency against temporal deontic logic theorems."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from datetime import datetime
+                
+                data = request.json or {}
+                document_text = data.get('document_text', '')
+                document_id = data.get('document_id', f'doc_{int(time.time())}')
+                jurisdiction = data.get('jurisdiction', 'Federal')
+                legal_domain = data.get('legal_domain', 'general')
+                
+                if not document_text:
+                    return jsonify({"error": "Document text is required"}), 400
+                
+                # Initialize checker
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                # Parse temporal context
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                # Check document consistency
+                analysis = checker.check_document(
+                    document_text=document_text,
+                    document_id=document_id,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain
+                )
+                
+                # Generate debug report
+                debug_report = checker.generate_debug_report(analysis)
+                
+                # Format response
+                result = {
+                    "document_id": analysis.document_id,
+                    "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                    "confidence_score": analysis.confidence_score,
+                    "formulas_extracted": len(analysis.extracted_formulas),
+                    "issues_found": len(analysis.issues_found),
+                    "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
+                    "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
+                    "processing_time": analysis.processing_time,
+                    "debug_report": {
+                        "total_issues": debug_report.total_issues,
+                        "critical_errors": debug_report.critical_errors,
+                        "warnings": debug_report.warnings,
+                        "suggestions": debug_report.suggestions,
+                        "issues": debug_report.issues[:10],  # Limit to first 10 issues
+                        "summary": debug_report.summary,
+                        "fix_suggestions": debug_report.fix_suggestions
+                    },
+                    "extracted_formulas": [
+                        {
+                            "operator": f.operator.name,
+                            "proposition": f.proposition,
+                            "agent": f.agent.name if f.agent else "Unspecified",
+                            "confidence": f.confidence
+                        } for f in analysis.extracted_formulas[:10]  # Limit to first 10
+                    ]
+                }
+                
+                self.logger.info(f"Document consistency check completed: {document_id}")
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Document consistency check failed: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process', methods=['POST'])
+        def api_bulk_process_caselaw():
+            """Start bulk processing of caselaw corpus to build unified deontic logic system."""
+            try:
+                from .logic_integration.caselaw_bulk_processor import (
+                    CaselawBulkProcessor, BulkProcessingConfig
+                )
+                from datetime import datetime
+                
+                data = request.json or {}
+                
+                # Extract configuration from request
+                caselaw_directories = data.get('caselaw_directories', [])
+                if not caselaw_directories:
+                    return jsonify({"error": "At least one caselaw directory is required"}), 400
+                
+                # Validate directories exist
+                import os
+                valid_directories = []
+                for directory in caselaw_directories:
+                    directory = directory.strip()
+                    if directory and os.path.exists(directory):
+                        valid_directories.append(directory)
+                    elif directory:
+                        self.logger.warning(f"Directory not found: {directory}")
+                
+                if not valid_directories:
+                    return jsonify({"error": "No valid caselaw directories found"}), 400
+                
+                # Create processing configuration
+                config = BulkProcessingConfig(
+                    caselaw_directories=valid_directories,
+                    output_directory=data.get('output_directory', 'unified_deontic_logic_system'),
+                    max_concurrent_documents=data.get('max_concurrent_documents', 5),
+                    enable_parallel_processing=data.get('enable_parallel_processing', True),
+                    min_precedent_strength=data.get('min_precedent_strength', 0.5),
+                    enable_consistency_validation=data.get('enable_consistency_validation', True),
+                    jurisdictions_filter=data.get('jurisdictions_filter') or None,
+                    legal_domains_filter=data.get('legal_domains_filter') or None
+                )
+                
+                # Handle date filtering
+                if data.get('start_date'):
+                    try:
+                        start_date = datetime.fromisoformat(data['start_date'])
+                        config.date_range = (start_date, config.date_range[1])
+                    except ValueError:
+                        pass
+                
+                if data.get('end_date'):
+                    try:
+                        end_date = datetime.fromisoformat(data['end_date'])
+                        config.date_range = (config.date_range[0], end_date)
+                    except ValueError:
+                        pass
+                
+                # Create session ID for tracking
+                import uuid
+                session_id = str(uuid.uuid4())
+                
+                # Initialize processor
+                processor = CaselawBulkProcessor(config)
+                
+                # Store session for tracking
+                if not hasattr(self, 'bulk_processing_sessions'):
+                    self.bulk_processing_sessions = {}
+                
+                self.bulk_processing_sessions[session_id] = {
+                    "id": session_id,
+                    "processor": processor,
+                    "config": config,
+                    "status": "starting",
+                    "start_time": datetime.now().isoformat(),
+                    "progress": 0.0,
+                    "stats": processor.stats.__dict__,
+                    "output_directory": config.output_directory
+                }
+                
+                # Start async processing
+                asyncio.create_task(self._process_caselaw_bulk(session_id, processor))
+                
+                self.logger.info(f"Started bulk caselaw processing session: {session_id}")
+                
+                return jsonify({
+                    "success": True,
+                    "session_id": session_id,
+                    "status": "started",
+                    "directories": valid_directories,
+                    "output_directory": config.output_directory
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Bulk caselaw processing failed to start: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>')
+        def api_get_bulk_processing_status(session_id):
+            """Get bulk processing session status."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                
+                # Update stats if processor is available
+                if 'processor' in session and session['processor']:
+                    session['stats'] = {
+                        k: v for k, v in session['processor'].stats.__dict__.items()
+                        if not k.startswith('_') and not callable(v)
+                    }
+                    
+                    # Convert sets to lists for JSON serialization
+                    if 'jurisdictions_processed' in session['stats']:
+                        session['stats']['jurisdictions_processed'] = list(session['stats']['jurisdictions_processed'])
+                    if 'legal_domains_processed' in session['stats']:
+                        session['stats']['legal_domains_processed'] = list(session['stats']['legal_domains_processed'])
+                    
+                    # Calculate progress
+                    total = session['stats'].get('total_documents', 0)
+                    processed = session['stats'].get('processed_documents', 0)
+                    if total > 0:
+                        session['progress'] = (processed / total) * 100
+                
+                return jsonify(session)
+            
+            return jsonify({"error": "Session not found"}), 404
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/stop', methods=['POST'])
+        def api_stop_bulk_processing(session_id):
+            """Stop bulk processing session."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                session['status'] = 'stopped'
+                
+                # Note: In a production environment, you would need to implement
+                # proper async task cancellation here
+                
+                return jsonify({"success": True, "status": "stopped"})
+            
+            return jsonify({"error": "Session not found"}), 404
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/download')
+        def api_download_bulk_processing_results(session_id):
+            """Download bulk processing results."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                output_dir = session.get('output_directory', 'unified_deontic_logic_system')
+                
+                # In a production environment, you would create a ZIP file
+                # of the output directory and return it as a download
+                import os
+                if os.path.exists(output_dir):
+                    return jsonify({
+                        "success": True,
+                        "message": f"Results available in {output_dir}",
+                        "files": os.listdir(output_dir) if os.path.exists(output_dir) else []
+                    })
+                else:
+                    return jsonify({"error": "Results not found"}), 404
+            
+            return jsonify({"error": "Session not found"}), 404
+        
+        @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>/log')
+        def api_get_bulk_processing_log(session_id):
+            """Get bulk processing log."""
+            if not hasattr(self, 'bulk_processing_sessions'):
+                return jsonify({"error": "Session not found"}), 404
+            
+            if session_id in self.bulk_processing_sessions:
+                session = self.bulk_processing_sessions[session_id]
+                
+                # Return processing log
+                log_data = {
+                    "session_id": session_id,
+                    "start_time": session.get('start_time'),
+                    "status": session.get('status'),
+                    "stats": session.get('stats', {}),
+                    "config": {
+                        "caselaw_directories": session['config'].caselaw_directories,
+                        "output_directory": session['config'].output_directory,
+                        "max_concurrent_documents": session['config'].max_concurrent_documents,
+                        "enable_parallel_processing": session['config'].enable_parallel_processing
+                    } if 'config' in session else {}
+                }
+                
+                return jsonify(log_data)
+            
+            return jsonify({"error": "Session not found"}), 404
+
+        @self.app.route('/api/mcp/caselaw/query_theorems', methods=['POST'])
+        def api_query_theorems():
+            """Query relevant theorems using RAG retrieval."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from datetime import datetime
+                
+                data = request.json or {}
+                query_text = data.get('query_text', '')
+                operator_str = data.get('operator', 'OBLIGATION')
+                jurisdiction = data.get('jurisdiction')
+                legal_domain = data.get('legal_domain')
+                top_k = min(int(data.get('top_k', 10)), 50)  # Limit to 50
+                
+                if not query_text:
+                    return jsonify({"error": "Query text is required"}), 400
+                
+                # Create query formula
+                operator = DeonticOperator[operator_str]
+                agent = LegalAgent("query_agent", "Query Agent", "person")
+                
+                query_formula = DeonticFormula(
+                    operator=operator,
+                    proposition=query_text,
+                    agent=agent
+                )
+                
+                # Query RAG store
+                rag_store = TemporalDeonticRAGStore()
+                
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                relevant_theorems = rag_store.retrieve_relevant_theorems(
+                    query_formula=query_formula,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain,
+                    top_k=top_k
+                )
+                
+                # Format response
+                result = {
+                    "query": {
+                        "text": query_text,
+                        "operator": operator_str,
+                        "jurisdiction": jurisdiction,
+                        "legal_domain": legal_domain
+                    },
+                    "total_results": len(relevant_theorems),
+                    "theorems": [
+                        {
+                            "theorem_id": t.theorem_id,
+                            "operator": t.formula.operator.name,
+                            "proposition": t.formula.proposition,
+                            "agent": t.formula.agent.name if t.formula.agent else "Unspecified",
+                            "jurisdiction": t.jurisdiction,
+                            "legal_domain": t.legal_domain,
+                            "source_case": t.source_case,
+                            "precedent_strength": t.precedent_strength,
+                            "confidence": t.confidence,
+                            "temporal_scope": {
+                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
+                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
+                            }
+                        } for t in relevant_theorems
+                    ]
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Theorem query failed: {e}")
+                return jsonify({"error": str(e)}), 500
+
+    async def _process_caselaw_bulk(self, session_id: str, processor) -> None:
+        """Async method to process caselaw bulk."""
+        try:
+            session = self.bulk_processing_sessions[session_id]
+            session['status'] = 'processing'
+            
+            # Run the bulk processing
+            stats = await processor.process_caselaw_corpus()
+            
+            # Update session with results
+            session['status'] = 'completed'
+            session['end_time'] = datetime.now().isoformat()
+            session['final_stats'] = {
+                k: v for k, v in stats.__dict__.items()
+                if not k.startswith('_') and not callable(v)
+            }
+            
+            # Convert sets to lists for JSON serialization
+            if 'jurisdictions_processed' in session['final_stats']:
+                session['final_stats']['jurisdictions_processed'] = list(session['final_stats']['jurisdictions_processed'])
+            if 'legal_domains_processed' in session['final_stats']:
+                session['final_stats']['legal_domains_processed'] = list(session['final_stats']['legal_domains_processed'])
+            
+            session['progress'] = 100.0
+            session['processing_time'] = str(stats.processing_time)
+            
+            self.logger.info(f"Bulk processing completed for session {session_id}: {stats.extracted_theorems} theorems")
+            
+        except Exception as e:
+            self.logger.error(f"Bulk processing failed for session {session_id}: {e}")
+            session = self.bulk_processing_sessions.get(session_id, {})
+            session['status'] = 'failed'
+            session['error'] = str(e)
+            session['end_time'] = datetime.now().isoformat()
+        
+        # Add MCP JSON-RPC endpoints for temporal deontic logic tools
+        @self.app.route('/api/mcp/caselaw/jsonrpc', methods=['POST'])
+        def mcp_caselaw_jsonrpc():
+            """MCP JSON-RPC endpoint for temporal deontic logic tools."""
+            try:
+                from .mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+                
+                request_data = request.json or {}
+                
+                # Basic JSON-RPC validation
+                if 'method' not in request_data:
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "error": {"code": -32600, "message": "Invalid Request - missing method"},
+                        "id": request_data.get('id')
+                    }), 400
+                
+                method = request_data['method']
+                params = request_data.get('params', {})
+                request_id = request_data.get('id', 1)
+                
+                # Map JSON-RPC methods to MCP tools
+                tool_mapping = {
+                    'check_document_consistency': 'check_document_consistency',
+                    'query_theorems': 'query_theorems',
+                    'bulk_process_caselaw': 'bulk_process_caselaw',
+                    'add_theorem': 'add_theorem'
+                }
+                
+                if method not in tool_mapping:
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "error": {"code": -32601, "message": f"Method not found: {method}"},
+                        "id": request_id
+                    }), 404
+                
+                # Execute MCP tool
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                try:
+                    result = loop.run_until_complete(
+                        temporal_deontic_mcp_server.call_tool_direct(tool_mapping[method], params)
+                    )
+                    
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "result": result,
+                        "id": request_id
+                    })
+                    
+                finally:
+                    loop.close()
+                
+            except Exception as e:
+                self.logger.error(f"MCP JSON-RPC call failed: {e}")
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": "Internal error",
+                        "data": str(e)
+                    },
+                    "id": request_data.get('id')
+                }), 500
+        
+        @self.app.route('/api/mcp/caselaw/tools')
+        def mcp_caselaw_tools():
+            """Get available temporal deontic logic MCP tools."""
+            try:
+                from .mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+                
+                tool_schemas = temporal_deontic_mcp_server.get_tool_schemas()
+                
+                return jsonify({
+                    "success": True,
+                    "tools": tool_schemas,
+                    "tool_count": len(tool_schemas),
+                    "server_info": {
+                        "name": "Temporal Deontic Logic MCP Server",
+                        "version": "1.0.0",
+                        "description": "MCP tools for legal document consistency checking"
+                    }
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Failed to get MCP tools: {e}")
+                return jsonify({
+                    "success": False,
+                    "error": str(e)
+                }), 500
+
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
             
