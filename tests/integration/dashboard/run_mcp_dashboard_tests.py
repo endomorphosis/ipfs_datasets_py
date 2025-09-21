@@ -211,7 +211,7 @@ class MCPDashboardTestRunner:
         
         try:
             result = subprocess.run([
-                "playwright", "install", self.browser
+                sys.executable, "-m", "playwright", "install", self.browser
             ], capture_output=True, text=True, timeout=300)
             
             if result.returncode == 0:
@@ -295,7 +295,7 @@ class MCPDashboardTestRunner:
         
         # Build pytest command
         cmd = [
-            "python", "-m", "pytest",
+            sys.executable, "-m", "pytest",
             "tests/integration/dashboard/comprehensive_mcp_dashboard_test.py",
             "-v",
             f"--timeout={config['timeout']}",

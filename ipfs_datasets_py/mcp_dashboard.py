@@ -47,6 +47,29 @@ except Exception:  # pragma: no cover
     def dataclass(cls):  # type: ignore
         return cls
 
+# Lightweight stubs for optional components to satisfy name resolution
+class AdvancedAnalyticsDashboard:  # stub
+    pass
+
+class MCPInvestigationDashboardConfig:  # stub
+    def __init__(self, *args, **kwargs):
+        pass
+
+class MCPInvestigationDashboard:  # stub
+    def __init__(self, *args, **kwargs):
+        pass
+
+class CompleteGraphRAGSystem:  # stub
+    pass
+
+class EnhancedGraphRAGSystem:  # stub
+    pass
+
+class CompleteProcessingConfiguration:  # stub
+    def __init__(self, *args, **kwargs):
+        self.processing_mode = kwargs.get("processing_mode")
+        self.output_directory = kwargs.get("output_directory")
+
 
 @dataclass
 class MCPDashboardConfig(DashboardConfig):
@@ -59,6 +82,7 @@ class MCPDashboardConfig(DashboardConfig):
     enable_investigation: bool = True
     enable_real_time_monitoring: bool = True
     enable_tool_execution: bool = False
+    max_concurrent_tools: int = 4
     open_browser: bool = False
     data_dir: str = os.path.expanduser("~/.ipfs_datasets/mcp_dashboard")
     graphrag_output_dir: str = os.path.expanduser("~/.ipfs_datasets/graphrag_output")
@@ -116,20 +140,10 @@ class MCPDashboard(AdminDashboard):
         super().configure(config)
         self.mcp_config = config
         
-        # Initialize MCP server if available; otherwise, use a simple in-process placeholder
-        if MCP_SERVER_AVAILABLE:
-            try:
-                self.mcp_server = SimpleIPFSDatasetsMCPServer(configs)
-                self._discover_mcp_tools()
-            except Exception as e:
-                self.logger.error(f"Failed to initialize MCP server: {e}")
-                self.mcp_server = SimpleInProcessMCPServer()
-                self._discover_mcp_tools()
-                self.logger.info("Using SimpleInProcessMCPServer (placeholder)")
-        else:
-            self.mcp_server = SimpleInProcessMCPServer()
-            self._discover_mcp_tools()
-            self.logger.info("Using SimpleInProcessMCPServer (placeholder)")
+        # Initialize simple in-process placeholder MCP server for status and discovery
+        self.mcp_server = SimpleInProcessMCPServer()
+        self._discover_mcp_tools()
+        self.logger.info("Using SimpleInProcessMCPServer (placeholder)")
         
         # Initialize GraphRAG components if enabled and available
         if config.enable_graphrag and GRAPHRAG_AVAILABLE:
@@ -1505,19 +1519,53 @@ class MCPDashboard(AdminDashboard):
             "timestamp": datetime.now().isoformat(),
             "execution_time": 3.2
         }
-        """Execute a tool synchronously (placeholder implementation)."""
-        # This is a placeholder - in a real implementation, this would
-        # call the actual MCP tool execution logic
-        
-        # Simulate some processing time
-        time.sleep(0.5)
-        
-        return {
-            "message": f"Tool {category}/{tool_name} executed successfully",
-            "parameters_received": params,
-            "execution_time": 0.5,
-            "timestamp": datetime.now().isoformat()
-        }
+
+    def _execute_tool_sync(self, category: str, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Dynamically import and execute an MCP tool.
+
+        Looks up module path `ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}`
+        and executes the async function with the same name. Awaits if coroutine.
+        """
+        import importlib
+        import inspect
+
+        module_path = f"ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}"
+        func_name = tool_name
+        start = time.time()
+        try:
+            mod = importlib.import_module(module_path)
+            fn = getattr(mod, func_name, None)
+            if fn is None:
+                raise AttributeError(f"Function '{func_name}' not found in {module_path}")
+
+            # Execute, awaiting if coroutine
+            if inspect.iscoroutinefunction(fn):
+                # Run in a fresh event loop to avoid conflicts
+                import asyncio
+                loop = asyncio.new_event_loop()
+                try:
+                    asyncio.set_event_loop(loop)
+                    result = loop.run_until_complete(fn(**params))
+                finally:
+                    loop.close()
+            else:
+                result = fn(**params)
+
+            # Normalize to dict
+            if not isinstance(result, dict):
+                result = {"status": "success", "result": result}
+
+            result.setdefault("status", "success")
+            result.setdefault("tool", f"{category}/{tool_name}")
+            result.setdefault("duration_s", round(time.time() - start, 3))
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "tool": f"{category}/{tool_name}",
+                "duration_s": round(time.time() - start, 3)
+            }
         
     def _get_comprehensive_status(self) -> Dict[str, Any]:
         """Get comprehensive status including all dashboard components."""
@@ -3412,7 +3460,8 @@ if __name__ == "__main__":
         enable_analytics=True,
         enable_rag_query=True,
         enable_investigation=True,
-        enable_real_time_monitoring=True
+        enable_real_time_monitoring=True,
+        enable_tool_execution=True
     )
     
     if os.environ.get("MCP_DASHBOARD_BLOCKING", "0") in ("1", "true", "True"):
