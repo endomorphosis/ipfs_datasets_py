@@ -8,6 +8,8 @@ with minimal imports. Only loads what's needed when needed.
 """
 
 import sys
+import os
+import subprocess
 from pathlib import Path
 
 
@@ -109,17 +111,88 @@ def execute_heavy_command(args):
         if command == "mcp":
             subcommand = args[1] if len(args) > 1 else None
             if subcommand == "start":
-                print("MCP server starting...")
-                print("Use: python -m ipfs_datasets_py.mcp_dashboard")
-                return
+                host = "127.0.0.1"
+                port = "8899"
+                blocking = False
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token in ("--host", "-H") and i + 1 < len(extra):
+                        host = str(extra[i + 1])
+                        i += 2
+                    elif token in ("--port", "-p") and i + 1 < len(extra):
+                        port = str(extra[i + 1])
+                        i += 2
+                    elif token in ("--blocking", "-b"):
+                        blocking = True
+                        i += 1
+                    else:
+                        i += 1
+
+                env = os.environ.copy()
+                env["MCP_DASHBOARD_HOST"] = host
+                env["MCP_DASHBOARD_PORT"] = str(port)
+                if blocking:
+                    env["MCP_DASHBOARD_BLOCKING"] = "1"
+
+                cmd = [sys.executable, "-m", "ipfs_datasets_py.mcp_dashboard"]
+                try:
+                    if blocking:
+                        print(f"Starting MCP dashboard (blocking) at http://{host}:{port}/mcp ...")
+                        subprocess.run(cmd, env=env, check=False)
+                    else:
+                        print(f"Starting MCP dashboard at http://{host}:{port}/mcp (background)...")
+                        stdout = subprocess.DEVNULL
+                        stderr = subprocess.DEVNULL
+                        subprocess.Popen(cmd, env=env, stdout=stdout, stderr=stderr)
+                        print("MCP dashboard launched.")
+                    return
+                except Exception as e:
+                    print(f"Failed to start MCP dashboard: {e}")
+                    print("Tip: try 'python -m ipfs_datasets_py.mcp_dashboard' for diagnostics")
+                    return
+
             elif subcommand == "status":
-                print("MCP Status: Available")
+                # Lightweight status check via HTTP if requests is available
+                host = "127.0.0.1"
+                port = "8899"
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token in ("--host", "-H") and i + 1 < len(extra):
+                        host = str(extra[i + 1])
+                        i += 2
+                    elif token in ("--port", "-p") and i + 1 < len(extra):
+                        port = str(extra[i + 1])
+                        i += 2
+                    else:
+                        i += 1
+                try:
+                    import requests
+                    url = f"http://{host}:{port}/api/mcp/status"
+                    r = requests.get(url, timeout=2)
+                    if r.ok:
+                        print(f"MCP Dashboard status at {url}: {r.status_code}")
+                        try:
+                            data = r.json()
+                            print(json.dumps({
+                                "status": data.get("status"),
+                                "tools_available": data.get("tools_available")
+                            }, indent=2))
+                        except Exception:
+                            print(r.text[:300])
+                    else:
+                        print(f"MCP Dashboard not healthy (HTTP {r.status_code}) at {url}")
+                except Exception as e:
+                    print(f"MCP status check failed: {e}")
                 return
         
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
-        from . import mcp_server
+    # Heavy subsystem imports would go here when needed
         # Continue with heavy operations...
         
     except ImportError as e:
