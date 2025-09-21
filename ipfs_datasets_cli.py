@@ -153,6 +153,16 @@ def execute_heavy_command(args):
                     print("Tip: try 'python -m ipfs_datasets_py.mcp_dashboard' for diagnostics")
                     return
 
+            elif subcommand == "stop":
+                # Best-effort stop via pkill on the dashboard module
+                try:
+                    # Prefer graceful stop in future; for now use pkill
+                    subprocess.run(["pkill", "-f", "ipfs_datasets_py.mcp_dashboard"], check=False)
+                    print("MCP dashboard stop signal sent (pkill).")
+                except Exception as e:
+                    print(f"Failed to stop MCP dashboard: {e}")
+                return
+
             elif subcommand == "status":
                 # Lightweight status check via HTTP if requests is available
                 host = "127.0.0.1"
