@@ -2656,7 +2656,7 @@ class MCPDashboard(AdminDashboard):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investigation Dashboard - Comprehensive Analysis with Geospatial Mapping</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .investigation-section { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
@@ -2899,8 +2899,15 @@ class MCPDashboard(AdminDashboard):
     </div>
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+    <script>
+        if (!window.L) {
+            var lf = document.createElement('script');
+            lf.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            document.head.appendChild(lf);
+        }
+    </script>
     <script>
         let map;
         let markers = [];
@@ -3117,8 +3124,8 @@ class MCPDashboard(AdminDashboard):
                     if (data.center_coordinates) {
                         const centerMarker = L.marker([data.center_coordinates[0], data.center_coordinates[1]], {
                             icon: L.icon({
-                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                                iconUrl: '{{ url_for('static', filename='css/images/marker-icon.png') }}',
+                                shadowUrl: '{{ url_for('static', filename='css/images/marker-shadow.png') }}',
                                 iconSize: [25, 41],
                                 iconAnchor: [12, 41],
                                 popupAnchor: [1, -34],

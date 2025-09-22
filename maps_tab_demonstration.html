@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investigation Dashboard - Maps Tab Integration Demo</title>
+    <link rel="stylesheet" href="ipfs_datasets_py/static/css/bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="ipfs_datasets_py/static/css/leaflet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -232,8 +234,10 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="ipfs_datasets_py/static/js/bootstrap5.bundle.min.js"></script>
+    <script>if (typeof bootstrap === 'undefined') { var b=document.createElement('script'); b.src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js'; document.head.appendChild(b);} </script>
+    <script src="ipfs_datasets_py/static/js/leaflet.js"></script>
+    <script>if (typeof L === 'undefined') { var lf=document.createElement('script'); lf.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; document.head.appendChild(lf);} </script>
     <script>
         let map;
         let markers = [];
@@ -386,8 +390,8 @@
             // Add center marker
             const centerMarker = L.marker([40.7128, -74.0060], {
                 icon: L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconUrl: 'ipfs_datasets_py/static/css/images/marker-icon.png',
+                    shadowUrl: 'ipfs_datasets_py/static/css/images/marker-shadow.png',
                     iconSize: [25, 41],
                     iconAnchor: [12, 41],
                     popupAnchor: [1, -34],

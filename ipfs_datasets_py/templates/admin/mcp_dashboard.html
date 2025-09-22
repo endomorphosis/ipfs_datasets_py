@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPFS Datasets MCP Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -186,16 +188,27 @@
         </div>
     </div>
 
-        <!-- Prefer CDN assets; fallback to local if unavailable -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJ+Y3VQS7B1UhtF0Q5cHGNyE7f3GJZ5b8m1w8=" crossorigin="anonymous"></script>
+        <!-- Local assets first; fallback to CDN if missing -->
+        <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
         <script>
             if (!window.jQuery) {
                 var s = document.createElement('script');
-                s.src = "{{ url_for('static', filename='js/jquery.min.js') }}";
+                s.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+                s.crossOrigin = "anonymous";
+                s.integrity = "sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=";
                 document.head.appendChild(s);
             }
         </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2LcC1iC2eGzZrUpP2iG6aI6Y4GZCXxY1wQnMZ4Zx1N" crossorigin="anonymous"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+        <script>
+            if (typeof bootstrap === 'undefined') {
+                var b = document.createElement('script');
+                b.src = "https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js";
+                b.crossOrigin = "anonymous";
+                b.integrity = "sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct";
+                document.head.appendChild(b);
+            }
+        </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
         $(document).ready(function() {
