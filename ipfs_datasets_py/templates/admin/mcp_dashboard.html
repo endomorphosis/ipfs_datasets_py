@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
 </head>
 <body>
     <div class="container-fluid">
@@ -192,62 +192,76 @@
         <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
         <script>
             if (!window.jQuery) {
-                var s = document.createElement('script');
-                s.src = "https://code.jquery.com/jquery-3.6.0.min.js";
-                s.crossOrigin = "anonymous";
-                s.integrity = "sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=";
-                document.head.appendChild(s);
+                document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\\/script>');
             }
+        </script>
+        <script>
+            // Ensure $ alias is available once jQuery is present
+            (function ensureDollar(){
+                if (window.jQuery && !window.$) { window.$ = window.jQuery; }
+                if (!window.$) { setTimeout(ensureDollar, 25); }
+            })();
         </script>
         <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
         <script>
             if (typeof bootstrap === 'undefined') {
-                var b = document.createElement('script');
-                b.src = "https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js";
-                b.crossOrigin = "anonymous";
-                b.integrity = "sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct";
-                document.head.appendChild(b);
+                document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"><\\/script>');
             }
         </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
         $(document).ready(function() {
-            // Initialize MCP SDK
-            window.mcpSDK = new MCPClient('{{ request.host_url }}api/mcp');
-            
-            // Tool execution handlers
-            $('.execute-tool-btn').click(function() {
-                const card = $(this).closest('.tool-card');
-                const category = card.data('category');
-                const tool = card.data('tool');
-                
-                $('#toolName').val(category + '/' + tool);
-                $('#toolExecutionModal').modal('show');
-            });
-            
-            $('#executeToolBtn').click(function() {
-                const toolName = $('#toolName').val().split('/');
-                const category = toolName[0];
-                const tool = toolName[1];
-                const parameters = $('#toolParameters').val();
-                
+            function bootDashboard() {
                 try {
-                    const params = parameters ? JSON.parse(parameters) : {};
-                    window.mcpSDK.executeTool(category, tool, params)
-                        .then(result => {
-                            alert('Tool executed successfully!');
-                            $('#toolExecutionModal').modal('hide');
-                            location.reload();
-                        })
-                        .catch(error => {
-                            alert('Tool execution failed: ' + error.message);
-                        });
+                    if (typeof window.MCPClient !== 'function') {
+                        throw new ReferenceError('MCPClient not ready');
+                    }
+                    // Initialize MCP SDK
+                    window.mcpSDK = new MCPClient('{{ request.host_url }}api/mcp');
                 } catch (e) {
-                    alert('Invalid JSON parameters: ' + e.message);
+                    setTimeout(bootDashboard, 50);
+                    return;
                 }
-            });
+
+                // Tool execution handlers
+                $('.execute-tool-btn').click(function() {
+                    const card = $(this).closest('.tool-card');
+                    const category = card.data('category');
+                    const tool = card.data('tool');
+
+                    $('#toolName').val(category + '/' + tool);
+                    $('#toolExecutionModal').modal('show');
+                });
+
+                $('#executeToolBtn').click(function() {
+                    const toolName = $('#toolName').val().split('/');
+                    const category = toolName[0];
+                    const tool = toolName[1];
+                    const parameters = $('#toolParameters').val();
+
+                    try {
+                        const params = parameters ? JSON.parse(parameters) : {};
+                        window.mcpSDK.executeTool(category, tool, params)
+                            .then(result => {
+                                alert('Tool executed successfully!');
+                                $('#toolExecutionModal').modal('hide');
+                                location.reload();
+                            })
+                            .catch(error => {
+                                alert('Tool execution failed: ' + error.message);
+                            });
+                    } catch (e) {
+                        alert('Invalid JSON parameters: ' + e.message);
+                    }
+                });
+            }
+
+            (function waitForDeps(){
+                if (window.MCPClient && window.$) { bootDashboard(); }
+                else { setTimeout(waitForDeps, 25); }
+            })();
         });
-        
+
         function refreshDashboard() {
             location.reload();
         }

@@ -1975,125 +1975,157 @@ class MCPDashboard(AdminDashboard):
         </div>
     </div>
 
+    <!-- Local assets first with safe fallbacks -->
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script>
+        if (!window.jQuery) {
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\\/script>');
+        }
+    </script>
+    <script>
+        (function ensureDollar(){
+            if (window.jQuery && !window.$) { window.$ = window.jQuery; }
+            if (!window.$) { setTimeout(ensureDollar, 25); }
+        })();
+    </script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        if (typeof bootstrap === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"><\\/script>');
+        }
+    </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
         $(document).ready(function() {
-            // Initialize MCP SDK
-            window.mcpSDK = new MCPClient('{{ request.host_url }}api/mcp');
-            
-            // Tool filtering
-            $('#toolSearch, #categoryFilter').on('input change', function() {
-                filterTools();
-            });
-            
-            function filterTools() {
-                const searchTerm = $('#toolSearch').val().toLowerCase();
-                const selectedCategory = $('#categoryFilter').val();
-                
-                $('.category-section').each(function() {
-                    const category = $(this).data('category');
-                    let categoryVisible = false;
-                    
-                    if (!selectedCategory || category === selectedCategory) {
-                        $(this).find('.tool-card').each(function() {
-                            const toolName = $(this).data('tool').toLowerCase();
-                            const toolDescription = $(this).find('.card-text').text().toLowerCase();
-                            
-                            if (!searchTerm || toolName.includes(searchTerm) || toolDescription.includes(searchTerm)) {
-                                $(this).show();
-                                categoryVisible = true;
-                            } else {
-                                $(this).hide();
-                            }
-                        });
-                    }
-                    
-                    $(this).toggle(categoryVisible);
-                });
-            }
-            
-            // Tool execution handlers
-            $('.execute-tool-btn').click(function() {
-                const card = $(this).closest('.tool-card');
-                const category = card.data('category');
-                const tool = card.data('tool');
-                
-                $('#toolName').val(category + '/' + tool);
-                $('#toolParameters').val('{}');
-                $('#toolExecutionModal').modal('show');
-            });
-            
-            $('#executeToolBtn').click(function() {
-                const toolName = $('#toolName').val().split('/');
-                const category = toolName[0];
-                const tool = toolName[1];
-                const parameters = $('#toolParameters').val();
-                
+            function bootDashboard() {
                 try {
-                    const params = parameters ? JSON.parse(parameters) : {};
+                    if (typeof window.MCPClient !== 'function') {
+                        throw new ReferenceError('MCPClient not ready');
+                    }
+                    // Initialize MCP SDK only when available
+                    window.mcpSDK = new MCPClient('{{ request.host_url }}api/mcp');
+                } catch (e) {
+                    setTimeout(bootDashboard, 50);
+                    return;
+                }
+
+                // Tool filtering
+                $('#toolSearch, #categoryFilter').on('input change', function() {
+                    filterTools();
+                });
+                
+                function filterTools() {
+                    const searchTerm = $('#toolSearch').val().toLowerCase();
+                    const selectedCategory = $('#categoryFilter').val();
                     
-                    $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Executing...');
+                    $('.category-section').each(function() {
+                        const category = $(this).data('category');
+                        let categoryVisible = false;
+                        
+                        if (!selectedCategory || category === selectedCategory) {
+                            $(this).find('.tool-card').each(function() {
+                                const toolName = $(this).data('tool').toLowerCase();
+                                const toolDescription = $(this).find('.card-text').text().toLowerCase();
+                                
+                                if (!searchTerm || toolName.includes(searchTerm) || toolDescription.includes(searchTerm)) {
+                                    $(this).show();
+                                    categoryVisible = true;
+                                } else {
+                                    $(this).hide();
+                                }
+                            });
+                        }
+                        
+                        $(this).toggle(categoryVisible);
+                    });
+                }
+                
+                // Tool execution handlers
+                $('.execute-tool-btn').click(function() {
+                    const card = $(this).closest('.tool-card');
+                    const category = card.data('category');
+                    const tool = card.data('tool');
                     
-                    window.mcpSDK.executeTool(category, tool, params)
-                        .then(result => {
-                            $('#toolExecutionModal').modal('hide');
-                            $('#executionResult').text(JSON.stringify(result, null, 2));
+                    $('#toolName').val(category + '/' + tool);
+                    $('#toolParameters').val('{}');
+                    $('#toolExecutionModal').modal('show');
+                });
+                
+                $('#executeToolBtn').click(function() {
+                    const toolName = $('#toolName').val().split('/');
+                    const category = toolName[0];
+                    const tool = toolName[1];
+                    const parameters = $('#toolParameters').val();
+                    
+                    try {
+                        const params = parameters ? JSON.parse(parameters) : {};
+                        
+                        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Executing...');
+                        
+                        window.mcpSDK.executeTool(category, tool, params)
+                            .then(result => {
+                                $('#toolExecutionModal').modal('hide');
+                                $('#executionResult').text(JSON.stringify(result, null, 2));
+                                $('#executionResultModal').modal('show');
+                                refreshExecutionHistory();
+                            })
+                            .catch(error => {
+                                alert('Tool execution failed: ' + error.message);
+                            })
+                            .finally(() => {
+                                $(this).prop('disabled', false).html('<i class="fas fa-play"></i> Execute');
+                            });
+                    } catch (e) {
+                        alert('Invalid JSON parameters: ' + e.message);
+                        $(this).prop('disabled', false).html('<i class="fas fa-play"></i> Execute');
+                    }
+                });
+                
+                // View execution result
+                $('.view-execution-btn').click(function() {
+                    const executionId = $(this).data('id');
+                    
+                    fetch('/api/mcp/executions/' + executionId)
+                        .then(response => response.json())
+                        .then(data => {
+                            $('#executionResult').text(JSON.stringify(data, null, 2));
                             $('#executionResultModal').modal('show');
-                            refreshExecutionHistory();
                         })
                         .catch(error => {
-                            alert('Tool execution failed: ' + error.message);
-                        })
-                        .finally(() => {
-                            $(this).prop('disabled', false).html('<i class="fas fa-play"></i> Execute');
+                            alert('Failed to load execution details: ' + error.message);
                         });
-                } catch (e) {
-                    alert('Invalid JSON parameters: ' + e.message);
-                    $(this).prop('disabled', false).html('<i class="fas fa-play"></i> Execute');
-                }
-            });
-            
-            // View execution result
-            $('.view-execution-btn').click(function() {
-                const executionId = $(this).data('id');
+                });
                 
-                fetch('/api/mcp/executions/' + executionId)
-                    .then(response => response.json())
-                    .then(data => {
-                        $('#executionResult').text(JSON.stringify(data, null, 2));
-                        $('#executionResultModal').modal('show');
-                    })
-                    .catch(error => {
-                        alert('Failed to load execution details: ' + error.message);
-                    });
-            });
-            
-            // Auto-refresh status every 10 seconds
-            setInterval(function() {
-                updateSystemStatus();
-            }, 10000);
-            
-            function updateSystemStatus() {
-                fetch('/api/mcp/status')
-                    .then(response => response.json())
-                    .then(data => {
-                        // Update status indicators
-                        console.log('Status updated:', data);
-                    })
-                    .catch(error => {
-                        console.error('Status update failed:', error);
-                    });
+                // Auto-refresh status every 10 seconds
+                setInterval(function() {
+                    updateSystemStatus();
+                }, 10000);
+                
+                function updateSystemStatus() {
+                    fetch('/api/mcp/status')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update status indicators
+                            console.log('Status updated:', data);
+                        })
+                        .catch(error => {
+                            console.error('Status update failed:', error);
+                        });
+                }
+                
+                function refreshExecutionHistory() {
+                    location.reload(); // Simple refresh for now
+                }
+                
+                function refreshTools() {
+                    location.reload();
+                }
             }
-            
-            function refreshExecutionHistory() {
-                location.reload(); // Simple refresh for now
-            }
-            
-            function refreshTools() {
-                location.reload();
-            }
+
+            (function waitForDeps(){
+                if (window.MCPClient && window.$) { bootDashboard(); }
+                else { setTimeout(waitForDeps, 25); }
+            })();
         });
     </script>
 </body>
@@ -2657,7 +2689,7 @@ class MCPDashboard(AdminDashboard):
     <title>Investigation Dashboard - Comprehensive Analysis with Geospatial Mapping</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
     <style>
         .investigation-section { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
         .finding-card { border-left: 4px solid #fd7e14; }
@@ -2899,7 +2931,21 @@ class MCPDashboard(AdminDashboard):
     </div>
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script>
+        if (!window.jQuery) {
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\\/script>');
+        }
+        (function ensureDollar(){
+            if (window.jQuery && !window.$) { window.$ = window.jQuery; }
+            if (!window.$) { setTimeout(ensureDollar, 25); }
+        })();
+    </script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        if (typeof bootstrap === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"><\\/script>');
+        }
+    </script>
     <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
     <script>
         if (!window.L) {
