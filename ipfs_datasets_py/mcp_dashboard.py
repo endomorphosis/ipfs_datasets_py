@@ -1618,6 +1618,13 @@ class MCPDashboard(AdminDashboard):
             tools_info = self._discover_mcp_tools() or {}
             total_tools = sum(len(v) for v in tools_info.values())
 
+            from flask import request
+            try:
+                base_url = request.host_url.rstrip('/')
+                external_url = f"{base_url}/mcp"
+            except Exception:
+                external_url = None
+
             return {
                 "status": "running",
                 "server_type": type(self.mcp_server).__name__,
@@ -1630,6 +1637,7 @@ class MCPDashboard(AdminDashboard):
                     "port": self.mcp_config.mcp_server_port if self.mcp_config else 8001,
                     "tool_execution_enabled": getattr(self.mcp_config, "enable_tool_execution", False) if self.mcp_config else False,
                 },
+                "external_url": external_url,
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}

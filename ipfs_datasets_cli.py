@@ -28,6 +28,8 @@ Commands:
     info         System information
       status     Show system status
       version    Show version information
+            defaults   Show resolved host/port/gateway defaults
+    save-defaults  Persist host/port/gateway to config
       
     mcp          MCP server management  
       start      Start MCP server
@@ -43,9 +45,9 @@ Commands:
       load       Load a dataset
       convert    Convert dataset format
       
-    ipfs         IPFS operations
-      pin        Pin data to IPFS
-      get        Get data from IPFS
+        ipfs         IPFS operations
+            pin        Pin data to IPFS
+            get        Get data from IPFS (supports --gateway)
       
     vector       Vector operations
       create     Create vector embeddings
@@ -56,13 +58,27 @@ Options:
     --version    Show version information
     --json       Output in JSON format
     --verbose    Verbose output
+    --config     Path to CLI config JSON (overrides default)
+    --host, -H   Override dashboard host
+    --port, -p   Override dashboard port
+    --gateway, -g  Override IPFS HTTP gateway (ipfs get)
     
 Environment:
     IPFS_DATASETS_HOST  Default dashboard host (e.g., 127.0.0.1)
     IPFS_DATASETS_PORT  Default dashboard port (e.g., 8899)
+    IPFS_DATASETS_CLI_CONFIG  Path to CLI config JSON
+    IPFS_HTTP_GATEWAY   Default IPFS gateway (e.g., https://ipfs.io)
+    IPFS_DATASETS_IPFS_GATEWAY  Alternate env var for gateway
+
+Config:
+        ~/.ipfs_datasets/cli.json  Optional defaults for host/port, e.g.:
+            {"host": "127.0.0.1", "port": "8899", "gateway": "https://ipfs.io"}
+        Precedence: flags > env > config file > hardcoded defaults
 
 Examples:
     ipfs-datasets info status
+    ipfs-datasets info defaults --json
+    ipfs-datasets ipfs get QmHash --gateway https://ipfs.io --out /tmp/file
     ipfs-datasets mcp start
     ipfs-datasets tools categories
     ipfs-datasets dataset load ./data.json
@@ -84,6 +100,51 @@ def show_status():
     print("Version: 1.0.0")
     print("Python:", sys.version.split()[0])
     print("Path:", Path(__file__).parent)
+
+
+def _load_cli_config(config_override: str | None = None) -> dict:
+    """Load optional CLI config from ~/.ipfs_datasets/cli.json.
+    Returns empty dict if not present or invalid.
+    """
+    try:
+        if config_override:
+            cfg_path = Path(config_override)
+        else:
+            env_cfg = os.environ.get("IPFS_DATASETS_CLI_CONFIG")
+            cfg_path = Path(env_cfg) if env_cfg else (Path.home() / ".ipfs_datasets" / "cli.json")
+        if not cfg_path.exists():
+            return {}
+        data = json.loads(cfg_path.read_text())
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+    return {}
+
+
+def _default_host_port(config_override: str | None = None):
+    """Resolve default host/port using precedence: env > config > hardcoded."""
+    cfg = _load_cli_config(config_override)
+    host = os.environ.get("IPFS_DATASETS_HOST") or cfg.get("host") or "127.0.0.1"
+    port = os.environ.get("IPFS_DATASETS_PORT") or cfg.get("port") or "8899"
+    return str(host), str(port)
+
+
+def _default_gateway(config_override: str | None = None, override: str | None = None) -> str | None:
+    """Resolve default IPFS HTTP gateway.
+    Precedence: explicit override > env (IPFS_HTTP_GATEWAY or IPFS_DATASETS_IPFS_GATEWAY) > config > None.
+    """
+    if override:
+        return override
+    gw_env = os.environ.get("IPFS_HTTP_GATEWAY") or os.environ.get("IPFS_DATASETS_IPFS_GATEWAY")
+    if gw_env:
+        return gw_env
+    cfg = _load_cli_config(config_override)
+    if isinstance(cfg, dict):
+        gw = cfg.get("gateway")
+        if gw:
+            return gw
+    return None
 
 
 def execute_heavy_command(args):
@@ -111,8 +172,17 @@ def execute_heavy_command(args):
         
         if command == "tools":
             subcommand = args[1] if len(args) > 1 else None
-            host = os.environ.get("IPFS_DATASETS_HOST", "127.0.0.1")
-            port = os.environ.get("IPFS_DATASETS_PORT", "8899")
+            # parse global option --config first
+            config_override = None
+            if "--config" in args:
+                try:
+                    idx = args.index("--config")
+                    if idx + 1 < len(args):
+                        config_override = args[idx + 1]
+                        args = args[:idx] + args[idx+2:]
+                except Exception:
+                    pass
+            host, port = _default_host_port(config_override)
             # Parse common options for tools
             extra = args[2:]
             i = 0
@@ -218,13 +288,30 @@ def execute_heavy_command(args):
         
         if command == "ipfs":
             subcommand = args[1] if len(args) > 1 else None
-            host = os.environ.get("IPFS_DATASETS_HOST", "127.0.0.1")
-            port = os.environ.get("IPFS_DATASETS_PORT", "8899")
+            config_override = None
+            if "--config" in args:
+                try:
+                    idx = args.index("--config")
+                    if idx + 1 < len(args):
+                        config_override = args[idx + 1]
+                        args = args[:idx] + args[idx+2:]
+                except Exception:
+                    pass
+            host, port = _default_host_port(config_override)
             extra = args[2:]
             i = 0
             out_path = None
             path_arg = None
             cid_arg = None
+            gateway = None
+            # load default gateway from env or config
+            if not gateway:
+                gw_env = os.environ.get("IPFS_HTTP_GATEWAY") or os.environ.get("IPFS_DATASETS_IPFS_GATEWAY")
+                if gw_env:
+                    gateway = gw_env
+                else:
+                    cfg = _load_cli_config(config_override)
+                    gateway = cfg.get("gateway") if isinstance(cfg, dict) else None
             while i < len(extra):
                 token = extra[i]
                 if token in ("--host", "-H") and i + 1 < len(extra):
@@ -235,6 +322,9 @@ def execute_heavy_command(args):
                     i += 2
                 elif token in ("--out", "-o") and i + 1 < len(extra):
                     out_path = extra[i + 1]
+                    i += 2
+                elif token in ("--gateway", "-g") and i + 1 < len(extra):
+                    gateway = extra[i + 1]
                     i += 2
                 else:
                     # positional capture
@@ -255,6 +345,8 @@ def execute_heavy_command(args):
                     body = {"cid": cid_arg}
                     if out_path:
                         body["output_path"] = out_path
+                    if gateway:
+                        body["gateway"] = gateway
                     r = requests.post(url, json=body, timeout=30)
                     if r.ok:
                         if json_output:
@@ -292,8 +384,16 @@ def execute_heavy_command(args):
         if command == "mcp":
             subcommand = args[1] if len(args) > 1 else None
             if subcommand == "start":
-                host = os.environ.get("IPFS_DATASETS_HOST", "127.0.0.1")
-                port = os.environ.get("IPFS_DATASETS_PORT", "8899")
+                config_override = None
+                if "--config" in args:
+                    try:
+                        idx = args.index("--config")
+                        if idx + 1 < len(args):
+                            config_override = args[idx + 1]
+                            args = args[:idx] + args[idx+2:]
+                    except Exception:
+                        pass
+                host, port = _default_host_port(config_override)
                 blocking = False
                 extra = args[2:]
                 i = 0
@@ -346,8 +446,16 @@ def execute_heavy_command(args):
 
             elif subcommand == "status":
                 # Lightweight status check via HTTP if requests is available
-                host = os.environ.get("IPFS_DATASETS_HOST", "127.0.0.1")
-                port = os.environ.get("IPFS_DATASETS_PORT", "8899")
+                config_override = None
+                if "--config" in args:
+                    try:
+                        idx = args.index("--config")
+                        if idx + 1 < len(args):
+                            config_override = args[idx + 1]
+                            args = args[:idx] + args[idx+2:]
+                    except Exception:
+                        pass
+                host, port = _default_host_port(config_override)
                 extra = args[2:]
                 i = 0
                 while i < len(extra):
@@ -428,12 +536,48 @@ def main():
         if len(args) > 1:
             sub = args[1]
             if sub == 'status':
+                # Parse optional overrides to reflect resolved defaults in JSON
+                config_override = None
+                host_override = None
+                port_override = None
+                gateway_override = None
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token == '--config' and i + 1 < len(extra):
+                        config_override = extra[i + 1]
+                        i += 2
+                    elif token in ('--host', '-H') and i + 1 < len(extra):
+                        host_override = str(extra[i + 1])
+                        i += 2
+                    elif token in ('--port', '-p') and i + 1 < len(extra):
+                        port_override = str(extra[i + 1])
+                        i += 2
+                    elif token in ('--gateway', '-g') and i + 1 < len(extra):
+                        gateway_override = extra[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+
+                host_res, port_res = _default_host_port(config_override)
+                if host_override:
+                    host_res = host_override
+                if port_override:
+                    port_res = port_override
+                gateway_res = _default_gateway(config_override, gateway_override)
+
                 if json_output:
                     out = {
                         "status": "success",
                         "message": "CLI available",
                         "version": "1.0.0",
-                        "python": sys.version.split()[0]
+                        "python": sys.version.split()[0],
+                        "host": host_res,
+                        "port": port_res,
+                        "gateway": gateway_res,
+                        "dashboard_status_url": f"http://{host_res}:{port_res}/api/mcp/status",
+                        "dashboard_url": f"http://{host_res}:{port_res}/mcp"
                     }
                     print(json.dumps(out))
                 else:
@@ -441,12 +585,119 @@ def main():
                     print("System Status: CLI tool is available")
                     print("Version: 1.0.0")
                     print("Python:", sys.version.split()[0])
+                    print(f"Host: {host_res}")
+                    print(f"Port: {port_res}")
+                    print(f"Gateway: {gateway_res or 'None'}")
+                    print(f"Dashboard: http://{host_res}:{port_res}/mcp")
+                    print(f"Status API: http://{host_res}:{port_res}/api/mcp/status")
                 return
             if sub == 'version':
                 if json_output:
                     print(json.dumps({"version": "1.0.0"}))
                 else:
                     show_version()
+                return
+            if sub == 'defaults':
+                # Parse options for host/port/gateway/config
+                config_override = None
+                host_override = None
+                port_override = None
+                gateway_override = None
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token == '--config' and i + 1 < len(extra):
+                        config_override = extra[i + 1]
+                        i += 2
+                    elif token in ('--host', '-H') and i + 1 < len(extra):
+                        host_override = str(extra[i + 1])
+                        i += 2
+                    elif token in ('--port', '-p') and i + 1 < len(extra):
+                        port_override = str(extra[i + 1])
+                        i += 2
+                    elif token in ('--gateway', '-g') and i + 1 < len(extra):
+                        gateway_override = extra[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+
+                # Resolve with precedence: flags > env > config > defaults
+                host, port = _default_host_port(config_override)
+                if host_override:
+                    host = host_override
+                if port_override:
+                    port = port_override
+                gateway = _default_gateway(config_override, gateway_override)
+
+                if json_output:
+                    print(json.dumps({
+                        "host": host,
+                        "port": port,
+                        "gateway": gateway
+                    }))
+                else:
+                    print(f"Host: {host}")
+                    print(f"Port: {port}")
+                    print(f"Gateway: {gateway or 'None'}")
+                return
+            if sub == 'save-defaults':
+                # Persist host/port/gateway to config file
+                config_path = None
+                host_val = None
+                port_val = None
+                gateway_val = None
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token == '--config' and i + 1 < len(extra):
+                        config_path = extra[i + 1]
+                        i += 2
+                    elif token in ('--host', '-H') and i + 1 < len(extra):
+                        host_val = str(extra[i + 1])
+                        i += 2
+                    elif token in ('--port', '-p') and i + 1 < len(extra):
+                        port_val = str(extra[i + 1])
+                        i += 2
+                    elif token in ('--gateway', '-g') and i + 1 < len(extra):
+                        gateway_val = extra[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+
+                # Resolve current defaults then override with provided values
+                default_host, default_port = _default_host_port(config_path)
+                resolved_host = host_val or default_host
+                resolved_port = port_val or default_port
+                resolved_gateway = _default_gateway(config_path, gateway_val)
+
+                # Determine config file path
+                if not config_path:
+                    env_cfg = os.environ.get("IPFS_DATASETS_CLI_CONFIG")
+                    config_path = env_cfg if env_cfg else str(Path.home() / ".ipfs_datasets" / "cli.json")
+
+                try:
+                    cfg_path = Path(config_path)
+                    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+                    data = {
+                        "host": str(resolved_host),
+                        "port": str(resolved_port),
+                        **({"gateway": str(resolved_gateway)} if resolved_gateway else {})
+                    }
+                    cfg_path.write_text(json.dumps(data, indent=2))
+                    if json_output:
+                        print(json.dumps({"status": "saved", "path": str(cfg_path), **data}))
+                    else:
+                        print(f"Saved defaults to {cfg_path}")
+                        print(f"Host: {resolved_host}")
+                        print(f"Port: {resolved_port}")
+                        print(f"Gateway: {resolved_gateway or 'None'}")
+                except Exception as e:
+                    if json_output:
+                        print(json.dumps({"status": "error", "error": str(e)}))
+                    else:
+                        print(f"Failed to save defaults: {e}")
                 return
             if sub in ['list-tools', 'listtools', 'tools']:
                 # Minimal categories view without heavy imports
