@@ -371,7 +371,8 @@ class QueryEngine:
                  storage: Optional[IPLDStorage] = None,
                  embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
                  logger: logging.Logger = logger,
-                 torch_library: Optional[ModuleType] = None 
+                 torch_library: Optional[ModuleType] = None,
+                 sentence_transformer_class: Optional[SentenceTransformer] = None
                  ) -> None:
         """
         Initialize the QueryEngine with GraphRAG integration and semantic search capabilities.
@@ -442,6 +443,8 @@ class QueryEngine:
 
         if not isinstance(graphrag_integrator, GraphRAGIntegrator):
             raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
+        if not graphrag_integrator.initialized:
+            raise RuntimeError("graphrag_integrator must be initialized.")
 
         # try: TODO this breaks tests with mocks. Figure out how to handle this.
         #     # Try to access an instance attribute to ensure it's initialized
@@ -456,18 +459,26 @@ class QueryEngine:
         self.storage = storage or IPLDStorage()
         self.logger = logger
 
+        if not self.graphrag.initialized:
+            raise RuntimeError("GraphRAGIntegrator must be initialized before using QueryEngine")
+
         self.torch = torch_library or torch
+        self.sentence_transformer_class = sentence_transformer_class or SentenceTransformer
 
         # Initialize embedding model for semantic search
         try:
-            self.embedding_model = SentenceTransformer(embedding_model)
+            self.embedding_model = self.sentence_transformer_class(embedding_model)
             self.logger.info(f"Loaded embedding model: {embedding_model}")
         except ImportError as e:
             self.logger.error(f"Failed to load embedding model: {e}")
             raise ImportError("sentence-transformers library is required for semantic search") from e
         except Exception as e:
-            self.logger.warning(f"Unexpected failure loading embedding model: {e}")
-            raise RuntimeError(f"Unexpected failure to load embedding model '{embedding_model}': {e}") from e
+            if "not a valid model identifier" in str(e):
+                self.logger.error(f"Embedding model '{embedding_model}' not found or invalid.")
+                raise ValueError(f"Embedding model '{embedding_model}' not found or invalid.") from e
+            else:
+                self.logger.warning(f"Unexpected failure loading embedding model: {e}")
+                raise RuntimeError(f"Unexpected failure to load embedding model '{embedding_model}': {e}") from e
         
         # Query processing components
         self.query_processors = {

@@ -961,8 +961,6 @@ class WikipediaQueryExpander:
     in knowledge graph searches. It implements semantic expansion techniques specific to
     Wikipedia knowledge structures, leveraging both vector similarity and hierarchical
     category relationships to identify related content and broaden query scope.
-    This class serves as a core component for query optimization, supporting both
-    automatic expansion and configurable expansion strategies.
 
     Args:
         tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance for
@@ -1006,29 +1004,15 @@ class WikipediaQueryExpander:
         topics = expanded_query["expansions"]["topics"]
         categories = expanded_query["expansions"]["categories"]
         has_expansions = expanded_query["has_expansions"]
-
-    Notes:
-        - Vector similarity expansion requires compatible vector store implementation
-        - Category expansion leverages Wikipedia's hierarchical structure
-        - Similarity thresholds balance expansion quality with recall improvement
-        - Maximum expansion limits prevent performance degradation
-        - Tracer integration enables detailed expansion analysis and debugging
-        - Token-based matching handles category name variations automatically
     """
 
     def __init__(self, tracer: Optional[WikipediaKnowledgeGraphTracer] = None):
         """
         Initialize the Wikipedia query expander with configurable tracing support.
 
-        This method sets up the query expansion system with default parameters for
-        similarity thresholds, expansion limits, and optional tracer integration
-        for detailed logging and explanation of expansion decisions.
-
         Args:
-            tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance for
-                logging and explaining query expansion decisions during the expansion process.
-                Enables detailed tracking of expansion reasoning and performance analysis.
-                Defaults to None for basic operation without tracing.
+            tracer (Optional[WikipediaKnowledgeGraphTracer], optional): Tracer instance
+                Defaults to None.
 
         Attributes initialized:
             tracer (Optional[WikipediaKnowledgeGraphTracer]): Tracer instance for logging
@@ -1047,12 +1031,6 @@ class WikipediaQueryExpander:
             >>> expander_with_trace = WikipediaQueryExpander(tracer=knowledge_tracer)
             >>> expander_with_trace.tracer is not None
             True
-
-        Notes:
-            - Similarity threshold balances expansion quality with recall improvement
-            - Maximum expansions prevent performance degradation from scope explosion
-            - Tracer integration enables detailed expansion analysis and debugging
-            - Default parameters are optimized for Wikipedia knowledge graph characteristics
         """
         self.tracer = tracer
 
@@ -2104,15 +2082,42 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
         entities: List[str]
     ) -> Dict[str, Any]:
         """
-        Apply pattern-specific optimizations for Wikipedia queries.
+        Apply pattern-specific optimizations for Wikipedia queries based on detected patterns.
+
+        This method implements specialized optimization strategies for different types of
+        Wikipedia queries based on pattern detection results. Each pattern type receives
+        customized traversal strategies, relationship prioritization, and resource allocation
+        to optimize performance for specific query characteristics and user intentions.
 
         Args:
-            query (Dict): Query to optimize
-            pattern_type (str): Detected pattern type
-            entities (List[str]): Extracted entities
+            query (Dict[str, Any]): Query dictionary to optimize containing traversal
+            parameters, edge types, and other optimization settings that will be
+            modified based on the detected pattern type.
+            pattern_type (str): Detected pattern type from query text analysis including
+            "topic_lookup", "comparison", "definition", "cause_effect", or "list"
+            determining the optimization strategy to apply.
+            entities (List[str]): Extracted entities from pattern matching used for
+            entity-specific optimizations and target-focused traversal strategies.
 
         Returns:
-            Dict: Optimized query
+            Dict[str, Any]: Optimized query with pattern-specific modifications including
+            updated traversal strategy, prioritized edge types, target entities,
+            and other Wikipedia-specific optimization parameters.
+
+        Raises:
+            ValueError: If pattern_type is not recognized or entities list is invalid
+            KeyError: If query dictionary is missing required optimization parameters
+
+        Examples:
+            >>> rewriter = WikipediaGraphRAGQueryRewriter()
+            >>> query = {"traversal": {"edge_types": ["mentions", "subclass_of"]}}
+            >>> optimized = rewriter._apply_pattern_optimization(
+            ...     query, "definition", ["quantum entanglement"]
+            ... )
+            >>> optimized["traversal"]["strategy"]
+            'definition'
+            >>> optimized["traversal"]["prioritize_edge_types"]
+            ['instance_of', 'subclass_of', 'defined_as']
         """
         # Ensure traversal section exists
         if "traversal" not in query:

@@ -8,6 +8,7 @@ Integrates processed PDF content into GraphRAG knowledge graph:
 - Enables semantic querying and retrieval
 - Maintains IPLD data integrity
 """
+import asyncio
 import hashlib
 import logging
 import re
@@ -101,7 +102,13 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         - Works with properly formatted natural language queries
     """
     start_time = time.time()
-    module_logger.info(f"Extracting entities from query: {query}")
+    def _print_time(step: str = ""):
+        elapsed = time.time() - start_time
+        string = f"integrate_document elapsed time: {elapsed:.2f} seconds"
+        string = f"{step} - {string}" if step else string
+        print(string)
+
+    #module_logger.info(f"Extracting entities from query: {query}")
 
     # Input validation
     if not isinstance(query, str):
@@ -113,18 +120,21 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
     # Tokenize and tag
     tokens = word_tokenize(query)
     pos_tags = pos_tag(tokens)
-    
+    _print_time(step="Completed POS tagging")
+
     # Named Entity Recognition
+    # NOTE This takes half a second per chunk!
     entities = ne_chunk(pos_tags, binary=False)
-    module_logger.debug(f"NER tree: {entities}")
+    #module_logger.debug(f"NER tree: {entities}")
+    _print_time(step="Completed NER chunking")
 
     # Extract entities from NER tree
     entity_names = []
-    
+
     # Convert tree to IOB tags for easier processing
     iob_tags = tree2conlltags(entities)
-    module_logger.debug(f"IOB tags: {iob_tags}")
-    
+    #module_logger.debug(f"IOB tags: {iob_tags}")
+
     current_entity = []
     current_label = None
 
@@ -132,27 +142,26 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         if ner.startswith('B-'):  # Beginning of entity
             # Save previous entity if exists
             if current_entity:
-                module_logger.debug(f"Beginning entity: {current_entity} with label {current_label}")
+                #module_logger.debug(f"Beginning entity: {current_entity} with label {current_label}")
                 entity_names.append(' '.join(current_entity))
             # Start new entity
             current_entity = [word]
             current_label = ner[2:]
         elif ner.startswith('I-') and current_entity:  # Inside entity
-            module_logger.debug(f"Inside entity: {current_entity} with label {current_label}")
+            #module_logger.debug(f"Inside entity: {current_entity} with label {current_label}")
             current_entity.append(word)
         else:  # Outside entity
             # Save previous entity if exists
-            module_logger.debug(f"Outside entity: {current_entity} with label {current_label}")
+            #module_logger.debug(f"Outside entity: {current_entity} with label {current_label}")
             if current_entity:
                 entity_names.append(' '.join(current_entity))
             current_entity = []
             current_label = None
-    
     # Don't forget the last entity
     if current_entity:
         entity_names.append(' '.join(current_entity))
     
-    module_logger.debug(f"Found entities from NER: {entity_names}")
+    #module_logger.debug(f"Found entities from NER: {entity_names}")
 
     # Also find proper nouns that might not be caught by NER
     proper_nouns = []
@@ -180,7 +189,7 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
             len(noun_phrase) >= 3 and
             not _is_question_word(noun_phrase)):
             proper_nouns.append(noun_phrase)
-    
+
     # Combine NER results with proper noun detection
     all_entities = entity_names + proper_nouns
     
@@ -199,21 +208,21 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         if entity not in seen:
             seen.add(entity)
             unique_entities.append(entity)
-    
+
     # Filter out obvious non-entities
     filtered_entities = []
     for entity in unique_entities:
         module_logger.debug(entity)
         if not _is_question_word(entity) and len(entity.strip()) >= min_chars:
-            module_logger.debug(f"{entity} is a valid entity")
+            #module_logger.debug(f"{entity} is a valid entity")
             filtered_entities.append(entity)
 
-    module_logger.debug(f"filtered_entities:\n{filtered_entities}")
+    #module_logger.debug(f"filtered_entities:\n{filtered_entities}")
 
     # Check if numbers are in the query
     has_numbers = any(char.isdigit() for char in query)
     if has_numbers:
-        module_logger.debug("has_numbers is True")
+        #module_logger.debug("has_numbers is True")
         # Consider numbers as part of potential entities IF
         # - They precede or follow a stand-alone proper noun (e.g. 'Death Race 2000', '2020 Olympics')
         # - They are preceded by a determiner (e.g. 'the 19th century', 'The 1970s')
@@ -229,16 +238,16 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
             if entity_start != -1:
                 # Check for numbers before the entity
                 before_text = query[:entity_start].strip()
-                module_logger.debug(f"Check before entity: {before_text}")
+                #module_logger.debug(f"Check before entity: {before_text}")
                 if before_text and before_text[-1].isdigit():
                     # Find the full number before the entity
                     words_before = before_text.split()
-                    module_logger.debug(f"words_before: {words_before}")
+                    #module_logger.debug(f"words_before: {words_before}")
                     if words_before:
                         last_word = words_before[-1]
                         if any(char.isdigit() for char in last_word):
                             number_entity = f"{last_word} {entity}"
-                            module_logger.debug(f"Found number before entity: {number_entity}")
+                            #module_logger.debug(f"Found number before entity: {number_entity}")
                             if number_entity not in filtered_entities:
                                 filtered_entities.append(number_entity)
 
@@ -249,16 +258,16 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
                 if after_text and after_text[0].isdigit():
                     # Find the full number after the entity
                     words_after = after_text.split()
-                    module_logger.debug(f"Check after entity: {before_text}")
+                    #module_logger.debug(f"Check after entity: {before_text}")
                     if words_after:
                         first_word = words_after[0]
-                        module_logger.debug(f"first_word: {first_word}")
+                        #module_logger.debug(f"first_word: {first_word}")
                         if any(char.isdigit() for char in first_word):
                             number_entity = f"{entity} {first_word}"
-                            module_logger.debug(f"Found number after entity: {number_entity}")
+                            #module_logger.debug(f"Found number after entity: {number_entity}")
                             if number_entity not in filtered_entities:
                                 filtered_entities.append(number_entity)
-        
+
         # Consolidate entries
         # Ex: ['Main Street', 'San Francisco', 'New York', '123 Main Street', '123']
         # becomes ['San Francisco', 'New York', '123 Main Street']
@@ -269,7 +278,7 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
 
     end_time = time.time()
     module_logger.debug(f"Entity extraction completed in {end_time - start_time:.2f} seconds")
-    module_logger.debug(f"filtered_entities on return:\n{filtered_entities}")
+    #module_logger.debug(f"filtered_entities on return:\n{filtered_entities}")
     return filtered_entities
 
 def _is_question_word(word: str) -> bool:
@@ -783,6 +792,7 @@ class GraphRAGIntegrator:
             ValueError: If similarity_threshold or entity_extraction_confidence
               is not between 0.0 and 1.0
         """
+        self._initialized = False
         # Validate storage parameter
         if storage is not None and not isinstance(storage, IPLDStorage):
             for required_attr in ['store', 'retrieve']:
@@ -819,6 +829,12 @@ class GraphRAGIntegrator:
         # NetworkX graphs for analysis
         self.document_graphs: Dict[str, nx.DiGraph] = {}
         self.global_graph = nx.DiGraph()
+        self._initialized = True
+
+    @property
+    def initialized(self) -> bool:
+        """Indicates if the integrator has been properly initialized."""
+        return self._initialized
 
     async def integrate_document(self, llm_document: LLMDocument) -> KnowledgeGraph:
         """
@@ -863,6 +879,13 @@ class GraphRAGIntegrator:
             for large document sets. The resulting knowledge graph is automatically merged
             with existing graphs to maintain global consistency.
         """
+        debug_timer_start = time.time()
+        def _print_time(step: str = ""):
+            elapsed = time.time() - debug_timer_start
+            string = f"integrate_document elapsed time: {elapsed:.2f} seconds"
+            string = f"{step} - {string}" if step else string
+            print(string)
+
         # Input validation
         if llm_document is None:
             raise TypeError("llm_document cannot be None")
@@ -889,9 +912,11 @@ class GraphRAGIntegrator:
                           f"Overwriting existing knowledge graph.")
         
         self.logger.info(f"Starting GraphRAG integration for document: {llm_document.document_id}")
-        
+        _print_time(step="Start integration")
+
         # Extract entities from chunks
         entities = await self._extract_entities_from_chunks(llm_document.chunks)
+        _print_time(step="Entity extraction complete")
 
         # Extract relationships
         relationships = await self._extract_relationships(entities, llm_document.chunks)
@@ -974,6 +999,13 @@ class GraphRAGIntegrator:
             - Properties from different mentions are merged (first occurrence wins for conflicts)
             - Only entities with confidence >= self.entity_extraction_confidence are returned
         """
+        debug_timer_start = time.time()
+        def _print_time(step: str = ""):
+            elapsed = time.time() - debug_timer_start
+            string = f"integrate_document elapsed time: {elapsed:.2f} seconds"
+            string = f"{step} - {string}" if step else string
+            print(string)
+
         # Validate input types
         if not isinstance(chunks, list):
             raise TypeError("chunks must be a list")
@@ -985,8 +1017,9 @@ class GraphRAGIntegrator:
                 raise AttributeError("LLMChunk must have 'content' and 'chunk_id' attributes")
 
         entity_mentions = {}  # Track entity mentions across chunks
-        
-        for chunk in chunks:
+        chunk_entity_queue = asyncio.Queue()
+        _print_time(step="Start entity extraction from chunks")
+        for idx, chunk in enumerate(chunks, start=1):
             # Extract entities from chunk content
             try:
                 chunk_entities = await self._extract_entities_from_text(
@@ -998,21 +1031,25 @@ class GraphRAGIntegrator:
                 raise RuntimeError(f"Entity extraction service for chunk {chunk.chunk_id}: {e}") from e
             else:
                 self.logger.debug(f"chunk_entities: {chunk_entities}")
+                _print_time(step=f"Extracted entities from chunk {idx}/{len(chunks)}")
+                chunk_entity_queue.put_nowait((chunk, chunk_entities))
 
+        while not chunk_entity_queue.empty():
+            chunk, chunk_entities = await chunk_entity_queue.get()
             for entity_data in chunk_entities:
 
                 assert isinstance(entity_data, dict), \
                     f"expected entity_data to be dict, got {type(entity_data).__name__} instead"
 
                 entity_key = (entity_data['name'].lower(), entity_data['type'])
-                
+
                 if entity_key in entity_mentions:
                     # Update existing entity
                     existing_entity = entity_mentions[entity_key]
                     if chunk.chunk_id not in existing_entity.source_chunks:
                         existing_entity.source_chunks.append(chunk.chunk_id)
                     existing_entity.confidence = max(existing_entity.confidence, entity_data['confidence'])
-                    
+
                     # Merge properties (first occurrence wins for conflicts)
                     for key, value in entity_data.get('properties', {}).items():
                         if key not in existing_entity.properties:
@@ -1032,17 +1069,19 @@ class GraphRAGIntegrator:
                         properties=entity_data.get('properties', {}),
                         embedding=entity_data.get('embedding')
                     )
-                    
                     entity_mentions[entity_key] = entity
-        
+            _print_time(step=f"Processed chunk {idx}/{len(chunks)} for entity consolidation")
+        _print_time(step="Entity extraction from chunks complete")
+
         # Get all unique entities
         entities = list(entity_mentions.values())
-        
+
         # Filter entities by confidence
         filtered_entities = [
             entity for entity in entities 
             if entity.confidence >= self.entity_extraction_confidence
         ]
+        _print_time(step="Entity filtering complete")
         
         self.logger.info(f"Extracted {len(filtered_entities)} entities from {len(chunks)} chunks")
         return filtered_entities
@@ -1092,11 +1131,11 @@ class GraphRAGIntegrator:
         
         entities = []
 
-        results = _extract_entity_names_from_query(text)
-        self.logger.debug(f"results:\n{results}")
-        for result in results:
-            output = get_continuous_chunks(result, 'GPE')
-            self.logger.debug(f"output:\n{output}")
+        # results = _extract_entity_names_from_query(text)
+        # self.logger.debug(f"results:\n{results}")
+        # for result in results:
+        #     output = get_continuous_chunks(result, 'GPE')
+        #     self.logger.debug(f"output:\n{output}")
 
         # Named Entity Recognition patterns (can be enhanced with NLP models)
         # TODO Replace with NLTK or other NLP library for better accuracy.
@@ -1139,7 +1178,7 @@ class GraphRAGIntegrator:
                             'start': match.start(),
                             'end': match.end()
                         })
-        
+
         # Sort by start position and remove overlaps (prefer longer matches)
         all_matches.sort(key=lambda x: (x['start'], -(x['end'] - x['start'])))
         self.logger.debug(f"all_matches:\n{all_matches}")

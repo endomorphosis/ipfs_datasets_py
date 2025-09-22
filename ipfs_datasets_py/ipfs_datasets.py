@@ -28,8 +28,74 @@ except Exception as e:
             pass
     pass
 
-# def process_hashed_dataset_shard(shard, datatype=None, split="train"):
 def process_hashed_dataset_shard(shard: Union[str, List[Any], Dict[str, Any]], datatype: Optional[str] = None, split: Optional[str] = None) -> Union[List[Any], ValueError]:
+    """
+    Process a hashed dataset shard and extract content identifiers and items.
+
+    This function processes dataset shards by extracting Content Identifiers (CIDs)
+    and associated items from Parquet files. It supports both CID extraction and
+    full item retrieval modes, with automatic fallback to generate missing CID files.
+    The function handles various input formats including file paths, parameter lists,
+    and dictionary configurations.
+
+    Args:
+        shard (Union[str, List[Any], Dict[str, Any]]): Dataset shard specification.
+            Can be a file path string, a list containing [shard, datatype, split],
+            or a dictionary with 'shard', 'datatype', and 'split' keys.
+        datatype (Optional[str], optional): Type of data to extract. Valid values
+            are 'cids' for Content Identifiers only, or 'items' for full content.
+            If None, automatically determined from file existence. Defaults to None.
+        split (Optional[str], optional): Dataset split to load ('train', 'test', etc.).
+            If None, loads the entire dataset without split specification.
+            Defaults to None.
+
+    Returns:
+        Union[List[Any], ValueError]: A list containing [cids, items, schema] where:
+            - cids (List[str]): List of Content Identifiers from the shard
+            - items (Dict[str, List[Any]] or None): Dictionary of item data organized
+              by field names, or None if datatype is 'cids'
+            - schema (Any or None): Dataset schema information, currently unused
+            Returns ValueError if dataset files are not found or datatype is invalid.
+
+    Raises:
+        ValueError: If no dataset files are found at the specified shard path,
+            or if datatype is not 'cids' or 'items'.
+        FileNotFoundError: If the specified shard file does not exist.
+        DatasetError: If there are issues loading the Parquet dataset files.
+
+    Examples:
+        # Process shard for CIDs only
+        >>> result = process_hashed_dataset_shard(
+        ...     "/data/shard_001.parquet",
+        ...     datatype="cids"
+        ... )
+        >>> cids, items, schema = result
+        >>> print(f"Extracted {len(cids)} CIDs")
+        
+        # Process shard for full items
+        >>> result = process_hashed_dataset_shard(
+        ...     "/data/shard_001.parquet",
+        ...     datatype="items",
+        ...     split="train"
+        ... )
+        >>> cids, items, schema = result
+        >>> print(f"Extracted {len(items['text'])} text items")
+        
+        # Process with dictionary configuration
+        >>> config = {
+        ...     "shard": "/data/shard_001.parquet",
+        ...     "datatype": "items",
+        ...     "split": "train"
+        ... }
+        >>> result = process_hashed_dataset_shard(config)
+
+    Notes:
+        - Automatically generates CID files if they don't exist
+        - CID files are stored as '{shard_path}_cids.parquet'
+        - Supports both single files and dataset collections
+        - Memory usage depends on shard size and datatype selection
+        - CID extraction is more memory efficient than full item loading
+    """
     items = None
     cids = None
     schema = None
@@ -125,6 +191,64 @@ def process_hashed_dataset_shard(shard: Union[str, List[Any], Dict[str, Any]], d
     return [ cids , items, schema ]
 
 def process_index_shard(shard: Union[str, List[Any], Dict[str, Any]], datatype: Optional[str] = None, split: str = "train") -> Union[List[Any], ValueError]:
+    """
+    Process an index shard for content identifier extraction and indexing operations.
+
+    This function processes dataset index shards by extracting Content Identifiers (CIDs)
+    and associated content for indexing purposes. It provides similar functionality to
+    process_hashed_dataset_shard but with specific optimizations for index operations
+    and different default split handling. The function supports both CID-only extraction
+    and full content retrieval for building search indexes.
+
+    Args:
+        shard (Union[str, List[Any], Dict[str, Any]]): Index shard specification.
+            Can be a file path string, a list containing [shard, datatype, split],
+            or a dictionary with 'shard', 'datatype', and 'split' keys.
+        datatype (Optional[str], optional): Type of data to extract. Valid values
+            are 'cids' for Content Identifiers only, or 'items' for full content
+            with indexable data. If None, automatically determined from file
+            existence. Defaults to None.
+        split (str, optional): Dataset split to load for indexing operations.
+            Defaults to "train" as the primary split for index building.
+
+    Returns:
+        Union[List[Any], ValueError]: A list containing [cids, items, schema] where:
+            - cids (List[str]): List of Content Identifiers from the index shard
+            - items (Dict[str, List[Any]] or None): Dictionary of indexable content
+              organized by field names, or None if datatype is 'cids'
+            - schema (Any or None): Index schema information, currently unused
+            Returns ValueError if index files are not found or datatype is invalid.
+
+    Raises:
+        ValueError: If no index dataset files are found at the specified shard path,
+            or if datatype is not 'cids' or 'items'.
+        FileNotFoundError: If the specified index shard file does not exist.
+        DatasetError: If there are issues loading the Parquet index files.
+
+    Examples:
+        # Process index shard for CIDs
+        >>> result = process_index_shard(
+        ...     "/indices/embedding_shard_001.parquet",
+        ...     datatype="cids"
+        ... )
+        >>> cids, items, schema = result
+        >>> print(f"Indexed {len(cids)} documents")
+        
+        # Process index shard for full content
+        >>> result = process_index_shard(
+        ...     "/indices/embedding_shard_001.parquet",
+        ...     datatype="items"
+        ... )
+        >>> cids, items, schema = result
+        >>> print(f"Loaded {len(items['embedding'])} embeddings")
+
+    Notes:
+        - Optimized for index building and search operations
+        - Automatically generates CID index files if missing
+        - Default split is 'train' for consistent index building
+        - Memory usage optimized for large index operations
+        - Compatible with embedding and similarity search workflows
+    """
     items = None
     cids = None
     schema = None
@@ -486,7 +610,71 @@ class ipfs_datasets_py:
         self.schemas = {}
         return None
 
-    async def load_combined_checkpoints(self, dataset, split, dst_path, models, method="cids"):
+    async def load_combined_checkpoints(self, dataset: str, split: str, dst_path: str, models: List[str], method: str = "cids") -> None:
+        """
+        Load and combine checkpoint data from multiple processing stages and models.
+
+        This method loads checkpoint data from various sources including hashed datasets,
+        embedding models, and sparse chunks. It combines data from multiple shards and
+        processing stages to reconstruct the complete dataset state for continued
+        processing or analysis. The method supports parallel loading for performance
+        optimization and maintains consistency across different model outputs.
+
+        Args:
+            dataset (str): Dataset identifier used for checkpoint file naming.
+                Must match the original dataset name used during processing.
+                Forward slashes are converted to triple underscores for file paths.
+            split (str): Dataset split to load ('train', 'test', 'validation', etc.).
+                Must match the split used during checkpoint creation.
+            dst_path (str): Destination path where checkpoint files are stored.
+                Should contain 'checkpoints' subdirectory with shard files.
+            models (List[str]): List of model identifiers for which to load
+                embedding checkpoints. Each model should have corresponding
+                checkpoint files in the destination path.
+            method (str, optional): Loading method for checkpoint processing.
+                Valid values are 'cids' for identifier-only loading or 'items'
+                for full content loading. Defaults to "cids".
+
+        Returns:
+            None: This method updates instance attributes in-place including:
+                - self.hashed_dataset: Combined hashed dataset from checkpoints
+                - self.all_cid_list: Updated CID lists for dataset and models
+                - self.all_cid_set: Updated CID sets for efficient lookup
+                - self.index: Model-specific embedding indexes
+                - self.caches: Cached items for performance optimization
+
+        Raises:
+            FileNotFoundError: If checkpoint directory or required files are missing.
+            DatasetError: If there are issues loading Parquet checkpoint files.
+            ValueError: If model names are invalid or checkpoint data is corrupted.
+            MemoryError: If checkpoint data exceeds available system memory.
+
+        Examples:
+            # Load checkpoints for text processing models
+            >>> await manager.load_combined_checkpoints(
+            ...     dataset="large_text_corpus",
+            ...     split="train",
+            ...     dst_path="/data/checkpoints",
+            ...     models=["sentence-transformers/all-MiniLM-L6-v2", "openai/text-embedding-ada-002"]
+            ... )
+            
+            # Load with full item data
+            >>> await manager.load_combined_checkpoints(
+            ...     dataset="scientific_papers",
+            ...     split="train", 
+            ...     dst_path="/data/checkpoints",
+            ...     models=["allenai/specter2"],
+            ...     method="items"
+            ... )
+
+        Notes:
+            - Uses multiprocessing for parallel shard loading
+            - Automatically handles missing CID files by generating them
+            - Memory usage scales with checkpoint size and method selection
+            - Progress is tracked through instance attribute updates
+            - Supports incremental loading for large datasets
+            - Maintains consistency across model-specific indexes
+        """
         if "hashed_dataset" not in list(dir(self)):
             self.hashed_dataset = None
         if "all_cid_list" not in list(dir(self)):
@@ -591,7 +779,52 @@ class ipfs_datasets_py:
                         self.cid_chunk_list.append(this_cid)
         return None
 
-    async def load_chunk_checkpoints(self, dataset, split, src_path, models):
+    async def load_chunk_checkpoints(self, dataset: str, split: str, src_path: str, models: List[str]) -> None:
+        """
+        Load checkpoint data from chunked storage for efficient distributed processing.
+
+        This method loads checkpoint data from sparse chunk files stored in distributed
+        storage systems. It processes chunk files for multiple models in parallel,
+        organizing content by document CIDs and maintaining efficient cache structures
+        for rapid access. The method is optimized for scenarios where datasets are
+        split into numerous small chunks for distributed processing workflows.
+
+        Args:
+            dataset (str): Dataset identifier used for chunk file filtering.
+                Used to locate relevant chunk files in the source directory.
+            split (str): Dataset split identifier for chunk organization.
+                Determines which chunk files to process for the specified split.
+            src_path (str): Source directory path containing chunk checkpoint files.
+                Should contain chunk files organized by model and dataset.
+            models (List[str]): List of model identifiers for chunk processing.
+                Each model should have corresponding chunk files in the source path.
+
+        Returns:
+            None: Updates instance attributes including:
+                - self.chunk_cache: Document-specific chunk cache organized by model
+                - self.chunk_cache_set: Set-based cache for efficient membership testing
+                - self.doc_cid: Document CID mapping for chunk organization
+
+        Raises:
+            FileNotFoundError: If source path or chunk files are not found.
+            DatasetError: If chunk files cannot be loaded or are corrupted.
+            MemoryError: If chunk data exceeds available system memory.
+
+        Examples:
+            # Load chunks for embedding models
+            >>> await manager.load_chunk_checkpoints(
+            ...     dataset="large_corpus",
+            ...     split="train",
+            ...     src_path="/storage/chunks",
+            ...     models=["sentence-transformers/all-MiniLM-L6-v2"]
+            ... )
+
+        Notes:
+            - Uses multiprocessing for parallel chunk loading
+            - Organizes chunks by document CID for efficient retrieval
+            - Memory usage scales with number of chunks and models
+            - Optimized for distributed storage scenarios
+        """
         files = []
         if "doc_cid" not in list(dir(self)):
             self.chunks = {}
@@ -616,7 +849,56 @@ class ipfs_datasets_py:
         return None
 
 
-    async def load_checkpoints(self, dataset, split, dst_path, models):
+    async def load_checkpoints(self, dataset: str, split: str, dst_path: str, models: List[str]) -> None:
+        """
+        Load checkpoint data from multiple processing stages for dataset reconstruction.
+
+        This method loads checkpoint data from various processing stages including
+        hashed datasets and model-specific embeddings. It reconstructs the complete
+        dataset state from checkpoint files, handling both consolidated files and
+        distributed shards. The method maintains consistency across different
+        processing stages and provides efficient access to reconstructed data.
+
+        Args:
+            dataset (str): Dataset identifier for checkpoint file location.
+                Used to construct checkpoint file paths and identify relevant data.
+            split (str): Dataset split to load from checkpoints.
+                Determines which checkpoint files to process for reconstruction.
+            dst_path (str): Destination path containing checkpoint files.
+                Should contain both consolidated files and checkpoint subdirectories.
+            models (List[str]): List of model identifiers for embedding checkpoint loading.
+                Each model should have corresponding checkpoint data in the destination.
+
+        Returns:
+            None: Updates instance attributes including:
+                - self.hashed_dataset: Reconstructed hashed dataset from checkpoints
+                - self.all_cid_list: Comprehensive CID lists for all components
+                - self.all_cid_set: Deduplicated CID sets for efficient operations
+                - self.index: Model-specific indexes reconstructed from checkpoints
+                - self.caches: Performance caches for rapid data access
+
+        Raises:
+            FileNotFoundError: If checkpoint files or directories are missing.
+            DatasetError: If checkpoint data is corrupted or incompatible.
+            ValueError: If model specifications are invalid.
+            MemoryError: If checkpoint data exceeds system memory limits.
+
+        Examples:
+            # Load standard checkpoints
+            >>> await manager.load_checkpoints(
+            ...     dataset="text_corpus",
+            ...     split="train",
+            ...     dst_path="/data/checkpoints",
+            ...     models=["bert-base-uncased", "roberta-base"]
+            ... )
+
+        Notes:
+            - Handles both consolidated and distributed checkpoint formats
+            - Automatically generates missing CID files during loading
+            - Uses multiprocessing for parallel shard reconstruction
+            - Maintains data consistency across processing stages
+            - Memory usage optimized through efficient caching strategies
+        """
         if "hashed_dataset" not in list(dir(self)):
             self.hashed_dataset = None
         if "all_cid_list" not in list(dir(self)):
@@ -730,7 +1012,54 @@ class ipfs_datasets_py:
         self.cid_list = list(self.cid_set)
         return None
 
-    async def load_dataset(self, dataset, split=None):
+    async def load_dataset(self, dataset: str, split: Optional[str] = None) -> None:
+        """
+        Load a HuggingFace dataset with automatic split detection and shuffling.
+
+        This method loads datasets from the HuggingFace datasets library with
+        intelligent split handling and automatic fallback mechanisms. It applies
+        random shuffling for improved training performance and handles cases where
+        the requested split is not available by falling back to the first available
+        split in the dataset.
+
+        Args:
+            dataset (str): HuggingFace dataset identifier or local dataset path.
+                Can be a dataset name like 'squad' or 'wikitext' from the HuggingFace
+                Hub, or a local path to a dataset directory.
+            split (Optional[str], optional): Specific dataset split to load
+                ('train', 'test', 'validation', etc.). If None, loads the entire
+                dataset or falls back to the first available split. Defaults to None.
+
+        Returns:
+            None: This method updates self.dataset with the loaded dataset instance.
+                The dataset is automatically shuffled with a random seed for
+                improved training characteristics.
+
+        Raises:
+            DatasetError: If the dataset cannot be loaded from HuggingFace Hub
+                or local path, or if no valid splits are available.
+            ConnectionError: If there are network issues accessing HuggingFace Hub.
+            ValueError: If the dataset identifier is invalid or malformed.
+
+        Examples:
+            # Load specific split
+            >>> await manager.load_dataset("squad", split="train")
+            >>> print(f"Loaded {len(manager.dataset)} training examples")
+            
+            # Load with automatic split detection
+            >>> await manager.load_dataset("wikitext-103-raw-v1")
+            >>> print(f"Dataset columns: {manager.dataset.column_names}")
+            
+            # Load local dataset
+            >>> await manager.load_dataset("/path/to/local/dataset", split="validation")
+
+        Notes:
+            - Applies random shuffling with seed between 0 and 65536
+            - Automatically handles missing splits by using the first available
+            - Supports both HuggingFace Hub and local dataset loading
+            - Updates instance state for use in subsequent processing methods
+            - Memory usage depends on dataset size and loading strategy
+        """
         if split is None:
             try:
                 self.dataset = load_dataset(dataset).shuffle(random.randint(0,65536))
@@ -749,7 +1078,46 @@ class ipfs_datasets_py:
         # columns.append("cid")
         return None
 
-    async def load_original_dataset(self, dataset, split=None):
+    async def load_original_dataset(self, dataset: str, split: Optional[str] = None) -> None:
+        """
+        Load the original unprocessed dataset with automatic split handling.
+
+        This method loads datasets in their original form from HuggingFace Hub or
+        local storage without any IPFS processing or content addressing. It provides
+        the foundation for subsequent processing workflows by establishing the base
+        dataset that will be processed into content-addressable formats. The method
+        includes intelligent split detection and random shuffling for optimal processing.
+
+        Args:
+            dataset (str): HuggingFace dataset identifier or local dataset path.
+                Can be a standard dataset name from the Hub or path to local files.
+            split (Optional[str], optional): Specific dataset split to load.
+                If None, loads the entire dataset or falls back to first available
+                split. Defaults to None.
+
+        Returns:
+            None: Updates self.dataset with the loaded original dataset instance.
+                Dataset is shuffled with random seed for improved processing characteristics.
+
+        Raises:
+            DatasetError: If the original dataset cannot be loaded from the specified source.
+            ConnectionError: If there are network issues accessing HuggingFace Hub.
+            ValueError: If the dataset identifier is malformed or invalid.
+
+        Examples:
+            # Load original dataset for processing
+            >>> await manager.load_original_dataset("squad", split="train")
+            >>> print(f"Loaded {len(manager.dataset)} original examples")
+            
+            # Load with automatic split detection
+            >>> await manager.load_original_dataset("wikitext-103-raw-v1")
+
+        Notes:
+            - Loads unprocessed data without IPFS content addressing
+            - Applies random shuffling for improved processing characteristics
+            - Serves as foundation for subsequent IPFS processing workflows
+            - Handles missing splits gracefully with automatic fallback
+        """
         if split is None:
             try:
                 self.dataset = load_dataset(dataset ).shuffle(random.randint(0,65536))
@@ -768,7 +1136,56 @@ class ipfs_datasets_py:
         # columns.append("cid")
         return None
 
-    async def load_combined(self, models, dataset, split, column, dst_path):
+    async def load_combined(self, models: List[str], dataset: str, split: str, column: Optional[str], dst_path: str) -> Any:
+        """
+        Load and combine processed datasets with intelligent checkpoint management.
+
+        This method loads combined datasets from various processing stages, intelligently
+        selecting between consolidated files and checkpoint collections based on
+        completeness and data availability. It performs validation against original
+        datasets to ensure processing completeness and handles both full and incremental
+        loading scenarios for optimal performance.
+
+        Args:
+            models (List[str]): List of model identifiers for combined loading.
+                Each model should have corresponding processed data in the destination.
+            dataset (str): Dataset identifier for combined file location.
+                Used to construct file paths and validate processing completeness.
+            split (str): Dataset split for combined data loading.
+                Determines which processed data to combine and validate.
+            column (Optional[str]): Specific column for uniqueness validation.
+                Used to compare processed data completeness against original dataset.
+                If None, uses row count for validation.
+            dst_path (str): Destination path containing combined and checkpoint files.
+                Should contain both consolidated files and checkpoint subdirectories.
+
+        Returns:
+            Any: The combined hashed dataset with complete processing state.
+                Returns the most complete version available from consolidation or checkpoints.
+
+        Raises:
+            FileNotFoundError: If required combined files or checkpoints are missing.
+            DatasetError: If combined data cannot be loaded or validated.
+            ValueError: If data validation fails against original dataset.
+            MemoryError: If combined dataset exceeds available system memory.
+
+        Examples:
+            # Load combined dataset with validation
+            >>> combined_data = await manager.load_combined(
+            ...     models=["sentence-transformers/all-MiniLM-L6-v2"],
+            ...     dataset="large_corpus",
+            ...     split="train",
+            ...     column="text",
+            ...     dst_path="/data/processed"
+            ... )
+
+        Notes:
+            - Intelligently selects between consolidated and checkpoint data
+            - Validates processing completeness against original dataset
+            - Handles incremental loading for large datasets
+            - Optimizes memory usage through selective loading strategies
+            - Maintains processing state for continued workflows
+        """
         print("load combined")
         await self.load_original_dataset(dataset, split)
         combined_checkpoint = os.path.join(dst_path, "ipfs_" + dataset.replace("/", "___") + ".parquet")
@@ -842,6 +1259,24 @@ class ipfs_datasets_py:
         return this_hashed_dataset
 
     async def combine_checkpoints(self, dataset, split, column, dst_path, models):
+        """
+        Combine distributed checkpoint data into consolidated datasets.
+
+        This method loads and combines checkpoint data from multiple processing
+        stages, creating consolidated datasets with deduplication. It processes
+        both hashed datasets and model-specific embeddings to create unified
+        output files for efficient access and storage.
+
+        Args:
+            dataset: Dataset identifier for checkpoint location
+            split: Dataset split to combine
+            column: Column for deduplication operations
+            dst_path: Destination path for combined output
+            models: List of model identifiers to combine
+
+        Returns:
+            None: Creates combined files in destination directory
+        """
         await self.load_dataset(dataset, split)
         await self.load_checkpoints(dataset, split, dst_path, models)
         if not os.path.exists(os.path.join(dst_path, "combined")):
@@ -880,11 +1315,41 @@ class ipfs_datasets_py:
         return None
 
     async def generate_clusters(self, dataset, split, dst_path):
+        """
+        Generate content clusters from processed dataset embeddings.
+
+        This method analyzes embedding vectors to create content clusters
+        for improved content organization and similarity search capabilities.
+
+        Args:
+            dataset: Dataset identifier for cluster generation
+            split: Dataset split to analyze
+            dst_path: Destination path for cluster output files
+
+        Returns:
+            None: Creates cluster files in destination directory
+        """
 
         return None
 
 
     async def combine_checkpoints(self, dataset, split, column, dst_path, models):
+        """
+        Alternative implementation for combining checkpoint data.
+
+        This method provides an alternative approach to combining distributed
+        checkpoint data with different processing strategies.
+
+        Args:
+            dataset: Dataset identifier for checkpoint location
+            split: Dataset split to combine  
+            column: Column for deduplication operations
+            dst_path: Destination path for combined output
+            models: List of model identifiers to combine
+
+        Returns:
+            None: Creates combined files in destination directory
+        """
         await self.load_dataset(dataset, split)
         await self.load_checkpoints(dataset, split, dst_path, models)
         if not os.path.exists(os.path.join(dst_path, "combined")):
@@ -923,10 +1388,40 @@ class ipfs_datasets_py:
         return None
 
     async def generate_clusters(self, dataset, split, dst_path):
+        """
+        Alternative implementation for content cluster generation.
+
+        This method provides an alternative approach to generating content
+        clusters with different algorithms or parameters.
+
+        Args:
+            dataset: Dataset identifier for cluster generation
+            split: Dataset split to analyze
+            dst_path: Destination path for cluster output files
+
+        Returns:
+            None: Creates cluster files in destination directory
+        """
 
         return None
 
     async def load_clusters(self, dataset, split, dst_path):
+        """
+        Load pre-computed content clusters from storage.
+
+        This method loads existing cluster assignments and metadata from
+        storage, reconstructing cluster structures for content organization
+        and similarity search operations.
+
+        Args:
+            dataset: Dataset identifier for cluster files
+            split: Dataset split for cluster loading
+            dst_path: Source path containing cluster files
+
+        Returns:
+            tuple: (cluster_cids_dataset, ipfs_cid_clusters_list, 
+                   ipfs_cid_clusters_set, ipfs_cid_list, ipfs_cid_set)
+        """
         ipfs_cid_clusters_list = []
         ipfs_cid_clusters_set = ()
         ipfs_cid_set = set()
@@ -961,6 +1456,23 @@ class ipfs_datasets_py:
 
 
     async def load_checkpoints(self, dataset, split, dst_path, models, method="cids"):
+        """
+        Enhanced checkpoint loading with configurable methods.
+
+        This method provides enhanced checkpoint loading capabilities with
+        configurable loading methods and improved error handling for
+        large-scale dataset reconstruction.
+
+        Args:
+            dataset: Dataset identifier for checkpoint location
+            split: Dataset split to load
+            dst_path: Source path containing checkpoint files
+            models: List of model identifiers to load
+            method: Loading method ('cids' or 'items')
+
+        Returns:
+            None: Updates instance attributes with loaded data
+        """
         if "hashed_dataset" not in list(dir(self)):
             self.hashed_dataset = None
         if "all_cid_list" not in list(dir(self)):
@@ -1139,6 +1651,21 @@ class ipfs_datasets_py:
 
 
     async def load_clusters(self, dataset, split, dst_path):
+        """
+        Alternative implementation for loading content clusters.
+
+        This method provides an alternative approach to loading cluster
+        data with different processing strategies or optimizations.
+
+        Args:
+            dataset: Dataset identifier for cluster files
+            split: Dataset split for cluster loading  
+            dst_path: Source path containing cluster files
+
+        Returns:
+            tuple: (cluster_cids_dataset, ipfs_cid_clusters_list,
+                   ipfs_cid_clusters_set, ipfs_cid_list, ipfs_cid_set)
+        """
         ipfs_cid_clusters_list = []
         ipfs_cid_clusters_set = ()
         ipfs_cid_set = set()
@@ -1172,9 +1699,88 @@ class ipfs_datasets_py:
         return cluster_cids_dataset, ipfs_cid_clusters_list, ipfs_cid_clusters_set, ipfs_cid_list, ipfs_cid_set
 
     def test(self) -> None:
+        """
+        Perform basic functionality test of the IPFS datasets system.
+
+        This method provides a simple test interface for validating that the
+        ipfs_datasets_py instance is properly initialized and ready for operation.
+        Currently serves as a placeholder for future comprehensive testing
+        functionality including connectivity tests, resource validation, and
+        system health checks.
+
+        Returns:
+            None: Method completes successfully if system is operational.
+
+        Examples:
+            # Basic system test
+            >>> manager = ipfs_datasets_py(resources, metadata)
+            >>> manager.test()
+            # No output indicates successful test
+
+        Notes:
+            - Currently a placeholder for future test implementations
+            - Will be expanded to include comprehensive system validation
+            - Useful for debugging initialization and configuration issues
+        """
         return None
 
-    def process_chunk_files(path: str, datatype: str = "cids") -> Any:
+    @staticmethod
+    def process_chunk_files(path: Union[str, List[Any], Dict[str, Any]], datatype: str = "cids") -> Union[List[Any], ValueError]:
+        """
+        Process chunk files for Content Identifier extraction and content management.
+
+        This static method processes individual chunk files to extract Content Identifiers
+        (CIDs) and associated content data. It supports multiple input formats and
+        automatically generates missing CID index files for efficient content addressing.
+        The method is designed for processing sparse chunk collections in distributed
+        storage scenarios.
+
+        Args:
+            path (Union[str, List[Any], Dict[str, Any]]): Chunk file specification.
+                Can be a file path string, a list containing [path, datatype],
+                or a dictionary with 'file' and 'type' keys for configuration.
+            datatype (str, optional): Type of data to extract from chunk files.
+                Valid values are 'cids' for Content Identifiers only, 'items'
+                for full content extraction, or 'schema' for metadata.
+                Defaults to "cids".
+
+        Returns:
+            Union[List[Any], ValueError]: A list containing [cids, items, schema] where:
+                - cids (List[str]): List of Content Identifiers from the chunk
+                - items (Dict[str, List[Any]] or None): Dictionary of chunk content
+                  organized by field names, or None if datatype is 'cids'
+                - schema (Any or None): Chunk schema information
+                Returns ValueError if chunk files are not found.
+
+        Raises:
+            ValueError: If no chunk dataset files are found at the specified path.
+            FileNotFoundError: If the specified chunk file does not exist.
+            DatasetError: If there are issues loading the Parquet chunk files.
+
+        Examples:
+            # Extract CIDs from chunk
+            >>> result = ipfs_datasets_py.process_chunk_files(
+            ...     "/chunks/chunk_001.parquet",
+            ...     datatype="cids"
+            ... )
+            >>> cids, items, schema = result
+            >>> print(f"Chunk contains {len(cids)} items")
+            
+            # Extract full content from chunk
+            >>> result = ipfs_datasets_py.process_chunk_files(
+            ...     "/chunks/chunk_001.parquet",
+            ...     datatype="items"
+            ... )
+            >>> cids, items, schema = result
+            >>> print(f"Extracted content: {list(items.keys())}")
+
+        Notes:
+            - Automatically generates CID files if they don't exist
+            - CID files are stored as '{chunk_path}_cids.parquet'
+            - Optimized for sparse chunk processing in distributed systems
+            - Memory usage depends on chunk size and datatype selection
+            - Static method for use without class instantiation
+        """
         cids = None
         items = None
         schema = None

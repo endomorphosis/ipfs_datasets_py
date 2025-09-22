@@ -158,9 +158,6 @@ class s3_kit:
             The s3cfg dictionary should contain either:
             - accessKey, secretKey, endpoint (legacy format)
             - aws_access_key_id, aws_secret_access_key, endpoint_url (boto3 format)
-
-        Raises:
-            Exception: If s3cfg is provided but doesn't contain required keys
         """
         self.bucket = None
         self.bucket_files = None
@@ -224,51 +221,54 @@ class s3_kit:
             >>> files = s3('ls_dir', dir='folder/', bucket_name='my-bucket')
             >>> result = s3('ul_file', upload_file='local.txt', path='remote.txt', bucket='my-bucket')
         """
-        if method == 'ls_dir':
-            self.method = 'ls_dir'
-            return self.s3_ls_dir(**kwargs)
-        if method == 'rm_dir':
-            self.method = 'rm_dir'
-            return self.s3_rm_dir(**kwargs)
-        if method == 'cp_dir':
-            self.method = 'cp_dir'
-            return self.s3_cp_dir(**kwargs)
-        if method == 'mv_dir':
-            self.method = 'mv_dir'
-            return self.s3_mv_dir(**kwargs)
-        if method == 'dl_dir':
-            self.method = 'dl_dir'
-            return self.s3_dl_dir(**kwargs)
-        if method == 'ul_dir':
-            self.method = 'ul_dir'
-            return self.s3_ul_dir(**kwargs)
-        if method == 'ls_file':
-            self.method = 'ls_file'
-            return self.s3_ls_file(**kwargs)
-        if method == 'rm_file':
-            self.method = 'rm_file'
-            return self.s3_rm_file(**kwargs)
-        if method == 'cp_file':
-            self.method = 'cp_file'
-            return self.s3_cp_file(**kwargs)
-        if method == 'mv_file':
-            self.method = 'mv_file'
-            return self.s3_mv_file(**kwargs)
-        if method == 'dl_file':
-            self.method = 'dl_file'
-            return self.s3_dl_file(**kwargs)
-        if method == 'ul_file':
-            self.method = 'ul_file'
-            return self.s3_ul_file(**kwargs)
-        if method == 'mk_dir':
-            self.method = 'mk_dir'
-            return self.s3_mkdir(**kwargs)
-        if method == 'get_session':
-            self.method = 'get_session'
-            return self.get_session(**kwargs)
-        if method == 'config_to_boto':
-            self.method = 'config_to_boto'
-            return self.config_to_boto(**kwargs)
+        match method:
+            case 'ls_dir':
+                self.method = 'ls_dir'
+                return self.s3_ls_dir(**kwargs)
+            case 'rm_dir':
+                self.method = 'rm_dir'
+                return self.s3_rm_dir(**kwargs)
+            case 'cp_dir':
+                self.method = 'cp_dir'
+                return self.s3_cp_dir(**kwargs)
+            case 'mv_dir':
+                self.method = 'mv_dir'
+                return self.s3_mv_dir(**kwargs)
+            case 'dl_dir':
+                self.method = 'dl_dir'
+                return self.s3_dl_dir(**kwargs)
+            case 'ul_dir':
+                self.method = 'ul_dir'
+                return self.s3_ul_dir(**kwargs)
+            case 'ls_file':
+                self.method = 'ls_file'
+                return self.s3_ls_file(**kwargs)
+            case 'rm_file':
+                self.method = 'rm_file'
+                return self.s3_rm_file(**kwargs)
+            case 'cp_file':
+                self.method = 'cp_file'
+                return self.s3_cp_file(**kwargs)
+            case 'mv_file':
+                self.method = 'mv_file'
+                return self.s3_mv_file(**kwargs)
+            case 'dl_file':
+                self.method = 'dl_file'
+                return self.s3_dl_file(**kwargs)
+            case 'ul_file':
+                self.method = 'ul_file'
+                return self.s3_ul_file(**kwargs)
+            case 'mk_dir':
+                self.method = 'mk_dir'
+                return self.s3_mkdir(**kwargs)
+            case 'get_session':
+                self.method = 'get_session'
+                return self.get_session(**kwargs)
+            case 'config_to_boto':
+                self.method = 'config_to_boto'
+                return self.config_to_boto(**kwargs)
+            case _:
+                raise AttributeError(f"Method '{method}' not recognized")
 
     def s3_ls_dir(self, dir: str, bucket_name: str, **kwargs: Any) -> List[Dict[str, Any]]:
         """
@@ -290,10 +290,6 @@ class s3_kit:
                 - last_modified (float): Unix timestamp of last modification
                 - size (int): Object size in bytes
                 - e_tag (str): Object ETag for integrity verification
-
-        Raises:
-            ClientError: If bucket doesn't exist or access is denied
-            Exception: If S3 configuration is invalid
 
         Examples:
             >>> files = s3.s3_ls_dir('documents/', 'my-bucket')
@@ -337,13 +333,6 @@ class s3_kit:
                 - e_tag (str): Object ETag before deletion
                 - last_modified (float): Unix timestamp of last modification before deletion
                 - size (int): Object size in bytes before deletion
-
-        Raises:
-            ClientError: If bucket doesn't exist, access is denied, or objects are not found
-            Exception: If S3 configuration is invalid
-
-        Warning:
-            This operation permanently deletes all objects in the directory and cannot be undone.
 
         Examples:
             >>> deleted_files = s3.s3_rm_dir('old-documents/', 'my-bucket')
@@ -393,14 +382,6 @@ class s3_kit:
                 - e_tag (str): Object ETag after copy
                 - last_modified (float): Unix timestamp of copy operation
                 - size (int): Object size in bytes (may be None)
-
-        Raises:
-            ClientError: If bucket doesn't exist, source objects not found, or access denied
-            Exception: If S3 configuration is invalid
-
-        Note:
-            The exact source path directory is excluded from copying to avoid copying
-            the directory marker itself.
 
         Examples:
             >>> results = s3.s3_cp_dir('old-docs/', 'backup-docs/', 'my-bucket')
@@ -471,14 +452,6 @@ class s3_kit:
         Raises:
             ClientError: If bucket doesn't exist, source objects not found, or access denied
             Exception: If S3 configuration is invalid
-
-        Warning:
-            This operation permanently deletes the original files after copying.
-            If the copy operation fails, the original files may still be deleted.
-
-        Note:
-            The exact source path directory is excluded from moving to avoid moving
-            the directory marker itself.
 
         Examples:
             >>> results = s3.s3_mv_dir('temp-docs/', 'archive-docs/', 'my-bucket')
@@ -1073,6 +1046,23 @@ class s3_kit:
 
 
     def s3_upload_object(self, f: Any, bucket: str, key: str, s3_config: Any, progress_callback: Any) -> Any:
+        """
+        Upload a file object to an S3 bucket.
+        
+        Args:
+            f (Any): File-like object to upload to S3.
+            bucket (str): Name of the S3 bucket to upload to.
+            key (str): S3 object key (path) where the file will be stored.
+            s3_config (Any): Configuration object containing S3 connection settings.
+            progress_callback (Any): Callback function to track upload progress.
+            
+        Returns:
+            Any: Response from the S3 upload operation.
+            
+        Raises:
+            Exception: If the upload fails due to network issues, authentication errors,
+                      or invalid bucket/key parameters.
+        """
         s3 = self.get_session(s3_config)
         return s3.upload_fileobj(
             f,
@@ -1082,6 +1072,19 @@ class s3_kit:
         )
 
     def s3_download_object(self, f, bucket, key, s3_config, progress_callback):
+        """
+        Downloads an object from S3 to a file-like object.
+
+        Args:
+            f: A file-like object to write the downloaded content to
+            bucket (str): The name of the S3 bucket containing the object
+            key (str): The S3 object key (path) to download
+            s3_config: Configuration object for S3 session setup
+            progress_callback: Callback function to track download progress
+
+        Returns:
+            The result of the S3 download operation
+        """
         s3 = self.get_session(s3_config)
         return s3.download_fileobj(
             bucket,
@@ -1092,6 +1095,18 @@ class s3_kit:
 
 
     def upload_dir(self, dir: str, bucket: str, s3_config: Any, progress_callback: Any) -> Any:
+        """
+        Upload a directory to an S3 bucket.
+
+        Args:
+            dir (str): Path to the local directory to upload.
+            bucket (str): Name of the S3 bucket to upload to.
+            s3_config (Any): Configuration object containing S3 connection parameters.
+            progress_callback (Any): Callback function to track upload progress.
+
+        Returns:
+            Any: Result of the upload operation from the S3 session.
+        """
         s3 = self.get_session(s3_config)
         return s3.upload_file(
             dir,
@@ -1100,6 +1115,18 @@ class s3_kit:
         )
 
     def download_dir(self, dir: str, bucket: str, s3_config: Any, progress_callback: Any) -> Any:
+        """
+        Downloads a directory from an S3 bucket.
+
+        Args:
+            dir (str): The directory path/key in the S3 bucket to download.
+            bucket (str): The name of the S3 bucket containing the directory.
+            s3_config (Any): Configuration object containing S3 connection parameters.
+            progress_callback (Any): Callback function to track download progress.
+
+        Returns:
+            Any: The result of the download operation from the S3 session.
+        """
         s3 = self.get_session(s3_config)
         return s3.download_file(
             bucket,
@@ -1108,6 +1135,31 @@ class s3_kit:
         )
 
     def s3_read_dir(self, dir: str, bucket: str, s3_config: Any) -> Any:
+        """
+        Read and retrieve metadata for all objects in a specified S3 directory.
+
+        This method connects to an S3 bucket and retrieves metadata for all objects
+        that match the specified directory prefix. It returns a dictionary containing
+        detailed information about each object found.
+
+        Args:
+            dir (str): The directory prefix to filter objects in the S3 bucket.
+            bucket (str): The name of the S3 bucket to read from.
+            s3_config (Any): Configuration object containing S3 connection parameters
+                             that will be converted to boto3 format.
+
+        Raises:
+            Exception: If s3_config is invalid or missing required keys
+            ClientError: If S3 connection cannot be established
+
+        Returns:
+            Any: A dictionary where keys are object keys and values are dictionaries
+                 containing object metadata with the following structure:
+                 - "key": The S3 object key
+                 - "last_modified": Unix timestamp of when the object was last modified
+                 - "size": Size of the object in bytes
+                 - "e_tag": ETag value of the object
+        """
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
         bucket_objects = bucket.objects.filter(Prefix=dir)
         bucket_object_metadata = bucket_objects.all()
@@ -1126,6 +1178,19 @@ class s3_kit:
         return directory
 
     def s3_download_object(self, f, bucket, key, s3_config, progress_callback):
+        """
+        Download an object from S3 to a file-like object.
+
+        Args:
+            f: File-like object to write the downloaded data to
+            bucket (str): Name of the S3 bucket containing the object
+            key (str): S3 object key (path) to download
+            s3_config: Configuration object for S3 session setup
+            progress_callback: Callback function to track download progress
+
+        Returns:
+            The result of the S3 download operation
+        """
         s3 = self.get_session(s3_config)
         return s3.download_fileobj(
             bucket,
@@ -1135,6 +1200,26 @@ class s3_kit:
         )
 
     def s3_mkdir(self, dir: str, bucket: str, s3_config: Any) -> Any:
+        """
+        Create a directory in an S3 bucket by putting an empty object with the directory path as key.
+
+        Args:
+            dir (str): The directory path/key to create in the S3 bucket.
+            bucket (str): The name of the S3 bucket where the directory will be created.
+            s3_config (Any): S3 configuration object containing connection parameters 
+                             that will be converted to boto3 format.
+
+        Returns:
+            Any: The S3 object response from the put_object operation.
+
+        Raises:
+            Exception: If s3_config is invalid or missing required keys
+            ClientError: If S3 connection cannot be established
+
+        Note:
+            In S3, directories don't exist as separate entities. This method creates
+            an empty object with the directory path as the key to simulate a directory.
+        """
         s3bucket = resource(**self.config_to_boto(s3_config)).Bucket(bucket)
         return s3bucket.put_object(Key=dir)
 

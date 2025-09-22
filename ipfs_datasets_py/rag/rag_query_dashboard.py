@@ -12,7 +12,7 @@ import json
 import logging
 import threading
 import datetime
-from typing import Dict, List, Any, Optional, Tuple, Union, Set
+from typing import Dict, List, Any, Optional, Tuple, Union, Set, Callable, Protocol
 from collections import defaultdict
 import random
 
@@ -98,7 +98,7 @@ class RealTimeDashboardServer:
     to connected clients when new metrics data is available.
     """
 
-    def __init__(self, port=8888, update_interval=5):
+    def __init__(self, port: int = 8888, update_interval: int = 5) -> None:
         """
         Initialize the real-time dashboard server.
 
@@ -118,7 +118,7 @@ class RealTimeDashboardServer:
         self.application = None
         self.metrics_collectors = []
 
-    def register_metrics_collector(self, collector):
+    def register_metrics_collector(self, collector: Union['QueryMetricsCollector', 'AuditMetricsAggregator']) -> None:
         """
         Register a metrics collector with the dashboard server.
 
@@ -127,7 +127,7 @@ class RealTimeDashboardServer:
         """
         self.metrics_collectors.append(collector)
 
-    def start(self):
+    def start(self) -> None:
         """Start the WebSocket server and updater thread."""
         if self.running:
             logging.warning("Dashboard server is already running")
@@ -137,17 +137,17 @@ class RealTimeDashboardServer:
         dashboard_server = self
 
         class DashboardWebSocketHandler(tornado.websocket.WebSocketHandler):
-            def check_origin(self, origin):
+            def check_origin(self, origin: str) -> bool:
                 # Allow connections from any origin
                 return True
 
-            def open(self):
+            def open(self) -> None:
                 logging.info("New dashboard client connected")
                 dashboard_server.clients.add(self)
                 # Send initial data
                 self.write_message(json.dumps(dashboard_server.metrics_data))
 
-            def on_close(self):
+            def on_close(self) -> None:
                 logging.info("Dashboard client disconnected")
                 dashboard_server.clients.remove(self)
 
@@ -170,7 +170,7 @@ class RealTimeDashboardServer:
         # Start Tornado IO loop
         tornado.ioloop.IOLoop.current().start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the WebSocket server and updater thread."""
         if not self.running:
             return
@@ -183,7 +183,7 @@ class RealTimeDashboardServer:
         tornado.ioloop.IOLoop.current().stop()
         logging.info("Dashboard server stopped")
 
-    def _update_loop(self):
+    def _update_loop(self) -> None:
         """Background thread that periodically checks for updates and broadcasts to clients."""
         while self.running:
             try:
@@ -207,7 +207,7 @@ class RealTimeDashboardServer:
             # Sleep until next update
             time.sleep(self.update_interval)
 
-    def _collect_metrics(self):
+    def _collect_metrics(self) -> bool:
         """
         Collect metrics from all registered collectors.
 
@@ -240,7 +240,7 @@ class RealTimeDashboardServer:
 
         return has_updates
 
-    def _collect_query_metrics(self, collector):
+    def _collect_query_metrics(self, collector: 'QueryMetricsCollector') -> Dict[str, Any]:
         """
         Collect metrics from a QueryMetricsCollector.
 
@@ -279,7 +279,7 @@ class RealTimeDashboardServer:
 
         return metrics
 
-    def _collect_audit_metrics(self, collector):
+    def _collect_audit_metrics(self, collector: 'AuditMetricsAggregator') -> Dict[str, Any]:
         """
         Collect metrics from an AuditMetricsAggregator.
 
@@ -330,7 +330,7 @@ class UnifiedDashboard:
     with both static and real-time components.
     """
 
-    def __init__(self, dashboard_dir=None, enable_realtime=False, port=8888):
+    def __init__(self, dashboard_dir: Optional[str] = None, enable_realtime: bool = False, port: int = 8888) -> None:
         """
         Initialize the unified dashboard.
 
@@ -372,7 +372,7 @@ class UnifiedDashboard:
                 logging.warning("Real-time libraries not available. Falling back to static dashboard.")
                 self.enable_realtime = False
 
-    def register_metrics_collector(self, collector):
+    def register_metrics_collector(self, collector: Union['QueryMetricsCollector', 'AuditMetricsAggregator']) -> None:
         """
         Register a metrics collector with the dashboard.
 
@@ -384,15 +384,15 @@ class UnifiedDashboard:
 
     def generate_dashboard(
         self,
-        query_metrics_collector=None,
-        audit_metrics_aggregator=None,
-        title="Unified Query & Audit Dashboard",
-        theme="light",
-        include_performance=True,
-        include_security=True,
-        include_interactive=True,
-        include_realtime=None  # None means use the instance default
-    ):
+        query_metrics_collector: Optional['QueryMetricsCollector'] = None,
+        audit_metrics_aggregator: Optional['AuditMetricsAggregator'] = None,
+        title: str = "Unified Query & Audit Dashboard",
+        theme: str = "light",
+        include_performance: bool = True,
+        include_security: bool = True,
+        include_interactive: bool = True,
+        include_realtime: Optional[bool] = None  # None means use the instance default
+    ) -> str:
         """
         Generate a comprehensive dashboard with both static and real-time components.
 
@@ -610,15 +610,15 @@ class UnifiedDashboard:
 
     def _generate_basic_html(
         self,
-        title,
-        theme,
-        static_visualizations,
-        interactive_visualizations,
-        has_query_metrics,
-        has_audit_metrics,
-        enable_realtime,
-        websocket_port
-    ):
+        title: str,
+        theme: str,
+        static_visualizations: Dict[str, str],
+        interactive_visualizations: Dict[str, str],
+        has_query_metrics: bool,
+        has_audit_metrics: bool,
+        enable_realtime: bool,
+        websocket_port: Optional[int]
+    ) -> str:
         """
         Generate basic HTML for the dashboard without using Jinja2.
 
@@ -1020,15 +1020,15 @@ class UnifiedDashboard:
 
     def _generate_template_html(
         self,
-        title,
-        theme,
-        static_visualizations,
-        interactive_visualizations,
-        has_query_metrics,
-        has_audit_metrics,
-        enable_realtime,
-        websocket_port
-    ):
+        title: str,
+        theme: str,
+        static_visualizations: Dict[str, str],
+        interactive_visualizations: Dict[str, str],
+        has_query_metrics: bool,
+        has_audit_metrics: bool,
+        enable_realtime: bool,
+        websocket_port: Optional[int]
+    ) -> str:
         """
         Generate HTML using Jinja2 templates.
 
@@ -1423,7 +1423,7 @@ class UnifiedDashboard:
 
         return html
 
-    def _generate_realtime_js(self):
+    def _generate_realtime_js(self) -> None:
         """Generate JavaScript for real-time dashboard updates."""
         js_content = """
 // Dashboard JavaScript for real-time updates
@@ -1689,7 +1689,7 @@ function formatTimestamp(timestamp) {
 
 
 # Example usage
-def run_demonstration(dashboard_dir=None, enable_realtime=True):
+def run_demonstration(dashboard_dir: Optional[str] = None, enable_realtime: bool = True) -> str:
     """Run a demonstration of the unified dashboard."""
     if dashboard_dir is None:
         dashboard_dir = os.path.join(os.getcwd(), "dashboard")

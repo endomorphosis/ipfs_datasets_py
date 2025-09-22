@@ -6,11 +6,6 @@ from ipfs_datasets_py.web_archive import WebArchive
 class TestWebArchiveArchiveUrl:
     """Test WebArchive.archive_url method functionality."""
 
-    @pytest.fixture
-    def archive(self):
-        """Set up test fixtures."""
-        return WebArchive()
-
     def test_archive_url_success_with_metadata_returns_success_status(self, archive):
         """
         GIVEN valid URL "https://example.com"

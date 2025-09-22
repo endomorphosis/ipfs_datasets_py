@@ -19,7 +19,13 @@ Features:
 import json
 import os
 import tempfile
-from typing import List, Dict, Any, Optional, Union, Tuple
+from typing import List, Dict, Any, Optional, Union, Tuple, Iterator, Generator, Callable, Set, TYPE_CHECKING, TypeVar, Generic
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from datasets import Dataset, DatasetDict
+    import datasets
+    import pyarrow as pa
 
 # Lazy import to avoid circular imports
 # from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
@@ -156,7 +162,7 @@ class DatasetSerializer:
         - Performance optimization varies by format and dataset characteristics
     """
 
-    def __init__(self, storage=None):
+    def __init__(self, storage: Optional['IPLDStorage'] = None) -> None:
         """
         Initialize Dataset Serialization Platform with IPLD Storage Integration
 
@@ -427,7 +433,7 @@ T = TypeVar('T')
 class GraphNode(Generic[T]):
     """A node in a graph dataset."""
 
-    def __init__(self, id: str, type: str, data: T):
+    def __init__(self, id: str, type: str, data: T) -> None:
         """
         Initialize a new graph node.
 
@@ -442,7 +448,7 @@ class GraphNode(Generic[T]):
         # Store edges as dicts with target node and properties
         self.edges: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
-    def add_edge(self, edge_type: str, target: 'GraphNode', properties: Optional[Dict[str, Any]] = None):
+    def add_edge(self, edge_type: str, target: 'GraphNode', properties: Optional[Dict[str, Any]] = None) -> None:
         """
         Add an edge to another node.
 
@@ -552,7 +558,7 @@ class GraphNode(Generic[T]):
 class GraphDataset:
     """A graph dataset containing nodes and edges with query capabilities."""
 
-    def __init__(self, name: str = None):
+    def __init__(self, name: Optional[str] = None) -> None:
         """
         Initialize a new graph dataset.
 
@@ -603,7 +609,7 @@ class GraphDataset:
 
         return node
 
-    def add_edge(self, source_id: str, edge_type: str, target_id: str, properties: Optional[Dict[str, Any]] = None):
+    def add_edge(self, source_id: str, edge_type: str, target_id: str, properties: Optional[Dict[str, Any]] = None) -> None:
         """
         Add an edge between nodes.
 
@@ -1074,8 +1080,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
     - Integration with IPFS for persistent storage
     """
 
-    def __init__(self, name: str = None, vector_dimension: int = 768,
-                 vector_metric: str = 'cosine', storage=None):
+    def __init__(self, name: Optional[str] = None, vector_dimension: int = 768,
+                 vector_metric: str = 'cosine', storage: Optional['IPLDStorage'] = None) -> None:
         """
         Initialize a new vector-augmented graph dataset.
 
@@ -1152,6 +1158,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Currently, IPFSKnnIndex doesn't support direct updates
         # The simplest approach is to create a new index with all vectors
+        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        
         all_embeddings = []
         all_metadata = []
 
@@ -2396,7 +2404,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return nodes_added, edges_added, nodes_removed, edges_removed
 
-    def _rebuild_vector_index(self):
+    def _rebuild_vector_index(self) -> None:
         """
         Rebuild the vector index after structural changes to the graph.
         """
@@ -4020,7 +4028,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return result
 
-    def _get_subgraph_contextual_embedding(self, subgraph, node_id):
+    def _get_subgraph_contextual_embedding(self, subgraph: GraphDataset, node_id: str) -> Optional[np.ndarray]:
         """Helper method to get contextual embedding within a subgraph"""
         if node_id not in subgraph.nodes:
             return None
@@ -4275,7 +4283,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return results
 
-    def _get_nodes_in_time_interval(self, time_property, start_time, end_time, additional_filters=None):
+    def _get_nodes_in_time_interval(self, time_property: str, start_time: Any, end_time: Any, additional_filters: Optional[Dict[str, Any]] = None) -> List[str]:
         """Helper method to get nodes within a specific time interval"""
         matching_nodes = []
 
@@ -4298,7 +4306,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return matching_nodes
 
-    def _is_in_time_interval(self, value, start, end):
+    def _is_in_time_interval(self, value: Any, start: Any, end: Any) -> bool:
         """Check if a value is within a time interval, handling different types"""
         # Handle different value types
         try:
@@ -4308,7 +4316,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             # For incomparable types, convert to string and compare
             return str(start) <= str(value) <= str(end)
 
-    def _create_time_snapshot_subgraph(self, node_ids):
+    def _create_time_snapshot_subgraph(self, node_ids: List[str]) -> GraphDataset:
         """Create a subgraph containing only the specified nodes and their interconnections"""
         subgraph = GraphDataset(name=f"time_snapshot_{id(node_ids)}")
 
@@ -4332,7 +4340,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return subgraph
 
-    def _compute_pagerank_for_subgraph(self, subgraph, damping=0.85, max_iterations=100, tolerance=1.0e-6):
+    def _compute_pagerank_for_subgraph(self, subgraph: GraphDataset, damping: float = 0.85, max_iterations: int = 100, tolerance: float = 1.0e-6) -> List[Tuple[str, float]]:
         """Compute PageRank centrality for nodes in a subgraph"""
         # Get nodes
         nodes = list(subgraph.nodes.keys())
@@ -4386,7 +4394,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return result
 
-    def _compute_clustering_coefficient(self, subgraph):
+    def _compute_clustering_coefficient(self, subgraph: GraphDataset) -> float:
         """Compute the average clustering coefficient of the subgraph"""
         if len(subgraph.nodes) < 3:
             return 0.0
@@ -4443,7 +4451,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Calculate average
         return total_coefficient / max(1, node_count)
 
-    def _count_node_connections(self, subgraph, node_id):
+    def _count_node_connections(self, subgraph: GraphDataset, node_id: str) -> Dict[str, int]:
         """Count incoming and outgoing connections for a node"""
         if node_id not in subgraph.nodes:
             return {"incoming": 0, "outgoing": 0, "total": 0}
@@ -4645,7 +4653,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return filtered_predictions
 
-    def _predict_edges_semantic(self, nodes_with_embeddings, target_relation_types, existing_edges):
+    def _predict_edges_semantic(self, nodes_with_embeddings: List[Tuple[str, np.ndarray]], target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Predict missing edges using semantic similarity of nodes"""
         predictions = []
 
@@ -4789,7 +4797,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return predictions
 
-    def _predict_edges_structural(self, target_relation_types, existing_edges):
+    def _predict_edges_structural(self, target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Predict missing edges using structural patterns"""
         predictions = []
 
@@ -4814,7 +4822,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return predictions
 
-    def _find_transitive_candidates(self, edge_type, existing_edges):
+    def _find_transitive_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Find potential transitive relation candidates (A->B, B->C => A->C)"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4850,7 +4858,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return candidates
 
-    def _find_symmetric_candidates(self, edge_type, existing_edges):
+    def _find_symmetric_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Find potential symmetric relation candidates"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4895,7 +4903,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return candidates
 
-    def _find_common_neighbor_candidates(self, edge_type, existing_edges):
+    def _find_common_neighbor_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Find potential relations based on common neighbors"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4951,7 +4959,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return candidates
 
-    def _merge_predictions(self, semantic_predictions, structural_predictions):
+    def _merge_predictions(self, semantic_predictions: List[Dict[str, Any]], structural_predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Merge and blend predictions from different methods"""
         # Create a lookup for faster matching
         semantic_lookup = {}
@@ -5172,7 +5180,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return established_links
 
-    def _establish_cross_modal_links_by_embedding(self, text_nodes, image_nodes, min_confidence):
+    def _establish_cross_modal_links_by_embedding(self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float) -> List[Tuple[GraphNode, GraphNode, str, float]]:
         """Helper method to establish links between text and image nodes using embeddings"""
         links = []
 
@@ -5218,7 +5226,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return links
 
-    def _establish_cross_modal_links_by_metadata(self, text_nodes, image_nodes, min_confidence):
+    def _establish_cross_modal_links_by_metadata(self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float) -> List[Tuple[GraphNode, GraphNode, str, float]]:
         """Helper method to establish links between text and image nodes using metadata matching"""
         links = []
 
@@ -5266,7 +5274,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return links
 
-    def _calculate_metadata_similarity(self, text_node, image_node, field_mappings, field_weights):
+    def _calculate_metadata_similarity(self, text_node: GraphNode, image_node: GraphNode, field_mappings: Dict[str, List[str]], field_weights: Dict[str, float]) -> Tuple[float, List[str]]:
         """Calculate similarity between text and image nodes based on metadata"""
         total_score = 0.0
         total_weight = 0.0
@@ -5313,7 +5321,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return similarity, matched_fields
 
-    def _calculate_field_similarity(self, value1, value2):
+    def _calculate_field_similarity(self, value1: Any, value2: Any) -> float:
         """Calculate similarity between two field values based on their types"""
         # Handle different value types
         if isinstance(value1, str) and isinstance(value2, str):
@@ -5335,7 +5343,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             except:
                 return 0.0
 
-    def _text_similarity(self, text1, text2):
+    def _text_similarity(self, text1: str, text2: str) -> float:
         """Calculate similarity between two text strings"""
         # Simple text similarity based on word overlap
         if not text1 or not text2:
@@ -5354,7 +5362,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return intersection / union
 
-    def _list_similarity(self, list1, list2):
+    def _list_similarity(self, list1: List[Any], list2: List[Any]) -> float:
         """Calculate similarity between two lists (e.g., tags)"""
         if not list1 or not list2:
             return 0.0
@@ -5369,7 +5377,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return intersection / union
 
-    def _normalize_text(self, text):
+    def _normalize_text(self, text: str) -> str:
         """Normalize text for comparison: lowercase, remove punctuation"""
         if not text:
             return ""
@@ -5385,7 +5393,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return text.strip()
 
-    def _determine_cross_modal_edge_type(self, text_node, image_node):
+    def _determine_cross_modal_edge_type(self, text_node: GraphNode, image_node: GraphNode) -> str:
         """Determine the appropriate edge type for a text-image link"""
         # Default to "visualizes" from text to image
         return "visualizes"
@@ -5536,7 +5544,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return results
 
-    def _get_default_node_schemas(self):
+    def _get_default_node_schemas(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """Return default schemas for common node types"""
         return {
             "paper": {
@@ -5553,7 +5561,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             }
         }
 
-    def _get_default_edge_schemas(self):
+    def _get_default_edge_schemas(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """Return default schemas for common edge types"""
         return {
             "cites": {
@@ -5570,7 +5578,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             }
         }
 
-    def _validate_against_schema(self, data, schema, validation_mode):
+    def _validate_against_schema(self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], validation_mode: str) -> List[Dict[str, Any]]:
         """Validate data against a schema and return violations"""
         violations = []
 
@@ -5686,7 +5694,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return violations
 
-    def _fix_schema_violations(self, data, schema, violations):
+    def _fix_schema_violations(self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], violations: List[Dict[str, Any]]) -> int:
         """Fix schema violations where possible and return count of fixed violations"""
         fixed_count = 0
 
@@ -6049,7 +6057,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return paths
 
-    def _calculate_edge_score(self, edge_properties, guidance_properties):
+    def _calculate_edge_score(self, edge_properties: Dict[str, Any], guidance_properties: Dict[str, float]) -> float:
         """Calculate a score for an edge based on its properties and guidance weights"""
         if not edge_properties or not guidance_properties:
             return 0.5  # Default score
@@ -6085,7 +6093,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         else:
             return 0.5  # Default score
 
-    def _calculate_structural_score(self, path_nodes, edge_types, guidance_properties):
+    def _calculate_structural_score(self, path_nodes: List[GraphNode], edge_types: List[str], guidance_properties: Dict[str, float]) -> float:
         """Calculate a structural quality score for a path"""
         if len(path_nodes) <= 1:
             return 0.0
@@ -6145,7 +6153,7 @@ class DatasetSerializer:
     - Vector embeddings
     """
 
-    def __init__(self, storage=None):
+    def __init__(self, storage: Optional['IPLDStorage'] = None) -> None:
         """
         Initialize a new DatasetSerializer.
 
@@ -6155,7 +6163,7 @@ class DatasetSerializer:
         """
         self.storage = storage or IPLDStorage()
 
-    def serialize_arrow_table(self, table, hash_columns=None):
+    def serialize_arrow_table(self, table: 'pa.Table', hash_columns: Optional[List[str]] = None) -> str:
         """
         Serialize an Arrow table to IPLD.
 
@@ -6212,7 +6220,7 @@ class DatasetSerializer:
         root_cid = self.storage.store_json(root_obj)
         return root_cid
 
-    def deserialize_arrow_table(self, cid):
+    def deserialize_arrow_table(self, cid: str) -> 'pa.Table':
         """
         Deserialize an Arrow table from IPLD.
 
@@ -6257,7 +6265,7 @@ class DatasetSerializer:
         table = pa.Table.from_arrays(columns, schema=schema)
         return table
 
-    def export_to_jsonl(self, data, output_path, orient="records", lines=True, compression=None):
+    def export_to_jsonl(self, data: Union['pa.Table', 'datasets.Dataset', 'pd.DataFrame', Dict[str, Any]], output_path: str, orient: str = "records", lines: bool = True, compression: Optional[str] = None) -> bool:
         """
         Export data to a JSONL file.
 
@@ -6387,7 +6395,7 @@ class DatasetSerializer:
             row = {col: table.column(col)[i].as_py() for col in table.column_names}
             file_obj.write(json.dumps(row) + "\n")
 
-    def import_from_jsonl(self, input_path, schema=None, compression=None, infer_schema=True, max_rows_for_inference=1000):
+    def import_from_jsonl(self, input_path: str, schema: Optional['pa.Schema'] = None, compression: Optional[str] = None, infer_schema: bool = True, max_rows_for_inference: int = 1000) -> 'pa.Table':
         """
         Import data from a JSONL file.
 
@@ -6493,7 +6501,7 @@ class DatasetSerializer:
             else:
                 return pa.Table.from_pylist([])
 
-    def convert_jsonl_to_huggingface(self, input_path, compression=None):
+    def convert_jsonl_to_huggingface(self, input_path: str, compression: Optional[str] = None) -> 'datasets.Dataset':
         """
         Convert a JSONL file to a HuggingFace dataset.
 
@@ -6516,7 +6524,7 @@ class DatasetSerializer:
         # Convert to HuggingFace dataset
         return Dataset(arrow_table=table)
 
-    def convert_arrow_to_jsonl(self, table, output_path, compression=None):
+    def convert_arrow_to_jsonl(self, table: 'pa.Table', output_path: str, compression: Optional[str] = None) -> str:
         """
         Convert an Arrow table to a JSONL file.
 
@@ -6530,7 +6538,7 @@ class DatasetSerializer:
         """
         return self.export_to_jsonl(table, output_path, compression=compression)
 
-    def serialize_jsonl(self, input_path, hash_records=True, compression=None, batch_size=1000):
+    def serialize_jsonl(self, input_path: str, hash_records: bool = True, compression: Optional[str] = None, batch_size: int = 1000) -> str:
         """
         Serialize a JSONL file to IPLD with efficient streaming.
 
@@ -6653,7 +6661,7 @@ class DatasetSerializer:
 
         return record_cids
 
-    def deserialize_jsonl(self, cid, output_path=None, compression=None, max_records=None):
+    def deserialize_jsonl(self, cid: str, output_path: Optional[str] = None, compression: Optional[str] = None, max_records: Optional[int] = None) -> Union[List[Dict[str, Any]], str]:
         """
         Deserialize a JSONL dataset from IPLD.
 
@@ -6721,7 +6729,7 @@ class DatasetSerializer:
 
             return records
 
-    def serialize_huggingface_dataset(self, dataset, split="train", hash_columns=None):
+    def serialize_huggingface_dataset(self, dataset: 'datasets.Dataset', split: str = "train", hash_columns: Optional[List[str]] = None) -> str:
         """
         Serialize a HuggingFace dataset to IPLD.
 
@@ -6774,7 +6782,7 @@ class DatasetSerializer:
         root_cid = self.storage.store_json(root_obj)
         return root_cid
 
-    def deserialize_huggingface_dataset(self, cid):
+    def deserialize_huggingface_dataset(self, cid: str) -> 'datasets.Dataset':
         """
         Deserialize a HuggingFace dataset from IPLD.
 
@@ -6827,7 +6835,7 @@ class DatasetSerializer:
 
         return dataset
 
-    def serialize_dataset_streaming(self, chunks_iter):
+    def serialize_dataset_streaming(self, chunks_iter: Iterator[Union['pa.Table', Dict[str, Any]]]) -> str:
         """
         Serialize a dataset in streaming mode.
 
@@ -6889,7 +6897,7 @@ class DatasetSerializer:
             import shutil
             shutil.rmtree(temp_dir)
 
-    def deserialize_dataset_streaming(self, cid):
+    def deserialize_dataset_streaming(self, cid: str) -> Iterator[Union['pa.Table', Dict[str, Any]]]:
         """
         Deserialize a dataset in streaming mode.
 

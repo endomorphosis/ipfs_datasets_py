@@ -642,7 +642,7 @@ class TestGetEntityNeighborhood:
 
     @pytest.mark.asyncio
     async def test_when_getting_neighborhood_with_none_entity_id_then_raises_type_error(
-        self, integrator_default
+        self, real_integrator
     ):
         """
         GIVEN GraphRAGIntegrator instance and None as entity_id parameter
@@ -651,11 +651,11 @@ class TestGetEntityNeighborhood:
         """
         # Act & Assert
         with pytest.raises(TypeError, match="entity_id must be a string"):
-            await integrator_default.get_entity_neighborhood(None)
+            await real_integrator.get_entity_neighborhood(None)
 
     @pytest.mark.asyncio
     async def test_when_getting_neighborhood_with_empty_entity_id_then_raises_value_error(
-        self, integrator_default
+        self, real_integrator
     ):
         """
         GIVEN GraphRAGIntegrator instance and empty string as entity_id
@@ -667,11 +667,11 @@ class TestGetEntityNeighborhood:
         
         # Act & Assert
         with pytest.raises(ValueError, match="entity_id must be a non-empty string."):
-            await integrator_default.get_entity_neighborhood(empty_entity_id)
+            await real_integrator.get_entity_neighborhood(empty_entity_id)
 
     @pytest.mark.asyncio
     async def test_when_getting_neighborhood_with_negative_depth_then_raises_value_error(
-        self, integrator_default, entity_id
+        self, real_integrator, entity_id
     ):
         """
         GIVEN GraphRAGIntegrator instance and negative depth value
@@ -683,11 +683,11 @@ class TestGetEntityNeighborhood:
         
         # Act & Assert
         with pytest.raises(ValueError, match="depth must be a non-negative integer"):
-            await integrator_default.get_entity_neighborhood(entity_id, depth=negative_depth)
+            await real_integrator.get_entity_neighborhood(entity_id, depth=negative_depth)
 
     @pytest.mark.asyncio
     async def test_when_getting_neighborhood_with_non_integer_depth_then_raises_type_error(
-        self, integrator_default, entity_id
+        self, real_integrator, entity_id
     ):
         """
         GIVEN GraphRAGIntegrator instance and non-integer depth parameter
@@ -699,7 +699,7 @@ class TestGetEntityNeighborhood:
         
         # Act & Assert
         with pytest.raises(TypeError, match="depth must be an integer"):
-            await integrator_default.get_entity_neighborhood(entity_id, depth=float_depth)
+            await real_integrator.get_entity_neighborhood(entity_id, depth=float_depth)
 
 
     @pytest.mark.asyncio

@@ -34,7 +34,6 @@ Usage Examples:
     similarity = calculate_similarity(vector1, vector2)
 
 Notes:
-    - All vector operations use NumPy for optimal performance
     - Vector dimensions must be consistent within each vector store
     - Similarity scores are normalized to [0, 1] range for cosine similarity
     - Error handling ensures graceful degradation in edge cases
@@ -58,8 +57,6 @@ class VectorSimilarityCalculator:
     natural language processing, and information retrieval applications. The calculator is
     designed for both single-pair computations and batch processing scenarios, supporting
     efficient similarity calculations for large vector collections.
-    This class serves as the core computational engine for vector-based similarity search,
-    clustering, and recommendation systems.
 
     Key Features:
     - Cosine similarity calculation with normalization and zero-vector handling
@@ -109,9 +106,6 @@ class VectorSimilarityCalculator:
         - Cosine similarity values range from -1 to 1, with 1 indicating identical direction
         - Euclidean distance values range from 0 to infinity, with 0 indicating identical vectors
         - Zero vectors return 0.0 similarity to prevent division by zero errors
-        - All vector operations use NumPy for optimized numerical computations
-        - Error handling ensures graceful degradation for invalid inputs
-        - Memory usage scales linearly with vector dimensions and batch sizes
     """
 
     def __init__(self):
@@ -119,14 +113,10 @@ class VectorSimilarityCalculator:
         Initialize the vector similarity calculator with no internal state.
 
         This method creates a stateless vector similarity calculator that can perform
-        various distance and similarity computations between vectors. The calculator
-        maintains no internal state, making it thread-safe and suitable for concurrent
-        use across multiple processes or threads.
+        various distance and similarity computations between vectors.
 
         Attributes initialized:
-            None: This calculator is stateless and maintains no internal attributes.
-                All computation methods are pure functions that operate on input vectors
-                without modifying any internal state.
+            None:
 
         Examples:
             >>> calculator = VectorSimilarityCalculator()
@@ -134,12 +124,6 @@ class VectorSimilarityCalculator:
             True
             >>> # Calculator is ready for immediate use
             >>> similarity = calculator.cosine_similarity([1, 0], [0, 1])
-
-        Notes:
-            - No parameters are required for initialization
-            - Calculator is immediately ready for all similarity operations
-            - Thread-safe design allows concurrent usage without synchronization
-            - Memory footprint is minimal due to stateless design
         """
         pass
 
@@ -151,7 +135,6 @@ class VectorSimilarityCalculator:
         the cosine of the angle between them in high-dimensional space. Cosine similarity
         measures the orientation relationship between vectors regardless of their magnitudes,
         making it ideal for text similarity, recommendation systems, and semantic analysis.
-        The method includes robust handling for zero vectors and edge cases.
 
         Args:
             vector1 (List[float]): The first vector for similarity comparison.
@@ -181,13 +164,6 @@ class VectorSimilarityCalculator:
             -1.0
             >>> calculator.cosine_similarity([0, 0], [1, 1])  # Zero vector handling
             0.0
-
-        Notes:
-            - Uses NumPy for optimized dot product and norm calculations
-            - Handles zero vectors gracefully by returning 0.0 similarity
-            - Dimensionality mismatch is handled by NumPy broadcasting rules
-            - Result is always a finite floating-point number
-            - Computation complexity is O(n) where n is vector dimension
         """
         try:
             v1 = np.array(vector1)
@@ -209,8 +185,8 @@ class VectorSimilarityCalculator:
         Calculate Euclidean distance between two vectors for geometric similarity.
 
         This method computes the straight-line distance between two points in
-        high-dimensional space using the Euclidean distance formula. Unlike cosine
-        similarity, Euclidean distance considers both the direction and magnitude
+        high-dimensional space using the Euclidean distance formula.
+        Euclidean distance considers both the direction and magnitude
         of vectors, making it suitable for applications where vector magnitude
         represents meaningful information such as feature intensities or quantities.
 
@@ -229,7 +205,6 @@ class VectorSimilarityCalculator:
         Raises:
             TypeError: If vector1 or vector2 are not lists or contain non-numeric values
             ValueError: If vectors have different dimensions or are empty
-            OverflowError: Handled internally for very large vector values
 
         Examples:
             >>> calculator = VectorSimilarityCalculator()
@@ -241,14 +216,6 @@ class VectorSimilarityCalculator:
             1.4142135623730951
             >>> calculator.euclidean_distance([-1, -1], [1, 1])
             2.8284271247461903
-
-        Notes:
-            - Uses NumPy's optimized norm calculation for performance
-            - Distance is always non-negative due to L2 norm properties
-            - Sensitive to vector magnitude unlike cosine similarity
-            - Computation complexity is O(n) where n is vector dimension
-            - Result represents geometric distance in vector space
-            - Error handling ensures graceful failure with 0.0 return
         """
         try:
             v1 = np.array(vector1)
@@ -264,9 +231,6 @@ class VectorSimilarityCalculator:
 
         This method efficiently computes cosine similarities between a single query vector
         and a collection of target vectors using batch processing for improved performance.
-        It's designed for scenarios where you need to find similarities between one query
-        and many candidates, such as document retrieval, recommendation systems, or
-        nearest neighbor search operations.
 
         Args:
             vectors (List[List[float]]): Collection of target vectors for similarity comparison.
@@ -296,14 +260,6 @@ class VectorSimilarityCalculator:
             >>> # Empty vectors list
             >>> calculator.batch_similarity([], [1, 0])
             []
-
-        Notes:
-            - Uses the same cosine similarity calculation as the single-vector method
-            - Performance scales linearly with the number of target vectors
-            - Memory usage is proportional to the number of vectors processed
-            - All vectors must have consistent dimensionality for valid results
-            - Error handling in individual similarity calculations prevents batch failure
-            - Maintains order correspondence between input vectors and output scores
         """
         similarities = []
         for vector in vectors:
@@ -317,9 +273,6 @@ class VectorSimilarityCalculator:
 
         This method identifies the top-k most similar vectors from a collection by
         calculating cosine similarities and ranking results in descending order.
-        It provides both similarity scores and vector identifiers, making it ideal
-        for nearest neighbor search, recommendation systems, and similarity-based
-        retrieval operations where you need the most relevant results.
 
         Args:
             vectors (Dict[str, List[float]]): Dictionary mapping vector IDs to their numeric
@@ -360,14 +313,6 @@ class VectorSimilarityCalculator:
             1.0
             >>> len(results)
             2
-
-        Notes:
-            - Results are always sorted by similarity in descending order
-            - Ties in similarity maintain stable relative ordering from input
-            - Vector IDs are preserved from the input dictionary keys
-            - Memory usage scales with the size of the vector collection
-            - Performance is O(n log n) due to sorting, where n is collection size
-            - Empty collections return empty result lists gracefully
         """
         similarities = []
         for vector_id, vector in vectors.items():
@@ -386,10 +331,6 @@ class VectorStore:
     searching high-dimensional vectors with associated metadata. It implements efficient
     vector storage with dimension validation, metadata association, and fast similarity
     search capabilities optimized for machine learning and information retrieval applications.
-    This class serves as the foundation for building semantic search systems, recommendation
-    engines, and vector-based knowledge retrieval systems.
-    The store is designed to handle large collections of vectors while maintaining
-    performance and memory efficiency through optimized data structures and algorithms.
 
     Args:
         dimension (int, optional): The dimensionality of vectors to be stored.
@@ -447,20 +388,11 @@ class VectorStore:
     Notes:
         - All vectors must have consistent dimensionality matching the store configuration
         - Vector IDs must be unique within the store; duplicate IDs will overwrite existing vectors
-        - Metadata is optional but recommended for meaningful search result interpretation
-        - NumPy arrays are used internally for optimized numerical computations
-        - Search performance scales linearly with the number of stored vectors
-        - Memory usage is proportional to the number of vectors and their dimensionality
     """
 
     def __init__(self, dimension: int = 768):
         """
         Initialize vector store with specified dimension and empty storage containers.
-
-        This method creates a new vector store configured for vectors of a specific
-        dimensionality. The store initializes empty storage containers for vectors
-        and metadata, ready to accept vector additions and perform similarity searches.
-        The dimension parameter enforces consistency across all vectors added to the store.
 
         Args:
             dimension (int, optional): The required dimensionality for all vectors
@@ -491,13 +423,6 @@ class VectorStore:
             >>> default_store = VectorStore()
             >>> default_store.dimension
             768
-
-        Notes:
-            - Dimension validation occurs during vector addition, not initialization
-            - Storage containers start empty and grow dynamically with vector additions
-            - Common dimensions: 768 (BERT), 512 (smaller models), 1024+ (large models)
-            - Memory footprint is minimal until vectors are added to the store
-            - Thread-safe initialization allows concurrent store creation
         """
         self.dimension = dimension
         self.vectors = {}
@@ -509,9 +434,7 @@ class VectorStore:
 
         This method stores a vector in the vector store with automatic dimension validation
         to ensure consistency across all stored vectors. It associates optional metadata
-        with the vector for enhanced search context and result interpretation. The method
-        provides comprehensive error handling and returns detailed status information
-        for robust integration with larger systems.
+        with the vector for enhanced search context and result interpretation.
 
         Args:
             vector_id (str): Unique identifier for the vector within the store.
@@ -553,14 +476,6 @@ class VectorStore:
             'error'
             >>> 'dimension mismatch' in error_result['message'].lower()
             True
-
-        Notes:
-            - Vector IDs must be unique; duplicates overwrite existing vectors
-            - Dimension validation prevents inconsistent vector storage
-            - Metadata is optional but recommended for meaningful search results
-            - NumPy conversion occurs internally for optimized storage and computation
-            - Error handling ensures graceful failure without corrupting the store
-            - Memory usage increases proportionally with vector additions
         """
         try:
             if len(vector) != self.dimension:
@@ -580,8 +495,7 @@ class VectorStore:
         This method performs similarity search across all stored vectors using cosine
         similarity calculations to identify the most relevant matches. Results are
         ranked by similarity score and include associated metadata for comprehensive
-        result interpretation. The search is optimized for performance while maintaining
-        accuracy across large vector collections.
+        result interpretation.
 
         Args:
             query_vector (List[float]): The query vector to find similar matches for.
@@ -621,14 +535,6 @@ class VectorStore:
             'horizontal'
             >>> len(results)
             2
-
-        Notes:
-            - Uses cosine similarity for orientation-based similarity measurement
-            - Results are always sorted by similarity in descending order
-            - Metadata from vector addition is included in search results
-            - Performance scales linearly with the number of stored vectors
-            - Empty stores return empty result lists gracefully
-            - Error handling ensures robust operation even with invalid inputs
         """
         try:
             calculator = VectorSimilarityCalculator()
@@ -655,9 +561,7 @@ def create_vector_store(dimension: int = 768) -> VectorStore:
     Create a new vector store instance with specified dimensionality.
 
     This utility function provides a convenient way to create and configure a new
-    VectorStore instance with a specified vector dimension. It serves as a factory
-    function for vector store creation, simplifying initialization in applications
-    that need multiple vector stores or dynamic store creation.
+    VectorStore instance with a specified vector dimension.
 
     Args:
         dimension (int, optional): The dimensionality for vectors in the new store.
@@ -683,12 +587,6 @@ def create_vector_store(dimension: int = 768) -> VectorStore:
         >>> default_store = create_vector_store()
         >>> default_store.dimension
         768
-
-    Notes:
-        - Equivalent to VectorStore(dimension) but provides cleaner import syntax
-        - Useful for factory patterns and dynamic store creation
-        - Common dimensions: 768 (BERT), 512 (smaller models), 1024+ (large models)
-        - Returns a fresh instance with empty storage containers
     """
     return VectorStore(dimension)
 
@@ -698,8 +596,7 @@ def calculate_similarity(vector1: List[float], vector2: List[float]) -> float:
 
     This utility function provides a convenient interface for calculating cosine
     similarity between two vectors without needing to instantiate a calculator
-    object. It uses the same robust computation logic as the VectorSimilarityCalculator
-    class, including proper handling of zero vectors and edge cases.
+    object.
 
     Args:
         vector1 (List[float]): The first vector for similarity comparison.
@@ -728,12 +625,6 @@ def calculate_similarity(vector1: List[float], vector2: List[float]) -> float:
         >>> similarity = calculate_similarity([1, 1], [-1, -1])
         >>> similarity
         -1.0
-
-    Notes:
-        - Equivalent to VectorSimilarityCalculator().cosine_similarity() but more concise
-        - Uses the same robust error handling and zero vector management
-        - Ideal for one-off similarity calculations without object instantiation
-        - Performance is identical to the class method implementation
     """
     calculator = VectorSimilarityCalculator()
     return calculator.cosine_similarity(vector1, vector2)

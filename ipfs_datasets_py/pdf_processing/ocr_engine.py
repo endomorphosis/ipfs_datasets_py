@@ -12,11 +12,26 @@ import numpy as np
 from typing import Dict, List, Any
 from cachetools import cached
 
+
 from PIL import Image
 import cv2
 
+
 logger = logging.getLogger(__name__)
 
+
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
+    logger.warning("pytesseract not available, Tesseract OCR will be disabled")
+
+
+try:
+    import surya
+except ImportError:
+    surya = None
+    logger.warning("surya not available, Surya OCR will be disabled")
 
 
 class OCREngine(ABC):
@@ -71,7 +86,7 @@ class OCREngine(ABC):
         - Text extraction results should follow a consistent dictionary format
     """
     
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, mock_dict: dict[str, Any] | None = None) -> None:
         """
         Initialize an OCR engine instance with comprehensive setup and validation.
 
@@ -137,7 +152,14 @@ class OCREngine(ABC):
         except Exception as e:
             logger.warning(f"Failed to initialize OCR engine '{name}': {e}")
             self.available = False
-    
+
+        if isinstance(mock_dict, dict):
+            for key, value in mock_dict.items():
+                try:
+                    setattr(self, key, value)
+                except Exception as e:
+                    raise AttributeError(f"Failed to set mock attribute '{key}': {e}") from e
+
     @abstractmethod
     def _initialize(self) -> None:
         """
@@ -418,9 +440,6 @@ class SuryaOCR(OCREngine):
         """
         self.name = "surya"
         try:
-            # Import Surya components
-            import surya
-
             # Load models
             self.surya = surya
             self.detection_predictor = self.surya.detection.DetectionPredictor()
@@ -656,7 +675,7 @@ class TesseractOCR(OCREngine):
             - Initialization is very fast compared to neural OCR engines
         """
         try:
-            import pytesseract
+            
 
             self.pytesseract = pytesseract
             self.available = True

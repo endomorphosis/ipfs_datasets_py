@@ -403,7 +403,7 @@ class _GraphRAGIntegratorFixtureFactory:
         assert isinstance(entities, list), f"Expected entities to be list, got {type(entities).__name__} instead."
         assert isinstance(conjunction, str), f"Expected conjunction to be str, got {type(conjunction).__name__} instead."
         assert isinstance(final_clause, str), f"Expected final_clause to be str, got {type(final_clause).__name__} instead."
-        assert len(entities) == 2, f"Expected exactly two entities, got {len(entities)} instead."
+        assert len(entities) == 3, f"Expected exactly three entities, got {len(entities)} instead."
 
         # Remove the final entity.
         # NOTE We modify the original list to prevent duplication of entities in the final sentence.
@@ -476,7 +476,7 @@ def integrator(
     )
 
 
-def integrator_default():
+def real_integrator():
     """Create a GraphRAGIntegrator instance with default parameters for testing."""
     return GraphRAGIntegrator()
 
@@ -861,7 +861,7 @@ def low_confidence_document(fixture_factory, test_constants) -> LLMDocument:
 
 
 @pytest.fixture
-def integrator_default() -> GraphRAGIntegrator:
+def real_integrator() -> GraphRAGIntegrator:
     """Create a GraphRAGIntegrator instance with default parameters for testing exceptions."""
     return GraphRAGIntegrator()
 

@@ -1053,13 +1053,13 @@ class TestLLMDocumentDataclassMethodsRepr:
             processing_metadata={},
             document_embedding=None
         )
-        
+
         # When
-        repr_str = repr(document)
-        str_repr = str(document)
-        
+        len_repr = len(repr(document))
+        len_str = len(str(document))
+
         # Then
-        assert len(repr_str) >= len(str_repr), "Repr should be at least as detailed as str()"
+        assert len_repr >= len_str, f"Repr '{len_repr}' should be at least as detailed as str '{len_str}'"
 
     def test_repr_not_excessively_verbose(self):
         """

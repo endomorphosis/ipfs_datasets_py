@@ -17,6 +17,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 import traceback
 import os
+from pprint import pprint
 
 
 try:
@@ -43,6 +44,11 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMDocum
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
 import json
+import os
+
+
+# Set environment variable for verbose PyMuPDF exceptions
+os.environ['PYMUPDF_EXCEPTIONS_VERBOSE'] = '2'
 
 
 class InitializationError(RuntimeError):
@@ -236,14 +242,14 @@ class PDFProcessor:
             Mock dictionary enables comprehensive unit testing with dependency injection.
         """
         self.storage: IPLDStorage = storage
+        self.logger: logging.Logger = logger
         self.audit_logger: AuditLogger = None 
         self.monitoring: MonitoringSystem = None
         self.query_engine: QueryEngine = None
-        self.pipeline_version: str = '2.0'
-        self.logger: logging.Logger = logger
         self.integrator: GraphRAGIntegrator = None
         self.ocr_engine: MultiEngineOCR = None
         self.optimizer: LLMOptimizer = None
+        self.pipeline_version: str = '2.0'
 
         # For testing purposes, allow dependency injection of mock objects
         if isinstance(mock_dict, dict):
@@ -254,6 +260,15 @@ class PDFProcessor:
                     raise AttributeError(f"Warning: Mock attribute '{key}' not set in PDFProcessor")
                 except Exception as e:
                     raise InitializationError(f"Unexpected error during mock injection: {e}") from e
+
+        if self.logger is None:
+            try:
+                self.logger = logging.getLogger(__name__)
+            except Exception as e:
+                raise InitializationError(f"Failed to initialize logger: {e}") from e
+
+        assert self.logger is not None, "Logger attribute cannot be None."
+        assert hasattr(logger, 'level'), "Logger attribute must have a 'level' attribute."
 
         if enable_audit:
             if self.audit_logger is None:
@@ -292,6 +307,7 @@ class PDFProcessor:
                 self.storage = IPLDStorage()
             except Exception as e:
                 raise InitializationError(f"Failed to initialize IPLDStorage: {e}") from e
+
         if self.integrator is None:
             try:
                 self.integrator = GraphRAGIntegrator(
@@ -300,6 +316,7 @@ class PDFProcessor:
                 )
             except Exception as e:
                 raise InitializationError(f"Failed to initialize GraphRAGIntegrator: {e}") from e
+
         if self.ocr_engine is None:
             try:
                 self.ocr_engine = MultiEngineOCR()
@@ -434,20 +451,30 @@ class PDFProcessor:
 
         # Validate string path
         if isinstance(pdf_path, str):
+            bad_characters = [
+                "<", ">", ":", "\"", "\'", "|", "?", "*",
+                # Additional unsafe characters for various filesystems
+                # e.g. Windows reserved characters and names
+                "CON", "PRN", "AUX", "NUL",
+                "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+                "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+            ]
             # Check for invalid or unsafe characters in the string path
             if not pdf_path.strip():
                 raise ValueError("pdf_path cannot be empty or whitespace")
 
             # Also check for control characters (ASCII 0-31 and 127)
-            if any(ord(char) < 32 or ord(char) == 127 for char in pdf_path):
+            if any(ord(char) < 32 or ord(char) == 127 or char in bad_characters for char in pdf_path):
                 raise ValueError("pdf_path contains invalid characters")
 
         pdf_path = Path(pdf_path)
 
-        if not pdf_path.exists():
-            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
-        if not pdf_path.is_file():
-            raise ValueError(f"PDF path is not a file: {pdf_path}")
+        # if not pdf_path.exists():
+        #     raise FileNotFoundError(f"PDF file path does not exist: {pdf_path}")
+        # if pdf_path.is_dir():
+        #     raise IsADirectoryError(f"PDF path is a directory, expected a file: {pdf_path}")
+        # if not pdf_path.is_file():
+        #     raise ValueError(f"PDF path is not a file: {pdf_path}")
 
         # Type-check the metadata dictionary
         if metadata is not None:
@@ -460,7 +487,7 @@ class PDFProcessor:
                     # Prevent overlapping keys
                     if key in ['pipeline_version', 'processing_time', 'quality_scores', 'stages_completed']:
                         raise KeyError(
-                            "Input metadata and built-in processing metadata have overlapping keys."
+                            f"Input metadata and built-in processing metadata have an overlapping key '{key}'."
                         )
 
         stages_completed: list[str] = []
@@ -495,39 +522,51 @@ class PDFProcessor:
                 self.logger.debug(f"start_time: {start_time}")
 
                 # Stage 1: PDF Input
-                pdf_info = await self._validate_and_analyze_pdf(pdf_path)
+                self.logger.info(f"Stage 1: Validating PDF {pdf_path}")
+                pdf_info: dict[str, Any] = await self._validate_and_analyze_pdf(pdf_path)
                 stages_completed.append('PDF validated and analyzed')
 
-                # Stage 2: Decomposition  
-                decomposed_content = await self._decompose_pdf(pdf_path)
+                assert isinstance(pdf_info, dict), \
+                    "PDF info must be a dictionary, got {type(pdf_into).__name__}."
+
+                # Stage 2: Decomposition
+                self.logger.info(f"Stage 2: Decomposing PDF {pdf_path}")
+                decomposed_content: dict[str, Any] = await self._decompose_pdf(pdf_path)
                 stages_completed.append('PDF decomposed')
 
                 # Stage 3: IPLD Structuring
-                ipld_structure = await self._create_ipld_structure(decomposed_content)
+                self.logger.info("Stage 3: Creating IPLD structure")
+                ipld_structure: dict[str, Any] = await self._create_ipld_structure(decomposed_content)
                 stages_completed.append('IPLD structure created with decomposed PDF content')
 
                 # Stage 4: OCR Processing
-                ocr_results = await self._process_ocr(decomposed_content)
+                self.logger.info("Stage 4: Processing OCR")
+                ocr_results: dict[str, Any] = await self._process_ocr(decomposed_content)
                 stages_completed.append('Decomposed PDF content processed with OCR')
 
                 # Stage 5: LLM Optimization
+                self.logger.info("Stage 5: Optimizing for LLM")
+                pprint(f"decomposed_content: {decomposed_content}\nocr_results: {ocr_results}")
                 optimized_content: dict[str, Any] = await self._optimize_for_llm(
                     decomposed_content, ocr_results
                 )
                 stages_completed.append('Decomposed PDF content optimized for LLM')
 
                 # Stage 6: Entity Extraction
+                self.logger.info("Stage 6: Extracting entities and relationships")
                 entities_and_relations: dict[str, Any] = await self._extract_entities(optimized_content)
                 stages_completed.append('Entities and relations extracted from optimized content')
 
                 # Stage 7: Vector Embedding
-                embeddings = await self._create_embeddings(
+                self.logger.info("Stage 7: Creating vector embeddings")
+                embeddings: dict[str, Any] = await self._create_embeddings(
                     optimized_content, entities_and_relations
                 )
                 stages_completed.append('Embeddings created from optimized content and entities and relations')
 
                 # Stage 8: IPLD GraphRAG Integration
-                graph_nodes = await self._integrate_with_graphrag(
+                self.logger.info("Stage 8: Integrating with GraphRAG")
+                graph_nodes: dict[str, Any] = await self._integrate_with_graphrag(
                     ipld_structure=ipld_structure, 
                     optimized_content=optimized_content, 
                     entities_and_relations=entities_and_relations, 
@@ -536,12 +575,14 @@ class PDFProcessor:
                 stages_completed.append('IPLD, entities and relations, and embeddings integrated into GraphRAG')
 
                 # Stage 9: Cross-Document Analysis
-                cross_doc_relations = await self._analyze_cross_document_relationships(
+                self.logger.info("Stage 9: Analyzing cross-document relationships")
+                cross_doc_relations: list[dict[str, Any]] = await self._analyze_cross_document_relationships(
                     graph_nodes
                 )
                 stages_completed.append('GraphRAG analyzed to find cross document relations.')
 
                 # Stage 10: Query Interface Setup
+                self.logger.info("Stage 10: Setting up query interface")
                 await self._setup_query_interface(graph_nodes, cross_doc_relations)
                 stages_completed.append('Query Engine initialized with graph nodes and cross document relations.')
 
@@ -564,7 +605,7 @@ class PDFProcessor:
                 if metadata:
                     result['processing_metadata'].update(metadata)
 
-                quality_scores = self._get_quality_scores(result, ocr_results)
+                quality_scores: dict[str, float] = self._get_quality_scores(result, ocr_results)
                 result['processing_metadata']['quality_scores'] = quality_scores
 
                 # Audit logging
@@ -575,19 +616,22 @@ class PDFProcessor:
                         resource_type="pdf_document",
                         details={"document_id": result['document_id']}
                     )
-                
+                    self.audit_logger
+
                 return result
-                
+
         except Exception as e:
-            if self.logger.level == logging.DEBUG:
-                # Enable exception tracing if in debug.
-                self.logger.exception(f"PDF processing failed for {pdf_path}: {e}")
-            else:
-                self.logger.error(f"PDF processing failed for {pdf_path}: {e}")
+            self.logger.exception(f"PDF processing failed for {pdf_path}: {e}")
+
+            # if self.logger.level == logging.DEBUG:
+            #     # Enable exception tracing if in debug.
+            #     self.logger.exception(f"PDF processing failed for {pdf_path}: {e}")
+            # else:
+            #     self.logger.error(f"PDF processing failed for {pdf_path}: {e}")
 
             if self.audit_logger:
                 self.audit_logger.security(
-                    "pdf_processing_error",
+                    "pdf_processing_error", 
                     details={"error": str(e), "pdf_path": str(pdf_path)}
                 )
 
@@ -657,38 +701,114 @@ class PDFProcessor:
             File hash provides content addressability and deduplication capabilities.
             Analysis timestamp enables processing audit trails and cache validation.
         """
-        self.logger.info(f"Stage 1: Validating PDF {pdf_path}")
+        # Check if it's a network path (e.g., UNC on Windows) NOTE Keep this non-os specific
+        if str(pdf_path).startswith('\\\\'):
+            raise ValueError("Network paths are not supported for PDF processing")
 
-        # Basic file validation
-        file_size = pdf_path.stat().st_size
-        if file_size == 0:
-            raise ValueError("PDF file is empty")
+        # Validate that it's a pdf file that exists.
+        if not pdf_path.exists():
+            raise FileNotFoundError(f"PDF path does not exist: {pdf_path}")
+        if not pdf_path.is_file(): # NOTE This should filter out URLs, directories, etc.
+            raise ValueError(f"PDF path is not a file: {pdf_path}")
+        if pdf_path.suffix.lower() != '.pdf':
+            raise ValueError(f"PDF file does not have a '.pdf' extension: {pdf_path}")
+
+        # Check if it's a symlink
+        if pdf_path.is_symlink():
+            raise ValueError("Symbolic links are not supported for PDF processing")
+
+        # file_size = pdf_path.stat().st_size
+        # if file_size == 0:
+        #     raise ValueError("PDF file is empty.")
 
         # Check for permission issues
         if not os.access(pdf_path, os.R_OK):
             raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
 
         # Open with PyMuPDF for analysis
+        doc = None
+        page_count: int = None
+        errored: list[str] = []
+        is_encrypted: bool = None
+        version: str = None
+
+        # TODO Find a way to make this less brittle.
         try:
             doc = pymupdf.open(str(pdf_path))
-            page_count = doc.page_count
-            doc.close()
-        except PermissionError:
-            raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
-        except FileNotFoundError:
-            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
-        except (pymupdf.FileDataError, pymupdf.mupdf.FzErrorFormat) as e:
-            raise e
-        except Exception as e:
-            raise RuntimeError(f"Unexpected error opening PDF file '{pdf_path}': {e}") from e
 
-        return {
-            'file_path': str(pdf_path),
-            'file_size': file_size,
-            'page_count': page_count,
-            'file_hash': self._calculate_file_hash(pdf_path),
-            'analysis_timestamp': datetime.datetime.now().isoformat()
-        }
+            if not doc.is_pdf:
+                errored.append("File is not a valid PDF document.")
+
+            metadata = doc.metadata
+            version = metadata['format'] if metadata is not None else "unknown"
+            page_count = doc.page_count
+            is_encrypted = doc.is_encrypted
+
+            if version is not None or version == "unknown":
+                if version == "unknown":
+                    errored.append("PDF file is an unsupported version 'unknown'.")
+                else:
+                    separator = " " if " " in version else "-"
+                    name, number = version.split(separator)
+                    name, number = name.strip(), number.strip()
+                    assert isinstance(name, str), f"PDF version name must be a string, got {type(name).__name__} instead."
+                    assert isinstance(number, str), f"PDF version number must be a string, got {type(number).__name__} instead."
+
+                    if 'pdf' not in name.lower():
+                        errored.append(f"PDF File is an unsupported version '{version}'")
+                    if number.startswith(('1','2')):
+                        pass
+                    else:
+                        errored.append(f"PDF File is an unsupported version '{version}'")
+
+        except AttributeError as e:
+            errored.append(e)
+            raise RuntimeError(f"pymupdf could not open PDF file: {e}") from e
+        except pymupdf.EmptyFileError as e:
+            errored.append(e)
+        except (pymupdf.FileDataError, pymupdf.mupdf.FzErrorFormat) as e:
+            # NOTE Pymupdf wraps its errors in the generic FileDataError, so we need
+            # to deconstruct it's cause to see what actually happened. I FUCKING HATE THIS LIBRARY!!!
+
+            # Check if it's actually a syntax error wrapped in FileDataError
+            if "invalid key in dict" in str(e.__cause__):
+                errored.append(f"PDF file is corrupted or malformed: {e.__cause__}")
+            else:
+                raise DependencyError(f"pymupdf could not open PDF file: {e}") from e
+
+        except Exception as e:
+            errored.append(e)
+            raise RuntimeError(f"Unexpected error opening PDF file '{pdf_path}': {e}") from e
+        else:
+            if is_encrypted is not None and is_encrypted == True:
+                errored.append("PDF file is encrypted.")
+
+            if page_count is not None and page_count == 0:
+                errored.append("PDF file has zero pages.")
+        finally:
+            if doc is not None:
+                if not doc.is_closed:
+                    doc.close()
+
+            pdf_info = {
+                'file_path': str(pdf_path),
+                'file_size': pdf_path.stat().st_size,
+                'page_count': page_count,
+                'file_hash': self._calculate_file_hash(pdf_path), # TODO this should be IPFS CID
+                'analysis_timestamp': datetime.datetime.now().isoformat()
+            }
+
+            if errored:
+                pdf_info['errored'] = errored
+                print("Error during PDF validation:", pdf_info)
+                if len(errored) == 1:
+                    raise ValueError(f"PDF validation failed: {errored[0]}")
+                else:
+                    raise ValueError(f"PDF validation failed with multiple errors: {errored}")
+            else:
+                print("PDF validation successful:", pdf_info)
+
+            return pdf_info
 
     async def _decompose_pdf(self, pdf_path: Path) -> dict[str, Any]:
         """
@@ -730,8 +850,6 @@ class PDFProcessor:
             Large PDF files are processed page-by-page to manage memory usage.
             Vector graphics and drawing elements are preserved with bounding boxes.
         """
-        self.logger.info(f"Stage 2: Decomposing PDF {pdf_path}")
-
         decomposed_content = {
             'pages': [],
             'metadata': {},
@@ -792,23 +910,24 @@ class PDFProcessor:
                     # Extract detailed text with positions
                     words = page.extract_words()
                     decomposed_content['pages'][i]['words'] = words
-            
+
             self.logger.info(f"Successfully decomposed {page_count} pages")
+            print(decomposed_content)
             return decomposed_content
-            
+
         except (ValueError, pymupdf.FileDataError, pymupdf.mupdf.FzErrorFormat) as e:
             self.logger.error(f"PDF decomposition failed: {e}")
             raise ValueError(f"PDF decomposition failed: {e}") from e
         except MemoryError as e:
-            self.logger.error(f"PDF decomposition failed: {e}")
-            raise MemoryError(f"PDF decomposition failed: {e}") from e
+            self.logger.error(f"Memory error in PDF decomposition: {e}")
+            raise MemoryError(f"Memory error in PDF decomposition: {e}") from e
         except (RuntimeError, IOError) as e:
-            self.logger.error(f"PDF decomposition failed: {e}")
-            raise RuntimeError(f"PDF decomposition failed: {e}") from e
+            self.logger.error(f"Runtime error in PDF decomposition: {e}")
+            raise RuntimeError(f"Runtime error in PDF decomposition: {e}") from e
         except Exception as e:
-            self.logger.error(f"PDF decomposition failed: {e}")
-            raise ValueError(f"PDF decomposition failed: {e}") from e
-    
+            self.logger.error(f"Unexpected error in PDF decomposition: {e}")
+            raise ValueError(f"Unexpected error in PDF decomposition: {e}") from e
+
     async def _extract_page_content(self, page: pymupdf.Page, page_num: int) -> dict[str, Any]:
         """
         Extract comprehensive content from a single PDF page with detailed positioning.
@@ -1060,22 +1179,19 @@ class PDFProcessor:
             Processing time includes I/O operations, computation, and storage overhead.
             Metrics support performance optimization and capacity planning.
         """
-        # Get processing statistics or calculate from start time
         end_time = datetime.datetime.now().timestamp()
 
         if not isinstance(start_time, (int, float)):
             raise TypeError(f"Start time must be a numeric timestamp, got {type(start_time).__name__}")
 
-        # Fix 2: Check start_time for validity before calculating total_time
         if start_time <= 0:
             raise ValueError(f"Processing start time must be positive, got '{start_time}'")
-        
-        # Fix 3: Add additional validation for reasonable timestamp range
+
         if start_time > end_time:
             raise ValueError(f"Start time ({start_time}) cannot be after end time ({end_time})")
 
         total_time = end_time - start_time
-        
+
         # Fix 4: Additional safety check for negative durations (shouldn't happen now, but defensive)
         if total_time < 0:
             raise ValueError(f"Invalid processing time calculation: negative duration '{total_time}'. Start: {start_time}, End: {end_time}")
@@ -1125,7 +1241,7 @@ class PDFProcessor:
             IPLD structure enables distributed storage and replication across nodes.
             Failed storage operations are logged but don't halt pipeline processing.
         """
-        self.logger.info("Stage 3: Creating IPLD structure")
+        
         
         # Create hierarchical IPLD structure
         ipld_structure = {
@@ -1149,7 +1265,7 @@ class PDFProcessor:
                 'annotations': page_data['annotations'],
                 'text_blocks': page_data['text_blocks']
             }
-            
+
             # Store in IPFS
             try:
                 page_cid = self.storage.store_json(page_node)
@@ -1160,7 +1276,7 @@ class PDFProcessor:
                 }
             except Exception as e:
                 raise RuntimeError(f"Failed to store page {page_num} in IPLD: {e}") from e
-        
+
         # Store document metadata
         try:
             doc_cid = self.storage.store_json(ipld_structure['document'])
@@ -1207,8 +1323,6 @@ class PDFProcessor:
             Multiple engines enable confidence comparison and accuracy validation.
             Word-level positioning supports precise content localization and extraction.
         """
-        self.logger.info("Stage 4: Processing OCR")
-
         ocr_results = {}
 
         for page_data in decomposed_content['pages']:
@@ -1266,7 +1380,7 @@ class PDFProcessor:
 
     async def _optimize_for_llm(self, 
                                decomposed_content: dict[str, Any], 
-                               ocr_results: dict[str, Any]) -> dict[str, Any]:
+                               ocr_results: dict[str, Any]) -> dict[str, Any]: # FIXME OCR results are not used at all.
         """
         Stage 5: Optimize extracted content for large language model consumption.
 
@@ -1307,21 +1421,23 @@ class PDFProcessor:
             Entity extraction occurs during optimization for efficiency.
             Document embeddings are generated for similarity search and clustering.
         """
-        self.logger.info("Stage 5: Optimizing for LLM")
+        assert isinstance(decomposed_content, dict), f"Decomposed content must be a dictionary, got {type(decomposed_content).__name__}"
+        assert isinstance(ocr_results, dict), f"OCR results must be a dictionary, got {type(ocr_results).__name__}"
 
         # Optimize the decomposed content for LLM processing
-        llm_document = await self.optimizer.optimize_for_llm(
+        llm_document: LLMDocument = await self.optimizer.optimize_for_llm(
             decomposed_content,
             decomposed_content['metadata']
         )
-        
+
         return {
             'llm_document': llm_document,
             'chunks': llm_document.chunks,
             'summary': llm_document.summary,
             'key_entities': llm_document.key_entities
         }
-    
+
+
     async def _extract_entities(self, optimized_content: dict[str, Any]) -> dict[str, Any]:
         """
         Stage 6: Extract named entities and relationships from optimized content.
@@ -1361,7 +1477,7 @@ class PDFProcessor:
             Confidence scores enable filtering and quality assessment.
             Results integrate seamlessly with GraphRAG knowledge graph construction.
         """
-        self.logger.info("Stage 6: Extracting entities and relationships")
+        
         if not isinstance(optimized_content, dict):
             raise ValueError(
                 f"Optimized content must be a dictionary, got {type(optimized_content).__name__} instead"
@@ -1378,10 +1494,9 @@ class PDFProcessor:
         
         # Extract additional relationships from chunks
         relationships = []
-        chunks = llm_document.chunks
-        
+
         # Simple relationship extraction based on co-occurrence
-        for i, chunk in enumerate(chunks):
+        for idx, chunk in enumerate(llm_document.chunks):
             chunk_entities = [ent for ent in entities if any(
                 ent['text'].lower() in chunk.content.lower() 
                 for ent in entities
@@ -1532,7 +1647,10 @@ class PDFProcessor:
         assert isinstance(llm_document, LLMDocument), f"llm_document is not an LLMDocument, but a {type(llm_document).__name__}"
 
         # Integrate with GraphRAG
-        knowledge_graph = await self.integrator.integrate_document(llm_document)
+        try:
+            knowledge_graph = await self.integrator.integrate_document(llm_document)
+        except Exception as e:
+            raise DependencyError(f"GraphRAG integration failed: {e}") from e
 
         return {
             'document': {
@@ -1562,24 +1680,24 @@ class PDFProcessor:
                 - document_id (str): Identifier for the document associated with the knowledge graph.
                 - entities (list[Entity]): List of Entity objects extracted from documents for knowledge graph construction.
 
-    An entity is a distinct object, concept, person, organization, or location
-    identified within text chunks during the document processing pipeline.
+                    An entity is a distinct object, concept, person, organization, or location
+                    identified within text chunks during the document processing pipeline.
 
-    Attributes:
-        id (str): Unique identifier for the entity within the knowledge graph.
-        name (str): The canonical name or primary label of the entity.
-        type (str): Category classification of the entity. Categories are arbitrary and are determined
-        description (str): Detailed textual description providing context and 
-            additional information about the entity.
-        confidence (float): Confidence score (0.0-1.0) indicating the reliability
-            of the entity extraction and classification.
-        source_chunks (List[str]): List of chunk identifiers where this entity
-            appears, enabling traceability back to source documents.
-        properties (Dict[str, Any]): Additional metadata and attributes specific
-            to the entity type (e.g., dates, relationships, custom fields).
-        embedding (Optional[np.ndarray]): High-dimensional vector representation
-            of the entity for semantic similarity calculations. Defaults to None
-            if not computed.
+                    Attributes:
+                        id (str): Unique identifier for the entity within the knowledge graph.
+                        name (str): The canonical name or primary label of the entity.
+                        type (str): Category classification of the entity. Categories are arbitrary and are determined
+                        description (str): Detailed textual description providing context and 
+                            additional information about the entity.
+                        confidence (float): Confidence score (0.0-1.0) indicating the reliability
+                            of the entity extraction and classification.
+                        source_chunks (List[str]): List of chunk identifiers where this entity
+                            appears, enabling traceability back to source documents.
+                        properties (Dict[str, Any]): Additional metadata and attributes specific
+                            to the entity type (e.g., dates, relationships, custom fields).
+                        embedding (Optional[np.ndarray]): High-dimensional vector representation
+                            of the entity for semantic similarity calculations. Defaults to None
+                            if not computed.
 
     Example:
         >>> entity = Entity(
@@ -1591,18 +1709,16 @@ class PDFProcessor:
         ...     source_chunks=["chunk_1", "chunk_3"],
         ...     properties={"role": "engineer", "company": "Tech Corp"}
         ... )
-
-
-                >>> from ipfs_datasets_py.pdf_processing.knowledge_graph import KnowledgeGraph, Entity,
-                >>> kg = KnowledgeGraph(
-                ...     graph_id="kg_001",
-                ...     document_id="doc_123",
-                ...     entities=[entity1, entity2],
-                ...     relationships=[rel1, rel2],
-                ...     chunks=[chunk1, chunk2],
-                ...     metadata={"model": "gpt-4", "confidence": 0.95},
-                ...     creation_timestamp="2024-01-01T12:00:00Z"
-                ... )
+        >>> from ipfs_datasets_py.pdf_processing.knowledge_graph import KnowledgeGraph, Entity,
+        >>> kg = KnowledgeGraph(
+        ...     graph_id="kg_001",
+        ...     document_id="doc_123",
+        ...     entities=[entity1, entity2],
+        ...     relationships=[rel1, rel2],
+        ...     chunks=[chunk1, chunk2],
+        ...     metadata={"model": "gpt-4", "confidence": 0.95},
+        ...     creation_timestamp="2024-01-01T12:00:00Z"
+        ... )
 
         Returns:
             list[dict[str, Any]]: Cross-document relationships discovered between entities.
@@ -1623,12 +1739,9 @@ class PDFProcessor:
 
         Note:
             Cross-document analysis requires multiple documents in the knowledge graph.
-            Entity resolution uses similarity thresholds and fuzzy matching algorithms.
             Relationship discovery leverages both explicit mentions and implicit connections.
             Results enable comprehensive knowledge discovery across document collections.
         """
-        self.logger.info("Stage 9: Analyzing cross-document relationships")
-        
         # Get the knowledge graph
         knowledge_graph: KnowledgeGraph = graph_nodes.get('knowledge_graph')
         if knowledge_graph is None:
@@ -1639,29 +1752,60 @@ class PDFProcessor:
         
         # Initialize cross-document relationship list
         cross_relations = []
-        
+
         # Cross-document analysis requires multiple documents in the knowledge graph
         # This implementation will be expanded when processing document collections
-        if not knowledge_graph or not hasattr(knowledge_graph, 'entities'):
-            self.logger.info("Cross-document analysis skipped - requires document collections")
-            return cross_relations
-        
+        assert hasattr(knowledge_graph, 'entities'), "knowledge_graph has no attribute 'entities'."
+        assert isinstance(knowledge_graph.entities, list), f"knowledge_graph.entities is not a list, but a {type(knowledge_graph.entities).__name__}"
+
         # Basic entity similarity analysis for cross-document relationships
-        entities = getattr(knowledge_graph, 'entities', [])
+        entities: list[Entity] = getattr(knowledge_graph, 'entities', [])
         if len(entities) < 2:
             self.logger.info("Cross-document analysis skipped - insufficient entities for relationship discovery")
             return cross_relations
         
-        # Placeholder implementation will be enhanced for multi-document scenarios
-        self.logger.info("Cross-document analysis complete - ready for document collection processing")
-        
+        assert hasattr(knowledge_graph, 'metadata'), f"knowledge_graph has no attribute 'metadata'.\nactual attributes: {dir(knowledge_graph)}"
+
+        # Cross-document analysis by comparing entities from the knowledge graph.
+        confidence = knowledge_graph.metadata.get('confidence', 0.5)
+        seen_pairs = set()
+        for i, entity_a in enumerate(entities):
+            assert isinstance(entity_a, Entity), f"Entity at index {i} is not an Entity, but a {type(entity_a).__name__}"
+            assert hasattr(entity_a, 'id'), f"Entity at index {i} has no attribute 'id'.\nactual attributes: {dir(entity_a)}"
+            assert hasattr(entity_a, 'name'), f"Entity at index {i} has no attribute 'name'.\nactual attributes: {dir(entity_a)}"
+            print(f"entity_a: {entity_a.name} (id: {entity_a.id})")
+            for j, entity_b in enumerate(entities):
+                if i >= j:
+                    continue  # Avoid duplicate or self comparison
+
+                # Assuming each entity has a 'name' attribute for comparison
+                if entity_a.name.lower() == entity_b.name.lower():
+                    pair_key = tuple(sorted([entity_a.id, entity_b.id]))
+                    if pair_key in seen_pairs:
+                        continue
+                    seen_pairs.add(pair_key)
+
+                    # Build cross-document relation if entities originate from different documents.
+                    doc_b = entity_b.properties.get("id", "unknown")
+                    doc_a = entity_a.properties.get("id", "unknown")
+
+                    if doc_a != doc_b:
+                        cross_relations.append({
+                            'source': entity_a.name,
+                            'target': entity_b.name,
+                            'type': 'cross_document',
+                            'confidence': confidence,
+                            'source_documents': [doc_a, doc_b]
+                        })
+
+        self.logger.info("Cross-document analysis complete with %d relationships discovered", len(cross_relations))
+
         return cross_relations
-    
+
     async def _setup_query_interface(self, 
                                     graph_nodes: dict[str, Any], 
                                     cross_doc_relations: list[dict[str, Any]]) -> None:
-        """
-        Stage 10: Configure natural language query interface for semantic search.
+        """Stage 10: Configure natural language query interface for semantic search.
 
         Initializes and configures the query engine with processed knowledge graph,
         cross-document relationships, and semantic search capabilities. Sets up
@@ -1698,11 +1842,9 @@ class PDFProcessor:
             - Graph traversal algorithms provide comprehensive relationship exploration.
             - Results include relevance scoring and context-aware ranking.
         """
-        self.logger.info("Stage 10: Setting up query interface")
-
         # Create query engine with the GraphRAG integrator
         self.query_engine = QueryEngine(self.integrator, storage=self.storage)
-        
+
         # The query engine is now ready to handle queries for this document
         self.logger.info("Query interface setup complete")
     

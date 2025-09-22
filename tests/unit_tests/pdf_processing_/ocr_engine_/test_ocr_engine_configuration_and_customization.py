@@ -83,15 +83,81 @@ try:
     from PIL import Image
     import cv2
 except ImportError as e:
-    raise ImportError(f"Failed to import necessary modules: {e}")
+    raise ImportError(f"Failed to import necessary modules: {e}") 
 
+
+from PIL import ImageDraw
+
+@pytest.fixture
+def test_constants():
+    """Test fixture for common constants used in OCR tests"""
+    return {
+        "sample_metadata": {
+            "author": "Test Author",
+            "title": "Test Title"
+        },
+        "sample_text": "This is a sample text for OCR testing.",
+        "sample_text_position": (20, 40),
+        "sample_image_size": (300, 100),
+        "sample_image_mode": "RGB",
+        "sample_image_color": "white",
+        "sample_text_color": "black",
+        "sample_image_format": "PNG"
+    }
+
+
+@pytest.fixture
+def valid_image_with_text(test_constants):
+    """Fixture of a PIL Image object"""
+
+    image_size = test_constants['sample_image_size']
+    image_mode = test_constants['sample_image_mode']
+    image_color = test_constants['sample_image_color']
+
+    text = test_constants['sample_text']
+    text_position = test_constants['sample_text_position']
+    text_color = test_constants['sample_text_color']
+
+    img = Image.new(image_mode, image_size, color=image_color)
+    draw = ImageDraw.Draw(img)
+    draw.text(text_position, text, fill=text_color)
+
+    return img
+
+
+@pytest.fixture
+def valid_image_data_with_text(valid_image_with_text, test_constants):
+    """Test fixture to create valid image data as bytes"""
+    buf = io.BytesIO()
+    valid_image_with_text.save(
+        buf, format=test_constants['sample_image_format']
+    )
+    return buf.getvalue()
+
+
+@pytest.fixture
+def mock_pytesseract(test_constants):
+    """Fixture to create a mock pytesseract engine"""
+    text = test_constants['sample_text']
+
+    mock_engine = MagicMock()
+    mock_engine.image_to_string.return_value = text
+    mock_engine.image_to_data.return_value = {
+        'text': [text],
+        'conf': [90],
+        'left': [10],
+        'top': [10],
+        'width': [100],
+        'height': [20]
+    }
+    return mock_engine
 
 
 
 class TestOCREngineConfigurationAndCustomization:
     """Test suite for configuration options and customization capabilities."""
 
-    def create_test_image_data(self):
+    def create_test_image_data(self, valid_image_with_text, valid_image_data_with_text):
         """Create valid test image data as bytes"""
         img = Image.new('RGB', (300, 100), color='white')
         from PIL import ImageDraw
@@ -101,7 +167,7 @@ class TestOCREngineConfigurationAndCustomization:
         img.save(buf, format='PNG')
         return buf.getvalue()
 
-    def create_test_image(self):
+    def create_test_image(self, valid_image_with_text, valid_image_data_with_text):
         """Create a test PIL Image object"""
         img = Image.new('RGB', (300, 100), color='white')
         from PIL import ImageDraw
@@ -109,122 +175,501 @@ class TestOCREngineConfigurationAndCustomization:
         draw.text((20, 40), "Test Text 123", fill='black')
         return img
 
-    def test_tesseract_psm_configuration_impact(self):
+    def test_tesseract_psm_3_fully_automatic_page_segmentation(self, valid_image_with_text, valid_image_data_with_text):
         """
-        GIVEN TesseractOCR with different PSM (Page Segmentation Mode) settings
-        WHEN processing various document layouts
-        THEN should demonstrate different behavior based on PSM mode
-        AND should optimize for specified layout types
+        GIVEN TesseractOCR with PSM 3 (Fully automatic page segmentation)
+        WHEN processing a document
+        THEN should use PSM 3 configuration
         """
         with patch.object(TesseractOCR, '_initialize'):
             engine = TesseractOCR()
             engine.available = True
             engine.pytesseract = Mock()
             
-            # Create a test image
-            test_image_data = self.create_test_image_data()
-            mock_image = self.create_test_image()
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
             
             with patch.object(engine, '_get_image_data', return_value=mock_image), \
                  patch.object(engine, '_preprocess_image', return_value=mock_image):
                 
-                # Test different PSM modes for different layout types
-                layout_tests = [
-                    # (PSM mode, expected config, layout description)
-                    (3, '--psm 3', 'Fully automatic page segmentation'),
-                    (6, '--psm 6', 'Uniform block of text'),
-                    (7, '--psm 7', 'Single text line'),
-                    (8, '--psm 8', 'Single word'),
-                    (10, '--psm 10', 'Single character'),
-                    (13, '--psm 13', 'Raw line fitting character')
-                ]
+                expected_output = "OCR output for PSM 3 - Fully automatic page segmentation"
+                engine.pytesseract.image_to_string.return_value = expected_output
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': [expected_output],
+                    'conf': [90],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
                 
-                for psm_mode, config_str, description in layout_tests:
-                    # Configure mock to return different results for different PSM modes
-                    expected_output = f"OCR output for PSM {psm_mode} - {description}"
-                    engine.pytesseract.image_to_string.return_value = expected_output
-                    engine.pytesseract.image_to_data.return_value = {
-                        'text': [expected_output],
-                        'conf': [90],
-                        'left': [10],
-                        'top': [10],
-                        'width': [100],
-                        'height': [20]
-                    }
-                    
-                    result = engine.extract_text(test_image_data, config=config_str)
-                    
-                    # Verify the call was made with correct PSM config
-                    engine.pytesseract.image_to_string.assert_called()
-                    call_args = engine.pytesseract.image_to_string.call_args
-                    config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
-                    
-                    assert config_str in config_used, \
-                        f"PSM config '{config_str}' not found in: {config_used}"
-                    assert result['text'] == expected_output
+                result = engine.extract_text(test_image_data, config='--psm 3')
                 
-                # Test combined PSM with other Tesseract options
-                complex_configs = [
-                    '--psm 6 -c tessedit_char_whitelist=0123456789',
-                    '--psm 7 --oem 3',
-                    '--psm 8 -c preserve_interword_spaces=1'
-                ]
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert '--psm 3' in config_used
+
+    def test_tesseract_psm_6_uniform_block_of_text(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 6 (Uniform block of text)
+        WHEN processing a document
+        THEN should use PSM 6 configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
                 
-                for complex_config in complex_configs:
-                    engine.pytesseract.image_to_string.return_value = "Complex config result"
-                    engine.pytesseract.image_to_data.return_value = {
-                        'text': ["Complex config result"],
-                        'conf': [95],
-                        'left': [10],
-                        'top': [10],
-                        'width': [120],
-                        'height': [20]
-                    }
-                    result = engine.extract_text(test_image_data, config=complex_config)
-                    
-                    call_args = engine.pytesseract.image_to_string.call_args
-                    config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
-                    assert complex_config == config_used, \
-                        f"Complex config not preserved: expected '{complex_config}', got '{config_used}'"
+                expected_output = "OCR output for PSM 6 - Uniform block of text"
+                engine.pytesseract.image_to_string.return_value = expected_output
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': [expected_output],
+                    'conf': [90],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
                 
-                # Test invalid PSM handling
+                result = engine.extract_text(test_image_data, config='--psm 6')
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert '--psm 6' in config_used
+
+    def test_tesseract_psm_7_single_text_line(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 7 (Single text line)
+        WHEN processing a document
+        THEN should use PSM 7 configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                expected_output = "OCR output for PSM 7 - Single text line"
+                engine.pytesseract.image_to_string.return_value = expected_output
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': [expected_output],
+                    'conf': [90],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 7')
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert '--psm 7' in config_used
+
+    def test_tesseract_psm_8_single_word(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 8 (Single word)
+        WHEN processing a document
+        THEN should use PSM 8 configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                expected_output = "OCR output for PSM 8 - Single word"
+                engine.pytesseract.image_to_string.return_value = expected_output
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': [expected_output],
+                    'conf': [90],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 8')
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert '--psm 8' in config_used
+
+    def test_tesseract_psm_10_single_character(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 10 (Single character)
+        WHEN processing a document
+        THEN should use PSM 10 configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                expected_output = "OCR output for PSM 10 - Single character"
+                engine.pytesseract.image_to_string.return_value = expected_output
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': [expected_output],
+                    'conf': [90],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 10')
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert '--psm 10' in config_used
+
+    def test_tesseract_psm_13_raw_line_fitting_character(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 13 (Raw line fitting character)
+        WHEN processing a document
+        THEN should use PSM 13 configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                expected_output = "OCR output for PSM 13 - Raw line fitting character"
+                engine.pytesseract.image_to_string.return_value = expected_output
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': [expected_output],
+                    'conf': [90],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 13')
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert '--psm 13' in config_used
+
+    def test_tesseract_complex_config_psm_with_char_whitelist(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with complex configuration combining PSM and character whitelist
+        WHEN processing a document
+        THEN should preserve the entire complex configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                engine.pytesseract.image_to_string.return_value = "Complex config result"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Complex config result"],
+                    'conf': [95],
+                    'left': [10],
+                    'top': [10],
+                    'width': [120],
+                    'height': [20]
+                }
+                
+                complex_config = '--psm 6 -c tessedit_char_whitelist=0123456789'
+                result = engine.extract_text(test_image_data, config=complex_config)
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert complex_config == config_used
+
+    def test_tesseract_complex_config_psm_with_oem(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with complex configuration combining PSM and OEM
+        WHEN processing a document
+        THEN should preserve the entire complex configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                engine.pytesseract.image_to_string.return_value = "Complex config result"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Complex config result"],
+                    'conf': [95],
+                    'left': [10],
+                    'top': [10],
+                    'width': [120],
+                    'height': [20]
+                }
+                
+                complex_config = '--psm 7 --oem 3'
+                result = engine.extract_text(test_image_data, config=complex_config)
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert complex_config == config_used
+
+    def test_tesseract_complex_config_psm_with_preserve_spaces(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with complex configuration combining PSM and preserve spaces
+        WHEN processing a document
+        THEN should preserve the entire complex configuration
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                engine.pytesseract.image_to_string.return_value = "Complex config result"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Complex config result"],
+                    'conf': [95],
+                    'left': [10],
+                    'top': [10],
+                    'width': [120],
+                    'height': [20]
+                }
+                
+                complex_config = '--psm 8 -c preserve_interword_spaces=1'
+                result = engine.extract_text(test_image_data, config=complex_config)
+                
+                call_args = engine.pytesseract.image_to_string.call_args
+                config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
+                assert complex_config == config_used
+
+    def test_tesseract_invalid_psm_raises_exception(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with invalid PSM mode
+        WHEN processing a document
+        THEN should raise an exception
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
                 engine.pytesseract.image_to_string.side_effect = Exception("Invalid PSM mode")
                 
                 with pytest.raises(Exception):
-                    engine.extract_text(test_image_data, config='--psm 99')  # Invalid PSM
+                    engine.extract_text(test_image_data, config='--psm 99')
+
+    def test_tesseract_document_page_psm_1_scenario(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 1 for document page analysis
+        WHEN processing a document
+        THEN should return expected result for document page scenario
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
                 
-                # Reset for remaining tests
-                engine.pytesseract.image_to_string.side_effect = None
+                engine.pytesseract.image_to_string.return_value = "Result for document_page"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Result for document_page"],
+                    'conf': [88],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
                 
-                # Test that different PSM modes can handle different content types
-                content_scenarios = [
-                    ('document_page', '--psm 1', 'Full page analysis'),
-                    ('text_block', '--psm 6', 'Uniform text block'),
-                    ('single_line', '--psm 7', 'Text line'),
-                    ('word_only', '--psm 8', 'Single word'),
-                    ('sparse_text', '--psm 11', 'Sparse text')
-                ]
+                result = engine.extract_text(test_image_data, config='--psm 1')
+                assert result['text'] == "Result for document_page"
+
+    def test_tesseract_text_block_psm_6_scenario(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 6 for text block
+        WHEN processing a document
+        THEN should return expected result for text block scenario
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
                 
-                for scenario, psm_config, expected_behavior in content_scenarios:
-                    engine.pytesseract.image_to_string.return_value = f"Result for {scenario}"
-                    engine.pytesseract.image_to_data.return_value = {
-                        'text': [f"Result for {scenario}"],
-                        'conf': [88],
-                        'left': [10],
-                        'top': [10],
-                        'width': [100],
-                        'height': [20]
-                    }
-                    result = engine.extract_text(test_image_data, config=psm_config)
-                    
-                    assert result['text'] == f"Result for {scenario}"
-                    
-                    # Verify config was applied
-                    call_args = engine.pytesseract.image_to_string.call_args
-                    config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
-                    assert psm_config in config_used
+                engine.pytesseract.image_to_string.return_value = "Result for text_block"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Result for text_block"],
+                    'conf': [88],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
                 
-                # Test default behavior (no PSM specified)
+                result = engine.extract_text(test_image_data, config='--psm 6')
+                assert result['text'] == "Result for text_block"
+
+    def test_tesseract_single_line_psm_7_scenario(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 7 for single line
+        WHEN processing a document
+        THEN should return expected result for single line scenario
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                engine.pytesseract.image_to_string.return_value = "Result for single_line"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Result for single_line"],
+                    'conf': [88],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 7')
+                assert result['text'] == "Result for single_line"
+
+    def test_tesseract_word_only_psm_8_scenario(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 8 for word only
+        WHEN processing a document
+        THEN should return expected result for word only scenario
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                engine.pytesseract.image_to_string.return_value = "Result for word_only"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Result for word_only"],
+                    'conf': [88],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 8')
+                assert result['text'] == "Result for word_only"
+
+    def test_tesseract_sparse_text_psm_11_scenario(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with PSM 11 for sparse text
+        WHEN processing a document
+        THEN should return expected result for sparse text scenario
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
+                engine.pytesseract.image_to_string.return_value = "Result for sparse_text"
+                engine.pytesseract.image_to_data.return_value = {
+                    'text': ["Result for sparse_text"],
+                    'conf': [88],
+                    'left': [10],
+                    'top': [10],
+                    'width': [100],
+                    'height': [20]
+                }
+                
+                result = engine.extract_text(test_image_data, config='--psm 11')
+                assert result['text'] == "Result for sparse_text"
+
+    def test_tesseract_default_behavior_no_psm_specified(self, valid_image_with_text, valid_image_data_with_text):
+        """
+        GIVEN TesseractOCR with no PSM configuration specified
+        WHEN processing a document
+        THEN should return result using default behavior
+        """
+        with patch.object(TesseractOCR, '_initialize'):
+            engine = TesseractOCR()
+            engine.available = True
+            engine.pytesseract = Mock()
+            
+            test_image_data = valid_image_data_with_text
+            mock_image = valid_image_with_text
+            
+            with patch.object(engine, '_get_image_data', return_value=mock_image), \
+                 patch.object(engine, '_preprocess_image', return_value=mock_image):
+                
                 engine.pytesseract.image_to_string.return_value = "Default PSM result"
                 engine.pytesseract.image_to_data.return_value = {
                     'text': ["Default PSM result"],
@@ -234,10 +679,11 @@ class TestOCREngineConfigurationAndCustomization:
                     'width': [100],
                     'height': [20]
                 }
+                
                 result = engine.extract_text(test_image_data)
                 assert result['text'] == "Default PSM result"
 
-    def test_tesseract_language_configuration(self):
+    def test_tesseract_language_configuration(self, valid_image_with_text, valid_image_data_with_text):
         """
         GIVEN TesseractOCR with different language configurations
         WHEN processing non-English text with actual language parameters
@@ -286,8 +732,8 @@ class TestOCREngineConfigurationAndCustomization:
             with patch.object(engine, '_get_image_data') as mock_get_image, \
                  patch.object(engine, '_preprocess_image') as mock_preprocess:
                 
-                mock_get_image.return_value = self.create_test_image()
-                mock_preprocess.return_value = self.create_test_image()
+                mock_get_image.return_value = valid_image_with_text
+                mock_preprocess.return_value = valid_image_with_text
                 
                 # Configure mocks for Spanish
                 engine.pytesseract.image_to_string.return_value = "Niño pequeño"
@@ -356,7 +802,7 @@ class TestOCREngineConfigurationAndCustomization:
                     f"Multi-language config not found in: {config_used}"
                 assert result_multi['text'] == "Mixed español and English"
 
-    def test_tesseract_character_whitelist_effectiveness(self):
+    def test_tesseract_character_whitelist_effectiveness(self, valid_image_with_text, valid_image_data_with_text):
         """
         GIVEN TesseractOCR with character whitelist configuration
         WHEN processing text with mixed character types
@@ -382,8 +828,8 @@ class TestOCREngineConfigurationAndCustomization:
             with patch.object(engine, '_get_image_data') as mock_get_image, \
                  patch.object(engine, '_preprocess_image') as mock_preprocess:
                 
-                mock_get_image.return_value = self.create_test_image()
-                mock_preprocess.return_value = self.create_test_image()
+                mock_get_image.return_value = valid_image_with_text
+                mock_preprocess.return_value = valid_image_with_text
                 
                 # Test without character whitelist (all characters)
                 engine.pytesseract.image_to_string.return_value = "ABC123!@#"
@@ -432,7 +878,7 @@ class TestOCREngineConfigurationAndCustomization:
                 config_used = call_args[1].get('config', '') if call_args[1] else call_args[0][1] if len(call_args[0]) > 1 else ''
                 assert "tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ" in config_used
 
-    def test_surya_language_specification_impact(self):
+    def test_surya_language_specification_impact(self, valid_image_with_text, valid_image_data_with_text):
         """
         GIVEN SuryaOCR with different language specifications
         WHEN processing multilingual content
@@ -474,10 +920,10 @@ class TestOCREngineConfigurationAndCustomization:
             engine.recognition_predictor = Mock()
             engine.recognition_predictor.return_value = [mock_result]
             
-            image_data = self.create_test_image_data()
+            image_data = valid_image_data_with_text
             
             with patch.object(engine, '_get_image_data') as mock_get_image:
-                mock_get_image.return_value = self.create_test_image()
+                mock_get_image.return_value = valid_image_with_text
                 
                 # Test multilingual content processing
                 result = engine.extract_text(image_data)
@@ -512,7 +958,7 @@ class TestOCREngineConfigurationAndCustomization:
                 assert 'English only' in result_en['text']
                 assert result_en['confidence'] == 0.96
 
-    def test_multi_engine_strategy_customization(self):
+    def test_multi_engine_strategy_customization(self, valid_image_with_text, valid_image_data_with_text):
         """
         GIVEN MultiEngineOCR with custom strategy definitions
         WHEN processing documents with known characteristics
@@ -531,7 +977,7 @@ class TestOCREngineConfigurationAndCustomization:
             mock_trocr.return_value = MockOCREngine('trocr', True, confidence=0.75, text="trocr custom")
             
             multi_ocr = MultiEngineOCR()
-            image_data = self.create_test_image_data()
+            image_data = valid_image_data_with_text
             
             # Test that different strategies exist and work
             strategies = ['quality_first', 'speed_first', 'accuracy_first']
@@ -561,7 +1007,7 @@ class TestOCREngineConfigurationAndCustomization:
             assert len(available_engines) == 4
             assert set(available_engines) == {'surya', 'tesseract', 'easyocr', 'trocr'}
 
-    def test_confidence_threshold_sensitivity_analysis(self):
+    def test_confidence_threshold_sensitivity_analysis(self, valid_image_with_text, valid_image_data_with_text):
         """
         GIVEN MultiEngineOCR with varying confidence thresholds
         WHEN processing documents of different quality levels
@@ -586,7 +1032,7 @@ class TestOCREngineConfigurationAndCustomization:
             mock_trocr_cls.return_value = mock_trocr
             
             # Create test data
-            test_image_data = self.create_test_image_data()
+            test_image_data = valid_image_data_with_text
             
             # Test different confidence scenarios
             confidence_scenarios = [

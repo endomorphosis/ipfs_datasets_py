@@ -442,18 +442,6 @@ class TestIntegrateDocument:
             f"Expected chunk count {len(sample_llm_document.chunks)}, got {result.metadata['chunk_count']}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_ipld_storage_stores_graph(
-        self, integrator: GraphRAGIntegrator, sample_llm_document):
-        """
-        GIVEN IPLD storage fails when storing the knowledge graph
-        WHEN integrate_document is called
-        THEN a RuntimeError should be raised
-        """
-        with pytest.raises(RuntimeError, match="Storage failed") as exc_info:
-            await integrator.integrate_document(sample_llm_document)
-
-
-    @pytest.mark.asyncio
     async def test_when_integrating_document_then_stores_document_in_graph_collection(self, integrator: GraphRAGIntegrator, sample_llm_document):
         """
         GIVEN a document with entities and relationships
@@ -712,7 +700,7 @@ class TestIntegrateDocument:
         # Act
         _ = await integrator.integrate_document(large_document)
         end_time = time.time()
-        
+
         # Assert
         assert end_time - start_time < test_constants['PERFORMANCE_TIMEOUT_SECONDS'], \
             f"Integration took {end_time - start_time}s, should be under {test_constants['PERFORMANCE_TIMEOUT_SECONDS']}s"

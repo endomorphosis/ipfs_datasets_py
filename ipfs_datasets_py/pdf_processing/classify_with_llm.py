@@ -104,7 +104,7 @@ async def _classify_with_openai_llm(
         for top_logprob in response.choices[0].logprobs.content[0].top_logprobs
         if top_logprob.logprob > log_threshold
     ]
-    print(f"_classify_with_openai_llm filtered token probabilities: {filtered_token_prob_tuples}")
+    #print(f"_classify_with_openai_llm filtered token probabilities: {filtered_token_prob_tuples}")
     return filtered_token_prob_tuples
 
 
@@ -131,192 +131,9 @@ async def _classify_with_transformers_llm(
 
 _SEMAPHORE = asyncio.Semaphore(3)  # Limit concurrency to prevent rate-limit overruns
 
-# async def classify_with_llm(
-#     *,
-#     text: str, 
-#     classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
-#     client: Any,
-#     model: str = "gpt-4.1-2025-04-14",
-#     retries: Optional[int] = 3,
-#     timeout = 30.0,  # seconds
-#     threshold: float = 0.05, # i.e. statistical significance threshold
-#     logger: logging.Logger = logger,
-#     llm_func: Callable = _classify_with_openai_llm
-#     ) -> list[ClassificationResult] | list:
-#     """
-#     Classify text into predefined categories using OpenAI's LLM.
 
-#     This function uses a transformer-based LLM to classify an arbitrary 
-#     English-language text into one or more arbitrary categories from a predefined set.
-
-#     Args:
-#         text (str): The text to classify.
-#         classifications (set[str]): Set of predefined categories to classify the text into.
-#         client (openai.AsyncOpenAI): OpenAI client instance for making API calls.
-#         model (str): The OpenAI model to use for classification. Defaults to "gpt-4o".
-#         retries (Optional[int]): Number of retries to refine classification. Defaults to 3.
-#         threshold (float): Probability threshold for including a classification. 
-#             Defaults to 0.05 (e.g. the statistical definition of an outlier)
-#         logger (logging.Logger): Logger instance for logging messages. Defaults to the module logger.
-    
-#     Returns:
-#         list[ClassificationResult] | list: List of ClassificationResult objects if classifications found.
-#             ClassificationResult is a pydantic base model with the following fields:
-#             - entity (str): The original text entity.
-#             - category (str): The category assigned to the entity.
-#             - confidence (float): Confidence score of the classification (0.0-1.0).
-#             If no classifications are found, returns an empty list.
-#     """
-#     loop = asyncio.get_event_loop()
-#     winnowed_categories: set[str] = classifications
-#     log_threshold = threshold if threshold <= 0 else math.log(threshold) # Turn the threshold into a logprob
-
-#     match client:
-#         case openai.AsyncOpenAI():
-#             llm_func = _classify_with_openai_llm
-#         case _:
-#             llm_func = _classify_with_transformers_llm
-
-
-
-#     print("Winnowed categories:", winnowed_categories)
-#     system_prompt = "You are a helpful assistant that classifies text into predefined categories."
-#     prompt_template = """
-# # Instructions:
-# - Classify the text into one of the following categories: {categories}.
-# - Return only the name of the category, with no additional formatting or commentary.
-# - Your response must be one of the {num_categories} categories.
-
-# # Text
-# {text}
-# """
-#     for attempt in range(retries):
-#         num_categories = len(winnowed_categories)
-#         if num_categories <= 0:
-#             raise ValueError(f"Invalid number of categories: {num_categories}. Must be a positive integer.")
-
-#         if llm_func == _classify_with_openai_llm:
-#             batch_size = 20
-#         else:
-#             batch_size = num_categories
-
-#         # Format the prompts first so we can define the categories for each.
-#         prompt_list: list[tuple[str, int]] = [
-#             (prompt_template.format(
-#                 categories=', '.join(list(cats)),
-#                 num_categories=len(cats),
-#                 text=text,
-#             ), len(cats))
-#             for cats in batched(winnowed_categories, batch_size)
-#         ]
-
-#         # Batch the batches so that they run in parallel.
-#         coroutines = [
-#             _run_task_with_limit(
-#                 llm_func(
-#                     prompt=prompt,
-#                     system_prompt=system_prompt,
-#                     client=client,
-#                     num_categories=num_categories,
-#                     model=model,
-#                     timeout=timeout,
-#                     log_threshold=log_threshold,
-#                 )
-#             ) for (prompt, num_categories) in prompt_list
-#         ]
-
-#         # Convert coroutines to tasks
-#         tasks = [asyncio.create_task(coro) for coro in coroutines]
-
-#         finished, unfinished = await asyncio.wait(
-#             tasks, timeout=timeout, return_when=asyncio.FIRST_COMPLETED
-#         )
-#         filtered_token_prob_tuples: list[tuple[str, float]] = []
-#         for task in finished:
-#             try:
-#                 output = await task
-#                 filtered_token_prob_tuples.extend(output)
-#                 # print(f"Attempt {attempt} with prompt:\n{prompt}")
-#                 # filtered_token_prob_tuples = await asyncio.wait_for(
-#                 #     llm_func(
-#                 #         prompt=prompt,
-#                 #         system_prompt=system_prompt,
-#                 #         client=client,
-#                 #         model=model,
-#                 #         num_categories=num_categories,
-#                 #         timeout=timeout,
-#                 #         log_threshold=log_threshold,
-#                 #     ),
-#                 #     timeout
-#                 # )
-#                 print(f"Filtered token probabilities: {filtered_token_prob_tuples}")
-#                 logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
-
-#             except ConnectionError as e:
-#                 print(f"Connection error on attempt {attempt}: {e}")
-#                 raise e
-#             except asyncio.TimeoutError as e:
-#                 if attempt == retries-1:
-#                     print(f"Timeout exceeded after {retries} attempts: {e}")
-#                     raise e
-#                 print(f"Timeout on attempt {attempt}, retrying...: {e}")
-#                 continue
-#             except Exception as e:
-#                 if attempt == retries-1:
-#                     print(f"Max retries exceeded after {retries} attempts: {e}")
-#                     raise RuntimeError(f"Unexpected {type(e).__name__} calling API: {e}")
-#                 print(f"Unexpected error on attempt {attempt}: {e}")
-#                 continue
-
-#         if not filtered_token_prob_tuples:
-#             logger.warning(f"No classifications above threshold {threshold} for text: {text}")
-#             return []
-
-#         new_cats = set()
-#         potential_outputs = set()
-
-#         for cat in winnowed_categories:
-#             # If token string begins a classification string, add that classification to the set.
-#             # ex: "Tech" would match "Technology"
-#             for token, log_prob in filtered_token_prob_tuples:
-#                 if cat.lower().startswith(token.lower()):
-#                     new_cats.add(cat)
-#                     potential_outputs.add(
-#                         (cat, log_prob)
-#                     )
-
-#         match len(new_cats):
-#             case 0:
-#                 logger.warning(f"No matching categories found for text: {text}")
-#                 return []
-#             case 1:
-#                 # If we only have one category, return it as a single result
-#                 cat_log_prob_tuple = potential_outputs.pop()
-#                 category, log_prob = cat_log_prob_tuple
-#                 return [ClassificationResult(entity=text, category=category, confidence=math.exp(log_prob))]
-#             case _:
-#                 if attempt == retries-1:
-#                     return sorted(
-#                         [
-#                             ClassificationResult(
-#                                 entity=text, 
-#                                 category=cat, 
-#                                 confidence=math.exp(log_prob)
-#                             ) 
-#                             for cat, log_prob in potential_outputs
-#                         ],
-#                         key =lambda x: x.confidence
-#                     )
-#                 else:
-#                     winnowed_categories = new_cats
-#                     continue
-#     else:
-#         # If we reach here, we have exhausted all retries without a single classification
-#         logger.warning(f"No classifications found after {retries} retries for text: {text}")
-#         return []
-
-from unittest.mock import MagicMock, AsyncMock, Mock
 import asyncio
+
 
 async def classify_with_llm(
     *,
@@ -359,6 +176,7 @@ async def classify_with_llm(
         raise ValueError(f"Threshold must be a positive float between 0 and 1, got {threshold}.")
     log_threshold = math.log(threshold) if threshold > 0 else threshold
 
+    # FIXME Support non-OpenAI clients
     # match client:
     #     case client if asyncio.iscoroutine(client):
     #         # If client is an async OpenAI client, use the async classification function
@@ -368,20 +186,22 @@ async def classify_with_llm(
     #     case _:
     #         llm_func = _classify_with_transformers_llm
 
-    print("Winnowed categories:", winnowed_categories)
     system_prompt = "You are a helpful assistant that classifies text into predefined categories."
     prompt_template = """
 # Instructions:
-- Classify the text into one of the following categories: {categories}.
+- Classify the text into one of the following categories.
 - Return only the name of the category, with no additional formatting or commentary.
-- Your response must be one of the {num_categories} categories.
+- Your response must be one of the categories.
+
+# Categories
+{categories}
 
 # Text
 {text}
 """
     # FIXME: Use retries + 1 to ensure at least one attempt even when retries=0
     max_attempts = retries + 1
-    
+
     async with _SEMAPHORE:
         for attempt in range(max_attempts):
             num_categories = len(winnowed_categories)
@@ -394,7 +214,6 @@ async def classify_with_llm(
                 filtered_token_prob_tuples = await llm_func(
                     prompt=prompt_template.format(
                         categories=', '.join(list(winnowed_categories)),
-                        num_categories=num_categories,
                         text=text,
                     ),
                     system_prompt=system_prompt,
@@ -406,7 +225,7 @@ async def classify_with_llm(
                 ) 
 
                 print(f"Filtered token probabilities: {filtered_token_prob_tuples}")
-                logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
+                #logger.debug(f"Filtered token probabilities: {filtered_token_prob_tuples}")
 
             except ConnectionError as e:
                 print(f"Connection error on attempt {attempt}: {e}")

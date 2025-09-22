@@ -209,73 +209,55 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.error_message == expected_error
 
-    @pytest.fixture
-    def partial_failure_result(self):
-        """
-        GIVEN a BatchJobResult for partial processing failure scenario
-        WHEN creating the fixture
-        THEN return a BatchJobResult with failed status but some successful processing stages
-        """
-        return BatchJobResult(
-            job_id="partial_job_789",
-            status="failed",
-            processing_time=45.8,
-            document_id="doc_partial123",
-            knowledge_graph_id=None,
-            ipld_cid=None,
-            entity_count=0,
-            relationship_count=0,
-            chunk_count=CHUNK_COUNT_SMALL,
-            error_message="GraphRAG integration timeout"
-        )
+@pytest.fixture
+def partial_batch_job_info():
+    return {
+        "job_id": "partial_job_789",
+        "status": "failed",
+        "processing_time": 45.8,
+        "document_id": "doc_partial123",
+        "knowledge_graph_id": None,
+        "ipld_cid": None,
+        "entity_count": 0,
+        "relationship_count": 0,
+        "chunk_count": CHUNK_COUNT_SMALL,
+        "error_message": "GraphRAG integration timeout"
+    }
 
-    def test_partial_failure_result_has_failed_status(self, partial_failure_result):
+@pytest.fixture
+def partial_failure_result(partial_batch_job_info):
+    return BatchJobResult(**partial_batch_job_info)
+
+class TestBatchJobResultDataclassPartialFailure:
+    """Test class for BatchJobResult dataclass with partial failure scenario."""
+
+    @pytest.mark.parametrize("field", [
+        "job_id",
+        "status",
+        "processing_time",
+        "document_id",
+        "knowledge_graph_id",
+        "ipld_cid",
+        "entity_count",
+        "relationship_count",
+        "chunk_count",
+        "error_message",
+    ])
+    def test_partial_failure_result_fields(
+        self, field, partial_failure_result, partial_batch_job_info):
         """
         GIVEN a BatchJobResult with partial processing failure
-        WHEN accessing the status attribute
-        THEN expect the status to be "failed"
+        WHEN accessing various field attributes
+        THEN expect each field value to match expected values based on processing stage success/failure
         """
-        assert partial_failure_result.status == "failed"
+        expected_value = partial_batch_job_info[field]
+        attr = getattr(partial_failure_result, field)
+        assert attr == expected_value, \
+            f"Expected {field} to be '{expected_value}', got '{attr}' instead."
 
-    def test_partial_failure_result_has_document_id(self, partial_failure_result):
-        """
-        GIVEN a BatchJobResult with partial processing failure
-        WHEN accessing the document_id attribute
-        THEN expect the document_id to be retained from successful stages
-        """
-        assert partial_failure_result.document_id == "doc_partial123"
 
-    def test_partial_failure_result_has_null_knowledge_graph_id(self, partial_failure_result):
-        """
-        GIVEN a BatchJobResult with partial processing failure
-        WHEN accessing the knowledge_graph_id attribute
-        THEN expect the knowledge_graph_id to be None for failed stage identifiers
-        """
-        assert partial_failure_result.knowledge_graph_id is None
-
-    def test_partial_failure_result_has_partial_chunk_count(self, partial_failure_result):
-        """
-        GIVEN a BatchJobResult with partial processing failure
-        WHEN accessing the chunk_count attribute
-        THEN expect the chunk_count to include counts from successful stages
-        """
-        assert partial_failure_result.chunk_count == CHUNK_COUNT_SMALL
-
-    def test_partial_failure_result_has_zero_entity_count(self, partial_failure_result):
-        """
-        GIVEN a BatchJobResult with partial processing failure
-        WHEN accessing the entity_count attribute
-        THEN expect the entity_count to be zero for failed stages
-        """
-        assert partial_failure_result.entity_count == 0
-
-    def test_partial_failure_result_has_timeout_error(self, partial_failure_result):
-        """
-        GIVEN a BatchJobResult with partial processing failure
-        WHEN accessing the error_message attribute
-        THEN expect the error_message to contain an explanation of the failure point
-        """
-        assert "timeout" in partial_failure_result.error_message
+class TestBatchJobResultDataclassMinimal:
+    """Test class for BatchJobResult dataclass with minimal fields."""
 
     @pytest.fixture
     def minimal_result(self):
@@ -304,7 +286,9 @@ class TestBatchJobResultDataclass:
         WHEN accessing any field attribute
         THEN expect the field value to match the expected default value
         """
-        assert getattr(minimal_result, field) == expected_value
+        attr = getattr(minimal_result, field)
+        assert attr == expected_value, \
+            f"Expected {field} to be '{expected_value}', got '{attr}' instead."
 
 
 

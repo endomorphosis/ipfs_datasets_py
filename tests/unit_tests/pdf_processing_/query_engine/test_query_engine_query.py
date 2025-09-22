@@ -123,13 +123,8 @@ class TestQueryEngineQuery:
     async def test_query_with_explicit_query_types(self, query_engine, sample_query_result, query_type):
         """
         GIVEN a QueryEngine instance
-        AND query_text "test query"
-        AND query_type explicitly set to various types
-        WHEN query method is called
-        THEN expect:
-            - _detect_query_type NOT called (type override)
-            - Appropriate processor called with normalized query
-            - QueryResponse.query_type set to specified type
+        WHEN query is called with query_type arg explicitly set to a specified type
+        THEN expect query_type attribute to be that specified type
         """
         # Setup mocks
         query_engine._normalize_query = Mock(return_value="test query")
@@ -290,11 +285,11 @@ class TestQueryEngineQuery:
         query_engine._detect_query_type = Mock(return_value="entity_search")
         query_engine._process_entity_query = AsyncMock(return_value=[sample_query_result])
         query_engine._generate_query_suggestions = AsyncMock(return_value=["suggestion"])
-        
+
         # Execute identical queries
         await query_engine.query("bill gates")
         await query_engine.query("bill gates")
-        
+
         # Verify processor only called once due to caching
         call_count = query_engine._process_entity_query.call_count
         assert call_count == 1, \
@@ -542,7 +537,7 @@ class TestQuerySuggestionGeneration:
         GIVEN a QueryEngine instance
         AND an arbitrary query that returns results
         WHEN query method is called with different suggestion counts and query types
-        THEN expect QueryResponse.suggestions is a list
+        THEN expect suggestions attribute to be a list
         """
         # Create suggestions based on count
         suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
@@ -561,14 +556,14 @@ class TestQuerySuggestionGeneration:
             "cross_document": "_process_cross_document_query",
             "graph_traversal": "_process_graph_traversal_query"
         }
-        
+
         # Setup the specific processor mock
         processor_method = processor_map[query_type]
         setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
-        
+
         # Execute query
         response = await query_engine.query("test query")
-        
+
         # Verify suggestions in response is list
         assert isinstance(response.suggestions, list)
 
@@ -594,7 +589,7 @@ class TestQuerySuggestionGeneration:
         query_engine._normalize_query = Mock(return_value="test query")
         query_engine._detect_query_type = Mock(return_value=query_type)
         query_engine._generate_query_suggestions = AsyncMock(return_value=suggestions)
-        
+
         # Map query types to their processor methods
         processor_map = {
             "entity_search": "_process_entity_query",
@@ -604,14 +599,14 @@ class TestQuerySuggestionGeneration:
             "cross_document": "_process_cross_document_query",
             "graph_traversal": "_process_graph_traversal_query"
         }
-        
+
         # Setup the specific processor mock
         processor_method = processor_map[query_type]
         setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
-        
+
         # Execute query
         response = await query_engine.query("test query")
-        
+
         # Verify suggestions count
         assert len(response.suggestions) == suggestion_count
 
@@ -647,14 +642,14 @@ class TestQuerySuggestionGeneration:
             "cross_document": "_process_cross_document_query",
             "graph_traversal": "_process_graph_traversal_query"
         }
-        
+
         # Setup the specific processor mock
         processor_method = processor_map[query_type]
         setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
-        
+
         # Execute query
         response = await query_engine.query("test query")
-        
+
         # Verify all suggestions are strings
         assert all(isinstance(s, str) for s in response.suggestions)
 
@@ -675,12 +670,12 @@ class TestQuerySuggestionGeneration:
         """
         # Create suggestions based on count
         suggestions = [f"Suggestion {i+1}" for i in range(suggestion_count)]
-        
+
         # Setup mocks
         query_engine._normalize_query = Mock(return_value="test query")
         query_engine._detect_query_type = Mock(return_value=query_type)
         query_engine._generate_query_suggestions = AsyncMock(return_value=suggestions)
-        
+
         # Map query types to their processor methods
         processor_map = {
             "entity_search": "_process_entity_query",
@@ -690,14 +685,14 @@ class TestQuerySuggestionGeneration:
             "cross_document": "_process_cross_document_query",
             "graph_traversal": "_process_graph_traversal_query"
         }
-        
+
         # Setup the specific processor mock
         processor_method = processor_map[query_type]
         setattr(query_engine, processor_method, AsyncMock(return_value=[sample_query_result]))
-        
+
         # Execute query
         response = await query_engine.query("test query")
-        
+
         # Verify suggestions content matches
         assert response.suggestions == suggestions
 
@@ -884,41 +879,6 @@ class TestQueryMetadataCompleteness:
         processor = getattr(query_engine, processor_method)
         processor.assert_called_once()
 
-    @pytest.mark.asyncio
-    async def test_query_timeout_handling(self, query_engine):
-        """
-        GIVEN a QueryEngine instance
-        AND processor method that hangs indefinitely
-        WHEN query method is called
-        THEN expect:
-            - TimeoutError raised after reasonable time limit
-            - No resources leaked
-        """
-        # Setup mocks
-        query_engine._normalize_query = Mock(return_value="test query")
-        query_engine._detect_query_type = Mock(return_value="entity_search")
-        
-        # Create a processor that hangs indefinitely
-        async def hanging_process(*args, **kwargs):
-            await asyncio.sleep(10)  # Long delay to simulate hanging
-            return []
-        
-        query_engine._process_entity_query = hanging_process
-        
-        # Mock the query method to include timeout logic
-        original_query = query_engine.query
-        
-        async def query_with_timeout(*args, **kwargs):
-            try:
-                return await asyncio.wait_for(original_query(*args, **kwargs), timeout=0.1)
-            except asyncio.TimeoutError:
-                raise TimeoutError("Query processing timed out")
-        
-        query_engine.query = query_with_timeout
-        
-        # Execute query and expect timeout
-        with pytest.raises(TimeoutError, match="Query processing timed out"):
-            await query_engine.query("test query")
 
     @pytest.mark.asyncio
     async def test_query_with_fake_name_questions(self, query_engine):

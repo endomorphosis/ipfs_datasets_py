@@ -145,7 +145,7 @@ def integrator_all_custom(custom_storage, non_default_parameters):
 
 
 @pytest.fixture
-def integrator_default():
+def real_integrator():
     """Create a GraphRAGIntegrator instance with default parameters for testing."""
     return GraphRAGIntegrator()
 
@@ -178,26 +178,26 @@ def two_independent_integrators():
 class TestGraphRAGIntegratorInit:
     """Test class for GraphRAGIntegrator.__init__ method."""
 
-    def test_init_default_storage_is_ipld_storage_instance(self, integrator_default):
+    def test_init_default_storage_is_ipld_storage_instance(self, real_integrator):
         """
         GIVEN no storage parameter is provided to GraphRAGIntegrator constructor
         WHEN a new GraphRAGIntegrator instance is created
         THEN the storage should be an IPLDStorage instance
         """
-        assert isinstance(integrator_default.storage, IPLDStorage)
+        assert isinstance(real_integrator.storage, IPLDStorage)
 
     @pytest.mark.parametrize("attribute", [
         "similarity_threshold",
         "entity_extraction_confidence"
     ])
-    def test_init_default_parameters(self, integrator_default, default_parameters, attribute):
+    def test_init_default_parameters(self, real_integrator, default_parameters, attribute):
         """
         GIVEN no parameters are provided to GraphRAGIntegrator constructor
         WHEN a new GraphRAGIntegrator instance is created
         THEN the attribute should have the default value
         """
         expected_value = default_parameters[attribute]
-        actual_value = getattr(integrator_default, attribute)
+        actual_value = getattr(real_integrator, attribute)
         assert actual_value == expected_value, \
             f"Expected default {attribute} to be {expected_value}, but got {actual_value}"
 
@@ -207,35 +207,35 @@ class TestGraphRAGIntegratorInit:
         ("cross_document_relationships", []),
         ("document_graphs", {})
     ])
-    def test_init_default_collections_empty(self, integrator_default, attribute, expected_value):
+    def test_init_default_collections_empty(self, real_integrator, attribute, expected_value):
         """
         GIVEN no parameters are provided to GraphRAGIntegrator constructor
         WHEN a new GraphRAGIntegrator instance is created
         THEN the collection attributes should be empty
         """
-        actual_value = getattr(integrator_default, attribute)
+        actual_value = getattr(real_integrator, attribute)
         assert actual_value == expected_value, \
             f"Expected default {attribute} to be {expected_value}, but got {actual_value}"
 
-    def test_init_default_global_graph_is_networkx_digraph(self, integrator_default):
+    def test_init_default_global_graph_is_networkx_digraph(self, real_integrator):
         """
         GIVEN no parameters are provided to GraphRAGIntegrator constructor
         WHEN a new GraphRAGIntegrator instance is created
         THEN the global_graph should be a NetworkX DiGraph instance
         """
-        assert isinstance(integrator_default.global_graph, nx.DiGraph)
+        assert isinstance(real_integrator.global_graph, nx.DiGraph)
 
     @pytest.mark.parametrize("graph_property,expected_length", [
         ("nodes", 0),
         ("edges", 0)
     ])
-    def test_init_default_global_graph_empty(self, integrator_default, graph_property, expected_length):
+    def test_init_default_global_graph_empty(self, real_integrator, graph_property, expected_length):
         """
         GIVEN no parameters are provided to GraphRAGIntegrator constructor
         WHEN a new GraphRAGIntegrator instance is created
         THEN the global_graph should have no nodes or edges
         """
-        actual_length = len(getattr(integrator_default.global_graph, graph_property))
+        actual_length = len(getattr(real_integrator.global_graph, graph_property))
         assert actual_length == expected_length, \
             f"Expected global_graph.{graph_property} length to be {expected_length}, but got {actual_length}"
 
@@ -505,52 +505,52 @@ class TestGraphRAGIntegratorInit:
         assert integrator2.document_graphs == expected_dict, \
             f"Expected integrator2.document_graphs to remain {expected_dict}, but got {integrator2.document_graphs}"
 
-    def test_init_default_storage_creation(self, integrator_default):
+    def test_init_default_storage_creation(self, real_integrator):
         """
         GIVEN no storage parameter is provided
         WHEN GraphRAGIntegrator is initialized
         THEN a new IPLDStorage instance should be created
         """
-        assert isinstance(integrator_default.storage, IPLDStorage), \
-            f"Expected storage to be IPLDStorage instance, but got {type(integrator_default.storage)}"
+        assert isinstance(real_integrator.storage, IPLDStorage), \
+            f"Expected storage to be IPLDStorage instance, but got {type(real_integrator.storage)}"
 
-    def test_init_global_graph_is_networkx_digraph(self, integrator_default):
+    def test_init_global_graph_is_networkx_digraph(self, real_integrator):
         """
         GIVEN GraphRAGIntegrator is initialized
         WHEN checking the global_graph attribute
         THEN it should be a NetworkX DiGraph instance
         """
-        assert isinstance(integrator_default.global_graph, nx.DiGraph), \
-            f"Expected global_graph to be nx.DiGraph, but got {type(integrator_default.global_graph)}"
+        assert isinstance(real_integrator.global_graph, nx.DiGraph), \
+            f"Expected global_graph to be nx.DiGraph, but got {type(real_integrator.global_graph)}"
 
-    def test_init_global_graph_is_directed(self, integrator_default: GraphRAGIntegrator):
+    def test_init_global_graph_is_directed(self, real_integrator: GraphRAGIntegrator):
         """
         GIVEN GraphRAGIntegrator is initialized
         WHEN checking the global_graph directedness
         THEN it should be a directed graph
         """
-        assert integrator_default.global_graph.is_directed(), \
+        assert real_integrator.global_graph.is_directed(), \
             "Expected global_graph to be directed, but it was not"
 
-    def test_init_global_graph_has_no_nodes(self, integrator_default, test_constants):
+    def test_init_global_graph_has_no_nodes(self, real_integrator, test_constants):
         """
         GIVEN GraphRAGIntegrator is initialized
         WHEN checking the global_graph nodes
         THEN it should have no nodes initially
         """
         expected_count = test_constants['ZERO_LENGTH']
-        actual_count = len(integrator_default.global_graph.nodes)
+        actual_count = len(real_integrator.global_graph.nodes)
         assert actual_count == expected_count, \
             f"Expected global_graph to have {expected_count} nodes, but got {actual_count}"
 
-    def test_init_global_graph_has_no_edges(self, integrator_default, test_constants):
+    def test_init_global_graph_has_no_edges(self, real_integrator, test_constants):
         """
         GIVEN GraphRAGIntegrator is initialized
         WHEN checking the global_graph edges
         THEN it should have no edges initially
         """
         expected_count = test_constants['ZERO_LENGTH']
-        actual_count = len(integrator_default.global_graph.edges)
+        actual_count = len(real_integrator.global_graph.edges)
         assert actual_count == expected_count, \
             f"Expected global_graph to have {expected_count} edges, but got {actual_count}"
 
@@ -596,7 +596,7 @@ class TestGraphRAGIntegratorInit:
         assert len(integrator2.cross_document_relationships) == expected_length, \
             f"Expected integrator2.cross_document_relationships length to be {expected_length}, but got {len(integrator2.cross_document_relationships)}"
 
-    def test_init_collections_start_with_expected_empty_values(self, integrator_default, test_constants):
+    def test_init_collections_start_with_expected_empty_values(self, real_integrator, test_constants):
         """
         GIVEN a new GraphRAGIntegrator instance is created
         WHEN checking initial collection states
@@ -604,8 +604,8 @@ class TestGraphRAGIntegratorInit:
         """
         expected_dict = test_constants['EMPTY_DICT']
         
-        assert integrator_default.knowledge_graphs == expected_dict, \
-            f"Expected knowledge_graphs to be {expected_dict}, but got {integrator_default.knowledge_graphs}"
+        assert real_integrator.knowledge_graphs == expected_dict, \
+            f"Expected knowledge_graphs to be {expected_dict}, but got {real_integrator.knowledge_graphs}"
 
 
 if __name__ == "__main__":

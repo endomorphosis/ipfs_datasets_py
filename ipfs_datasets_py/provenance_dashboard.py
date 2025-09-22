@@ -370,16 +370,17 @@ class ProvenanceDashboard:
                 edge_colors = []
                 for source, target, data in lineage_graph.edges(data=True):
                     relationship_type = data.get('type', 'unknown')
-                    if relationship_type == 'derives_from':
-                        color = 'blue'
-                    elif relationship_type == 'cites':
-                        color = 'green'
-                    elif relationship_type == 'includes':
-                        color = 'orange'
-                    elif relationship_type == 'references':
-                        color = 'red'
-                    else:
-                        color = 'gray'
+                    match relationship_type:
+                        case 'derives_from':
+                            color = 'blue'
+                        case 'cites':
+                            color = 'green'
+                        case 'includes':
+                            color = 'orange'
+                        case 'references':
+                            color = 'red'
+                        case _:
+                            color = 'gray'
                     edge_colors.append(color)
 
                 # Draw the graph
