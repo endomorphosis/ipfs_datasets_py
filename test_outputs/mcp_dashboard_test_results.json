@@ -1,49 +1,44 @@
 {
   "screenshots": [
     {
-      "name": "01_initial_load",
-      "path": "test_outputs/mcp_dashboard_screenshots/01_initial_load.png",
-      "timestamp": "2025-09-23T14:42:30.401739"
-    },
-    {
       "name": "02_nav_0_Main_Dashboard",
       "path": "test_outputs/mcp_dashboard_screenshots/02_nav_0_Main_Dashboard.png",
-      "timestamp": "2025-09-23T14:42:31.922516"
+      "timestamp": "2025-09-23T15:01:26.050952"
     },
     {
       "name": "07_api__api_mcp_status",
       "path": "test_outputs/mcp_dashboard_screenshots/07_api__api_mcp_status.png",
-      "timestamp": "2025-09-23T14:42:32.825757"
+      "timestamp": "2025-09-23T15:01:29.506013"
     },
     {
       "name": "07_api__api_mcp_tools",
       "path": "test_outputs/mcp_dashboard_screenshots/07_api__api_mcp_tools.png",
-      "timestamp": "2025-09-23T14:42:34.084198"
+      "timestamp": "2025-09-23T15:01:47.347444"
     },
     {
       "name": "07_api__api_mcp_history",
       "path": "test_outputs/mcp_dashboard_screenshots/07_api__api_mcp_history.png",
-      "timestamp": "2025-09-23T14:42:34.702267"
+      "timestamp": "2025-09-23T15:01:50.261165"
     },
     {
       "name": "08_error_handling",
       "path": "test_outputs/mcp_dashboard_screenshots/08_error_handling.png",
-      "timestamp": "2025-09-23T14:42:37.498835"
+      "timestamp": "2025-09-23T15:01:55.493375"
     },
     {
       "name": "09_responsive_desktop",
       "path": "test_outputs/mcp_dashboard_screenshots/09_responsive_desktop.png",
-      "timestamp": "2025-09-23T14:42:38.745850"
+      "timestamp": "2025-09-23T15:01:56.628987"
     },
     {
       "name": "09_responsive_tablet",
       "path": "test_outputs/mcp_dashboard_screenshots/09_responsive_tablet.png",
-      "timestamp": "2025-09-23T14:42:39.848451"
+      "timestamp": "2025-09-23T15:01:57.731571"
     },
     {
       "name": "09_responsive_mobile",
       "path": "test_outputs/mcp_dashboard_screenshots/09_responsive_mobile.png",
-      "timestamp": "2025-09-23T14:42:40.911215"
+      "timestamp": "2025-09-23T15:01:58.819113"
     }
   ],
   "interactions": [
@@ -51,12 +46,12 @@
       "type": "navigation_click",
       "element": "Main Dashboard",
       "status": "success",
-      "timestamp": "2025-09-23T14:42:31.922549"
+      "timestamp": "2025-09-23T15:01:26.051010"
     },
     {
       "type": "tool_discovery",
       "tools_found": 0,
-      "timestamp": "2025-09-23T14:42:32.068849"
+      "timestamp": "2025-09-23T15:01:26.249913"
     },
     {
       "type": "responsive_test",
@@ -65,7 +60,7 @@
         "height": 1080,
         "name": "desktop"
       },
-      "timestamp": "2025-09-23T14:42:38.745927"
+      "timestamp": "2025-09-23T15:01:56.629028"
     },
     {
       "type": "responsive_test",
@@ -74,7 +69,7 @@
         "height": 768,
         "name": "tablet"
       },
-      "timestamp": "2025-09-23T14:42:39.848481"
+      "timestamp": "2025-09-23T15:01:57.731608"
     },
     {
       "type": "responsive_test",
@@ -83,7 +78,7 @@
         "height": 667,
         "name": "mobile"
       },
-      "timestamp": "2025-09-23T14:42:40.911240"
+      "timestamp": "2025-09-23T15:01:58.819139"
     }
   ],
   "errors": [
@@ -91,17 +86,17 @@
       "test": "console",
       "type": "error",
       "message": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
-      "timestamp": "2025-09-23T14:42:35.370670"
+      "timestamp": "2025-09-23T15:01:51.365275"
     }
   ],
   "performance": {
-    "page_load_time": 0.6122603416442871,
+    "page_load_time": 0.6219966411590576,
     "metrics": {
-      "loadEventEnd": 75.69999980926514,
-      "domContentLoadedEventEnd": 75.19999980926514,
-      "firstContentfulPaint": 96
+      "loadEventEnd": 90.70000076293945,
+      "domContentLoadedEventEnd": 90.30000019073486,
+      "firstContentfulPaint": 112
     },
-    "timestamp": "2025-09-23T14:42:41.562240"
+    "timestamp": "2025-09-23T15:01:59.484664"
   },
   "accessibility": [
     {
@@ -110,24 +105,24 @@
         "inputsWithoutLabels": 0,
         "headingCount": 1
       },
-      "timestamp": "2025-09-23T14:42:40.936132"
+      "timestamp": "2025-09-23T15:01:58.849510"
     }
   ],
   "api_responses": [
     {
       "endpoint": "/api/mcp/status",
       "status": "success",
-      "timestamp": "2025-09-23T14:42:32.825788"
+      "timestamp": "2025-09-23T15:01:29.506065"
     },
     {
       "endpoint": "/api/mcp/tools",
       "status": "success",
-      "timestamp": "2025-09-23T14:42:34.084227"
+      "timestamp": "2025-09-23T15:01:47.347477"
     },
     {
       "endpoint": "/api/mcp/history",
       "status": "success",
-      "timestamp": "2025-09-23T14:42:34.702292"
+      "timestamp": "2025-09-23T15:01:50.261192"
     }
   ]
 }
