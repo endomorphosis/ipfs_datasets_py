@@ -547,7 +547,7 @@ class MCPDashboard(AdminDashboard):
                     "mcp_enabled": True
                 }
             
-            return render_template('admin/caselaw_dashboard_mcp.html', **dashboard_data)
+            return render_template('caselaw_dashboard_mcp.html', **dashboard_data)
         
         @self.app.route('/mcp/caselaw/rest')
         def caselaw_dashboard_rest():
@@ -585,7 +585,7 @@ class MCPDashboard(AdminDashboard):
                     "error_message": str(e)
                 }
             
-            return render_template('admin/caselaw_dashboard.html', **dashboard_data)
+            return render_template('caselaw_dashboard.html', **dashboard_data)
         
         @self.app.route('/api/mcp/caselaw/add_theorem', methods=['POST'])
         def api_add_theorem():
