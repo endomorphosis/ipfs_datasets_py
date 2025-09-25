@@ -316,8 +316,9 @@
 		{
 			"label": "Start Docker MCP Services",
 			"type": "shell",
-			"command": "docker-compose",
+			"command": "docker",
 			"args": [
+				"compose",
 				"-f",
 				"docker-compose.mcp.yml",
 				"up",
@@ -333,8 +334,9 @@
 		{
 			"label": "Stop Docker MCP Services",
 			"type": "shell",
-			"command": "docker-compose",
+			"command": "docker",
 			"args": [
+				"compose",
 				"-f",
 				"docker-compose.mcp.yml",
 				"down"
