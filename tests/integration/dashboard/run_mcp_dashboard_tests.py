@@ -240,13 +240,13 @@ class MCPDashboardTestRunner:
             try:
                 return subprocess.run([
                     "docker-compose", *args
-                ], capture_output=True, text=True, timeout=180)
+                ], capture_output=True, text=True, timeout=600)
             except FileNotFoundError:
                 # Fallback to `docker compose ...`
                 logger.info("docker-compose not found, falling back to 'docker compose'.")
                 return subprocess.run([
                     "docker", "compose", *args
-                ], capture_output=True, text=True, timeout=180)
+                ], capture_output=True, text=True, timeout=600)
         
         try:
             # Start MCP server and dashboard
