@@ -81,7 +81,7 @@ class MCPDashboardConfig(DashboardConfig):
     enable_rag_query: bool = True
     enable_investigation: bool = True
     enable_real_time_monitoring: bool = True
-    enable_tool_execution: bool = False
+    enable_tool_execution: bool = True
     max_concurrent_tools: int = 4
     open_browser: bool = False
     data_dir: str = os.path.expanduser("~/.ipfs_datasets/mcp_dashboard")
@@ -1228,6 +1228,43 @@ class MCPDashboard(AdminDashboard):
                 "total": len(self.tool_execution_history)
             })
             
+        # Test Suite API endpoint
+        @self.app.route('/api/mcp/run-tests', methods=['POST'])
+        def api_run_tests():
+            """Run test suite based on test type."""
+            if not self.mcp_config or not self.mcp_config.enable_tool_execution:
+                return jsonify({"error": "Tool execution is disabled"}), 403
+            
+            data = request.json or {}
+            test_type = data.get('test_type', 'unit')
+            
+            try:
+                if test_type == 'unit':
+                    result = self._run_unit_tests()
+                elif test_type == 'integration':
+                    result = self._run_integration_tests()
+                elif test_type == 'full':
+                    result = self._run_full_test_suite()
+                else:
+                    return jsonify({"error": f"Unknown test type: {test_type}"}), 400
+                
+                return jsonify({
+                    "status": "success",
+                    "test_type": test_type,
+                    "result": result,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                # Log the full error but return sanitized error message
+                self.logger.error(f"Test execution failed: {e}")
+                return jsonify({
+                    "status": "error", 
+                    "test_type": test_type,
+                    "error": "Test execution failed. Check server logs for details.",
+                    "timestamp": datetime.now().isoformat()
+                }), 500
+            
         # JavaScript SDK endpoint
         @self.app.route('/static/js/mcp-sdk.js')
         def mcp_sdk():
@@ -1567,6 +1604,119 @@ class MCPDashboard(AdminDashboard):
                 "duration_s": round(time.time() - start, 3)
             }
         
+    def _run_unit_tests(self) -> Dict[str, Any]:
+        """Run unit tests and return results."""
+        import subprocess
+        import sys
+        
+        try:
+            # Run pytest on the tests directory focusing on unit tests
+            result = subprocess.run([
+                sys.executable, '-m', 'pytest', 
+                'tests/', '-v', '--tb=short',
+                '-k', 'not integration',
+                '--maxfail=10'
+            ], capture_output=True, text=True, timeout=300, cwd=Path(__file__).parent.parent)
+            
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "success": result.returncode == 0,
+                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Test execution timed out after 5 minutes",
+                "success": False,
+                "test_count": 0
+            }
+        except Exception as e:
+            return {
+                "exit_code": -1, 
+                "stdout": "",
+                "stderr": f"Test execution failed: {str(e)}",
+                "success": False,
+                "test_count": 0
+            }
+    
+    def _run_integration_tests(self) -> Dict[str, Any]:
+        """Run integration tests and return results."""
+        import subprocess
+        import sys
+        
+        try:
+            # Run pytest focusing on integration tests
+            result = subprocess.run([
+                sys.executable, '-m', 'pytest',
+                'tests/integration/', '-v', '--tb=short',
+                '--maxfail=5'
+            ], capture_output=True, text=True, timeout=600, cwd=Path(__file__).parent.parent)
+            
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "success": result.returncode == 0,
+                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Integration test execution timed out after 10 minutes",
+                "success": False,
+                "test_count": 0
+            }
+        except Exception as e:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Integration test execution failed: {str(e)}",
+                "success": False,
+                "test_count": 0
+            }
+    
+    def _run_full_test_suite(self) -> Dict[str, Any]:
+        """Run the full test suite and return results."""
+        import subprocess
+        import sys
+        
+        try:
+            # Run all tests with more comprehensive reporting
+            result = subprocess.run([
+                sys.executable, '-m', 'pytest',
+                'tests/', '-v', '--tb=short', 
+                '--maxfail=20',
+                '--durations=10'
+            ], capture_output=True, text=True, timeout=900, cwd=Path(__file__).parent.parent)
+            
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "success": result.returncode == 0,
+                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Full test suite execution timed out after 15 minutes",
+                "success": False,
+                "test_count": 0
+            }
+        except Exception as e:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Full test suite execution failed: {str(e)}",
+                "success": False,
+                "test_count": 0
+            }
+        
     def _get_comprehensive_status(self) -> Dict[str, Any]:
         """Get comprehensive status including all dashboard components."""
         base_status = self._get_mcp_server_status()
@@ -1652,6 +1802,7 @@ class MCPDashboard(AdminDashboard):
     <title>IPFS Datasets Comprehensive MCP Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
     <style>
         .dashboard-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .feature-card { transition: transform 0.2s; }
@@ -1713,6 +1864,12 @@ class MCPDashboard(AdminDashboard):
                     <a class="nav-link" href="/mcp/investigation">Investigation</a>
                 </li>
                 {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#test-suite-section">Test Suite</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#dataset-processing-section">Dataset Processing</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#tools-section">Tools</a>
                 </li>
@@ -1820,6 +1977,170 @@ class MCPDashboard(AdminDashboard):
                 </div>
             </div>
             {% endif %}
+        </div>
+
+        <!-- Test Suite Panel -->
+        <div class="row mb-4" id="test-suite-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-flask"></i> Test Suite Execution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <h6>Unit Tests</h6>
+                                        <p class="small">Run individual module tests</p>
+                                        <button class="btn btn-success btn-sm run-tests-btn" data-test-type="unit">
+                                            <i class="fas fa-play"></i> Run Unit Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-link fa-2x text-info mb-2"></i>
+                                        <h6>Integration Tests</h6>
+                                        <p class="small">Test cross-module functionality</p>
+                                        <button class="btn btn-info btn-sm run-tests-btn" data-test-type="integration">
+                                            <i class="fas fa-play"></i> Run Integration Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-rocket fa-2x text-warning mb-2"></i>
+                                        <h6>Full Test Suite</h6>
+                                        <p class="small">Comprehensive test run</p>
+                                        <button class="btn btn-warning btn-sm run-tests-btn" data-test-type="full">
+                                            <i class="fas fa-play"></i> Run All Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Test Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="test-output" class="bg-dark text-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click a test button to run tests...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dataset Processing Panel -->
+        <div class="row mb-4" id="dataset-processing-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> Dataset Processing Workflows</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fab fa-hubspot fa-2x text-primary mb-2"></i>
+                                        <h6>HuggingFace</h6>
+                                        <p class="small">Load from HuggingFace datasets</p>
+                                        <button class="btn btn-primary btn-sm dataset-source-btn" data-source="huggingface">
+                                            <i class="fas fa-download"></i> Load
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cube fa-2x text-secondary mb-2"></i>
+                                        <h6>IPFS</h6>
+                                        <p class="small">Fetch from IPFS network</p>
+                                        <button class="btn btn-secondary btn-sm dataset-source-btn" data-source="ipfs">
+                                            <i class="fas fa-download"></i> Fetch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-table fa-2x text-success mb-2"></i>
+                                        <h6>Parquet</h6>
+                                        <p class="small">Load Parquet files</p>
+                                        <button class="btn btn-success btn-sm dataset-source-btn" data-source="parquet">
+                                            <i class="fas fa-upload"></i> Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-archive fa-2x text-info mb-2"></i>
+                                        <h6>CAR Files</h6>
+                                        <p class="small">Import CAR archives</p>
+                                        <button class="btn btn-info btn-sm dataset-source-btn" data-source="car">
+                                            <i class="fas fa-upload"></i> Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Processing Pipeline</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Loaded Datasets</h6>
+                                                <div id="loaded-datasets" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                                    <div class="list-group-item text-muted">No datasets loaded</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Processing Options</h6>
+                                                <div class="btn-group-vertical w-100" role="group">
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('filter')">
+                                                        <i class="fas fa-filter"></i> Filter Dataset
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('transform')">
+                                                        <i class="fas fa-exchange-alt"></i> Transform Data
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('embed')">
+                                                        <i class="fas fa-vector-square"></i> Generate Embeddings
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('export')">
+                                                        <i class="fas fa-save"></i> Export Dataset
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tools Grid -->
@@ -1975,23 +2296,35 @@ class MCPDashboard(AdminDashboard):
         </div>
     </div>
 
-    <!-- Local assets first with safe fallbacks -->
+    <!-- Local assets with embedded fallbacks -->
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script>
-        if (!window.jQuery) {
-            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\\/script>');
+        // Ensure $ is available
+        if (window.jQuery && !window.$) { 
+            window.$ = window.jQuery; 
         }
-    </script>
-    <script>
-        (function ensureDollar(){
-            if (window.jQuery && !window.$) { window.$ = window.jQuery; }
-            if (!window.$) { setTimeout(ensureDollar, 25); }
-        })();
+        // If jQuery failed to load, provide minimal $ implementation
+        if (!window.$) {
+            window.$ = function(selector) {
+                if (typeof selector === 'function') {
+                    // $(document).ready equivalent
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', selector);
+                    } else {
+                        selector();
+                    }
+                    return;
+                }
+                return document.querySelectorAll(selector);
+            };
+            window.$.ajax = function() { console.warn('jQuery not loaded, AJAX disabled'); };
+        }
     </script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script>
+        // Bootstrap compatibility
         if (typeof bootstrap === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"><\\/script>');
+            window.bootstrap = { Modal: function() {} };
         }
     </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
@@ -2096,6 +2429,114 @@ class MCPDashboard(AdminDashboard):
                         });
                 });
                 
+                // Test Suite functionality
+                $('.run-tests-btn').click(function() {
+                    const testType = $(this).data('test-type');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Running...');
+                    $('#test-output').html('<div class="text-info">Starting ' + testType + ' tests...</div>');
+                    
+                    fetch('/api/mcp/run-tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test_type: testType })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#test-output').html('<div class="text-success">Test Results:</div><pre>' + 
+                            JSON.stringify(data, null, 2) + '</pre>');
+                    })
+                    .catch(error => {
+                        $('#test-output').html('<div class="text-danger">Test execution failed: ' + error.message + '</div>');
+                    })
+                    .finally(() => {
+                        $btn.prop('disabled', false).html(originalText);
+                    });
+                });
+                
+                // Dataset source functionality
+                $('.dataset-source-btn').click(function() {
+                    const source = $(this).data('source');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+                    
+                    // Different behavior based on source
+                    if (source === 'huggingface') {
+                        const datasetName = prompt('Enter HuggingFace dataset name:');
+                        if (datasetName) {
+                            loadDataset('huggingface', { dataset_name: datasetName });
+                        } else {
+                            $btn.prop('disabled', false).html(originalText);
+                        }
+                    } else if (source === 'ipfs') {
+                        const cid = prompt('Enter IPFS CID:');
+                        if (cid) {
+                            loadDataset('ipfs', { cid: cid });
+                        } else {
+                            $btn.prop('disabled', false).html(originalText);
+                        }
+                    } else if (source === 'parquet' || source === 'car') {
+                        // For file uploads, trigger file input
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = source === 'parquet' ? '.parquet' : '.car';
+                        input.onchange = function() {
+                            if (this.files[0]) {
+                                uploadDataset(source, this.files[0]);
+                            } else {
+                                $btn.prop('disabled', false).html(originalText);
+                            }
+                        };
+                        input.click();
+                    }
+                    
+                    function loadDataset(sourceType, params) {
+                        window.mcpSDK.executeTool('dataset_tools', 'load_dataset', params)
+                            .then(result => {
+                                addLoadedDataset(result.dataset_id || 'dataset_' + Date.now(), sourceType, params);
+                                $btn.prop('disabled', false).html(originalText);
+                            })
+                            .catch(error => {
+                                alert('Dataset loading failed: ' + error.message);
+                                $btn.prop('disabled', false).html(originalText);
+                            });
+                    }
+                    
+                    function uploadDataset(sourceType, file) {
+                        // For now, simulate upload - in real implementation would use FormData
+                        setTimeout(() => {
+                            addLoadedDataset(file.name, sourceType, { filename: file.name });
+                            $btn.prop('disabled', false).html(originalText);
+                        }, 1000);
+                    }
+                });
+                
+                function addLoadedDataset(datasetId, source, params) {
+                    const $container = $('#loaded-datasets');
+                    if ($container.find('.text-muted').length) {
+                        $container.empty();
+                    }
+                    
+                    const item = $('<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                        '<div><strong>' + datasetId + '</strong><br><small class="text-muted">Source: ' + source + '</small></div>' +
+                        '<button class="btn btn-sm btn-outline-danger remove-dataset-btn" data-id="' + datasetId + '">' +
+                        '<i class="fas fa-trash"></i></button></div>');
+                    
+                    $container.append(item);
+                }
+                
+                // Remove dataset functionality
+                $(document).on('click', '.remove-dataset-btn', function() {
+                    $(this).closest('.list-group-item').remove();
+                    if ($('#loaded-datasets').children().length === 0) {
+                        $('#loaded-datasets').html('<div class="list-group-item text-muted">No datasets loaded</div>');
+                    }
+                });
+                
                 // Auto-refresh status every 10 seconds
                 setInterval(function() {
                     updateSystemStatus();
@@ -2119,6 +2560,49 @@ class MCPDashboard(AdminDashboard):
                 
                 function refreshTools() {
                     location.reload();
+                }
+                
+                // Dataset processing functions
+                function processDataset(operation) {
+                    const selectedDatasets = $('#loaded-datasets .list-group-item:not(.text-muted)');
+                    if (selectedDatasets.length === 0) {
+                        alert('No datasets loaded. Please load a dataset first.');
+                        return;
+                    }
+                    
+                    const datasetId = selectedDatasets.first().find('strong').text();
+                    let params = {};
+                    
+                    // Get operation-specific parameters
+                    if (operation === 'filter') {
+                        const filterExpr = prompt('Enter filter expression (e.g., "length > 100"):');
+                        if (!filterExpr) return;
+                        params = { operations: [{ type: 'filter', condition: filterExpr }] };
+                    } else if (operation === 'transform') {
+                        const transformType = prompt('Enter transform type (map, select, sort):');
+                        if (!transformType) return;
+                        params = { operations: [{ type: transformType }] };
+                    } else if (operation === 'embed') {
+                        params = { operations: [{ type: 'embed', model: 'sentence-transformers/all-MiniLM-L6-v2' }] };
+                    } else if (operation === 'export') {
+                        const format = prompt('Export format (json, parquet, csv):');
+                        if (!format) return;
+                        params = { operations: [{ type: 'export', format: format }] };
+                    }
+                    
+                    params.dataset_source = datasetId;
+                    
+                    window.mcpSDK.executeTool('dataset_tools', 'process_dataset', params)
+                        .then(result => {
+                            alert('Dataset processing completed: ' + JSON.stringify(result));
+                            if (operation === 'export') {
+                                // Add processed dataset to list
+                                addLoadedDataset(result.output_id || 'processed_' + Date.now(), 'processed', params);
+                            }
+                        })
+                        .catch(error => {
+                            alert('Dataset processing failed: ' + error.message);
+                        });
                 }
             }
 
