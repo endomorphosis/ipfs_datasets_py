@@ -3624,11 +3624,10 @@ class MCPDashboard(AdminDashboard):
         templates_dir.mkdir(parents=True, exist_ok=True)
         static_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create main MCP dashboard template
+        # Create main MCP dashboard template (always update to ensure latest features)
         mcp_template_path = templates_dir / "mcp_dashboard.html"
-        if not mcp_template_path.exists():
-            with open(mcp_template_path, 'w') as f:
-                f.write(self.create_mcp_dashboard_template())
+        with open(mcp_template_path, 'w') as f:
+            f.write(self.create_mcp_dashboard_template())
 
         # Create GraphRAG dashboard template
         if self.mcp_config and self.mcp_config.enable_graphrag:
