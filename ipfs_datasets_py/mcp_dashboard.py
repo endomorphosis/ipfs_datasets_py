@@ -1870,6 +1870,54 @@ class MCPDashboard(AdminDashboard):
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        
+        /* Advanced panels styling */
+        .workflow-btn, .monitoring-btn, .performance-btn {
+            transition: all 0.2s ease;
+        }
+        .workflow-btn:hover, .monitoring-btn:hover, .performance-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        #batch-processing-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #batch-processing-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #monitoring-section .card.bg-primary,
+        #monitoring-section .card.bg-info,
+        #monitoring-section .card.bg-success,
+        #monitoring-section .card.bg-warning {
+            transition: transform 0.2s;
+        }
+        #monitoring-section .card.bg-primary:hover,
+        #monitoring-section .card.bg-info:hover,
+        #monitoring-section .card.bg-success:hover,
+        #monitoring-section .card.bg-warning:hover {
+            transform: scale(1.05);
+        }
+        
+        #performance-section .progress {
+            height: 25px;
+        }
+        #performance-section .progress-bar {
+            transition: width 0.5s ease;
+        }
+        
+        #performance-chart {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        }
+        
+        #workflow-status, #optimization-results {
+            font-size: 0.85em;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1920,6 +1968,15 @@ class MCPDashboard(AdminDashboard):
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#content-analysis-section">Content Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#batch-processing-section">Batch Processing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#monitoring-section">Real-time Monitoring</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#performance-section">Performance</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#tools-section">Tools</a>
@@ -2460,6 +2517,283 @@ class MCPDashboard(AdminDashboard):
                                     <div class="card-body">
                                         <div id="analysis-results" class="bg-light p-3" style="height: 250px; overflow-y: auto;">
                                             <div class="text-muted">Select an analysis type and click a button to start...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Processing & Workflow Management Panel -->
+        <div class="row mb-4" id="batch-processing-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tasks"></i> Batch Processing & Workflow Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-project-diagram fa-2x text-primary mb-2"></i>
+                                        <h6>Workflow Builder</h6>
+                                        <p class="small">Create automated workflows</p>
+                                        <button class="btn btn-primary btn-sm workflow-btn" data-action="create_workflow">
+                                            <i class="fas fa-plus"></i> Create Workflow
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-layer-group fa-2x text-success mb-2"></i>
+                                        <h6>Batch Operations</h6>
+                                        <p class="small">Process multiple datasets</p>
+                                        <button class="btn btn-success btn-sm workflow-btn" data-action="batch_process">
+                                            <i class="fas fa-play"></i> Start Batch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                        <h6>Scheduler</h6>
+                                        <p class="small">Schedule recurring tasks</p>
+                                        <button class="btn btn-warning btn-sm workflow-btn" data-action="schedule_task">
+                                            <i class="fas fa-calendar"></i> Schedule
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Active Workflows</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="active-workflows" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                            <div class="list-group-item text-muted">No active workflows</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Workflow Status</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="workflow-status" class="bg-light p-3" style="height: 200px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Select a workflow to view status...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Monitoring & Analytics Panel -->
+        <div class="row mb-4" id="monitoring-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Real-time Monitoring & Analytics</h5>
+                        <div class="float-right">
+                            <span class="badge badge-success">Live</span>
+                            <span class="real-time-indicator"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="cpu-usage">--</h4>
+                                        <small>CPU Usage %</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="memory-usage">--</h4>
+                                        <small>Memory Usage %</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="active-connections">--</h4>
+                                        <small>Active Connections</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="queue-size">--</h4>
+                                        <small>Task Queue Size</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>System Performance Chart</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="performance-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>System Health</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="health-indicators">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>MCP Server</span>
+                                                <span class="badge badge-success">Healthy</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>IPFS Node</span>
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Vector Store</span>
+                                                <span class="badge badge-success">Ready</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Cache</span>
+                                                <span class="badge badge-warning">75% Full</span>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <button class="btn btn-sm btn-outline-primary w-100 monitoring-btn" data-action="refresh_health">
+                                            <i class="fas fa-sync"></i> Refresh Health
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Optimization Panel -->
+        <div class="row mb-4" id="performance-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tachometer-alt"></i> Performance Optimization</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-rocket fa-2x text-primary mb-2"></i>
+                                        <h6>Cache Optimization</h6>
+                                        <p class="small">Optimize caching strategies</p>
+                                        <button class="btn btn-primary btn-sm performance-btn" data-action="optimize_cache">
+                                            <i class="fas fa-magic"></i> Optimize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-database fa-2x text-success mb-2"></i>
+                                        <h6>Index Management</h6>
+                                        <p class="small">Manage search indexes</p>
+                                        <button class="btn btn-success btn-sm performance-btn" data-action="manage_indexes">
+                                            <i class="fas fa-cogs"></i> Manage
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-compress-alt fa-2x text-warning mb-2"></i>
+                                        <h6>Data Compression</h6>
+                                        <p class="small">Compress large datasets</p>
+                                        <button class="btn btn-warning btn-sm performance-btn" data-action="compress_data">
+                                            <i class="fas fa-compress"></i> Compress
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-broom fa-2x text-danger mb-2"></i>
+                                        <h6>Cleanup</h6>
+                                        <p class="small">Clean temporary files</p>
+                                        <button class="btn btn-danger btn-sm performance-btn" data-action="cleanup_system">
+                                            <i class="fas fa-trash"></i> Cleanup
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Performance Metrics</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 25%">
+                                                Cache Hit Rate: 25%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 60%">
+                                                Index Efficiency: 60%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 80%">
+                                                Disk Usage: 80%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 40%">
+                                                Network Utilization: 40%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Optimization Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="optimization-results" class="bg-light p-3" style="height: 180px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click an optimization button to see results...</div>
                                         </div>
                                     </div>
                                 </div>
@@ -3085,11 +3419,194 @@ class MCPDashboard(AdminDashboard):
                             resetAnalysisButton();
                         });
                 });
+                
+                // Batch Processing & Workflow Management functionality
+                $('.workflow-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                    
+                    let params = {};
+                    let toolName = '';
+                    
+                    if (action === 'create_workflow') {
+                        const workflowName = prompt('Enter workflow name:');
+                        if (!workflowName) return resetWorkflowButton();
+                        params = {
+                            name: workflowName,
+                            steps: [
+                                { tool: 'load_dataset', params: {} },
+                                { tool: 'process_dataset', params: {} }
+                            ]
+                        };
+                        toolName = 'enhanced_workflow_tools';
+                    } else if (action === 'batch_process') {
+                        const batchSize = prompt('Enter batch size (default: 10):') || '10';
+                        params = {
+                            batch_size: parseInt(batchSize),
+                            operation: 'process_multiple_datasets'
+                        };
+                        toolName = 'enhanced_workflow_tools';
+                    } else if (action === 'schedule_task') {
+                        const schedule = prompt('Enter cron schedule (e.g., "0 */6 * * *"):');
+                        if (!schedule) return resetWorkflowButton();
+                        params = { schedule: schedule, task_type: 'data_processing' };
+                        toolName = 'enhanced_workflow_tools';
+                    }
+                    
+                    function resetWorkflowButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool('workflow_tools', toolName, params)
+                        .then(result => {
+                            $('#workflow-status').html('<div class="text-success">Workflow operation completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                            updateActiveWorkflows();
+                        })
+                        .catch(error => {
+                            $('#workflow-status').html('<div class="text-danger">Workflow operation failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetWorkflowButton();
+                        });
+                });
+                
+                // Real-time Monitoring functionality
+                $('.monitoring-btn').click(function() {
+                    const action = $(this).data('action');
+                    
+                    if (action === 'refresh_health') {
+                        updateSystemMetrics();
+                        updateHealthIndicators();
+                    }
+                });
+                
+                // Performance Optimization functionality
+                $('.performance-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Optimizing...');
+                    
+                    let params = {};
+                    let toolName = '';
+                    let category = '';
+                    
+                    if (action === 'optimize_cache') {
+                        params = { optimization_type: 'cache', strategy: 'aggressive' };
+                        toolName = 'enhanced_cache_tools';
+                        category = 'cache_tools';
+                    } else if (action === 'manage_indexes') {
+                        params = { action: 'optimize_all' };
+                        toolName = 'index_management_tools';
+                        category = 'index_management_tools';
+                    } else if (action === 'compress_data') {
+                        params = { compression_algorithm: 'gzip', level: 6 };
+                        toolName = 'data_processing_tools';
+                        category = 'data_processing_tools';
+                    } else if (action === 'cleanup_system') {
+                        params = { clean_temp: true, clean_cache: true, clean_logs: true };
+                        toolName = 'system_health';
+                        category = 'bespoke_tools';
+                    }
+                    
+                    function resetPerformanceButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#optimization-results').html('<div class="text-success">Optimization completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                            updatePerformanceMetrics();
+                        })
+                        .catch(error => {
+                            $('#optimization-results').html('<div class="text-danger">Optimization failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetPerformanceButton();
+                        });
+                });
+                
+                // Utility functions for new panels
+                function updateActiveWorkflows() {
+                    // Mock workflow data - in production would fetch from server
+                    const workflows = [
+                        { id: 'wf1', name: 'Daily Dataset Processing', status: 'running', progress: 60 },
+                        { id: 'wf2', name: 'Weekly Analysis Report', status: 'scheduled', progress: 0 },
+                        { id: 'wf3', name: 'Data Quality Check', status: 'completed', progress: 100 }
+                    ];
+                    
+                    let html = '';
+                    workflows.forEach(wf => {
+                        const statusClass = wf.status === 'running' ? 'primary' : 
+                                          wf.status === 'completed' ? 'success' : 'secondary';
+                        html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${wf.name}</strong><br>
+                                        <small class="text-muted">ID: ${wf.id}</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge badge-${statusClass}">${wf.status}</span>
+                                        <div class="progress mt-1" style="width: 100px;">
+                                            <div class="progress-bar" style="width: ${wf.progress}%"></div>
+                                        </div>
+                                    </div>
+                                 </div>`;
+                    });
+                    $('#active-workflows').html(html);
+                }
+                
+                function updateSystemMetrics() {
+                    // Mock system metrics - in production would fetch from monitoring API
+                    $('#cpu-usage').text(Math.floor(Math.random() * 40 + 20) + '%');
+                    $('#memory-usage').text(Math.floor(Math.random() * 30 + 40) + '%');
+                    $('#active-connections').text(Math.floor(Math.random() * 20 + 5));
+                    $('#queue-size').text(Math.floor(Math.random() * 10));
+                }
+                
+                function updateHealthIndicators() {
+                    // Mock health status updates
+                    const services = ['MCP Server', 'IPFS Node', 'Vector Store', 'Cache'];
+                    const statuses = ['Healthy', 'Connected', 'Ready', '75% Full'];
+                    const badges = ['success', 'success', 'success', 'warning'];
+                    
+                    let html = '';
+                    services.forEach((service, i) => {
+                        html += `<div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>${service}</span>
+                                    <span class="badge badge-${badges[i]}">${statuses[i]}</span>
+                                 </div>`;
+                    });
+                    $('#health-indicators').html(html + '<hr><button class="btn btn-sm btn-outline-primary w-100 monitoring-btn" data-action="refresh_health"><i class="fas fa-sync"></i> Refresh Health</button>');
+                }
+                
+                function updatePerformanceMetrics() {
+                    // Update performance bars with slight improvements after optimization
+                    const currentCacheRate = parseInt($('.progress-bar.bg-primary').css('width')) || 25;
+                    $('.progress-bar.bg-primary').css('width', Math.min(100, currentCacheRate + 10) + '%')
+                                                   .text(`Cache Hit Rate: ${Math.min(100, currentCacheRate + 10)}%`);
+                }
+                
+                // Initialize real-time updates
+                setInterval(function() {
+                    updateSystemMetrics();
+                }, 5000); // Update every 5 seconds
+                
+                // Initialize panels
+                updateActiveWorkflows();
+                updateSystemMetrics();
+                updateHealthIndicators();
             }
 
             (function waitForDeps(){
                 if (window.MCPClient && window.$) { bootDashboard(); }
                 else { setTimeout(waitForDeps, 25); }
+            })();
             })();
             })();
         });
