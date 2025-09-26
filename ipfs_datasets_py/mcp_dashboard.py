@@ -1828,6 +1828,48 @@ class MCPDashboard(AdminDashboard):
         .metric-value { font-size: 2em; font-weight: bold; }
         .progress-ring { width: 60px; height: 60px; }
         .progress-circle { fill: none; stroke-width: 4; }
+        
+        /* New sections styling */
+        .web-scraping-btn, .search-btn, .analysis-btn {
+            transition: all 0.2s ease;
+        }
+        .web-scraping-btn:hover, .search-btn:hover, .analysis-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        #scraping-results, #search-results, #analysis-results {
+            font-size: 0.85em;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+        
+        #web-scraping-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #web-scraping-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #data-search-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #data-search-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #content-analysis-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #content-analysis-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -1869,6 +1911,15 @@ class MCPDashboard(AdminDashboard):
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#dataset-processing-section">Dataset Processing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#web-scraping-section">Web Scraping</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#data-search-section">Data Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#content-analysis-section">Content Analysis</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#tools-section">Tools</a>
@@ -2133,6 +2184,282 @@ class MCPDashboard(AdminDashboard):
                                                     </button>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Web Scraping & Archiving Panel -->
+        <div class="row mb-4" id="web-scraping-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-globe"></i> Web Scraping & Archiving</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-archive fa-2x text-primary mb-2"></i>
+                                        <h6>Wayback Machine</h6>
+                                        <p class="small">Search historical web content</p>
+                                        <button class="btn btn-primary btn-sm web-scraping-btn" data-action="wayback_search">
+                                            <i class="fas fa-search"></i> Search Archives
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-spider fa-2x text-success mb-2"></i>
+                                        <h6>Common Crawl</h6>
+                                        <p class="small">Large-scale web crawl data</p>
+                                        <button class="btn btn-success btn-sm web-scraping-btn" data-action="common_crawl">
+                                            <i class="fas fa-search"></i> Search Crawl
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-archive fa-2x text-warning mb-2"></i>
+                                        <h6>Create WARC</h6>
+                                        <p class="small">Archive websites to WARC format</p>
+                                        <button class="btn btn-warning btn-sm web-scraping-btn" data-action="create_warc">
+                                            <i class="fas fa-download"></i> Archive Site
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-video fa-2x text-danger mb-2"></i>
+                                        <h6>Media Download</h6>
+                                        <p class="small">Download from 1000+ platforms</p>
+                                        <button class="btn btn-danger btn-sm web-scraping-btn" data-action="media_download">
+                                            <i class="fas fa-download"></i> Download Media
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Scraping Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="scraping-results" class="bg-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click a scraping button to start...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Search & Discovery Panel -->
+        <div class="row mb-4" id="data-search-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Data Search & Discovery</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-vector-square fa-2x text-primary mb-2"></i>
+                                        <h6>Vector Search</h6>
+                                        <p class="small">Semantic similarity search</p>
+                                        <button class="btn btn-primary btn-sm search-btn" data-action="vector_search">
+                                            <i class="fas fa-search"></i> Search Vectors
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
+                                        <h6>Knowledge Graph</h6>
+                                        <p class="small">Query knowledge graphs</p>
+                                        <button class="btn btn-info btn-sm search-btn" data-action="knowledge_graph">
+                                            <i class="fas fa-search"></i> Query Graph
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-sitemap fa-2x text-success mb-2"></i>
+                                        <h6>Content Index</h6>
+                                        <p class="small">Full-text search indexes</p>
+                                        <button class="btn btn-success btn-sm search-btn" data-action="content_index">
+                                            <i class="fas fa-list"></i> Browse Index
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-database fa-2x text-secondary mb-2"></i>
+                                        <h6>Dataset Discovery</h6>
+                                        <p class="small">Find datasets across sources</p>
+                                        <button class="btn btn-secondary btn-sm search-btn" data-action="dataset_discovery">
+                                            <i class="fas fa-search"></i> Discover Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Search Query</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" id="search-query" placeholder="Enter search query...">
+                                        </div>
+                                        <div class="form-group">
+                                            <select class="form-control" id="search-type">
+                                                <option value="semantic">Semantic Search</option>
+                                                <option value="exact">Exact Match</option>
+                                                <option value="fuzzy">Fuzzy Search</option>
+                                                <option value="graph">Graph Query</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Search Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="search-results" class="bg-light p-3" style="height: 200px; overflow-y: auto;">
+                                            <div class="text-muted">Enter a query to search...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Analysis & Transformation Panel -->
+        <div class="row mb-4" id="content-analysis-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Content Analysis & Transformation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cluster fa-2x text-primary mb-2"></i>
+                                        <h6>Clustering Analysis</h6>
+                                        <p class="small">Group similar content</p>
+                                        <button class="btn btn-primary btn-sm analysis-btn" data-action="clustering">
+                                            <i class="fas fa-sitemap"></i> Cluster Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-tags fa-2x text-success mb-2"></i>
+                                        <h6>Classification</h6>
+                                        <p class="small">Categorize content types</p>
+                                        <button class="btn btn-success btn-sm analysis-btn" data-action="classification">
+                                            <i class="fas fa-tag"></i> Classify Content
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-exchange-alt fa-2x text-warning mb-2"></i>
+                                        <h6>Format Conversion</h6>
+                                        <p class="small">Transform data formats</p>
+                                        <button class="btn btn-warning btn-sm analysis-btn" data-action="format_conversion">
+                                            <i class="fas fa-file-export"></i> Convert Format
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-medal fa-2x text-info mb-2"></i>
+                                        <h6>Quality Assessment</h6>
+                                        <p class="small">Analyze content quality</p>
+                                        <button class="btn btn-info btn-sm analysis-btn" data-action="quality_assessment">
+                                            <i class="fas fa-check-circle"></i> Assess Quality
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Analysis Parameters</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label>Analysis Type</label>
+                                            <select class="form-control" id="analysis-type">
+                                                <option value="comprehensive">Comprehensive</option>
+                                                <option value="quick">Quick Analysis</option>
+                                                <option value="detailed">Detailed Analysis</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Data Source</label>
+                                            <select class="form-control" id="analysis-source">
+                                                <option value="loaded_datasets">Loaded Datasets</option>
+                                                <option value="scraped_content">Scraped Content</option>
+                                                <option value="search_results">Search Results</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Analysis Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="analysis-results" class="bg-light p-3" style="height: 250px; overflow-y: auto;">
+                                            <div class="text-muted">Select an analysis type and click a button to start...</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2604,11 +2931,166 @@ class MCPDashboard(AdminDashboard):
                             alert('Dataset processing failed: ' + error.message);
                         });
                 }
+                
+                // Web Scraping & Archiving functionality
+                $('.web-scraping-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                    $('#scraping-results').html('<div class="text-info">Starting ' + action + '...</div>');
+                    
+                    let params = {};
+                    let toolName = '';
+                    
+                    // Get action-specific parameters
+                    if (action === 'wayback_search') {
+                        const url = prompt('Enter URL to search in Wayback Machine:');
+                        if (!url) return resetButton();
+                        params = { url: url, limit: 50 };
+                        toolName = 'wayback_machine_search';
+                    } else if (action === 'common_crawl') {
+                        const domain = prompt('Enter domain to search in Common Crawl:');
+                        if (!domain) return resetButton();
+                        params = { domain: domain, limit: 50 };
+                        toolName = 'common_crawl_search';
+                    } else if (action === 'create_warc') {
+                        const url = prompt('Enter URL to archive:');
+                        if (!url) return resetButton();
+                        params = { url: url, output_path: 'archives/' + Date.now() + '.warc.gz' };
+                        toolName = 'create_warc';
+                    } else if (action === 'media_download') {
+                        const url = prompt('Enter media URL (YouTube, Vimeo, etc.):');
+                        if (!url) return resetButton();
+                        params = { url: url, output_dir: 'media_downloads', quality: 'best[height<=720]' };
+                        toolName = 'ytdlp_download';
+                    }
+                    
+                    function resetButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool('web_archive_tools', toolName, params)
+                        .then(result => {
+                            $('#scraping-results').html('<div class="text-success">Success!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#scraping-results').html('<div class="text-danger">Error: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetButton();
+                        });
+                });
+                
+                // Data Search & Discovery functionality
+                $('.search-btn').click(function() {
+                    const action = $(this).data('action');
+                    const query = $('#search-query').val();
+                    const searchType = $('#search-type').val();
+                    
+                    if (!query) {
+                        alert('Please enter a search query');
+                        return;
+                    }
+                    
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Searching...');
+                    $('#search-results').html('<div class="text-info">Searching...</div>');
+                    
+                    let params = { query: query };
+                    let toolName = '';
+                    
+                    if (action === 'vector_search') {
+                        params.search_type = searchType;
+                        toolName = 'search_vector_index';
+                    } else if (action === 'knowledge_graph') {
+                        toolName = 'query_knowledge_graph';
+                    } else if (action === 'content_index') {
+                        toolName = 'list_indices';
+                    } else if (action === 'dataset_discovery') {
+                        params.source = 'multiple';
+                        toolName = 'load_dataset';
+                    }
+                    
+                    const category = action === 'knowledge_graph' ? 'graph_tools' :
+                                   action === 'dataset_discovery' ? 'dataset_tools' : 'vector_tools';
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#search-results').html('<div class="text-success">Results found!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#search-results').html('<div class="text-danger">Search failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            $btn.prop('disabled', false).html(originalText);
+                        });
+                });
+                
+                // Content Analysis & Transformation functionality
+                $('.analysis-btn').click(function() {
+                    const action = $(this).data('action');
+                    const analysisType = $('#analysis-type').val();
+                    const analysisSource = $('#analysis-source').val();
+                    
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Analyzing...');
+                    $('#analysis-results').html('<div class="text-info">Starting ' + action + ' analysis...</div>');
+                    
+                    let params = {
+                        analysis_type: analysisType,
+                        data_source: analysisSource
+                    };
+                    let toolName = '';
+                    
+                    if (action === 'clustering') {
+                        params.algorithm = 'kmeans';
+                        params.n_clusters = 5;
+                        toolName = 'analysis_tools';
+                    } else if (action === 'classification') {
+                        params.categories = ['text', 'image', 'video', 'audio', 'document'];
+                        toolName = 'analysis_tools';
+                    } else if (action === 'format_conversion') {
+                        const targetFormat = prompt('Enter target format (json, parquet, csv):');
+                        if (!targetFormat) return resetAnalysisButton();
+                        params.target_format = targetFormat;
+                        toolName = 'convert_dataset_format';
+                    } else if (action === 'quality_assessment') {
+                        params.metrics = ['completeness', 'consistency', 'accuracy'];
+                        toolName = 'analysis_tools';
+                    }
+                    
+                    function resetAnalysisButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    const category = action === 'format_conversion' ? 'dataset_tools' : 'analysis_tools';
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#analysis-results').html('<div class="text-success">Analysis completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#analysis-results').html('<div class="text-danger">Analysis failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetAnalysisButton();
+                        });
+                });
             }
 
             (function waitForDeps(){
                 if (window.MCPClient && window.$) { bootDashboard(); }
                 else { setTimeout(waitForDeps, 25); }
+            })();
             })();
         });
     </script>
