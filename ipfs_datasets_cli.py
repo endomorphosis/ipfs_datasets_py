@@ -35,6 +35,7 @@ Commands:
       start      Start MCP server
       stop       Stop MCP server
       status     Show MCP server status
+            logs       Tail MCP dashboard logs
       
     tools        Tool management
       categories List available tool categories
@@ -424,10 +425,34 @@ def execute_heavy_command(args):
                         subprocess.run(cmd, env=env, check=False)
                     else:
                         print(f"Starting MCP dashboard at http://{host}:{port}/mcp (background)...")
-                        stdout = subprocess.DEVNULL
-                        stderr = subprocess.DEVNULL
-                        subprocess.Popen(cmd, env=env, stdout=stdout, stderr=stderr)
-                        print("MCP dashboard launched.")
+                        # Write logs to a file so crashes aren't silent
+                        logs_dir = Path.home() / ".ipfs_datasets"
+                        logs_dir.mkdir(parents=True, exist_ok=True)
+                        log_path = logs_dir / "mcp_dashboard.log"
+                        log_fh = open(log_path, "a")
+                        proc = subprocess.Popen(cmd, env=env, stdout=log_fh, stderr=log_fh)
+                        # Quick readiness probe so users get fast feedback
+                        import time as _time
+                        import urllib.request as _url
+                        ready = False
+                        status_url = f"http://{host}:{port}/api/mcp/status"
+                        for _ in range(20):  # ~5s total
+                            try:
+                                with _url.urlopen(status_url, timeout=0.25) as r:
+                                    if r.status == 200:
+                                        ready = True
+                                        break
+                            except Exception:
+                                _time.sleep(0.25)
+                        if ready:
+                            print(f"MCP dashboard is up: {status_url}")
+                        else:
+                            print("MCP dashboard did not respond yet. It may still be booting or failed to start.")
+                            print(f"Tip: tail -n 100 {log_path} to see logs, or run 'ipfs-datasets mcp start --blocking' for diagnostics.")
+                            # If process exited immediately, surface that
+                            _time.sleep(0.2)
+                            if proc.poll() is not None:
+                                print(f"Warning: dashboard process exited with code {proc.returncode}. See logs: {log_path}")
                     return
                 except Exception as e:
                     print(f"Failed to start MCP dashboard: {e}")
@@ -489,6 +514,63 @@ def execute_heavy_command(args):
                         print(f"MCP Dashboard not healthy (HTTP {r.status_code}) at {url}")
                 except Exception as e:
                     print(f"MCP status check failed: {e}")
+                return
+
+            elif subcommand == "logs":
+                # Tail the MCP dashboard log file
+                # Options: --lines N (default 200), --follow
+                lines = 200
+                follow = False
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token in ("--lines", "-n") and i + 1 < len(extra):
+                        try:
+                            lines = int(extra[i + 1])
+                        except Exception:
+                            pass
+                        i += 2
+                    elif token in ("--follow", "-f"):
+                        follow = True
+                        i += 1
+                    else:
+                        i += 1
+
+                log_path = Path.home() / ".ipfs_datasets" / "mcp_dashboard.log"
+                if not log_path.exists():
+                    print(f"No log file found at {log_path}. Start the dashboard first with 'ipfs-datasets mcp start'.")
+                    return
+
+                # Print last N lines
+                try:
+                    with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.readlines()
+                        start = max(0, len(content) - lines)
+                        for line in content[start:]:
+                            print(line.rstrip("\n"))
+
+                    if not follow:
+                        return
+
+                    # Follow mode
+                    print("-- following -- (Ctrl+C to stop)")
+                    with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+                        # Seek to end
+                        f.seek(0, 2)
+                        import time as _time
+                        while True:
+                            pos = f.tell()
+                            line = f.readline()
+                            if not line:
+                                _time.sleep(0.25)
+                                f.seek(pos)
+                            else:
+                                print(line.rstrip("\n"))
+                except KeyboardInterrupt:
+                    return
+                except Exception as e:
+                    print(f"Error reading logs: {e}")
                 return
         
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")

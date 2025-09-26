@@ -813,8 +813,8 @@ class GraphRAGLLMProcessor:
             Analysis of the evidence chain
         """
         # Create cache key
-    key_str = f"{doc1['id']}:{doc2['id']}:{entity['id']}"
-    cache_key = f"evidence_chain:{hash(key_str)}"
+        key_str = f"{doc1['id']}:{doc2['id']}:{entity['id']}"
+        cache_key = f"evidence_chain:{hash(key_str)}"
 
         # Check cache
         if cache_key in self._response_cache:
