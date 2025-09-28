@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPFS Datasets Comprehensive MCP Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="alternate icon" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
@@ -1180,7 +1182,26 @@
                     }
                     return;
                 }
-                return document.querySelectorAll(selector);
+                // Handle non-string selectors safely
+                if (selector === document || selector === window) {
+                    return [selector];
+                }
+                if (selector && (selector.nodeType === 1 || selector.nodeType === 9)) {
+                    // Element or Document
+                    return [selector];
+                }
+                try {
+                    if (typeof NodeList !== 'undefined' && selector instanceof NodeList) {
+                        return selector;
+                    }
+                } catch (_) {}
+                if (Array.isArray(selector)) {
+                    return selector;
+                }
+                if (typeof selector === 'string') {
+                    return document.querySelectorAll(selector);
+                }
+                return [];
             };
             window.$.ajax = function() { console.warn('jQuery not loaded, AJAX disabled'); };
         }
@@ -1194,7 +1215,20 @@
     </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
-        $(document).ready(function() {
+        // jQuery-agnostic ready helper
+        const onReady = function(fn) {
+            if (window.jQuery && window.$ && window.$.fn && typeof $.fn.ready === 'function') {
+                $(document).ready(fn);
+            } else {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', fn);
+                } else {
+                    fn();
+                }
+            }
+        };
+
+        onReady(function() {
             function bootDashboard() {
                 try {
                     if (typeof window.MCPClient !== 'function') {
@@ -1808,10 +1842,9 @@
             }
 
             (function waitForDeps(){
-                if (window.MCPClient && window.$) { bootDashboard(); }
-                else { setTimeout(waitForDeps, 25); }
-            })();
-            })();
+                const hasRealJQ = !!(window.jQuery && window.$ && window.$.fn);
+                if (window.MCPClient && hasRealJQ) { bootDashboard(); }
+                else { setTimeout(waitForDeps, 50); }
             })();
         });
     </script>

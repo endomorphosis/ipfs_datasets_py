@@ -28,9 +28,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    from flask import render_template, jsonify, request, send_from_directory
+    from flask import render_template, jsonify, request, send_from_directory, url_for
 except Exception:  # pragma: no cover
-    render_template = jsonify = request = send_from_directory = None  # type: ignore
+    render_template = jsonify = request = send_from_directory = url_for = None  # type: ignore
 
 from ipfs_datasets_py.admin_dashboard import AdminDashboard, DashboardConfig
 
@@ -234,6 +234,15 @@ class MCPDashboard(AdminDashboard):
         
         if not self.app:
             return
+        
+        # Serve favicon.ico (use SVG asset)
+        @self.app.route('/favicon.ico')
+        def favicon():
+            return send_from_directory(
+                os.path.join(self.app.root_path, 'static'),
+                'favicon.svg',
+                mimetype='image/svg+xml'
+            )
             
         # MCP-specific routes
         @self.app.route('/mcp')
@@ -1800,6 +1809,8 @@ class MCPDashboard(AdminDashboard):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPFS Datasets Comprehensive MCP Dashboard</title>
+    <link rel=\"icon\" href=\"{{ url_for('static', filename='favicon.svg') }}\" type=\"image/svg+xml\">
+    <link rel=\"alternate icon\" href=\"{{ url_for('static', filename='favicon.svg') }}\">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
@@ -2990,7 +3001,20 @@ class MCPDashboard(AdminDashboard):
     </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
-        $(document).ready(function() {
+        // jQuery-agnostic ready helper
+        const onReady = function(fn) {
+            if (window.jQuery && window.$ && window.$.fn && typeof $.fn.ready === 'function') {
+                $(document).ready(fn);
+            } else {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', fn);
+                } else {
+                    fn();
+                }
+            }
+        };
+
+        onReady(function() {
             function bootDashboard() {
                 try {
                     if (typeof window.MCPClient !== 'function') {
@@ -3604,10 +3628,9 @@ class MCPDashboard(AdminDashboard):
             }
 
             (function waitForDeps(){
-                if (window.MCPClient && window.$) { bootDashboard(); }
-                else { setTimeout(waitForDeps, 25); }
-            })();
-            })();
+                const hasRealJQ = !!(window.jQuery && window.$ && window.$.fn);
+                if (window.MCPClient && hasRealJQ) { bootDashboard(); }
+                else { setTimeout(waitForDeps, 50); }
             })();
         });
     </script>
