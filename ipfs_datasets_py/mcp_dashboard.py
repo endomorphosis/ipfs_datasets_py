@@ -2830,7 +2830,7 @@ Recommendations: Schedule cleanup job`);
             return {"status": "error", "message": str(e)}
         
     def create_mcp_dashboard_template(self) -> str:
-        """Create the comprehensive MCP dashboard HTML template with GraphRAG integration."""
+        """Create the professional desktop-focused MCP dashboard HTML template."""
         return """<!DOCTYPE html>
 <html lang="en">
 <head>
