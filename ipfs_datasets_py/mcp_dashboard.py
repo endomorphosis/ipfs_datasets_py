@@ -214,90 +214,42 @@ class MCPDashboard(AdminDashboard):
                 self.logger.warning(f"Failed to open browser: {e}")
     
     def _create_standalone_html_dashboard(self, tools_info: Dict[str, Any], config: MCPDashboardConfig) -> str:
-        """Create a standalone HTML dashboard with all data science workflows."""
-        return f"""<!DOCTYPE html>
+        """Create a standalone HTML dashboard with professional desktop design."""
+        # Read the professional template
+        template_path = Path(__file__).parent / "templates" / "mcp_dashboard.html"
+        if template_path.exists():
+            with open(template_path, "r", encoding="utf-8") as f:
+                return f.read()
+        
+        # Fallback to basic template if file doesn't exist
+        return """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPFS Datasets MCP Dashboard - Data Science Workflows</title>
+    <title>MCP Server Dashboard - IPFS Datasets Management Console</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {{
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }}
-        
-        body {{
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 100vh;
-        }}
-        
-        .navbar {{
-            background: var(--primary-gradient) !important;
-            backdrop-filter: blur(10px);
-            border: none;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-        }}
-        
-        .workflow-card {{
-            background: white;
-            border-radius: 16px;
-            border: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }}
-        
-        .workflow-card:hover {{
-            transform: translateY(-8px);
-            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
-        }}
-        
-        .workflow-header {{
-            padding: 1.5rem;
-            background: white;
-            border-bottom: 1px solid #f0f0f0;
-        }}
-        
-        .workflow-title {{
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-            color: #2d3748;
-        }}
-        
-        .workflow-description {{
-            color: #718096;
-            margin: 0.5rem 0 0 0;
-            font-size: 0.9rem;
-        }}
-        
-        .workflow-body {{
-            padding: 1.5rem;
-        }}
-        
-        .action-btn {{
-            width: 100%;
-            margin-bottom: 0.75rem;
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            font-weight: 500;
-            border: none;
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }}
-        
-        .action-btn:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }}
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; }
+        .header { background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 1rem; }
+        .sidebar { background: white; width: 280px; height: 100vh; position: fixed; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-server"></i> MCP Server Dashboard</h1>
+    </div>
+    <div class="sidebar">
+        <h3>Navigation</h3>
+        <p>Professional MCP Dashboard</p>
+    </div>
+    <div class="main-content">
+        <h2>Dataset Operations</h2>
+        <p>Professional interface for IPFS dataset management</p>
+    </div>
+</body>
+</html>"""
         
         .btn-create {{ background: var(--info-gradient); color: white; }}
         .btn-transform {{ background: var(--warning-gradient); color: white; }}
@@ -2831,6 +2783,9 @@ Recommendations: Schedule cleanup job`);
         
     def create_mcp_dashboard_template(self) -> str:
         """Create the professional desktop-focused MCP dashboard HTML template."""
+        # Return the complete professional desktop template
+        with open(Path(__file__).parent / "templates" / "mcp_dashboard.html", "r") as f:
+            return f.read()
         return """<!DOCTYPE html>
 <html lang="en">
 <head>
