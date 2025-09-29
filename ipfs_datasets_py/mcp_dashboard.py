@@ -114,7 +114,7 @@ class MCPDashboard(AdminDashboard):
         super().__init__()
         self.mcp_server = None
         self.mcp_config = None
-        self.tool_execution_history = []
+        self.tool_execution_history = deque(maxlen=1000)
         self.active_tool_executions = {}
         
         # GraphRAG components
@@ -127,6 +127,43 @@ class MCPDashboard(AdminDashboard):
         self.graphrag_processing_sessions = {}
         self.analytics_metrics_history = deque(maxlen=1000)
         self.rag_query_sessions = {}
+        
+        # Enhanced features
+        self.workflow_manager = {}
+        self.system_metrics = {
+            'cpu_usage': 0.0,
+            'memory_usage': 0.0,
+            'active_connections': 0,
+            'task_queue_size': 0,
+            'total_datasets_processed': 0,
+            'uptime': 0
+        }
+        self.health_status = {
+            'mcp_server': 'running',
+            'ipfs_node': 'running', 
+            'vector_store': 'running',
+            'cache_system': 'running'
+        }
+        self.dataset_registry = {}
+        self.performance_metrics = {}
+        self.test_results = {}
+        
+        # Bug prevention
+        self._initialize_safe_defaults()
+        
+    def _initialize_safe_defaults(self):
+        """Initialize safe defaults to prevent bugs."""
+        # Ensure all collections are properly initialized
+        if not hasattr(self, 'tool_execution_history'):
+            self.tool_execution_history = deque(maxlen=1000)
+        if not hasattr(self, 'active_tool_executions'):
+            self.active_tool_executions = {}
+        if not hasattr(self, 'workflow_manager'):
+            self.workflow_manager = {}
+        
+        # Set up error handling
+        self._error_log = deque(maxlen=100)
+        self._debug_mode = os.environ.get('MCP_DEBUG', '0') == '1'
         
         # Real-time monitoring
         self.real_time_clients = set()
@@ -215,13 +252,19 @@ class MCPDashboard(AdminDashboard):
     
     def _create_standalone_html_dashboard(self, tools_info: Dict[str, Any], config: MCPDashboardConfig) -> str:
         """Create a standalone HTML dashboard with professional desktop design."""
-        # Read the professional template
+        # First try the comprehensive final template
+        comprehensive_path = Path(__file__).parent.parent / "comprehensive_mcp_dashboard_final.html"
+        if comprehensive_path.exists():
+            with open(comprehensive_path, "r", encoding="utf-8") as f:
+                return f.read()
+        
+        # Try the professional template
         template_path = Path(__file__).parent / "templates" / "mcp_dashboard.html"
         if template_path.exists():
             with open(template_path, "r", encoding="utf-8") as f:
                 return f.read()
         
-        # Fallback to basic template if file doesn't exist
+        # Fallback to comprehensive inline template
         return """<!DOCTYPE html>
 <html lang="en">
 <head>
