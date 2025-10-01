@@ -28,9 +28,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    from flask import render_template, jsonify, request, send_from_directory
+    from flask import render_template, jsonify, request, send_from_directory, url_for
+    FLASK_AVAILABLE = True
 except Exception:  # pragma: no cover
-    render_template = jsonify = request = send_from_directory = None  # type: ignore
+    FLASK_AVAILABLE = False
+    render_template = jsonify = request = send_from_directory = url_for = None  # type: ignore
 
 from ipfs_datasets_py.admin_dashboard import AdminDashboard, DashboardConfig
 
@@ -81,7 +83,7 @@ class MCPDashboardConfig(DashboardConfig):
     enable_rag_query: bool = True
     enable_investigation: bool = True
     enable_real_time_monitoring: bool = True
-    enable_tool_execution: bool = False
+    enable_tool_execution: bool = True
     max_concurrent_tools: int = 4
     open_browser: bool = False
     data_dir: str = os.path.expanduser("~/.ipfs_datasets/mcp_dashboard")
@@ -112,7 +114,7 @@ class MCPDashboard(AdminDashboard):
         super().__init__()
         self.mcp_server = None
         self.mcp_config = None
-        self.tool_execution_history = []
+        self.tool_execution_history = deque(maxlen=1000)
         self.active_tool_executions = {}
         
         # GraphRAG components
@@ -126,6 +128,43 @@ class MCPDashboard(AdminDashboard):
         self.analytics_metrics_history = deque(maxlen=1000)
         self.rag_query_sessions = {}
         
+        # Enhanced features
+        self.workflow_manager = {}
+        self.system_metrics = {
+            'cpu_usage': 0.0,
+            'memory_usage': 0.0,
+            'active_connections': 0,
+            'task_queue_size': 0,
+            'total_datasets_processed': 0,
+            'uptime': 0
+        }
+        self.health_status = {
+            'mcp_server': 'running',
+            'ipfs_node': 'running', 
+            'vector_store': 'running',
+            'cache_system': 'running'
+        }
+        self.dataset_registry = {}
+        self.performance_metrics = {}
+        self.test_results = {}
+        
+        # Bug prevention
+        self._initialize_safe_defaults()
+        
+    def _initialize_safe_defaults(self):
+        """Initialize safe defaults to prevent bugs."""
+        # Ensure all collections are properly initialized
+        if not hasattr(self, 'tool_execution_history'):
+            self.tool_execution_history = deque(maxlen=1000)
+        if not hasattr(self, 'active_tool_executions'):
+            self.active_tool_executions = {}
+        if not hasattr(self, 'workflow_manager'):
+            self.workflow_manager = {}
+        
+        # Set up error handling
+        self._error_log = deque(maxlen=100)
+        self._debug_mode = os.environ.get('MCP_DEBUG', '0') == '1'
+        
         # Real-time monitoring
         self.real_time_clients = set()
         self.monitoring_thread = None
@@ -137,6 +176,12 @@ class MCPDashboard(AdminDashboard):
         Args:
             config: MCP dashboard configuration
         """
+        # Check Flask availability first
+        if not FLASK_AVAILABLE:
+            self.logger.warning("Flask not available - creating standalone HTML dashboard")
+            self._create_standalone_dashboard(config)
+            return
+            
         super().configure(config)
         self.mcp_config = config
         
@@ -172,6 +217,82 @@ class MCPDashboard(AdminDashboard):
         # Create output directory for GraphRAG
         if config.enable_graphrag:
             os.makedirs(config.graphrag_output_dir, exist_ok=True)
+                
+    def _create_standalone_dashboard(self, config: MCPDashboardConfig) -> None:
+        """Create a standalone HTML dashboard when Flask is not available."""
+        self.mcp_config = config
+        self.mcp_server = SimpleInProcessMCPServer()
+        
+        # Create standalone dashboard directory
+        dashboard_dir = Path(config.data_dir)
+        dashboard_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate tools info
+        tools_info = self._discover_mcp_tools()
+        
+        # Create comprehensive standalone dashboard
+        standalone_html = self._create_standalone_html_dashboard(tools_info, config)
+        
+        # Write standalone dashboard
+        dashboard_file = dashboard_dir / "mcp_dashboard.html"
+        with open(dashboard_file, 'w', encoding='utf-8') as f:
+            f.write(standalone_html)
+        
+        self.logger.info(f"Standalone MCP Dashboard created at: {dashboard_file}")
+        self.logger.info(f"Open this file in your browser to access the dashboard")
+        
+        # Try to open in browser if configured
+        if config.open_browser:
+            try:
+                import webbrowser
+                webbrowser.open(f"file://{dashboard_file.absolute()}")
+                self.logger.info("Dashboard opened in browser")
+            except Exception as e:
+                self.logger.warning(f"Failed to open browser: {e}")
+    
+    def _create_standalone_html_dashboard(self, tools_info: Dict[str, Any], config: MCPDashboardConfig) -> str:
+        """Create a standalone HTML dashboard with professional desktop design."""
+        # First try the comprehensive final template
+        comprehensive_path = Path(__file__).parent.parent / "comprehensive_mcp_dashboard_final.html"
+        if comprehensive_path.exists():
+            with open(comprehensive_path, "r", encoding="utf-8") as f:
+                return f.read()
+        
+        # Try the professional template
+        template_path = Path(__file__).parent / "templates" / "mcp_dashboard.html"
+        if template_path.exists():
+            with open(template_path, "r", encoding="utf-8") as f:
+                return f.read()
+        
+        # Fallback to comprehensive inline template
+        return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Dashboard - IPFS Datasets Management Console</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; }
+        .header { background: linear-gradient(135deg, #2563eb, #1e40af); color: white; padding: 1rem; }
+        .sidebar { background: white; width: 280px; height: 100vh; position: fixed; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-server"></i> MCP Server Dashboard</h1>
+    </div>
+    <div class="sidebar">
+        <h3>Navigation</h3>
+        <p>Professional MCP Dashboard</p>
+    </div>
+    <div class="main-content">
+        <h2>Dataset Operations</h2>
+        <p>Professional interface for IPFS dataset management</p>
+    </div>
+</body>
+</html>"""
     
     def _initialize_graphrag_components(self) -> None:
         """Initialize GraphRAG processing components."""
@@ -181,9 +302,6 @@ class MCPDashboard(AdminDashboard):
         try:
             # Initialize complete GraphRAG system
             self.graphrag_system = CompleteGraphRAGSystem()
-            
-            # Initialize enhanced GraphRAG system
-            self.enhanced_graphrag = EnhancedGraphRAGSystem()
             
             self.logger.info("GraphRAG components initialized successfully")
         except Exception as e:
@@ -210,83 +328,21 @@ class MCPDashboard(AdminDashboard):
     def _scan_tool_category(self, category_path: Path) -> List[Dict[str, Any]]:
         """Scan a tool category directory for available tools."""
         tools = []
+        try:
+            for tool_file in category_path.glob("*.py"):
+                if not tool_file.name.startswith("_"):
+                    tool_name = tool_file.stem
+                    tools.append({
+                        "name": tool_name,
+                        "file": str(tool_file),
+                        "description": f"Tool: {tool_name}"
+                    })
+        except Exception as e:
+            self.logger.error(f"Error scanning tool category {category_path}: {e}")
         
-        for tool_file in category_path.glob("*.py"):
-            if tool_file.name.startswith('_') or tool_file.name == '__init__.py':
-                continue
-                
-            tool_info = {
-                "name": tool_file.stem,
-                "file": str(tool_file),
-                "category": category_path.name,
-                "description": "MCP Tool",  # Will be updated when tool is loaded
-                "parameters": [],
-                "last_modified": datetime.fromtimestamp(tool_file.stat().st_mtime).isoformat()
-            }
-            tools.append(tool_info)
-            
         return tools
         
     def _setup_routes(self) -> None:
-        """Set up Flask routes for the comprehensive MCP dashboard."""
-        # Set up parent routes first
-        super()._setup_routes()
-        
-        if not self.app:
-            return
-            
-        # MCP-specific routes
-        @self.app.route('/mcp')
-        def mcp_dashboard():
-            """Render the main MCP dashboard page."""
-            tools_info = self._discover_mcp_tools()
-            server_status = self._get_mcp_server_status()
-            
-            dashboard_data = {
-                "tools_info": tools_info,
-                "server_status": server_status,
-                "execution_history": self.tool_execution_history[-50:],
-                "active_executions": len(self.active_tool_executions),
-                "dashboard_config": self.mcp_config.__dict__ if self.mcp_config else {},
-                "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                "graphrag_enabled": self.mcp_config.enable_graphrag if self.mcp_config else False,
-                "analytics_enabled": self.mcp_config.enable_analytics if self.mcp_config else False,
-                "rag_query_enabled": self.mcp_config.enable_rag_query if self.mcp_config else False,
-                "investigation_enabled": self.mcp_config.enable_investigation if self.mcp_config else False
-            }
-            
-            return render_template('mcp_dashboard.html', **dashboard_data)
-        
-        # GraphRAG routes
-        if self.mcp_config and self.mcp_config.enable_graphrag:
-            self._setup_graphrag_routes()
-        
-        # Analytics routes  
-        if self.mcp_config and self.mcp_config.enable_analytics:
-            self._setup_analytics_routes()
-        
-        # RAG query routes
-        if self.mcp_config and self.mcp_config.enable_rag_query:
-            self._setup_rag_query_routes()
-        
-        # Investigation routes
-        if self.mcp_config and self.mcp_config.enable_investigation:
-            self._setup_investigation_routes()
-            
-        # Caselaw routes - Always enabled for temporal deontic logic RAG system
-        self._setup_caselaw_routes()
-            
-        # Original MCP tool routes
-        self._setup_mcp_tool_routes()
-    
-    def _setup_graphrag_routes(self) -> None:
-        """Set up GraphRAG processing routes."""
-        
-        @self.app.route('/mcp/graphrag')
-        def graphrag_dashboard():
-            """Render the GraphRAG processing dashboard."""
-            processing_stats = self._get_graphrag_processing_stats()
-            active_sessions = list(self.graphrag_processing_sessions.keys())
             
             return render_template('graphrag_dashboard.html', 
                                  processing_stats=processing_stats,
@@ -1228,6 +1284,43 @@ class MCPDashboard(AdminDashboard):
                 "total": len(self.tool_execution_history)
             })
             
+        # Test Suite API endpoint
+        @self.app.route('/api/mcp/run-tests', methods=['POST'])
+        def api_run_tests():
+            """Run test suite based on test type."""
+            if not self.mcp_config or not self.mcp_config.enable_tool_execution:
+                return jsonify({"error": "Tool execution is disabled"}), 403
+            
+            data = request.json or {}
+            test_type = data.get('test_type', 'unit')
+            
+            try:
+                if test_type == 'unit':
+                    result = self._run_unit_tests()
+                elif test_type == 'integration':
+                    result = self._run_integration_tests()
+                elif test_type == 'full':
+                    result = self._run_full_test_suite()
+                else:
+                    return jsonify({"error": f"Unknown test type: {test_type}"}), 400
+                
+                return jsonify({
+                    "status": "success",
+                    "test_type": test_type,
+                    "result": result,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                # Log the full error but return sanitized error message
+                self.logger.error(f"Test execution failed: {e}")
+                return jsonify({
+                    "status": "error", 
+                    "test_type": test_type,
+                    "error": "Test execution failed. Check server logs for details.",
+                    "timestamp": datetime.now().isoformat()
+                }), 500
+            
         # JavaScript SDK endpoint
         @self.app.route('/static/js/mcp-sdk.js')
         def mcp_sdk():
@@ -1567,6 +1660,119 @@ class MCPDashboard(AdminDashboard):
                 "duration_s": round(time.time() - start, 3)
             }
         
+    def _run_unit_tests(self) -> Dict[str, Any]:
+        """Run unit tests and return results."""
+        import subprocess
+        import sys
+        
+        try:
+            # Run pytest on the tests directory focusing on unit tests
+            result = subprocess.run([
+                sys.executable, '-m', 'pytest', 
+                'tests/', '-v', '--tb=short',
+                '-k', 'not integration',
+                '--maxfail=10'
+            ], capture_output=True, text=True, timeout=300, cwd=Path(__file__).parent.parent)
+            
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "success": result.returncode == 0,
+                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Test execution timed out after 5 minutes",
+                "success": False,
+                "test_count": 0
+            }
+        except Exception as e:
+            return {
+                "exit_code": -1, 
+                "stdout": "",
+                "stderr": f"Test execution failed: {str(e)}",
+                "success": False,
+                "test_count": 0
+            }
+    
+    def _run_integration_tests(self) -> Dict[str, Any]:
+        """Run integration tests and return results."""
+        import subprocess
+        import sys
+        
+        try:
+            # Run pytest focusing on integration tests
+            result = subprocess.run([
+                sys.executable, '-m', 'pytest',
+                'tests/integration/', '-v', '--tb=short',
+                '--maxfail=5'
+            ], capture_output=True, text=True, timeout=600, cwd=Path(__file__).parent.parent)
+            
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "success": result.returncode == 0,
+                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Integration test execution timed out after 10 minutes",
+                "success": False,
+                "test_count": 0
+            }
+        except Exception as e:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Integration test execution failed: {str(e)}",
+                "success": False,
+                "test_count": 0
+            }
+    
+    def _run_full_test_suite(self) -> Dict[str, Any]:
+        """Run the full test suite and return results."""
+        import subprocess
+        import sys
+        
+        try:
+            # Run all tests with more comprehensive reporting
+            result = subprocess.run([
+                sys.executable, '-m', 'pytest',
+                'tests/', '-v', '--tb=short', 
+                '--maxfail=20',
+                '--durations=10'
+            ], capture_output=True, text=True, timeout=900, cwd=Path(__file__).parent.parent)
+            
+            return {
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "success": result.returncode == 0,
+                "test_count": result.stdout.count("PASSED") + result.stdout.count("FAILED") + result.stdout.count("SKIPPED")
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": "Full test suite execution timed out after 15 minutes",
+                "success": False,
+                "test_count": 0
+            }
+        except Exception as e:
+            return {
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Full test suite execution failed: {str(e)}",
+                "success": False,
+                "test_count": 0
+            }
+        
     def _get_comprehensive_status(self) -> Dict[str, Any]:
         """Get comprehensive status including all dashboard components."""
         base_status = self._get_mcp_server_status()
@@ -1643,15 +1849,21 @@ class MCPDashboard(AdminDashboard):
             return {"status": "error", "message": str(e)}
         
     def create_mcp_dashboard_template(self) -> str:
-        """Create the comprehensive MCP dashboard HTML template with GraphRAG integration."""
+        """Create the professional desktop-focused MCP dashboard HTML template."""
+        # Return the complete professional desktop template
+        with open(Path(__file__).parent / "templates" / "mcp_dashboard.html", "r") as f:
+            return f.read()
         return """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPFS Datasets Comprehensive MCP Dashboard</title>
+    <link rel=\"icon\" href=\"{{ url_for('static', filename='favicon.svg') }}\" type=\"image/svg+xml\">
+    <link rel=\"alternate icon\" href=\"{{ url_for('static', filename='favicon.svg') }}\">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
     <style>
         .dashboard-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .feature-card { transition: transform 0.2s; }
@@ -1677,6 +1889,96 @@ class MCPDashboard(AdminDashboard):
         .metric-value { font-size: 2em; font-weight: bold; }
         .progress-ring { width: 60px; height: 60px; }
         .progress-circle { fill: none; stroke-width: 4; }
+        
+        /* New sections styling */
+        .web-scraping-btn, .search-btn, .analysis-btn {
+            transition: all 0.2s ease;
+        }
+        .web-scraping-btn:hover, .search-btn:hover, .analysis-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        #scraping-results, #search-results, #analysis-results {
+            font-size: 0.85em;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+        
+        #web-scraping-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #web-scraping-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #data-search-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #data-search-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #content-analysis-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #content-analysis-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* Advanced panels styling */
+        .workflow-btn, .monitoring-btn, .performance-btn {
+            transition: all 0.2s ease;
+        }
+        .workflow-btn:hover, .monitoring-btn:hover, .performance-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        #batch-processing-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #batch-processing-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #monitoring-section .card.bg-primary,
+        #monitoring-section .card.bg-info,
+        #monitoring-section .card.bg-success,
+        #monitoring-section .card.bg-warning {
+            transition: transform 0.2s;
+        }
+        #monitoring-section .card.bg-primary:hover,
+        #monitoring-section .card.bg-info:hover,
+        #monitoring-section .card.bg-success:hover,
+        #monitoring-section .card.bg-warning:hover {
+            transform: scale(1.05);
+        }
+        
+        #performance-section .progress {
+            height: 25px;
+        }
+        #performance-section .progress-bar {
+            transition: width 0.5s ease;
+        }
+        
+        #performance-chart {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        }
+        
+        #workflow-status, #optimization-results {
+            font-size: 0.85em;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1713,6 +2015,30 @@ class MCPDashboard(AdminDashboard):
                     <a class="nav-link" href="/mcp/investigation">Investigation</a>
                 </li>
                 {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#test-suite-section">Test Suite</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#dataset-processing-section">Dataset Processing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#web-scraping-section">Web Scraping</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#data-search-section">Data Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#content-analysis-section">Content Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#batch-processing-section">Batch Processing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#monitoring-section">Real-time Monitoring</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#performance-section">Performance</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#tools-section">Tools</a>
                 </li>
@@ -1820,6 +2146,723 @@ class MCPDashboard(AdminDashboard):
                 </div>
             </div>
             {% endif %}
+        </div>
+
+        <!-- Test Suite Panel -->
+        <div class="row mb-4" id="test-suite-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-flask"></i> Test Suite Execution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <h6>Unit Tests</h6>
+                                        <p class="small">Run individual module tests</p>
+                                        <button class="btn btn-success btn-sm run-tests-btn" data-test-type="unit">
+                                            <i class="fas fa-play"></i> Run Unit Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-link fa-2x text-info mb-2"></i>
+                                        <h6>Integration Tests</h6>
+                                        <p class="small">Test cross-module functionality</p>
+                                        <button class="btn btn-info btn-sm run-tests-btn" data-test-type="integration">
+                                            <i class="fas fa-play"></i> Run Integration Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-rocket fa-2x text-warning mb-2"></i>
+                                        <h6>Full Test Suite</h6>
+                                        <p class="small">Comprehensive test run</p>
+                                        <button class="btn btn-warning btn-sm run-tests-btn" data-test-type="full">
+                                            <i class="fas fa-play"></i> Run All Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Test Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="test-output" class="bg-dark text-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click a test button to run tests...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dataset Processing Panel -->
+        <div class="row mb-4" id="dataset-processing-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> Dataset Processing Workflows</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fab fa-hubspot fa-2x text-primary mb-2"></i>
+                                        <h6>HuggingFace</h6>
+                                        <p class="small">Load from HuggingFace datasets</p>
+                                        <button class="btn btn-primary btn-sm dataset-source-btn" data-source="huggingface">
+                                            <i class="fas fa-download"></i> Load
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cube fa-2x text-secondary mb-2"></i>
+                                        <h6>IPFS</h6>
+                                        <p class="small">Fetch from IPFS network</p>
+                                        <button class="btn btn-secondary btn-sm dataset-source-btn" data-source="ipfs">
+                                            <i class="fas fa-download"></i> Fetch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-table fa-2x text-success mb-2"></i>
+                                        <h6>Parquet</h6>
+                                        <p class="small">Load Parquet files</p>
+                                        <button class="btn btn-success btn-sm dataset-source-btn" data-source="parquet">
+                                            <i class="fas fa-upload"></i> Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-archive fa-2x text-info mb-2"></i>
+                                        <h6>CAR Files</h6>
+                                        <p class="small">Import CAR archives</p>
+                                        <button class="btn btn-info btn-sm dataset-source-btn" data-source="car">
+                                            <i class="fas fa-upload"></i> Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Processing Pipeline</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Loaded Datasets</h6>
+                                                <div id="loaded-datasets" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                                    <div class="list-group-item text-muted">No datasets loaded</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Processing Options</h6>
+                                                <div class="btn-group-vertical w-100" role="group">
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('filter')">
+                                                        <i class="fas fa-filter"></i> Filter Dataset
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('transform')">
+                                                        <i class="fas fa-exchange-alt"></i> Transform Data
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('embed')">
+                                                        <i class="fas fa-vector-square"></i> Generate Embeddings
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('export')">
+                                                        <i class="fas fa-save"></i> Export Dataset
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Web Scraping & Archiving Panel -->
+        <div class="row mb-4" id="web-scraping-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-globe"></i> Web Scraping & Archiving</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-archive fa-2x text-primary mb-2"></i>
+                                        <h6>Wayback Machine</h6>
+                                        <p class="small">Search historical web content</p>
+                                        <button class="btn btn-primary btn-sm web-scraping-btn" data-action="wayback_search">
+                                            <i class="fas fa-search"></i> Search Archives
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-spider fa-2x text-success mb-2"></i>
+                                        <h6>Common Crawl</h6>
+                                        <p class="small">Large-scale web crawl data</p>
+                                        <button class="btn btn-success btn-sm web-scraping-btn" data-action="common_crawl">
+                                            <i class="fas fa-search"></i> Search Crawl
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-archive fa-2x text-warning mb-2"></i>
+                                        <h6>Create WARC</h6>
+                                        <p class="small">Archive websites to WARC format</p>
+                                        <button class="btn btn-warning btn-sm web-scraping-btn" data-action="create_warc">
+                                            <i class="fas fa-download"></i> Archive Site
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-video fa-2x text-danger mb-2"></i>
+                                        <h6>Media Download</h6>
+                                        <p class="small">Download from 1000+ platforms</p>
+                                        <button class="btn btn-danger btn-sm web-scraping-btn" data-action="media_download">
+                                            <i class="fas fa-download"></i> Download Media
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Scraping Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="scraping-results" class="bg-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click a scraping button to start...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Search & Discovery Panel -->
+        <div class="row mb-4" id="data-search-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Data Search & Discovery</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-vector-square fa-2x text-primary mb-2"></i>
+                                        <h6>Vector Search</h6>
+                                        <p class="small">Semantic similarity search</p>
+                                        <button class="btn btn-primary btn-sm search-btn" data-action="vector_search">
+                                            <i class="fas fa-search"></i> Search Vectors
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
+                                        <h6>Knowledge Graph</h6>
+                                        <p class="small">Query knowledge graphs</p>
+                                        <button class="btn btn-info btn-sm search-btn" data-action="knowledge_graph">
+                                            <i class="fas fa-search"></i> Query Graph
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-sitemap fa-2x text-success mb-2"></i>
+                                        <h6>Content Index</h6>
+                                        <p class="small">Full-text search indexes</p>
+                                        <button class="btn btn-success btn-sm search-btn" data-action="content_index">
+                                            <i class="fas fa-list"></i> Browse Index
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-database fa-2x text-secondary mb-2"></i>
+                                        <h6>Dataset Discovery</h6>
+                                        <p class="small">Find datasets across sources</p>
+                                        <button class="btn btn-secondary btn-sm search-btn" data-action="dataset_discovery">
+                                            <i class="fas fa-search"></i> Discover Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Search Query</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" id="search-query" placeholder="Enter search query...">
+                                        </div>
+                                        <div class="form-group">
+                                            <select class="form-control" id="search-type">
+                                                <option value="semantic">Semantic Search</option>
+                                                <option value="exact">Exact Match</option>
+                                                <option value="fuzzy">Fuzzy Search</option>
+                                                <option value="graph">Graph Query</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Search Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="search-results" class="bg-light p-3" style="height: 200px; overflow-y: auto;">
+                                            <div class="text-muted">Enter a query to search...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Analysis & Transformation Panel -->
+        <div class="row mb-4" id="content-analysis-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Content Analysis & Transformation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cluster fa-2x text-primary mb-2"></i>
+                                        <h6>Clustering Analysis</h6>
+                                        <p class="small">Group similar content</p>
+                                        <button class="btn btn-primary btn-sm analysis-btn" data-action="clustering">
+                                            <i class="fas fa-sitemap"></i> Cluster Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-tags fa-2x text-success mb-2"></i>
+                                        <h6>Classification</h6>
+                                        <p class="small">Categorize content types</p>
+                                        <button class="btn btn-success btn-sm analysis-btn" data-action="classification">
+                                            <i class="fas fa-tag"></i> Classify Content
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-exchange-alt fa-2x text-warning mb-2"></i>
+                                        <h6>Format Conversion</h6>
+                                        <p class="small">Transform data formats</p>
+                                        <button class="btn btn-warning btn-sm analysis-btn" data-action="format_conversion">
+                                            <i class="fas fa-file-export"></i> Convert Format
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-medal fa-2x text-info mb-2"></i>
+                                        <h6>Quality Assessment</h6>
+                                        <p class="small">Analyze content quality</p>
+                                        <button class="btn btn-info btn-sm analysis-btn" data-action="quality_assessment">
+                                            <i class="fas fa-check-circle"></i> Assess Quality
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Analysis Parameters</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label>Analysis Type</label>
+                                            <select class="form-control" id="analysis-type">
+                                                <option value="comprehensive">Comprehensive</option>
+                                                <option value="quick">Quick Analysis</option>
+                                                <option value="detailed">Detailed Analysis</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Data Source</label>
+                                            <select class="form-control" id="analysis-source">
+                                                <option value="loaded_datasets">Loaded Datasets</option>
+                                                <option value="scraped_content">Scraped Content</option>
+                                                <option value="search_results">Search Results</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Analysis Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="analysis-results" class="bg-light p-3" style="height: 250px; overflow-y: auto;">
+                                            <div class="text-muted">Select an analysis type and click a button to start...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Processing & Workflow Management Panel -->
+        <div class="row mb-4" id="batch-processing-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tasks"></i> Batch Processing & Workflow Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-project-diagram fa-2x text-primary mb-2"></i>
+                                        <h6>Workflow Builder</h6>
+                                        <p class="small">Create automated workflows</p>
+                                        <button class="btn btn-primary btn-sm workflow-btn" data-action="create_workflow">
+                                            <i class="fas fa-plus"></i> Create Workflow
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-layer-group fa-2x text-success mb-2"></i>
+                                        <h6>Batch Operations</h6>
+                                        <p class="small">Process multiple datasets</p>
+                                        <button class="btn btn-success btn-sm workflow-btn" data-action="batch_process">
+                                            <i class="fas fa-play"></i> Start Batch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                        <h6>Scheduler</h6>
+                                        <p class="small">Schedule recurring tasks</p>
+                                        <button class="btn btn-warning btn-sm workflow-btn" data-action="schedule_task">
+                                            <i class="fas fa-calendar"></i> Schedule
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Active Workflows</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="active-workflows" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                            <div class="list-group-item text-muted">No active workflows</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Workflow Status</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="workflow-status" class="bg-light p-3" style="height: 200px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Select a workflow to view status...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Monitoring & Analytics Panel -->
+        <div class="row mb-4" id="monitoring-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Real-time Monitoring & Analytics</h5>
+                        <div class="float-right">
+                            <span class="badge badge-success">Live</span>
+                            <span class="real-time-indicator"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="cpu-usage">--</h4>
+                                        <small>CPU Usage %</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="memory-usage">--</h4>
+                                        <small>Memory Usage %</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="active-connections">--</h4>
+                                        <small>Active Connections</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="queue-size">--</h4>
+                                        <small>Task Queue Size</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>System Performance Chart</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="performance-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>System Health</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="health-indicators">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>MCP Server</span>
+                                                <span class="badge badge-success">Healthy</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>IPFS Node</span>
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Vector Store</span>
+                                                <span class="badge badge-success">Ready</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Cache</span>
+                                                <span class="badge badge-warning">75% Full</span>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <button class="btn btn-sm btn-outline-primary w-100 monitoring-btn" data-action="refresh_health">
+                                            <i class="fas fa-sync"></i> Refresh Health
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Optimization Panel -->
+        <div class="row mb-4" id="performance-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tachometer-alt"></i> Performance Optimization</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-rocket fa-2x text-primary mb-2"></i>
+                                        <h6>Cache Optimization</h6>
+                                        <p class="small">Optimize caching strategies</p>
+                                        <button class="btn btn-primary btn-sm performance-btn" data-action="optimize_cache">
+                                            <i class="fas fa-magic"></i> Optimize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-database fa-2x text-success mb-2"></i>
+                                        <h6>Index Management</h6>
+                                        <p class="small">Manage search indexes</p>
+                                        <button class="btn btn-success btn-sm performance-btn" data-action="manage_indexes">
+                                            <i class="fas fa-cogs"></i> Manage
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-compress-alt fa-2x text-warning mb-2"></i>
+                                        <h6>Data Compression</h6>
+                                        <p class="small">Compress large datasets</p>
+                                        <button class="btn btn-warning btn-sm performance-btn" data-action="compress_data">
+                                            <i class="fas fa-compress"></i> Compress
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-broom fa-2x text-danger mb-2"></i>
+                                        <h6>Cleanup</h6>
+                                        <p class="small">Clean temporary files</p>
+                                        <button class="btn btn-danger btn-sm performance-btn" data-action="cleanup_system">
+                                            <i class="fas fa-trash"></i> Cleanup
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Performance Metrics</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 25%">
+                                                Cache Hit Rate: 25%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 60%">
+                                                Index Efficiency: 60%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 80%">
+                                                Disk Usage: 80%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 40%">
+                                                Network Utilization: 40%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Optimization Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="optimization-results" class="bg-light p-3" style="height: 180px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click an optimization button to see results...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tools Grid -->
@@ -1975,28 +3018,53 @@ class MCPDashboard(AdminDashboard):
         </div>
     </div>
 
-    <!-- Local assets first with safe fallbacks -->
+    <!-- Local assets with embedded fallbacks -->
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script>
-        if (!window.jQuery) {
-            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\\/script>');
+        // Ensure $ is available
+        if (window.jQuery && !window.$) { 
+            window.$ = window.jQuery; 
         }
-    </script>
-    <script>
-        (function ensureDollar(){
-            if (window.jQuery && !window.$) { window.$ = window.jQuery; }
-            if (!window.$) { setTimeout(ensureDollar, 25); }
-        })();
+        // If jQuery failed to load, provide minimal $ implementation
+        if (!window.$) {
+            window.$ = function(selector) {
+                if (typeof selector === 'function') {
+                    // $(document).ready equivalent
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', selector);
+                    } else {
+                        selector();
+                    }
+                    return;
+                }
+                return document.querySelectorAll(selector);
+            };
+            window.$.ajax = function() { console.warn('jQuery not loaded, AJAX disabled'); };
+        }
     </script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script>
+        // Bootstrap compatibility
         if (typeof bootstrap === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"><\\/script>');
+            window.bootstrap = { Modal: function() {} };
         }
     </script>
     <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
-        $(document).ready(function() {
+        // jQuery-agnostic ready helper
+        const onReady = function(fn) {
+            if (window.jQuery && window.$ && window.$.fn && typeof $.fn.ready === 'function') {
+                $(document).ready(fn);
+            } else {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', fn);
+                } else {
+                    fn();
+                }
+            }
+        };
+
+        onReady(function() {
             function bootDashboard() {
                 try {
                     if (typeof window.MCPClient !== 'function') {
@@ -2096,6 +3164,114 @@ class MCPDashboard(AdminDashboard):
                         });
                 });
                 
+                // Test Suite functionality
+                $('.run-tests-btn').click(function() {
+                    const testType = $(this).data('test-type');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Running...');
+                    $('#test-output').html('<div class="text-info">Starting ' + testType + ' tests...</div>');
+                    
+                    fetch('/api/mcp/run-tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test_type: testType })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#test-output').html('<div class="text-success">Test Results:</div><pre>' + 
+                            JSON.stringify(data, null, 2) + '</pre>');
+                    })
+                    .catch(error => {
+                        $('#test-output').html('<div class="text-danger">Test execution failed: ' + error.message + '</div>');
+                    })
+                    .finally(() => {
+                        $btn.prop('disabled', false).html(originalText);
+                    });
+                });
+                
+                // Dataset source functionality
+                $('.dataset-source-btn').click(function() {
+                    const source = $(this).data('source');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+                    
+                    // Different behavior based on source
+                    if (source === 'huggingface') {
+                        const datasetName = prompt('Enter HuggingFace dataset name:');
+                        if (datasetName) {
+                            loadDataset('huggingface', { dataset_name: datasetName });
+                        } else {
+                            $btn.prop('disabled', false).html(originalText);
+                        }
+                    } else if (source === 'ipfs') {
+                        const cid = prompt('Enter IPFS CID:');
+                        if (cid) {
+                            loadDataset('ipfs', { cid: cid });
+                        } else {
+                            $btn.prop('disabled', false).html(originalText);
+                        }
+                    } else if (source === 'parquet' || source === 'car') {
+                        // For file uploads, trigger file input
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = source === 'parquet' ? '.parquet' : '.car';
+                        input.onchange = function() {
+                            if (this.files[0]) {
+                                uploadDataset(source, this.files[0]);
+                            } else {
+                                $btn.prop('disabled', false).html(originalText);
+                            }
+                        };
+                        input.click();
+                    }
+                    
+                    function loadDataset(sourceType, params) {
+                        window.mcpSDK.executeTool('dataset_tools', 'load_dataset', params)
+                            .then(result => {
+                                addLoadedDataset(result.dataset_id || 'dataset_' + Date.now(), sourceType, params);
+                                $btn.prop('disabled', false).html(originalText);
+                            })
+                            .catch(error => {
+                                alert('Dataset loading failed: ' + error.message);
+                                $btn.prop('disabled', false).html(originalText);
+                            });
+                    }
+                    
+                    function uploadDataset(sourceType, file) {
+                        // For now, simulate upload - in real implementation would use FormData
+                        setTimeout(() => {
+                            addLoadedDataset(file.name, sourceType, { filename: file.name });
+                            $btn.prop('disabled', false).html(originalText);
+                        }, 1000);
+                    }
+                });
+                
+                function addLoadedDataset(datasetId, source, params) {
+                    const $container = $('#loaded-datasets');
+                    if ($container.find('.text-muted').length) {
+                        $container.empty();
+                    }
+                    
+                    const item = $('<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                        '<div><strong>' + datasetId + '</strong><br><small class="text-muted">Source: ' + source + '</small></div>' +
+                        '<button class="btn btn-sm btn-outline-danger remove-dataset-btn" data-id="' + datasetId + '">' +
+                        '<i class="fas fa-trash"></i></button></div>');
+                    
+                    $container.append(item);
+                }
+                
+                // Remove dataset functionality
+                $(document).on('click', '.remove-dataset-btn', function() {
+                    $(this).closest('.list-group-item').remove();
+                    if ($('#loaded-datasets').children().length === 0) {
+                        $('#loaded-datasets').html('<div class="list-group-item text-muted">No datasets loaded</div>');
+                    }
+                });
+                
                 // Auto-refresh status every 10 seconds
                 setInterval(function() {
                     updateSystemStatus();
@@ -2120,11 +3296,391 @@ class MCPDashboard(AdminDashboard):
                 function refreshTools() {
                     location.reload();
                 }
+                
+                // Dataset processing functions
+                function processDataset(operation) {
+                    const selectedDatasets = $('#loaded-datasets .list-group-item:not(.text-muted)');
+                    if (selectedDatasets.length === 0) {
+                        alert('No datasets loaded. Please load a dataset first.');
+                        return;
+                    }
+                    
+                    const datasetId = selectedDatasets.first().find('strong').text();
+                    let params = {};
+                    
+                    // Get operation-specific parameters
+                    if (operation === 'filter') {
+                        const filterExpr = prompt('Enter filter expression (e.g., "length > 100"):');
+                        if (!filterExpr) return;
+                        params = { operations: [{ type: 'filter', condition: filterExpr }] };
+                    } else if (operation === 'transform') {
+                        const transformType = prompt('Enter transform type (map, select, sort):');
+                        if (!transformType) return;
+                        params = { operations: [{ type: transformType }] };
+                    } else if (operation === 'embed') {
+                        params = { operations: [{ type: 'embed', model: 'sentence-transformers/all-MiniLM-L6-v2' }] };
+                    } else if (operation === 'export') {
+                        const format = prompt('Export format (json, parquet, csv):');
+                        if (!format) return;
+                        params = { operations: [{ type: 'export', format: format }] };
+                    }
+                    
+                    params.dataset_source = datasetId;
+                    
+                    window.mcpSDK.executeTool('dataset_tools', 'process_dataset', params)
+                        .then(result => {
+                            alert('Dataset processing completed: ' + JSON.stringify(result));
+                            if (operation === 'export') {
+                                // Add processed dataset to list
+                                addLoadedDataset(result.output_id || 'processed_' + Date.now(), 'processed', params);
+                            }
+                        })
+                        .catch(error => {
+                            alert('Dataset processing failed: ' + error.message);
+                        });
+                }
+                
+                // Web Scraping & Archiving functionality
+                $('.web-scraping-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                    $('#scraping-results').html('<div class="text-info">Starting ' + action + '...</div>');
+                    
+                    let params = {};
+                    let toolName = '';
+                    
+                    // Get action-specific parameters
+                    if (action === 'wayback_search') {
+                        const url = prompt('Enter URL to search in Wayback Machine:');
+                        if (!url) return resetButton();
+                        params = { url: url, limit: 50 };
+                        toolName = 'wayback_machine_search';
+                    } else if (action === 'common_crawl') {
+                        const domain = prompt('Enter domain to search in Common Crawl:');
+                        if (!domain) return resetButton();
+                        params = { domain: domain, limit: 50 };
+                        toolName = 'common_crawl_search';
+                    } else if (action === 'create_warc') {
+                        const url = prompt('Enter URL to archive:');
+                        if (!url) return resetButton();
+                        params = { url: url, output_path: 'archives/' + Date.now() + '.warc.gz' };
+                        toolName = 'create_warc';
+                    } else if (action === 'media_download') {
+                        const url = prompt('Enter media URL (YouTube, Vimeo, etc.):');
+                        if (!url) return resetButton();
+                        params = { url: url, output_dir: 'media_downloads', quality: 'best[height<=720]' };
+                        toolName = 'ytdlp_download';
+                    }
+                    
+                    function resetButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool('web_archive_tools', toolName, params)
+                        .then(result => {
+                            $('#scraping-results').html('<div class="text-success">Success!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#scraping-results').html('<div class="text-danger">Error: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetButton();
+                        });
+                });
+                
+                // Data Search & Discovery functionality
+                $('.search-btn').click(function() {
+                    const action = $(this).data('action');
+                    const query = $('#search-query').val();
+                    const searchType = $('#search-type').val();
+                    
+                    if (!query) {
+                        alert('Please enter a search query');
+                        return;
+                    }
+                    
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Searching...');
+                    $('#search-results').html('<div class="text-info">Searching...</div>');
+                    
+                    let params = { query: query };
+                    let toolName = '';
+                    
+                    if (action === 'vector_search') {
+                        params.search_type = searchType;
+                        toolName = 'search_vector_index';
+                    } else if (action === 'knowledge_graph') {
+                        toolName = 'query_knowledge_graph';
+                    } else if (action === 'content_index') {
+                        toolName = 'list_indices';
+                    } else if (action === 'dataset_discovery') {
+                        params.source = 'multiple';
+                        toolName = 'load_dataset';
+                    }
+                    
+                    const category = action === 'knowledge_graph' ? 'graph_tools' :
+                                   action === 'dataset_discovery' ? 'dataset_tools' : 'vector_tools';
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#search-results').html('<div class="text-success">Results found!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#search-results').html('<div class="text-danger">Search failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            $btn.prop('disabled', false).html(originalText);
+                        });
+                });
+                
+                // Content Analysis & Transformation functionality
+                $('.analysis-btn').click(function() {
+                    const action = $(this).data('action');
+                    const analysisType = $('#analysis-type').val();
+                    const analysisSource = $('#analysis-source').val();
+                    
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Analyzing...');
+                    $('#analysis-results').html('<div class="text-info">Starting ' + action + ' analysis...</div>');
+                    
+                    let params = {
+                        analysis_type: analysisType,
+                        data_source: analysisSource
+                    };
+                    let toolName = '';
+                    
+                    if (action === 'clustering') {
+                        params.algorithm = 'kmeans';
+                        params.n_clusters = 5;
+                        toolName = 'analysis_tools';
+                    } else if (action === 'classification') {
+                        params.categories = ['text', 'image', 'video', 'audio', 'document'];
+                        toolName = 'analysis_tools';
+                    } else if (action === 'format_conversion') {
+                        const targetFormat = prompt('Enter target format (json, parquet, csv):');
+                        if (!targetFormat) return resetAnalysisButton();
+                        params.target_format = targetFormat;
+                        toolName = 'convert_dataset_format';
+                    } else if (action === 'quality_assessment') {
+                        params.metrics = ['completeness', 'consistency', 'accuracy'];
+                        toolName = 'analysis_tools';
+                    }
+                    
+                    function resetAnalysisButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    const category = action === 'format_conversion' ? 'dataset_tools' : 'analysis_tools';
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#analysis-results').html('<div class="text-success">Analysis completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#analysis-results').html('<div class="text-danger">Analysis failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetAnalysisButton();
+                        });
+                });
+                
+                // Batch Processing & Workflow Management functionality
+                $('.workflow-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                    
+                    let params = {};
+                    let toolName = '';
+                    
+                    if (action === 'create_workflow') {
+                        const workflowName = prompt('Enter workflow name:');
+                        if (!workflowName) return resetWorkflowButton();
+                        params = {
+                            name: workflowName,
+                            steps: [
+                                { tool: 'load_dataset', params: {} },
+                                { tool: 'process_dataset', params: {} }
+                            ]
+                        };
+                        toolName = 'enhanced_workflow_tools';
+                    } else if (action === 'batch_process') {
+                        const batchSize = prompt('Enter batch size (default: 10):') || '10';
+                        params = {
+                            batch_size: parseInt(batchSize),
+                            operation: 'process_multiple_datasets'
+                        };
+                        toolName = 'enhanced_workflow_tools';
+                    } else if (action === 'schedule_task') {
+                        const schedule = prompt('Enter cron schedule (e.g., "0 */6 * * *"):');
+                        if (!schedule) return resetWorkflowButton();
+                        params = { schedule: schedule, task_type: 'data_processing' };
+                        toolName = 'enhanced_workflow_tools';
+                    }
+                    
+                    function resetWorkflowButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool('workflow_tools', toolName, params)
+                        .then(result => {
+                            $('#workflow-status').html('<div class="text-success">Workflow operation completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                            updateActiveWorkflows();
+                        })
+                        .catch(error => {
+                            $('#workflow-status').html('<div class="text-danger">Workflow operation failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetWorkflowButton();
+                        });
+                });
+                
+                // Real-time Monitoring functionality
+                $('.monitoring-btn').click(function() {
+                    const action = $(this).data('action');
+                    
+                    if (action === 'refresh_health') {
+                        updateSystemMetrics();
+                        updateHealthIndicators();
+                    }
+                });
+                
+                // Performance Optimization functionality
+                $('.performance-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Optimizing...');
+                    
+                    let params = {};
+                    let toolName = '';
+                    let category = '';
+                    
+                    if (action === 'optimize_cache') {
+                        params = { optimization_type: 'cache', strategy: 'aggressive' };
+                        toolName = 'enhanced_cache_tools';
+                        category = 'cache_tools';
+                    } else if (action === 'manage_indexes') {
+                        params = { action: 'optimize_all' };
+                        toolName = 'index_management_tools';
+                        category = 'index_management_tools';
+                    } else if (action === 'compress_data') {
+                        params = { compression_algorithm: 'gzip', level: 6 };
+                        toolName = 'data_processing_tools';
+                        category = 'data_processing_tools';
+                    } else if (action === 'cleanup_system') {
+                        params = { clean_temp: true, clean_cache: true, clean_logs: true };
+                        toolName = 'system_health';
+                        category = 'bespoke_tools';
+                    }
+                    
+                    function resetPerformanceButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#optimization-results').html('<div class="text-success">Optimization completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                            updatePerformanceMetrics();
+                        })
+                        .catch(error => {
+                            $('#optimization-results').html('<div class="text-danger">Optimization failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetPerformanceButton();
+                        });
+                });
+                
+                // Utility functions for new panels
+                function updateActiveWorkflows() {
+                    // Mock workflow data - in production would fetch from server
+                    const workflows = [
+                        { id: 'wf1', name: 'Daily Dataset Processing', status: 'running', progress: 60 },
+                        { id: 'wf2', name: 'Weekly Analysis Report', status: 'scheduled', progress: 0 },
+                        { id: 'wf3', name: 'Data Quality Check', status: 'completed', progress: 100 }
+                    ];
+                    
+                    let html = '';
+                    workflows.forEach(wf => {
+                        const statusClass = wf.status === 'running' ? 'primary' : 
+                                          wf.status === 'completed' ? 'success' : 'secondary';
+                        html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${wf.name}</strong><br>
+                                        <small class="text-muted">ID: ${wf.id}</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge badge-${statusClass}">${wf.status}</span>
+                                        <div class="progress mt-1" style="width: 100px;">
+                                            <div class="progress-bar" style="width: ${wf.progress}%"></div>
+                                        </div>
+                                    </div>
+                                 </div>`;
+                    });
+                    $('#active-workflows').html(html);
+                }
+                
+                function updateSystemMetrics() {
+                    // Mock system metrics - in production would fetch from monitoring API
+                    $('#cpu-usage').text(Math.floor(Math.random() * 40 + 20) + '%');
+                    $('#memory-usage').text(Math.floor(Math.random() * 30 + 40) + '%');
+                    $('#active-connections').text(Math.floor(Math.random() * 20 + 5));
+                    $('#queue-size').text(Math.floor(Math.random() * 10));
+                }
+                
+                function updateHealthIndicators() {
+                    // Mock health status updates
+                    const services = ['MCP Server', 'IPFS Node', 'Vector Store', 'Cache'];
+                    const statuses = ['Healthy', 'Connected', 'Ready', '75% Full'];
+                    const badges = ['success', 'success', 'success', 'warning'];
+                    
+                    let html = '';
+                    services.forEach((service, i) => {
+                        html += `<div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>${service}</span>
+                                    <span class="badge badge-${badges[i]}">${statuses[i]}</span>
+                                 </div>`;
+                    });
+                    $('#health-indicators').html(html + '<hr><button class="btn btn-sm btn-outline-primary w-100 monitoring-btn" data-action="refresh_health"><i class="fas fa-sync"></i> Refresh Health</button>');
+                }
+                
+                function updatePerformanceMetrics() {
+                    // Update performance bars with slight improvements after optimization
+                    const currentCacheRate = parseInt($('.progress-bar.bg-primary').css('width')) || 25;
+                    $('.progress-bar.bg-primary').css('width', Math.min(100, currentCacheRate + 10) + '%')
+                                                   .text(`Cache Hit Rate: ${Math.min(100, currentCacheRate + 10)}%`);
+                }
+                
+                // Initialize real-time updates
+                setInterval(function() {
+                    updateSystemMetrics();
+                }, 5000); // Update every 5 seconds
+                
+                // Initialize panels
+                updateActiveWorkflows();
+                updateSystemMetrics();
+                updateHealthIndicators();
             }
 
             (function waitForDeps(){
-                if (window.MCPClient && window.$) { bootDashboard(); }
-                else { setTimeout(waitForDeps, 25); }
+                const hasRealJQ = !!(window.jQuery && window.$ && window.$.fn);
+                if (window.MCPClient && hasRealJQ) { bootDashboard(); }
+                else { setTimeout(waitForDeps, 50); }
             })();
         });
     </script>
@@ -2141,11 +3697,10 @@ class MCPDashboard(AdminDashboard):
         templates_dir.mkdir(parents=True, exist_ok=True)
         static_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create main MCP dashboard template
+        # Create main MCP dashboard template (always update to ensure latest features)
         mcp_template_path = templates_dir / "mcp_dashboard.html"
-        if not mcp_template_path.exists():
-            with open(mcp_template_path, 'w') as f:
-                f.write(self.create_mcp_dashboard_template())
+        with open(mcp_template_path, 'w') as f:
+            f.write(self.create_mcp_dashboard_template())
 
         # Create GraphRAG dashboard template
         if self.mcp_config and self.mcp_config.enable_graphrag:

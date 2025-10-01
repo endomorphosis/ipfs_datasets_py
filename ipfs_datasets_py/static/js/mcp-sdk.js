@@ -448,8 +448,9 @@ if (typeof module !== 'undefined' && module.exports) {
 
 /**
  * jQuery plugin for easy MCP integration (if jQuery is available)
+ * Only register when a real jQuery instance is present (i.e., $.fn exists).
  */
-if (typeof $ !== 'undefined') {
+if (typeof $ !== 'undefined' && $.fn && typeof $.fn === 'object') {
     $.fn.mcpToolExecutor = function(options = {}) {
         const settings = {
             baseUrl: '/api/mcp',

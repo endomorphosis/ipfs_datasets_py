@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPFS Datasets Comprehensive MCP Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .dashboard-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .feature-card { transition: transform 0.2s; }
+        .feature-card:hover { transform: translateY(-2px); }
+        .status-badge { font-size: 0.8em; }
+        .graphrag-section { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .analytics-section { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+        .rag-section { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+        .investigation-section { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
+        .real-time-indicator { 
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .metric-value { font-size: 2em; font-weight: bold; }
+        .progress-ring { width: 60px; height: 60px; }
+        .progress-circle { fill: none; stroke-width: 4; }
+        
+        /* New sections styling */
+        .web-scraping-btn, .search-btn, .analysis-btn {
+            transition: all 0.2s ease;
+        }
+        .web-scraping-btn:hover, .search-btn:hover, .analysis-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        #scraping-results, #search-results, #analysis-results {
+            font-size: 0.85em;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+        
+        #web-scraping-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #web-scraping-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #data-search-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #data-search-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #content-analysis-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #content-analysis-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* Advanced panels styling */
+        .workflow-btn, .monitoring-btn, .performance-btn {
+            transition: all 0.2s ease;
+        }
+        .workflow-btn:hover, .monitoring-btn:hover, .performance-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        #batch-processing-section .card-body .card {
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #batch-processing-section .card-body .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #monitoring-section .card.bg-primary,
+        #monitoring-section .card.bg-info,
+        #monitoring-section .card.bg-success,
+        #monitoring-section .card.bg-warning {
+            transition: transform 0.2s;
+        }
+        #monitoring-section .card.bg-primary:hover,
+        #monitoring-section .card.bg-info:hover,
+        #monitoring-section .card.bg-success:hover,
+        #monitoring-section .card.bg-warning:hover {
+            transform: scale(1.05);
+        }
+        
+        #performance-section .progress {
+            height: 25px;
+        }
+        #performance-section .progress-bar {
+            transition: width 0.5s ease;
+        }
+        
+        #performance-chart {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        }
+        
+        #workflow-status, #optimization-results {
+            font-size: 0.85em;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark dashboard-nav">
+        <a class="navbar-brand" href="{{ url_for('mcp_dashboard') }}">
+            <strong>IPFS Datasets MCP Dashboard</strong>
+            <span class="real-time-indicator"></span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('mcp_dashboard') }}">Overview</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/mcp/graphrag">GraphRAG</a>
+                </li>
+                
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/mcp/analytics">Analytics</a>
+                </li>
+                
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/mcp/rag">RAG Query</a>
+                </li>
+                
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/mcp/investigation">Investigation</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="#test-suite-section">Test Suite</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#dataset-processing-section">Dataset Processing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#web-scraping-section">Web Scraping</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#data-search-section">Data Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#content-analysis-section">Content Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#batch-processing-section">Batch Processing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#monitoring-section">Real-time Monitoring</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#performance-section">Performance</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#tools-section">Tools</a>
+                </li>
+            </ul>
+            <span class="navbar-text">
+                Last Updated: 2025-09-26 15:45:00
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- System Status Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-server"></i> System Status Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="metric-value">running</div>
+                                    <small class="text-muted">MCP Server</small>
+                                    <br>
+                                    <span class="badge badge-{{ 'success' if server_status.status == 'running' else 'danger' }}">
+                                        running
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="metric-value">130</div>
+                                    <small class="text-muted">Tools Available</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="metric-value">3</div>
+                                    <small class="text-muted">Active Executions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="metric-value">42</div>
+                                    <small class="text-muted">Total Executions</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Sections -->
+        <div class="row mb-4">
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card graphrag-section">
+                    <div class="card-body text-center">
+                        <i class="fas fa-brain fa-3x mb-3"></i>
+                        <h5>GraphRAG Processing</h5>
+                        <p>Advanced website analysis with knowledge graph extraction</p>
+                        <a href="/mcp/graphrag" class="btn btn-light">Open GraphRAG</a>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card analytics-section">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                        <h5>Analytics Dashboard</h5>
+                        <p>Real-time monitoring and performance metrics</p>
+                        <a href="/mcp/analytics" class="btn btn-light">View Analytics</a>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card rag-section">
+                    <div class="card-body text-center">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <h5>RAG Query Interface</h5>
+                        <p>Interactive query interface with visualizations</p>
+                        <a href="/mcp/rag" class="btn btn-light">Query RAG</a>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card investigation-section">
+                    <div class="card-body text-center">
+                        <i class="fas fa-detective fa-3x mb-3"></i>
+                        <h5>Investigation Tools</h5>
+                        <p>Content analysis and investigation capabilities</p>
+                        <a href="/mcp/investigation" class="btn btn-light">Start Investigation</a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Test Suite Panel -->
+        <div class="row mb-4" id="test-suite-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-flask"></i> Test Suite Execution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                        <h6>Unit Tests</h6>
+                                        <p class="small">Run individual module tests</p>
+                                        <button class="btn btn-success btn-sm run-tests-btn" data-test-type="unit">
+                                            <i class="fas fa-play"></i> Run Unit Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-link fa-2x text-info mb-2"></i>
+                                        <h6>Integration Tests</h6>
+                                        <p class="small">Test cross-module functionality</p>
+                                        <button class="btn btn-info btn-sm run-tests-btn" data-test-type="integration">
+                                            <i class="fas fa-play"></i> Run Integration Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-rocket fa-2x text-warning mb-2"></i>
+                                        <h6>Full Test Suite</h6>
+                                        <p class="small">Comprehensive test run</p>
+                                        <button class="btn btn-warning btn-sm run-tests-btn" data-test-type="full">
+                                            <i class="fas fa-play"></i> Run All Tests
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Test Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="test-output" class="bg-dark text-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click a test button to run tests...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dataset Processing Panel -->
+        <div class="row mb-4" id="dataset-processing-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> Dataset Processing Workflows</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fab fa-hubspot fa-2x text-primary mb-2"></i>
+                                        <h6>HuggingFace</h6>
+                                        <p class="small">Load from HuggingFace datasets</p>
+                                        <button class="btn btn-primary btn-sm dataset-source-btn" data-source="huggingface">
+                                            <i class="fas fa-download"></i> Load
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cube fa-2x text-secondary mb-2"></i>
+                                        <h6>IPFS</h6>
+                                        <p class="small">Fetch from IPFS network</p>
+                                        <button class="btn btn-secondary btn-sm dataset-source-btn" data-source="ipfs">
+                                            <i class="fas fa-download"></i> Fetch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-table fa-2x text-success mb-2"></i>
+                                        <h6>Parquet</h6>
+                                        <p class="small">Load Parquet files</p>
+                                        <button class="btn btn-success btn-sm dataset-source-btn" data-source="parquet">
+                                            <i class="fas fa-upload"></i> Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-archive fa-2x text-info mb-2"></i>
+                                        <h6>CAR Files</h6>
+                                        <p class="small">Import CAR archives</p>
+                                        <button class="btn btn-info btn-sm dataset-source-btn" data-source="car">
+                                            <i class="fas fa-upload"></i> Import
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Processing Pipeline</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Loaded Datasets</h6>
+                                                <div id="loaded-datasets" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                                    <div class="list-group-item text-muted">No datasets loaded</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Processing Options</h6>
+                                                <div class="btn-group-vertical w-100" role="group">
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('filter')">
+                                                        <i class="fas fa-filter"></i> Filter Dataset
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('transform')">
+                                                        <i class="fas fa-exchange-alt"></i> Transform Data
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('embed')">
+                                                        <i class="fas fa-vector-square"></i> Generate Embeddings
+                                                    </button>
+                                                    <button class="btn btn-outline-primary btn-sm" onclick="processDataset('export')">
+                                                        <i class="fas fa-save"></i> Export Dataset
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Web Scraping & Archiving Panel -->
+        <div class="row mb-4" id="web-scraping-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-globe"></i> Web Scraping & Archiving</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-archive fa-2x text-primary mb-2"></i>
+                                        <h6>Wayback Machine</h6>
+                                        <p class="small">Search historical web content</p>
+                                        <button class="btn btn-primary btn-sm web-scraping-btn" data-action="wayback_search">
+                                            <i class="fas fa-search"></i> Search Archives
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-spider fa-2x text-success mb-2"></i>
+                                        <h6>Common Crawl</h6>
+                                        <p class="small">Large-scale web crawl data</p>
+                                        <button class="btn btn-success btn-sm web-scraping-btn" data-action="common_crawl">
+                                            <i class="fas fa-search"></i> Search Crawl
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-archive fa-2x text-warning mb-2"></i>
+                                        <h6>Create WARC</h6>
+                                        <p class="small">Archive websites to WARC format</p>
+                                        <button class="btn btn-warning btn-sm web-scraping-btn" data-action="create_warc">
+                                            <i class="fas fa-download"></i> Archive Site
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-video fa-2x text-danger mb-2"></i>
+                                        <h6>Media Download</h6>
+                                        <p class="small">Download from 1000+ platforms</p>
+                                        <button class="btn btn-danger btn-sm web-scraping-btn" data-action="media_download">
+                                            <i class="fas fa-download"></i> Download Media
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Scraping Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="scraping-results" class="bg-light p-3" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click a scraping button to start...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Search & Discovery Panel -->
+        <div class="row mb-4" id="data-search-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Data Search & Discovery</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-vector-square fa-2x text-primary mb-2"></i>
+                                        <h6>Vector Search</h6>
+                                        <p class="small">Semantic similarity search</p>
+                                        <button class="btn btn-primary btn-sm search-btn" data-action="vector_search">
+                                            <i class="fas fa-search"></i> Search Vectors
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
+                                        <h6>Knowledge Graph</h6>
+                                        <p class="small">Query knowledge graphs</p>
+                                        <button class="btn btn-info btn-sm search-btn" data-action="knowledge_graph">
+                                            <i class="fas fa-search"></i> Query Graph
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-sitemap fa-2x text-success mb-2"></i>
+                                        <h6>Content Index</h6>
+                                        <p class="small">Full-text search indexes</p>
+                                        <button class="btn btn-success btn-sm search-btn" data-action="content_index">
+                                            <i class="fas fa-list"></i> Browse Index
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-database fa-2x text-secondary mb-2"></i>
+                                        <h6>Dataset Discovery</h6>
+                                        <p class="small">Find datasets across sources</p>
+                                        <button class="btn btn-secondary btn-sm search-btn" data-action="dataset_discovery">
+                                            <i class="fas fa-search"></i> Discover Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Search Query</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" id="search-query" placeholder="Enter search query...">
+                                        </div>
+                                        <div class="form-group">
+                                            <select class="form-control" id="search-type">
+                                                <option value="semantic">Semantic Search</option>
+                                                <option value="exact">Exact Match</option>
+                                                <option value="fuzzy">Fuzzy Search</option>
+                                                <option value="graph">Graph Query</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Search Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="search-results" class="bg-light p-3" style="height: 200px; overflow-y: auto;">
+                                            <div class="text-muted">Enter a query to search...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Analysis & Transformation Panel -->
+        <div class="row mb-4" id="content-analysis-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Content Analysis & Transformation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cluster fa-2x text-primary mb-2"></i>
+                                        <h6>Clustering Analysis</h6>
+                                        <p class="small">Group similar content</p>
+                                        <button class="btn btn-primary btn-sm analysis-btn" data-action="clustering">
+                                            <i class="fas fa-sitemap"></i> Cluster Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-tags fa-2x text-success mb-2"></i>
+                                        <h6>Classification</h6>
+                                        <p class="small">Categorize content types</p>
+                                        <button class="btn btn-success btn-sm analysis-btn" data-action="classification">
+                                            <i class="fas fa-tag"></i> Classify Content
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-exchange-alt fa-2x text-warning mb-2"></i>
+                                        <h6>Format Conversion</h6>
+                                        <p class="small">Transform data formats</p>
+                                        <button class="btn btn-warning btn-sm analysis-btn" data-action="format_conversion">
+                                            <i class="fas fa-file-export"></i> Convert Format
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-medal fa-2x text-info mb-2"></i>
+                                        <h6>Quality Assessment</h6>
+                                        <p class="small">Analyze content quality</p>
+                                        <button class="btn btn-info btn-sm analysis-btn" data-action="quality_assessment">
+                                            <i class="fas fa-check-circle"></i> Assess Quality
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Analysis Parameters</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label>Analysis Type</label>
+                                            <select class="form-control" id="analysis-type">
+                                                <option value="comprehensive">Comprehensive</option>
+                                                <option value="quick">Quick Analysis</option>
+                                                <option value="detailed">Detailed Analysis</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Data Source</label>
+                                            <select class="form-control" id="analysis-source">
+                                                <option value="loaded_datasets">Loaded Datasets</option>
+                                                <option value="scraped_content">Scraped Content</option>
+                                                <option value="search_results">Search Results</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Analysis Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="analysis-results" class="bg-light p-3" style="height: 250px; overflow-y: auto;">
+                                            <div class="text-muted">Select an analysis type and click a button to start...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Processing & Workflow Management Panel -->
+        <div class="row mb-4" id="batch-processing-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tasks"></i> Batch Processing & Workflow Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-project-diagram fa-2x text-primary mb-2"></i>
+                                        <h6>Workflow Builder</h6>
+                                        <p class="small">Create automated workflows</p>
+                                        <button class="btn btn-primary btn-sm workflow-btn" data-action="create_workflow">
+                                            <i class="fas fa-plus"></i> Create Workflow
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-layer-group fa-2x text-success mb-2"></i>
+                                        <h6>Batch Operations</h6>
+                                        <p class="small">Process multiple datasets</p>
+                                        <button class="btn btn-success btn-sm workflow-btn" data-action="batch_process">
+                                            <i class="fas fa-play"></i> Start Batch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                        <h6>Scheduler</h6>
+                                        <p class="small">Schedule recurring tasks</p>
+                                        <button class="btn btn-warning btn-sm workflow-btn" data-action="schedule_task">
+                                            <i class="fas fa-calendar"></i> Schedule
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Active Workflows</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="active-workflows" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                            <div class="list-group-item text-muted">No active workflows</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Workflow Status</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="workflow-status" class="bg-light p-3" style="height: 200px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Select a workflow to view status...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Monitoring & Analytics Panel -->
+        <div class="row mb-4" id="monitoring-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Real-time Monitoring & Analytics</h5>
+                        <div class="float-right">
+                            <span class="badge badge-success">Live</span>
+                            <span class="real-time-indicator"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="cpu-usage">--</h4>
+                                        <small>CPU Usage %</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="memory-usage">--</h4>
+                                        <small>Memory Usage %</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="active-connections">--</h4>
+                                        <small>Active Connections</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h4 id="queue-size">--</h4>
+                                        <small>Task Queue Size</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>System Performance Chart</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="performance-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>System Health</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="health-indicators">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>MCP Server</span>
+                                                <span class="badge badge-success">Healthy</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>IPFS Node</span>
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Vector Store</span>
+                                                <span class="badge badge-success">Ready</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Cache</span>
+                                                <span class="badge badge-warning">75% Full</span>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <button class="btn btn-sm btn-outline-primary w-100 monitoring-btn" data-action="refresh_health">
+                                            <i class="fas fa-sync"></i> Refresh Health
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Optimization Panel -->
+        <div class="row mb-4" id="performance-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tachometer-alt"></i> Performance Optimization</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-rocket fa-2x text-primary mb-2"></i>
+                                        <h6>Cache Optimization</h6>
+                                        <p class="small">Optimize caching strategies</p>
+                                        <button class="btn btn-primary btn-sm performance-btn" data-action="optimize_cache">
+                                            <i class="fas fa-magic"></i> Optimize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-database fa-2x text-success mb-2"></i>
+                                        <h6>Index Management</h6>
+                                        <p class="small">Manage search indexes</p>
+                                        <button class="btn btn-success btn-sm performance-btn" data-action="manage_indexes">
+                                            <i class="fas fa-cogs"></i> Manage
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-compress-alt fa-2x text-warning mb-2"></i>
+                                        <h6>Data Compression</h6>
+                                        <p class="small">Compress large datasets</p>
+                                        <button class="btn btn-warning btn-sm performance-btn" data-action="compress_data">
+                                            <i class="fas fa-compress"></i> Compress
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-broom fa-2x text-danger mb-2"></i>
+                                        <h6>Cleanup</h6>
+                                        <p class="small">Clean temporary files</p>
+                                        <button class="btn btn-danger btn-sm performance-btn" data-action="cleanup_system">
+                                            <i class="fas fa-trash"></i> Cleanup
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Performance Metrics</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 25%">
+                                                Cache Hit Rate: 25%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 60%">
+                                                Index Efficiency: 60%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 80%">
+                                                Disk Usage: 80%
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 40%">
+                                                Network Utilization: 40%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Optimization Results</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="optimization-results" class="bg-light p-3" style="height: 180px; overflow-y: auto; font-family: monospace;">
+                                            <div class="text-muted">Click an optimization button to see results...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Grid -->
+        <div class="row mb-4" id="tools-section">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tools"></i> Available MCP Tools</h5>
+                        <button class="btn btn-sm btn-outline-primary float-right" onclick="refreshTools()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <input type="text" class="form-control" id="toolSearch" placeholder="Search tools...">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <select class="form-control" id="categoryFilter">
+                                    <option value="">All Categories</option>
+                                    {% for category in tools_info.keys() %}
+                                    <option value="{{ category }}">{{ category.replace('_', ' ').title() }}</option>
+                                    
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="tools-container"><div class="category-section mb-4" data-category="dataset_tools"><h6 class="text-muted">Dataset Tools (2 tools)</h6><div class="row">
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="dataset_tools" data-tool="load_dataset">
+                <div class="card-body">
+                    <h6 class="card-title">load_dataset</h6>
+                    <p class="card-text small">Load datasets from various sources</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="dataset_tools" data-tool="process_dataset">
+                <div class="card-body">
+                    <h6 class="card-title">process_dataset</h6>
+                    <p class="card-text small">Apply transformations to datasets</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div></div></div><div class="category-section mb-4" data-category="web_archive_tools"><h6 class="text-muted">Web Archive Tools (2 tools)</h6><div class="row">
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="web_archive_tools" data-tool="wayback_machine_search">
+                <div class="card-body">
+                    <h6 class="card-title">wayback_machine_search</h6>
+                    <p class="card-text small">Search Wayback Machine</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="web_archive_tools" data-tool="common_crawl_search">
+                <div class="card-body">
+                    <h6 class="card-title">common_crawl_search</h6>
+                    <p class="card-text small">Search Common Crawl data</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div></div></div><div class="category-section mb-4" data-category="analysis_tools"><h6 class="text-muted">Analysis Tools (1 tools)</h6><div class="row">
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="analysis_tools" data-tool="analysis_tools">
+                <div class="card-body">
+                    <h6 class="card-title">analysis_tools</h6>
+                    <p class="card-text small">Analyze and cluster data</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div></div></div><div class="category-section mb-4" data-category="workflow_tools"><h6 class="text-muted">Workflow Tools (1 tools)</h6><div class="row">
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="workflow_tools" data-tool="enhanced_workflow_tools">
+                <div class="card-body">
+                    <h6 class="card-title">enhanced_workflow_tools</h6>
+                    <p class="card-text small">Advanced workflow management</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div></div></div><div class="category-section mb-4" data-category="monitoring_tools"><h6 class="text-muted">Monitoring Tools (1 tools)</h6><div class="row">
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card tool-card h-100" data-category="monitoring_tools" data-tool="enhanced_monitoring_tools">
+                <div class="card-body">
+                    <h6 class="card-title">enhanced_monitoring_tools</h6>
+                    <p class="card-text small">Real-time system monitoring</p>
+                    <div class="mt-auto">
+                        <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                            <i class="fas fa-play"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div></div></div>
+                            
+                            <div class="category-section mb-4" data-category="{{ category }}">
+                                <h6 class="text-muted">{{ category.replace('_', ' ').title() }} ({{ tools|length }} tools)</h6>
+                                <div class="row">
+                                    {% for tool in tools %}
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <div class="card tool-card h-100" data-category="{{ category }}" data-tool="{{ tool.name }}">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ tool.name }}</h6>
+                                                <p class="card-text small">{{ tool.description }}</p>
+                                                <div class="mt-auto">
+                                                    <button class="btn btn-sm btn-primary execute-tool-btn w-100">
+                                                        <i class="fas fa-play"></i> Execute
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Execution History -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history"></i> Recent Executions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tool</th>
+                                        <th>Status</th>
+                                        <th>Start Time</th>
+                                        <th>Duration</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for execution in execution_history %}
+                                    <tr>
+                                        <td>{{ execution.category }}/{{ execution.tool_name }}</td>
+                                        <td>
+                                            <span class="badge status-badge badge-{{ 'success' if execution.status == 'completed' else 'danger' if execution.status == 'failed' else 'warning' }}">
+                                                {{ execution.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ execution.start_time }}</td>
+                                        <td>{{ execution.get('end_time', 'N/A') }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-execution-btn" data-id="{{ execution.id }}">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Execution Modal -->
+    <div class="modal fade" id="toolExecutionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Execute Tool</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="toolExecutionForm">
+                        <div class="form-group">
+                            <label>Tool:</label>
+                            <input type="text" class="form-control" id="toolName" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Parameters (JSON):</label>
+                            <textarea class="form-control" id="toolParameters" rows="8" placeholder='{"param1": "value1", "param2": "value2"}'></textarea>
+                            <small class="form-text text-muted">Enter parameters as JSON. Leave empty for no parameters.</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="executeToolBtn">
+                        <i class="fas fa-play"></i> Execute
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Result Modal -->
+    <div class="modal fade" id="executionResultModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Execution Result</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="executionResult"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local assets with embedded fallbacks -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Ensure $ is available
+        if (window.jQuery && !window.$) { 
+            window.$ = window.jQuery; 
+        }
+        // If jQuery failed to load, provide minimal $ implementation
+        if (!window.$) {
+            window.$ = function(selector) {
+                if (typeof selector === 'function') {
+                    // $(document).ready equivalent
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', selector);
+                    } else {
+                        selector();
+                    }
+                    return;
+                }
+                return document.querySelectorAll(selector);
+            };
+            window.$.ajax = function() { console.warn('jQuery not loaded, AJAX disabled'); };
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Bootstrap compatibility
+        if (typeof bootstrap === 'undefined') {
+            window.bootstrap = { Modal: function() {} };
+        }
+    </script>
+    <script src=""></script>
+    <script>
+        $(document).ready(function() {
+            function bootDashboard() {
+                try {
+                    if (typeof window.MCPClient !== 'function') {
+                        throw new ReferenceError('MCPClient not ready');
+                    }
+                    // Initialize MCP SDK only when available
+                    window.mcpSDK = new MCPClient('{{ request.host_url }}api/mcp');
+                } catch (e) {
+                    setTimeout(bootDashboard, 50);
+                    return;
+                }
+
+                // Tool filtering
+                $('#toolSearch, #categoryFilter').on('input change', function() {
+                    filterTools();
+                });
+                
+                function filterTools() {
+                    const searchTerm = $('#toolSearch').val().toLowerCase();
+                    const selectedCategory = $('#categoryFilter').val();
+                    
+                    $('.category-section').each(function() {
+                        const category = $(this).data('category');
+                        let categoryVisible = false;
+                        
+                        if (!selectedCategory || category === selectedCategory) {
+                            $(this).find('.tool-card').each(function() {
+                                const toolName = $(this).data('tool').toLowerCase();
+                                const toolDescription = $(this).find('.card-text').text().toLowerCase();
+                                
+                                if (!searchTerm || toolName.includes(searchTerm) || toolDescription.includes(searchTerm)) {
+                                    $(this).show();
+                                    categoryVisible = true;
+                                } else {
+                                    $(this).hide();
+                                }
+                            });
+                        }
+                        
+                        $(this).toggle(categoryVisible);
+                    });
+                }
+                
+                // Tool execution handlers
+                $('.execute-tool-btn').click(function() {
+                    const card = $(this).closest('.tool-card');
+                    const category = card.data('category');
+                    const tool = card.data('tool');
+                    
+                    $('#toolName').val(category + '/' + tool);
+                    $('#toolParameters').val('{}');
+                    $('#toolExecutionModal').modal('show');
+                });
+                
+                $('#executeToolBtn').click(function() {
+                    const toolName = $('#toolName').val().split('/');
+                    const category = toolName[0];
+                    const tool = toolName[1];
+                    const parameters = $('#toolParameters').val();
+                    
+                    try {
+                        const params = parameters ? JSON.parse(parameters) : {};
+                        
+                        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Executing...');
+                        
+                        window.mcpSDK.executeTool(category, tool, params)
+                            .then(result => {
+                                $('#toolExecutionModal').modal('hide');
+                                $('#executionResult').text(JSON.stringify(result, null, 2));
+                                $('#executionResultModal').modal('show');
+                                refreshExecutionHistory();
+                            })
+                            .catch(error => {
+                                alert('Tool execution failed: ' + error.message);
+                            })
+                            .finally(() => {
+                                $(this).prop('disabled', false).html('<i class="fas fa-play"></i> Execute');
+                            });
+                    } catch (e) {
+                        alert('Invalid JSON parameters: ' + e.message);
+                        $(this).prop('disabled', false).html('<i class="fas fa-play"></i> Execute');
+                    }
+                });
+                
+                // View execution result
+                $('.view-execution-btn').click(function() {
+                    const executionId = $(this).data('id');
+                    
+                    fetch('/api/mcp/executions/' + executionId)
+                        .then(response => response.json())
+                        .then(data => {
+                            $('#executionResult').text(JSON.stringify(data, null, 2));
+                            $('#executionResultModal').modal('show');
+                        })
+                        .catch(error => {
+                            alert('Failed to load execution details: ' + error.message);
+                        });
+                });
+                
+                // Test Suite functionality
+                $('.run-tests-btn').click(function() {
+                    const testType = $(this).data('test-type');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Running...');
+                    $('#test-output').html('<div class="text-info">Starting ' + testType + ' tests...</div>');
+                    
+                    fetch('/api/mcp/run-tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test_type: testType })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#test-output').html('<div class="text-success">Test Results:</div><pre>' + 
+                            JSON.stringify(data, null, 2) + '</pre>');
+                    })
+                    .catch(error => {
+                        $('#test-output').html('<div class="text-danger">Test execution failed: ' + error.message + '</div>');
+                    })
+                    .finally(() => {
+                        $btn.prop('disabled', false).html(originalText);
+                    });
+                });
+                
+                // Dataset source functionality
+                $('.dataset-source-btn').click(function() {
+                    const source = $(this).data('source');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+                    
+                    // Different behavior based on source
+                    if (source === 'huggingface') {
+                        const datasetName = prompt('Enter HuggingFace dataset name:');
+                        if (datasetName) {
+                            loadDataset('huggingface', { dataset_name: datasetName });
+                        } else {
+                            $btn.prop('disabled', false).html(originalText);
+                        }
+                    } else if (source === 'ipfs') {
+                        const cid = prompt('Enter IPFS CID:');
+                        if (cid) {
+                            loadDataset('ipfs', { cid: cid });
+                        } else {
+                            $btn.prop('disabled', false).html(originalText);
+                        }
+                    } else if (source === 'parquet' || source === 'car') {
+                        // For file uploads, trigger file input
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = source === 'parquet' ? '.parquet' : '.car';
+                        input.onchange = function() {
+                            if (this.files[0]) {
+                                uploadDataset(source, this.files[0]);
+                            } else {
+                                $btn.prop('disabled', false).html(originalText);
+                            }
+                        };
+                        input.click();
+                    }
+                    
+                    function loadDataset(sourceType, params) {
+                        window.mcpSDK.executeTool('dataset_tools', 'load_dataset', params)
+                            .then(result => {
+                                addLoadedDataset(result.dataset_id || 'dataset_' + Date.now(), sourceType, params);
+                                $btn.prop('disabled', false).html(originalText);
+                            })
+                            .catch(error => {
+                                alert('Dataset loading failed: ' + error.message);
+                                $btn.prop('disabled', false).html(originalText);
+                            });
+                    }
+                    
+                    function uploadDataset(sourceType, file) {
+                        // For now, simulate upload - in real implementation would use FormData
+                        setTimeout(() => {
+                            addLoadedDataset(file.name, sourceType, { filename: file.name });
+                            $btn.prop('disabled', false).html(originalText);
+                        }, 1000);
+                    }
+                });
+                
+                function addLoadedDataset(datasetId, source, params) {
+                    const $container = $('#loaded-datasets');
+                    if ($container.find('.text-muted').length) {
+                        $container.empty();
+                    }
+                    
+                    const item = $('<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                        '<div><strong>' + datasetId + '</strong><br><small class="text-muted">Source: ' + source + '</small></div>' +
+                        '<button class="btn btn-sm btn-outline-danger remove-dataset-btn" data-id="' + datasetId + '">' +
+                        '<i class="fas fa-trash"></i></button></div>');
+                    
+                    $container.append(item);
+                }
+                
+                // Remove dataset functionality
+                $(document).on('click', '.remove-dataset-btn', function() {
+                    $(this).closest('.list-group-item').remove();
+                    if ($('#loaded-datasets').children().length === 0) {
+                        $('#loaded-datasets').html('<div class="list-group-item text-muted">No datasets loaded</div>');
+                    }
+                });
+                
+                // Auto-refresh status every 10 seconds
+                setInterval(function() {
+                    updateSystemStatus();
+                }, 10000);
+                
+                function updateSystemStatus() {
+                    fetch('/api/mcp/status')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update status indicators
+                            console.log('Status updated:', data);
+                        })
+                        .catch(error => {
+                            console.error('Status update failed:', error);
+                        });
+                }
+                
+                function refreshExecutionHistory() {
+                    location.reload(); // Simple refresh for now
+                }
+                
+                function refreshTools() {
+                    location.reload();
+                }
+                
+                // Dataset processing functions
+                function processDataset(operation) {
+                    const selectedDatasets = $('#loaded-datasets .list-group-item:not(.text-muted)');
+                    if (selectedDatasets.length === 0) {
+                        alert('No datasets loaded. Please load a dataset first.');
+                        return;
+                    }
+                    
+                    const datasetId = selectedDatasets.first().find('strong').text();
+                    let params = {};
+                    
+                    // Get operation-specific parameters
+                    if (operation === 'filter') {
+                        const filterExpr = prompt('Enter filter expression (e.g., "length > 100"):');
+                        if (!filterExpr) return;
+                        params = { operations: [{ type: 'filter', condition: filterExpr }] };
+                    } else if (operation === 'transform') {
+                        const transformType = prompt('Enter transform type (map, select, sort):');
+                        if (!transformType) return;
+                        params = { operations: [{ type: transformType }] };
+                    } else if (operation === 'embed') {
+                        params = { operations: [{ type: 'embed', model: 'sentence-transformers/all-MiniLM-L6-v2' }] };
+                    } else if (operation === 'export') {
+                        const format = prompt('Export format (json, parquet, csv):');
+                        if (!format) return;
+                        params = { operations: [{ type: 'export', format: format }] };
+                    }
+                    
+                    params.dataset_source = datasetId;
+                    
+                    window.mcpSDK.executeTool('dataset_tools', 'process_dataset', params)
+                        .then(result => {
+                            alert('Dataset processing completed: ' + JSON.stringify(result));
+                            if (operation === 'export') {
+                                // Add processed dataset to list
+                                addLoadedDataset(result.output_id || 'processed_' + Date.now(), 'processed', params);
+                            }
+                        })
+                        .catch(error => {
+                            alert('Dataset processing failed: ' + error.message);
+                        });
+                }
+                
+                // Web Scraping & Archiving functionality
+                $('.web-scraping-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                    $('#scraping-results').html('<div class="text-info">Starting ' + action + '...</div>');
+                    
+                    let params = {};
+                    let toolName = '';
+                    
+                    // Get action-specific parameters
+                    if (action === 'wayback_search') {
+                        const url = prompt('Enter URL to search in Wayback Machine:');
+                        if (!url) return resetButton();
+                        params = { url: url, limit: 50 };
+                        toolName = 'wayback_machine_search';
+                    } else if (action === 'common_crawl') {
+                        const domain = prompt('Enter domain to search in Common Crawl:');
+                        if (!domain) return resetButton();
+                        params = { domain: domain, limit: 50 };
+                        toolName = 'common_crawl_search';
+                    } else if (action === 'create_warc') {
+                        const url = prompt('Enter URL to archive:');
+                        if (!url) return resetButton();
+                        params = { url: url, output_path: 'archives/' + Date.now() + '.warc.gz' };
+                        toolName = 'create_warc';
+                    } else if (action === 'media_download') {
+                        const url = prompt('Enter media URL (YouTube, Vimeo, etc.):');
+                        if (!url) return resetButton();
+                        params = { url: url, output_dir: 'media_downloads', quality: 'best[height<=720]' };
+                        toolName = 'ytdlp_download';
+                    }
+                    
+                    function resetButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool('web_archive_tools', toolName, params)
+                        .then(result => {
+                            $('#scraping-results').html('<div class="text-success">Success!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#scraping-results').html('<div class="text-danger">Error: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetButton();
+                        });
+                });
+                
+                // Data Search & Discovery functionality
+                $('.search-btn').click(function() {
+                    const action = $(this).data('action');
+                    const query = $('#search-query').val();
+                    const searchType = $('#search-type').val();
+                    
+                    if (!query) {
+                        alert('Please enter a search query');
+                        return;
+                    }
+                    
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Searching...');
+                    $('#search-results').html('<div class="text-info">Searching...</div>');
+                    
+                    let params = { query: query };
+                    let toolName = '';
+                    
+                    if (action === 'vector_search') {
+                        params.search_type = searchType;
+                        toolName = 'search_vector_index';
+                    } else if (action === 'knowledge_graph') {
+                        toolName = 'query_knowledge_graph';
+                    } else if (action === 'content_index') {
+                        toolName = 'list_indices';
+                    } else if (action === 'dataset_discovery') {
+                        params.source = 'multiple';
+                        toolName = 'load_dataset';
+                    }
+                    
+                    const category = action === 'knowledge_graph' ? 'graph_tools' :
+                                   action === 'dataset_discovery' ? 'dataset_tools' : 'vector_tools';
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#search-results').html('<div class="text-success">Results found!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#search-results').html('<div class="text-danger">Search failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            $btn.prop('disabled', false).html(originalText);
+                        });
+                });
+                
+                // Content Analysis & Transformation functionality
+                $('.analysis-btn').click(function() {
+                    const action = $(this).data('action');
+                    const analysisType = $('#analysis-type').val();
+                    const analysisSource = $('#analysis-source').val();
+                    
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Analyzing...');
+                    $('#analysis-results').html('<div class="text-info">Starting ' + action + ' analysis...</div>');
+                    
+                    let params = {
+                        analysis_type: analysisType,
+                        data_source: analysisSource
+                    };
+                    let toolName = '';
+                    
+                    if (action === 'clustering') {
+                        params.algorithm = 'kmeans';
+                        params.n_clusters = 5;
+                        toolName = 'analysis_tools';
+                    } else if (action === 'classification') {
+                        params.categories = ['text', 'image', 'video', 'audio', 'document'];
+                        toolName = 'analysis_tools';
+                    } else if (action === 'format_conversion') {
+                        const targetFormat = prompt('Enter target format (json, parquet, csv):');
+                        if (!targetFormat) return resetAnalysisButton();
+                        params.target_format = targetFormat;
+                        toolName = 'convert_dataset_format';
+                    } else if (action === 'quality_assessment') {
+                        params.metrics = ['completeness', 'consistency', 'accuracy'];
+                        toolName = 'analysis_tools';
+                    }
+                    
+                    function resetAnalysisButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    const category = action === 'format_conversion' ? 'dataset_tools' : 'analysis_tools';
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#analysis-results').html('<div class="text-success">Analysis completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                        })
+                        .catch(error => {
+                            $('#analysis-results').html('<div class="text-danger">Analysis failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetAnalysisButton();
+                        });
+                });
+                
+                // Batch Processing & Workflow Management functionality
+                $('.workflow-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                    
+                    let params = {};
+                    let toolName = '';
+                    
+                    if (action === 'create_workflow') {
+                        const workflowName = prompt('Enter workflow name:');
+                        if (!workflowName) return resetWorkflowButton();
+                        params = {
+                            name: workflowName,
+                            steps: [
+                                { tool: 'load_dataset', params: {} },
+                                { tool: 'process_dataset', params: {} }
+                            ]
+                        };
+                        toolName = 'enhanced_workflow_tools';
+                    } else if (action === 'batch_process') {
+                        const batchSize = prompt('Enter batch size (default: 10):') || '10';
+                        params = {
+                            batch_size: parseInt(batchSize),
+                            operation: 'process_multiple_datasets'
+                        };
+                        toolName = 'enhanced_workflow_tools';
+                    } else if (action === 'schedule_task') {
+                        const schedule = prompt('Enter cron schedule (e.g., "0 */6 * * *"):');
+                        if (!schedule) return resetWorkflowButton();
+                        params = { schedule: schedule, task_type: 'data_processing' };
+                        toolName = 'enhanced_workflow_tools';
+                    }
+                    
+                    function resetWorkflowButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool('workflow_tools', toolName, params)
+                        .then(result => {
+                            $('#workflow-status').html('<div class="text-success">Workflow operation completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                            updateActiveWorkflows();
+                        })
+                        .catch(error => {
+                            $('#workflow-status').html('<div class="text-danger">Workflow operation failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetWorkflowButton();
+                        });
+                });
+                
+                // Real-time Monitoring functionality
+                $('.monitoring-btn').click(function() {
+                    const action = $(this).data('action');
+                    
+                    if (action === 'refresh_health') {
+                        updateSystemMetrics();
+                        updateHealthIndicators();
+                    }
+                });
+                
+                // Performance Optimization functionality
+                $('.performance-btn').click(function() {
+                    const action = $(this).data('action');
+                    const $btn = $(this);
+                    const originalText = $btn.html();
+                    
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Optimizing...');
+                    
+                    let params = {};
+                    let toolName = '';
+                    let category = '';
+                    
+                    if (action === 'optimize_cache') {
+                        params = { optimization_type: 'cache', strategy: 'aggressive' };
+                        toolName = 'enhanced_cache_tools';
+                        category = 'cache_tools';
+                    } else if (action === 'manage_indexes') {
+                        params = { action: 'optimize_all' };
+                        toolName = 'index_management_tools';
+                        category = 'index_management_tools';
+                    } else if (action === 'compress_data') {
+                        params = { compression_algorithm: 'gzip', level: 6 };
+                        toolName = 'data_processing_tools';
+                        category = 'data_processing_tools';
+                    } else if (action === 'cleanup_system') {
+                        params = { clean_temp: true, clean_cache: true, clean_logs: true };
+                        toolName = 'system_health';
+                        category = 'bespoke_tools';
+                    }
+                    
+                    function resetPerformanceButton() {
+                        $btn.prop('disabled', false).html(originalText);
+                    }
+                    
+                    window.mcpSDK.executeTool(category, toolName, params)
+                        .then(result => {
+                            $('#optimization-results').html('<div class="text-success">Optimization completed!</div><pre>' + 
+                                JSON.stringify(result, null, 2) + '</pre>');
+                            updatePerformanceMetrics();
+                        })
+                        .catch(error => {
+                            $('#optimization-results').html('<div class="text-danger">Optimization failed: ' + error.message + '</div>');
+                        })
+                        .finally(() => {
+                            resetPerformanceButton();
+                        });
+                });
+                
+                // Utility functions for new panels
+                function updateActiveWorkflows() {
+                    // Mock workflow data - in production would fetch from server
+                    const workflows = [
+                        { id: 'wf1', name: 'Daily Dataset Processing', status: 'running', progress: 60 },
+                        { id: 'wf2', name: 'Weekly Analysis Report', status: 'scheduled', progress: 0 },
+                        { id: 'wf3', name: 'Data Quality Check', status: 'completed', progress: 100 }
+                    ];
+                    
+                    let html = '';
+                    workflows.forEach(wf => {
+                        const statusClass = wf.status === 'running' ? 'primary' : 
+                                          wf.status === 'completed' ? 'success' : 'secondary';
+                        html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${wf.name}</strong><br>
+                                        <small class="text-muted">ID: ${wf.id}</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge badge-${statusClass}">${wf.status}</span>
+                                        <div class="progress mt-1" style="width: 100px;">
+                                            <div class="progress-bar" style="width: ${wf.progress}%"></div>
+                                        </div>
+                                    </div>
+                                 </div>`;
+                    });
+                    $('#active-workflows').html(html);
+                }
+                
+                function updateSystemMetrics() {
+                    // Mock system metrics - in production would fetch from monitoring API
+                    $('#cpu-usage').text(Math.floor(Math.random() * 40 + 20) + '%');
+                    $('#memory-usage').text(Math.floor(Math.random() * 30 + 40) + '%');
+                    $('#active-connections').text(Math.floor(Math.random() * 20 + 5));
+                    $('#queue-size').text(Math.floor(Math.random() * 10));
+                }
+                
+                function updateHealthIndicators() {
+                    // Mock health status updates
+                    const services = ['MCP Server', 'IPFS Node', 'Vector Store', 'Cache'];
+                    const statuses = ['Healthy', 'Connected', 'Ready', '75% Full'];
+                    const badges = ['success', 'success', 'success', 'warning'];
+                    
+                    let html = '';
+                    services.forEach((service, i) => {
+                        html += `<div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>${service}</span>
+                                    <span class="badge badge-${badges[i]}">${statuses[i]}</span>
+                                 </div>`;
+                    });
+                    $('#health-indicators').html(html + '<hr><button class="btn btn-sm btn-outline-primary w-100 monitoring-btn" data-action="refresh_health"><i class="fas fa-sync"></i> Refresh Health</button>');
+                }
+                
+                function updatePerformanceMetrics() {
+                    // Update performance bars with slight improvements after optimization
+                    const currentCacheRate = parseInt($('.progress-bar.bg-primary').css('width')) || 25;
+                    $('.progress-bar.bg-primary').css('width', Math.min(100, currentCacheRate + 10) + '%')
+                                                   .text(`Cache Hit Rate: ${Math.min(100, currentCacheRate + 10)}%`);
+                }
+                
+                // Initialize real-time updates
+                setInterval(function() {
+                    updateSystemMetrics();
+                }, 5000); // Update every 5 seconds
+                
+                // Initialize panels
+                updateActiveWorkflows();
+                updateSystemMetrics();
+                updateHealthIndicators();
+            }
+
+            (function waitForDeps(){
+                if (window.MCPClient && window.$) { bootDashboard(); }
+                else { setTimeout(waitForDeps, 25); }
+            })();
+            })();
+            })();
+        });
+    </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize performance chart
+if (document.getElementById('performance-chart')) {
+    const ctx = document.getElementById('performance-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['1m', '2m', '3m', '4m', '5m'],
+            datasets: [{
+                label: 'CPU %',
+                data: [25, 30, 28, 32, 29],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Memory %',
+                data: [45, 48, 52, 50, 53],
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+</script>
+</body>
+</html>
