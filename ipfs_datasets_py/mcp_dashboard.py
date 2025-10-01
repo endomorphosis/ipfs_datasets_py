@@ -343,11 +343,7 @@ class MCPDashboard(AdminDashboard):
         return tools
         
     def _setup_routes(self) -> None:
-            
-            return render_template('graphrag_dashboard.html', 
-                                 processing_stats=processing_stats,
-                                 active_sessions=active_sessions,
-                                 last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        """Set up GraphRAG processing routes."""
         
         @self.app.route('/api/mcp/graphrag/process', methods=['POST'])
         def api_start_graphrag_processing():
