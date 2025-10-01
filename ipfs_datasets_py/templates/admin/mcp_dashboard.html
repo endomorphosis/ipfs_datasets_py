@@ -746,8 +746,216 @@
                 </div>
             </div>
 
-            <!-- Other sections will be shown/hidden based on navigation -->
-            <!-- System Monitoring, Workflow Management, Testing Suite, etc. -->
+            <!-- Data Visualization Section -->
+            <div id="data-visualization" class="content-section">
+                <div class="tool-section">
+                    <h2>Data Visualization & Analytics</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-chart-bar"></i>Chart Generation</h3>
+                            <div class="form-group">
+                                <label for="chart-type">Chart Type</label>
+                                <select class="form-select" id="chart-type">
+                                    <option value="histogram">Histogram</option>
+                                    <option value="scatter">Scatter Plot</option>
+                                    <option value="heatmap">Heatmap</option>
+                                    <option value="timeline">Timeline</option>
+                                    <option value="correlation">Correlation Matrix</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="data-column">Data Column</label>
+                                <input type="text" class="form-control" id="data-column" placeholder="e.g., score, timestamp, category">
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="generateChart()">
+                                <i class="fas fa-chart-line me-2"></i>Generate Chart
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-tachometer-alt"></i>Analytics Dashboard</h3>
+                            <div class="form-group">
+                                <label for="analytics-type">Analysis Type</label>
+                                <select class="form-select" id="analytics-type">
+                                    <option value="summary">Data Summary</option>
+                                    <option value="quality">Quality Report</option>
+                                    <option value="correlation">Correlation Analysis</option>
+                                    <option value="distribution">Distribution Analysis</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Report Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="include-nulls">
+                                    <label class="form-check-label" for="include-nulls">Include Null Analysis</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="generate-insights">
+                                    <label class="form-check-label" for="generate-insights">Generate Insights</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-success w-100" onclick="generateAnalytics()">
+                                <i class="fas fa-chart-pie me-2"></i>Generate Analytics
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-download"></i>Data Export</h3>
+                            <div class="form-group">
+                                <label for="export-format">Export Format</label>
+                                <select class="form-select" id="export-format">
+                                    <option value="parquet">Parquet</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="json">JSON</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="arrow">Arrow</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="export-filename">Filename</label>
+                                <input type="text" class="form-control" id="export-filename" placeholder="dataset_export">
+                            </div>
+                            <button class="btn btn-warning w-100" onclick="exportData()">
+                                <i class="fas fa-file-export me-2"></i>Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Visualization Results</h2>
+                    <div id="visualization-results" class="results-panel">
+                        <div class="result-header">Data Visualization Console Ready</div>
+                        <div class="result-item">ℹ Select visualization options above to begin generating charts and analytics...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Monitoring Section -->
+            <div id="system-monitoring" class="content-section">
+                <div class="tool-section">
+                    <h2>System Monitoring & Health</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-heartbeat"></i>System Health Check</h3>
+                            <div class="form-group">
+                                <label>Components to Monitor</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="monitor-mcp" checked>
+                                    <label class="form-check-label" for="monitor-mcp">MCP Server</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="monitor-ipfs" checked>
+                                    <label class="form-check-label" for="monitor-ipfs">IPFS Node</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="monitor-storage" checked>
+                                    <label class="form-check-label" for="monitor-storage">Storage Systems</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="runSystemHealth()">
+                                <i class="fas fa-stethoscope me-2"></i>Run Health Check
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-chart-area"></i>Performance Metrics</h3>
+                            <div class="form-group">
+                                <label for="metrics-timeframe">Time Frame</label>
+                                <select class="form-select" id="metrics-timeframe">
+                                    <option value="1h">Last Hour</option>
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="metrics-type">Metrics Type</label>
+                                <select class="form-select" id="metrics-type">
+                                    <option value="cpu">CPU Usage</option>
+                                    <option value="memory">Memory Usage</option>
+                                    <option value="disk">Disk I/O</option>
+                                    <option value="network">Network Traffic</option>
+                                    <option value="all">All Metrics</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-success w-100" onclick="getPerformanceMetrics()">
+                                <i class="fas fa-chart-line me-2"></i>Get Metrics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>System Status</h2>
+                    <div id="monitoring-results" class="results-panel">
+                        <div class="result-header">System Monitoring Console Ready</div>
+                        <div class="result-item result-success">✓ All monitoring systems operational</div>
+                        <div class="result-item">ℹ Select monitoring options above to begin system analysis...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testing Suite Section -->
+            <div id="testing-suite" class="content-section">
+                <div class="tool-section">
+                    <h2>Testing Suite & Quality Assurance</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-flask"></i>Test Execution</h3>
+                            <div class="form-group">
+                                <label for="test-type">Test Type</label>
+                                <select class="form-select" id="test-type">
+                                    <option value="unit">Unit Tests</option>
+                                    <option value="integration">Integration Tests</option>
+                                    <option value="full">Full Test Suite</option>
+                                    <option value="performance">Performance Tests</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="test-module">Module (Optional)</label>
+                                <input type="text" class="form-control" id="test-module" placeholder="e.g., dataset_tools, mcp_server">
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="runTestSuite()">
+                                <i class="fas fa-play me-2"></i>Run Tests
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-shield-alt"></i>Code Quality Check</h3>
+                            <div class="form-group">
+                                <label>Quality Checks</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="check-syntax" checked>
+                                    <label class="form-check-label" for="check-syntax">Syntax Check</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="check-style" checked>
+                                    <label class="form-check-label" for="check-style">Style Check</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="check-security">
+                                    <label class="form-check-label" for="check-security">Security Scan</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-warning w-100" onclick="runQualityCheck()">
+                                <i class="fas fa-search me-2"></i>Run Quality Check
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Test Results</h2>
+                    <div id="testing-results" class="results-panel">
+                        <div class="result-header">Testing Suite Console Ready</div>
+                        <div class="result-item">ℹ Select test options above to begin quality assurance...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
