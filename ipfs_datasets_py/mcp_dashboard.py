@@ -351,9 +351,20 @@ class MCPDashboard(AdminDashboard):
         @self.app.route('/mcp')
         def mcp_dashboard():
             """Render the main MCP dashboard."""
+            # Get server status safely
+            server_status = {}
+            if self.mcp_server:
+                if hasattr(self.mcp_server, 'get_status'):
+                    try:
+                        server_status = self.mcp_server.get_status()
+                    except Exception:
+                        server_status = {"name": getattr(self.mcp_server, 'name', 'MCP Server'), "status": "running"}
+                else:
+                    server_status = {"name": getattr(self.mcp_server, 'name', 'MCP Server'), "status": "running"}
+            
             return render_template('mcp_dashboard.html',
                                  tools=self._discover_mcp_tools(),
-                                 server_status=self.mcp_server.get_status() if self.mcp_server else {},
+                                 server_status=server_status,
                                  last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         
         # Set up MCP tool routes (status, tools, executions)
