@@ -343,6 +343,33 @@ class MCPDashboard(AdminDashboard):
         return tools
         
     def _setup_routes(self) -> None:
+        """Set up MCP dashboard routes."""
+        # Call parent to set up base admin dashboard routes
+        super()._setup_routes()
+        
+        # Set up main MCP dashboard route
+        @self.app.route('/mcp')
+        def mcp_dashboard():
+            """Render the main MCP dashboard."""
+            return render_template('mcp_dashboard.html',
+                                 tools=self._discover_mcp_tools(),
+                                 server_status=self.mcp_server.get_status() if self.mcp_server else {},
+                                 last_updated=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        
+        # Set up MCP tool routes (status, tools, executions)
+        self._setup_mcp_tool_routes()
+        
+        # Set up feature-specific routes if enabled
+        if self.mcp_config and self.mcp_config.enable_graphrag:
+            self._setup_graphrag_routes()
+        if self.mcp_config and self.mcp_config.enable_analytics:
+            self._setup_analytics_routes()
+        if self.mcp_config and self.mcp_config.enable_rag_query:
+            self._setup_rag_query_routes()
+        if self.mcp_config and self.mcp_config.enable_investigation:
+            self._setup_investigation_routes()
+    
+    def _setup_graphrag_routes(self) -> None:
         """Set up GraphRAG processing routes."""
         
         @self.app.route('/api/mcp/graphrag/process', methods=['POST'])
