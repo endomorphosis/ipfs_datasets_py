@@ -169,6 +169,7 @@ class MCPDashboard(AdminDashboard):
         self.real_time_clients = set()
         self.monitoring_thread = None
         self.last_metrics_update = time.time()
+        self.start_time = time.time()
         
     def configure(self, config: MCPDashboardConfig) -> None:
         """Configure the comprehensive MCP dashboard.
@@ -1368,6 +1369,156 @@ class MCPDashboard(AdminDashboard):
         # Removed duplicated early registration of MCP tool routes to avoid endpoint conflicts
             
         # Duplicate status/history/SDK routes removed (comprehensive versions already registered above)
+        
+        # System Management API endpoints
+        @self.app.route('/api/mcp/system/workflows', methods=['GET'])
+        def api_manage_workflows():
+            """Get workflow management status and active workflows."""
+            try:
+                workflows = {
+                    "active_workflows": list(self.workflow_manager.keys()),
+                    "workflow_count": len(self.workflow_manager),
+                    "workflows": self.workflow_manager,
+                    "timestamp": datetime.now().isoformat()
+                }
+                return jsonify(workflows)
+            except Exception as e:
+                self.logger.error(f"Failed to get workflows: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/system/optimize', methods=['POST'])
+        def api_optimize_system():
+            """Optimize system performance."""
+            try:
+                # Update performance metrics
+                import psutil
+                
+                # Get current metrics
+                cpu_percent = psutil.cpu_percent(interval=1)
+                memory = psutil.virtual_memory()
+                disk = psutil.disk_usage('/')
+                
+                # Update system metrics
+                self.system_metrics.update({
+                    'cpu_usage': cpu_percent,
+                    'memory_usage': memory.percent,
+                    'disk_usage': disk.percent,
+                    'memory_available_mb': memory.available / (1024 * 1024),
+                    'disk_available_gb': disk.free / (1024 * 1024 * 1024)
+                })
+                
+                # Perform basic optimization
+                optimization_results = {
+                    "status": "completed",
+                    "optimizations_applied": [],
+                    "metrics_before": {
+                        "cpu_usage": cpu_percent,
+                        "memory_usage": memory.percent,
+                        "disk_usage": disk.percent
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Clear old execution history if too large
+                if len(self.tool_execution_history) > 800:
+                    removed = len(self.tool_execution_history) - 500
+                    self.tool_execution_history = deque(list(self.tool_execution_history)[-500:], maxlen=1000)
+                    optimization_results["optimizations_applied"].append(f"Cleared {removed} old execution records")
+                
+                # Clear old analytics history if too large
+                if len(self.analytics_metrics_history) > 800:
+                    removed = len(self.analytics_metrics_history) - 500
+                    self.analytics_metrics_history = deque(list(self.analytics_metrics_history)[-500:], maxlen=1000)
+                    optimization_results["optimizations_applied"].append(f"Cleared {removed} old analytics records")
+                
+                if not optimization_results["optimizations_applied"]:
+                    optimization_results["optimizations_applied"].append("System already optimized")
+                
+                return jsonify(optimization_results)
+            except Exception as e:
+                self.logger.error(f"Failed to optimize system: {e}")
+                return jsonify({"error": str(e), "status": "failed"}), 500
+        
+        @self.app.route('/api/mcp/system/health', methods=['GET'])
+        def api_monitor_health():
+            """Get system health status."""
+            try:
+                import psutil
+                
+                # Get system metrics
+                cpu_percent = psutil.cpu_percent(interval=0.5)
+                memory = psutil.virtual_memory()
+                disk = psutil.disk_usage('/')
+                
+                # Update metrics
+                self.system_metrics.update({
+                    'cpu_usage': cpu_percent,
+                    'memory_usage': memory.percent,
+                    'disk_usage': disk.percent,
+                    'active_connections': len(self.active_tool_executions),
+                    'uptime': time.time() - getattr(self, 'start_time', time.time())
+                })
+                
+                # Determine health status
+                health_issues = []
+                if cpu_percent > 90:
+                    health_issues.append("High CPU usage")
+                if memory.percent > 90:
+                    health_issues.append("High memory usage")
+                if disk.percent > 90:
+                    health_issues.append("High disk usage")
+                
+                overall_status = "healthy" if not health_issues else "warning"
+                
+                health_data = {
+                    "status": overall_status,
+                    "health_status": self.health_status,
+                    "system_metrics": self.system_metrics,
+                    "issues": health_issues,
+                    "components": {
+                        "mcp_server": self.health_status.get('mcp_server', 'unknown'),
+                        "ipfs_node": self.health_status.get('ipfs_node', 'unknown'),
+                        "vector_store": self.health_status.get('vector_store', 'unknown'),
+                        "cache_system": self.health_status.get('cache_system', 'unknown')
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                return jsonify(health_data)
+            except Exception as e:
+                self.logger.error(f"Failed to get health status: {e}")
+                return jsonify({
+                    "status": "error",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat()
+                }), 500
+        
+        @self.app.route('/api/mcp/system/logs', methods=['GET'])
+        def api_get_system_logs():
+            """Get system logs."""
+            try:
+                limit = request.args.get('limit', 100, type=int)
+                level = request.args.get('level', 'all')
+                
+                # Get recent error logs
+                logs = list(self._error_log) if hasattr(self, '_error_log') else []
+                
+                # Filter by level if specified
+                if level != 'all':
+                    logs = [log for log in logs if log.get('level') == level]
+                
+                # Limit results
+                logs = logs[-limit:]
+                
+                return jsonify({
+                    "logs": logs,
+                    "total": len(logs),
+                    "level": level,
+                    "timestamp": datetime.now().isoformat()
+                })
+            except Exception as e:
+                self.logger.error(f"Failed to get logs: {e}")
+                return jsonify({"error": str(e)}), 500
             
     # GraphRAG processing methods
     async def _process_website_graphrag(self, session_id: str, url: str, config: 'CompleteProcessingConfiguration') -> None:
