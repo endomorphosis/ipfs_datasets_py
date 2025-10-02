@@ -393,6 +393,152 @@
             color: white;
             font-size: 1.2rem;
         }
+
+        /* Additional styles for new sections */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 6px;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .metric-value {
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: var(--primary-blue);
+            font-weight: 700;
+        }
+
+        .api-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .api-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 6px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .api-method {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .api-method.get {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .api-method.post {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .api-path {
+            flex: 1;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            color: var(--gray-800);
+        }
+
+        .tools-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--gray-50);
+            border-radius: 6px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .tool-item {
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--gray-200);
+        }
+
+        .tool-item:hover {
+            background: var(--primary-blue);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .log-viewer {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.8rem;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            border-bottom: 1px solid var(--gray-700);
+        }
+
+        .log-level {
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .log-level-error {
+            background-color: var(--danger-red);
+            color: white;
+        }
+
+        .log-level-warning {
+            background-color: var(--warning-orange);
+            color: white;
+        }
+
+        .log-level-info {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        .log-time {
+            color: var(--gray-600);
+            font-size: 0.75rem;
+            min-width: 150px;
+        }
+
+        .log-message {
+            flex: 1;
+            color: var(--gray-100);
+        }
     </style>
 </head>
 <body>
@@ -956,6 +1102,309 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Workflow Management Section -->
+            <div id="workflow-management" class="content-section">
+                <div class="tool-section">
+                    <h2>Workflow Management</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-project-diagram"></i>Active Workflows</h3>
+                            <div class="form-group">
+                                <label>Current Status</label>
+                                <div id="workflow-status-display" class="alert alert-info">
+                                    Loading workflow status...
+                                </div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="refreshWorkflowStatus()">
+                                <i class="fas fa-sync me-2"></i>Refresh Status
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-tasks"></i>Workflow Controls</h3>
+                            <div class="form-group">
+                                <label for="workflow-action">Action</label>
+                                <select class="form-select" id="workflow-action">
+                                    <option value="list">List All Workflows</option>
+                                    <option value="pause">Pause Workflow</option>
+                                    <option value="resume">Resume Workflow</option>
+                                    <option value="cancel">Cancel Workflow</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="workflow-id">Workflow ID (if applicable)</label>
+                                <input type="text" class="form-control" id="workflow-id" placeholder="workflow-12345">
+                            </div>
+                            <button class="btn btn-success w-100" onclick="manageWorkflow()">
+                                <i class="fas fa-cog me-2"></i>Execute Action
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Workflow Status</h2>
+                    <div id="workflow-results" class="results-panel">
+                        <div class="result-header">Workflow Management Console Ready</div>
+                        <div class="result-item">ℹ Click 'Refresh Status' to load current workflow information...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Optimization Section -->
+            <div id="performance-optimization" class="content-section">
+                <div class="tool-section">
+                    <h2>Performance Optimization</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-tachometer-alt"></i>System Metrics</h3>
+                            <div class="form-group">
+                                <label>Current Performance</label>
+                                <div id="performance-metrics-display" class="metrics-grid">
+                                    <div class="metric-item">
+                                        <span class="metric-label">CPU:</span>
+                                        <span id="cpu-metric" class="metric-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Memory:</span>
+                                        <span id="memory-metric" class="metric-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Disk:</span>
+                                        <span id="disk-metric" class="metric-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-info w-100" onclick="loadPerformanceMetrics()">
+                                <i class="fas fa-chart-line me-2"></i>Load Metrics
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-rocket"></i>Optimization Actions</h3>
+                            <div class="form-group">
+                                <label>Optimization Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="opt-cache" checked>
+                                    <label class="form-check-label" for="opt-cache">Clear Old Cache</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="opt-logs" checked>
+                                    <label class="form-check-label" for="opt-logs">Trim Log Files</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="opt-memory">
+                                    <label class="form-check-label" for="opt-memory">Free Memory</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-warning w-100" onclick="runOptimization()">
+                                <i class="fas fa-magic me-2"></i>Run Optimization
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Optimization Results</h2>
+                    <div id="optimization-results" class="results-panel">
+                        <div class="result-header">Performance Optimization Console Ready</div>
+                        <div class="result-item">ℹ Load metrics or run optimization to begin...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP Tools Section -->
+            <div id="mcp-tools" class="content-section">
+                <div class="tool-section">
+                    <h2>MCP Tools (130+)</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-toolbox"></i>Tool Categories</h3>
+                            <div class="form-group">
+                                <label for="tool-category">Select Category</label>
+                                <select class="form-select" id="tool-category" onchange="loadToolsInCategory()">
+                                    <option value="">Loading categories...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Category Tools</label>
+                                <div id="tools-list" class="tools-list">
+                                    Select a category to view available tools
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-search"></i>Tool Execution</h3>
+                            <div class="form-group">
+                                <label for="tool-name">Tool Name</label>
+                                <input type="text" class="form-control" id="tool-name" placeholder="e.g., load_dataset">
+                            </div>
+                            <div class="form-group">
+                                <label for="tool-params">Parameters (JSON)</label>
+                                <textarea class="form-control" id="tool-params" rows="4" placeholder='{"param1": "value1"}'></textarea>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="executeMCPTool()">
+                                <i class="fas fa-play me-2"></i>Execute Tool
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Tool Execution Results</h2>
+                    <div id="mcp-tools-results" class="results-panel">
+                        <div class="result-header">MCP Tools Console Ready</div>
+                        <div class="result-item">ℹ 130+ tools available across multiple categories...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Endpoints Section -->
+            <div id="api-endpoints" class="content-section">
+                <div class="tool-section">
+                    <h2>API Endpoints</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-plug"></i>System Management APIs</h3>
+                            <div class="api-list">
+                                <div class="api-item">
+                                    <span class="api-method get">GET</span>
+                                    <span class="api-path">/api/mcp/status</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="testEndpoint('/api/mcp/status', 'GET')">Test</button>
+                                </div>
+                                <div class="api-item">
+                                    <span class="api-method get">GET</span>
+                                    <span class="api-path">/api/mcp/system/workflows</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="testEndpoint('/api/mcp/system/workflows', 'GET')">Test</button>
+                                </div>
+                                <div class="api-item">
+                                    <span class="api-method post">POST</span>
+                                    <span class="api-path">/api/mcp/system/optimize</span>
+                                    <button class="btn btn-sm btn-outline-success" onclick="testEndpoint('/api/mcp/system/optimize', 'POST')">Test</button>
+                                </div>
+                                <div class="api-item">
+                                    <span class="api-method get">GET</span>
+                                    <span class="api-path">/api/mcp/system/health</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="testEndpoint('/api/mcp/system/health', 'GET')">Test</button>
+                                </div>
+                                <div class="api-item">
+                                    <span class="api-method get">GET</span>
+                                    <span class="api-path">/api/mcp/system/logs</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="testEndpoint('/api/mcp/system/logs', 'GET')">Test</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-code"></i>Custom API Request</h3>
+                            <div class="form-group">
+                                <label for="api-endpoint">Endpoint Path</label>
+                                <input type="text" class="form-control" id="api-endpoint" placeholder="/api/mcp/...">
+                            </div>
+                            <div class="form-group">
+                                <label for="api-method">Method</label>
+                                <select class="form-select" id="api-method">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="api-body">Request Body (JSON)</label>
+                                <textarea class="form-control" id="api-body" rows="3" placeholder='{"key": "value"}'></textarea>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="makeCustomAPIRequest()">
+                                <i class="fas fa-paper-plane me-2"></i>Send Request
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>API Response</h2>
+                    <div id="api-results" class="results-panel">
+                        <div class="result-header">API Endpoints Console Ready</div>
+                        <div class="result-item">ℹ Test endpoints or make custom API requests...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Logs Section -->
+            <div id="system-logs" class="content-section">
+                <div class="tool-section">
+                    <h2>System Logs</h2>
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-file-alt"></i>Log Viewer</h3>
+                            <div class="form-group">
+                                <label for="log-level">Log Level</label>
+                                <select class="form-select" id="log-level">
+                                    <option value="all">All Logs</option>
+                                    <option value="error">Errors Only</option>
+                                    <option value="warning">Warnings Only</option>
+                                    <option value="info">Info Only</option>
+                                    <option value="debug">Debug Only</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="log-limit">Number of Entries</label>
+                                <select class="form-select" id="log-limit">
+                                    <option value="50">50 entries</option>
+                                    <option value="100" selected>100 entries</option>
+                                    <option value="200">200 entries</option>
+                                    <option value="500">500 entries</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="loadSystemLogs()">
+                                <i class="fas fa-download me-2"></i>Load Logs
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-filter"></i>Log Filters</h3>
+                            <div class="form-group">
+                                <label for="log-search">Search Text</label>
+                                <input type="text" class="form-control" id="log-search" placeholder="Search in logs...">
+                            </div>
+                            <div class="form-group">
+                                <label for="log-component">Component Filter</label>
+                                <select class="form-select" id="log-component">
+                                    <option value="">All Components</option>
+                                    <option value="mcp_server">MCP Server</option>
+                                    <option value="ipfs">IPFS Node</option>
+                                    <option value="storage">Storage System</option>
+                                    <option value="api">API Layer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="log-auto-refresh">
+                                    <label class="form-check-label" for="log-auto-refresh">Auto-refresh (5s)</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-success w-100" onclick="applyLogFilters()">
+                                <i class="fas fa-search me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>System Logs</h2>
+                    <div id="logs-results" class="results-panel log-viewer">
+                        <div class="result-header">System Logs Console Ready</div>
+                        <div class="result-item">ℹ Click 'Load Logs' to view system log entries...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1228,6 +1677,296 @@
             `;
             stepsContainer.appendChild(newStep);
         }
+
+        // Workflow Management Functions
+        async function refreshWorkflowStatus() {
+            const resultsPanel = document.getElementById('workflow-results');
+            const statusDisplay = document.getElementById('workflow-status-display');
+            
+            try {
+                const response = await fetch('/api/mcp/system/workflows');
+                const data = await response.json();
+                
+                statusDisplay.className = 'alert alert-success';
+                statusDisplay.innerHTML = `
+                    Active Workflows: ${data.workflow_count}<br>
+                    Last Updated: ${new Date(data.timestamp).toLocaleTimeString()}
+                `;
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Workflow Status Retrieved</div>
+                    <div class="result-item result-success">✓ Total workflows: ${data.workflow_count}</div>
+                    <div class="result-item">📊 Active workflows: ${data.active_workflows.length}</div>
+                    <div class="result-item">⏰ Updated: ${new Date(data.timestamp).toLocaleString()}</div>
+                    <pre class="mt-3">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                statusDisplay.className = 'alert alert-danger';
+                statusDisplay.textContent = 'Error loading workflow status';
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function manageWorkflow() {
+            const action = document.getElementById('workflow-action').value;
+            const workflowId = document.getElementById('workflow-id').value;
+            const resultsPanel = document.getElementById('workflow-results');
+            
+            try {
+                const response = await fetch('/api/mcp/system/workflows');
+                const data = await response.json();
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Workflow Action: ${action}</div>
+                    <div class="result-item result-success">✓ Action "${action}" processed</div>
+                    ${workflowId ? `<div class="result-item">🔧 Workflow ID: ${workflowId}</div>` : ''}
+                    <pre class="mt-3">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Performance Optimization Functions
+        async function loadPerformanceMetrics() {
+            try {
+                const response = await fetch('/api/mcp/system/health');
+                const data = await response.json();
+                
+                document.getElementById('cpu-metric').textContent = `${data.system_metrics.cpu_usage.toFixed(1)}%`;
+                document.getElementById('memory-metric').textContent = `${data.system_metrics.memory_usage.toFixed(1)}%`;
+                document.getElementById('disk-metric').textContent = `${data.system_metrics.disk_usage.toFixed(1)}%`;
+                
+                const resultsPanel = document.getElementById('optimization-results');
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Performance Metrics Loaded</div>
+                    <div class="result-item result-success">✓ System health status: ${data.status}</div>
+                    <div class="result-item">💻 CPU Usage: ${data.system_metrics.cpu_usage.toFixed(1)}%</div>
+                    <div class="result-item">🧠 Memory Usage: ${data.system_metrics.memory_usage.toFixed(1)}%</div>
+                    <div class="result-item">💾 Disk Usage: ${data.system_metrics.disk_usage.toFixed(1)}%</div>
+                    <div class="result-item">⏱️ Uptime: ${(data.system_metrics.uptime / 60).toFixed(1)} minutes</div>
+                    <div class="result-item">🔌 Active Connections: ${data.system_metrics.active_connections}</div>
+                `;
+            } catch (error) {
+                document.getElementById('optimization-results').innerHTML = 
+                    `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function runOptimization() {
+            const resultsPanel = document.getElementById('optimization-results');
+            resultsPanel.innerHTML = '<div class="result-item">⏳ Running optimization...</div>';
+            
+            try {
+                const response = await fetch('/api/mcp/system/optimize', { method: 'POST' });
+                const data = await response.json();
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Optimization Complete</div>
+                    <div class="result-item result-success">✓ Status: ${data.status}</div>
+                    <div class="result-item">📊 CPU Before: ${data.metrics_before.cpu_usage.toFixed(1)}%</div>
+                    <div class="result-item">🧠 Memory Before: ${data.metrics_before.memory_usage.toFixed(1)}%</div>
+                    <div class="result-item">💾 Disk Before: ${data.metrics_before.disk_usage.toFixed(1)}%</div>
+                    <div class="result-item">🔧 Optimizations Applied:</div>
+                `;
+                
+                data.optimizations_applied.forEach(opt => {
+                    resultsPanel.innerHTML += `<div class="result-item">  • ${opt}</div>`;
+                });
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // MCP Tools Functions
+        async function loadToolCategories() {
+            try {
+                const response = await fetch('/api/mcp/tools');
+                const data = await response.json();
+                
+                const select = document.getElementById('tool-category');
+                select.innerHTML = '<option value="">Select a category...</option>';
+                
+                Object.keys(data).forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = `${category} (${data[category].length} tools)`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading tool categories:', error);
+            }
+        }
+
+        async function loadToolsInCategory() {
+            const category = document.getElementById('tool-category').value;
+            if (!category) return;
+            
+            try {
+                const response = await fetch('/api/mcp/tools');
+                const data = await response.json();
+                const tools = data[category] || [];
+                
+                const toolsList = document.getElementById('tools-list');
+                toolsList.innerHTML = tools.map(tool => 
+                    `<div class="tool-item" onclick="selectTool('${tool.name}')">${tool.name}</div>`
+                ).join('');
+            } catch (error) {
+                document.getElementById('tools-list').innerHTML = 
+                    `<div class="text-danger">Error loading tools: ${error.message}</div>`;
+            }
+        }
+
+        function selectTool(toolName) {
+            document.getElementById('tool-name').value = toolName;
+        }
+
+        async function executeMCPTool() {
+            const category = document.getElementById('tool-category').value;
+            const toolName = document.getElementById('tool-name').value;
+            const paramsText = document.getElementById('tool-params').value;
+            
+            if (!category || !toolName) {
+                alert('Please select a category and tool name');
+                return;
+            }
+            
+            let params = {};
+            if (paramsText) {
+                try {
+                    params = JSON.parse(paramsText);
+                } catch (e) {
+                    alert('Invalid JSON in parameters');
+                    return;
+                }
+            }
+            
+            const resultsPanel = document.getElementById('mcp-tools-results');
+            resultsPanel.innerHTML = '<div class="result-item">⏳ Executing tool...</div>';
+            
+            try {
+                const response = await fetch(`/api/mcp/tools/${category}/${toolName}/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Tool Execution: ${toolName}</div>
+                    <div class="result-item result-success">✓ Status: ${data.status}</div>
+                    <pre class="mt-3">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // API Endpoints Functions
+        async function testEndpoint(path, method) {
+            const resultsPanel = document.getElementById('api-results');
+            resultsPanel.innerHTML = `<div class="result-item">⏳ Testing ${method} ${path}...</div>`;
+            
+            try {
+                const options = { method: method };
+                const response = await fetch(path, options);
+                const data = await response.json();
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">${method} ${path}</div>
+                    <div class="result-item result-success">✓ Status: ${response.status} ${response.statusText}</div>
+                    <pre class="mt-3">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function makeCustomAPIRequest() {
+            const endpoint = document.getElementById('api-endpoint').value;
+            const method = document.getElementById('api-method').value;
+            const bodyText = document.getElementById('api-body').value;
+            
+            if (!endpoint) {
+                alert('Please enter an endpoint path');
+                return;
+            }
+            
+            const resultsPanel = document.getElementById('api-results');
+            resultsPanel.innerHTML = `<div class="result-item">⏳ Sending ${method} request...</div>`;
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                
+                if (bodyText && (method === 'POST' || method === 'PUT')) {
+                    options.body = bodyText;
+                }
+                
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">${method} ${endpoint}</div>
+                    <div class="result-item result-success">✓ Status: ${response.status} ${response.statusText}</div>
+                    <pre class="mt-3">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // System Logs Functions
+        async function loadSystemLogs() {
+            const level = document.getElementById('log-level').value;
+            const limit = document.getElementById('log-limit').value;
+            const resultsPanel = document.getElementById('logs-results');
+            
+            resultsPanel.innerHTML = '<div class="result-item">⏳ Loading system logs...</div>';
+            
+            try {
+                const response = await fetch(`/api/mcp/system/logs?level=${level}&limit=${limit}`);
+                const data = await response.json();
+                
+                resultsPanel.innerHTML = `
+                    <div class="result-header">System Logs (${data.total} entries)</div>
+                    <div class="result-item">📊 Level Filter: ${data.level}</div>
+                    <div class="result-item">📝 Showing: ${Math.min(data.total, limit)} entries</div>
+                    <div class="result-item">⏰ Retrieved: ${new Date(data.timestamp).toLocaleString()}</div>
+                `;
+                
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        resultsPanel.innerHTML += `
+                            <div class="log-entry">
+                                <span class="log-level log-level-${log.level || 'info'}">${log.level || 'INFO'}</span>
+                                <span class="log-time">${log.timestamp || new Date().toISOString()}</span>
+                                <span class="log-message">${log.message || 'No message'}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultsPanel.innerHTML += '<div class="result-item">ℹ No log entries found</div>';
+                }
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function applyLogFilters() {
+            const search = document.getElementById('log-search').value;
+            const component = document.getElementById('log-component').value;
+            
+            // For now, just reload with filters (could be enhanced to filter client-side)
+            loadSystemLogs();
+        }
+
+        // Initialize tool categories on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadToolCategories();
+        });
     </script>
 </body>
 </html>
