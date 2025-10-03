@@ -1005,7 +1005,7 @@
 
         <div class="nav-section">
             <div class="nav-section-title">Legal & Logic Systems</div>
-            <a href="/mcp/caselaw" class="nav-link">
+            <a href="#" class="nav-link" data-target="caselaw-analysis">
                 <i class="fas fa-gavel"></i>Caselaw Analysis
             </a>
             <a href="#" class="nav-link" data-target="text-to-fol">
@@ -2201,6 +2201,190 @@
                     <div id="logs-results" class="results-panel log-viewer">
                         <div class="result-header">System Logs Console Ready</div>
                         <div class="result-item">ℹ Click 'Load Logs' to view system log entries...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caselaw Analysis Section -->
+            <div id="caselaw-analysis" class="content-section">
+                <div class="tool-section">
+                    <h2><i class="fas fa-gavel"></i> Temporal Deontic Logic RAG System - Caselaw Analysis</h2>
+                    <p class="text-muted">Legal document consistency checker using temporal deontic logic theorems and MCP tools</p>
+                    
+                    <!-- Tabs for different caselaw functions -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="doc-analysis-tab" data-bs-toggle="tab" data-bs-target="#doc-analysis" type="button" role="tab">
+                                <i class="fas fa-file-text"></i> Document Analysis
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="query-theorems-tab" data-bs-toggle="tab" data-bs-target="#query-theorems-section" type="button" role="tab">
+                                <i class="fas fa-search"></i> Query Theorems
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="bulk-proc-tab" data-bs-toggle="tab" data-bs-target="#bulk-proc" type="button" role="tab">
+                                <i class="fas fa-tasks"></i> Bulk Process
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3">
+                        <!-- Document Analysis Tab -->
+                        <div class="tab-pane fade show active" id="doc-analysis" role="tabpanel">
+                            <div class="tool-grid">
+                                <div class="tool-panel">
+                                    <h3><i class="fas fa-file-text"></i> Document Text</h3>
+                                    <div class="form-group">
+                                        <label for="caselaw-document-text">Legal Document Text</label>
+                                        <textarea class="form-control" id="caselaw-document-text" rows="6" placeholder="Paste legal document text here for consistency analysis..."></textarea>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="caselaw-jurisdiction">Jurisdiction</label>
+                                                <select class="form-select" id="caselaw-jurisdiction">
+                                                    <option value="Federal">Federal</option>
+                                                    <option value="State">State</option>
+                                                    <option value="Supreme Court">Supreme Court</option>
+                                                    <option value="Circuit Court">Circuit Court</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="caselaw-legal-domain">Legal Domain</label>
+                                                <select class="form-select" id="caselaw-legal-domain">
+                                                    <option value="general">General</option>
+                                                    <option value="Contract">Contract</option>
+                                                    <option value="Employment">Employment</option>
+                                                    <option value="Confidentiality">Confidentiality</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="caselaw-document-id">Document ID</label>
+                                                <input type="text" class="form-control" id="caselaw-document-id" placeholder="Optional ID">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary w-100" onclick="analyzeCaselawDocument()">
+                                        <i class="fas fa-search me-2"></i>Analyze Document
+                                    </button>
+                                </div>
+
+                                <div class="tool-panel">
+                                    <h3><i class="fas fa-info-circle"></i> About Document Analysis</h3>
+                                    <div class="alert alert-info">
+                                        <strong><i class="fas fa-gavel"></i> How It Works</strong>
+                                        <p class="mb-0 small">This tool checks legal documents against temporal deontic logic theorems extracted from caselaw. It identifies:</p>
+                                        <ul class="small mb-0">
+                                            <li><strong>Obligations</strong> (O): "must" statements</li>
+                                            <li><strong>Permissions</strong> (P): "may" statements</li>
+                                            <li><strong>Prohibitions</strong> (F): "must not" statements</li>
+                                        </ul>
+                                        <p class="mb-0 small mt-2">Results include consistency analysis, extracted formulas, and debug reports.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Results Section -->
+                            <div class="results-section">
+                                <h2>Analysis Results</h2>
+                                <div id="caselaw-analysis-results" class="results-panel">
+                                    <div class="result-header">Waiting for input...</div>
+                                    <div class="result-item">Enter document text above and click 'Analyze Document' to see results.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Query Theorems Tab -->
+                        <div class="tab-pane fade" id="query-theorems-section" role="tabpanel">
+                            <div class="tool-grid">
+                                <div class="tool-panel">
+                                    <h3><i class="fas fa-search"></i> Query Parameters</h3>
+                                    <div class="form-group">
+                                        <label for="theorem-query-text">Natural Language Query</label>
+                                        <input type="text" class="form-control" id="theorem-query-text" placeholder="e.g., Can employee share confidential information?">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="theorem-operator-filter">Operator Filter</label>
+                                                <select class="form-select" id="theorem-operator-filter">
+                                                    <option value="all">All Operators</option>
+                                                    <option value="OBLIGATION">Obligations</option>
+                                                    <option value="PERMISSION">Permissions</option>
+                                                    <option value="PROHIBITION">Prohibitions</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="theorem-jurisdiction-filter">Jurisdiction</label>
+                                                <select class="form-select" id="theorem-jurisdiction-filter">
+                                                    <option value="all">All</option>
+                                                    <option value="Federal">Federal</option>
+                                                    <option value="State">State</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="theorem-domain-filter">Legal Domain</label>
+                                                <select class="form-select" id="theorem-domain-filter">
+                                                    <option value="all">All</option>
+                                                    <option value="Contract">Contract</option>
+                                                    <option value="Employment">Employment</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="theorem-max-results">Max Results</label>
+                                                <input type="number" class="form-control" id="theorem-max-results" value="10" min="1" max="50">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success w-100" onclick="queryTheorems()">
+                                        <i class="fas fa-search me-2"></i>Query Theorems
+                                    </button>
+                                </div>
+
+                                <div class="tool-panel">
+                                    <h3><i class="fas fa-database"></i> RAG-Based Search</h3>
+                                    <div class="alert alert-info">
+                                        <strong><i class="fas fa-lightbulb"></i> Semantic Search</strong>
+                                        <p class="mb-0 small">Uses RAG (Retrieval Augmented Generation) to find relevant theorems from the temporal deontic logic database. Results are ranked by relevance score and include precedent strength.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Results Section -->
+                            <div class="results-section">
+                                <h2>Theorem Query Results</h2>
+                                <div id="theorem-query-results" class="results-panel">
+                                    <div class="result-header">Waiting for query...</div>
+                                    <div class="result-item">Enter a query above and click 'Query Theorems' to search.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bulk Process Tab -->
+                        <div class="tab-pane fade" id="bulk-proc" role="tabpanel">
+                            <div class="tool-grid">
+                                <div class="tool-panel">
+                                    <h3><i class="fas fa-tasks"></i> Bulk Processing</h3>
+                                    <div class="alert alert-info">
+                                        <strong><i class="fas fa-info-circle"></i> Process Caselaw Corpus</strong>
+                                        <p class="mb-0 small">Process entire directories of legal documents to extract deontic logic theorems at scale and build unified legal knowledge systems.</p>
+                                    </div>
+                                    <p class="small text-muted">This feature processes large corpora of legal documents asynchronously. Due to the complexity, use the dedicated caselaw dashboard at <a href="/mcp/caselaw" target="_blank">/mcp/caselaw</a> for full bulk processing capabilities.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4143,6 +4327,173 @@ Example: Citizens must pay taxes by April 15th. Corporations are prohibited from
         }
 
         // Load theorem store statistics
+        // Caselaw Analysis Functions
+        async function analyzeCaselawDocument() {
+            const text = document.getElementById('caselaw-document-text').value.trim();
+            if (!text) {
+                alert('Please enter document text to analyze');
+                return;
+            }
+
+            const jurisdiction = document.getElementById('caselaw-jurisdiction').value;
+            const legalDomain = document.getElementById('caselaw-legal-domain').value;
+            const documentId = document.getElementById('caselaw-document-id').value;
+
+            const resultsPanel = document.getElementById('caselaw-analysis-results');
+            resultsPanel.innerHTML = '<div class="result-item">🔄 Analyzing document...</div>';
+
+            try {
+                const response = await fetch('/api/mcp/caselaw/check_document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_text: text,
+                        jurisdiction: jurisdiction,
+                        legal_domain: legalDomain,
+                        document_id: documentId || undefined
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.consistency_analysis) {
+                    const analysis = data.consistency_analysis;
+                    let html = `
+                        <div class="result-header ${analysis.is_consistent ? 'bg-success' : 'bg-danger'} text-white p-3 rounded">
+                            <h5><i class="fas ${analysis.is_consistent ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
+                            ${analysis.is_consistent ? 'CONSISTENT' : 'CONFLICTS FOUND'}</h5>
+                            <p class="mb-0">Document ID: ${data.document_id} | Confidence: ${(analysis.confidence_score * 100).toFixed(1)}% | Time: ${analysis.processing_time.toFixed(3)}s</p>
+                        </div>
+                    `;
+                    
+                    html += '<div class="row mt-3"><div class="col-md-6">';
+                    html += `<h6>Extracted Formulas (${analysis.formulas_extracted})</h6>`;
+                    
+                    if (data.extracted_formulas && data.extracted_formulas.length > 0) {
+                        data.extracted_formulas.forEach(formula => {
+                            const operatorClass = formula.operator.toLowerCase();
+                            const bgColor = operatorClass === 'obligation' ? '#dc3545' : 
+                                          operatorClass === 'permission' ? '#28a745' : '#ffc107';
+                            html += `
+                                <div class="result-item mb-2">
+                                    <span class="badge" style="background-color: ${bgColor}">${formula.operator}</span>
+                                    <strong>${formula.agent}</strong>: ${formula.proposition}
+                                    <small class="text-muted">(${(formula.confidence * 100).toFixed(1)}%)</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p class="text-muted">No formulas extracted</p>';
+                    }
+                    
+                    html += '</div><div class="col-md-6">';
+                    html += '<h6>Debug Report</h6>';
+                    
+                    if (data.debug_report) {
+                        const report = data.debug_report;
+                        html += `
+                            <div class="card">
+                                <div class="card-body">
+                                    <p><strong>Issues:</strong> ${report.total_issues}</p>
+                                    <p><strong>Critical:</strong> ${report.critical_errors} | 
+                                       <strong>Warnings:</strong> ${report.warnings} | 
+                                       <strong>Suggestions:</strong> ${report.suggestions}</p>
+                                    <p><strong>Summary:</strong> ${report.summary || 'Analysis complete'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div></div>';
+                    resultsPanel.innerHTML = html;
+                } else {
+                    resultsPanel.innerHTML = `<div class="result-item result-error">❌ Analysis failed: ${data.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function queryTheorems() {
+            const queryText = document.getElementById('theorem-query-text').value.trim();
+            if (!queryText) {
+                alert('Please enter a query');
+                return;
+            }
+
+            const operatorFilter = document.getElementById('theorem-operator-filter').value;
+            const jurisdictionFilter = document.getElementById('theorem-jurisdiction-filter').value;
+            const domainFilter = document.getElementById('theorem-domain-filter').value;
+            const maxResults = parseInt(document.getElementById('theorem-max-results').value);
+
+            const resultsPanel = document.getElementById('theorem-query-results');
+            resultsPanel.innerHTML = '<div class="result-item">🔄 Searching theorems...</div>';
+
+            try {
+                const params = {
+                    query_text: queryText,
+                    top_k: maxResults
+                };
+                
+                if (operatorFilter !== 'all') params.operator = operatorFilter;
+                if (jurisdictionFilter !== 'all') params.jurisdiction = jurisdictionFilter;
+                if (domainFilter !== 'all') params.legal_domain = domainFilter;
+
+                const response = await fetch('/api/mcp/caselaw/query_theorems', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.theorems) {
+                    let html = `
+                        <div class="result-header">
+                            <h6><i class="fas fa-search"></i> Query: "${data.query}"</h6>
+                            <p class="mb-0">Found ${data.total_results} theorems</p>
+                        </div>
+                    `;
+                    
+                    if (data.theorems.length > 0) {
+                        data.theorems.forEach(theorem => {
+                            const formula = theorem.formula;
+                            const metadata = theorem.metadata;
+                            const operatorClass = formula.operator.toLowerCase();
+                            const bgColor = operatorClass === 'obligation' ? '#dc3545' : 
+                                          operatorClass === 'permission' ? '#28a745' : '#ffc107';
+                            
+                            html += `
+                                <div class="result-item mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <span class="badge" style="background-color: ${bgColor}">${formula.operator}</span>
+                                            <strong class="ms-2">${formula.agent}</strong>: ${formula.proposition}
+                                        </div>
+                                        <small class="text-muted">Relevance: ${(theorem.relevance_score * 100).toFixed(1)}%</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        Source: ${metadata.source_case} | 
+                                        ${metadata.jurisdiction} | 
+                                        ${metadata.legal_domain} | 
+                                        Precedent: ${(metadata.precedent_strength * 100).toFixed(0)}%
+                                    </small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p class="text-muted">No theorems found matching the query.</p>';
+                    }
+                    
+                    resultsPanel.innerHTML = html;
+                } else {
+                    resultsPanel.innerHTML = `<div class="result-item result-error">❌ Query failed: ${data.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
         async function loadTheoremStats() {
             try {
                 const response = await fetch('/api/mcp/caselaw/check_document', {
