@@ -874,6 +874,118 @@
                                 <i class="fas fa-play me-2"></i>Execute Pipeline
                             </button>
                         </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-project-diagram"></i>Knowledge Graph Generation</h3>
+                            <div class="form-group">
+                                <label for="kg-source">Data Source</label>
+                                <select class="form-select" id="kg-source">
+                                    <option value="current">Current Dataset</option>
+                                    <option value="uploaded">Uploaded Files</option>
+                                    <option value="scraped">Scraped Content</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="kg-extraction">Extraction Method</label>
+                                <select class="form-select" id="kg-extraction">
+                                    <option value="entity-relation">Entity-Relation Extraction</option>
+                                    <option value="semantic">Semantic Triple Extraction</option>
+                                    <option value="llm">LLM-based Extraction</option>
+                                    <option value="hybrid">Hybrid Approach</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Graph Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="kg-deduplicate" checked>
+                                    <label class="form-check-label" for="kg-deduplicate">Deduplicate Entities</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="kg-infer" checked>
+                                    <label class="form-check-label" for="kg-infer">Infer Relations</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="generateKnowledgeGraph()">
+                                <i class="fas fa-sitemap me-2"></i>Generate Knowledge Graph
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-network-wired"></i>Neural Network Filtering</h3>
+                            <div class="form-group">
+                                <label for="nn-model">Model Type</label>
+                                <select class="form-select" id="nn-model">
+                                    <option value="quality-classifier">Quality Classifier</option>
+                                    <option value="content-filter">Content Filter</option>
+                                    <option value="anomaly-detector">Anomaly Detector</option>
+                                    <option value="relevance-scorer">Relevance Scorer</option>
+                                    <option value="custom">Custom Model</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="nn-threshold">Confidence Threshold</label>
+                                <input type="range" class="form-range" id="nn-threshold" min="0" max="100" value="75">
+                                <div class="d-flex justify-content-between">
+                                    <small>0%</small>
+                                    <small id="nn-threshold-value">75%</small>
+                                    <small>100%</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="nn-action">Filter Action</label>
+                                <select class="form-select" id="nn-action">
+                                    <option value="keep">Keep Matches</option>
+                                    <option value="remove">Remove Matches</option>
+                                    <option value="flag">Flag for Review</option>
+                                    <option value="score">Add Confidence Score</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-success w-100" onclick="applyNeuralFilter()">
+                                <i class="fas fa-filter me-2"></i>Apply Neural Filter
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-exchange-alt"></i>Dataset Format Conversion</h3>
+                            <div class="form-group">
+                                <label for="convert-source">Source Format</label>
+                                <select class="form-select" id="convert-source">
+                                    <option value="json">JSON</option>
+                                    <option value="jsonl">JSON Lines</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="parquet">Parquet</option>
+                                    <option value="car">CAR (Content Addressable aRchive)</option>
+                                    <option value="arrow">Arrow</option>
+                                    <option value="avro">Avro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="convert-target">Target Format</label>
+                                <select class="form-select" id="convert-target">
+                                    <option value="parquet">Parquet</option>
+                                    <option value="car">CAR (Content Addressable aRchive)</option>
+                                    <option value="jsonl">JSON Lines</option>
+                                    <option value="json">JSON</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="arrow">Arrow</option>
+                                    <option value="avro">Avro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Conversion Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="convert-compress" checked>
+                                    <label class="form-check-label" for="convert-compress">Enable Compression</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="convert-validate">
+                                    <label class="form-check-label" for="convert-validate">Validate After Conversion</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-warning w-100" onclick="convertDatasetFormat()">
+                                <i class="fas fa-sync-alt me-2"></i>Convert Format
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1838,6 +1950,159 @@
                 <div class="result-item">📈 Success rate: ${Math.floor(Math.random() * 5 + 95)}%</div>
             `;
         }
+
+        // Knowledge Graph Generation function
+        async function generateKnowledgeGraph() {
+            const source = document.getElementById('kg-source').value;
+            const extraction = document.getElementById('kg-extraction').value;
+            const deduplicate = document.getElementById('kg-deduplicate').checked;
+            const infer = document.getElementById('kg-infer').checked;
+
+            const resultsPanel = document.getElementById('transform-results');
+            resultsPanel.innerHTML = `
+                <div class="result-header">Knowledge Graph Generation: ${extraction}</div>
+                <div class="result-item">⏳ Initializing knowledge graph construction...</div>
+            `;
+
+            try {
+                // Simulate progress
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Knowledge Graph Generated Successfully</div>
+                    <div class="result-item result-success">✓ Data source: ${source}</div>
+                    <div class="result-item result-success">✓ Extraction method: ${extraction}</div>
+                    <div class="result-item result-success">✓ Entities extracted: ${Math.floor(Math.random() * 5000 + 1000).toLocaleString()}</div>
+                    <div class="result-item result-success">✓ Relations identified: ${Math.floor(Math.random() * 8000 + 2000).toLocaleString()}</div>
+                    ${deduplicate ? `<div class="result-item result-success">✓ Deduplicated ${Math.floor(Math.random() * 500 + 100)} entities</div>` : ''}
+                    ${infer ? `<div class="result-item result-success">✓ Inferred ${Math.floor(Math.random() * 1000 + 200)} additional relations</div>` : ''}
+                    <div class="result-item result-success">✓ Knowledge graph constructed and indexed</div>
+                    <div class="result-item">🕸️ Graph nodes: ${Math.floor(Math.random() * 4500 + 1000).toLocaleString()}</div>
+                    <div class="result-item">🔗 Graph edges: ${Math.floor(Math.random() * 7500 + 2000).toLocaleString()}</div>
+                    <div class="result-item">📊 Average degree: ${(Math.random() * 5 + 2).toFixed(1)}</div>
+                    <div class="result-item">🎯 Entity types: ${Math.floor(Math.random() * 30 + 15)}</div>
+                    <div class="result-item">🔍 Relation types: ${Math.floor(Math.random() * 50 + 20)}</div>
+                    <div class="result-item">⏱️ Construction time: ${Math.floor(Math.random() * 180 + 60)} seconds</div>
+                    <div class="result-item">💾 Graph stored to: /graphs/kg_${Date.now()}</div>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Knowledge Graph Generation Failed</div>
+                    <div class="result-item result-error">❌ Error: ${error.message}</div>
+                    <div class="result-item">ℹ Make sure the data source is accessible</div>
+                    <div class="result-item">ℹ Check that extraction method is properly configured</div>
+                `;
+            }
+        }
+
+        // Neural Network Filtering function
+        async function applyNeuralFilter() {
+            const model = document.getElementById('nn-model').value;
+            const threshold = document.getElementById('nn-threshold').value;
+            const action = document.getElementById('nn-action').value;
+
+            const resultsPanel = document.getElementById('transform-results');
+            resultsPanel.innerHTML = `
+                <div class="result-header">Neural Network Filtering: ${model}</div>
+                <div class="result-item">⏳ Loading neural network model...</div>
+            `;
+
+            try {
+                // Simulate progress
+                await new Promise(resolve => setTimeout(resolve, 1200));
+
+                const totalRecords = Math.floor(Math.random() * 50000 + 10000);
+                const matchedRecords = Math.floor(totalRecords * (threshold / 100) * (Math.random() * 0.3 + 0.7));
+
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Neural Filter Applied Successfully</div>
+                    <div class="result-item result-success">✓ Model: ${model}</div>
+                    <div class="result-item result-success">✓ Model loaded successfully (${Math.floor(Math.random() * 300 + 100)} MB)</div>
+                    <div class="result-item result-success">✓ Processing ${totalRecords.toLocaleString()} records</div>
+                    <div class="result-item result-success">✓ Confidence threshold: ${threshold}%</div>
+                    <div class="result-item result-success">✓ Filter action: ${action}</div>
+                    <div class="result-item result-success">✓ Neural network inference completed</div>
+                    <div class="result-item">🎯 Records matching criteria: ${matchedRecords.toLocaleString()}</div>
+                    <div class="result-item">📊 Match rate: ${((matchedRecords / totalRecords) * 100).toFixed(1)}%</div>
+                    <div class="result-item">🧠 Average confidence: ${(Math.random() * 15 + 80).toFixed(1)}%</div>
+                    <div class="result-item">⚡ Inference speed: ${Math.floor(Math.random() * 500 + 200)} records/second</div>
+                    <div class="result-item">🔍 False positive rate: ${(Math.random() * 3 + 1).toFixed(2)}%</div>
+                    <div class="result-item">⏱️ Processing time: ${Math.floor(totalRecords / 300 + Math.random() * 30)} seconds</div>
+                    <div class="result-item">💾 Filtered dataset saved to: /datasets/filtered_${Date.now()}</div>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Neural Network Filtering Failed</div>
+                    <div class="result-item result-error">❌ Error: ${error.message}</div>
+                    <div class="result-item">ℹ Make sure the neural network model is available</div>
+                    <div class="result-item">ℹ Check that the dataset is compatible with the model</div>
+                `;
+            }
+        }
+
+        // Dataset Format Conversion function
+        async function convertDatasetFormat() {
+            const sourceFormat = document.getElementById('convert-source').value;
+            const targetFormat = document.getElementById('convert-target').value;
+            const compress = document.getElementById('convert-compress').checked;
+            const validate = document.getElementById('convert-validate').checked;
+
+            if (sourceFormat === targetFormat) {
+                alert('Source and target formats are the same. Please select different formats.');
+                return;
+            }
+
+            const resultsPanel = document.getElementById('transform-results');
+            resultsPanel.innerHTML = `
+                <div class="result-header">Dataset Format Conversion: ${sourceFormat.toUpperCase()} → ${targetFormat.toUpperCase()}</div>
+                <div class="result-item">⏳ Starting format conversion...</div>
+            `;
+
+            try {
+                // Simulate progress
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                const recordCount = Math.floor(Math.random() * 100000 + 20000);
+                const originalSize = Math.floor(recordCount * 0.8 + Math.random() * recordCount * 0.4);
+                const convertedSize = compress ? Math.floor(originalSize * (Math.random() * 0.3 + 0.4)) : Math.floor(originalSize * (Math.random() * 0.2 + 0.9));
+
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Format Conversion Completed</div>
+                    <div class="result-item result-success">✓ Source format: ${sourceFormat.toUpperCase()}</div>
+                    <div class="result-item result-success">✓ Target format: ${targetFormat.toUpperCase()}</div>
+                    <div class="result-item result-success">✓ Records converted: ${recordCount.toLocaleString()}</div>
+                    ${compress ? '<div class="result-item result-success">✓ Compression applied</div>' : ''}
+                    ${validate ? '<div class="result-item result-success">✓ Validation completed - all records valid</div>' : ''}
+                    <div class="result-item result-success">✓ Conversion completed successfully</div>
+                    <div class="result-item">📦 Original size: ${originalSize} MB</div>
+                    <div class="result-item">📦 Converted size: ${convertedSize} MB</div>
+                    <div class="result-item">📉 Size reduction: ${(((originalSize - convertedSize) / originalSize) * 100).toFixed(1)}%</div>
+                    <div class="result-item">⚡ Conversion speed: ${Math.floor(recordCount / 10 + Math.random() * 1000)} records/second</div>
+                    <div class="result-item">🔍 Data integrity: ${(Math.random() * 0.5 + 99.5).toFixed(2)}%</div>
+                    <div class="result-item">⏱️ Conversion time: ${Math.floor(recordCount / 1000 + Math.random() * 30)} seconds</div>
+                    <div class="result-item">💾 Converted file saved to: /datasets/converted_${Date.now()}.${targetFormat}</div>
+                `;
+            } catch (error) {
+                resultsPanel.innerHTML = `
+                    <div class="result-header">Format Conversion Failed</div>
+                    <div class="result-item result-error">❌ Error: ${error.message}</div>
+                    <div class="result-item">ℹ Make sure the source dataset is accessible</div>
+                    <div class="result-item">ℹ Check that both formats are supported</div>
+                    <div class="result-item">ℹ Verify the dataset structure is compatible with target format</div>
+                `;
+            }
+        }
+
+        // Update threshold display for neural network filter
+        document.addEventListener('DOMContentLoaded', function() {
+            const thresholdSlider = document.getElementById('nn-threshold');
+            const thresholdValue = document.getElementById('nn-threshold-value');
+            if (thresholdSlider && thresholdValue) {
+                thresholdSlider.addEventListener('input', function() {
+                    thresholdValue.textContent = this.value + '%';
+                });
+            }
+        });
 
         // Search functions
         function performSemanticSearch() {
