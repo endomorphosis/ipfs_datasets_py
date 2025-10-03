@@ -380,6 +380,9 @@ class MCPDashboard(AdminDashboard):
             self._setup_rag_query_routes()
         if self.mcp_config and self.mcp_config.enable_investigation:
             self._setup_investigation_routes()
+        
+        # Set up caselaw/legal text to deontic logic routes (always enabled)
+        self._setup_caselaw_routes()
     
     def _setup_graphrag_routes(self) -> None:
         """Set up GraphRAG processing routes."""
@@ -760,7 +763,7 @@ class MCPDashboard(AdminDashboard):
                 legal_domain = data.get('legal_domain', 'general')
                 
                 if not document_text:
-                    return jsonify({"error": "Document text is required"}), 400
+                    return jsonify({"success": False, "error": "Document text is required"}), 400
                 
                 # Initialize checker
                 rag_store = TemporalDeonticRAGStore()
@@ -783,16 +786,19 @@ class MCPDashboard(AdminDashboard):
                 # Generate debug report
                 debug_report = checker.generate_debug_report(analysis)
                 
-                # Format response
+                # Format response to match frontend expectations
                 result = {
+                    "success": True,
                     "document_id": analysis.document_id,
-                    "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
-                    "confidence_score": analysis.confidence_score,
-                    "formulas_extracted": len(analysis.extracted_formulas),
-                    "issues_found": len(analysis.issues_found),
-                    "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
-                    "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
-                    "processing_time": analysis.processing_time,
+                    "consistency_analysis": {
+                        "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                        "confidence_score": analysis.confidence_score,
+                        "formulas_extracted": len(analysis.extracted_formulas),
+                        "issues_found": len(analysis.issues_found),
+                        "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
+                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
+                        "processing_time": analysis.processing_time
+                    },
                     "debug_report": {
                         "total_issues": debug_report.total_issues,
                         "critical_errors": debug_report.critical_errors,
@@ -817,7 +823,7 @@ class MCPDashboard(AdminDashboard):
                 
             except Exception as e:
                 self.logger.error(f"Document consistency check failed: {e}")
-                return jsonify({"error": str(e)}), 500
+                return jsonify({"success": False, "error": str(e)}), 500
         
         @self.app.route('/api/mcp/caselaw/bulk_process', methods=['POST'])
         def api_bulk_process_caselaw():
@@ -912,7 +918,7 @@ class MCPDashboard(AdminDashboard):
                 
             except Exception as e:
                 self.logger.error(f"Bulk caselaw processing failed to start: {e}")
-                return jsonify({"error": str(e)}), 500
+                return jsonify({"success": False, "error": str(e)}), 500
         
         @self.app.route('/api/mcp/caselaw/bulk_process/<session_id>')
         def api_get_bulk_processing_status(session_id):
@@ -1030,7 +1036,7 @@ class MCPDashboard(AdminDashboard):
                 top_k = min(int(data.get('top_k', 10)), 50)  # Limit to 50
                 
                 if not query_text:
-                    return jsonify({"error": "Query text is required"}), 400
+                    return jsonify({"success": False, "error": "Query text is required"}), 400
                 
                 # Create query formula
                 operator = DeonticOperator[operator_str]
@@ -1057,26 +1063,26 @@ class MCPDashboard(AdminDashboard):
                     top_k=top_k
                 )
                 
-                # Format response
+                # Format response to match frontend expectations
                 result = {
-                    "query": {
-                        "text": query_text,
-                        "operator": operator_str,
-                        "jurisdiction": jurisdiction,
-                        "legal_domain": legal_domain
-                    },
+                    "success": True,
+                    "query": query_text,
                     "total_results": len(relevant_theorems),
                     "theorems": [
                         {
                             "theorem_id": t.theorem_id,
-                            "operator": t.formula.operator.name,
-                            "proposition": t.formula.proposition,
-                            "agent": t.formula.agent.name if t.formula.agent else "Unspecified",
-                            "jurisdiction": t.jurisdiction,
-                            "legal_domain": t.legal_domain,
-                            "source_case": t.source_case,
-                            "precedent_strength": t.precedent_strength,
-                            "confidence": t.confidence,
+                            "formula": {
+                                "operator": t.formula.operator.name,
+                                "proposition": t.formula.proposition,
+                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified"
+                            },
+                            "metadata": {
+                                "jurisdiction": t.jurisdiction,
+                                "legal_domain": t.legal_domain,
+                                "source_case": t.source_case,
+                                "precedent_strength": t.precedent_strength
+                            },
+                            "relevance_score": t.confidence,
                             "temporal_scope": {
                                 "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
                                 "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
@@ -1089,7 +1095,7 @@ class MCPDashboard(AdminDashboard):
                 
             except Exception as e:
                 self.logger.error(f"Theorem query failed: {e}")
-                return jsonify({"error": str(e)}), 500
+                return jsonify({"success": False, "error": str(e)}), 500
 
     async def _process_caselaw_bulk(self, session_id: str, processor) -> None:
         """Async method to process caselaw bulk."""
