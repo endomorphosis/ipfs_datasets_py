@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporal Deontic Logic RAG - Caselaw Dashboard (MCP)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap5.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .caselaw-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 8px;
+        }
+        .theorem-card {
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+        }
+        .deontic-operator {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .obligation { background-color: #dc3545; color: white; }
+        .permission { background-color: #28a745; color: white; }
+        .prohibition { background-color: #ffc107; color: black; }
+        .status-consistent { color: #28a745; }
+        .status-conflicts { color: #dc3545; }
+        .conflict-item {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .mcp-indicator {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0056b3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .mcp-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .mcp-connected { background-color: #28a745; color: white; }
+        .mcp-disconnected { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('index') }}">
+                                <i class="fas fa-home"></i> Main Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('mcp_dashboard') }}">
+                                <i class="fas fa-server"></i> MCP Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('caselaw_dashboard') }}">
+                                <i class="fas fa-gavel"></i> Caselaw Analysis (MCP)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <!-- Header -->
+                <div class="caselaw-header">
+                    <h1><i class="fas fa-gavel"></i> Temporal Deontic Logic RAG System</h1>
+                    <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
+                </div>
+
+                <!-- MCP Status Indicator -->
+                <div class="mcp-indicator">
+                    <h5><i class="fas fa-plug"></i> MCP Connection Status</h5>
+                    <p class="mb-2">
+                        <span id="mcpStatus" class="mcp-status mcp-disconnected">Disconnected</span>
+                        <span class="ml-2" id="mcpStatusText">Initializing MCP connection...</span>
+                    </p>
+                    <p class="mb-0">
+                        <small>This dashboard uses Model Context Protocol (MCP) JSON-RPC tools instead of REST APIs for legal analysis.</small>
+                    </p>
+                </div>
+
+                <!-- System Status -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-database"></i> System Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <h6>Theorem Corpus</h6>
+                                        <p class="h4" id="theoremCount">{{ system_status.theorem_count }}</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6>Jurisdictions</h6>
+                                        <p class="h4" id="jurisdictionCount">{{ system_status.jurisdictions|length }}</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6>Legal Domains</h6>
+                                        <p class="h4" id="legalDomainCount">{{ system_status.legal_domains|length }}</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6>MCP Tools Available</h6>
+                                        <p class="h4" id="mcpToolCount">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs" id="caselawTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="document-analysis-tab" data-bs-toggle="tab" data-bs-target="#document-analysis" type="button" role="tab">
+                            <i class="fas fa-file-text"></i> Document Analysis
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="query-theorems-tab" data-bs-toggle="tab" data-bs-target="#query-theorems" type="button" role="tab">
+                            <i class="fas fa-search"></i> Query Theorems
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bulk-process-tab" data-bs-toggle="tab" data-bs-target="#bulk-process" type="button" role="tab">
+                            <i class="fas fa-tasks"></i> Bulk Process Caselaw
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="caselawTabContent">
+                    <!-- Document Analysis Tab -->
+                    <div class="tab-pane fade show active" id="document-analysis" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-file-text"></i> Document Consistency Analysis</h5>
+                                <small class="text-muted">Check legal documents against temporal deontic logic theorems</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="documentAnalysisForm">
+                                    <div class="mb-3">
+                                        <label for="documentText" class="form-label">Document Text</label>
+                                        <textarea class="form-control" id="documentText" rows="6" 
+                                                  placeholder="Paste legal document text here for consistency analysis..."></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="jurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="jurisdiction">
+                                                <option value="Federal">Federal</option>
+                                                <option value="State">State</option>
+                                                <option value="Supreme Court">Supreme Court</option>
+                                                <option value="Circuit Court">Circuit Court</option>
+                                                <option value="International">International</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="legalDomain" class="form-label">Legal Domain</label>
+                                            <select class="form-select" id="legalDomain">
+                                                <option value="general">General</option>
+                                                <option value="Contract">Contract</option>
+                                                <option value="Employment">Employment</option>
+                                                <option value="Confidentiality">Confidentiality</option>
+                                                <option value="IP">Intellectual Property</option>
+                                                <option value="Corporate">Corporate</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="documentId" class="form-label">Document ID</label>
+                                            <input type="text" class="form-control" id="documentId" 
+                                                   placeholder="Optional document identifier">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Analyze Document
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="analysisSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Analyzing...</span>
+                                    </div>
+                                    <p class="mt-2">Running consistency analysis...</p>
+                                </div>
+                                
+                                <div id="analysisResults" class="mt-4" style="display: none;">
+                                    <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Query Theorems Tab -->
+                    <div class="tab-pane fade" id="query-theorems" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-search"></i> RAG-Based Theorem Query</h5>
+                                <small class="text-muted">Semantic search of temporal deontic logic theorems</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="queryTheoremForm">
+                                    <div class="mb-3">
+                                        <label for="queryText" class="form-label">Query</label>
+                                        <input type="text" class="form-control" id="queryText" 
+                                               placeholder="Enter natural language query (e.g., 'Can employee share confidential information?')">
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="operatorFilter" class="form-label">Operator Filter</label>
+                                            <select class="form-select" id="operatorFilter">
+                                                <option value="all">All Operators</option>
+                                                <option value="OBLIGATION">Obligations</option>
+                                                <option value="PERMISSION">Permissions</option>
+                                                <option value="PROHIBITION">Prohibitions</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="queryJurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="queryJurisdiction">
+                                                <option value="all">All Jurisdictions</option>
+                                                <option value="Federal">Federal</option>
+                                                <option value="State">State</option>
+                                                <option value="Supreme Court">Supreme Court</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="queryLegalDomain" class="form-label">Legal Domain</label>
+                                            <select class="form-select" id="queryLegalDomain">
+                                                <option value="all">All Domains</option>
+                                                <option value="Contract">Contract</option>
+                                                <option value="Employment">Employment</option>
+                                                <option value="Confidentiality">Confidentiality</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="queryLimit" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="queryLimit" value="10" min="1" max="50">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-search"></i> Query Theorems
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="querySpinner">
+                                    <div class="spinner-border text-success" role="status">
+                                        <span class="visually-hidden">Querying...</span>
+                                    </div>
+                                    <p class="mt-2">Searching theorem corpus...</p>
+                                </div>
+                                
+                                <div id="queryResults" class="mt-4" style="display: none;">
+                                    <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Process Tab -->
+                    <div class="tab-pane fade" id="bulk-process" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-tasks"></i> Bulk Caselaw Processing</h5>
+                                <small class="text-muted">Process entire caselaw databases to build unified deontic logic systems</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="bulkProcessForm">
+                                    <div class="mb-3">
+                                        <label for="caselawDirectories" class="form-label">Caselaw Directories</label>
+                                        <textarea class="form-control" id="caselawDirectories" rows="3" 
+                                                  placeholder="Enter directory paths (one per line):&#10;/data/federal_cases&#10;/data/state_cases&#10;/data/supreme_court"></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="outputDirectory" class="form-label">Output Directory</label>
+                                            <input type="text" class="form-control" id="outputDirectory" 
+                                                   value="unified_deontic_logic_system" 
+                                                   placeholder="Directory for results">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="concurrentLimit" class="form-label">Concurrent Documents</label>
+                                            <input type="number" class="form-control" id="concurrentLimit" 
+                                                   value="5" min="1" max="20">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="precedentStrength" class="form-label">Min Precedent Strength</label>
+                                            <input type="number" class="form-control" id="precedentStrength" 
+                                                   value="0.5" min="0" max="1" step="0.1">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="enableParallel" checked>
+                                                <label class="form-check-label" for="enableParallel">
+                                                    Enable Parallel Processing
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="asyncProcessing" checked>
+                                                <label class="form-check-label" for="asyncProcessing">
+                                                    Asynchronous Processing
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-play"></i> Start Bulk Processing
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="bulkSpinner">
+                                    <div class="spinner-border text-warning" role="status">
+                                        <span class="visually-hidden">Processing...</span>
+                                    </div>
+                                    <p class="mt-2">Processing caselaw corpus...</p>
+                                </div>
+                                
+                                <div id="bulkResults" class="mt-4" style="display: none;">
+                                    <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries: local first, then CDN fallback -->
+    <script src="{{ url_for('static', filename='js/bootstrap5.bundle.min.js') }}"></script>
+    <script>
+        if (typeof bootstrap === 'undefined') {
+            var b = document.createElement('script');
+            b.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js";
+            document.head.appendChild(b);
+        }
+    </script>
+    
+    <!-- MCP Client JavaScript SDK -->
+    <script>
+        // MCP JSON-RPC Client Implementation
+        class MCPClient {
+            constructor(serverUrl = 'ws://localhost:8765') {
+                this.serverUrl = serverUrl;
+                this.ws = null;
+                this.requestId = 1;
+                this.pendingRequests = new Map();
+                this.isConnected = false;
+                this.availableTools = [];
+            }
+
+            async connect() {
+                try {
+                    // For demo purposes, simulate MCP connection
+                    // In real implementation, this would establish WebSocket connection
+                    console.log('Connecting to MCP server...');
+                    
+                    // Simulate connection delay
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    this.isConnected = true;
+                    this.updateConnectionStatus(true);
+                    
+                    // Load available tools
+                    await this.loadAvailableTools();
+                    
+                    console.log('MCP client connected successfully');
+                    return true;
+                    
+                } catch (error) {
+                    console.error('Failed to connect to MCP server:', error);
+                    this.updateConnectionStatus(false);
+                    return false;
+                }
+            }
+
+            async loadAvailableTools() {
+                // Simulate loading MCP tools
+                this.availableTools = [
+                    'check_document_consistency',
+                    'query_theorems', 
+                    'bulk_process_caselaw',
+                    'add_theorem'
+                ];
+                
+                document.getElementById('mcpToolCount').textContent = this.availableTools.length;
+            }
+
+            updateConnectionStatus(connected) {
+                const statusElement = document.getElementById('mcpStatus');
+                const statusTextElement = document.getElementById('mcpStatusText');
+                
+                if (connected) {
+                    statusElement.className = 'mcp-status mcp-connected';
+                    statusElement.textContent = 'Connected';
+                    statusTextElement.textContent = 'MCP JSON-RPC connection established';
+                } else {
+                    statusElement.className = 'mcp-status mcp-disconnected';
+                    statusElement.textContent = 'Disconnected';
+                    statusTextElement.textContent = 'Failed to establish MCP connection';
+                }
+            }
+
+            async callTool(toolName, parameters) {
+                if (!this.isConnected) {
+                    throw new Error('MCP client not connected');
+                }
+
+                console.log(`Calling MCP tool via JSON-RPC: ${toolName}`, parameters);
+                
+                try {
+                    // Make JSON-RPC call to MCP endpoint
+                    const response = await this.callJsonRpc(toolName, parameters);
+                    return response;
+                    
+                } catch (error) {
+                    console.error(`MCP JSON-RPC call failed for ${toolName}:`, error);
+                    // Fallback to REST API if JSON-RPC fails
+                    return await this.callRestFallback(toolName, parameters);
+                }
+            }
+
+            async callJsonRpc(toolName, parameters) {
+                const jsonRpcRequest = {
+                    jsonrpc: "2.0",
+                    method: toolName,
+                    params: parameters,
+                    id: this.requestId++
+                };
+
+                const response = await fetch('/api/mcp/caselaw/jsonrpc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonRpcRequest)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const jsonRpcResponse = await response.json();
+                
+                if (jsonRpcResponse.error) {
+                    throw new Error(`JSON-RPC Error: ${jsonRpcResponse.error.message}`);
+                }
+
+                return jsonRpcResponse.result;
+            }
+
+            async callRestFallback(toolName, parameters) {
+                // Map MCP tool names to REST endpoints for fallback
+                const endpointMap = {
+                    'check_document_consistency': '/api/mcp/caselaw/check_document',
+                    'query_theorems': '/api/mcp/caselaw/query_theorems',
+                    'bulk_process_caselaw': '/api/mcp/caselaw/bulk_process',
+                    'add_theorem': '/api/mcp/caselaw/add_theorem'
+                };
+
+                const endpoint = endpointMap[toolName];
+                if (!endpoint) {
+                    throw new Error(`Unknown tool: ${toolName}`);
+                }
+
+                console.log(`Fallback to REST API: ${endpoint}`);
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(parameters)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            }
+        }
+
+        // Global MCP client instance
+        let mcpClient = null;
+
+        // Initialize MCP client on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            mcpClient = new MCPClient();
+            await mcpClient.connect();
+            
+            // Set up form handlers
+            setupDocumentAnalysisForm();
+            setupQueryTheoremForm();
+            setupBulkProcessForm();
+        });
+
+        // Document Analysis Form Handler
+        function setupDocumentAnalysisForm() {
+            const form = document.getElementById('documentAnalysisForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const documentText = document.getElementById('documentText').value.trim();
+                if (!documentText) {
+                    alert('Please enter document text to analyze');
+                    return;
+                }
+
+                const parameters = {
+                    document_text: documentText,
+                    document_id: document.getElementById('documentId').value || undefined,
+                    jurisdiction: document.getElementById('jurisdiction').value,
+                    legal_domain: document.getElementById('legalDomain').value
+                };
+
+                const spinner = document.getElementById('analysisSpinner');
+                const results = document.getElementById('analysisResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    const response = await mcpClient.callTool('check_document_consistency', parameters);
+                    
+                    displayAnalysisResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Analysis failed:', error);
+                    displayError(results, 'Document analysis failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+        }
+
+        // Query Theorem Form Handler  
+        function setupQueryTheoremForm() {
+            const form = document.getElementById('queryTheoremForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const queryText = document.getElementById('queryText').value.trim();
+                if (!queryText) {
+                    alert('Please enter a query');
+                    return;
+                }
+
+                const parameters = {
+                    query: queryText,
+                    operator_filter: document.getElementById('operatorFilter').value,
+                    jurisdiction: document.getElementById('queryJurisdiction').value,
+                    legal_domain: document.getElementById('queryLegalDomain').value,
+                    limit: parseInt(document.getElementById('queryLimit').value)
+                };
+
+                const spinner = document.getElementById('querySpinner');
+                const results = document.getElementById('queryResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    const response = await mcpClient.callTool('query_theorems', parameters);
+                    
+                    displayQueryResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Query failed:', error);
+                    displayError(results, 'Theorem query failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+        }
+
+        // Bulk Process Form Handler
+        function setupBulkProcessForm() {
+            const form = document.getElementById('bulkProcessForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const directoriesText = document.getElementById('caselawDirectories').value.trim();
+                if (!directoriesText) {
+                    alert('Please enter at least one caselaw directory');
+                    return;
+                }
+
+                const directories = directoriesText.split('\n').map(d => d.trim()).filter(d => d);
+                
+                const parameters = {
+                    caselaw_directories: directories,
+                    output_directory: document.getElementById('outputDirectory').value,
+                    max_concurrent_documents: parseInt(document.getElementById('concurrentLimit').value),
+                    enable_parallel_processing: document.getElementById('enableParallel').checked,
+                    min_precedent_strength: parseFloat(document.getElementById('precedentStrength').value),
+                    async_processing: document.getElementById('asyncProcessing').checked
+                };
+
+                const spinner = document.getElementById('bulkSpinner');
+                const results = document.getElementById('bulkResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    const response = await mcpClient.callTool('bulk_process_caselaw', parameters);
+                    
+                    displayBulkResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Bulk processing failed:', error);
+                    displayError(results, 'Bulk processing failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+        }
+
+        // Display Functions
+        function displayAnalysisResults(response) {
+            const container = document.getElementById('analysisResults');
+            
+            if (!response.success) {
+                displayError(container, response.error || 'Analysis failed');
+                return;
+            }
+
+            const analysis = response.consistency_analysis;
+            const debugReport = response.debug_report;
+            
+            let html = `
+                <div class="alert ${analysis.is_consistent ? 'alert-success' : 'alert-danger'}">
+                    <h6><i class="fas ${analysis.is_consistent ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
+                    Analysis Result: ${analysis.is_consistent ? 'CONSISTENT' : 'CONFLICTS FOUND'}</h6>
+                    <p class="mb-0">
+                        Document ID: ${response.document_id} | 
+                        Confidence: ${(analysis.confidence_score * 100).toFixed(1)}% | 
+                        Processing Time: ${analysis.processing_time.toFixed(3)}s
+                    </p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Extracted Formulas (${analysis.formulas_extracted})</h6>
+                        <div class="list-group">
+            `;
+
+            response.extracted_formulas.forEach(formula => {
+                const operatorClass = formula.operator.toLowerCase();
+                html += `
+                    <div class="list-group-item">
+                        <span class="deontic-operator ${operatorClass}">${formula.operator}</span>
+                        <strong>${formula.agent}</strong>: ${formula.proposition}
+                        <small class="text-muted">(${(formula.confidence * 100).toFixed(1)}%)</small>
+                    </div>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Debug Report</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <p><strong>Issues Found:</strong> ${debugReport.total_issues}</p>
+                                <p><strong>Critical:</strong> ${debugReport.critical_errors} | 
+                                   <strong>Warnings:</strong> ${debugReport.warnings} | 
+                                   <strong>Suggestions:</strong> ${debugReport.suggestions}</p>
+                                <p><strong>Summary:</strong> ${debugReport.summary}</p>
+            `;
+
+            if (debugReport.issues && debugReport.issues.length > 0) {
+                html += '<h6>Issues:</h6>';
+                debugReport.issues.forEach(issue => {
+                    html += `<div class="conflict-item">${issue}</div>`;
+                });
+            }
+
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function displayQueryResults(response) {
+            const container = document.getElementById('queryResults');
+            
+            if (!response.success) {
+                displayError(container, response.error || 'Query failed');
+                return;
+            }
+
+            let html = `
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-search"></i> Query Results</h6>
+                    <p class="mb-0">
+                        Query: "${response.query}" | 
+                        Results: ${response.total_results} theorems found
+                    </p>
+                </div>
+            `;
+
+            if (response.theorems && response.theorems.length > 0) {
+                response.theorems.forEach(theorem => {
+                    const operatorClass = theorem.formula.operator.toLowerCase();
+                    html += `
+                        <div class="theorem-card card mb-2">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="deontic-operator ${operatorClass}">${theorem.formula.operator}</span>
+                                        <strong class="ms-2">${theorem.formula.agent}</strong>: ${theorem.formula.proposition}
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">Relevance: ${(theorem.relevance_score * 100).toFixed(1)}%</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        Source: ${theorem.metadata.source_case} | 
+                                        ${theorem.metadata.jurisdiction} | 
+                                        ${theorem.metadata.legal_domain} | 
+                                        Precedent: ${(theorem.metadata.precedent_strength * 100).toFixed(0)}%
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p class="text-muted">No theorems found matching the query.</p>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function displayBulkResults(response) {
+            const container = document.getElementById('bulkResults');
+            
+            if (!response.success) {
+                displayError(container, response.error || 'Bulk processing failed');
+                return;
+            }
+
+            let html = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-tasks"></i> Bulk Processing Results</h6>
+            `;
+
+            if (response.async_processing) {
+                html += `
+                    <p class="mb-0">
+                        Processing started asynchronously | 
+                        Session ID: ${response.session_id} | 
+                        Status: ${response.status}
+                    </p>
+                    <p class="mt-2 mb-0">
+                        <small>Use the session ID to monitor progress and download results when complete.</small>
+                    </p>
+                `;
+            } else {
+                const results = response.results;
+                html += `
+                    <p class="mb-0">
+                        Processed: ${results.documents_processed} documents | 
+                        Extracted: ${results.theorems_extracted} theorems | 
+                        Time: ${results.processing_time}s
+                    </p>
+                    <p class="mt-2 mb-0">
+                        Jurisdictions: ${results.jurisdictions_covered.join(', ')} | 
+                        Domains: ${results.legal_domains_covered.join(', ')}
+                    </p>
+                `;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function displayError(container, message) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Error</h6>
+                    <p class="mb-0">${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

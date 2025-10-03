@@ -128,6 +128,20 @@ from .proof_execution_engine import (
     check_consistency
 )
 
+# Temporal deontic RAG system exports
+from .temporal_deontic_rag_store import (
+    TemporalDeonticRAGStore,
+    TheoremMetadata,
+    ConsistencyResult
+)
+
+# Document consistency checker exports
+from .document_consistency_checker import (
+    DocumentConsistencyChecker,
+    DocumentAnalysis,
+    DebugReport
+)
+
 # Legacy SymbolicAI exports
 from .symbolic_fol_bridge import SymbolicFOLBridge
 from .symbolic_logic_primitives import LogicPrimitives

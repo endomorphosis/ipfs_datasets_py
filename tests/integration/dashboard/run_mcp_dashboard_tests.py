@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import subprocess
+import shutil
 import sys
 import time
 from datetime import datetime
@@ -211,7 +212,7 @@ class MCPDashboardTestRunner:
         
         try:
             result = subprocess.run([
-                "playwright", "install", self.browser
+                sys.executable, "-m", "playwright", "install", self.browser
             ], capture_output=True, text=True, timeout=300)
             
             if result.returncode == 0:
@@ -235,15 +236,25 @@ class MCPDashboardTestRunner:
         """Start services using Docker Compose."""
         logger.info("Starting Docker services...")
         
+        def _compose_cmd(args: list[str]) -> subprocess.CompletedProcess:
+            try:
+                return subprocess.run([
+                    "docker-compose", *args
+                ], capture_output=True, text=True, timeout=600)
+            except FileNotFoundError:
+                # Fallback to `docker compose ...`
+                logger.info("docker-compose not found, falling back to 'docker compose'.")
+                return subprocess.run([
+                    "docker", "compose", *args
+                ], capture_output=True, text=True, timeout=600)
+        
         try:
             # Start MCP server and dashboard
-            result = subprocess.run([
-                "docker-compose", "-f", "docker-compose.mcp.yml", 
-                "up", "-d", "mcp-server", "mcp-dashboard"
-            ], capture_output=True, text=True, timeout=120)
+            args = ["-f", "docker-compose.mcp.yml", "up", "-d", "mcp-server", "mcp-dashboard"]
+            result = _compose_cmd(args)
             
             if result.returncode != 0:
-                logger.error(f"Failed to start Docker services: {result.stderr}")
+                logger.error(f"Failed to start Docker services: {result.stderr or result.stdout}")
                 return False
             
             # Wait for services to be healthy
@@ -295,7 +306,7 @@ class MCPDashboardTestRunner:
         
         # Build pytest command
         cmd = [
-            "python", "-m", "pytest",
+            sys.executable, "-m", "pytest",
             "tests/integration/dashboard/comprehensive_mcp_dashboard_test.py",
             "-v",
             f"--timeout={config['timeout']}",
@@ -426,9 +437,11 @@ class MCPDashboardTestRunner:
         """Stop test services."""
         if self.docker:
             logger.info("Stopping Docker services...")
-            subprocess.run([
-                "docker-compose", "-f", "docker-compose.mcp.yml", "down"
-            ], capture_output=True)
+            args = ["-f", "docker-compose.mcp.yml", "down"]
+            try:
+                subprocess.run(["docker-compose", *args], capture_output=True)
+            except FileNotFoundError:
+                subprocess.run(["docker", "compose", *args], capture_output=True)
 
 
 def main():

@@ -1,0 +1,128 @@
+{
+  "screenshots": [
+    {
+      "name": "02_nav_0_Main_Dashboard",
+      "path": "test_outputs/mcp_dashboard_screenshots/02_nav_0_Main_Dashboard.png",
+      "timestamp": "2025-09-23T15:01:26.050952"
+    },
+    {
+      "name": "07_api__api_mcp_status",
+      "path": "test_outputs/mcp_dashboard_screenshots/07_api__api_mcp_status.png",
+      "timestamp": "2025-09-23T15:01:29.506013"
+    },
+    {
+      "name": "07_api__api_mcp_tools",
+      "path": "test_outputs/mcp_dashboard_screenshots/07_api__api_mcp_tools.png",
+      "timestamp": "2025-09-23T15:01:47.347444"
+    },
+    {
+      "name": "07_api__api_mcp_history",
+      "path": "test_outputs/mcp_dashboard_screenshots/07_api__api_mcp_history.png",
+      "timestamp": "2025-09-23T15:01:50.261165"
+    },
+    {
+      "name": "08_error_handling",
+      "path": "test_outputs/mcp_dashboard_screenshots/08_error_handling.png",
+      "timestamp": "2025-09-23T15:01:55.493375"
+    },
+    {
+      "name": "09_responsive_desktop",
+      "path": "test_outputs/mcp_dashboard_screenshots/09_responsive_desktop.png",
+      "timestamp": "2025-09-23T15:01:56.628987"
+    },
+    {
+      "name": "09_responsive_tablet",
+      "path": "test_outputs/mcp_dashboard_screenshots/09_responsive_tablet.png",
+      "timestamp": "2025-09-23T15:01:57.731571"
+    },
+    {
+      "name": "09_responsive_mobile",
+      "path": "test_outputs/mcp_dashboard_screenshots/09_responsive_mobile.png",
+      "timestamp": "2025-09-23T15:01:58.819113"
+    }
+  ],
+  "interactions": [
+    {
+      "type": "navigation_click",
+      "element": "Main Dashboard",
+      "status": "success",
+      "timestamp": "2025-09-23T15:01:26.051010"
+    },
+    {
+      "type": "tool_discovery",
+      "tools_found": 0,
+      "timestamp": "2025-09-23T15:01:26.249913"
+    },
+    {
+      "type": "responsive_test",
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "name": "desktop"
+      },
+      "timestamp": "2025-09-23T15:01:56.629028"
+    },
+    {
+      "type": "responsive_test",
+      "viewport": {
+        "width": 1024,
+        "height": 768,
+        "name": "tablet"
+      },
+      "timestamp": "2025-09-23T15:01:57.731608"
+    },
+    {
+      "type": "responsive_test",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "name": "mobile"
+      },
+      "timestamp": "2025-09-23T15:01:58.819139"
+    }
+  ],
+  "errors": [
+    {
+      "test": "console",
+      "type": "error",
+      "message": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "timestamp": "2025-09-23T15:01:51.365275"
+    }
+  ],
+  "performance": {
+    "page_load_time": 0.6219966411590576,
+    "metrics": {
+      "loadEventEnd": 90.70000076293945,
+      "domContentLoadedEventEnd": 90.30000019073486,
+      "firstContentfulPaint": 112
+    },
+    "timestamp": "2025-09-23T15:01:59.484664"
+  },
+  "accessibility": [
+    {
+      "checks": {
+        "imagesWithoutAlt": 0,
+        "inputsWithoutLabels": 0,
+        "headingCount": 1
+      },
+      "timestamp": "2025-09-23T15:01:58.849510"
+    }
+  ],
+  "api_responses": [
+    {
+      "endpoint": "/api/mcp/status",
+      "status": "success",
+      "timestamp": "2025-09-23T15:01:29.506065"
+    },
+    {
+      "endpoint": "/api/mcp/tools",
+      "status": "success",
+      "timestamp": "2025-09-23T15:01:47.347477"
+    },
+    {
+      "endpoint": "/api/mcp/history",
+      "status": "success",
+      "timestamp": "2025-09-23T15:01:50.261192"
+    }
+  ]
+}

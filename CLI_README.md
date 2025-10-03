@@ -158,6 +158,61 @@ The enhanced CLI provides access to 31+ tool categories:
 | `web_archive_tools` | 11 tools | Web archiving and crawling |
 | `workflow_tools` | 2 tools | Workflow automation |
 
+## Config Defaults
+
+You can set persistent defaults for the main CLI in `~/.ipfs_datasets/cli.json` or pass a path via `--config` (or env `IPFS_DATASETS_CLI_CONFIG`):
+
+```json
+{
+   "host": "127.0.0.1",
+   "port": "8899",
+   "gateway": "https://ipfs.io"
+}
+```
+
+Precedence order for defaults resolution:
+- Command-line flags: `--host`, `--port`, `--gateway`
+- Environment variables: `IPFS_DATASETS_HOST`, `IPFS_DATASETS_PORT`, `IPFS_HTTP_GATEWAY` (or `IPFS_DATASETS_IPFS_GATEWAY`), `IPFS_DATASETS_CLI_CONFIG`
+- Config file: `--config <path>` or `~/.ipfs_datasets/cli.json`
+- Hardcoded defaults: `127.0.0.1:8899` and no gateway
+
+These defaults apply to the `mcp`, `tools`, and `ipfs` command families.
+
+### Inspecting Defaults
+
+Quickly see the resolved values the CLI will use:
+
+```bash
+# Human-readable
+./ipfs-datasets info defaults
+
+# JSON for scripts
+./ipfs-datasets --json info defaults
+
+# With overrides
+./ipfs-datasets info defaults --host 0.0.0.0 --port 9000 --gateway https://cloudflare-ipfs.com
+
+# Using an alternate config file
+./ipfs-datasets info defaults --config /tmp/cli.json
+
+### Persisting Defaults
+
+Save your preferred defaults (host/port/gateway) to the config file:
+
+```bash
+# Save to default path ~/.ipfs_datasets/cli.json using current resolutions
+./ipfs-datasets info save-defaults
+
+# Explicit values and custom path
+./ipfs-datasets info save-defaults \
+   --host 127.0.0.1 --port 8899 --gateway https://ipfs.io \
+   --config /tmp/cli.json
+
+# Verify
+./ipfs-datasets --json info defaults --config /tmp/cli.json
+```
+```
+
 ## Global Options
 
 Both CLI tools support these global options:

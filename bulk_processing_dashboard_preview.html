@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Caselaw Processing - Dashboard Preview</title>
+    <link rel="stylesheet" href="ipfs_datasets_py/static/css/bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .caselaw-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 8px;
+        }
+        .demo-note {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0056b3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sidebar {
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+        .nav-link.active {
+            background-color: #667eea !important;
+            color: white !important;
+        }
+        .bulk-processing-section {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .processing-config {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#main">
+                                <i class="fas fa-home"></i> Main Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#mcp">
+                                <i class="fas fa-server"></i> MCP Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#caselaw">
+                                <i class="fas fa-gavel"></i> Caselaw Analysis
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <!-- Header -->
+                <div class="caselaw-header">
+                    <h1><i class="fas fa-gavel"></i> Temporal Deontic Logic RAG System</h1>
+                    <p class="lead mb-0">Legal document consistency checker using temporal deontic logic theorems derived from caselaw</p>
+                </div>
+
+                <!-- Demo Note -->
+                <div class="demo-note">
+                    <h5><i class="fas fa-database"></i> Bulk Processing System Added</h5>
+                    <p class="mb-0">The dashboard now includes bulk processing capabilities to process entire caselaw corpus and construct a unified temporal deontic logic system automatically, rather than adding theorems via forms.</p>
+                </div>
+
+                <!-- System Status -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-database"></i> System Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>System Status:</strong>
+                                        <span class="badge bg-success">Ready for Bulk Processing</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Theorems Loaded:</strong> 0 (Start bulk processing)
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Jurisdictions:</strong> 0
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Legal Domains:</strong> 0
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#check-document" type="button">
+                                    <i class="fas fa-search"></i> Document Analysis
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#query-theorems" type="button">
+                                    <i class="fas fa-book-open"></i> Query Theorems
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#bulk-process" type="button">
+                                    <i class="fas fa-database"></i> Bulk Process Caselaw
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Bulk Process Caselaw Tab (Active) -->
+                    <div class="tab-pane fade show active" id="bulk-process">
+                        <div class="bulk-processing-section">
+                            <h5><i class="fas fa-database"></i> Bulk Process Entire Caselaw Corpus</h5>
+                            <p class="mb-0">Process large volumes of caselaw to construct unified temporal deontic logic system automatically</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-cogs"></i> Bulk Processing Configuration</h5>
+                                <small class="text-muted">Configure parameters for processing entire caselaw database</small>
+                            </div>
+                            <div class="card-body processing-config">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Caselaw Directories:</strong></label>
+                                            <textarea class="form-control" rows="4" placeholder="Enter caselaw directory paths (one per line)...">/path/to/federal_cases
+/path/to/state_cases  
+/path/to/supreme_court_cases
+/path/to/circuit_court_cases</textarea>
+                                            <small class="form-text text-muted">Specify directories containing caselaw documents in supported formats (TXT, JSON, PDF, XML)</small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Output Directory:</strong></label>
+                                            <input type="text" class="form-control" placeholder="unified_deontic_logic_system" value="unified_deontic_logic_system">
+                                            <small class="form-text text-muted">Directory to save the unified deontic logic system</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Max Concurrent Documents:</strong></label>
+                                            <select class="form-control">
+                                                <option value="3">3 (Conservative)</option>
+                                                <option value="5" selected>5 (Balanced)</option>
+                                                <option value="10">10 (Aggressive)</option>
+                                                <option value="20">20 (High Performance)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Enable Parallel Processing:</strong></label>
+                                            <select class="form-control">
+                                                <option value="true" selected>Yes - Faster Processing</option>
+                                                <option value="false">No - Sequential Processing</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Min Precedent Strength:</strong></label>
+                                            <select class="form-control">
+                                                <option value="0.0">0.0 - Include All</option>
+                                                <option value="0.3">0.3 - Low Threshold</option>
+                                                <option value="0.5" selected>0.5 - Medium Threshold</option>
+                                                <option value="0.7">0.7 - High Threshold</option>
+                                                <option value="0.9">0.9 - Only Strong Precedents</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h6><i class="fas fa-filter"></i> Advanced Filters (Optional)</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Jurisdictions:</label>
+                                                    <select class="form-control" multiple>
+                                                        <option value="Federal" selected>Federal</option>
+                                                        <option value="State" selected>State</option>
+                                                        <option value="International">International</option>
+                                                        <option value="Supreme Court" selected>Supreme Court</option>
+                                                        <option value="Circuit Court">Circuit Court</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Selected: Federal, State, Supreme Court</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Legal Domains:</label>
+                                                    <select class="form-control" multiple>
+                                                        <option value="contract" selected>Contract Law</option>
+                                                        <option value="employment" selected>Employment Law</option>
+                                                        <option value="confidentiality" selected>Confidentiality</option>
+                                                        <option value="professional_services">Professional Services</option>
+                                                        <option value="intellectual_property">Intellectual Property</option>
+                                                        <option value="corporate">Corporate Law</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Selected: Contract, Employment, Confidentiality</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Date Range:</label>
+                                                    <div class="input-group">
+                                                        <input type="date" class="form-control" value="2000-01-01">
+                                                        <input type="date" class="form-control" value="2024-12-31">
+                                                    </div>
+                                                    <small class="form-text text-muted">2000 - 2024 (24 years)</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-play"></i> Start Bulk Processing
+                                        </button>
+                                        <button type="button" class="btn btn-secondary ml-2" disabled>
+                                            <i class="fas fa-stop"></i> Stop Processing
+                                        </button>
+                                        <button type="button" class="btn btn-info ml-2" disabled>
+                                            <i class="fas fa-download"></i> Download Results
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Expected Results Preview -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-bar"></i> Expected Processing Results</h5>
+                                <small class="text-muted">Preview of what the bulk processing will generate</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="card bg-primary text-white">
+                                            <div class="card-body text-center">
+                                                <h3>10,000+</h3>
+                                                <small>Theorems Expected</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-success text-white">
+                                            <div class="card-body text-center">
+                                                <h3>50,000+</h3>
+                                                <small>Documents Scanned</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-info text-white">
+                                            <div class="card-body text-center">
+                                                <h3>3</h3>
+                                                <small>Jurisdictions</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-warning text-white">
+                                            <div class="card-body text-center">
+                                                <h3>24</h3>
+                                                <small>Years of Caselaw</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <h6><i class="fas fa-lightbulb"></i> What This Will Create:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Unified Deontic Logic System:</strong> Complete temporal legal knowledge base</li>
+                                        <li><strong>Automated Theorem Extraction:</strong> No manual entry required</li>
+                                        <li><strong>Cross-Jurisdictional Coverage:</strong> Federal, State, and Supreme Court precedents</li>
+                                        <li><strong>Temporal Tracking:</strong> Evolution of legal requirements over time</li>
+                                        <li><strong>Consistency Validation:</strong> Automatic conflict detection</li>
+                                        <li><strong>RAG-Ready Database:</strong> Semantic search of all legal precedents</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="ipfs_datasets_py/static/js/bootstrap5.bundle.min.js"></script>
+    <script>if (typeof bootstrap === 'undefined') { var b=document.createElement('script'); b.src='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js'; document.head.appendChild(b);} </script>
+</body>
+</html>

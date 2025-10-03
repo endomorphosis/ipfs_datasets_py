@@ -316,8 +316,9 @@
 		{
 			"label": "Start Docker MCP Services",
 			"type": "shell",
-			"command": "docker-compose",
+			"command": "docker",
 			"args": [
+				"compose",
 				"-f",
 				"docker-compose.mcp.yml",
 				"up",
@@ -333,8 +334,9 @@
 		{
 			"label": "Stop Docker MCP Services",
 			"type": "shell",
-			"command": "docker-compose",
+			"command": "docker",
 			"args": [
+				"compose",
 				"-f",
 				"docker-compose.mcp.yml",
 				"down"
@@ -489,6 +491,99 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Stop MCP Dashboard",
+			"type": "shell",
+			"command": "pkill",
+			"args": [
+				"-f",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Run MCP CLI Tool",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"mcp_cli.py",
+				"${input:mcp_category}",
+				"${input:mcp_tool}",
+				"${input:mcp_args}"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "List MCP CLI Categories",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"mcp_cli.py",
+				"--list-categories"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Run MCP Dashboard Playwright Tests",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"mcp_dashboard_tests.py",
+				"--headless",
+				"--output",
+				"test_results.json"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Start Docker MCP Server",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"run",
+				"-d",
+				"--name",
+				"mcp-server",
+				"-p",
+				"8000:8000",
+				"-v",
+				"${workspaceFolder}:/app",
+				"ipfs-datasets-mcp"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Stop Docker MCP Server",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"stop",
+				"mcp-server",
+				"&&",
+				"docker",
+				"rm",
+				"mcp-server"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
 		}
 	],
 	"inputs": [
@@ -511,6 +606,35 @@
 			"id": "toolName",
 			"description": "Tool name",
 			"default": "load_dataset",
+			"type": "promptString"
+		},
+		{
+			"id": "mcp_category",
+			"description": "MCP Tool Category",
+			"default": "dataset_tools",
+			"type": "pickString",
+			"options": [
+				"dataset_tools",
+				"ipfs_tools",
+				"vector_tools",
+				"graph_tools",
+				"audit_tools",
+				"analysis_tools",
+				"embedding_tools",
+				"media_tools",
+				"admin_tools"
+			]
+		},
+		{
+			"id": "mcp_tool",
+			"description": "MCP Tool Name",
+			"default": "load_dataset",
+			"type": "promptString"
+		},
+		{
+			"id": "mcp_args",
+			"description": "MCP Tool Arguments (--key value format)",
+			"default": "--source test --format json",
 			"type": "promptString"
 		}
 	]

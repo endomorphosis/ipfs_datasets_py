@@ -9,13 +9,11 @@
     <link href="{{ url_for('static', filename='admin/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='admin/css/dashboard.css') }}" rel="stylesheet">
     
-    <!-- Leaflet CSS for maps -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
+    <!-- Leaflet CSS for maps (local-first) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
     
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
     
     <!-- Investigation-specific styles -->
     <style>
@@ -973,9 +971,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+    <script>if (!window.L) { var lf=document.createElement('script'); lf.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; document.head.appendChild(lf);} </script>
     <script src="{{ url_for('static', filename='admin/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='admin/js/unified-investigation-mcp-sdk.js') }}"></script>
     
