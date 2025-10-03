@@ -380,6 +380,9 @@ class MCPDashboard(AdminDashboard):
             self._setup_rag_query_routes()
         if self.mcp_config and self.mcp_config.enable_investigation:
             self._setup_investigation_routes()
+        
+        # Set up caselaw/legal text to deontic logic routes (always enabled)
+        self._setup_caselaw_routes()
     
     def _setup_graphrag_routes(self) -> None:
         """Set up GraphRAG processing routes."""

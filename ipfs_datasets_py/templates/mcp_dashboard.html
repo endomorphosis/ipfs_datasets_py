@@ -1002,6 +1002,22 @@
                 <i class="fas fa-file-alt"></i>System Logs
             </a>
         </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Legal & Logic Systems</div>
+            <a href="/mcp/caselaw" class="nav-link">
+                <i class="fas fa-gavel"></i>Caselaw Analysis
+            </a>
+            <a href="#" class="nav-link" data-target="text-to-fol">
+                <i class="fas fa-brain"></i>Text to First-Order Logic
+            </a>
+            <a href="#" class="nav-link" data-target="legal-to-deontic">
+                <i class="fas fa-balance-scale"></i>Legal Text to Deontic Logic
+            </a>
+            <a href="#" class="nav-link" data-target="permission-checker">
+                <i class="fas fa-shield-alt"></i>Permission Checker
+            </a>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -2185,6 +2201,228 @@
                     <div id="logs-results" class="results-panel log-viewer">
                         <div class="result-header">System Logs Console Ready</div>
                         <div class="result-item">ℹ Click 'Load Logs' to view system log entries...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Text to First-Order Logic Section -->
+            <div id="text-to-fol" class="content-section">
+                <div class="tool-section">
+                    <h2><i class="fas fa-brain"></i> Text to First-Order Logic Converter</h2>
+                    <p class="text-muted">Convert natural language text into formal First-Order Logic (FOL) representations for automated reasoning and theorem proving.</p>
+                    
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-edit"></i>Input Text</h3>
+                            <div class="form-group">
+                                <label for="fol-input-text">Natural Language Text</label>
+                                <textarea class="form-control" id="fol-input-text" rows="6" placeholder="Enter natural language statements... 
+Example: All humans are mortal. Socrates is a human."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="fol-output-format">Output Format</label>
+                                <select class="form-select" id="fol-output-format">
+                                    <option value="json">JSON</option>
+                                    <option value="symbolic">Symbolic</option>
+                                    <option value="prolog">Prolog</option>
+                                    <option value="tptp">TPTP</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="fol-confidence">Confidence Threshold</label>
+                                <input type="range" class="form-range" id="fol-confidence" min="0" max="100" value="70">
+                                <small class="text-muted">Current: <span id="fol-confidence-value">0.70</span></small>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="convertToFOL()">
+                                <i class="fas fa-brain me-2"></i>Convert to FOL
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-cog"></i>Advanced Options</h3>
+                            <div class="form-group">
+                                <label for="fol-domain-predicates">Domain Predicates (comma-separated)</label>
+                                <input type="text" class="form-control" id="fol-domain-predicates" placeholder="human, mortal, philosopher">
+                            </div>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="fol-include-metadata" checked>
+                                    <label class="form-check-label" for="fol-include-metadata">Include conversion metadata</label>
+                                </div>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong><i class="fas fa-info-circle"></i> About FOL Conversion</strong>
+                                <p class="mb-0 small">This tool extracts predicates, quantifiers, and logical operators from natural language to generate formal FOL formulas. The confidence threshold filters low-quality conversions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>FOL Conversion Results</h2>
+                    <div id="fol-results" class="results-panel">
+                        <div class="result-header">Waiting for input...</div>
+                        <div class="result-item">Enter text above and click 'Convert to FOL' to see results.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal Text to Deontic Logic Section -->
+            <div id="legal-to-deontic" class="content-section">
+                <div class="tool-section">
+                    <h2><i class="fas fa-balance-scale"></i> Legal Text to Deontic Logic Converter</h2>
+                    <p class="text-muted">Convert legal text (statutes, regulations, contracts) into temporal deontic logic for legal reasoning, compliance checking, and permission analysis.</p>
+                    
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-file-alt"></i>Legal Document Input</h3>
+                            <div class="form-group">
+                                <label for="deontic-input-text">Legal Text</label>
+                                <textarea class="form-control" id="deontic-input-text" rows="6" placeholder="Enter legal text...
+Example: Citizens must pay taxes by April 15th. Corporations are prohibited from engaging in price fixing."></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="deontic-jurisdiction">Jurisdiction</label>
+                                        <select class="form-select" id="deontic-jurisdiction">
+                                            <option value="us">United States</option>
+                                            <option value="eu">European Union</option>
+                                            <option value="uk">United Kingdom</option>
+                                            <option value="international">International</option>
+                                            <option value="general">General</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="deontic-doc-type">Document Type</label>
+                                        <select class="form-select" id="deontic-doc-type">
+                                            <option value="statute">Statute</option>
+                                            <option value="regulation">Regulation</option>
+                                            <option value="contract">Contract</option>
+                                            <option value="policy">Policy</option>
+                                            <option value="agreement">Agreement</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="convertToDeontic()">
+                                <i class="fas fa-gavel me-2"></i>Convert to Deontic Logic
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-sliders-h"></i>Analysis Options</h3>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="deontic-extract-obligations" checked>
+                                    <label class="form-check-label" for="deontic-extract-obligations">Extract obligation structures</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="deontic-include-exceptions" checked>
+                                    <label class="form-check-label" for="deontic-include-exceptions">Include exception handling</label>
+                                </div>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong><i class="fas fa-info-circle"></i> Deontic Logic Operators</strong>
+                                <ul class="mb-0 small">
+                                    <li><strong>O(φ)</strong> - Obligation: "must" φ</li>
+                                    <li><strong>P(φ)</strong> - Permission: "may" φ</li>
+                                    <li><strong>F(φ)</strong> - Prohibition: "must not" φ</li>
+                                </ul>
+                                <p class="mt-2 mb-0 small">These operators are combined with temporal constraints (deadlines, durations) and legal entities (agents, roles) to model legal requirements.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Deontic Logic Formulas</h2>
+                    <div id="deontic-results" class="results-panel">
+                        <div class="result-header">Waiting for input...</div>
+                        <div class="result-item">Enter legal text above and click 'Convert to Deontic Logic' to see formulas.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permission Checker Section -->
+            <div id="permission-checker" class="content-section">
+                <div class="tool-section">
+                    <h2><i class="fas fa-shield-alt"></i> Permission Checker</h2>
+                    <p class="text-muted">Check whether a user/entity has permission to perform an action based on deontic logic axioms derived from legal documents.</p>
+                    
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-user-check"></i>Permission Query</h3>
+                            <div class="form-group">
+                                <label for="permission-agent">Agent/Entity</label>
+                                <input type="text" class="form-control" id="permission-agent" placeholder="e.g., John Doe, Acme Corp">
+                            </div>
+                            <div class="form-group">
+                                <label for="permission-action">Action</label>
+                                <input type="text" class="form-control" id="permission-action" placeholder="e.g., access confidential data, sign contract">
+                            </div>
+                            <div class="form-group">
+                                <label for="permission-context">Temporal Context</label>
+                                <input type="datetime-local" class="form-control" id="permission-context">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="permission-jurisdiction">Jurisdiction</label>
+                                        <select class="form-select" id="permission-jurisdiction">
+                                            <option value="Federal">Federal</option>
+                                            <option value="State">State</option>
+                                            <option value="Local">Local</option>
+                                            <option value="International">International</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="permission-domain">Legal Domain</label>
+                                        <select class="form-select" id="permission-domain">
+                                            <option value="general">General</option>
+                                            <option value="contract">Contract Law</option>
+                                            <option value="corporate">Corporate Law</option>
+                                            <option value="employment">Employment Law</option>
+                                            <option value="privacy">Privacy Law</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="checkPermission()">
+                                <i class="fas fa-check-circle me-2"></i>Check Permission
+                            </button>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-info-circle"></i>System Information</h3>
+                            <div class="alert alert-success">
+                                <strong><i class="fas fa-database"></i> Theorem Store Status</strong>
+                                <p class="mb-1 small">Theorems loaded: <span id="theorem-count">0</span></p>
+                                <p class="mb-1 small">Jurisdictions: <span id="jurisdiction-count">0</span></p>
+                                <p class="mb-0 small">Last updated: <span id="theorem-last-updated">Never</span></p>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong><i class="fas fa-lightbulb"></i> How It Works</strong>
+                                <p class="mb-0 small">The permission checker uses temporal deontic logic theorems extracted from legal documents. It queries the RAG store to find relevant axioms and uses theorem provers (Z3, CVC5, SymbolicAI) to determine if the action is permitted, prohibited, or obligatory for the given agent and context.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Permission Analysis Results</h2>
+                    <div id="permission-results" class="results-panel">
+                        <div class="result-header">Waiting for query...</div>
+                        <div class="result-item">Enter agent and action details above, then click 'Check Permission' to analyze.</div>
                     </div>
                 </div>
             </div>
@@ -3683,9 +3921,250 @@
             loadSystemLogs();
         }
 
+        // Text to FOL Conversion
+        async function convertToFOL() {
+            const text = document.getElementById('fol-input-text').value.trim();
+            if (!text) {
+                alert('Please enter some text to convert');
+                return;
+            }
+
+            const outputFormat = document.getElementById('fol-output-format').value;
+            const confidence = parseFloat(document.getElementById('fol-confidence').value) / 100;
+            const includeMetadata = document.getElementById('fol-include-metadata').checked;
+            const domainPredicates = document.getElementById('fol-domain-predicates').value
+                .split(',')
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+
+            const resultsPanel = document.getElementById('fol-results');
+            resultsPanel.innerHTML = '<div class="result-item">🔄 Converting to First-Order Logic...</div>';
+
+            try {
+                const response = await fetch('/api/mcp/tools/dataset_tools/text_to_fol/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text_input: text,
+                        domain_predicates: domainPredicates.length > 0 ? domainPredicates : null,
+                        output_format: outputFormat,
+                        confidence_threshold: confidence,
+                        include_metadata: includeMetadata
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.fol_formulas) {
+                    let html = `<div class="result-header">✅ Successfully converted ${data.fol_formulas.length} statements</div>`;
+                    
+                    data.fol_formulas.forEach((formula, idx) => {
+                        html += `
+                            <div class="result-item">
+                                <strong>Statement ${idx + 1}:</strong> ${formula.original_text}<br>
+                                <strong>FOL Formula:</strong> <code>${formula.fol_formula}</code><br>
+                                <strong>Confidence:</strong> ${(formula.confidence * 100).toFixed(1)}%<br>
+                                ${formula.predicates_used ? `<strong>Predicates:</strong> ${formula.predicates_used.join(', ')}` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    if (data.summary) {
+                        html += `
+                            <div class="result-item">
+                                <strong>Summary:</strong><br>
+                                Total statements: ${data.summary.total_statements}<br>
+                                Successful: ${data.summary.successful_conversions}<br>
+                                Average confidence: ${(data.summary.average_confidence * 100).toFixed(1)}%
+                            </div>
+                        `;
+                    }
+                    
+                    resultsPanel.innerHTML = html;
+                } else {
+                    resultsPanel.innerHTML = `<div class="result-item result-error">❌ Conversion failed: ${data.message || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Update confidence slider value display
+        document.getElementById('fol-confidence')?.addEventListener('input', function() {
+            document.getElementById('fol-confidence-value').textContent = (this.value / 100).toFixed(2);
+        });
+
+        // Legal Text to Deontic Logic Conversion
+        async function convertToDeontic() {
+            const text = document.getElementById('deontic-input-text').value.trim();
+            if (!text) {
+                alert('Please enter legal text to convert');
+                return;
+            }
+
+            const jurisdiction = document.getElementById('deontic-jurisdiction').value;
+            const docType = document.getElementById('deontic-doc-type').value;
+            const extractObligations = document.getElementById('deontic-extract-obligations').checked;
+            const includeExceptions = document.getElementById('deontic-include-exceptions').checked;
+
+            const resultsPanel = document.getElementById('deontic-results');
+            resultsPanel.innerHTML = '<div class="result-item">🔄 Converting to Deontic Logic...</div>';
+
+            try {
+                const response = await fetch('/api/mcp/tools/dataset_tools/legal_text_to_deontic/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        legal_text: text,
+                        jurisdiction: jurisdiction,
+                        document_type: docType,
+                        output_format: 'json',
+                        extract_obligations: extractObligations,
+                        include_exceptions: includeExceptions
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.deontic_formulas) {
+                    let html = `<div class="result-header">✅ Extracted ${data.deontic_formulas.length} deontic formulas</div>`;
+                    
+                    data.deontic_formulas.forEach((formula, idx) => {
+                        const operatorClass = formula.operator.toLowerCase();
+                        html += `
+                            <div class="result-item">
+                                <strong>Formula ${idx + 1}:</strong><br>
+                                <span class="badge bg-primary">${formula.operator}</span> 
+                                ${formula.proposition}<br>
+                                ${formula.agent ? `<strong>Agent:</strong> ${formula.agent}<br>` : ''}
+                                ${formula.temporal_constraint ? `<strong>Temporal:</strong> ${formula.temporal_constraint}<br>` : ''}
+                                <strong>Confidence:</strong> ${(formula.confidence * 100).toFixed(1)}%
+                            </div>
+                        `;
+                    });
+                    
+                    if (data.summary) {
+                        html += `
+                            <div class="result-item">
+                                <strong>Summary:</strong><br>
+                                Total formulas: ${data.summary.total_formulas || data.deontic_formulas.length}<br>
+                                Obligations: ${data.summary.obligations || 0}<br>
+                                Permissions: ${data.summary.permissions || 0}<br>
+                                Prohibitions: ${data.summary.prohibitions || 0}
+                            </div>
+                        `;
+                    }
+                    
+                    resultsPanel.innerHTML = html;
+                } else {
+                    resultsPanel.innerHTML = `<div class="result-item result-error">❌ Conversion failed: ${data.message || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Permission Checker
+        async function checkPermission() {
+            const agent = document.getElementById('permission-agent').value.trim();
+            const action = document.getElementById('permission-action').value.trim();
+            
+            if (!agent || !action) {
+                alert('Please enter both agent and action');
+                return;
+            }
+
+            const temporalContext = document.getElementById('permission-context').value;
+            const jurisdiction = document.getElementById('permission-jurisdiction').value;
+            const legalDomain = document.getElementById('permission-domain').value;
+
+            const resultsPanel = document.getElementById('permission-results');
+            resultsPanel.innerHTML = '<div class="result-item">🔄 Checking permission...</div>';
+
+            try {
+                // First, construct a query document
+                const documentText = `${agent} wants to ${action}`;
+                
+                const response = await fetch('/api/mcp/caselaw/check_document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_text: documentText,
+                        jurisdiction: jurisdiction,
+                        legal_domain: legalDomain,
+                        temporal_context: temporalContext || new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                
+                let html = '<div class="result-header">Permission Analysis Results</div>';
+                
+                if (data.is_consistent === true) {
+                    html += `
+                        <div class="result-item" style="background-color: #d4edda; border-color: #c3e6cb;">
+                            <strong>✅ PERMITTED</strong><br>
+                            The action appears to be consistent with known legal rules.<br>
+                            <strong>Confidence:</strong> ${(data.confidence_score * 100).toFixed(1)}%
+                        </div>
+                    `;
+                } else if (data.is_consistent === false) {
+                    html += `
+                        <div class="result-item" style="background-color: #f8d7da; border-color: #f5c6cb;">
+                            <strong>❌ PROHIBITED or INCONSISTENT</strong><br>
+                            The action may violate legal rules or create conflicts.<br>
+                            <strong>Conflicts found:</strong> ${data.conflicts || 0}<br>
+                            <strong>Confidence:</strong> ${(data.confidence_score * 100).toFixed(1)}%
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="result-item" style="background-color: #fff3cd; border-color: #ffeaa7;">
+                            <strong>⚠️ UNCERTAIN</strong><br>
+                            Unable to determine permission status definitively.<br>
+                            This may require manual legal review.
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="result-item">
+                        <strong>Analysis Details:</strong><br>
+                        Formulas extracted: ${data.formulas_extracted || 0}<br>
+                        Issues found: ${data.issues_found || 0}<br>
+                        Processing time: ${data.processing_time ? (data.processing_time * 1000).toFixed(0) + 'ms' : 'N/A'}
+                    </div>
+                `;
+                
+                resultsPanel.innerHTML = html;
+            } catch (error) {
+                resultsPanel.innerHTML = `<div class="result-item result-error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Load theorem store statistics
+        async function loadTheoremStats() {
+            try {
+                const response = await fetch('/api/mcp/caselaw/check_document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_text: 'status check',
+                        get_stats_only: true
+                    })
+                });
+                
+                // This is a simple status check - we'd need a dedicated endpoint for real stats
+                document.getElementById('theorem-last-updated').textContent = new Date().toLocaleString();
+            } catch (error) {
+                console.error('Failed to load theorem stats:', error);
+            }
+        }
+
         // Initialize tool categories on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadToolCategories();
+            loadTheoremStats();
         });
     </script>
 </body>
