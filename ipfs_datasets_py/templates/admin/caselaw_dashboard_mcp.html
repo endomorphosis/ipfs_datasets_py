@@ -9,6 +9,34 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Fix sidebar overlap issue */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            width: 16.666667%; /* col-md-2 */
+        }
+        
+        /* Main content offset to prevent overlap */
+        main[role="main"] {
+            margin-left: 16.666667%; /* offset by sidebar width */
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 767.98px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+            }
+            main[role="main"] {
+                margin-left: 0;
+            }
+        }
+        
         .caselaw-header { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
