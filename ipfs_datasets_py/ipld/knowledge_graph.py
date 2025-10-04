@@ -11,6 +11,16 @@ Features:
 - Vector-augmented graph queries
 - Cross-document reasoning capabilities
 - Export to/import from CAR files
+- Automatic chunking for large graphs (prevents IPFS 1MiB block limit errors)
+
+Large Graph Handling:
+When a knowledge graph grows large (e.g., 10,000+ entities), the root node
+metadata can exceed IPFS's 1MiB block size limit. This module automatically
+detects when data arrays (entity_ids, entity_cids, relationship_ids,
+relationship_cids) exceed the threshold (800KB by default) and stores them
+in separate IPLD blocks, referencing them by CID in the root node. This
+ensures the root block stays well under the 1MB limit while maintaining
+full functionality and backward compatibility.
 """
 
 import os
