@@ -540,13 +540,33 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="visualization-tab" data-bs-toggle="tab" data-bs-target="#visualization" type="button" role="tab">
-                            <i class="fas fa-chart-line"></i> Theorem Visualization
+                        <button class="nav-link" id="precedent-search-tab" data-bs-toggle="tab" data-bs-target="#precedent-search" type="button" role="tab">
+                            <i class="fas fa-balance-scale"></i> Case Precedent Search
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="system-info-tab" data-bs-toggle="tab" data-bs-target="#system-info" type="button" role="tab">
-                            <i class="fas fa-info-circle"></i> System Architecture
+                        <button class="nav-link" id="conflict-analyzer-tab" data-bs-toggle="tab" data-bs-target="#conflict-analyzer" type="button" role="tab">
+                            <i class="fas fa-exclamation-triangle"></i> Conflict Analyzer
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="citation-network-tab" data-bs-toggle="tab" data-bs-target="#citation-network" type="button" role="tab">
+                            <i class="fas fa-project-diagram"></i> Citation Network
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="brief-generator-tab" data-bs-toggle="tab" data-bs-target="#brief-generator" type="button" role="tab">
+                            <i class="fas fa-file-contract"></i> Legal Brief Generator
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="jurisdiction-compare-tab" data-bs-toggle="tab" data-bs-target="#jurisdiction-compare" type="button" role="tab">
+                            <i class="fas fa-exchange-alt"></i> Jurisdiction Comparison
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab">
+                            <i class="fas fa-history"></i> Timeline Analysis
                         </button>
                     </li>
                 </ul>
@@ -756,6 +776,565 @@
                                 
                                 <div id="bulkResults" class="mt-4" style="display: none;">
                                     <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Case Precedent Search Tab -->
+                    <div class="tab-pane fade" id="precedent-search" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-balance-scale"></i> Case Precedent Search</h5>
+                                <small class="text-muted">Find similar cases and binding precedents using GraphRAG</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="precedentSearchForm">
+                                    <div class="mb-3">
+                                        <label for="precedentQuery" class="form-label">Legal Issue or Fact Pattern</label>
+                                        <textarea class="form-control" id="precedentQuery" rows="4" 
+                                                  placeholder="Describe the legal issue, facts, or cite a case you want to find similar precedents for...
+Example: 'Employee terminated without notice after reporting safety violations'"></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="precedentJurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="precedentJurisdiction">
+                                                <option value="all">All Jurisdictions</option>
+                                                <option value="Federal">Federal</option>
+                                                <option value="State">State</option>
+                                                <option value="Supreme Court">Supreme Court</option>
+                                                <option value="Circuit Court">Circuit Court</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="precedentDomain" class="form-label">Legal Area</label>
+                                            <select class="form-select" id="precedentDomain">
+                                                <option value="all">All Areas</option>
+                                                <option value="Employment">Employment Law</option>
+                                                <option value="Contract">Contract Law</option>
+                                                <option value="Tort">Tort Law</option>
+                                                <option value="Constitutional">Constitutional Law</option>
+                                                <option value="IP">Intellectual Property</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="dateRange" class="form-label">Date Range</label>
+                                            <select class="form-select" id="dateRange">
+                                                <option value="all">All Time</option>
+                                                <option value="recent">Last 5 Years</option>
+                                                <option value="decade">Last 10 Years</option>
+                                                <option value="landmark">Landmark Cases Only</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="precedentLimit" class="form-label">Results</label>
+                                            <input type="number" class="form-control" id="precedentLimit" value="10" min="1" max="50">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Search Precedents
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportPrecedents">
+                                            <i class="fas fa-download"></i> Export Results
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="precedentSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Searching precedents...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing case law database...</p>
+                                </div>
+                                
+                                <div id="precedentResults" class="mt-4" style="display: none;">
+                                    <!-- Results populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Conflict Analyzer Tab -->
+                    <div class="tab-pane fade" id="conflict-analyzer" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Legal Conflict Analyzer</h5>
+                                <small class="text-muted">Identify conflicting laws, precedents, and legal principles</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> How It Works</h6>
+                                    <p class="mb-0">This tool uses temporal deontic logic to identify conflicts between obligations, permissions, and prohibitions across different jurisdictions and time periods.</p>
+                                </div>
+                                
+                                <form id="conflictAnalyzerForm">
+                                    <div class="mb-3">
+                                        <label for="conflictArea" class="form-label">Legal Area to Analyze</label>
+                                        <select class="form-select" id="conflictArea">
+                                            <option value="Employment">Employment Law</option>
+                                            <option value="Contract">Contract Law</option>
+                                            <option value="IP">Intellectual Property</option>
+                                            <option value="Privacy">Privacy & Data Protection</option>
+                                            <option value="Environmental">Environmental Law</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Jurisdiction 1</label>
+                                            <select class="form-select" id="conflict Jurisdiction1">
+                                                <option value="Federal">Federal</option>
+                                                <option value="California">California</option>
+                                                <option value="New York">New York</option>
+                                                <option value="Texas">Texas</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Jurisdiction 2</label>
+                                            <select class="form-select" id="conflictJurisdiction2">
+                                                <option value="State">State (General)</option>
+                                                <option value="California">California</option>
+                                                <option value="New York">New York</option>
+                                                <option value="Texas">Texas</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Conflict Types to Detect</label>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="conflictObligation" checked>
+                                                    <label class="form-check-label" for="conflictObligation">
+                                                        Contradictory Obligations
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="conflictPermission" checked>
+                                                    <label class="form-check-label" for="conflictPermission">
+                                                        Permission vs Prohibition
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="conflictTemporal" checked>
+                                                    <label class="form-check-label" for="conflictTemporal">
+                                                        Temporal Conflicts
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Analyze Conflicts
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="conflictSpinner">
+                                    <div class="spinner-border text-danger" role="status">
+                                        <span class="visually-hidden">Analyzing conflicts...</span>
+                                    </div>
+                                    <p class="mt-2">Checking for legal conflicts...</p>
+                                </div>
+                                
+                                <div id="conflictResults" class="mt-4" style="display: none;">
+                                    <!-- Results populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Citation Network Tab -->
+                    <div class="tab-pane fade" id="citation-network" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-project-diagram"></i> Citation Network Analysis</h5>
+                                <small class="text-muted">Visualize how cases cite each other and trace legal evolution</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="citationNetworkForm">
+                                    <div class="mb-3">
+                                        <label for="rootCase" class="form-label">Root Case or Legal Principle</label>
+                                        <input type="text" class="form-control" id="rootCase" 
+                                               placeholder="Enter case name or legal principle (e.g., 'Miranda v. Arizona' or 'Due Process')">
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="networkDepth" class="form-label">Network Depth</label>
+                                            <select class="form-select" id="networkDepth">
+                                                <option value="1">Direct Citations Only</option>
+                                                <option value="2" selected>2 Levels</option>
+                                                <option value="3">3 Levels</option>
+                                                <option value="4">4 Levels (Comprehensive)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="networkDirection" class="form-label">Direction</label>
+                                            <select class="form-select" id="networkDirection">
+                                                <option value="both">Both (Citing & Cited)</option>
+                                                <option value="forward">Forward (Cases Citing This)</option>
+                                                <option value="backward">Backward (Cases This Cites)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="networkFilter" class="form-label">Filter</label>
+                                            <select class="form-select" id="networkFilter">
+                                                <option value="all">All Citations</option>
+                                                <option value="affirm">Affirming Only</option>
+                                                <option value="distinguish">Distinguishing Only</option>
+                                                <option value="overrule">Overruling Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-project-diagram"></i> Generate Network
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportNetwork">
+                                            <i class="fas fa-download"></i> Export Graph
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="networkSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Building citation network...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing citation relationships...</p>
+                                </div>
+                                
+                                <div id="networkResults" class="mt-4" style="display: none;">
+                                    <div class="alert alert-success">
+                                        <h6><i class="fas fa-check-circle"></i> Citation Network Generated</h6>
+                                        <p class="mb-0">Found <strong id="networkNodeCount">0</strong> related cases with <strong id="networkEdgeCount">0</strong> citations</p>
+                                    </div>
+                                    <div id="networkVisualization" style="height: 500px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                                        <!-- Network visualization will be rendered here -->
+                                        <div class="d-flex align-items-center justify-content-center h-100">
+                                            <div class="text-center">
+                                                <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">Network visualization will appear here</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Legal Brief Generator Tab -->
+                    <div class="tab-pane fade" id="brief-generator" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-file-contract"></i> AI-Assisted Legal Brief Generator</h5>
+                                <small class="text-muted">Generate legal arguments backed by relevant caselaw and precedents</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="briefGeneratorForm">
+                                    <div class="mb-3">
+                                        <label for="briefIssue" class="form-label">Legal Issue</label>
+                                        <textarea class="form-control" id="briefIssue" rows="3" 
+                                                  placeholder="Describe the legal issue you need to argue...
+Example: 'Whether an employment contract requiring 30 days notice is enforceable when employee was constructively discharged'"></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="briefPosition" class="form-label">Your Position</label>
+                                            <select class="form-select" id="briefPosition">
+                                                <option value="plaintiff">Plaintiff/Petitioner</option>
+                                                <option value="defendant">Defendant/Respondent</option>
+                                                <option value="neutral">Neutral Analysis</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="briefJurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="briefJurisdiction">
+                                                <option value="Federal">Federal</option>
+                                                <option value="State">State</option>
+                                                <option value="Supreme Court">Supreme Court</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Key Facts (Optional)</label>
+                                        <textarea class="form-control" id="briefFacts" rows="3" 
+                                                  placeholder="Enter key facts that are material to your argument..."></textarea>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Brief Sections to Generate</label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefSummary" checked>
+                                                    <label class="form-check-label" for="briefSummary">
+                                                        Summary of Argument
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefPrecedents" checked>
+                                                    <label class="form-check-label" for="briefPrecedents">
+                                                        Relevant Precedents
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefCounterArguments" checked>
+                                                    <label class="form-check-label" for="briefCounterArguments">
+                                                        Counter-Arguments
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefConclusion" checked>
+                                                    <label class="form-check-label" for="briefConclusion">
+                                                        Conclusion
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-magic"></i> Generate Brief
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportBrief">
+                                            <i class="fas fa-file-word"></i> Export to Word
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="copyBrief">
+                                            <i class="fas fa-copy"></i> Copy to Clipboard
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="briefSpinner">
+                                    <div class="spinner-border text-success" role="status">
+                                        <span class="visually-hidden">Generating brief...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing precedents and generating argument...</p>
+                                </div>
+                                
+                                <div id="briefResults" class="mt-4" style="display: none;">
+                                    <!-- Generated brief will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Jurisdiction Comparison Tab -->
+                    <div class="tab-pane fade" id="jurisdiction-compare" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-exchange-alt"></i> Multi-Jurisdiction Comparison</h5>
+                                <small class="text-muted">Compare how different jurisdictions handle the same legal issue</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="jurisdictionCompareForm">
+                                    <div class="mb-3">
+                                        <label for="compareIssue" class="form-label">Legal Issue to Compare</label>
+                                        <input type="text" class="form-control" id="compareIssue" 
+                                               placeholder="E.g., 'Non-compete agreements', 'Right to work laws', 'Data breach notification'">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Jurisdictions to Compare (2-5)</label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionFederal" checked>
+                                                    <label class="form-check-label" for="jurisdictionFederal">Federal</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionCA">
+                                                    <label class="form-check-label" for="jurisdictionCA">California</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionNY">
+                                                    <label class="form-check-label" for="jurisdictionNY">New York</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionTX">
+                                                    <label class="form-check-label" for="jurisdictionTX">Texas</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionFL">
+                                                    <label class="form-check-label" for="jurisdictionFL">Florida</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionIL">
+                                                    <label class="form-check-label" for="jurisdictionIL">Illinois</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionMA">
+                                                    <label class="form-check-label" for="jurisdictionMA">Massachusetts</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionWA">
+                                                    <label class="form-check-label" for="jurisdictionWA">Washington</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionCO">
+                                                    <label class="form-check-label" for="jurisdictionCO">Colorado</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionSupreme">
+                                                    <label class="form-check-label" for="jurisdictionSupreme">US Supreme Court</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdiction9th">
+                                                    <label class="form-check-label" for="jurisdiction9th">9th Circuit</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-exchange-alt"></i> Compare Jurisdictions
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportComparison">
+                                            <i class="fas fa-table"></i> Export Comparison Table
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="compareSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Comparing jurisdictions...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing laws across jurisdictions...</p>
+                                </div>
+                                
+                                <div id="compareResults" class="mt-4" style="display: none;">
+                                    <!-- Comparison table will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Analysis Tab -->
+                    <div class="tab-pane fade" id="timeline" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-history"></i> Legal Evolution Timeline</h5>
+                                <small class="text-muted">Track how laws and interpretations have evolved over time</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="timelineForm">
+                                    <div class="mb-3">
+                                        <label for="timelineIssue" class="form-label">Legal Issue or Doctrine</label>
+                                        <input type="text" class="form-control" id="timelineIssue" 
+                                               placeholder="E.g., 'Employment at-will doctrine', 'Fourth Amendment privacy'">
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="timelineStart" class="form-label">Start Year</label>
+                                            <input type="number" class="form-control" id="timelineStart" value="1950" min="1800" max="2024">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="timelineEnd" class="form-label">End Year</label>
+                                            <input type="number" class="form-control" id="timelineEnd" value="2024" min="1800" max="2024">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="timelineGranularity" class="form-label">Granularity</label>
+                                            <select class="form-select" id="timelineGranularity">
+                                                <option value="year">By Year</option>
+                                                <option value="decade" selected>By Decade</option>
+                                                <option value="milestone">Milestones Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Include in Timeline</label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineLegislation" checked>
+                                                    <label class="form-check-label" for="timelineLegislation">
+                                                        Legislation
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineCases" checked>
+                                                    <label class="form-check-label" for="timelineCases">
+                                                        Key Cases
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineRegulations">
+                                                    <label class="form-check-label" for="timelineRegulations">
+                                                        Regulations
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineOverturns">
+                                                    <label class="form-check-label" for="timelineOverturns">
+                                                        Overturned/Amended
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-history"></i> Generate Timeline
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportTimeline">
+                                            <i class="fas fa-image"></i> Export Timeline
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="timelineSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Building timeline...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing legal evolution...</p>
+                                </div>
+                                
+                                <div id="timelineResults" class="mt-4" style="display: none;">
+                                    <div id="timelineVisualization" style="min-height: 400px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: #f8f9fa;">
+                                        <!-- Timeline visualization will be rendered here -->
+                                        <div class="text-center">
+                                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted">Timeline will appear here</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
