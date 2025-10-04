@@ -86,7 +86,11 @@ class OCREngine(ABC):
         - Text extraction results should follow a consistent dictionary format
     """
     
-    def __init__(self, name: str, mock_dict: dict[str, Any] | None = None) -> None:
+    def __init__(self, 
+                 name: str, 
+                 logger: logging.Logger = logger,
+                 mock_dict: dict[str, Any] | None = None
+                 ) -> None:
         """
         Initialize an OCR engine instance with comprehensive setup and validation.
 
@@ -106,6 +110,11 @@ class OCREngine(ABC):
             'easyocr', 'trocr'). Must be a non-empty string that clearly identifies
             the underlying OCR technology. This name is used for logging, debugging,
             and engine selection in multi-engine scenarios.
+            logger (logging.Logger, optional): Logger instance for logging messages.
+                Defaults to the module-level logger if not provided.
+            mock_dict (dict[str, Any] | None, optional): Optional dictionary for
+                injecting mock attributes for testing purposes. Keys should be attribute
+                names and values should be the corresponding mock values.
 
         Raises:
             TypeError: If name is None or not a string type. This ensures type safety
@@ -126,8 +135,8 @@ class OCREngine(ABC):
         Examples:
             >>> # Concrete implementation example
             >>> class CustomOCR(OCREngine):
-            ...     def __init__(self):
-            ...         super().__init__("custom_ocr")  # Calls this constructor
+            ...     def __init__(self, logger=logger, mock_dict=None):
+            ...         super().__init__("custom_ocr", logger=logger, mock_dict=mock_dict)  # Calls this constructor
             ...     
             ...     def _initialize(self):
             ...         # Perform custom initialization
@@ -137,24 +146,28 @@ class OCREngine(ABC):
             - All concrete OCR engine subclasses must call this constructor
             - Initialization failures are logged but do not raise exceptions
             - Engine availability should be checked before use via is_available()
-            - The _initialize() method is responsible for setting available = True
             - Thread-safe initialization ensures consistent engine state
         """
         if name is None:
             raise TypeError("OCR engine name cannot be None")
         if not isinstance(name, str):
             raise TypeError(f"OCR engine name must be a string, got {type(name).__name__}")
-        
+        if logger is None:
+            raise TypeError("Logger instance cannot be None")
+
         self.name = name
+        self.logger = logger
         self.available = False
         try:
             self._initialize()
         except Exception as e:
-            logger.warning(f"Failed to initialize OCR engine '{name}': {e}")
+            self.logger.warning(f"Failed to initialize OCR engine '{name}': {e}")
             self.available = False
 
         if isinstance(mock_dict, dict):
             for key, value in mock_dict.items():
+                if not hasattr(self, key):
+                    raise AttributeError(f"Mock attribute '{key}' does not exist on {self.__class__.__name__}")
                 try:
                     setattr(self, key, value)
                 except Exception as e:
@@ -368,7 +381,7 @@ class SuryaOCR(OCREngine):
         - Falls back gracefully if Surya framework not available
     """
     
-    def __init__(self) -> None:
+    def __init__(self, logger: logging.Logger = logger, mock_dict=None) -> None:
         """
         Initialize the Surya OCR engine with transformer-based architecture.
 
@@ -401,7 +414,7 @@ class SuryaOCR(OCREngine):
             ...     result = surya_engine.extract_text(image_data)
             ...     print(f"Extracted: {result['text']}")
         """
-        super().__init__("surya")
+        super().__init__("surya", logger=logger, mock_dict=mock_dict)
     
     def _initialize(self) -> None:
         """
@@ -446,13 +459,12 @@ class SuryaOCR(OCREngine):
             self.recognition_predictor = self.surya.recognition.RecognitionPredictor()
 
             self.available = True
-            logger.info("Surya OCR engine initialized successfully")
-            
+            self.logger.info("Surya OCR engine initialized successfully")
         except ImportError as e:
-            logger.warning(f"Surya OCR not available: {e}")
+            self.logger.warning(f"Surya OCR not available: {e}")
             self.available = False
         except Exception as e:
-            logger.error(f"Failed to initialize Surya OCR: {e}")
+            self.logger.error(f"Failed to initialize Surya OCR: {e}")
             self.available = False
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
@@ -539,7 +551,7 @@ class SuryaOCR(OCREngine):
             }
             
         except Exception as e:
-            logger.error(f"Surya OCR extraction failed: {e}")
+            self.logger.error(f"Surya OCR extraction failed: {e}")
             raise
 
 
@@ -595,7 +607,7 @@ class TesseractOCR(OCREngine):
         - Preprocessing pipeline optimized for PDF-derived images
     """
     
-    def __init__(self) -> None:
+    def __init__(self, logger=logger, mock_dict=None) -> None:
         """
         Initialize the Tesseract OCR engine with comprehensive configuration and dependency validation.
 
@@ -639,7 +651,7 @@ class TesseractOCR(OCREngine):
             - Initialization is lightweight as models are loaded on-demand
             - Configuration can be customized per extraction call
         """
-        super().__init__("tesseract")
+        super().__init__("tesseract", logger=logger, mock_dict=mock_dict)
     
     def _initialize(self) -> None:
         """
@@ -679,13 +691,13 @@ class TesseractOCR(OCREngine):
 
             self.pytesseract = pytesseract
             self.available = True
-            logger.info("Tesseract OCR engine initialized successfully")
+            self.logger.info("Tesseract OCR engine initialized successfully")
             
         except ImportError as e:
-            logger.warning(f"Tesseract OCR not available: {e}")
+            self.logger.warning(f"Tesseract OCR not available: {e}")
             self.available = False
         except Exception as e:
-            logger.error(f"Failed to initialize Tesseract OCR: {e}")
+            self.logger.error(f"Failed to initialize Tesseract OCR: {e}")
             self.available = False
     
     def extract_text(self, 
@@ -793,7 +805,7 @@ class TesseractOCR(OCREngine):
             }
             
         except Exception as e:
-            logger.error(f"Tesseract OCR extraction failed: {e}")
+            self.logger.error(f"Tesseract OCR extraction failed: {e}")
             raise
     
     def _preprocess_image(self, image: Image.Image) -> Image.Image:
@@ -908,7 +920,7 @@ class EasyOCR(OCREngine):
         - Supports automatic language detection without explicit configuration
     """
     
-    def __init__(self) -> None:
+    def __init__(self, logger=logger, mock_dict=None) -> None:
         """
         Initialize the EasyOCR engine for neural network-based text recognition.
 
@@ -953,7 +965,7 @@ class EasyOCR(OCREngine):
             - Memory intensive due to neural network models
             - Initialization may take longer on first run due to model downloads
         """
-        super().__init__("easyocr")
+        super().__init__("easyocr", logger=logger, mock_dict=mock_dict)
     
     def _initialize(self) -> None:
         """
@@ -982,13 +994,13 @@ class EasyOCR(OCREngine):
 
             self.reader = easyocr.Reader(['en'])  # Initialize with English
             self.available = True
-            logger.info("EasyOCR engine initialized successfully")
+            self.logger.info("EasyOCR engine initialized successfully")
             
         except ImportError as e:
-            logger.warning(f"EasyOCR not available: {e}")
+            self.logger.warning(f"EasyOCR not available: {e}")
             self.available = False
         except Exception as e:
-            logger.error(f"Failed to initialize EasyOCR: {e}")
+            self.logger.error(f"Failed to initialize EasyOCR: {e}")
             self.available = False
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
@@ -1061,7 +1073,7 @@ class EasyOCR(OCREngine):
             }
             
         except Exception as e:
-            logger.error(f"EasyOCR extraction failed: {e}")
+            self.logger.error(f"EasyOCR extraction failed: {e}")
             raise
 
 
@@ -1124,7 +1136,7 @@ class TrOCREngine(OCREngine):
         - Performs exceptionally well on challenging handwriting styles
     """
     
-    def __init__(self) -> None:
+    def __init__(self, logger=logger, mock_dict=None) -> None:
         """
         Initialize the TrOCR engine for transformer-based text recognition.
 
@@ -1163,7 +1175,7 @@ class TrOCREngine(OCREngine):
             - Memory intensive due to transformer model architecture
             - Initialization may take 30-60 seconds on first run
         """
-        super().__init__("trocr")
+        super().__init__("trocr", logger=logger, mock_dict=mock_dict)
 
     def _initialize(self) -> None:
         """Initialize the TrOCR (Transformers OCR) engine by loading the model and processor.
@@ -1205,13 +1217,13 @@ class TrOCREngine(OCREngine):
             self.model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-printed")
             
             self.available = True
-            logger.info("TrOCR engine initialized successfully")
+            self.logger.info("TrOCR engine initialized successfully")
             
         except ImportError as e:
-            logger.warning(f"TrOCR not available: {e}")
+            self.logger.warning(f"TrOCR not available: {e}")
             self.available = False
         except Exception as e:
-            logger.error(f"Failed to initialize TrOCR: {e}")
+            self.logger.error(f"Failed to initialize TrOCR: {e}")
             self.available = False
     
     def extract_text(self, image_data: bytes) -> Dict[str, Any]:
@@ -1274,7 +1286,7 @@ class TrOCREngine(OCREngine):
             # Re-raise ValueError for empty or invalid image data
             raise
         except Exception as e:
-            logger.error(f"TrOCR extraction failed: {e}")
+            self.logger.error(f"TrOCR extraction failed: {e}")
             raise
 
 
@@ -1351,7 +1363,7 @@ class MultiEngineOCR:
             cls.instance = super(MultiEngineOCR, cls).__new__(cls)
         return cls.instance
     
-    def __init__(self) -> None:
+    def __init__(self, logger=logger, mock_dict=None) -> None:
         """Initialize the OCR engine manager with all available OCR engines.
 
         Attempts to initialize and register multiple OCR engines including SuryaOCR,
@@ -1379,27 +1391,23 @@ class MultiEngineOCR:
             but do not prevent the manager from initializing with remaining engines.
         """
         self.engines = {}
+        self.logger = logger
 
         # Initialize engines
-        engine_classes = [
-            SuryaOCR,
-            TesseractOCR, 
-            EasyOCR,
-            TrOCREngine
-        ]
-        
+        engine_classes = [SuryaOCR, TesseractOCR, EasyOCR, TrOCREngine]
+
         for engine_class in engine_classes:
             try:
-                engine = engine_class()
+                engine = engine_class(logger=logger, mock_dict=mock_dict)
                 if engine.is_available():
-                    logger.info(f"OCR engine '{engine.name}' is available")
+                    self.logger.info(f"OCR engine '{engine.name}' is available")
                 else:
-                    logger.warning(f"OCR engine '{engine.name}' is not available")
+                    self.logger.warning(f"OCR engine '{engine.name}' is not available")
                 self.engines[engine.name] = engine
             except Exception as e:
-                logger.error(f"Failed to initialize {engine_class.__name__}: {e}")
+                self.logger.error(f"Failed to initialize {engine_class.__name__}: {e}")
         if not self.engines:
-            logger.warning("No OCR engines available!")
+            self.logger.warning("No OCR engines available!")
     
     def extract_with_ocr(self, 
                             image_data: bytes, 
@@ -1528,7 +1536,7 @@ class MultiEngineOCR:
         
         for engine_name in available_engines:
             try:
-                logger.info(f"Trying OCR with {engine_name}")
+                self.logger.info(f"Trying OCR with {engine_name}")
                 
                 result = self.engines[engine_name].extract_text(image_data)
                 result['engine'] = engine_name
@@ -1536,21 +1544,21 @@ class MultiEngineOCR:
 
                 # Check if result meets confidence threshold
                 if result.get('confidence', 0) >= confidence_threshold:
-                    logger.info(f"OCR successful with {engine_name}, confidence: {result['confidence']:.2f}")
+                    self.logger.info(f"OCR successful with {engine_name}, confidence: {result['confidence']:.2f}")
                     return result
                 
             except Exception as e:
-                logger.warning(f"OCR engine {engine_name} failed: {e}")
+                self.logger.warning(f"OCR engine {engine_name} failed: {e}")
                 continue
 
         # If no engine met the threshold, return the best result
         if results:
             best_result = max(results, key=lambda x: x.get('confidence', 0))
-            logger.info(f"Returning best result from {best_result['engine']} with confidence {best_result['confidence']:.2f}")
+            self.logger.info(f"Returning best result from {best_result['engine']} with confidence {best_result['confidence']:.2f}")
             return best_result
         
         # If all engines failed, return empty result with error
-        logger.error("All OCR engines failed")
+        self.logger.error("All OCR engines failed")
         return {
             'text': '',
             'confidence': 0.0,
@@ -1657,5 +1665,5 @@ class MultiEngineOCR:
                 return 'mixed'
                 
         except Exception as e:
-            logger.warning(f"Document type classification failed: {e}, defaulting to 'printed'")
+            self.logger.warning(f"Document type classification failed: {e}, defaulting to 'printed'")
             return 'printed'

@@ -8,16 +8,17 @@ IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 """
 from __future__ import annotations
 import asyncio
-import logging
-import hashlib
-import datetime
-from pathlib import Path
-from typing import Any, Optional, Union
 from contextlib import nullcontext
 from dataclasses import dataclass
-import traceback
+import datetime
+import hashlib
+import logging
 import os
+from pathlib import Path
 from pprint import pprint
+import time
+import traceback
+from typing import Any, Optional, Union
 
 
 try:
@@ -519,6 +520,7 @@ class PDFProcessor:
             with operation_context if operation_context is not None else nullcontext():
 
                 start_time: float = datetime.datetime.now().timestamp()
+                mono_start_time = time.monotonic()
                 self.logger.debug(f"start_time: {start_time}")
 
                 # Stage 1: PDF Input
@@ -596,7 +598,7 @@ class PDFProcessor:
                     'cross_doc_relations': len(cross_doc_relations),
                     'processing_metadata': {
                         'pipeline_version': self.pipeline_version,
-                        'processing_time': self._get_processing_time(start_time),
+                        'processing_time': self._get_processing_time(start_time, mono_start_time),
                         'quality_scores': None,
                         'stages_completed': stages_completed,
                     },
@@ -1145,7 +1147,7 @@ class PDFProcessor:
         
         return page_content
 
-    def _get_processing_time(self, start_time: float) -> float:
+    def _get_processing_time(self, start_time: float, mono_start_time: float) -> float:
         """
         Calculate total elapsed time for complete pipeline processing including all stages.
 
@@ -1155,8 +1157,10 @@ class PDFProcessor:
         across different document types and sizes.
 
         Args:
-            start_time (float): Timestamp when processing started, typically from
+            start_time (float): Timestamp when processing started, from
                 datetime.datetime.now().timestamp()
+            mono_start_time (float): Monotonic timestamp when processing started,
+                from time.monotonic()
 
         Returns:
             float: Total processing time in seconds with decimal precision.
@@ -1179,24 +1183,20 @@ class PDFProcessor:
             Processing time includes I/O operations, computation, and storage overhead.
             Metrics support performance optimization and capacity planning.
         """
-        end_time = datetime.datetime.now().timestamp()
+        for t in [start_time, mono_start_time]:
+            if not isinstance(t, float):
+                raise TypeError(f"Timestamps must be floats, got {type(t).__name__}")
+            if t <= 0:
+                raise ValueError(f"Timestamps must be positive, got '{t}'")
 
-        if not isinstance(start_time, (int, float)):
-            raise TypeError(f"Start time must be a numeric timestamp, got {type(start_time).__name__}")
+        # Record times at the same line to ensure consistency between them.
+        total_time, end_time = (time.monotonic() - mono_start_time, datetime.datetime.now().timestamp())
 
-        if start_time <= 0:
-            raise ValueError(f"Processing start time must be positive, got '{start_time}'")
+        for t in [total_time, end_time]:
+            if t <= 0:
+                raise ValueError(f"Calculated times must be positive, got '{t}'")
 
-        if start_time > end_time:
-            raise ValueError(f"Start time ({start_time}) cannot be after end time ({end_time})")
-
-        total_time = end_time - start_time
-
-        # Fix 4: Additional safety check for negative durations (shouldn't happen now, but defensive)
-        if total_time < 0:
-            raise ValueError(f"Invalid processing time calculation: negative duration '{total_time}'. Start: {start_time}, End: {end_time}")
-
-        # Fix 5: Store stats after validation
+        # Store stats after validation
         self.processing_stats['start_time'] = start_time
         self.processing_stats['end_time'] = end_time
         
@@ -1978,7 +1978,7 @@ class PDFProcessor:
                     'cross_doc_relations': len(cross_doc_relations),
                     'processing_metadata': {
                         'pipeline_version': self.pipeline_version,
-                        'processing_time': self._get_processing_time(start_time),
+                        'processing_time': self._get_processing_time(start_time, mono_start_time),
                         'quality_scores': None,
                         'stages_completed': 10,
                     },

@@ -172,11 +172,13 @@ INVALID_PATHS = {
 
 @pytest.fixture
 def invalid_paths():
+    """Fixture providing various invalid file paths."""
     return INVALID_PATHS
 
 # ==========================================
 # TEXT CONTENT FIXTURES
 # ==========================================
+
 
 @pytest.fixture
 def text_in_the_image():

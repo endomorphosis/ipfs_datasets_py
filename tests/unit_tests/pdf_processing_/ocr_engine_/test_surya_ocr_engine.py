@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 
 import cv2
@@ -84,6 +84,105 @@ try:
 except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
+@pytest.fixture
+def mock_logger():
+    mock_logger = MagicMock(spec_set=logging.Logger)
+    return mock_logger
+
+@pytest.fixture
+def surya_engine(mock_logger):
+    return SuryaOCR(logger=mock_logger)
+
+@pytest.fixture
+def mock_surya_engine(mock_logger):
+    with patch.object(SuryaOCR, '_initialize'):
+        engine = SuryaOCR(logger=mock_logger)
+        engine.available = True
+        return engine
+
+@pytest.fixture
+def mock_surya_with_mocked_ocr_components(mock_surya_engine):
+    mock_surya_engine.recognition_predictor = Mock()
+    mock_surya_engine.detection_predictor = Mock()
+    return mock_surya_engine
+
+
+@pytest.fixture
+def test_image_data():
+    """Fixture to make test image data."""
+    img = Image.new('RGB', (100, 50), color='white')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return buf.getvalue()
+
+@pytest.fixture
+def test_large_image_data():
+    """Generate large image data for testing."""
+    img = Image.new('RGB', (2000, 1000), color='white')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return buf.getvalue()
+
+@pytest.fixture
+def bbox_lists():
+    return {
+        "bbox_1": [10, 10, 50, 25],
+        "bbox_2": [10, 30, 60, 45],
+        "bbox_3": [10, 50, 70, 65]
+    }
+
+@pytest.fixture
+def confidence_scores():
+    return {
+        "high_confidence": 0.95,
+        "medium_high_confidence": 0.88,
+        "medium_confidence": 0.65,
+        "low_confidence": 0.32
+    }
+
+@pytest.fixture
+def text_lines(bbox_lists, confidence_scores):
+    return {
+        "text_lines": [
+            Mock(text="Text 1", confidence=confidence_scores['high_confidence'], bbox=bbox_lists["bbox_1"]),
+            Mock(text="Text 2", confidence=confidence_scores['medium_high_confidence'], bbox=bbox_lists["bbox_2"])
+        ],
+        "multilingual_text_lines": [
+            Mock(text="Hello", confidence=confidence_scores['high_confidence'], bbox=bbox_lists["bbox_1"]),
+            Mock(text="Hola", confidence=confidence_scores['medium_high_confidence'], bbox=bbox_lists["bbox_2"]),
+            Mock(text="Bonjour", confidence=confidence_scores['medium_high_confidence'], bbox=bbox_lists["bbox_3"])
+        ],
+        "large_image_text_lines": [
+            Mock(text="Large image text", confidence=confidence_scores['high_confidence'], bbox=bbox_lists["bbox_1"])
+        ],
+        "confidence_score_text_lines": [
+            Mock(text="Clear text", confidence=confidence_scores['high_confidence'], bbox=bbox_lists["bbox_1"]),
+            Mock(text="Blurry text", confidence=0.65, bbox=[10, 35, 100, 55]),
+            Mock(text="Very unclear", confidence=0.32, bbox=[10, 60, 100, 80])
+        ]
+    }
+
+
+@pytest.fixture
+def mock_surya_ocr_with_bbox_text(mock_surya_with_mocked_ocr_components, text_lines):
+    mock_result = Mock()
+    mock_text_lines = text_lines['text_lines']
+    mock_result.text_lines = mock_text_lines
+
+    # Mock recognition_predictor to return list containing our mock result
+    mock_surya_with_mocked_ocr_components.recognition_predictor.return_value = [mock_result]
+    return mock_surya_with_mocked_ocr_components
+
+
+@pytest.fixture
+def mock_surya_ocr_with_multilingual_text(mock_surya_with_mocked_ocr_components, text_lines):
+    mock_result = Mock()
+    mock_text_lines = text_lines['multilingual_text_lines']
+    mock_result.text_lines = mock_text_lines
+    
+    # Mock recognition_predictor to return list containing our mock result
+    mock_surya_with_mocked_ocr_components.recognition_predictor.return_value = [mock_result]
+    return mock_surya_with_mocked_ocr_components
 
 
 
@@ -91,7 +190,7 @@ except ImportError as e:
 class TestSuryaOCREngine:
     """Test suite for SuryaOCR transformer-based OCR engine."""
 
-    def test_surya_ocr_initialization_success(self):
+    def test_surya_ocr_initialization_success(self, mock_logger):
         """
         GIVEN Surya dependencies are available
         WHEN initializing SuryaOCR
@@ -103,29 +202,47 @@ class TestSuryaOCREngine:
         with patch('builtins.__import__') as mock_surya:
             with patch.object(SuryaOCR, '_initialize') as mock_init:
                 mock_init.return_value = None
-                engine = SuryaOCR()
+                engine = SuryaOCR(logger=mock_logger)
                 mock_init.assert_called_once()
 
-    def test_surya_ocr_initialization_missing_dependencies(self):
+    @pytest.mark.parametrize("name,value", [('available', False), ('name', 'surya')])
+    def test_surya_ocr_initialization_missing_dependencies_sets_available_false(
+        self, name, value, mock_logger):
         """
         GIVEN Surya framework is not installed
         WHEN initializing SuryaOCR
-        THEN should handle ImportError gracefully
-        AND should set available to False
-        AND should not crash the application
+        THEN should set available to False
         """
-        # Mock the surya imports to simulate missing dependencies
         with patch('builtins.__import__', side_effect=ImportError("No module named 'surya'")):
-            with patch('ipfs_datasets_py.pdf_processing.ocr_engine.logger'):
-                engine = SuryaOCR()
-                
-                # Should not crash and should set available to False
-                assert engine.available == False
-                assert engine.name == 'surya'
-                assert hasattr(engine, 'detection_predictor') == False or engine.detection_predictor is None
-                assert hasattr(engine, 'det_model') == False or engine.det_model is None
+            engine = SuryaOCR(logger=mock_logger)
+            attr = getattr(engine, name)
+            assert attr == value, \
+                f"Expected engine.{name} to be {value} when Surya is not installed, got {attr}"
 
-    def test_surya_ocr_initialization_model_download_failure(self):
+    def test_surya_ocr_initialization_missing_dependencies_sets_correct_name(self, mock_logger):
+        """
+        GIVEN Surya framework is not installed
+        WHEN initializing SuryaOCR
+        THEN should set name to 'surya'
+        """
+        with patch('builtins.__import__', side_effect=ImportError("No module named 'surya'")):
+            engine = SuryaOCR(logger=mock_logger)
+            assert engine.name == 'surya'
+
+    @pytest.mark.parametrize("attr", ["detection_predictor", "det_model"])
+    def test_surya_ocr_initialization_missing_dependencies_attributes_none(self, mock_logger, attr):
+        """
+        GIVEN Surya framework is not installed
+        WHEN initializing SuryaOCR
+        THEN instance should not have detection_predictor and det_model attributes
+        """
+        with patch('builtins.__import__', side_effect=ImportError("No module named 'surya'")):
+            engine = SuryaOCR(logger=mock_logger)
+            assert not hasattr(engine, attr), \
+                f"Expected engine to not have {attr} attribute when Surya is not installed"
+
+
+    def test_surya_ocr_initialization_model_download_failure(self, mock_logger):
         """
         GIVEN Surya is installed but model download fails
         WHEN initializing SuryaOCR
@@ -140,14 +257,13 @@ class TestSuryaOCREngine:
         }
         
         with patch.dict('sys.modules', mock_surya_modules):
-            with patch('ipfs_datasets_py.pdf_processing.ocr_engine.logger'):
-                engine = SuryaOCR()
-                
-                # Should handle the error gracefully and set available to False
-                assert engine.available == False
-                assert engine.name == 'surya'
+            engine = SuryaOCR(logger=mock_logger)
+            
+            # Should handle the error gracefully and set available to False
+            assert engine.available == False
+            assert engine.name == 'surya'
 
-    def test_surya_ocr_initialization_insufficient_memory(self):
+    def test_surya_ocr_initialization_insufficient_memory(self, mock_logger):
         """
         GIVEN insufficient memory for loading transformer models
         WHEN initializing SuryaOCR
@@ -156,22 +272,14 @@ class TestSuryaOCREngine:
         """
         # Mock the _initialize method to raise MemoryError
         with patch.object(SuryaOCR, '_initialize', side_effect=MemoryError("Insufficient memory")):
-            with patch('ipfs_datasets_py.pdf_processing.ocr_engine.logger'):
-                engine = SuryaOCR()
-                
-                # Should handle the error gracefully and set available to False
-                assert engine.available == False
-                assert engine.name == 'surya'
+            engine = SuryaOCR(logger=mock_logger)
 
-    def create_test_image_data(self):
-        """Helper method to create test image data."""
-        # Create a simple test image
-        img = Image.new('RGB', (100, 50), color='white')
-        buf = io.BytesIO()
-        img.save(buf, format='PNG')
-        return buf.getvalue()
+            # Should handle the error gracefully and set available to False
+            assert engine.available == False
+            assert engine.name == 'surya'
 
-    def test_surya_ocr_extract_text_valid_image_english(self):
+
+    def test_surya_ocr_extract_text_valid_image_english(self, mock_logger, test_image_data):
         """
         GIVEN a SuryaOCR instance and valid image data with English text
         WHEN calling extract_text(image_data)
@@ -183,7 +291,7 @@ class TestSuryaOCREngine:
         """
         # Mock successful initialization
         with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
+            engine = SuryaOCR(logger=mock_logger)
             engine.available = True
             
             # Mock the actual OCR components
@@ -200,9 +308,8 @@ class TestSuryaOCREngine:
             
             # Mock recognition_predictor to return list containing our mock result
             engine.recognition_predictor.return_value = [mock_result]
-            
-            image_data = self.create_test_image_data()
-            result = engine.extract_text(image_data)
+
+            result = engine.extract_text(test_image_data)
             
             # Verify return structure
             assert isinstance(result, dict)
@@ -219,101 +326,64 @@ class TestSuryaOCREngine:
             assert 0.0 <= result['confidence'] <= 1.0
             assert isinstance(result['text_blocks'], list)
 
-    def test_surya_ocr_extract_text_multilingual(self):
+    def test_surya_ocr_extract_text_multilingual(self, mock_surya_ocr_with_multilingual_text, test_image_data):
         """
         GIVEN a SuryaOCR instance and image with multiple languages
         WHEN calling extract_text(image_data)
         THEN should handle multilingual text extraction
         AND should return appropriate results for each language
         """
-        with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
-            engine.available = True
-            
-            # Mock OCR components
-            engine.recognition_predictor = Mock()
-            engine.detection_predictor = Mock()
-            
-            # Create mock result object with text_lines attribute
-            mock_result = Mock()
-            mock_text_lines = [
-                Mock(text="Hello", confidence=0.95, bbox=[10, 10, 50, 25]),
-                Mock(text="Hola", confidence=0.92, bbox=[10, 30, 50, 45]),
-                Mock(text="Bonjour", confidence=0.89, bbox=[10, 50, 70, 65])
-            ]
-            mock_result.text_lines = mock_text_lines
-            
-            # Mock recognition_predictor to return list containing our mock result
-            engine.recognition_predictor.return_value = [mock_result]
-            
-            image_data = self.create_test_image_data()
-            result = engine.extract_text(image_data)
-            
-            assert isinstance(result, dict)
-            assert result['engine'] == 'surya'
-            # Should have processed the multilingual request
-            engine.recognition_predictor.assert_called_once()
+        result = mock_surya_ocr_with_multilingual_text.extract_text(test_image_data)
 
-    def test_surya_ocr_extract_text_empty_image_data(self):
+        assert isinstance(result, dict), \
+            f"Result should be a dictionary, got {type(result).__name__}"
+
+        assert result['engine'] == 'surya'
+        # Should have processed the multilingual request
+        mock_surya_ocr_with_multilingual_text.recognition_predictor.assert_called_once()
+
+    @pytest.mark.parametrize("image_bytes", [b'', b'not_an_image'])
+    def test_surya_ocr_extract_text_invalid_inputs(self, mock_logger, image_bytes):
         """
         GIVEN a SuryaOCR instance
-        WHEN calling extract_text() with empty bytes
-        THEN should raise PIL.UnidentifiedImageError
+        WHEN calling extract_text() with invalid image data (empty or non-image)
+        THEN should raise ValueError
         """
         with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
+            engine = SuryaOCR(logger=mock_logger)
             engine.available = True
-            
-            with pytest.raises(Exception):  # PIL.UnidentifiedImageError is subclass of Exception
-                engine.extract_text(b'')
 
-    def test_surya_ocr_extract_text_invalid_image_format(self):
-        """
-        GIVEN a SuryaOCR instance
-        WHEN calling extract_text() with invalid image data
-        THEN should raise PIL.UnidentifiedImageError or ValueError
-        """
-        with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
-            engine.available = True
-            
-            with pytest.raises((ValueError, Exception)):  # PIL.UnidentifiedImageError is subclass of Exception
-                engine.extract_text(b'not_an_image')
+            with pytest.raises(ValueError):
+                engine.extract_text(image_bytes)
 
-    def test_surya_ocr_extract_text_engine_not_available(self):
+    def test_surya_ocr_extract_text_engine_not_available(self, mock_logger, test_image_data):
         """
         GIVEN a SuryaOCR instance with available=False
         WHEN calling extract_text()
         THEN should raise RuntimeError
         """
         with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
+            engine = SuryaOCR(logger=mock_logger)
             engine.available = False
-            
-            with pytest.raises(RuntimeError, match="not.*available|not.*initialized"):
-                engine.extract_text(self.create_test_image_data())
 
-    def test_surya_ocr_extract_text_large_image(self):
+            with pytest.raises(RuntimeError):
+                engine.extract_text(test_image_data)
+
+    def test_surya_ocr_extract_text_large_image(self, mock_logger, test_large_image_data):
         """
         GIVEN a SuryaOCR instance and very large image data
-        WHEN calling extract_text()
-        THEN should handle processing appropriately
+        WHEN extract_text is called
+        THEN should return a dictionary
         AND should not exceed reasonable memory usage
         """
         with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
+            engine = SuryaOCR(logger=mock_logger)
             engine.available = True
             
             # Mock OCR components
             engine.recognition_predictor = Mock()
             engine.detection_predictor = Mock()
-            
-            # Create larger test image
-            img = Image.new('RGB', (2000, 1000), color='white')
-            buf = io.BytesIO()
-            img.save(buf, format='PNG')
-            large_image_data = buf.getvalue()
-            
+
             # Create mock result object with text_lines attribute
             mock_result = Mock()
             mock_text_lines = [Mock(text="Large image text", confidence=0.9, bbox=[10, 10, 200, 50])]
@@ -322,11 +392,11 @@ class TestSuryaOCREngine:
             # Mock successful processing
             engine.recognition_predictor.return_value = [mock_result]
             
-            result = engine.extract_text(large_image_data)
+            result = engine.extract_text(test_large_image_data)
             assert isinstance(result, dict)
             assert result['engine'] == 'surya'
 
-    def test_surya_ocr_extract_text_confidence_scores(self):
+    def test_surya_ocr_extract_text_confidence_scores(self, mock_logger, test_image_data):
         """
         GIVEN a SuryaOCR instance and image with varying text quality
         WHEN calling extract_text()
@@ -334,7 +404,7 @@ class TestSuryaOCREngine:
         AND confidence scores should correlate with text quality
         """
         with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
+            engine = SuryaOCR(logger=mock_logger)
             engine.available = True
             
             # Mock OCR components
@@ -353,21 +423,20 @@ class TestSuryaOCREngine:
             # Mock recognition_predictor to return list containing our mock result
             engine.recognition_predictor.return_value = [mock_result]
             
-            result = engine.extract_text(self.create_test_image_data())
-            
+            result = engine.extract_text(test_image_data)
+
             # Should return confidence scores
             assert 'confidence' in result
+            assert 'text_blocks' in result
             assert isinstance(result['confidence'], float)
             assert 0.0 <= result['confidence'] <= 1.0
-            
-            # Text blocks should have individual confidence scores
-            if 'text_blocks' in result:
-                for block in result['text_blocks']:
-                    if 'confidence' in block:
-                        assert isinstance(block['confidence'], float)
-                        assert 0.0 <= block['confidence'] <= 1.0
 
-    def test_surya_ocr_extract_text_bounding_boxes(self):
+            # Text blocks should have individual confidence scores
+            for block in result['text_blocks']:
+                assert isinstance(block['confidence'], float)
+                assert 0.0 <= block['confidence'] <= 1.0
+
+    def test_surya_ocr_extract_text_bounding_boxes(self, mock_logger, test_image_data):
         """
         GIVEN a SuryaOCR instance and image with text
         WHEN calling extract_text()
@@ -376,7 +445,7 @@ class TestSuryaOCREngine:
         AND bounding boxes should be in [x1, y1, x2, y2] format
         """
         with patch.object(SuryaOCR, '_initialize'):
-            engine = SuryaOCR()
+            engine = SuryaOCR(logger=mock_logger)
             engine.available = True
             
             # Mock OCR components
@@ -395,24 +464,19 @@ class TestSuryaOCREngine:
             engine.recognition_predictor.return_value = [mock_result]
             
             # Create image with known dimensions
-            img = Image.new('RGB', (100, 50), color='white')
-            buf = io.BytesIO()
-            img.save(buf, format='PNG')
-            image_data = buf.getvalue()
-            
-            result = engine.extract_text(image_data)
+            result = engine.extract_text(test_image_data)
             
             # Check for bounding box information
-            if 'text_blocks' in result:
-                for block in result['text_blocks']:
-                    if 'bbox' in block:
-                        bbox = block['bbox']
-                        assert isinstance(bbox, list)
-                        assert len(bbox) == 4  # [x1, y1, x2, y2]
-                        x1, y1, x2, y2 = bbox
-                        # Coordinates should be within image bounds
-                        assert 0 <= x1 < x2 <= 100
-                        assert 0 <= y1 < y2 <= 50
+            assert 'text_blocks' in result
+            assert isinstance(result['text_blocks'], list)
+            for block in result['text_blocks']:
+                bbox = block['bbox']
+                assert isinstance(bbox, list)
+                assert len(bbox) == 4  # [x1, y1, x2, y2]
+                x1, y1, x2, y2 = bbox
+                # Coordinates should be within image bounds
+                assert 0 <= x1 < x2 <= 100
+                assert 0 <= y1 < y2 <= 50
 
 
 
