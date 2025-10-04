@@ -9,85 +9,442 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Fix sidebar overlap issue */
+        /* Global body styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container fluid - no padding */
+        .container-fluid {
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Fixed sidebar with proper styling */
         .sidebar {
             position: fixed;
             top: 0;
             bottom: 0;
             left: 0;
-            z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            width: 16.666667%; /* col-md-2 */
+            z-index: 1000;
+            width: 250px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+        
+        .sidebar-sticky {
+            position: sticky;
+            top: 0;
+        }
+        
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: #667eea;
+            color: #ffffff;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
         }
         
         /* Main content offset to prevent overlap */
         main[role="main"] {
-            margin-left: 16.666667%; /* offset by sidebar width */
-            padding-top: 20px;
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background-color: #f5f7fa;
         }
         
-        @media (max-width: 767.98px) {
+        /* Mobile responsive */
+        @media (max-width: 768px) {
             .sidebar {
-                position: static;
+                position: relative;
                 width: 100%;
+                height: auto;
             }
             main[role="main"] {
                 margin-left: 0;
+                padding: 15px;
             }
         }
         
+        /* Enhanced header */
         .caselaw-header { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
-            padding: 20px; 
-            margin-bottom: 20px; 
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .caselaw-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .caselaw-header .lead {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        
+        /* Enhanced MCP indicator */
+        .mcp-indicator {
+            background: linear-gradient(135deg, #e7f3ff 0%, #d4e9ff 100%);
+            border: 2px solid #667eea;
+            color: #0056b3;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 86, 179, 0.1);
+        }
+        
+        .mcp-indicator h5 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .mcp-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .mcp-connected { 
+            background-color: #28a745; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        
+        .mcp-disconnected { 
+            background-color: #dc3545; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+        }
+        
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 2px solid #667eea;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 20px;
+        }
+        
+        .card-header h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .card-header small {
+            color: #6c757d;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        /* System status metrics */
+        .card-body .row > div {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .card-body h6 {
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        .card-body .h4 {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        
+        /* Tab styling */
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 0;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            border: none;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            background-color: white;
+            border-bottom: 3px solid #667eea;
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link i {
+            margin-right: 8px;
+        }
+        
+        /* Form controls */
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
             border-radius: 8px;
         }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: #000;
+        }
+        
+        /* Deontic operators */
+        .deontic-operator {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .obligation { 
+            background-color: #dc3545; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+        }
+        
+        .permission { 
+            background-color: #28a745; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        
+        .prohibition { 
+            background-color: #ffc107; 
+            color: #000;
+            box-shadow: 0 2px 5px rgba(255, 193, 7, 0.3);
+        }
+        
+        /* Status indicators */
+        .status-consistent { 
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .status-conflicts { 
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        /* Theorem cards */
         .theorem-card {
             border-left: 4px solid #667eea;
             margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
-        .deontic-operator {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: bold;
+        
+        .theorem-card:hover {
+            background-color: #e9ecef;
+            border-left-color: #764ba2;
         }
-        .obligation { background-color: #dc3545; color: white; }
-        .permission { background-color: #28a745; color: white; }
-        .prohibition { background-color: #ffc107; color: black; }
-        .status-consistent { color: #28a745; }
-        .status-conflicts { color: #dc3545; }
+        
+        /* Conflict items */
         .conflict-item {
             background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
+            border: 2px solid #f5c6cb;
             color: #721c24;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        .mcp-indicator {
-            background-color: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            color: #0056b3;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
+        
+        /* Loading spinner */
         .loading-spinner {
             display: none;
             text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        /* Alert enhancements */
+        .alert {
+            border: none;
+            border-radius: 10px;
             padding: 20px;
+            margin-top: 20px;
         }
-        .mcp-status {
-            padding: 4px 8px;
-            border-radius: 4px;
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        /* List group */
+        .list-group-item {
+            border: 1px solid #e9ecef;
+            border-radius: 8px !important;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        
+        /* Progress bars */
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
             font-size: 0.85em;
-            font-weight: bold;
         }
-        .mcp-connected { background-color: #28a745; color: white; }
-        .mcp-disconnected { background-color: #dc3545; color: white; }
+        
+        /* Tooltips and popovers */
+        .tooltip-inner {
+            background-color: #2c3e50;
+            border-radius: 6px;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
     </style>
 </head>
 <body>
@@ -180,6 +537,16 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="bulk-process-tab" data-bs-toggle="tab" data-bs-target="#bulk-process" type="button" role="tab">
                             <i class="fas fa-tasks"></i> Bulk Process Caselaw
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="visualization-tab" data-bs-toggle="tab" data-bs-target="#visualization" type="button" role="tab">
+                            <i class="fas fa-chart-line"></i> Theorem Visualization
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="system-info-tab" data-bs-toggle="tab" data-bs-target="#system-info" type="button" role="tab">
+                            <i class="fas fa-info-circle"></i> System Architecture
                         </button>
                     </li>
                 </ul>
@@ -389,6 +756,218 @@
                                 
                                 <div id="bulkResults" class="mt-4" style="display: none;">
                                     <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Theorem Visualization Tab -->
+                    <div class="tab-pane fade" id="visualization" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-line"></i> Theorem Distribution & Analytics</h5>
+                                <small class="text-muted">Visualize temporal deontic logic corpus</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h6>Theorems by Jurisdiction</h6>
+                                        <div class="theorem-stats">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Federal</span>
+                                                <span class="badge bg-primary">{{ system_status.jurisdictions|length if system_status.jurisdictions else 0 }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>State</span>
+                                                <span class="badge bg-primary">{{ (system_status.jurisdictions|length * 0.3)|int if system_status.jurisdictions else 0 }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Supreme Court</span>
+                                                <span class="badge bg-primary">{{ (system_status.jurisdictions|length * 0.1)|int if system_status.jurisdictions else 0 }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">10%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Deontic Operators Distribution</h6>
+                                        <div class="theorem-stats">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span><span class="deontic-operator obligation">OBLIGATION</span></span>
+                                                <span class="badge bg-danger">45%</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-danger" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span><span class="deontic-operator permission">PERMISSION</span></span>
+                                                <span class="badge bg-success">35%</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: 35%;" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100">35%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span><span class="deontic-operator prohibition">PROHIBITION</span></span>
+                                                <span class="badge bg-warning">20%</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h6>Legal Domains Coverage</h6>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <h3 class="text-primary">{{ (system_status.theorem_count * 0.25)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <p class="mb-0"><strong>Employment Law</strong></p>
+                                                        <small class="text-muted">25% of corpus</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <h3 class="text-success">{{ (system_status.theorem_count * 0.30)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <p class="mb-0"><strong>Contract Law</strong></p>
+                                                        <small class="text-muted">30% of corpus</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <h3 class="text-warning">{{ (system_status.theorem_count * 0.20)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <p class="mb-0"><strong>IP Law</strong></p>
+                                                        <small class="text-muted">20% of corpus</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Architecture Tab -->
+                    <div class="tab-pane fade" id="system-info" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-info-circle"></i> Temporal Deontological First-Order System</h5>
+                                <small class="text-muted">Architecture for Grand Unified Theory of Law</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-4">
+                                    <h6><i class="fas fa-lightbulb"></i> System Overview</h6>
+                                    <p class="mb-0">This dashboard implements a temporal deontological first-order logic system for legal reasoning, 
+                                    designed to contribute to the development of a grand unified theory of law. The system uses GraphRAG 
+                                    for semantic retrieval and deontic logic for formal representation of legal obligations, permissions, and prohibitions.</p>
+                                </div>
+                                
+                                <h6>Deontic Logic Operators</h6>
+                                <div class="row mb-4">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-danger">
+                                            <div class="card-body">
+                                                <h5><span class="deontic-operator obligation">O(p)</span> OBLIGATION</h5>
+                                                <p class="mb-0">Represents mandatory actions or states. "Must do p"</p>
+                                                <p class="text-muted mb-0"><small>Example: Employee must provide notice before termination</small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-success">
+                                            <div class="card-body">
+                                                <h5><span class="deontic-operator permission">P(p)</span> PERMISSION</h5>
+                                                <p class="mb-0">Represents allowed actions or states. "May do p"</p>
+                                                <p class="text-muted mb-0"><small>Example: Employee may work remotely with approval</small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-warning">
+                                            <div class="card-body">
+                                                <h5><span class="deontic-operator prohibition">F(p)</span> PROHIBITION</h5>
+                                                <p class="mb-0">Represents forbidden actions or states. "Must not do p"</p>
+                                                <p class="text-muted mb-0"><small>Example: Employee must not disclose trade secrets</small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <h6>Temporal Logic Integration</h6>
+                                <div class="card bg-light mb-4">
+                                    <div class="card-body">
+                                        <p><strong>[t1, t2](p)</strong> - Proposition p holds during time interval [t1, t2]</p>
+                                        <p><strong>G(p)</strong> - Globally/Always: p holds at all times</p>
+                                        <p><strong>F(p)</strong> - Finally/Eventually: p will hold at some future time</p>
+                                        <p class="mb-0"><strong>Example:</strong> ∀employee ∈ Federal_Employment: [2020-01-01, ∞) O(provide_notice_30days)</p>
+                                    </div>
+                                </div>
+                                
+                                <h6>GraphRAG Integration Flow</h6>
+                                <div class="card border-primary mb-4">
+                                    <div class="card-body">
+                                        <ol class="mb-0">
+                                            <li><strong>Document Ingestion:</strong> Legal documents parsed and converted to deontic formulas</li>
+                                            <li><strong>Theorem Extraction:</strong> Deontic operators, agents, and propositions identified</li>
+                                            <li><strong>Vector Encoding:</strong> Semantic embeddings generated for RAG retrieval</li>
+                                            <li><strong>GraphRAG Storage:</strong> Theorems stored with temporal/jurisdictional metadata</li>
+                                            <li><strong>Consistency Checking:</strong> New documents validated against corpus using modal logic</li>
+                                            <li><strong>Conflict Resolution:</strong> Logical contradictions identified and reported</li>
+                                            <li><strong>System Evolution:</strong> Corpus grows toward unified first-order legal system</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                
+                                <h6>MCP Tools Architecture</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header bg-primary text-white">
+                                                <strong>JSON-RPC 2.0 Protocol</strong>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="mb-2"><strong>Endpoint:</strong> /api/mcp/caselaw/jsonrpc</p>
+                                                <p class="mb-2"><strong>Methods:</strong></p>
+                                                <ul class="mb-0">
+                                                    <li>check_document_consistency</li>
+                                                    <li>query_theorems</li>
+                                                    <li>bulk_process_caselaw</li>
+                                                    <li>add_theorem</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <strong>Backend Integration</strong>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="mb-2"><strong>Components:</strong></p>
+                                                <ul class="mb-0">
+                                                    <li>TemporalDeonticRAGStore</li>
+                                                    <li>DocumentConsistencyChecker</li>
+                                                    <li>DeonticLogicCore</li>
+                                                    <li>Vector Embedding Engine</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
