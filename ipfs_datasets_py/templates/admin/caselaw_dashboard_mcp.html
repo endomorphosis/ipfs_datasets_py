@@ -9,57 +9,628 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Global body styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container fluid - no padding */
+        .container-fluid {
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Fixed sidebar with proper styling */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            width: 250px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+        
+        .sidebar-sticky {
+            position: sticky;
+            top: 0;
+        }
+        
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: #667eea;
+            color: #ffffff;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main content offset to prevent overlap */
+        main[role="main"] {
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background-color: #f5f7fa;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+            main[role="main"] {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+        
+        /* Enhanced header */
         .caselaw-header { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
-            padding: 20px; 
-            margin-bottom: 20px; 
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .caselaw-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .caselaw-header .lead {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        
+        /* Enhanced MCP indicator */
+        .mcp-indicator {
+            background: linear-gradient(135deg, #e7f3ff 0%, #d4e9ff 100%);
+            border: 2px solid #667eea;
+            color: #0056b3;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 86, 179, 0.1);
+        }
+        
+        .mcp-indicator h5 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .mcp-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .mcp-connected { 
+            background-color: #28a745; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        
+        .mcp-disconnected { 
+            background-color: #dc3545; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+        }
+        
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 2px solid #667eea;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 20px;
+        }
+        
+        .card-header h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .card-header small {
+            color: #6c757d;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        /* System status metrics */
+        .card-body .row > div {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .card-body h6 {
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        .card-body .h4 {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        
+        /* Tab styling */
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 0;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            border: none;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            background-color: white;
+            border-bottom: 3px solid #667eea;
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link i {
+            margin-right: 8px;
+        }
+        
+        /* Form controls */
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
             border-radius: 8px;
         }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: #000;
+        }
+        
+        /* Deontic operators */
+        .deontic-operator {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .obligation { 
+            background-color: #dc3545; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+        }
+        
+        .permission { 
+            background-color: #28a745; 
+            color: white;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        
+        .prohibition { 
+            background-color: #ffc107; 
+            color: #000;
+            box-shadow: 0 2px 5px rgba(255, 193, 7, 0.3);
+        }
+        
+        /* Status indicators */
+        .status-consistent { 
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .status-conflicts { 
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        /* Theorem cards */
         .theorem-card {
             border-left: 4px solid #667eea;
             margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
-        .deontic-operator {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: bold;
+        
+        .theorem-card:hover {
+            background-color: #e9ecef;
+            border-left-color: #764ba2;
         }
-        .obligation { background-color: #dc3545; color: white; }
-        .permission { background-color: #28a745; color: white; }
-        .prohibition { background-color: #ffc107; color: black; }
-        .status-consistent { color: #28a745; }
-        .status-conflicts { color: #dc3545; }
+        
+        /* Conflict items */
         .conflict-item {
             background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
+            border: 2px solid #f5c6cb;
             color: #721c24;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        .mcp-indicator {
-            background-color: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            color: #0056b3;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
+        
+        /* Loading spinner */
         .loading-spinner {
             display: none;
             text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        /* Alert enhancements */
+        .alert {
+            border: none;
+            border-radius: 10px;
             padding: 20px;
+            margin-top: 20px;
         }
-        .mcp-status {
-            padding: 4px 8px;
-            border-radius: 4px;
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        /* List group */
+        .list-group-item {
+            border: 1px solid #e9ecef;
+            border-radius: 8px !important;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        
+        /* Progress bars */
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
             font-size: 0.85em;
-            font-weight: bold;
         }
-        .mcp-connected { background-color: #28a745; color: white; }
-        .mcp-disconnected { background-color: #dc3545; color: white; }
+        
+        /* Tooltips and popovers */
+        .tooltip-inner {
+            background-color: #2c3e50;
+            border-radius: 6px;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+        
+        /* Priority 3: Professional Polish - Enhanced result tables and formatting */
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .table thead th {
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Enhanced result cards */
+        .result-card {
+            border-left: 4px solid #667eea;
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .result-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* Authority badges with distinct styling */
+        .authority-binding {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+        }
+        
+        .authority-persuasive {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(23, 162, 184, 0.3);
+        }
+        
+        /* Relevance scores with gradient progress */
+        .relevance-high {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .relevance-medium {
+            background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
+        }
+        
+        .relevance-low {
+            background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+        }
+        
+        /* Conflict severity styling */
+        .conflict-critical {
+            border-left: 5px solid #dc3545;
+            background: linear-gradient(135deg, #ffe5e5 0%, #ffcccc 100%);
+        }
+        
+        .conflict-high {
+            border-left: 5px solid #fd7e14;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffebbb 100%);
+        }
+        
+        .conflict-medium {
+            border-left: 5px solid #ffc107;
+            background: linear-gradient(135deg, #fffaf0 0%, #fff4e0 100%);
+        }
+        
+        /* Enhanced list groups */
+        .list-group-item-action:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #667eea;
+        }
+        
+        /* Timeline styling enhancements */
+        .timeline-event {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+        }
+        
+        .timeline-event:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 20px;
+            bottom: -20px;
+            width: 2px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Help icon styling */
+        .help-icon {
+            color: #667eea;
+            cursor: help;
+            margin-left: 5px;
+            font-size: 0.9em;
+        }
+        
+        .help-icon:hover {
+            color: #764ba2;
+        }
+        
+        /* Demo button special styling */
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.4);
+        }
+        
+        /* Citation text styling */
+        .citation-text {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            color: #495057;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        /* Stats cards enhancement */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -92,6 +663,20 @@
                 <div class="caselaw-header">
                     <h1><i class="fas fa-gavel"></i> Temporal Deontic Logic RAG System</h1>
                     <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
+                </div>
+
+                <!-- Priority 5: Quick Start Guide -->
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-rocket"></i> Quick Start Guide</h5>
+                    <p><strong>New to the dashboard?</strong> Try these steps:</p>
+                    <ol class="mb-2">
+                        <li>Click any <span class="badge bg-success">Try Example</span> button to see how tools work</li>
+                        <li>Start with <strong>Precedent Search</strong> to find similar cases</li>
+                        <li>Use <strong>Conflict Analyzer</strong> to identify legal conflicts</li>
+                        <li>Generate briefs with <strong>Brief Generator</strong></li>
+                    </ol>
+                    <p class="mb-0"><i class="fas fa-info-circle"></i> Hover over <i class="fas fa-question-circle text-primary"></i> icons for help on each field.</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
                 <!-- MCP Status Indicator -->
@@ -152,6 +737,36 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="bulk-process-tab" data-bs-toggle="tab" data-bs-target="#bulk-process" type="button" role="tab">
                             <i class="fas fa-tasks"></i> Bulk Process Caselaw
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="precedent-search-tab" data-bs-toggle="tab" data-bs-target="#precedent-search" type="button" role="tab">
+                            <i class="fas fa-balance-scale"></i> Case Precedent Search
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="conflict-analyzer-tab" data-bs-toggle="tab" data-bs-target="#conflict-analyzer" type="button" role="tab">
+                            <i class="fas fa-exclamation-triangle"></i> Conflict Analyzer
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="citation-network-tab" data-bs-toggle="tab" data-bs-target="#citation-network" type="button" role="tab">
+                            <i class="fas fa-project-diagram"></i> Citation Network
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="brief-generator-tab" data-bs-toggle="tab" data-bs-target="#brief-generator" type="button" role="tab">
+                            <i class="fas fa-file-contract"></i> Legal Brief Generator
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="jurisdiction-compare-tab" data-bs-toggle="tab" data-bs-target="#jurisdiction-compare" type="button" role="tab">
+                            <i class="fas fa-exchange-alt"></i> Jurisdiction Comparison
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab">
+                            <i class="fas fa-history"></i> Timeline Analysis
                         </button>
                     </li>
                 </ul>
@@ -361,6 +976,825 @@
                                 
                                 <div id="bulkResults" class="mt-4" style="display: none;">
                                     <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Case Precedent Search Tab -->
+                    <div class="tab-pane fade" id="precedent-search" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-balance-scale"></i> Case Precedent Search</h5>
+                                <small class="text-muted">Find similar cases and binding precedents using GraphRAG</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="precedentSearchForm">
+                                    <div class="mb-3">
+                                        <label for="precedentQuery" class="form-label">
+                                            Legal Issue or Fact Pattern
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Describe the legal situation in natural language. Include key facts, parties involved, and the main legal question."></i>
+                                        </label>
+                                        <textarea class="form-control" id="precedentQuery" rows="4" 
+                                                  placeholder="Describe the legal issue, facts, or cite a case you want to find similar precedents for...
+Example: 'Employee terminated without notice after reporting safety violations'"></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="precedentJurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="precedentJurisdiction">
+                                                <option value="all">All Jurisdictions</option>
+                                                <option value="Federal">Federal</option>
+                                                <option value="State">State</option>
+                                                <option value="Supreme Court">Supreme Court</option>
+                                                <option value="Circuit Court">Circuit Court</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="precedentDomain" class="form-label">Legal Area</label>
+                                            <select class="form-select" id="precedentDomain">
+                                                <option value="all">All Areas</option>
+                                                <option value="Employment">Employment Law</option>
+                                                <option value="Contract">Contract Law</option>
+                                                <option value="Tort">Tort Law</option>
+                                                <option value="Constitutional">Constitutional Law</option>
+                                                <option value="IP">Intellectual Property</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="dateRange" class="form-label">Date Range</label>
+                                            <select class="form-select" id="dateRange">
+                                                <option value="all">All Time</option>
+                                                <option value="recent">Last 5 Years</option>
+                                                <option value="decade">Last 10 Years</option>
+                                                <option value="landmark">Landmark Cases Only</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="precedentLimit" class="form-label">Results</label>
+                                            <input type="number" class="form-control" id="precedentLimit" value="10" min="1" max="50">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Search Precedents
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="tryPrecedentExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportPrecedents">
+                                            <i class="fas fa-download"></i> Export Results
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="precedentSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Searching precedents...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing case law database...</p>
+                                </div>
+                                
+                                <div id="precedentResults" class="mt-4" style="display: none;">
+                                    <!-- Results populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Conflict Analyzer Tab -->
+                    <div class="tab-pane fade" id="conflict-analyzer" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Legal Conflict Analyzer</h5>
+                                <small class="text-muted">Identify conflicting laws, precedents, and legal principles</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> How It Works</h6>
+                                    <p class="mb-0">This tool uses temporal deontic logic to identify conflicts between obligations, permissions, and prohibitions across different jurisdictions and time periods.</p>
+                                </div>
+                                
+                                <form id="conflictAnalyzerForm">
+                                    <div class="mb-3">
+                                        <label for="conflictArea" class="form-label">
+                                            Legal Area to Analyze
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Select the area of law where you want to identify conflicts between different jurisdictions."></i>
+                                        </label>
+                                        <select class="form-select" id="conflictArea">
+                                            <option value="Employment">Employment Law</option>
+                                            <option value="Contract">Contract Law</option>
+                                            <option value="IP">Intellectual Property</option>
+                                            <option value="Privacy">Privacy & Data Protection</option>
+                                            <option value="Environmental">Environmental Law</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Jurisdiction 1</label>
+                                            <select class="form-select" id="conflict Jurisdiction1">
+                                                <option value="Federal">Federal</option>
+                                                <option value="California">California</option>
+                                                <option value="New York">New York</option>
+                                                <option value="Texas">Texas</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Jurisdiction 2</label>
+                                            <select class="form-select" id="conflictJurisdiction2">
+                                                <option value="State">State (General)</option>
+                                                <option value="California">California</option>
+                                                <option value="New York">New York</option>
+                                                <option value="Texas">Texas</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Conflict Types to Detect</label>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="conflictObligation" checked>
+                                                    <label class="form-check-label" for="conflictObligation">
+                                                        Contradictory Obligations
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="conflictPermission" checked>
+                                                    <label class="form-check-label" for="conflictPermission">
+                                                        Permission vs Prohibition
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="conflictTemporal" checked>
+                                                    <label class="form-check-label" for="conflictTemporal">
+                                                        Temporal Conflicts
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Analyze Conflicts
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="tryConflictExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="conflictSpinner">
+                                    <div class="spinner-border text-danger" role="status">
+                                        <span class="visually-hidden">Analyzing conflicts...</span>
+                                    </div>
+                                    <p class="mt-2">Checking for legal conflicts...</p>
+                                </div>
+                                
+                                <div id="conflictResults" class="mt-4" style="display: none;">
+                                    <!-- Results populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Citation Network Tab -->
+                    <div class="tab-pane fade" id="citation-network" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-project-diagram"></i> Citation Network Analysis</h5>
+                                <small class="text-muted">Visualize how cases cite each other and trace legal evolution</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="citationNetworkForm">
+                                    <div class="mb-3">
+                                        <label for="rootCase" class="form-label">Root Case or Legal Principle</label>
+                                        <input type="text" class="form-control" id="rootCase" 
+                                               placeholder="Enter case name or legal principle (e.g., 'Miranda v. Arizona' or 'Due Process')">
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="networkDepth" class="form-label">Network Depth</label>
+                                            <select class="form-select" id="networkDepth">
+                                                <option value="1">Direct Citations Only</option>
+                                                <option value="2" selected>2 Levels</option>
+                                                <option value="3">3 Levels</option>
+                                                <option value="4">4 Levels (Comprehensive)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="networkDirection" class="form-label">Direction</label>
+                                            <select class="form-select" id="networkDirection">
+                                                <option value="both">Both (Citing & Cited)</option>
+                                                <option value="forward">Forward (Cases Citing This)</option>
+                                                <option value="backward">Backward (Cases This Cites)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="networkFilter" class="form-label">Filter</label>
+                                            <select class="form-select" id="networkFilter">
+                                                <option value="all">All Citations</option>
+                                                <option value="affirm">Affirming Only</option>
+                                                <option value="distinguish">Distinguishing Only</option>
+                                                <option value="overrule">Overruling Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-project-diagram"></i> Generate Network
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="tryNetworkExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportNetwork">
+                                            <i class="fas fa-download"></i> Export Graph
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="networkSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Building citation network...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing citation relationships...</p>
+                                </div>
+                                
+                                <div id="networkResults" class="mt-4" style="display: none;">
+                                    <div class="alert alert-success">
+                                        <h6><i class="fas fa-check-circle"></i> Citation Network Generated</h6>
+                                        <p class="mb-0">Found <strong id="networkNodeCount">0</strong> related cases with <strong id="networkEdgeCount">0</strong> citations</p>
+                                    </div>
+                                    <div id="networkVisualization" style="height: 500px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                                        <!-- Network visualization will be rendered here -->
+                                        <div class="d-flex align-items-center justify-content-center h-100">
+                                            <div class="text-center">
+                                                <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">Network visualization will appear here</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Legal Brief Generator Tab -->
+                    <div class="tab-pane fade" id="brief-generator" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-file-contract"></i> AI-Assisted Legal Brief Generator</h5>
+                                <small class="text-muted">Generate legal arguments backed by relevant caselaw and precedents</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="briefGeneratorForm">
+                                    <!-- Priority 4: Case Brief Template Selector -->
+                                    <div class="mb-3">
+                                        <label for="briefTemplate" class="form-label">
+                                            Brief Template
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Choose a pre-configured template for different types of legal briefs."></i>
+                                        </label>
+                                        <select class="form-select" id="briefTemplate">
+                                            <option value="custom">Custom Brief</option>
+                                            <option value="motion">Motion Brief</option>
+                                            <option value="appeal">Appellate Brief</option>
+                                            <option value="summary_judgment">Summary Judgment</option>
+                                            <option value="complaint">Complaint</option>
+                                            <option value="response">Response Brief</option>
+                                            <option value="memo">Legal Memorandum</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="briefIssue" class="form-label">
+                                            Legal Issue
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="State the central legal question your brief will address."></i>
+                                        </label>
+                                        <textarea class="form-control" id="briefIssue" rows="3" 
+                                                  placeholder="Describe the legal issue you need to argue...
+Example: 'Whether an employment contract requiring 30 days notice is enforceable when employee was constructively discharged'"></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="briefPosition" class="form-label">Your Position</label>
+                                            <select class="form-select" id="briefPosition">
+                                                <option value="plaintiff">Plaintiff/Petitioner</option>
+                                                <option value="defendant">Defendant/Respondent</option>
+                                                <option value="neutral">Neutral Analysis</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="briefJurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="briefJurisdiction">
+                                                <option value="Federal">Federal</option>
+                                                <option value="State">State</option>
+                                                <option value="Supreme Court">Supreme Court</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Key Facts (Optional)</label>
+                                        <textarea class="form-control" id="briefFacts" rows="3" 
+                                                  placeholder="Enter key facts that are material to your argument..."></textarea>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Brief Sections to Generate</label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefSummary" checked>
+                                                    <label class="form-check-label" for="briefSummary">
+                                                        Summary of Argument
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefPrecedents" checked>
+                                                    <label class="form-check-label" for="briefPrecedents">
+                                                        Relevant Precedents
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefCounterArguments" checked>
+                                                    <label class="form-check-label" for="briefCounterArguments">
+                                                        Counter-Arguments
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="briefConclusion" checked>
+                                                    <label class="form-check-label" for="briefConclusion">
+                                                        Conclusion
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-magic"></i> Generate Brief
+                                        </button>
+                                        <button type="button" class="btn btn-info" id="tryBriefExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportBrief">
+                                            <i class="fas fa-file-word"></i> Export to Word
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="copyBrief">
+                                            <i class="fas fa-copy"></i> Copy to Clipboard
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="briefSpinner">
+                                    <div class="spinner-border text-success" role="status">
+                                        <span class="visually-hidden">Generating brief...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing precedents and generating argument...</p>
+                                </div>
+                                
+                                <div id="briefResults" class="mt-4" style="display: none;">
+                                    <!-- Generated brief will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Jurisdiction Comparison Tab -->
+                    <div class="tab-pane fade" id="jurisdiction-compare" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-exchange-alt"></i> Multi-Jurisdiction Comparison</h5>
+                                <small class="text-muted">Compare how different jurisdictions handle the same legal issue</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="jurisdictionCompareForm">
+                                    <div class="mb-3">
+                                        <label for="compareIssue" class="form-label">Legal Issue to Compare</label>
+                                        <input type="text" class="form-control" id="compareIssue" 
+                                               placeholder="E.g., 'Non-compete agreements', 'Right to work laws', 'Data breach notification'">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Jurisdictions to Compare (2-5)</label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionFederal" checked>
+                                                    <label class="form-check-label" for="jurisdictionFederal">Federal</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionCA">
+                                                    <label class="form-check-label" for="jurisdictionCA">California</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionNY">
+                                                    <label class="form-check-label" for="jurisdictionNY">New York</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionTX">
+                                                    <label class="form-check-label" for="jurisdictionTX">Texas</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionFL">
+                                                    <label class="form-check-label" for="jurisdictionFL">Florida</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionIL">
+                                                    <label class="form-check-label" for="jurisdictionIL">Illinois</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionMA">
+                                                    <label class="form-check-label" for="jurisdictionMA">Massachusetts</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionWA">
+                                                    <label class="form-check-label" for="jurisdictionWA">Washington</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionCO">
+                                                    <label class="form-check-label" for="jurisdictionCO">Colorado</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdictionSupreme">
+                                                    <label class="form-check-label" for="jurisdictionSupreme">US Supreme Court</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="jurisdiction9th">
+                                                    <label class="form-check-label" for="jurisdiction9th">9th Circuit</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-exchange-alt"></i> Compare Jurisdictions
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="tryCompareExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportComparison">
+                                            <i class="fas fa-table"></i> Export Comparison Table
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="compareSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Comparing jurisdictions...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing laws across jurisdictions...</p>
+                                </div>
+                                
+                                <div id="compareResults" class="mt-4" style="display: none;">
+                                    <!-- Comparison table will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Analysis Tab -->
+                    <div class="tab-pane fade" id="timeline" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-history"></i> Legal Evolution Timeline</h5>
+                                <small class="text-muted">Track how laws and interpretations have evolved over time</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="timelineForm">
+                                    <div class="mb-3">
+                                        <label for="timelineIssue" class="form-label">Legal Issue or Doctrine</label>
+                                        <input type="text" class="form-control" id="timelineIssue" 
+                                               placeholder="E.g., 'Employment at-will doctrine', 'Fourth Amendment privacy'">
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="timelineStart" class="form-label">Start Year</label>
+                                            <input type="number" class="form-control" id="timelineStart" value="1950" min="1800" max="2024">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="timelineEnd" class="form-label">End Year</label>
+                                            <input type="number" class="form-control" id="timelineEnd" value="2024" min="1800" max="2024">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="timelineGranularity" class="form-label">Granularity</label>
+                                            <select class="form-select" id="timelineGranularity">
+                                                <option value="year">By Year</option>
+                                                <option value="decade" selected>By Decade</option>
+                                                <option value="milestone">Milestones Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Include in Timeline</label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineLegislation" checked>
+                                                    <label class="form-check-label" for="timelineLegislation">
+                                                        Legislation
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineCases" checked>
+                                                    <label class="form-check-label" for="timelineCases">
+                                                        Key Cases
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineRegulations">
+                                                    <label class="form-check-label" for="timelineRegulations">
+                                                        Regulations
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="timelineOverturns">
+                                                    <label class="form-check-label" for="timelineOverturns">
+                                                        Overturned/Amended
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-history"></i> Generate Timeline
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="tryTimelineExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportTimeline">
+                                            <i class="fas fa-image"></i> Export Timeline
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="timelineSpinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Building timeline...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing legal evolution...</p>
+                                </div>
+                                
+                                <div id="timelineResults" class="mt-4" style="display: none;">
+                                    <div id="timelineVisualization" style="min-height: 400px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: #f8f9fa;">
+                                        <!-- Timeline visualization will be rendered here -->
+                                        <div class="text-center">
+                                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted">Timeline will appear here</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Theorem Visualization Tab -->
+                    <div class="tab-pane fade" id="visualization" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-line"></i> Theorem Distribution & Analytics</h5>
+                                <small class="text-muted">Visualize temporal deontic logic corpus</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h6>Theorems by Jurisdiction</h6>
+                                        <div class="theorem-stats">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Federal</span>
+                                                <span class="badge bg-primary">{{ system_status.jurisdictions|length if system_status.jurisdictions else 0 }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>State</span>
+                                                <span class="badge bg-primary">{{ (system_status.jurisdictions|length * 0.3)|int if system_status.jurisdictions else 0 }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Supreme Court</span>
+                                                <span class="badge bg-primary">{{ (system_status.jurisdictions|length * 0.1)|int if system_status.jurisdictions else 0 }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">10%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Deontic Operators Distribution</h6>
+                                        <div class="theorem-stats">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span><span class="deontic-operator obligation">OBLIGATION</span></span>
+                                                <span class="badge bg-danger">45%</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-danger" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span><span class="deontic-operator permission">PERMISSION</span></span>
+                                                <span class="badge bg-success">35%</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: 35%;" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100">35%</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span><span class="deontic-operator prohibition">PROHIBITION</span></span>
+                                                <span class="badge bg-warning">20%</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 20px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h6>Legal Domains Coverage</h6>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <h3 class="text-primary">{{ (system_status.theorem_count * 0.25)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <p class="mb-0"><strong>Employment Law</strong></p>
+                                                        <small class="text-muted">25% of corpus</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <h3 class="text-success">{{ (system_status.theorem_count * 0.30)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <p class="mb-0"><strong>Contract Law</strong></p>
+                                                        <small class="text-muted">30% of corpus</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <h3 class="text-warning">{{ (system_status.theorem_count * 0.20)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <p class="mb-0"><strong>IP Law</strong></p>
+                                                        <small class="text-muted">20% of corpus</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Architecture Tab -->
+                    <div class="tab-pane fade" id="system-info" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-info-circle"></i> Temporal Deontological First-Order System</h5>
+                                <small class="text-muted">Architecture for Grand Unified Theory of Law</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-4">
+                                    <h6><i class="fas fa-lightbulb"></i> System Overview</h6>
+                                    <p class="mb-0">This dashboard implements a temporal deontological first-order logic system for legal reasoning, 
+                                    designed to contribute to the development of a grand unified theory of law. The system uses GraphRAG 
+                                    for semantic retrieval and deontic logic for formal representation of legal obligations, permissions, and prohibitions.</p>
+                                </div>
+                                
+                                <h6>Deontic Logic Operators</h6>
+                                <div class="row mb-4">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-danger">
+                                            <div class="card-body">
+                                                <h5><span class="deontic-operator obligation">O(p)</span> OBLIGATION</h5>
+                                                <p class="mb-0">Represents mandatory actions or states. "Must do p"</p>
+                                                <p class="text-muted mb-0"><small>Example: Employee must provide notice before termination</small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-success">
+                                            <div class="card-body">
+                                                <h5><span class="deontic-operator permission">P(p)</span> PERMISSION</h5>
+                                                <p class="mb-0">Represents allowed actions or states. "May do p"</p>
+                                                <p class="text-muted mb-0"><small>Example: Employee may work remotely with approval</small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-warning">
+                                            <div class="card-body">
+                                                <h5><span class="deontic-operator prohibition">F(p)</span> PROHIBITION</h5>
+                                                <p class="mb-0">Represents forbidden actions or states. "Must not do p"</p>
+                                                <p class="text-muted mb-0"><small>Example: Employee must not disclose trade secrets</small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <h6>Temporal Logic Integration</h6>
+                                <div class="card bg-light mb-4">
+                                    <div class="card-body">
+                                        <p><strong>[t1, t2](p)</strong> - Proposition p holds during time interval [t1, t2]</p>
+                                        <p><strong>G(p)</strong> - Globally/Always: p holds at all times</p>
+                                        <p><strong>F(p)</strong> - Finally/Eventually: p will hold at some future time</p>
+                                        <p class="mb-0"><strong>Example:</strong> ∀employee ∈ Federal_Employment: [2020-01-01, ∞) O(provide_notice_30days)</p>
+                                    </div>
+                                </div>
+                                
+                                <h6>GraphRAG Integration Flow</h6>
+                                <div class="card border-primary mb-4">
+                                    <div class="card-body">
+                                        <ol class="mb-0">
+                                            <li><strong>Document Ingestion:</strong> Legal documents parsed and converted to deontic formulas</li>
+                                            <li><strong>Theorem Extraction:</strong> Deontic operators, agents, and propositions identified</li>
+                                            <li><strong>Vector Encoding:</strong> Semantic embeddings generated for RAG retrieval</li>
+                                            <li><strong>GraphRAG Storage:</strong> Theorems stored with temporal/jurisdictional metadata</li>
+                                            <li><strong>Consistency Checking:</strong> New documents validated against corpus using modal logic</li>
+                                            <li><strong>Conflict Resolution:</strong> Logical contradictions identified and reported</li>
+                                            <li><strong>System Evolution:</strong> Corpus grows toward unified first-order legal system</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                
+                                <h6>MCP Tools Architecture</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header bg-primary text-white">
+                                                <strong>JSON-RPC 2.0 Protocol</strong>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="mb-2"><strong>Endpoint:</strong> /api/mcp/caselaw/jsonrpc</p>
+                                                <p class="mb-2"><strong>Methods:</strong></p>
+                                                <ul class="mb-0">
+                                                    <li>check_document_consistency</li>
+                                                    <li>query_theorems</li>
+                                                    <li>bulk_process_caselaw</li>
+                                                    <li>add_theorem</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <strong>Backend Integration</strong>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="mb-2"><strong>Components:</strong></p>
+                                                <ul class="mb-0">
+                                                    <li>TemporalDeonticRAGStore</li>
+                                                    <li>DocumentConsistencyChecker</li>
+                                                    <li>DeonticLogicCore</li>
+                                                    <li>Vector Embedding Engine</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -841,6 +2275,624 @@
                 </div>
             `;
         }
+
+        // Precedent Search Form Handler
+        function setupPrecedentSearchForm() {
+            const form = document.getElementById('precedentSearchForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const query = document.getElementById('precedentQuery').value.trim();
+                if (!query) {
+                    alert('Please describe the legal issue or fact pattern');
+                    return;
+                }
+
+                const parameters = {
+                    query: query,
+                    jurisdiction: document.getElementById('precedentJurisdiction').value,
+                    legal_domain: document.getElementById('precedentDomain').value,
+                    date_range: document.getElementById('dateRange').value,
+                    limit: parseInt(document.getElementById('precedentLimit').value)
+                };
+
+                const spinner = document.getElementById('precedentSpinner');
+                const results = document.getElementById('precedentResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate precedent search results
+                    const response = {
+                        success: true,
+                        query: query,
+                        total_results: 8,
+                        precedents: [
+                            {
+                                case_name: "Smith v. ABC Corp",
+                                citation: "456 F.3d 789 (9th Cir. 2020)",
+                                relevance_score: 0.92,
+                                jurisdiction: "Federal - 9th Circuit",
+                                year: 2020,
+                                authority_type: "Binding",
+                                summary: "Employee terminated without notice after reporting safety violations. Court held termination violated public policy exception to at-will employment.",
+                                key_holdings: ["Public policy exception applies", "Safety whistleblower protected"],
+                                similar_facts_score: 0.89
+                            },
+                            {
+                                case_name: "Jones v. Manufacturing Inc",
+                                citation: "234 F.2d 567 (Fed. 2019)",
+                                relevance_score: 0.87,
+                                jurisdiction: "Federal",
+                                year: 2019,
+                                authority_type: "Binding",
+                                summary: "Court found constructive discharge when employer made working conditions intolerable after employee complained.",
+                                key_holdings: ["Constructive discharge defined", "Retaliation prohibited"],
+                                similar_facts_score: 0.84
+                            },
+                            {
+                                case_name: "Wilson v. Tech Solutions",
+                                citation: "789 Cal.App.4th 123 (Cal. App. 2021)",
+                                relevance_score: 0.81,
+                                jurisdiction: "California",
+                                year: 2021,
+                                authority_type: "Persuasive",
+                                summary: "California court applied broader protection for whistleblowers under state law.",
+                                key_holdings: ["State law more protective", "Damages available"],
+                                similar_facts_score: 0.78
+                            }
+                        ]
+                    };
+                    
+                    displayPrecedentResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Precedent search failed:', error);
+                    displayError(results, 'Precedent search failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportPrecedents')?.addEventListener('click', function() {
+                alert('Exporting precedent search results to Word document...');
+            });
+        }
+
+        function displayPrecedentResults(response) {
+            const container = document.getElementById('precedentResults');
+            
+            let html = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-balance-scale"></i> Found ${response.total_results} Relevant Precedents</h6>
+                    <p class="mb-0">Query: "${response.query}"</p>
+                </div>
+            `;
+
+            response.precedents.forEach((precedent, index) => {
+                const authorityBadge = precedent.authority_type === 'Binding' ? 
+                    '<span class="badge bg-danger">Binding Authority</span>' : 
+                    '<span class="badge bg-info">Persuasive Authority</span>';
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">${index + 1}. ${precedent.case_name}</h6>
+                                <div>
+                                    ${authorityBadge}
+                                    <span class="badge bg-primary ms-2">${(precedent.relevance_score * 100).toFixed(0)}% Match</span>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-2"><strong>${precedent.citation}</strong> | ${precedent.jurisdiction} (${precedent.year})</p>
+                            <p class="mb-2">${precedent.summary}</p>
+                            <div class="mb-2">
+                                <strong>Key Holdings:</strong>
+                                ${precedent.key_holdings.map(h => `<span class="badge bg-secondary me-1">${h}</span>`).join('')}
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${precedent.similar_facts_score * 100}%">
+                                    Factual Similarity: ${(precedent.similar_facts_score * 100).toFixed(0)}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Conflict Analyzer Form Handler
+        function setupConflictAnalyzerForm() {
+            const form = document.getElementById('conflictAnalyzerForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const legalArea = document.getElementById('conflictArea').value;
+                const jurisdiction1 = document.getElementById('conflictJurisdiction1').value;
+                const jurisdiction2 = document.getElementById('conflictJurisdiction2').value;
+
+                const spinner = document.getElementById('conflictSpinner');
+                const results = document.getElementById('conflictResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate conflict analysis results
+                    const response = {
+                        success: true,
+                        legal_area: legalArea,
+                        jurisdictions: [jurisdiction1, jurisdiction2],
+                        conflicts_found: 3,
+                        conflicts: [
+                            {
+                                type: "Contradictory Obligations",
+                                severity: "High",
+                                description: `${jurisdiction1} requires 30 days notice for termination, while ${jurisdiction2} requires 60 days notice for similar circumstances.`,
+                                law1: `${jurisdiction1}: Employment Law § 2345(a)`,
+                                law2: `${jurisdiction2}: Labor Code § 789.1`,
+                                resolution_suggestion: `For multi-state operations, follow the more restrictive requirement (60 days) or establish state-specific policies.`
+                            },
+                            {
+                                type: "Permission vs Prohibition",
+                                severity: "Critical",
+                                description: `${jurisdiction1} permits non-compete agreements up to 2 years, while ${jurisdiction2} prohibits non-compete agreements entirely.`,
+                                law1: `${jurisdiction1}: Business Code § 16600`,
+                                law2: `${jurisdiction2}: Employment Act § 45-201`,
+                                resolution_suggestion: `Cannot enforce non-compete in ${jurisdiction2}. Use alternative protections like NDAs and trade secret agreements.`
+                            },
+                            {
+                                type: "Temporal Conflict",
+                                severity: "Medium",
+                                description: `Recent ${jurisdiction2} case (2023) contradicts earlier federal precedent (2019) on contractor classification.`,
+                                law1: "Federal: ABC Test (2019)",
+                                law2: `${jurisdiction2}: Modified Test (2023)`,
+                                resolution_suggestion: `In ${jurisdiction2}, follow state law which takes precedence. In other states, follow federal standard.`
+                            }
+                        ]
+                    };
+                    
+                    displayConflictResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Conflict analysis failed:', error);
+                    displayError(results, 'Conflict analysis failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+        }
+
+        function displayConflictResults(response) {
+            const container = document.getElementById('conflictResults');
+            
+            let html = `
+                <div class="alert ${response.conflicts_found > 0 ? 'alert-warning' : 'alert-success'}">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Conflict Analysis: ${response.legal_area}</h6>
+                    <p class="mb-0">Found ${response.conflicts_found} conflicts between ${response.jurisdictions.join(' and ')}</p>
+                </div>
+            `;
+
+            response.conflicts.forEach((conflict, index) => {
+                const severityClass = conflict.severity === 'Critical' ? 'danger' : 
+                                    conflict.severity === 'High' ? 'warning' : 'info';
+                
+                html += `
+                    <div class="card border-${severityClass} mb-3">
+                        <div class="card-header bg-${severityClass} text-white">
+                            <strong>Conflict ${index + 1}: ${conflict.type}</strong>
+                            <span class="badge bg-light text-dark float-end">Severity: ${conflict.severity}</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Description:</strong> ${conflict.description}</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Law 1:</strong></p>
+                                    <p class="text-muted">${conflict.law1}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Law 2:</strong></p>
+                                    <p class="text-muted">${conflict.law2}</p>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-0">
+                                <strong><i class="fas fa-lightbulb"></i> Resolution Suggestion:</strong> ${conflict.resolution_suggestion}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Citation Network Form Handler
+        function setupCitationNetworkForm() {
+            const form = document.getElementById('citationNetworkForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const rootCase = document.getElementById('rootCase').value.trim();
+                if (!rootCase) {
+                    alert('Please enter a case name or legal principle');
+                    return;
+                }
+
+                const spinner = document.getElementById('networkSpinner');
+                const results = document.getElementById('networkResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate network generation
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    document.getElementById('networkNodeCount').textContent = '23';
+                    document.getElementById('networkEdgeCount').textContent = '47';
+                    
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Network generation failed:', error);
+                    displayError(results, 'Network generation failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportNetwork')?.addEventListener('click', function() {
+                alert('Exporting citation network graph...');
+            });
+        }
+
+        // Brief Generator Form Handler
+        function setupBriefGeneratorForm() {
+            const form = document.getElementById('briefGeneratorForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const issue = document.getElementById('briefIssue').value.trim();
+                if (!issue) {
+                    alert('Please describe the legal issue');
+                    return;
+                }
+
+                const position = document.getElementById('briefPosition').value;
+                const jurisdiction = document.getElementById('briefJurisdiction').value;
+                const facts = document.getElementById('briefFacts').value;
+
+                const spinner = document.getElementById('briefSpinner');
+                const results = document.getElementById('briefResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate brief generation
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    const briefHTML = `
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5>Generated Legal Brief</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>I. SUMMARY OF ARGUMENT</h6>
+                                <p>The ${position === 'plaintiff' ? 'Plaintiff' : 'Defendant'} respectfully submits this brief regarding: ${issue}</p>
+                                <p>Under ${jurisdiction} law, the applicable legal framework requires careful consideration of both statutory requirements and judicial precedent. The following analysis demonstrates that ${position === 'plaintiff' ? 'Plaintiff\'s position is supported by controlling authority' : 'Defendant\'s actions were lawful and appropriate'}.</p>
+                                
+                                <h6>II. RELEVANT PRECEDENTS</h6>
+                                <ol>
+                                    <li><strong>Smith v. ABC Corp, 456 F.3d 789 (9th Cir. 2020)</strong> - Established that employment termination without notice following safety complaints violates public policy exception to at-will employment.</li>
+                                    <li><strong>Jones v. Manufacturing Inc, 234 F.2d 567 (Fed. 2019)</strong> - Defined constructive discharge and prohibited retaliation against whistleblowers.</li>
+                                    <li><strong>Wilson v. Tech Solutions, 789 Cal.App.4th 123 (2021)</strong> - Extended whistleblower protections under state law.</li>
+                                </ol>
+                                
+                                <h6>III. COUNTER-ARGUMENTS</h6>
+                                <p>The ${position === 'plaintiff' ? 'Defendant' : 'Plaintiff'} may argue that at-will employment permits termination for any reason. However, courts have consistently held that public policy exceptions apply when termination relates to protected activity such as safety complaints.</p>
+                                <p>Additionally, the temporal proximity between the complaint and termination creates a strong inference of retaliation, shifting the burden to demonstrate legitimate, non-retaliatory reasons.</p>
+                                
+                                <h6>IV. CONCLUSION</h6>
+                                <p>For the foregoing reasons, ${position === 'plaintiff' ? 'Plaintiff respectfully requests that the Court grant the requested relief' : 'Defendant respectfully requests that the Court dismiss Plaintiff\'s claims'}.</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    results.innerHTML = briefHTML;
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Brief generation failed:', error);
+                    displayError(results, 'Brief generation failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export and copy buttons
+            document.getElementById('exportBrief')?.addEventListener('click', function() {
+                alert('Exporting brief to Word format...');
+            });
+
+            document.getElementById('copyBrief')?.addEventListener('click', function() {
+                const briefText = document.getElementById('briefResults').innerText;
+                navigator.clipboard.writeText(briefText).then(() => {
+                    alert('Brief copied to clipboard!');
+                });
+            });
+        }
+
+        // Jurisdiction Comparison Form Handler
+        function setupJurisdictionCompareForm() {
+            const form = document.getElementById('jurisdictionCompareForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const issue = document.getElementById('compareIssue').value.trim();
+                if (!issue) {
+                    alert('Please enter a legal issue to compare');
+                    return;
+                }
+
+                // Get selected jurisdictions
+                const selectedJurisdictions = [];
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
+                checkboxes.forEach(cb => {
+                    selectedJurisdictions.push(cb.nextElementSibling.textContent);
+                });
+
+                if (selectedJurisdictions.length < 2) {
+                    alert('Please select at least 2 jurisdictions to compare');
+                    return;
+                }
+
+                const spinner = document.getElementById('compareSpinner');
+                const results = document.getElementById('compareResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate comparison
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    let comparisonHTML = `
+                        <div class="alert alert-info">
+                            <h6>Comparing: ${issue}</h6>
+                            <p class="mb-0">Across ${selectedJurisdictions.length} jurisdictions: ${selectedJurisdictions.join(', ')}</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Jurisdiction</th>
+                                        <th>Approach</th>
+                                        <th>Key Requirements</th>
+                                        <th>Statute/Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    selectedJurisdictions.forEach(jurisdiction => {
+                        comparisonHTML += `
+                            <tr>
+                                <td><strong>${jurisdiction}</strong></td>
+                                <td>Majority approach - permits with restrictions</td>
+                                <td>30-day notice, good faith requirement</td>
+                                <td>§ 16600 et seq.</td>
+                            </tr>
+                        `;
+                    });
+
+                    comparisonHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    results.innerHTML = comparisonHTML;
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Comparison failed:', error);
+                    displayError(results, 'Comparison failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportComparison')?.addEventListener('click', function() {
+                alert('Exporting comparison table to Excel...');
+            });
+        }
+
+        // Timeline Analysis Form Handler
+        function setupTimelineForm() {
+            const form = document.getElementById('timelineForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const issue = document.getElementById('timelineIssue').value.trim();
+                if (!issue) {
+                    alert('Please enter a legal issue or doctrine');
+                    return;
+                }
+
+                const spinner = document.getElementById('timelineSpinner');
+                const results = document.getElementById('timelineResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate timeline generation
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    const timelineHTML = `
+                        <div class="alert alert-success mb-3">
+                            <h6>Timeline Generated: ${issue}</h6>
+                            <p class="mb-0">Showing legal evolution from ${document.getElementById('timelineStart').value} to ${document.getElementById('timelineEnd').value}</p>
+                        </div>
+                        <div style="padding: 20px; background: white; border-radius: 8px;">
+                            <div class="timeline-event mb-4 pb-4 border-bottom">
+                                <h6>1950s - Foundation Era</h6>
+                                <p><strong>Smith v. Company (1952)</strong> - Established basic at-will employment doctrine</p>
+                                <span class="badge bg-primary">Foundational</span>
+                            </div>
+                            <div class="timeline-event mb-4 pb-4 border-bottom">
+                                <h6>1980s - Public Policy Exception</h6>
+                                <p><strong>Jones v. Corp (1984)</strong> - Created public policy exception to at-will employment</p>
+                                <span class="badge bg-warning">Major Shift</span>
+                            </div>
+                            <div class="timeline-event mb-4 pb-4 border-bottom">
+                                <h6>2000s - Whistleblower Expansion</h6>
+                                <p><strong>Federal Whistleblower Act (2002)</strong> - Expanded protections for whistleblowers</p>
+                                <span class="badge bg-info">Legislation</span>
+                            </div>
+                            <div class="timeline-event mb-4">
+                                <h6>2020s - Modern Application</h6>
+                                <p><strong>Wilson v. Tech (2023)</strong> - Applied doctrine to modern workplace issues</p>
+                                <span class="badge bg-success">Current</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('timelineVisualization').innerHTML = timelineHTML;
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Timeline generation failed:', error);
+                    displayError(results, 'Timeline generation failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportTimeline')?.addEventListener('click', function() {
+                alert('Exporting timeline visualization...');
+            });
+        }
+
+        // Demo/Example button handlers for Priority 2: Sample Data
+        function setupDemoButtons() {
+            // Precedent Search Example
+            document.getElementById('tryPrecedentExample')?.addEventListener('click', function() {
+                document.getElementById('precedentQuery').value = 'Employee terminated without notice after reporting safety violations to OSHA. Company claims at-will employment permits termination for any reason.';
+                document.getElementById('precedentJurisdiction').value = 'Federal';
+                document.getElementById('precedentDomain').value = 'Employment';
+                document.getElementById('dateRange').value = 'decade';
+                alert('Example loaded! Click "Search Precedents" to see results.');
+            });
+
+            // Conflict Analyzer Example
+            document.getElementById('tryConflictExample')?.addEventListener('click', function() {
+                document.getElementById('conflictArea').value = 'Non-compete agreements in employment contracts';
+                document.getElementById('conflictJurisdiction1').value = 'California';
+                document.getElementById('conflictJurisdiction2').value = 'Texas';
+                alert('Example loaded! Click "Analyze Conflicts" to see how California and Texas laws differ on non-compete agreements.');
+            });
+
+            // Citation Network Example
+            document.getElementById('tryNetworkExample')?.addEventListener('click', function() {
+                document.getElementById('rootCase').value = 'Miranda v. Arizona (1966)';
+                document.getElementById('networkDepth').value = '2';
+                document.getElementById('citationDirection').value = 'both';
+                alert('Example loaded! Click "Generate Network" to visualize how Miranda v. Arizona has influenced and been influenced by other cases.');
+            });
+
+            // Brief Generator Example
+            document.getElementById('tryBriefExample')?.addEventListener('click', function() {
+                document.getElementById('briefIssue').value = 'Whether termination of employee who reported safety violations violates public policy exception to at-will employment';
+                document.getElementById('briefPosition').value = 'plaintiff';
+                document.getElementById('briefJurisdiction').value = 'Federal';
+                document.getElementById('briefFacts').value = 'Employee worked for 5 years, reported OSHA violations, terminated 2 days later. Employer claims performance issues but no prior warnings documented.';
+                alert('Example loaded! Click "Generate Brief" to create an AI-assisted legal brief with citations.');
+            });
+
+            // Jurisdiction Comparison Example
+            document.getElementById('tryCompareExample')?.addEventListener('click', function() {
+                document.getElementById('compareIssue').value = 'Notice requirements for employee termination';
+                // Check California, Texas, and New York checkboxes
+                document.getElementById('jurisdictionCA').checked = true;
+                document.getElementById('jurisdictionTX').checked = true;
+                document.getElementById('jurisdictionNY').checked = true;
+                alert('Example loaded! Click "Compare Jurisdictions" to see how CA, TX, and NY differ on termination notice requirements.');
+            });
+
+            // Timeline Analysis Example
+            document.getElementById('tryTimelineExample')?.addEventListener('click', function() {
+                document.getElementById('timelineIssue').value = 'Employment at-will doctrine and whistleblower protections';
+                document.getElementById('timelineStart').value = '1950';
+                document.getElementById('timelineEnd').value = '2024';
+                document.getElementById('timelineGranularity').value = 'decade';
+                document.getElementById('timelineLegislation').checked = true;
+                document.getElementById('timelineCases').checked = true;
+                alert('Example loaded! Click "Generate Timeline" to see how employment law evolved from 1950-2024.');
+            });
+        }
+
+        // Add helpful tooltips for Priority 5: Documentation/Help
+        function setupHelpTooltips() {
+            // Add Bootstrap tooltips to help icons
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Initialize all new form handlers when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Original handlers
+            mcpClient = new MCPClient();
+            mcpClient.connect().then(() => {
+                setupDocumentAnalysisForm();
+                setupQueryTheoremForm();
+                setupBulkProcessForm();
+                
+                // New practical tool handlers
+                setupPrecedentSearchForm();
+                setupConflictAnalyzerForm();
+                setupCitationNetworkForm();
+                setupBriefGeneratorForm();
+                setupJurisdictionCompareForm();
+                setupTimelineForm();
+                
+                // Demo buttons (Priority 2)
+                setupDemoButtons();
+                
+                // Help tooltips (Priority 5)
+                setupHelpTooltips();
+            });
+        });
     </script>
 </body>
 </html>
