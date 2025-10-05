@@ -44,6 +44,8 @@ IPLD-based knowledge graph storage and traversal.
 - Immutable knowledge graph structures
 - Efficient graph traversal and querying
 - Cross-dataset graph linking
+- **Automatic chunking for large graphs** (>800KB blocks are split automatically)
+- Handles graphs exceeding IPFS's 1MiB block limit
 
 ## Usage Examples
 
