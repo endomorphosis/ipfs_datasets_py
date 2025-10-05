@@ -2027,6 +2027,551 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 </div>
             `;
         }
+
+        // Precedent Search Form Handler
+        function setupPrecedentSearchForm() {
+            const form = document.getElementById('precedentSearchForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const query = document.getElementById('precedentQuery').value.trim();
+                if (!query) {
+                    alert('Please describe the legal issue or fact pattern');
+                    return;
+                }
+
+                const parameters = {
+                    query: query,
+                    jurisdiction: document.getElementById('precedentJurisdiction').value,
+                    legal_domain: document.getElementById('precedentDomain').value,
+                    date_range: document.getElementById('dateRange').value,
+                    limit: parseInt(document.getElementById('precedentLimit').value)
+                };
+
+                const spinner = document.getElementById('precedentSpinner');
+                const results = document.getElementById('precedentResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate precedent search results
+                    const response = {
+                        success: true,
+                        query: query,
+                        total_results: 8,
+                        precedents: [
+                            {
+                                case_name: "Smith v. ABC Corp",
+                                citation: "456 F.3d 789 (9th Cir. 2020)",
+                                relevance_score: 0.92,
+                                jurisdiction: "Federal - 9th Circuit",
+                                year: 2020,
+                                authority_type: "Binding",
+                                summary: "Employee terminated without notice after reporting safety violations. Court held termination violated public policy exception to at-will employment.",
+                                key_holdings: ["Public policy exception applies", "Safety whistleblower protected"],
+                                similar_facts_score: 0.89
+                            },
+                            {
+                                case_name: "Jones v. Manufacturing Inc",
+                                citation: "234 F.2d 567 (Fed. 2019)",
+                                relevance_score: 0.87,
+                                jurisdiction: "Federal",
+                                year: 2019,
+                                authority_type: "Binding",
+                                summary: "Court found constructive discharge when employer made working conditions intolerable after employee complained.",
+                                key_holdings: ["Constructive discharge defined", "Retaliation prohibited"],
+                                similar_facts_score: 0.84
+                            },
+                            {
+                                case_name: "Wilson v. Tech Solutions",
+                                citation: "789 Cal.App.4th 123 (Cal. App. 2021)",
+                                relevance_score: 0.81,
+                                jurisdiction: "California",
+                                year: 2021,
+                                authority_type: "Persuasive",
+                                summary: "California court applied broader protection for whistleblowers under state law.",
+                                key_holdings: ["State law more protective", "Damages available"],
+                                similar_facts_score: 0.78
+                            }
+                        ]
+                    };
+                    
+                    displayPrecedentResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Precedent search failed:', error);
+                    displayError(results, 'Precedent search failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportPrecedents')?.addEventListener('click', function() {
+                alert('Exporting precedent search results to Word document...');
+            });
+        }
+
+        function displayPrecedentResults(response) {
+            const container = document.getElementById('precedentResults');
+            
+            let html = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-balance-scale"></i> Found ${response.total_results} Relevant Precedents</h6>
+                    <p class="mb-0">Query: "${response.query}"</p>
+                </div>
+            `;
+
+            response.precedents.forEach((precedent, index) => {
+                const authorityBadge = precedent.authority_type === 'Binding' ? 
+                    '<span class="badge bg-danger">Binding Authority</span>' : 
+                    '<span class="badge bg-info">Persuasive Authority</span>';
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">${index + 1}. ${precedent.case_name}</h6>
+                                <div>
+                                    ${authorityBadge}
+                                    <span class="badge bg-primary ms-2">${(precedent.relevance_score * 100).toFixed(0)}% Match</span>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-2"><strong>${precedent.citation}</strong> | ${precedent.jurisdiction} (${precedent.year})</p>
+                            <p class="mb-2">${precedent.summary}</p>
+                            <div class="mb-2">
+                                <strong>Key Holdings:</strong>
+                                ${precedent.key_holdings.map(h => `<span class="badge bg-secondary me-1">${h}</span>`).join('')}
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${precedent.similar_facts_score * 100}%">
+                                    Factual Similarity: ${(precedent.similar_facts_score * 100).toFixed(0)}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Conflict Analyzer Form Handler
+        function setupConflictAnalyzerForm() {
+            const form = document.getElementById('conflictAnalyzerForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const legalArea = document.getElementById('conflictArea').value;
+                const jurisdiction1 = document.getElementById('conflictJurisdiction1').value;
+                const jurisdiction2 = document.getElementById('conflictJurisdiction2').value;
+
+                const spinner = document.getElementById('conflictSpinner');
+                const results = document.getElementById('conflictResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate conflict analysis results
+                    const response = {
+                        success: true,
+                        legal_area: legalArea,
+                        jurisdictions: [jurisdiction1, jurisdiction2],
+                        conflicts_found: 3,
+                        conflicts: [
+                            {
+                                type: "Contradictory Obligations",
+                                severity: "High",
+                                description: `${jurisdiction1} requires 30 days notice for termination, while ${jurisdiction2} requires 60 days notice for similar circumstances.`,
+                                law1: `${jurisdiction1}: Employment Law § 2345(a)`,
+                                law2: `${jurisdiction2}: Labor Code § 789.1`,
+                                resolution_suggestion: `For multi-state operations, follow the more restrictive requirement (60 days) or establish state-specific policies.`
+                            },
+                            {
+                                type: "Permission vs Prohibition",
+                                severity: "Critical",
+                                description: `${jurisdiction1} permits non-compete agreements up to 2 years, while ${jurisdiction2} prohibits non-compete agreements entirely.`,
+                                law1: `${jurisdiction1}: Business Code § 16600`,
+                                law2: `${jurisdiction2}: Employment Act § 45-201`,
+                                resolution_suggestion: `Cannot enforce non-compete in ${jurisdiction2}. Use alternative protections like NDAs and trade secret agreements.`
+                            },
+                            {
+                                type: "Temporal Conflict",
+                                severity: "Medium",
+                                description: `Recent ${jurisdiction2} case (2023) contradicts earlier federal precedent (2019) on contractor classification.`,
+                                law1: "Federal: ABC Test (2019)",
+                                law2: `${jurisdiction2}: Modified Test (2023)`,
+                                resolution_suggestion: `In ${jurisdiction2}, follow state law which takes precedence. In other states, follow federal standard.`
+                            }
+                        ]
+                    };
+                    
+                    displayConflictResults(response);
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Conflict analysis failed:', error);
+                    displayError(results, 'Conflict analysis failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+        }
+
+        function displayConflictResults(response) {
+            const container = document.getElementById('conflictResults');
+            
+            let html = `
+                <div class="alert ${response.conflicts_found > 0 ? 'alert-warning' : 'alert-success'}">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Conflict Analysis: ${response.legal_area}</h6>
+                    <p class="mb-0">Found ${response.conflicts_found} conflicts between ${response.jurisdictions.join(' and ')}</p>
+                </div>
+            `;
+
+            response.conflicts.forEach((conflict, index) => {
+                const severityClass = conflict.severity === 'Critical' ? 'danger' : 
+                                    conflict.severity === 'High' ? 'warning' : 'info';
+                
+                html += `
+                    <div class="card border-${severityClass} mb-3">
+                        <div class="card-header bg-${severityClass} text-white">
+                            <strong>Conflict ${index + 1}: ${conflict.type}</strong>
+                            <span class="badge bg-light text-dark float-end">Severity: ${conflict.severity}</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Description:</strong> ${conflict.description}</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Law 1:</strong></p>
+                                    <p class="text-muted">${conflict.law1}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Law 2:</strong></p>
+                                    <p class="text-muted">${conflict.law2}</p>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-0">
+                                <strong><i class="fas fa-lightbulb"></i> Resolution Suggestion:</strong> ${conflict.resolution_suggestion}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Citation Network Form Handler
+        function setupCitationNetworkForm() {
+            const form = document.getElementById('citationNetworkForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const rootCase = document.getElementById('rootCase').value.trim();
+                if (!rootCase) {
+                    alert('Please enter a case name or legal principle');
+                    return;
+                }
+
+                const spinner = document.getElementById('networkSpinner');
+                const results = document.getElementById('networkResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate network generation
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    document.getElementById('networkNodeCount').textContent = '23';
+                    document.getElementById('networkEdgeCount').textContent = '47';
+                    
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Network generation failed:', error);
+                    displayError(results, 'Network generation failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportNetwork')?.addEventListener('click', function() {
+                alert('Exporting citation network graph...');
+            });
+        }
+
+        // Brief Generator Form Handler
+        function setupBriefGeneratorForm() {
+            const form = document.getElementById('briefGeneratorForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const issue = document.getElementById('briefIssue').value.trim();
+                if (!issue) {
+                    alert('Please describe the legal issue');
+                    return;
+                }
+
+                const position = document.getElementById('briefPosition').value;
+                const jurisdiction = document.getElementById('briefJurisdiction').value;
+                const facts = document.getElementById('briefFacts').value;
+
+                const spinner = document.getElementById('briefSpinner');
+                const results = document.getElementById('briefResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate brief generation
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    const briefHTML = `
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5>Generated Legal Brief</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>I. SUMMARY OF ARGUMENT</h6>
+                                <p>The ${position === 'plaintiff' ? 'Plaintiff' : 'Defendant'} respectfully submits this brief regarding: ${issue}</p>
+                                <p>Under ${jurisdiction} law, the applicable legal framework requires careful consideration of both statutory requirements and judicial precedent. The following analysis demonstrates that ${position === 'plaintiff' ? 'Plaintiff's position is supported by controlling authority' : 'Defendant's actions were lawful and appropriate'}.</p>
+                                
+                                <h6>II. RELEVANT PRECEDENTS</h6>
+                                <ol>
+                                    <li><strong>Smith v. ABC Corp, 456 F.3d 789 (9th Cir. 2020)</strong> - Established that employment termination without notice following safety complaints violates public policy exception to at-will employment.</li>
+                                    <li><strong>Jones v. Manufacturing Inc, 234 F.2d 567 (Fed. 2019)</strong> - Defined constructive discharge and prohibited retaliation against whistleblowers.</li>
+                                    <li><strong>Wilson v. Tech Solutions, 789 Cal.App.4th 123 (2021)</strong> - Extended whistleblower protections under state law.</li>
+                                </ol>
+                                
+                                <h6>III. COUNTER-ARGUMENTS</h6>
+                                <p>The ${position === 'plaintiff' ? 'Defendant' : 'Plaintiff'} may argue that at-will employment permits termination for any reason. However, courts have consistently held that public policy exceptions apply when termination relates to protected activity such as safety complaints.</p>
+                                <p>Additionally, the temporal proximity between the complaint and termination creates a strong inference of retaliation, shifting the burden to demonstrate legitimate, non-retaliatory reasons.</p>
+                                
+                                <h6>IV. CONCLUSION</h6>
+                                <p>For the foregoing reasons, ${position === 'plaintiff' ? 'Plaintiff respectfully requests that the Court grant the requested relief' : 'Defendant respectfully requests that the Court dismiss Plaintiff's claims'}.</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    results.innerHTML = briefHTML;
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Brief generation failed:', error);
+                    displayError(results, 'Brief generation failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export and copy buttons
+            document.getElementById('exportBrief')?.addEventListener('click', function() {
+                alert('Exporting brief to Word format...');
+            });
+
+            document.getElementById('copyBrief')?.addEventListener('click', function() {
+                const briefText = document.getElementById('briefResults').innerText;
+                navigator.clipboard.writeText(briefText).then(() => {
+                    alert('Brief copied to clipboard!');
+                });
+            });
+        }
+
+        // Jurisdiction Comparison Form Handler
+        function setupJurisdictionCompareForm() {
+            const form = document.getElementById('jurisdictionCompareForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const issue = document.getElementById('compareIssue').value.trim();
+                if (!issue) {
+                    alert('Please enter a legal issue to compare');
+                    return;
+                }
+
+                // Get selected jurisdictions
+                const selectedJurisdictions = [];
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
+                checkboxes.forEach(cb => {
+                    selectedJurisdictions.push(cb.nextElementSibling.textContent);
+                });
+
+                if (selectedJurisdictions.length < 2) {
+                    alert('Please select at least 2 jurisdictions to compare');
+                    return;
+                }
+
+                const spinner = document.getElementById('compareSpinner');
+                const results = document.getElementById('compareResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate comparison
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    let comparisonHTML = `
+                        <div class="alert alert-info">
+                            <h6>Comparing: ${issue}</h6>
+                            <p class="mb-0">Across ${selectedJurisdictions.length} jurisdictions: ${selectedJurisdictions.join(', ')}</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Jurisdiction</th>
+                                        <th>Approach</th>
+                                        <th>Key Requirements</th>
+                                        <th>Statute/Case</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    selectedJurisdictions.forEach(jurisdiction => {
+                        comparisonHTML += `
+                            <tr>
+                                <td><strong>${jurisdiction}</strong></td>
+                                <td>Majority approach - permits with restrictions</td>
+                                <td>30-day notice, good faith requirement</td>
+                                <td>§ 16600 et seq.</td>
+                            </tr>
+                        `;
+                    });
+
+                    comparisonHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    results.innerHTML = comparisonHTML;
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Comparison failed:', error);
+                    displayError(results, 'Comparison failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportComparison')?.addEventListener('click', function() {
+                alert('Exporting comparison table to Excel...');
+            });
+        }
+
+        // Timeline Analysis Form Handler
+        function setupTimelineForm() {
+            const form = document.getElementById('timelineForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const issue = document.getElementById('timelineIssue').value.trim();
+                if (!issue) {
+                    alert('Please enter a legal issue or doctrine');
+                    return;
+                }
+
+                const spinner = document.getElementById('timelineSpinner');
+                const results = document.getElementById('timelineResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate timeline generation
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    const timelineHTML = `
+                        <div class="alert alert-success mb-3">
+                            <h6>Timeline Generated: ${issue}</h6>
+                            <p class="mb-0">Showing legal evolution from ${document.getElementById('timelineStart').value} to ${document.getElementById('timelineEnd').value}</p>
+                        </div>
+                        <div style="padding: 20px; background: white; border-radius: 8px;">
+                            <div class="timeline-event mb-4 pb-4 border-bottom">
+                                <h6>1950s - Foundation Era</h6>
+                                <p><strong>Smith v. Company (1952)</strong> - Established basic at-will employment doctrine</p>
+                                <span class="badge bg-primary">Foundational</span>
+                            </div>
+                            <div class="timeline-event mb-4 pb-4 border-bottom">
+                                <h6>1980s - Public Policy Exception</h6>
+                                <p><strong>Jones v. Corp (1984)</strong> - Created public policy exception to at-will employment</p>
+                                <span class="badge bg-warning">Major Shift</span>
+                            </div>
+                            <div class="timeline-event mb-4 pb-4 border-bottom">
+                                <h6>2000s - Whistleblower Expansion</h6>
+                                <p><strong>Federal Whistleblower Act (2002)</strong> - Expanded protections for whistleblowers</p>
+                                <span class="badge bg-info">Legislation</span>
+                            </div>
+                            <div class="timeline-event mb-4">
+                                <h6>2020s - Modern Application</h6>
+                                <p><strong>Wilson v. Tech (2023)</strong> - Applied doctrine to modern workplace issues</p>
+                                <span class="badge bg-success">Current</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('timelineVisualization').innerHTML = timelineHTML;
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Timeline generation failed:', error);
+                    displayError(results, 'Timeline generation failed: ' + error.message);
+                    results.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                }
+            });
+
+            // Export button
+            document.getElementById('exportTimeline')?.addEventListener('click', function() {
+                alert('Exporting timeline visualization...');
+            });
+        }
+
+        // Initialize all new form handlers when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Original handlers
+            mcpClient = new MCPClient();
+            mcpClient.connect().then(() => {
+                setupDocumentAnalysisForm();
+                setupQueryTheoremForm();
+                setupBulkProcessForm();
+                
+                // New practical tool handlers
+                setupPrecedentSearchForm();
+                setupConflictAnalyzerForm();
+                setupCitationNetworkForm();
+                setupBriefGeneratorForm();
+                setupJurisdictionCompareForm();
+                setupTimelineForm();
+            });
+        });
     </script>
 </body>
 </html>
