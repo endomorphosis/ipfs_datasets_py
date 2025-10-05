@@ -665,6 +665,20 @@
                     <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
                 </div>
 
+                <!-- Priority 5: Quick Start Guide -->
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-rocket"></i> Quick Start Guide</h5>
+                    <p><strong>New to the dashboard?</strong> Try these steps:</p>
+                    <ol class="mb-2">
+                        <li>Click any <span class="badge bg-success">Try Example</span> button to see how tools work</li>
+                        <li>Start with <strong>Precedent Search</strong> to find similar cases</li>
+                        <li>Use <strong>Conflict Analyzer</strong> to identify legal conflicts</li>
+                        <li>Generate briefs with <strong>Brief Generator</strong></li>
+                    </ol>
+                    <p class="mb-0"><i class="fas fa-info-circle"></i> Hover over <i class="fas fa-question-circle text-primary"></i> icons for help on each field.</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
                 <!-- MCP Status Indicator -->
                 <div class="mcp-indicator">
                     <h5><i class="fas fa-plug"></i> MCP Connection Status</h5>
@@ -977,7 +991,11 @@
                             <div class="card-body">
                                 <form id="precedentSearchForm">
                                     <div class="mb-3">
-                                        <label for="precedentQuery" class="form-label">Legal Issue or Fact Pattern</label>
+                                        <label for="precedentQuery" class="form-label">
+                                            Legal Issue or Fact Pattern
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Describe the legal situation in natural language. Include key facts, parties involved, and the main legal question."></i>
+                                        </label>
                                         <textarea class="form-control" id="precedentQuery" rows="4" 
                                                   placeholder="Describe the legal issue, facts, or cite a case you want to find similar precedents for...
 Example: 'Employee terminated without notice after reporting safety violations'"></textarea>
@@ -1062,7 +1080,11 @@ Example: 'Employee terminated without notice after reporting safety violations'"
                                 
                                 <form id="conflictAnalyzerForm">
                                     <div class="mb-3">
-                                        <label for="conflictArea" class="form-label">Legal Area to Analyze</label>
+                                        <label for="conflictArea" class="form-label">
+                                            Legal Area to Analyze
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Select the area of law where you want to identify conflicts between different jurisdictions."></i>
+                                        </label>
                                         <select class="form-select" id="conflictArea">
                                             <option value="Employment">Employment Law</option>
                                             <option value="Contract">Contract Law</option>
@@ -1239,8 +1261,30 @@ Example: 'Employee terminated without notice after reporting safety violations'"
                             </div>
                             <div class="card-body">
                                 <form id="briefGeneratorForm">
+                                    <!-- Priority 4: Case Brief Template Selector -->
                                     <div class="mb-3">
-                                        <label for="briefIssue" class="form-label">Legal Issue</label>
+                                        <label for="briefTemplate" class="form-label">
+                                            Brief Template
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Choose a pre-configured template for different types of legal briefs."></i>
+                                        </label>
+                                        <select class="form-select" id="briefTemplate">
+                                            <option value="custom">Custom Brief</option>
+                                            <option value="motion">Motion Brief</option>
+                                            <option value="appeal">Appellate Brief</option>
+                                            <option value="summary_judgment">Summary Judgment</option>
+                                            <option value="complaint">Complaint</option>
+                                            <option value="response">Response Brief</option>
+                                            <option value="memo">Legal Memorandum</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="briefIssue" class="form-label">
+                                            Legal Issue
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="State the central legal question your brief will address."></i>
+                                        </label>
                                         <textarea class="form-control" id="briefIssue" rows="3" 
                                                   placeholder="Describe the legal issue you need to argue...
 Example: 'Whether an employment contract requiring 30 days notice is enforceable when employee was constructively discharged'"></textarea>
