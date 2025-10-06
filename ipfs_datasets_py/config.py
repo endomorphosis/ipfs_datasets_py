@@ -6,9 +6,10 @@ from os import listdir
 from os.path import isfile, join
 from os import walk
 import toml
+from typing import Dict, Any, Optional, Union
 
 class config():
-    def __init__(self, collection=None, meta=None):
+    def __init__(self, collection: Optional[Any] = None, meta: Optional[Dict[str, Any]] = None) -> None:
         this_dir = os.path.dirname(os.path.realpath(__file__))
         if meta is not None:
             if "config" in meta:
@@ -22,7 +23,7 @@ class config():
                 self.toml_file = os.path.realpath(os.path.join(this_dir, self.toml_file))
             self.baseConfig = self.requireConfig(self.toml_file)
 
-    def overrideToml(self, base, overrides):
+    def overrideToml(self, base: Dict[str, Any], overrides: Union[Dict[str, Any], str]) -> Dict[str, Any]:
         if not isinstance(overrides, dict):
             if isinstance(overrides, str):
                 if os.path.exists(overrides):
@@ -45,7 +46,7 @@ class config():
         else:
             return base
 
-    def findConfig(self):
+    def findConfig(self) -> Optional[str]:
         paths = [
             './config.toml',
             '../config.toml',
@@ -63,7 +64,7 @@ class config():
         print("foundPath: ", foundPath)
         return foundPath if foundPath != None else None
 
-    def loadConfig(self, configPath, overrides = None):
+    def loadConfig(self, configPath: Optional[str], overrides: Optional[Union[Dict[str, Any], str]] = None) -> Dict[str, Any]:
         if configPath is None and "findConfig" in dir(self):
             configPath = self.findConfig()
         with open(configPath) as f:
@@ -73,7 +74,7 @@ class config():
             else:
                 return self.overrideToml(config, overrides)
 
-    def requireConfig(self, opts = None):
+    def requireConfig(self, opts: Optional[Union[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
         configPath = None
         this_dir = os.path.dirname(os.path.realpath(__file__))
         this_config = os.path.join(this_dir, 'config.toml')
