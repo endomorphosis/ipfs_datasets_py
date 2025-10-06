@@ -11,7 +11,7 @@ from typing import Callable, Dict, List, Optional, AsyncIterator, TypeAlias
 from abc import ABC, abstractmethod
 
 
-Tokenizer: TypeAlias = Callable[[str, Optional[Dict]]]
+Tokenizer: TypeAlias = Callable[[str, Optional[Dict]], str]
 
 
 from .schema import DocumentChunk, ChunkingStrategy, EmbeddingConfig
@@ -23,12 +23,14 @@ except ImportError:
 
 try:
     from llama_index.core.schema import Document
-    from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+    # from llama_index.embeddings.huggingface import HuggingFaceEmbedding FIXME This is hallucinated and will always be none
     from llama_index.core.node_parser import SemanticSplitterNodeParser
 except ImportError:
     Document = None
     HuggingFaceEmbedding = None
     SemanticSplitterNodeParser = None
+
+HuggingFaceEmbedding = None
 
 try:
     import pysbd

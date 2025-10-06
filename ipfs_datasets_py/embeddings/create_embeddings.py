@@ -1,8 +1,11 @@
 import asyncio
-from aiohttp import ClientSession
-from datasets import load_dataset, Dataset
 import os
+
+
+from aiohttp import ClientSession
 import datasets
+from datasets import load_dataset, Dataset
+
 
 # Try to import ipfs_kit_py
 try:
@@ -12,10 +15,6 @@ except ImportError:
     print("⚠ Warning: Could not import ipfs_kit_py. Some functionality may be limited.")
     ipfs_kit = None
 
-import subprocess
-from transformers.models.auto.tokenization_auto import AutoTokenizer
-import random
-from multiprocessing import Pool
 
 class create_embeddings:
     def __init__(self, resources, metadata):
@@ -27,7 +26,7 @@ class create_embeddings:
         if len(list(metadata.keys())) > 0:
             for key in metadata.keys():
                 setattr(self, key, metadata[key])
-        
+
         # Initialize ipfs_kit if available
         if ipfs_kit:
             self.ipfs_kit = ipfs_kit(resources, metadata)

@@ -9,8 +9,10 @@ requests>=2.25.0,<3.0.0
 # Testing framework
 pytest>=7.3.1,<9.0.0
 pytest-cov>=4.1.0,<6.0.0
-pytest-parallel>=0.1.1
+pytest-parallel>=0.1.1 # Allows parallel test execution
 pytest-xdist>=3.8.0
+pytest-timeout >=2.0.2 # To prevent test suites from hanging indefinitely
+
 
 # Basic utilities
 tqdm>=4.60.0,<5.0.0
@@ -56,6 +58,25 @@ Faker>=37.4.2
 reportlab>=4.4.3
 pyfakefs
 moviepy
+cryptography # For encrypting/decrypting test files
+
+# ipld crap
+ipld-car
+ipld-dag-pb
+dag-cbor>=0.3.3
+
+# All this other crap in order to get the debugger to fucking work.
+slugify
+llama-index>=0.13.5
+qdrant-client
+elasticsearch
+pysbd
+PyJWT
+fastapi
+keyring
+passlib
+uvicorn
+psutil
 
 # Web scraping and archiving tools
 cdx-toolkit>=0.9.37  # Common Crawl CDX access

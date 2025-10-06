@@ -16,6 +16,7 @@ from enum import StrEnum
 import os
 from types import ModuleType
 import math
+from itertools import batched
 
 # Import dependencies with automated installation
 from ipfs_datasets_py.auto_installer import ensure_module
@@ -491,7 +492,7 @@ EMBEDDING_PATTERN = r'embedding=array\([^)]*(?:\([^)]*\)[^)]*)*\)'
 EMBEDDING_REGEX = re.compile(EMBEDDING_PATTERN)
 
 
-SEMAPHORE = asyncio.Semaphore(4)
+SEMAPHORE = asyncio.Semaphore(3)
 
 
 class LLMChunkMetadata(BaseModel):
@@ -674,29 +675,29 @@ class LLMChunkMetadata(BaseModel):
             token_word_ratio = self.token_count / self.word_count
             if token_word_ratio > UNREALISTIC_TOKEN_WORD_RATIO:
                 raise ValueError("token_count to word_count ratio is unrealistic (logical consistency error)")
-        
+
         # Chunk position should not exceed total chunks
         if self.chunk_position_in_doc > self.total_chunks_on_page:
             raise ValueError("chunk_position_in_doc cannot exceed total_chunks_on_page")
-        
+
         # Zero character count should imply zero word and sentence counts
         if self.character_count == 0:
             if self.word_count != 0:
                 raise ValueError("Zero character_count must imply zero word_count (logical consistency error)")
             if self.sentence_count != 0:
                 raise ValueError("Zero character_count must imply zero sentence_count (logical consistency error)")
-        
+
         # Zero word count should imply zero sentence count
         if (
             (self.word_count == 0 and self.sentence_count != 0) or
             (self.sentence_count == 0 and self.word_count != 0)
         ):
             raise ValueError("Zero word_count must imply zero sentence_count (logical consistency error)")
-        
+
         # Semantic type and is_header flag consistency
         if self.semantic_type.lower() == 'header' and not self.is_header:
             raise ValueError("semantic_type 'header' must have is_header flag set to True (semantic consistency error)")
-        
+
         # Validate timestamp consistency (within 1 second tolerance)
         created_dt = datetime.fromisoformat(self.validate_iso_format(self.created_at))
         created_timestamp = created_dt.timestamp()
@@ -750,7 +751,7 @@ class LLMChunkMetadata(BaseModel):
         """Inequality comparison."""
         return not self.__eq__(other)
 
-from enum import StrEnum
+
 
 class ValidSemanticType(StrEnum):
     """
@@ -1020,7 +1021,7 @@ class LLMDocument(BaseModel):
         # Replace embedding arrays in string representation to avoid clutter
         if 'embedding' in original_string:
             original_string = re.sub(
-            EMBEDDING_REGEX, 
+            EMBEDDING_PATTERN, 
             'embedding=<omitted>', 
             original_string,
             flags=re.DOTALL
@@ -1428,23 +1429,24 @@ class LLMOptimizer:
             if not isinstance(*args):
                 raise TypeError(f"{name} must be of type {args[1].__name__}, got {type(args[0]).__name__} instead.")
 
-        expected_metadata_keys = ['author', 'title', 'document_id']
+        expected_decomposed_content_keys_and_types = [
+            ('pages', list), ('metadata', dict), ('structure', dict),
+        ]
+        expected_metadata_keys_and_types = [
+            ('author', str), ('title', str), ('document_id', str),
+        ]
 
-        expected_dict_key_types = {
-            "decomposed_content": (decomposed_content, str),
-            "document_metadata": (document_metadata, str),
-        }
-        for name, args in expected_dict_key_types.items():
-            dictionary, expected_type = args
-            for key in dictionary.keys():
-                if not isinstance(key, expected_type):
-                    raise TypeError(f"All keys in {name} must be of type {expected_type.__name__}, got {type(key).__name__} for key '{key}' instead.")
-                if key not in expected_metadata_keys:
-                    raise KeyError(f"Unexpected key '{key}' is in from {name} dictionary")
-
-            for keys in args[0].keys():
-                if key not in expected_metadata_keys:
-                    raise KeyError("Required key '{key}' is missing from metadata dictionary")
+        for key, type_ in expected_decomposed_content_keys_and_types:
+            if key not in decomposed_content:
+                raise KeyError(f"Missing required key '{key}' in decomposed_content")
+            if not isinstance(decomposed_content[key], type_):
+                raise TypeError(f"Key '{key}' in decomposed_content must be of type {type_.__name__}, got {type(decomposed_content[key]).__name__} instead.")
+        
+        for key, type_ in expected_metadata_keys_and_types:
+            if key not in document_metadata:
+                raise KeyError(f"Missing required key '{key}' in document_metadata")
+            if not isinstance(document_metadata[key], type_):
+                raise TypeError(f"Key '{key}' in document_metadata must be of type {type_.__name__}, got {type(document_metadata[key]).__name__} instead.")
 
         if timeout < 0:
             raise ValueError(f"timeout must be non-negative, got {timeout}.")
@@ -1463,7 +1465,7 @@ class LLMOptimizer:
 
             self.logger.info("Generated document summary")
             self.logger.debug(f"document_summary: {document_summary}")
-            
+
             # Create optimal chunks
             try:
                 chunks: list[LLMChunk] = await self._create_optimal_chunks(structured_text)
@@ -2338,87 +2340,6 @@ class LLMOptimizer:
                 return classification_results[0]
 
 
-#         sys_prompt = "You are a helpful assistant that classifies text into predefined categories."
-
-#         for attempt in range(retries + 1):
-#             try:
-#                 # Create prompt with classifications
-#                 categories_list = list(classifications)
-#                 categories_str = ", ".join(categories_list)
-#                 prompt = f"""
-# # Instructions
-# Classify the following text into one of these categories: {categories_str}
-
-# # Text
-# {sentence}
-
-# # Category:"""
-#                 # Make OpenAI API call with timeout
-#                 response = await asyncio.wait_for(
-#                     openai_client.chat.completions.create(
-#                         model="gpt-3.5-turbo",
-#                         messages=[
-#                             {"role": "system", "content": sys_prompt},
-#                             {"role": "user", "content": prompt}
-#                         ],
-#                         temperature=0.0,
-#                         max_tokens=50,
-#                         logprobs=True,
-#                         top_logprobs=20
-#                     ),
-#                     timeout=timeout
-#                 )
-                
-#                 # Parse response
-#                 if not response.choices:
-#                     raise RuntimeError("response parsing fails: no choices in response")
-                
-#                 choice = response.choices[0]
-#                 if not choice.message.content:
-#                     raise RuntimeError("response parsing fails: no content in response")
-                
-#                 category = choice.message.content.strip()
-                
-#                 # Extract confidence from log probabilities
-#                 confidence = 0.0
-#                 if choice.logprobs and choice.logprobs.content:
-#                     content_logprobs = choice.logprobs.content[0]
-#                     if content_logprobs.top_logprobs:
-#                         # Find the log probability for the chosen category
-#                         for logprob_item in content_logprobs.top_logprobs:
-#                             if logprob_item.token.strip() == category:
-#                                 if logprob_item.logprob >= LOG_THRESHOLD:
-#                                     confidence = math.exp(logprob_item.logprob)
-#                                 break
-
-#                 # Check if confidence is below threshold
-#                 if confidence == 0.0 or math.log(confidence) < LOG_THRESHOLD:
-#                     category = "unclassified"
-
-#                 # Ensure category is in valid classifications or is "unclassified"
-#                 if category not in classifications and category != "unclassified":
-#                     category = "unclassified"
-#                     confidence = 0.0
-
-#                 return ClassificationResult(
-#                     entity=sentence,
-#                     category=category,
-#                     confidence=confidence
-#                 )
-                
-#             except asyncio.TimeoutError:
-#                 if attempt == retries:
-#                     raise
-#                 continue
-#             except Exception as e:
-#                 if attempt == retries:
-#                     raise RuntimeError(f"max retries exceeded: {str(e)}")
-#                 continue
-
-#         else:
-#             raise RuntimeError("max retries exceeded")
-
-
     async def _extract_key_entities(self, 
                                     structured_text: dict[str, Any],
                                     max_entities: int = 50
@@ -2473,6 +2394,10 @@ class LLMOptimizer:
             >>> #     {'text': '95%', 'type': 'PERCENT', 'confidence': 0.9}
             >>> # ]
         """
+        retries = 3
+        timeout = 30
+        batches = 5 # Number of sentences to process in each batch
+
         if not isinstance(structured_text, dict):
             raise TypeError("structured_text must be a dictionary")
         if 'pages' not in structured_text.keys():
@@ -2485,7 +2410,7 @@ class LLMOptimizer:
             raise TypeError("max_entities must be an integer")
         if max_entities <= 0:
             raise ValueError("max_entities must be a positive integer")
-        
+
         # Validate page structure
         for idx, page in enumerate(structured_text['pages']):
             if not isinstance(page, dict):
@@ -2494,36 +2419,36 @@ class LLMOptimizer:
                 raise KeyError(f"Page {idx} missing required 'full_text' key")
             if not isinstance(page['full_text'], str):
                 raise TypeError(f"Page {idx} 'full_text' must be a string")
-        
+
         # Combine all text for entity extraction
         full_text = ""
         for page in structured_text['pages']:
             full_text += page['full_text'] + "\n"
-        
+
         if not full_text.strip():
             raise ValueError("No valid text content found for entity extraction")
-        
+
         entities = []
-        
+
         # Process text in sentences for better entity recognition
-        sentences = sent_tokenize(full_text)
-        
-        for sentence in sentences:
+        sentences: list[str] = sent_tokenize(full_text)
 
-            # Named entity recognition via LLM
-            result: ClassificationResult = await self._get_entity_classification(
-                sentence,
-                openai_client=self.openai_async_client,
-                classifications=self.entity_classifications,
-                retries=3,
-                timeout=30
-            )
+        for batch in batched(sentences, n=batches):
+            for sentence in batch:
+                # Named entity recognition via LLM
+                result: ClassificationResult = await self._get_entity_classification(
+                    sentence,
+                    openai_client=self.openai_async_client,
+                    classifications=self.entity_classifications,
+                    retries=retries,
+                    timeout=timeout
+                )
 
-            entities.append({
-                'text': result.entity,
-                'type': result.category,
-                'confidence': result.confidence
-            })
+                entities.append({
+                    'text': result.entity,
+                    'type': result.category,
+                    'confidence': result.confidence
+                })
 
         # Remove duplicates while preserving order
         seen = set()
@@ -2533,7 +2458,7 @@ class LLMOptimizer:
             if entity_key not in seen:
                 seen.add(entity_key)
                 unique_entities.append(entity)
-        
+
         # Sort by confidence and limit results
         unique_entities.sort(key=lambda x: x['confidence'], reverse=True)
 
@@ -2772,6 +2697,7 @@ class LLMOptimizer:
         if not text:
             return 0
 
+        class_tokenizer = None
         for attr in ['encode', 'tokenize']:
             class_tokenizer = getattr(self.tokenizer, attr, None)
             if class_tokenizer is not None:
@@ -2779,6 +2705,8 @@ class LLMOptimizer:
 
         tokenizer_list = [class_tokenizer, word_tokenize]
         for tokenizer in tokenizer_list:
+            if tokenizer is None:
+                continue
             try:
                 return len(tokenizer(text))
             except Exception as e:

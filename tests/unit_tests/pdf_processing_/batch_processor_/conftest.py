@@ -8,11 +8,14 @@ in this directory and subdirectories.
 
 import pytest
 from unittest.mock import MagicMock
-from ipfs_datasets_py.pdf_processing.batch_processor import BatchProcessor
+from ipfs_datasets_py.pdf_processing.batch_processor import (
+    BatchProcessor, BatchJobResult, BatchStatus, ProcessingJob
+)
 from ipfs_datasets_py.ipld.storage import IPLDStorage
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
+
 
 # Test configuration constants
 DEFAULT_MAX_WORKERS = 4
@@ -42,6 +45,7 @@ DEFAULT_PRIORITY = 5
 HIGH_PRIORITY = 8
 LOW_PRIORITY = 1
 MAX_PRIORITY = 10
+
 
 
 @pytest.fixture
@@ -208,7 +212,6 @@ def processor_with_custom_config(mock_storage, mock_pdf_processor, mock_llm_opti
 @pytest.fixture
 def successful_job_result():
     """Create a successful BatchJobResult for testing."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import BatchJobResult
     return BatchJobResult(
         job_id="success_job_123",
         status="completed",
@@ -224,7 +227,6 @@ def successful_job_result():
 @pytest.fixture
 def failed_job_result():
     """Create a failed BatchJobResult for testing."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import BatchJobResult
     return BatchJobResult(
         job_id="failed_job_456",
         status="failed",
@@ -238,7 +240,6 @@ def failed_job_result():
 @pytest.fixture
 def batch_status_active():
     """Create an active BatchStatus for testing."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import BatchStatus
     return BatchStatus(
         batch_id="active_batch_test",
         total_jobs=15,
@@ -257,7 +258,6 @@ def batch_status_active():
 @pytest.fixture
 def batch_status_completed():
     """Create a completed BatchStatus for testing."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import BatchStatus
     return BatchStatus(
         batch_id="completed_batch_test",
         total_jobs=10,
@@ -276,7 +276,6 @@ def batch_status_completed():
 @pytest.fixture
 def processing_job_basic():
     """Create a basic ProcessingJob for testing."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import ProcessingJob
     return ProcessingJob(
         job_id="test_job_123",
         pdf_path="/path/to/document.pdf",
@@ -286,7 +285,6 @@ def processing_job_basic():
 @pytest.fixture
 def processing_job_custom():
     """Create a custom ProcessingJob for testing."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import ProcessingJob
     return ProcessingJob(
         job_id="custom_job_456",
         pdf_path="/custom/path/doc.pdf",
@@ -333,16 +331,14 @@ def mock_batch_processor_dependencies():
                         mock_llm_class.return_value = Mock()
                         mock_graphrag_class.return_value = Mock()
                         yield
-    
+
     return _mock_dependencies
 
 @pytest.fixture
 def sample_batch_with_results(processor):
     """Create a batch with completed and failed job results."""
-    from ipfs_datasets_py.pdf_processing.batch_processor import BatchStatus, BatchJobResult
-    
     batch_id = "batch_sample_123"
-    
+
     # Create batch status
     batch_status = BatchStatus(
         batch_id=batch_id,

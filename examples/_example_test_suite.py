@@ -26,7 +26,7 @@ This module demonstrates best practices for unit testing with pytest based on:
     - Tests that assume external resource availability without checking (e.g. resource optimism)
     - Tests that use 'str' or 'repr' in test methods (e.g. sensitive equality)
 - Comprehensive unhappy path testing
-- Clear, descriptive test naming
+- Clear, descriptive test naming in "test_when_XYZ_then_ABC" format
 - Docstrings in the GIVEN/WHEN/THEN format
 """
 import pytest

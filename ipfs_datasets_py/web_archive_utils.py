@@ -159,11 +159,11 @@ class WebArchiveProcessor:
         - Cross-archive analysis requires consistent indexing and metadata schemas
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a new WebArchiveProcessor."""
         pass
 
-    def create_warc(self, url, output_path=None, options=None):
+    def create_warc(self, url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> str:
         """
         Create WARC Archive Files with Advanced Crawling and Configuration Options
 
@@ -307,7 +307,7 @@ class WebArchiveProcessor:
 
         return result
 
-    def index_warc(self, warc_path, output_path=None, encryption_key=None):
+    def index_warc(self, warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> str:
         """
         Index WARC Files to IPFS with Advanced Distributed Storage and Security Features
 
@@ -443,7 +443,7 @@ class WebArchiveProcessor:
 
         return output_path
 
-    def extract_dataset_from_cdxj(self, cdxj_path, output_format="arrow"):
+    def extract_dataset_from_cdxj(self, cdxj_path: str, output_format: str = "arrow") -> Union[List[Dict[str, Any]], Any]:
         """
         Extract Structured Datasets from CDXJ Index Files with Advanced Schema Generation
 
@@ -673,7 +673,7 @@ class WebArchiveProcessor:
         else:
             raise ValueError(f"Unknown output format: {output_format}")
 
-    def extract_text_from_warc(self, warc_path):
+    def extract_text_from_warc(self, warc_path: str) -> List[Dict[str, Any]]:
         """
         Extract and Normalize Text Content from WARC Archives with Advanced Processing
 
@@ -837,7 +837,7 @@ class WebArchiveProcessor:
 
         return records
 
-    def extract_links_from_warc(self, warc_path):
+    def extract_links_from_warc(self, warc_path: str) -> List[Dict[str, Any]]:
         """
         Extract Link Relationships and Network Topology from WARC Archives
 
@@ -1027,7 +1027,7 @@ class WebArchiveProcessor:
 
         return links
 
-    def extract_metadata_from_warc(self, warc_path):
+    def extract_metadata_from_warc(self, warc_path: str) -> Dict[str, Any]:
         """
         Extract Comprehensive Metadata and Provenance Information from WARC Archives
 
@@ -1201,7 +1201,7 @@ class WebArchiveProcessor:
         return metadata
 
 
-def index_warc(warc_path, output_path=None, encryption_key=None):
+def index_warc(warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> str:
     """
     Convenience function to index a WARC file using IPWB.
 
@@ -1217,7 +1217,7 @@ def index_warc(warc_path, output_path=None, encryption_key=None):
     return processor.index_warc(warc_path, output_path, encryption_key)
 
 
-def create_warc(url, output_path=None, options=None):
+def create_warc(url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> str:
     """
     Convenience function to create a WARC file using ArchiveNow.
 

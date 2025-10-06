@@ -17,7 +17,7 @@ from typing import Dict, Any
 from ipfs_datasets_py.multimedia.media_processor import make_media_processor, MediaProcessor
 
 
-class TestImplementationDetailError(Exception):
+class _TestImplementationDetailError(Exception):
     """
     Exception raised when a test is testing implementation details instead of behavior.
     

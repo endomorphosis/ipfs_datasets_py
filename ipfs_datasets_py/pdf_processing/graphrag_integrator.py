@@ -8,6 +8,7 @@ Integrates processed PDF content into GraphRAG knowledge graph:
 - Enables semantic querying and retrieval
 - Maintains IPLD data integrity
 """
+import asyncio
 import hashlib
 import logging
 import re
@@ -17,122 +18,21 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-# Import with automated dependency installation
-from ipfs_datasets_py.auto_installer import ensure_module
 
-# Install required dependencies automatically
-networkx = ensure_module('networkx', 'networkx', required=False)
-if networkx:
-    nx = networkx
-else:
-    # Create mock networkx for fallback
-    class MockNetworkX:
-        class DiGraph:
-            def __init__(self):
-                self.nodes = {}
-                self.edges = []
-            def add_node(self, node_id, **attrs):
-                self.nodes[node_id] = attrs
-            def add_edge(self, source, target, **attrs):
-                self.edges.append((source, target, attrs))
-        
-        class Graph:
-            def __init__(self):
-                self.nodes = {}
-                self.edges = []
-            def add_node(self, node_id, **attrs):
-                self.nodes[node_id] = attrs
-            def add_edge(self, source, target, **attrs):
-                self.edges.append((source, target, attrs))
-    nx = MockNetworkX()
+import networkx as nx
+import numpy as np
+from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
+import openai
+import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
 
-numpy = ensure_module('numpy', 'numpy', required=False)
-if numpy:
-    np = numpy
-else:
-    # Create mock numpy for fallback
-    class MockNumpy:
-        @staticmethod
-        def array(data):
-            return list(data) if hasattr(data, '__iter__') else [data]
-        @staticmethod
-        def zeros(shape):
-            return [0] * (shape if isinstance(shape, int) else shape[0])
-        @staticmethod
-        def mean(data):
-            if not data:
-                return 0
-            return sum(data) / len(data)
-        @staticmethod
-        def std(data):
-            if not data:
-                return 0
-            mean_val = sum(data) / len(data)
-            variance = sum((x - mean_val) ** 2 for x in data) / len(data)
-            return variance ** 0.5
-        
-        # Add ndarray class for type hints
-        class ndarray:
-            def __init__(self, data=None):
-                self.data = list(data) if data and hasattr(data, '__iter__') else []
-    np = MockNumpy()
+get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
 
-# Install NLTK with fallback functionality
-nltk_module = ensure_module('nltk', 'nltk', required=False)
-if nltk_module:
-    from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
-else:
-    # Minimal fallback functions
-    def word_tokenize(text): return text.split()
-    def pos_tag(tokens): return [(token, 'NN') for token in tokens]
-    def ne_chunk(tagged): return tagged
-    def tree2conlltags(tree): return tree
-    Tree = list
 
-# Install OpenAI API client
-openai = ensure_module('openai', 'openai', required=False)
-if not openai:
-    # Create minimal mock for testing
-    class MockOpenAI:
-        class ChatCompletion:
-            @staticmethod
-            def create(**kwargs):
-                return {"choices": [{"message": {"content": "Mock LLM response"}}]}
-        chat = type('chat', (), {'completions': ChatCompletion()})()
-    openai = MockOpenAI()
-
-# Install IPFS multiformats
-try:
-    from ipfs_datasets_py.ipfs_multiformats import ipfs_multiformats_py
-    get_cid = ipfs_multiformats_py(None, None).get_cid
-except ImportError:
-    # Fallback CID generation
-    def get_cid(data):
-        if isinstance(data, str):
-            data = data.encode()
-        return f"bafk{hashlib.sha256(data).hexdigest()[:56]}"
-
-# Install IPLD storage
-try:
-    from ipfs_datasets_py.ipld import IPLDStorage
-except ImportError:
-    # Mock IPLD storage
-    class MockIPLDStorage:
-        async def store(self, data, metadata=None):
-            return f"mock_cid_{hash(str(data)) % 10000}"
-    IPLDStorage = MockIPLDStorage
-
-# Install LLM optimizer components
-try:
-    from ipfs_datasets_py.pdf_processing.llm_optimizer import (
-        LLMDocument, LLMChunk,
-        WIKIPEDIA_CLASSIFICATIONS
-    )
-except ImportError:
-    # Mock LLM optimizer components
-    LLMDocument = dict
-    LLMChunk = dict
-    WIKIPEDIA_CLASSIFICATIONS = ["article", "disambiguation", "redirect"]
+from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.pdf_processing.llm_optimizer import (
+    LLMDocument, LLMChunk,
+    WIKIPEDIA_CLASSIFICATIONS
+)
 
 module_logger = logging.getLogger(__name__)
 
@@ -202,7 +102,13 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         - Works with properly formatted natural language queries
     """
     start_time = time.time()
-    module_logger.info(f"Extracting entities from query: {query}")
+    def _print_time(step: str = ""):
+        elapsed = time.time() - start_time
+        string = f"integrate_document elapsed time: {elapsed:.2f} seconds"
+        string = f"{step} - {string}" if step else string
+        print(string)
+
+    #module_logger.info(f"Extracting entities from query: {query}")
 
     # Input validation
     if not isinstance(query, str):
@@ -214,18 +120,21 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
     # Tokenize and tag
     tokens = word_tokenize(query)
     pos_tags = pos_tag(tokens)
-    
+    _print_time(step="Completed POS tagging")
+
     # Named Entity Recognition
+    # NOTE This takes half a second per chunk!
     entities = ne_chunk(pos_tags, binary=False)
-    module_logger.debug(f"NER tree: {entities}")
+    #module_logger.debug(f"NER tree: {entities}")
+    _print_time(step="Completed NER chunking")
 
     # Extract entities from NER tree
     entity_names = []
-    
+
     # Convert tree to IOB tags for easier processing
     iob_tags = tree2conlltags(entities)
-    module_logger.debug(f"IOB tags: {iob_tags}")
-    
+    #module_logger.debug(f"IOB tags: {iob_tags}")
+
     current_entity = []
     current_label = None
 
@@ -233,27 +142,26 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         if ner.startswith('B-'):  # Beginning of entity
             # Save previous entity if exists
             if current_entity:
-                module_logger.debug(f"Beginning entity: {current_entity} with label {current_label}")
+                #module_logger.debug(f"Beginning entity: {current_entity} with label {current_label}")
                 entity_names.append(' '.join(current_entity))
             # Start new entity
             current_entity = [word]
             current_label = ner[2:]
         elif ner.startswith('I-') and current_entity:  # Inside entity
-            module_logger.debug(f"Inside entity: {current_entity} with label {current_label}")
+            #module_logger.debug(f"Inside entity: {current_entity} with label {current_label}")
             current_entity.append(word)
         else:  # Outside entity
             # Save previous entity if exists
-            module_logger.debug(f"Outside entity: {current_entity} with label {current_label}")
+            #module_logger.debug(f"Outside entity: {current_entity} with label {current_label}")
             if current_entity:
                 entity_names.append(' '.join(current_entity))
             current_entity = []
             current_label = None
-    
     # Don't forget the last entity
     if current_entity:
         entity_names.append(' '.join(current_entity))
     
-    module_logger.debug(f"Found entities from NER: {entity_names}")
+    #module_logger.debug(f"Found entities from NER: {entity_names}")
 
     # Also find proper nouns that might not be caught by NER
     proper_nouns = []
@@ -281,7 +189,7 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
             len(noun_phrase) >= 3 and
             not _is_question_word(noun_phrase)):
             proper_nouns.append(noun_phrase)
-    
+
     # Combine NER results with proper noun detection
     all_entities = entity_names + proper_nouns
     
@@ -300,21 +208,21 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
         if entity not in seen:
             seen.add(entity)
             unique_entities.append(entity)
-    
+
     # Filter out obvious non-entities
     filtered_entities = []
     for entity in unique_entities:
         module_logger.debug(entity)
         if not _is_question_word(entity) and len(entity.strip()) >= min_chars:
-            module_logger.debug(f"{entity} is a valid entity")
+            #module_logger.debug(f"{entity} is a valid entity")
             filtered_entities.append(entity)
 
-    module_logger.debug(f"filtered_entities:\n{filtered_entities}")
+    #module_logger.debug(f"filtered_entities:\n{filtered_entities}")
 
     # Check if numbers are in the query
     has_numbers = any(char.isdigit() for char in query)
     if has_numbers:
-        module_logger.debug("has_numbers is True")
+        #module_logger.debug("has_numbers is True")
         # Consider numbers as part of potential entities IF
         # - They precede or follow a stand-alone proper noun (e.g. 'Death Race 2000', '2020 Olympics')
         # - They are preceded by a determiner (e.g. 'the 19th century', 'The 1970s')
@@ -330,16 +238,16 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
             if entity_start != -1:
                 # Check for numbers before the entity
                 before_text = query[:entity_start].strip()
-                module_logger.debug(f"Check before entity: {before_text}")
+                #module_logger.debug(f"Check before entity: {before_text}")
                 if before_text and before_text[-1].isdigit():
                     # Find the full number before the entity
                     words_before = before_text.split()
-                    module_logger.debug(f"words_before: {words_before}")
+                    #module_logger.debug(f"words_before: {words_before}")
                     if words_before:
                         last_word = words_before[-1]
                         if any(char.isdigit() for char in last_word):
                             number_entity = f"{last_word} {entity}"
-                            module_logger.debug(f"Found number before entity: {number_entity}")
+                            #module_logger.debug(f"Found number before entity: {number_entity}")
                             if number_entity not in filtered_entities:
                                 filtered_entities.append(number_entity)
 
@@ -350,16 +258,16 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
                 if after_text and after_text[0].isdigit():
                     # Find the full number after the entity
                     words_after = after_text.split()
-                    module_logger.debug(f"Check after entity: {before_text}")
+                    #module_logger.debug(f"Check after entity: {before_text}")
                     if words_after:
                         first_word = words_after[0]
-                        module_logger.debug(f"first_word: {first_word}")
+                        #module_logger.debug(f"first_word: {first_word}")
                         if any(char.isdigit() for char in first_word):
                             number_entity = f"{entity} {first_word}"
-                            module_logger.debug(f"Found number after entity: {number_entity}")
+                            #module_logger.debug(f"Found number after entity: {number_entity}")
                             if number_entity not in filtered_entities:
                                 filtered_entities.append(number_entity)
-        
+
         # Consolidate entries
         # Ex: ['Main Street', 'San Francisco', 'New York', '123 Main Street', '123']
         # becomes ['San Francisco', 'New York', '123 Main Street']
@@ -370,7 +278,7 @@ def _extract_entity_names_from_query(query: str, min_chars: int = 0) -> List[str
 
     end_time = time.time()
     module_logger.debug(f"Entity extraction completed in {end_time - start_time:.2f} seconds")
-    module_logger.debug(f"filtered_entities on return:\n{filtered_entities}")
+    #module_logger.debug(f"filtered_entities on return:\n{filtered_entities}")
     return filtered_entities
 
 def _is_question_word(word: str) -> bool:
@@ -384,12 +292,93 @@ def _is_question_word(word: str) -> bool:
     }
     return word in question_words
 
-# NLTK imports handled in try/catch blocks above - removed hard dependencies
+import nltk
+
+from nltk.corpus import brown
+
+
+def _confirm_match_with_nltk(text: str, type_: str) -> str:
+    """
+    Confirm entity types from text using NLTK.
+    
+    Args:
+        text: a string of text. Should be just an entity (e.g. Apple Inc, New York, etc.)
+        type_: the expected type of the entity (e.g. 'person', 'organization', 'location')
+    
+    Returns:
+        str: Either the original entity label, or the confirmed NLTK label.
+            Conflicts default to the NLTK label.
+    """
+    nltk_entities = []
+    
+    # Tokenize, POS tag, and NER chunk
+    tokens = word_tokenize(text)
+    pos_tags = pos_tag(tokens)
+    ner_tree = ne_chunk(pos_tags, binary=False)
+
+    # Convert tree to IOB tags for easier processing
+    iob_tags = tree2conlltags(ner_tree)
+
+    current_entity = []
+    current_label = None
+
+    # Map NLTK labels to internal types
+    label_map = {
+        'PERSON': 'person',
+        'ORGANIZATION': 'organization',
+        'GPE': 'location',  # Geopolitical Entity
+        'LOCATION': 'location',
+        'FACILITY': 'location',
+        'DATE': 'date',
+        'MONEY': 'currency'
+    }
+
+    # Process IOB tags to find entities
+    for word, pos, ner in iob_tags:
+        if ner.startswith('B-'):  # Beginning of a new entity
+            if current_entity:
+                # This case is unlikely if the input text is a single entity, but good to handle
+                nltk_entities.append((' '.join(current_entity), current_label))
+            current_entity = [word]
+            current_label = ner[2:]
+        elif ner.startswith('I-') and current_label == ner[2:]: # Inside the same entity
+            current_entity.append(word)
+        else: # Outside an entity or a different entity starts without 'B-' tag
+            if current_entity:
+                nltk_entities.append((' '.join(current_entity), current_label))
+            current_entity = []
+            current_label = None
+
+    # Add the last entity if it exists
+    if current_entity:
+        nltk_entities.append((' '.join(current_entity), current_label))
+
+    # If NLTK found an entity, use its type
+    if nltk_entities:
+        # Assuming the most prominent entity in the text is the correct one
+        # For a short text that is supposed to be one entity, there should ideally be only one.
+        # We take the first one found.
+        _, nltk_label = nltk_entities[0]
+        
+        # Map the NLTK label to our internal type system
+        confirmed_type = label_map.get(nltk_label, type_)
+        
+        # If NLTK's type is different, prefer NLTK's classification.
+        if confirmed_type != type_:
+            return confirmed_type
+
+    # If NLTK did not find any entity or confirmed the type, return the original type
+    return type_
+
+
+
+
+
 
 @dataclass
 class Entity:
     """
-    Represents an entity extracted from documents for knowledge graph construction.
+    An entity extracted from documents for knowledge graph construction, structured as a dataclass.
 
     An entity is a distinct object, concept, person, organization, or location
     identified within text chunks during the document processing pipeline.
@@ -427,7 +416,7 @@ class Entity:
         ...     properties={"role": "engineer", "company": "Tech Corp"}
         ... )
     """
-    id: str
+    id: str # NOTE Should be CID
     name: str
     type: str  # 'person', 'organization', 'concept', 'location', etc.
     description: str
@@ -435,6 +424,59 @@ class Entity:
     source_chunks: List[str]  # Chunk IDs where entity appears
     properties: Dict[str, Any]
     embedding: Optional[np.ndarray] = None
+    gateway_url: str = "ipfs_datasets_py.com"
+
+    @property
+    def ipfs_uri(self):
+        """
+        IPFS uri for the entity
+        Immutable pointer to the resources itself.
+        """
+        uri_string = f"<https://{self.gateway_url}/ipfs/{self.id}/{self.name}>"
+        return uri_string
+
+    @property
+    def ipns_uri(self): # TODO
+        """
+        IPNS uri for the entity. Basically a mutable pointer to the IPFS uri.
+        See: https://docs.ipfs.tech/concepts/ipns/#how-ipns-works
+        """
+        pass
+
+from enum import StrEnum
+
+class OwlFamily(StrEnum):
+    """
+    From: https://en.wikipedia.org/wiki/Web_Ontology_Language, accessed 9/8/2025
+    """
+    OWL2_FUNCTIONAL_SYNTAX = "OWL2 Functional Syntax"
+    OWL2_XML_STYLE = "OWL2 XML Syntax"
+    MANCHESTER_SYNTAX = "Manchester Syntax"
+    RDF_XML_SYNTAX = "RDF/XML Syntax"
+    RDF_TURTLE = "RDF/Turtle"
+
+
+@dataclass
+class Owl:
+    """
+    See: https://en.wikipedia.org/wiki/Web_Ontology_Language
+    """
+    entity: Entity
+    spec: OwlFamily = OwlFamily.MANCHESTER_SYNTAX
+
+    def __str__(self):
+        match self.spec.value:
+            case OwlFamily.MANCHESTER_SYNTAX:
+                owl_string = f"""
+Ontology: {self.entity.ipfs_uri}
+Class: {self.entity.name}
+
+
+"""
+            case _:
+                raise NotImplementedError("This ontology style is not yet supported")
+        return owl_string
+
 
 @dataclass
 class Relationship:
@@ -482,6 +524,7 @@ class Relationship:
     confidence: float
     source_chunks: List[str]
     properties: Dict[str, Any]
+
 
 @dataclass
 class KnowledgeGraph:
@@ -749,6 +792,7 @@ class GraphRAGIntegrator:
             ValueError: If similarity_threshold or entity_extraction_confidence
               is not between 0.0 and 1.0
         """
+        self._initialized = False
         # Validate storage parameter
         if storage is not None and not isinstance(storage, IPLDStorage):
             for required_attr in ['store', 'retrieve']:
@@ -772,10 +816,10 @@ class GraphRAGIntegrator:
         self.similarity_threshold = similarity_threshold
         self.entity_extraction_confidence = entity_extraction_confidence
 
-        for attr, type_ in [("storage", IPLDStorage), ("logger", logging.Logger)]:
-            attr = getattr(self, attr)
-            if not isinstance(attr, type_):
-                raise TypeError(f"{attr} must be an instance of {type_.__name__}, got {type(attr).__name__}")
+        for attr_name, type_ in [("storage", IPLDStorage), ("logger", logging.Logger)]:
+            attr_value = getattr(self, attr_name)
+            if not isinstance(attr_value, type_):
+                raise TypeError(f"{attr_name} must be an instance of {type_.__name__}, got {type(attr_value).__name__}")
 
         # Graph storage
         self.knowledge_graphs: Dict[str, KnowledgeGraph] = {}
@@ -785,6 +829,12 @@ class GraphRAGIntegrator:
         # NetworkX graphs for analysis
         self.document_graphs: Dict[str, nx.DiGraph] = {}
         self.global_graph = nx.DiGraph()
+        self._initialized = True
+
+    @property
+    def initialized(self) -> bool:
+        """Indicates if the integrator has been properly initialized."""
+        return self._initialized
 
     async def integrate_document(self, llm_document: LLMDocument) -> KnowledgeGraph:
         """
@@ -829,6 +879,13 @@ class GraphRAGIntegrator:
             for large document sets. The resulting knowledge graph is automatically merged
             with existing graphs to maintain global consistency.
         """
+        debug_timer_start = time.time()
+        def _print_time(step: str = ""):
+            elapsed = time.time() - debug_timer_start
+            string = f"integrate_document elapsed time: {elapsed:.2f} seconds"
+            string = f"{step} - {string}" if step else string
+            print(string)
+
         # Input validation
         if llm_document is None:
             raise TypeError("llm_document cannot be None")
@@ -855,9 +912,11 @@ class GraphRAGIntegrator:
                           f"Overwriting existing knowledge graph.")
         
         self.logger.info(f"Starting GraphRAG integration for document: {llm_document.document_id}")
-        
+        _print_time(step="Start integration")
+
         # Extract entities from chunks
         entities = await self._extract_entities_from_chunks(llm_document.chunks)
+        _print_time(step="Entity extraction complete")
 
         # Extract relationships
         relationships = await self._extract_relationships(entities, llm_document.chunks)
@@ -940,6 +999,13 @@ class GraphRAGIntegrator:
             - Properties from different mentions are merged (first occurrence wins for conflicts)
             - Only entities with confidence >= self.entity_extraction_confidence are returned
         """
+        debug_timer_start = time.time()
+        def _print_time(step: str = ""):
+            elapsed = time.time() - debug_timer_start
+            string = f"integrate_document elapsed time: {elapsed:.2f} seconds"
+            string = f"{step} - {string}" if step else string
+            print(string)
+
         # Validate input types
         if not isinstance(chunks, list):
             raise TypeError("chunks must be a list")
@@ -951,8 +1017,9 @@ class GraphRAGIntegrator:
                 raise AttributeError("LLMChunk must have 'content' and 'chunk_id' attributes")
 
         entity_mentions = {}  # Track entity mentions across chunks
-        
-        for chunk in chunks:
+        chunk_entity_queue = asyncio.Queue()
+        _print_time(step="Start entity extraction from chunks")
+        for idx, chunk in enumerate(chunks, start=1):
             # Extract entities from chunk content
             try:
                 chunk_entities = await self._extract_entities_from_text(
@@ -964,21 +1031,25 @@ class GraphRAGIntegrator:
                 raise RuntimeError(f"Entity extraction service for chunk {chunk.chunk_id}: {e}") from e
             else:
                 self.logger.debug(f"chunk_entities: {chunk_entities}")
+                _print_time(step=f"Extracted entities from chunk {idx}/{len(chunks)}")
+                chunk_entity_queue.put_nowait((chunk, chunk_entities))
 
+        while not chunk_entity_queue.empty():
+            chunk, chunk_entities = await chunk_entity_queue.get()
             for entity_data in chunk_entities:
 
                 assert isinstance(entity_data, dict), \
                     f"expected entity_data to be dict, got {type(entity_data).__name__} instead"
 
                 entity_key = (entity_data['name'].lower(), entity_data['type'])
-                
+
                 if entity_key in entity_mentions:
                     # Update existing entity
                     existing_entity = entity_mentions[entity_key]
                     if chunk.chunk_id not in existing_entity.source_chunks:
                         existing_entity.source_chunks.append(chunk.chunk_id)
                     existing_entity.confidence = max(existing_entity.confidence, entity_data['confidence'])
-                    
+
                     # Merge properties (first occurrence wins for conflicts)
                     for key, value in entity_data.get('properties', {}).items():
                         if key not in existing_entity.properties:
@@ -998,17 +1069,19 @@ class GraphRAGIntegrator:
                         properties=entity_data.get('properties', {}),
                         embedding=entity_data.get('embedding')
                     )
-                    
                     entity_mentions[entity_key] = entity
-        
+            _print_time(step=f"Processed chunk {idx}/{len(chunks)} for entity consolidation")
+        _print_time(step="Entity extraction from chunks complete")
+
         # Get all unique entities
         entities = list(entity_mentions.values())
-        
+
         # Filter entities by confidence
         filtered_entities = [
             entity for entity in entities 
             if entity.confidence >= self.entity_extraction_confidence
         ]
+        _print_time(step="Entity filtering complete")
         
         self.logger.info(f"Extracted {len(filtered_entities)} entities from {len(chunks)} chunks")
         return filtered_entities
@@ -1058,11 +1131,11 @@ class GraphRAGIntegrator:
         
         entities = []
 
-        results = _extract_entity_names_from_query(text)
-        self.logger.debug(f"results:\n{results}")
-        for result in results:
-            output = get_continuous_chunks(result, 'GPE')
-            self.logger.debug(f"output:\n{output}")
+        # results = _extract_entity_names_from_query(text)
+        # self.logger.debug(f"results:\n{results}")
+        # for result in results:
+        #     output = get_continuous_chunks(result, 'GPE')
+        #     self.logger.debug(f"output:\n{output}")
 
         # Named Entity Recognition patterns (can be enhanced with NLP models)
         # TODO Replace with NLTK or other NLP library for better accuracy.
@@ -1105,7 +1178,7 @@ class GraphRAGIntegrator:
                             'start': match.start(),
                             'end': match.end()
                         })
-        
+
         # Sort by start position and remove overlaps (prefer longer matches)
         all_matches.sort(key=lambda x: (x['start'], -(x['end'] - x['start'])))
         self.logger.debug(f"all_matches:\n{all_matches}")
@@ -1119,16 +1192,19 @@ class GraphRAGIntegrator:
                 if not (match['end'] <= accepted['start'] or match['start'] >= accepted['end']):
                     overlaps = True
                     break
-            
+
             if not overlaps:
                 non_overlapping.append(match)
         self.logger.debug(f"non_overlapping:\n{non_overlapping}")
 
         # Convert to entity format
         for match in non_overlapping:
+
+            type_ = _confirm_match_with_nltk(match['text'], match['type'])
+
             entities.append({
                 'name': match['text'],
-                'type': match['type'],
+                'type': type_,
                 'description': f'{match["type"].capitalize()} found in chunk {chunk_id}',
                 'confidence': 0.7,  # Base confidence for pattern matching
                 'properties': {
@@ -1136,7 +1212,7 @@ class GraphRAGIntegrator:
                     'source_chunk': chunk_id
                 }
             })
-        
+
         # Remove duplicates by name (case-insensitive)
         unique_entities = []
         seen_names = set()
@@ -1145,9 +1221,9 @@ class GraphRAGIntegrator:
             if name_key not in seen_names:
                 seen_names.add(name_key)
                 unique_entities.append(entity)
-        
+
         return unique_entities
-    
+
     async def _extract_relationships(self, 
                                    entities: List[Entity], 
                                    chunks: List[LLMChunk]) -> List[Relationship]:
@@ -2044,12 +2120,12 @@ class GraphRAGIntegrator:
             - Performance scales with graph size and depth - use smaller depths for large graphs
         """
         if not isinstance(entity_id, str):
-            raise TypeError("entity_id must be a string.")
+            raise TypeError(f"entity_id must be a string, got {type(entity_id).__name__} instead.")
         if not entity_id:
             raise ValueError("entity_id must be a non-empty string.")
         
         if not isinstance(depth, int):
-            raise TypeError("depth must be an integer")
+            raise TypeError(f"depth must be an integer, got {type(depth).__name__} instead.")
         if depth < 0:
             raise ValueError("depth must be a non-negative integer")
 

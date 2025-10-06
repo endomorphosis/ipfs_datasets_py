@@ -17,9 +17,9 @@ async def test_imports():
     
     try:
         # Test core embeddings
-        from ipfs_datasets_py.embeddings import EmbeddingConfig, TextChunker
+        from ipfs_datasets_py.embeddings import EmbeddingConfig, Chunker
         print("  ✅ embeddings.EmbeddingConfig imported")
-        print("  ✅ embeddings.TextChunker imported")
+        print("  ✅ embeddings.Chunker imported")
     except ImportError as e:
         print(f"  ❌ embeddings import failed: {e}")
         

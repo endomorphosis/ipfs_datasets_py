@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Import the core embeddings functionality
 try:
-    from ...embeddings.core import IpfsEmbeddings, PerformanceMetrics
+    from ...embeddings.core import IPFSEmbeddings, PerformanceMetrics
     from ...embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
     HAVE_EMBEDDINGS = True
 except ImportError as e:
@@ -68,7 +68,7 @@ async def generate_embedding(
             raise ValueError("Text length exceeds maximum limit of 10,000 characters")
         
         # Initialize embeddings engine
-        embeddings_engine = IpfsEmbeddings(
+        embeddings_engine = IPFSEmbeddings(
             model=model_name,
             batch_size=batch_size,
             use_gpu=use_gpu
@@ -162,7 +162,7 @@ async def generate_batch_embeddings(
             }
         
         # Initialize embeddings engine
-        embeddings_engine = IpfsEmbeddings(
+        embeddings_engine = IPFSEmbeddings(
             model=model_name,
             batch_size=batch_size,
             use_gpu=use_gpu

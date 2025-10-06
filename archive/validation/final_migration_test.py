@@ -37,7 +37,7 @@ class MigrationTester:
             
         try:
             from ipfs_datasets_py.embeddings.chunker import (
-                TextChunker, ChunkingConfig
+                Chunker, ChunkingConfig
             )
             tests['embeddings_chunker'] = True
         except Exception as e:
@@ -96,8 +96,8 @@ class MigrationTester:
         
         # Test chunker
         try:
-            from ipfs_datasets_py.embeddings.chunker import TextChunker
-            chunker = TextChunker()
+            from ipfs_datasets_py.embeddings.chunker import Chunker
+            chunker = Chunker()
             test_text = "This is a test sentence. This is another test sentence. And one more for good measure."
             chunks = chunker.chunk_text(test_text, max_chunk_size=30)
             tests['chunker_functionality'] = len(chunks) > 1
