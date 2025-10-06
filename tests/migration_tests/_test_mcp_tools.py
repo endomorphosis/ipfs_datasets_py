@@ -37,10 +37,11 @@ try:
     import ipfs_datasets_py
     from ipfs_datasets_py import mcp_server
     # We'll import the individual tools dynamically later
+    MCP_AVAILABLE = True
 except ImportError as e:
     logger.error(f"Error importing IPFS Datasets: {e}")
     print(f"Error: Could not import IPFS Datasets library: {e}")
-    sys.exit(1)
+    MCP_AVAILABLE = False
 
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -443,7 +444,7 @@ class AuditToolTests(unittest.TestCase):
         cleanup_test_environment()
 
     @patch('ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event.AuditLogger')
-    def test_record_audit_event(self, mock_audit_logger):
+    async def test_record_audit_event(self, mock_audit_logger):
         """Test the record_audit_event tool."""
         record_audit_event_module = import_tool("audit_tools", "record_audit_event")
         if not record_audit_event_module:
@@ -452,7 +453,7 @@ class AuditToolTests(unittest.TestCase):
         mock_instance = mock_audit_logger.get_instance.return_value
         mock_instance.log.return_value = "mock_event_id"
 
-        result = record_audit_event_module.record_audit_event(
+        result = await record_audit_event_module.record_audit_event(
             action=SAMPLE_AUDIT_EVENT["action"],
             resource_id=SAMPLE_AUDIT_EVENT["resource"],
             resource_type="test_resource_type", # Added resource_type
@@ -563,7 +564,7 @@ class WebArchiveToolTests(unittest.TestCase):
         cleanup_test_environment()
 
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.create_warc.WebArchiveProcessor')
-    def test_create_warc(self, mock_processor):
+    async def test_create_warc(self, mock_processor):
         """Test the create_warc tool."""
         create_warc_module = import_tool("web_archive_tools", "create_warc")
         if not create_warc_module:
@@ -572,7 +573,7 @@ class WebArchiveToolTests(unittest.TestCase):
         mock_instance = mock_processor.return_value
         mock_instance.create_warc.return_value = os.path.join(self.test_env["test_dir"], "test.warc")
 
-        result = create_warc_module.create_warc(
+        result = await create_warc_module.create_warc(
             url="https://example.com",
             output_path=os.path.join(self.test_env["test_dir"], "test.warc")
         )
@@ -582,7 +583,7 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertEqual(result["warc_path"], os.path.join(self.test_env["test_dir"], "test.warc"))
 
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc.WebArchiveProcessor')
-    def test_index_warc(self, mock_processor):
+    async def test_index_warc(self, mock_processor):
         """Test the index_warc tool."""
         index_warc_module = import_tool("web_archive_tools", "index_warc")
         if not index_warc_module:
@@ -591,7 +592,7 @@ class WebArchiveToolTests(unittest.TestCase):
         mock_instance = mock_processor.return_value
         mock_instance.index_warc.return_value = os.path.join(self.test_env["test_dir"], "test.cdxj")
 
-        result = index_warc_module.index_warc(
+        result = await index_warc_module.index_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc"),
             output_path=os.path.join(self.test_env["test_dir"], "test.cdxj")
         )
@@ -601,7 +602,7 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertEqual(result["cdxj_path"], os.path.join(self.test_env["test_dir"], "test.cdxj"))
 
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj.WebArchiveProcessor')
-    def test_extract_dataset_from_cdxj(self, mock_processor):
+    async def test_extract_dataset_from_cdxj(self, mock_processor):
         """Test the extract_dataset_from_cdxj tool."""
         extract_dataset_module = import_tool("web_archive_tools", "extract_dataset_from_cdxj")
         if not extract_dataset_module:
@@ -610,7 +611,7 @@ class WebArchiveToolTests(unittest.TestCase):
         mock_instance = mock_processor.return_value
         mock_instance.extract_dataset_from_cdxj.return_value = SAMPLE_DATASET
 
-        result = extract_dataset_module.extract_dataset_from_cdxj(
+        result = await extract_dataset_module.extract_dataset_from_cdxj(
             cdxj_path=os.path.join(self.test_env["test_dir"], "test.cdxj"),
             output_format="dict"
         )
@@ -620,7 +621,7 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertEqual(result["dataset"], SAMPLE_DATASET)
 
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc.WebArchiveProcessor')
-    def test_extract_text_from_warc(self, mock_processor):
+    async def test_extract_text_from_warc(self, mock_processor):
         """Test the extract_text_from_warc tool."""
         extract_text_module = import_tool("web_archive_tools", "extract_text_from_warc")
         if not extract_text_module:
@@ -629,7 +630,7 @@ class WebArchiveToolTests(unittest.TestCase):
         mock_instance = mock_processor.return_value
         mock_instance.extract_text_from_warc.return_value = [{"uri": "http://example.com", "text": "Sample extracted text"}]
 
-        result = extract_text_module.extract_text_from_warc(
+        result = await extract_text_module.extract_text_from_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
         )
 
@@ -639,7 +640,7 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertEqual(len(result["records"]), 1)
 
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc.WebArchiveProcessor')
-    def test_extract_links_from_warc(self, mock_processor):
+    async def test_extract_links_from_warc(self, mock_processor):
         """Test the extract_links_from_warc tool."""
         extract_links_module = import_tool("web_archive_tools", "extract_links_from_warc")
         if not extract_links_module:
@@ -650,7 +651,7 @@ class WebArchiveToolTests(unittest.TestCase):
             {"uri": "http://example.com", "links": ["http://example.com/page1", "http://example.com/page2"]}
         ]
 
-        result = extract_links_module.extract_links_from_warc(
+        result = await extract_links_module.extract_links_from_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
         )
 
@@ -660,7 +661,7 @@ class WebArchiveToolTests(unittest.TestCase):
         self.assertEqual(len(result["records"]), 1)
 
     @patch('ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc.WebArchiveProcessor')
-    def test_extract_metadata_from_warc(self, mock_processor):
+    async def test_extract_metadata_from_warc(self, mock_processor):
         """Test the extract_metadata_from_warc tool."""
         extract_metadata_module = import_tool("web_archive_tools", "extract_metadata_from_warc")
         if not extract_metadata_module:
@@ -671,7 +672,7 @@ class WebArchiveToolTests(unittest.TestCase):
             {"uri": "http://example.com", "metadata": {"title": "Example", "status": "200"}}
         ]
 
-        result = extract_metadata_module.extract_metadata_from_warc(
+        result = await extract_metadata_module.extract_metadata_from_warc(
             warc_path=os.path.join(self.test_env["test_dir"], "test.warc")
         )
 

@@ -1,0 +1,30 @@
+{
+  "test_summary": {
+    "total_screenshots": 1,
+    "successful_interactions": 0,
+    "errors_found": 0,
+    "accessibility_checks": 0
+  },
+  "screenshots": [
+    {
+      "name": "Static Dashboard Preview",
+      "path": "gui_interaction_screenshots/unified_dashboard_preview.html",
+      "description": "Complete unified investigation dashboard interface (static version)"
+    }
+  ],
+  "interactions": [],
+  "errors": [],
+  "accessibility": [],
+  "recommendations": [
+    {
+      "type": "accessibility",
+      "priority": "medium",
+      "message": "Improve accessibility features (ARIA labels, keyboard navigation)"
+    },
+    {
+      "type": "enhancement",
+      "priority": "low",
+      "message": "Consider adding loading states and error handling for better UX"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "formula_id": "e5b63ec1da26",
+  "deontic_formula": {
+    "formula_id": "e5b63ec1da26",
+    "operator": "O",
+    "proposition": "resolve_disputes_through_arbitration",
+    "agent": null,
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "All disputes shall be resolved through binding arbitration in Springfield, Illinois",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "O(resolve_disputes_through_arbitration)",
+    "creation_timestamp": "2025-08-31T19:16:24.346230"
+  },
+  "source_document_cid": "mock_doc_cid",
+  "source_text_excerpt": "All disputes shall be resolved through binding arbitration in Springfield, Illinois",
+  "extraction_metadata": {
+    "collection": "Springfield Construction Contract"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:16:24.358329",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

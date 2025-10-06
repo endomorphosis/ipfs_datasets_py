@@ -1,0 +1,99 @@
+{
+  "sources": [
+    "White House",
+    "Congress",
+    "Federal Register"
+  ],
+  "articles_processed": 75,
+  "entities_extracted": 20,
+  "processing_time": 0.0011529922485351562,
+  "queries_executed": [
+    {
+      "type": "semantic",
+      "query": "government policy decisions",
+      "user_type": "data_scientist",
+      "results_count": 15,
+      "processing_time": 1.0175928926730324,
+      "status": "success"
+    },
+    {
+      "type": "entity",
+      "query": "White House",
+      "user_type": "historian",
+      "results_count": 8,
+      "processing_time": 1.0314036714312969,
+      "status": "success"
+    },
+    {
+      "type": "temporal",
+      "query": "last_week",
+      "user_type": "data_scientist",
+      "results_count": 8,
+      "processing_time": 1.030350309478289,
+      "status": "success"
+    },
+    {
+      "type": "relationship",
+      "query": "President Biden AND Congress",
+      "user_type": "lawyer",
+      "results_count": 15,
+      "processing_time": 0.7239439731391693,
+      "status": "success"
+    },
+    {
+      "type": "cross_document",
+      "query": "regulatory changes",
+      "user_type": "historian",
+      "results_count": 13,
+      "processing_time": 0.8371657828839592,
+      "status": "success"
+    }
+  ],
+  "knowledge_graph": {
+    "nodes": 20,
+    "edges": 46,
+    "communities": 12,
+    "graph_density": 0.242,
+    "modularity_score": 0.682,
+    "node_types": {
+      "organizations": 11,
+      "people": 4,
+      "locations": 2,
+      "government_entities": 3
+    }
+  },
+  "professional_analysis": {
+    "data_scientists": {
+      "articles_analyzed": 75,
+      "government_entity_classification": {
+        "executive": 25,
+        "legislative": 25,
+        "regulatory": 25
+      },
+      "topic_clusters": 12,
+      "model_accuracy": 0.82,
+      "dataset_exports": [
+        "CSV",
+        "JSON",
+        "Parquet"
+      ]
+    },
+    "historians": {
+      "temporal_coverage": "7 days of government activity",
+      "sources_verified": 3,
+      "significant_events": 8,
+      "cross_references": 53,
+      "citations_generated": 75,
+      "archive_quality": "government_standard"
+    },
+    "legal_professionals": {
+      "document_portfolio": 75,
+      "sources_verified": 3,
+      "chain_of_custody": "maintained",
+      "evidence_integrity": "verified",
+      "admissible_documents": 72,
+      "admissibility_rate": "96.0%"
+    }
+  },
+  "timestamp": "2025-09-04T00:32:23.320091"
+}

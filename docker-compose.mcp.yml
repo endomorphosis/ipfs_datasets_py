@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # MCP Server
+  mcp-server:
+    build:
+      context: .
+      dockerfile: ipfs_datasets_py/mcp_server/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONFAULTHANDLER=1
+      - PYTHONUNBUFFERED=1
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=8000
+      - IPFS_DATASETS_CONFIG=/app/config/mcp_config.yaml
+    volumes:
+      - ./config:/app/config:ro
+      - mcp_data:/app/data
+    networks:
+      - mcp_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # MCP Dashboard
+  mcp-dashboard:
+    build:
+      context: .
+      dockerfile: ipfs_datasets_py/mcp_server/Dockerfile.dashboard
+    ports:
+      - "8899:8899"
+    environment:
+      - PYTHONFAULTHANDLER=1
+      - PYTHONUNBUFFERED=1
+      - MCP_DASHBOARD_HOST=0.0.0.0
+      - MCP_DASHBOARD_PORT=8899
+      - MCP_DASHBOARD_BLOCKING=1
+      - MCP_SERVER_HOST=mcp-server
+      - MCP_SERVER_PORT=8000
+    volumes:
+      - ./config:/app/config:ro
+      - dashboard_data:/app/data
+    networks:
+      - mcp_network
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8899/api/mcp/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # IPFS Node (optional)
+  ipfs:
+    image: ipfs/kubo:latest
+    ports:
+      - "4001:4001"     # P2P
+      - "5001:5001"     # API
+      - "8082:8080"     # Gateway
+    environment:
+      - IPFS_PROFILE=server
+    volumes:
+      - ipfs_data:/data/ipfs
+      - ipfs_staging:/export
+    networks:
+      - mcp_network
+    command: ["daemon", "--migrate=true", "--agent-version-suffix=docker"]
+    restart: unless-stopped
+
+  # Browser Testing Service (for automated testing)
+  browser-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.testing
+    environment:
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      - MCP_DASHBOARD_URL=http://mcp-dashboard:8899
+      - MCP_SERVER_URL=http://mcp-server:8000
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./test_outputs:/app/test_outputs
+      - playwright_cache:/ms-playwright
+    networks:
+      - mcp_network
+    depends_on:
+      mcp-dashboard:
+        condition: service_healthy
+    profiles:
+      - testing
+    command: ["pytest", "/app/tests/integration/dashboard/comprehensive_mcp_dashboard_test.py", "-v"]
+
+volumes:
+  mcp_data:
+    driver: local
+  dashboard_data:
+    driver: local
+  ipfs_data:
+    driver: local
+  ipfs_staging:
+    driver: local
+  playwright_cache:
+    driver: local
+
+networks:
+  mcp_network:
+    driver: bridge

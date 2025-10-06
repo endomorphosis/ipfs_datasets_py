@@ -1,0 +1,18 @@
+{
+  "collection_name": "Springfield Construction Contract",
+  "formula_cids": [
+    "bbb06bc3ba0800b99191b0e5f141b46a",
+    "3a13be2a97e8c3365f130887356f74b3",
+    "8f361b814fc928f632fc9834318e74f5",
+    "c6860fa7a884aab0cfbe0216089ba160",
+    "f9abc7c4ea498c1274f4c018ee14845a",
+    "35476dbf06cec5ebba7af1ce16dbd2cd",
+    "5517727b4712a037d660b03112f734ec",
+    "261d968c01cd82d627142c5cc7dfed91",
+    "261d613d524010fda93012bc55563ea2",
+    "f647929015bf5e4f42fba1a7f4176d2d"
+  ],
+  "source_document_cid": "mock_doc_cid",
+  "creation_timestamp": "2025-08-31T19:15:17.151812",
+  "formula_count": 10
+}

@@ -16,7 +16,7 @@ from ....vector_tools import VectorStore, create_vector_store
 
 
 # Global manager instance to maintain state between calls
-from .shared_state import get_global_manager
+from .shared_state import _get_global_manager
 
 
 async def create_vector_index(
@@ -43,9 +43,8 @@ async def create_vector_index(
     """
     try:
         logger.info(f"Creating vector index with {len(vectors)} vectors")
-
-        # Get the global manager
-        manager = get_global_manager()
+        # Get the global manager (synchronous internal helper)
+        manager = _get_global_manager()
 
         # Infer dimension if not provided
         if dimension is None and vectors:

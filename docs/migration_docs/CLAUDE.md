@@ -1662,6 +1662,9 @@ docker run -p 12345:12345 oduwsdl/archivenow --server --host 0.0.0.0
    
    # Push to specific archives (ia=Internet Archive, is=Archive.today, cc=Perma.cc)
    archivenow --ia --is https://example.com/
+   
+   # Archive to Archive.is (archive.today) specifically  
+   archivenow --is https://example.com/
    ```
 
 2. **Python API Usage**:
@@ -1676,10 +1679,48 @@ docker run -p 12345:12345 oduwsdl/archivenow --server --host 0.0.0.0
    result_ia = archivenow.push("https://example.com/", "ia")
    print(f"Internet Archive URL: {result_ia}")
    
-   # Push to multiple archives
+   # Push to Archive.is (archive.today)
+   result_is = archivenow.push("https://example.com/", "is")
+   print(f"Archive.is URL: {result_is}")
+   
+   # Push to multiple archives including Archive.is
    results = archivenow.push("https://example.com/", ["ia", "is", "cc"])
    for archive, url in results.items():
        print(f"{archive}: {url}")
+   
+   # Direct Archive.is integration with custom headers
+   import requests
+   
+   def archive_to_archive_is(url, wait_for_completion=True):
+       """Archive URL directly to Archive.is with completion tracking."""
+       response = requests.post(
+           'https://archive.is/submit/',
+           data={'url': url},
+           headers={
+               'User-Agent': 'IPFS Datasets Archive Bot 1.0',
+               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+           },
+           timeout=60
+       )
+       
+       if response.status_code == 200:
+           archive_url = response.url
+           if wait_for_completion and 'archive.is' in archive_url:
+               # Wait for archive completion
+               import time
+               time.sleep(5)  # Allow processing time
+               
+               # Verify archive exists
+               verify_response = requests.get(archive_url, timeout=30)
+               if verify_response.status_code == 200:
+                   return archive_url
+           return archive_url
+       else:
+           raise Exception(f"Archive.is failed with status: {response.status_code}")
+   
+   # Use direct Archive.is integration
+   archive_is_url = archive_to_archive_is("https://example.com")
+   print(f"Direct Archive.is URL: {archive_is_url}")
        
    # Custom implementation with handlers
    from archivenow.handlers import warc_handler
@@ -1789,8 +1830,63 @@ To obtain WARC or CDXJ files from the Internet Archive:
 
 3. **Web Archive Discovery Tools**:
    - CDX API: Use Archive.org's CDX server API to find captures
-   - WayBack Machine API: Query archived URLs by timestamp
+   - WayBack Machine API: Query archived URLs by timestamp  
    - ARCH Framework: Python library for archive discovery
+   - Common Crawl Index API: Query massive web crawl datasets
+   - Archive.is API: Direct integration with Archive.today service
+   
+   ```python
+   # CDX API for Wayback Machine
+   import requests
+   
+   def query_cdx_api(url, from_date=None, to_date=None, limit=100):
+       """Query Archive.org CDX API for URL captures."""
+       params = {
+           'url': url,
+           'output': 'json',
+           'limit': limit
+       }
+       if from_date:
+           params['from'] = from_date
+       if to_date:
+           params['to'] = to_date
+           
+       response = requests.get('http://web.archive.org/cdx/search/cdx', params=params)
+       return response.json()
+   
+   # Common Crawl Index API
+   def query_common_crawl_index(url_pattern, crawl_id="CC-MAIN-2024-10"):
+       """Query Common Crawl index for URL patterns."""
+       cc_url = f"https://index.commoncrawl.org/{crawl_id}-index"
+       params = {'url': url_pattern, 'output': 'json'}
+       
+       response = requests.get(cc_url, params=params)
+       results = []
+       for line in response.text.strip().split('\n'):
+           if line:
+               results.append(json.loads(line))
+       return results
+   
+   # Archive.is verification and metadata
+   def get_archive_is_metadata(archive_url):
+       """Get metadata from Archive.is archived page."""
+       response = requests.get(archive_url, timeout=30)
+       if response.status_code == 200:
+           # Extract metadata from Archive.is page
+           from bs4 import BeautifulSoup
+           soup = BeautifulSoup(response.content, 'html.parser')
+           
+           # Find archive timestamp and original URL
+           meta_info = soup.find('div', class_='TEXT-BLOCK')
+           if meta_info:
+               return {
+                   'archive_url': archive_url,
+                   'archived_at': meta_info.get_text().strip(),
+                   'original_url': soup.find('a', {'rel': 'canonical'})['href'] if soup.find('a', {'rel': 'canonical'}) else None,
+                   'archive_service': 'archive.is'
+               }
+       return None
+   ```
 
 ### Usage Examples
 ```python
@@ -1839,17 +1935,68 @@ This module aims to provide functionality for querying Common Crawl and Internet
        limit=1000
    )
    
-   # Download matching WARC records
-   warc_data = web_archive_utils.download_cc_warcs(results)
+   # Advanced Common Crawl querying with filters
+   filtered_results = web_archive_utils.query_common_crawl(
+       domain="stackoverflow.com",
+       url_pattern="*/questions/*",
+       crawl_id="CC-MAIN-2024-10",
+       limit=5000,
+       filters={
+           'mime_type': 'text/html',
+           'status_code': '200',
+           'language': 'en',
+           'min_content_length': 1000
+       }
+   )
    
-   # Convert to structured dataset
-   dataset = web_archive_utils.warc_to_dataset(warc_data, extract_text=True, extract_metadata=True)
+   # Download matching WARC records with parallel processing
+   warc_data = web_archive_utils.download_cc_warcs(
+       results, 
+       max_workers=4,
+       chunk_size=1024*1024  # 1MB chunks
+   )
    
-   # Save as Parquet
-   dataset.save_to_parquet("example_blog_content.parquet")
+   # Convert to structured dataset with content analysis
+   dataset = web_archive_utils.warc_to_dataset(
+       warc_data, 
+       extract_text=True, 
+       extract_metadata=True,
+       content_analysis={
+           'language_detection': True,
+           'content_classification': True,
+           'link_extraction': True,
+           'structured_data_extraction': True  # JSON-LD, microdata, etc.
+       }
+   )
    
-   # Or push to Hugging Face Datasets
-   dataset.push_to_hub("username/example-web-content")
+   # Advanced Common Crawl processing pipeline
+   cc_pipeline = web_archive_utils.CommonCrawlPipeline(
+       crawl_ids=["CC-MAIN-2024-10", "CC-MAIN-2024-06"],  # Multiple crawls
+       domain_filters=["*.edu", "*.gov", "*.org"],
+       content_filters={
+           'min_text_length': 500,
+           'languages': ['en', 'es', 'fr'],
+           'exclude_patterns': ['*/admin/*', '*/login/*']
+       },
+       output_format='parquet',
+       deduplication=True
+   )
+   
+   # Process multiple domains across multiple crawls
+   bulk_dataset = cc_pipeline.process_domains([
+       "example.com",
+       "stackoverflow.com", 
+       "github.com"
+   ])
+   
+   # Save as Parquet with partitioning
+   bulk_dataset.save_to_parquet(
+       "common_crawl_dataset.parquet",
+       partition_cols=["domain", "crawl_id", "language"]
+   )
+   
+   # Or push to Hugging Face Datasets Hub
+   bulk_dataset.push_to_hub("username/common-crawl-processed")
    ```
 
 2. **Internet Archive Wayback Machine Integration**:
@@ -1955,6 +2102,219 @@ trainer = Trainer(
     train_dataset=training_dataset
 )
 trainer.train()
+```
+
+## Multimedia Scraping and Processing Integration
+
+### YT-DLP Video and Audio Scraping
+
+IPFS Datasets Python integrates YT-DLP for downloading content from 1000+ platforms including YouTube, Vimeo, SoundCloud, TikTok, and many others.
+
+#### Core YT-DLP Integration
+
+```python
+from ipfs_datasets_py.multimedia import YtDlpWrapper
+from ipfs_datasets_py.mcp_server.tools.media_tools import (
+    ytdlp_download_video, ytdlp_download_playlist, 
+    ytdlp_extract_info, ytdlp_search_videos, ytdlp_batch_download
+)
+
+# Initialize YT-DLP wrapper
+ytdlp = YtDlpWrapper(
+    default_output_dir="downloads",
+    default_quality="best[height<=720]"
+)
+
+# Download single video with comprehensive metadata
+result = await ytdlp_download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    output_dir="multimedia_datasets/videos",
+    quality="best[height<=1080]",
+    download_info_json=True,
+    download_thumbnails=True,
+    subtitle_langs=["en", "auto", "es"],
+    custom_opts={
+        "writesubtitles": True,
+        "writeautomaticsub": True,
+        "writedescription": True,
+        "writeinfojson": True
+    }
+)
+
+# Download entire playlists for large datasets
+playlist_result = await ytdlp_download_playlist(
+    url="https://www.youtube.com/playlist?list=PLrAXtmRdnEQy5JBZM-0P3KKiMxz5e3fXr",
+    output_dir="multimedia_datasets/playlists",
+    quality="best[height<=720]",
+    max_downloads=100,
+    download_info_json=True,
+    archive_file="downloaded_videos.txt"  # Track downloads
+)
+
+# Extract metadata without downloading for dataset analysis
+info_result = await ytdlp_extract_info(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    extract_flat=False
+)
+
+print(f"Video metadata: {info_result['title']}, {info_result['duration']}s")
+print(f"Uploader: {info_result['uploader']}, Views: {info_result['view_count']}")
+```
+
+### FFmpeg Media Processing Integration
+
+Professional media processing and conversion with FFmpeg integration:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.media_tools import (
+    ffmpeg_convert, ffmpeg_mux, ffmpeg_demux,
+    ffmpeg_cut, ffmpeg_splice, ffmpeg_concat,
+    ffmpeg_probe, ffmpeg_analyze, ffmpeg_apply_filters,
+    ffmpeg_batch_process, ffmpeg_stream_input, ffmpeg_stream_output
+)
+
+# Convert videos to standardized formats for ML datasets
+conversion_result = await ffmpeg_convert(
+    input_file="raw_video.webm",
+    output_file="processed/standardized.mp4",
+    video_codec="libx264",
+    audio_codec="aac",
+    resolution="1280x720",
+    quality="medium",
+    custom_options={
+        "preset": "medium",
+        "crf": "23",  # Constant rate factor for quality
+        "profile": "high",
+        "level": "4.0"
+    }
+)
+
+# Extract audio for speech/music analysis
+audio_extraction = await ffmpeg_convert(
+    input_file="video.mp4",
+    output_file="audio/extracted.wav",
+    video_codec=None,  # Remove video stream
+    audio_codec="pcm_s16le",  # Uncompressed for analysis
+    audio_sampling_rate="16000",  # Standard for speech processing
+    audio_channels=1  # Mono for speech
+)
+
+# Extract frames for computer vision datasets
+frames_result = await ffmpeg_convert(
+    input_file="video.mp4",
+    output_file="frames/frame_%04d.jpg",
+    custom_options={
+        "vf": "fps=1",         # 1 frame per second
+        "q:v": "2",            # High quality JPEG
+        "start_number": "0"    # Start numbering from 0
+    }
+)
+
+# Batch processing for large datasets
+batch_result = await ffmpeg_batch_process(
+    input_files=["video1.mp4", "video2.webm", "video3.avi"],
+    output_directory="processed_batch/",
+    operation="convert",
+    operation_params={
+        "video_codec": "libx264",
+        "audio_codec": "aac",
+        "resolution": "854x480",
+        "quality": "medium"
+    },
+    max_parallel=4,
+    progress_callback=lambda status: print(f"Progress: {status['completed']}/{status['total']}")
+)
+```
+
+### Comprehensive Web Scraping Strategies
+
+```python
+async def comprehensive_web_scraping_pipeline(targets):
+    """
+    Comprehensive web scraping combining all available methods:
+    - Traditional web archiving (WARC/IPWB)
+    - Internet Archive queries
+    - Common Crawl data
+    - Archive.is archiving
+    - Multimedia content scraping (YT-DLP)
+    """
+    
+    results = {
+        'web_archives': [],
+        'multimedia_content': [],
+        'wayback_captures': [],
+        'common_crawl_data': [],
+        'archive_is_snapshots': []
+    }
+    
+    for target in targets:
+        target_type = target['type']
+        url = target['url']
+        
+        try:
+            if target_type == 'web_archive':
+                # Traditional web archiving
+                warc_path = processor.create_warc(
+                    url=url,
+                    options=target.get('options', {"agent": "wget", "depth": 1})
+                )
+                
+                # Index to IPFS
+                index_result = processor.index_warc(warc_path)
+                
+                # Archive to multiple services
+                ia_url = archivenow.push(url, "ia")
+                is_url = archivenow.push(url, "is")
+                
+                results['web_archives'].append({
+                    'url': url,
+                    'warc_path': warc_path,
+                    'ipfs_hash': index_result['ipfs_hash'],
+                    'internet_archive_url': ia_url,
+                    'archive_is_url': is_url
+                })
+                
+            elif target_type == 'multimedia':
+                # Multimedia content scraping
+                if 'playlist' in url:
+                    download_result = await ytdlp_download_playlist(
+                        url=url,
+                        output_dir="multimedia_content",
+                        max_downloads=target.get('max_videos', 20)
+                    )
+                else:
+                    download_result = await ytdlp_download_video(
+                        url=url,
+                        output_dir="multimedia_content",
+                        quality=target.get('quality', 'best[height<=720]'),
+                        download_info_json=True
+                    )
+                
+                results['multimedia_content'].append(download_result)
+                
+        except Exception as e:
+            print(f"Error processing {url}: {e}")
+    
+    return results
+
+# Example comprehensive scraping configuration
+scraping_targets = [
+    {
+        "type": "web_archive",
+        "url": "https://example.com",
+        "options": {"agent": "wget", "depth": 2}
+    },
+    {
+        "type": "multimedia", 
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "quality": "720p"
+    }
+]
+
+# Run comprehensive scraping
+comprehensive_results = asyncio.run(
+    comprehensive_web_scraping_pipeline(scraping_targets)
+)
 ```
 
 ## Complete Integration Examples
