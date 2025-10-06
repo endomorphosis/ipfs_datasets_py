@@ -15,7 +15,7 @@ from ....vector_tools import VectorSimilarityCalculator, VectorStore
 
 
 # Global manager instance to maintain state between calls
-from .shared_state import get_global_manager
+from .shared_state import _get_global_manager
 
 
 async def search_vector_index(
@@ -42,12 +42,11 @@ async def search_vector_index(
     """
     try:
         logger.info(f"Searching vector index {index_id} for top {top_k} results")
-
-        # Get the global manager instance
-        manager = get_global_manager()
+        # Get the global manager instance (synchronous helper)
+        manager = _get_global_manager()
 
         # Check if index exists; if not, create a simple test index
-        if not hasattr(manager, 'indices') or index_id not in manager.indices:
+        if not hasattr(manager, 'indexes') or index_id not in manager.indexes:
             logger.warning(f"Index {index_id} not found. Creating a test index for demonstration.")
             # Create a simple test index
             test_vectors = [[0.1, 0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9, 1.0]]

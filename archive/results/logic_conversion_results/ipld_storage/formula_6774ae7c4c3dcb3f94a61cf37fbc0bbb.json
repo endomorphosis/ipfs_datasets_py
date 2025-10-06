@@ -1,0 +1,42 @@
+{
+  "formula_id": "632cd7bf8498",
+  "deontic_formula": {
+    "formula_id": "632cd7bf8498",
+    "operator": "P",
+    "proposition": "terminate_agreement",
+    "agent": {
+      "identifier": "agent_5373",
+      "name": "party",
+      "agent_type": "party",
+      "properties": {},
+      "hash": "1bbdd9a2"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "Either party may terminate this agreement with 30 days written notice",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "P[agent_5373](terminate_agreement)",
+    "creation_timestamp": "2025-08-31T19:10:24.759437"
+  },
+  "source_document_cid": null,
+  "source_text_excerpt": "Either party may terminate this agreement with 30 days written notice",
+  "extraction_metadata": {
+    "source_method": "graphrag_conversion"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:10:24.762980",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

@@ -1,0 +1,19 @@
+{
+  "target": "lean",
+  "translated_formula": "Obligatory resolve_disputes_through_arbitration",
+  "success": true,
+  "confidence": 0.85,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "syntax_version": "lean4",
+    "deontic_operator": "O",
+    "has_agent": false,
+    "has_conditions": false
+  },
+  "dependencies": [
+    "Mathlib.Logic.Basic",
+    "Mathlib.Data.Set.Basic",
+    "Mathlib.Logic.Relation"
+  ]
+}

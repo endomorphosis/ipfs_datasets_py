@@ -1,0 +1,35 @@
+{
+  "pipeline_info": {
+    "source_url": "https://simulated-law.edu/comprehensive-legal-analysis",
+    "content_title": "Comprehensive Legal Requirements and Obligations Analysis",
+    "content_length": 8758,
+    "extraction_time": 0.001,
+    "timestamp": "2025-08-31 22:49:39"
+  },
+  "knowledge_graph": {
+    "entities_count": 13,
+    "relationships_count": 5
+  },
+  "deontic_conversion": {
+    "formulas_generated": 12,
+    "obligations": 0,
+    "permissions": 0,
+    "prohibitions": 0,
+    "conversion_errors": 0
+  },
+  "proof_execution": {
+    "z3": {
+      "total_proofs": 12,
+      "successful_proofs": 12,
+      "success_rate": 1.0,
+      "average_time": 0.00800625483194987
+    }
+  },
+  "consistency_checks": {
+    "z3": {
+      "status": "error",
+      "execution_time": 0.00829935073852539,
+      "consistent": null
+    }
+  }
+}

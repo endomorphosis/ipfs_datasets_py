@@ -76,7 +76,7 @@ async def test_web_archive_tools():
     try:
         # Test create_warc
         print("\nTesting create_warc...")
-        result = create_warc( # Removed await
+        result = await create_warc( # Fixed: Added await
             url=url,
             output_path=str(warc_path)
         )
@@ -88,7 +88,7 @@ async def test_web_archive_tools():
 
         # Test index_warc
         print("\nTesting index_warc...")
-        result = index_warc( # Removed await
+        result = await index_warc( # Fixed: Added await
             warc_path=str(warc_path),
             output_path=str(cdxj_path)
         )
@@ -100,7 +100,7 @@ async def test_web_archive_tools():
 
         # Test extract_dataset_from_cdxj
         print("\nTesting extract_dataset_from_cdxj...")
-        result = extract_dataset_from_cdxj( # Removed await
+        result = await extract_dataset_from_cdxj( # Fixed: Added await
             cdxj_path=str(cdxj_path),
             output_format="dict" # Changed output_path to output_format
         )
@@ -112,7 +112,7 @@ async def test_web_archive_tools():
 
         # Test extract_text_from_warc
         print("\nTesting extract_text_from_warc...")
-        result = extract_text_from_warc( # Removed await
+        result = await extract_text_from_warc( # Fixed: Added await
             warc_path=str(warc_path)
         )
         print(f"Result: {result}")
@@ -123,7 +123,7 @@ async def test_web_archive_tools():
 
         # Test extract_links_from_warc
         print("\nTesting extract_links_from_warc...")
-        result = extract_links_from_warc( # Removed await
+        result = await extract_links_from_warc( # Fixed: Added await
             warc_path=str(warc_path)
         )
         print(f"Result: {result}")
@@ -134,7 +134,7 @@ async def test_web_archive_tools():
 
         # Test extract_metadata_from_warc
         print("\nTesting extract_metadata_from_warc...")
-        result = extract_metadata_from_warc( # Removed await
+        result = await extract_metadata_from_warc( # Fixed: Added await
             warc_path=str(warc_path)
         )
         print(f"Result: {result}")

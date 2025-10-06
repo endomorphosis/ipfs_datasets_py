@@ -1,0 +1,42 @@
+{
+  "formula_id": "8a035ae9f462",
+  "deontic_formula": {
+    "formula_id": "8a035ae9f462",
+    "operator": "F",
+    "proposition": "use_substandard_materials",
+    "agent": {
+      "identifier": "agent_3338",
+      "name": "Contractor",
+      "agent_type": "organization",
+      "properties": {},
+      "hash": "fd83345a"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Contractor must not use materials that do not meet specification requirements",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "F[agent_3338](use_substandard_materials)",
+    "creation_timestamp": "2025-08-31T19:10:24.758997"
+  },
+  "source_document_cid": "mock_doc_cid",
+  "source_text_excerpt": "The Contractor must not use materials that do not meet specification requirements",
+  "extraction_metadata": {
+    "collection": "Springfield Construction Contract"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:10:24.769125",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

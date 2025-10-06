@@ -1,0 +1,62 @@
+-- Legal Theory: Springfield Construction Contract
+-- Generated deontic logic formulas
+
+import Mathlib.Logic.Basic
+import Mathlib.Data.Set.Basic
+
+namespace Springfield_Construction_Contract
+
+-- Deontic logic operators
+def Obligatory (P : Prop) : Prop := P
+def Permitted (P : Prop) : Prop := ¬¬P
+def Forbidden (P : Prop) : Prop := ¬P
+def Right (P : Prop) : Prop := P
+def Liberty (P : Prop) : Prop := P ∨ ¬P
+
+-- Agent type
+structure Agent where
+  id : String
+  name : String
+
+-- Proposition with agent and conditions
+structure DeonticProp where
+  proposition : Prop
+  agent : Option Agent := none
+  conditions : List Prop := []
+
+-- Extracted legal formulas
+def formula_1 : Prop := Obligatory complete_all_construction_work_by_december_31 (agent := contractor_abc) (conditions := [December_31])
+-- Source: The Contractor shall complete all construction work by Decem...
+
+def formula_2 : Prop := Obligatory pay_the_contractor_within_30_days_of_completion (agent := client_springfield) (conditions := [id_30_days_of_completion])
+-- Source: The Client shall pay the Contractor within 30 days of comple...
+
+def formula_3 : Prop := Obligatory complete_construction_work (agent := agent_3583) (conditions := [December_31])
+-- Source: The Contractor shall complete all construction work by Decem...
+
+def formula_4 : Prop := Obligatory pay_contractor (agent := agent_3583) (conditions := [id_30_days_of_completion])
+-- Source: The Client shall pay the Contractor within 30 days of comple...
+
+def formula_5 : Prop := Permitted inspect_work (agent := agent_9415)
+-- Source: The Client may inspect the work at any time with 24 hours ad...
+
+def formula_6 : Prop := Forbidden use_substandard_materials (agent := agent_3583)
+-- Source: The Contractor must not use materials that do not meet speci...
+
+def formula_7 : Prop := Forbidden subcontract_without_approval (agent := agent_3583)
+-- Source: The Contractor shall not subcontract work without prior writ...
+
+def formula_8 : Prop := Obligatory maintain_insurance_coverage (agent := agent_3583)
+-- Source: The Contractor is required to maintain comprehensive insuran...
+
+def formula_9 : Prop := Permitted terminate_agreement (agent := agent_8208)
+-- Source: Either party may terminate this agreement with 30 days writt...
+
+def formula_10 : Prop := Obligatory resolve_disputes_through_arbitration
+-- Source: All disputes shall be resolved through binding arbitration i...
+
+-- Consistency axioms
+axiom no_obligation_and_prohibition (P : Prop) : ¬(Obligatory P ∧ Forbidden P)
+axiom permission_consistency (P : Prop) : Permitted P → ¬Forbidden P
+
+end Springfield_Construction_Contract

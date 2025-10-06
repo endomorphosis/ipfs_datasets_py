@@ -1,3 +1,4 @@
+import asyncio
 """
 Test stubs for Vector MCP tools.
 

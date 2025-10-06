@@ -840,8 +840,6 @@ def create_test_runner(path: str = ".",
     return runner
 
 
-# Apply the MCP wrapper to the function
-@development_tool_mcp_wrapper
 def run_comprehensive_tests(path: str = ".",
                            run_unit_tests: bool = True,
                            run_type_check: bool = True,

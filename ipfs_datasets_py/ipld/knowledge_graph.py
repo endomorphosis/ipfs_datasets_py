@@ -11,6 +11,16 @@ Features:
 - Vector-augmented graph queries
 - Cross-document reasoning capabilities
 - Export to/import from CAR files
+- Automatic chunking for large graphs (prevents IPFS 1MiB block limit errors)
+
+Large Graph Handling:
+When a knowledge graph grows large (e.g., 10,000+ entities), the root node
+metadata can exceed IPFS's 1MiB block size limit. This module automatically
+detects when data arrays (entity_ids, entity_cids, relationship_ids,
+relationship_cids) exceed the threshold (800KB by default) and stores them
+in separate IPLD blocks, referencing them by CID in the root node. This
+ensures the root block stays well under the 1MB limit while maintaining
+full functionality and backward compatibility.
 """
 
 import os
@@ -42,6 +52,10 @@ try:
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
+
+# Maximum size for a single IPLD block before chunking (800KB to stay under 1MB limit)
+# IPFS has a 1MiB limit for blocks that can be exchanged with other peers
+MAX_BLOCK_SIZE = 800 * 1024
 
 # Type for entity and relationship IDs
 EntityID = str
@@ -1127,11 +1141,34 @@ class IPLDKnowledgeGraph:
             "relationship_count": len(self.relationships),
             "entity_types": list(self._entity_index.keys()),
             "relationship_types": list(self._relationship_index.keys()),
-            "entity_ids": list(self.entities.keys()),
-            "entity_cids": self._entity_cids,
-            "relationship_ids": list(self.relationships.keys()),
-            "relationship_cids": self._relationship_cids
         }
+        
+        # Helper function to store large data as separate block
+        def store_if_large(data, field_name):
+            data_bytes = json.dumps(data).encode()
+            if len(data_bytes) > MAX_BLOCK_SIZE:
+                # Store as separate block and return CID reference
+                cid = self.storage.store(data_bytes)
+                return {"_cid": cid, "_chunked": True}
+            return data
+        
+        # Store entity and relationship data, chunking if necessary
+        root_node["entity_ids"] = store_if_large(
+            list(self.entities.keys()), 
+            "entity_ids"
+        )
+        root_node["entity_cids"] = store_if_large(
+            self._entity_cids, 
+            "entity_cids"
+        )
+        root_node["relationship_ids"] = store_if_large(
+            list(self.relationships.keys()), 
+            "relationship_ids"
+        )
+        root_node["relationship_cids"] = store_if_large(
+            self._relationship_cids, 
+            "relationship_cids"
+        )
 
         # Store the root node
         root_bytes = json.dumps(root_node).encode()
@@ -1227,9 +1264,20 @@ class IPLDKnowledgeGraph:
         # Set the root CID
         kg.root_cid = cid
 
-        # Load entity and relationship CIDs
-        kg._entity_cids = root_node.get("entity_cids", {})
-        kg._relationship_cids = root_node.get("relationship_cids", {})
+        # Helper function to load data that might be chunked
+        def load_data(field_value):
+            """Load data, handling both inline and chunked formats."""
+            if isinstance(field_value, dict) and field_value.get("_chunked"):
+                # Data is stored in a separate block
+                chunked_cid = field_value.get("_cid")
+                if chunked_cid:
+                    chunked_bytes = storage.get(chunked_cid)
+                    return json.loads(chunked_bytes.decode())
+            return field_value
+
+        # Load entity and relationship CIDs, handling chunked data
+        kg._entity_cids = load_data(root_node.get("entity_cids", {}))
+        kg._relationship_cids = load_data(root_node.get("relationship_cids", {}))
 
         # Load entities
         for entity_id, entity_cid in kg._entity_cids.items():

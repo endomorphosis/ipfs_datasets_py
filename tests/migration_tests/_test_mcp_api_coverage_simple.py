@@ -15,15 +15,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Import main library and MCP server components
+import pytest
+
 try:
     import ipfs_datasets_py
     from ipfs_datasets_py import web_archive_utils
+    IPFS_DATASETS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing ipfs_datasets_py: {e}")
-    sys.exit(1)
+    IPFS_DATASETS_AVAILABLE = False
 
 # Paths
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MCP_SERVER_PATH = PROJECT_ROOT / "ipfs_datasets_py" / "mcp_server"
 TOOLS_PATH = MCP_SERVER_PATH / "tools"
 
@@ -240,4 +243,11 @@ def main():
         return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_code = main()
+    sys.exit(exit_code)
+
+# Convert the main function to a pytest test
+@pytest.mark.skipif(not IPFS_DATASETS_AVAILABLE, reason="IPFS datasets library not available - missing dependencies")
+def test_mcp_api_coverage():
+    """Test that all expected features are covered by MCP tools."""
+    assert main() == 0, "Not all expected features are covered by MCP tools"
