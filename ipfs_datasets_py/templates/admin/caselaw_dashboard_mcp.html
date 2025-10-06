@@ -744,63 +744,6 @@
                     <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
                 </div>
 
-                <!-- Priority 5: Quick Start Guide -->
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <h5 class="alert-heading"><i class="fas fa-rocket"></i> Quick Start Guide</h5>
-                    <p><strong>New to the dashboard?</strong> Try these steps:</p>
-                    <ol class="mb-2">
-                        <li>Click any <span class="badge bg-success">Try Example</span> button to see how tools work</li>
-                        <li>Start with <strong>Precedent Search</strong> to find similar cases</li>
-                        <li>Use <strong>Conflict Analyzer</strong> to identify legal conflicts</li>
-                        <li>Generate briefs with <strong>Brief Generator</strong></li>
-                    </ol>
-                    <p class="mb-0"><i class="fas fa-info-circle"></i> Hover over <i class="fas fa-question-circle text-primary"></i> icons for help on each field.</p>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-
-                <!-- MCP Status Indicator -->
-                <div class="mcp-indicator">
-                    <h5><i class="fas fa-plug"></i> MCP Connection Status</h5>
-                    <p class="mb-2">
-                        <span id="mcpStatus" class="mcp-status mcp-disconnected">Disconnected</span>
-                        <span class="ml-2" id="mcpStatusText">Initializing MCP connection...</span>
-                    </p>
-                    <p class="mb-0">
-                        <small>This dashboard uses Model Context Protocol (MCP) JSON-RPC tools instead of REST APIs for legal analysis.</small>
-                    </p>
-                </div>
-
-                <!-- System Status -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5><i class="fas fa-database"></i> System Status</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <h6>Theorem Corpus</h6>
-                                        <p class="h4" id="theoremCount">{{ system_status.theorem_count }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h6>Jurisdictions</h6>
-                                        <p class="h4" id="jurisdictionCount">{{ system_status.jurisdictions|length }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h6>Legal Domains</h6>
-                                        <p class="h4" id="legalDomainCount">{{ system_status.legal_domains|length }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h6>MCP Tools Available</h6>
-                                        <p class="h4" id="mcpToolCount">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Navigation Tabs -->
                 <div class="tab-content" id="caselawTabContent">
                     <!-- Document Analysis Tab -->
