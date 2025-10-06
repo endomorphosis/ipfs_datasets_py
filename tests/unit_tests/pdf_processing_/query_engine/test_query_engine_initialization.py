@@ -65,7 +65,7 @@ from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrat
 
 import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -115,6 +115,15 @@ from sentence_transformers import SentenceTransformer
 
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
+
+
+
+@pytest.fixture
+def mock_graphrag_integrator():
+    """Create a mock GraphRAGIntegrator instance for testing."""
+    mock = AsyncMock(spec=GraphRAGIntegrator)
+    mock.is_initialized = True  # Assume this attribute indicates initialization status
+    return mock
 
 
 class TestQueryEngineInitialization:
@@ -238,28 +247,14 @@ class TestQueryEngineInitialization:
         GIVEN a valid GraphRAGIntegrator instance
         AND an invalid embedding model name
         WHEN QueryEngine is initialized
-        THEN expect:
-            - embedding_model set to None (graceful failure)
-            - Warning logged about model loading failure
-            - Instance still created successfully
+        THEN expect raise ValueError
         """
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         invalid_model = "nonexistent/model"
-        
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'), \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.logger') as mock_logger:
-            
-            mock_st.side_effect = Exception("Model not found")
-            
-            # WHEN
-            engine = QueryEngine(mock_graphrag, embedding_model=invalid_model)
-            
-            # THEN
-            assert engine.embedding_model is None
-            mock_logger.warning.assert_called()
-            assert engine.graphrag is mock_graphrag  # Instance still created
+        with pytest.raises(ValueError, match=r"not found or invalid"):
+            QueryEngine(mock_graphrag, embedding_model=invalid_model)
+
 
     def test_init_with_none_graphrag_integrator(self):
         """
@@ -377,10 +372,7 @@ class TestQueryEngineInitialization:
         GIVEN a valid GraphRAGIntegrator instance
         AND SentenceTransformer raises ImportError when instantiated
         WHEN QueryEngine is initialized
-        THEN expect:
-            - embedding_model set to None
-            - ImportError logged but not propagated
-            - Instance created successfully
+        THEN expect raise ImportError
         """
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
@@ -388,16 +380,13 @@ class TestQueryEngineInitialization:
         with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
              patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'), \
              patch('ipfs_datasets_py.pdf_processing.query_engine.logger') as mock_logger:
-            
+
             mock_st.side_effect = ImportError("sentence-transformers not installed")
-            
-            # WHEN
-            engine = QueryEngine(mock_graphrag)
-            
-            # THEN
-            assert engine.embedding_model is None
-            mock_logger.error.assert_called()
-            assert engine.graphrag is mock_graphrag
+
+            # WHEN/THEN
+            with pytest.raises(ImportError):
+                _ = QueryEngine(mock_graphrag)
+
 
     def test_init_with_uninitialized_graphrag_integrator(self):
         """
@@ -408,7 +397,7 @@ class TestQueryEngineInitialization:
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         mock_graphrag.is_initialized = False  # Assume this attribute indicates initialization status
-        
+
         # WHEN/THEN
         with pytest.raises(RuntimeError, match="GraphRAGIntegrator must be properly initialized"):
             QueryEngine(mock_graphrag)

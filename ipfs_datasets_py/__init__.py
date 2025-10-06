@@ -88,9 +88,10 @@ except ImportError:
 
 try:
     # Import new embeddings and vector store capabilities
-    from .embeddings.core import IpfsEmbeddings, PerformanceMetrics
+    from .embeddings.core import IPFSEmbeddings, PerformanceMetrics
+    # FIXME All the embeddings models in schema are hallucinated
     from .embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
-    from .embeddings.chunker import TextChunker, ChunkingStrategy
+    from .embeddings.chunker import Chunker, ChunkingStrategy
     HAVE_EMBEDDINGS = True
 except ImportError:
     HAVE_EMBEDDINGS = False
@@ -100,7 +101,7 @@ try:
     from .vector_stores.base import BaseVectorStore
     from .vector_stores.qdrant_store import QdrantVectorStore
     from .vector_stores.elasticsearch_store import ElasticsearchVectorStore
-    from .vector_stores.faiss_store import FaissVectorStore
+    from .vector_stores.faiss_store import FAISSVectorStore
     HAVE_VECTOR_STORES = True
 except ImportError:
     HAVE_VECTOR_STORES = False
@@ -375,12 +376,12 @@ if HAVE_SEARCH:
 
 if HAVE_EMBEDDINGS:
     __all__.extend([
-        'IpfsEmbeddings',
+        'IPFSEmbeddings',
         'PerformanceMetrics',
         'EmbeddingModel', 
         'EmbeddingRequest',
         'EmbeddingResponse',
-        'TextChunker',
+        'Chunker',
         'ChunkingStrategy'
     ])
 
@@ -389,7 +390,7 @@ if HAVE_VECTOR_STORES:
         'BaseVectorStore',
         'QdrantVectorStore',
         'ElasticsearchVectorStore',
-        'FaissVectorStore'
+        'FAISSVectorStore'
     ])
 
 if HAVE_GRAPHRAG_PROCESSOR:

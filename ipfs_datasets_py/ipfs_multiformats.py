@@ -3,6 +3,7 @@ from multiformats import CID, multihash
 import tempfile
 import os
 import sys
+from typing import Any, Union, Dict
 
 class ipfs_multiformats_py:
     """
@@ -102,7 +103,7 @@ class ipfs_multiformats_py:
         - File paths are resolved to absolute paths for consistent processing
         - Base32 encoding provides human-readable content identifiers
     """
-    def __init__(self, resources, metadata):
+    def __init__(self, resources: Any, metadata: Any) -> None:
         """
         Initialize IPFS Multiformats Content Identifier Generation System
 
@@ -165,7 +166,7 @@ class ipfs_multiformats_py:
         self.multihash = multihash
 
     # Step 1: Hash the file content with SHA-256
-    def get_file_sha256(self, file_path):
+    def get_file_sha256(self, file_path: str) -> str:
         hasher = hashlib.sha256()
         with open(file_path, 'rb') as f:
             while chunk := f.read(8192):
@@ -173,12 +174,12 @@ class ipfs_multiformats_py:
         return hasher.digest()
 
     # Step 2: Wrap the hash in Multihash format
-    def get_multihash_sha256(self, file_content_hash):
+    def get_multihash_sha256(self, file_content_hash: str) -> str:
         mh = self.multihash.wrap(file_content_hash, 'sha2-256')
         return mh
 
     # Step 3: Generate CID from Multihash (CIDv1)
-    def get_cid(self, file_data):
+    def get_cid(self, file_data: Union[str, bytes]) -> str:
         if os.path.isfile(file_data) == True:
             absolute_path = os.path.abspath(file_data)
             file_content_hash = self.get_file_sha256(file_data)

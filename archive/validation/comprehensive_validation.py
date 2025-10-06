@@ -18,7 +18,7 @@ def test_embeddings_module():
     
     try:
         # Test basic imports
-        from ipfs_datasets_py.embeddings import EmbeddingConfig, TextChunker
+        from ipfs_datasets_py.embeddings import EmbeddingConfig, Chunker
         from ipfs_datasets_py.embeddings.core import EmbeddingCore, generate_embeddings
         from ipfs_datasets_py.embeddings.schema import EmbeddingRequest, EmbeddingResponse
         
@@ -26,7 +26,7 @@ def test_embeddings_module():
         
         # Test class definitions
         print(f"  ✅ EmbeddingConfig: {EmbeddingConfig.__name__}")
-        print(f"  ✅ TextChunker: {TextChunker.__name__}")
+        print(f"  ✅ Chunker: {Chunker.__name__}")
         print(f"  ✅ EmbeddingCore: {EmbeddingCore.__name__}")
         
         return True

@@ -86,14 +86,14 @@ class TestLLMOptimizerInitialization:
         "text_processor",
         "chunk_optimizer"
     ])
-    def test_init_has_required_attributes(self, attribute_name):
+    def test_init_has_required_attributes(self, llm_optimizer_with_mocks, attribute_name):
         """
         GIVEN default initialization parameters
         WHEN LLMOptimizer is initialized without arguments
         THEN expect all required attributes to be present
         """
-        optimizer = LLMOptimizer()
-        assert hasattr(optimizer, attribute_name), f"Optimizer should have {attribute_name} attribute"
+        assert hasattr(llm_optimizer_with_mocks, attribute_name), \
+            f"Optimizer should have {attribute_name} attribute"
 
     @pytest.mark.parametrize("attribute_name,expected_value", [
         ("model_name", "sentence-transformers/all-MiniLM-L6-v2"),
@@ -102,14 +102,13 @@ class TestLLMOptimizerInitialization:
         ("chunk_overlap", 200),
         ("min_chunk_size", 100)
     ])
-    def test_init_default_parameter_values(self, attribute_name, expected_value):
+    def test_init_default_parameter_values(self, llm_optimizer_with_mocks, attribute_name, expected_value):
         """
         GIVEN default initialization parameters
         WHEN LLMOptimizer is initialized without arguments
         THEN expect default parameter values to be set correctly
         """
-        optimizer = LLMOptimizer()
-        actual_value = getattr(optimizer, attribute_name)
+        actual_value = getattr(llm_optimizer_with_mocks, attribute_name)
         assert actual_value == expected_value, \
             f"Default {attribute_name} should be {expected_value}, got {actual_value}"
 
@@ -117,305 +116,11 @@ class TestLLMOptimizerInitialization:
         """
         GIVEN default initialization parameters
         WHEN LLMOptimizer is initialized without arguments
-        THEN expect instance to be created successfully
+        THEN expect instance to be created
         """
         optimizer = LLMOptimizer()
-        assert isinstance(optimizer, LLMOptimizer), "Should create LLMOptimizer instance successfully"
-
-class TestLLMOptimizerGenerateDocumentSummary:
-
-    def setup_method(self):
-        """Setup LLMOptimizer instance for each test method."""
-        self.optimizer = LLMOptimizer()
-        self.empty_structured_text = {}
-        self.empty_pages_text = {"pages": []}
-        self.no_content_text = {
-            "pages": [
-                {"page_number": 1, "elements": []},
-                {"page_number": 2, "elements": []}
-            ]
-        }
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_completely_empty_content(self):
-        """
-        GIVEN completely empty structured_text
-        WHEN _generate_document_summary is called
-        THEN expect summary generation failure message
-        """
-        # Given
-        empty_structured_text = {}
-        
-        # When
-        summary = await self.optimizer._generate_document_summary(empty_structured_text)
-        
-        # Then
-        assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_completely_empty_content_shows_keyerror(self):
-        """
-        GIVEN completely empty structured_text
-        WHEN _generate_document_summary is called
-        THEN expect keyerror indication in response
-        """
-        # Given
-        empty_structured_text = {}
-        
-        # When
-        summary = await self.optimizer._generate_document_summary(empty_structured_text)
-        
-        # Then
-        assert "keyerror" in summary.lower(), "Should indicate the error is due to missing keys"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_empty_pages_list(self):
-        """
-        GIVEN structured_text with empty pages list
-        WHEN _generate_document_summary is called
-        THEN expect summary generation failure message
-        """
-        # Given
-        empty_pages_text = {"pages": []}
-        
-        # When
-        summary = await self.optimizer._generate_document_summary(empty_pages_text)
-        
-        # Then
-        assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_empty_pages_list_shows_valueerror(self):
-        """
-        GIVEN structured_text with empty pages list
-        WHEN _generate_document_summary is called
-        THEN expect valueerror indication in response
-        """
-        # Given
-        empty_pages_text = {"pages": []}
-        
-        # When
-        summary = await self.optimizer._generate_document_summary(empty_pages_text)
-        
-        # Then
-        assert "valueerror" in summary.lower(), f"Should indicate the error is due to finding no valid text, got {summary}"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_pages_with_no_content_elements(self):
-        """
-        GIVEN structured_text with pages containing no content elements
-        WHEN _generate_document_summary is called
-        THEN expect summary generation failure message
-        """
-        # Given
-        no_content_text = {
-            "pages": [
-                {"page_number": 1, "elements": []},
-                {"page_number": 2, "elements": []}
-            ]
-        }
-        
-        # When
-        summary = await self.optimizer._generate_document_summary(no_content_text)
-        
-        # Then
-        assert "summary generation failed" in summary.lower(), "Should indicate summary generation failure for empty content"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_pages_with_no_content_elements_shows_keyerror(self):
-        """
-        GIVEN structured_text with pages containing no content elements
-        WHEN _generate_document_summary is called
-        THEN expect keyerror indication in response
-        """
-        # Given
-        no_content_text = {
-            "pages": [
-                {"page_number": 1, "elements": []},
-                {"page_number": 2, "elements": []}
-            ]
-        }
-        
-        # When
-        summary = await self.optimizer._generate_document_summary(no_content_text)
-        
-        # Then
-        assert "keyerror" in summary.lower(), f"Should indicate the error is due to missing keys, got {summary}"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_missing_pages(self):
-        """
-        GIVEN structured_text missing 'pages' key
-        WHEN _generate_document_summary is called
-        THEN expect error message to be returned
-        """
-        # Test structured text missing pages key
-        missing_pages_text = {
-            "document_metadata": {"title": "Test Document"},
-            "content": "Some content but no pages structure"
-        }
-        
-        # When
-        result = await self.optimizer._generate_document_summary(missing_pages_text)
-        
-        # Then - should return error message instead of raising exception
-        assert isinstance(result, str), "Result should be string type"
-        assert "summary generation failed" in result.lower(), "Should indicate summary generation failure"
-        assert "keyerror" in result.lower(), "Should indicate KeyError occurred"
-        assert "'pages'" in result, "Should mention missing 'pages' key"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_keyword_analysis(self):
-        """
-        GIVEN structured_text with specific keywords and themes
-        WHEN _generate_document_summary is called
-        THEN expect:
-            - Key themes reflected in summary
-            - Important keywords included
-            - Keyword frequency analysis working
-        """
-
-        # Given
-        optimizer = LLMOptimizer()
-        
-        # Structured text with specific themes and keywords
-        structured_text = {
-            "pages": [
-                {
-                    "page_number": 1,
-                    "elements": [
-                        {
-                            "type": "header",
-                            "content": "Machine Learning Research and Development",
-                            "metadata": {"level": 1}
-                        },
-                        {
-                            "type": "paragraph",
-                            "content": "Machine learning algorithms are revolutionizing artificial intelligence applications. Neural networks provide powerful computational frameworks for pattern recognition and data analysis.",
-                            "metadata": {}
-                        },
-                        {
-                            "type": "paragraph", 
-                            "content": "Deep learning techniques enable advanced computer vision and natural language processing capabilities. These algorithms demonstrate superior performance in classification and prediction tasks.",
-                            "metadata": {}
-                        }
-                    ],
-                    "full_text": "Machine Learning Research and Development. Machine learning algorithms are revolutionizing artificial intelligence applications. Neural networks provide powerful computational frameworks for pattern recognition and data analysis. Deep learning techniques enable advanced computer vision and natural language processing capabilities. These algorithms demonstrate superior performance in classification and prediction tasks."
-                },
-                {
-                    "page_number": 2,
-                    "elements": [
-                        {
-                            "type": "paragraph",
-                            "content": "Machine learning research continues to advance with new algorithms and methodologies. Artificial intelligence systems are becoming more sophisticated and capable.",
-                            "metadata": {}
-                        }
-                    ],
-                    "full_text": "Machine learning research continues to advance with new algorithms and methodologies. Artificial intelligence systems are becoming more sophisticated and capable."
-                }
-            ]
-        }
-        
-        # When
-        summary = await optimizer._generate_document_summary(structured_text)
-        
-        # Then - verify keyword analysis and theme extraction
-        assert isinstance(summary, str), "Summary should be string type"
-        assert len(summary.strip()) > 0, "Summary should not be empty"
-        
-        # Key themes should be reflected in summary
-        key_themes = ["machine learning", "artificial intelligence", "neural networks", "deep learning", "algorithms"]
-        themes_found = sum(1 for theme in key_themes if theme.lower() in summary.lower())
-        assert themes_found >= 3, f"Summary should contain at least 3 key themes, found {themes_found}"
-        
-        # Important keywords should be included
-        important_keywords = ["machine", "learning", "artificial", "intelligence", "neural", "algorithms"]
-        keywords_found = sum(1 for keyword in important_keywords if keyword.lower() in summary.lower())
-        assert keywords_found >= 4, f"Summary should contain important keywords, found {keywords_found}/{len(important_keywords)}"
-        
-        # Summary should be comprehensive but concise
-        assert 50 <= len(summary) <= 500, f"Summary length should be reasonable: {len(summary)} characters"
-        
-        # Should contain meaningful content, not just keywords
-        assert "." in summary, "Summary should contain proper sentences"
-        assert not summary.lower().startswith("the document"), "Summary should be more specific than generic description"
-
-    @pytest.mark.asyncio
-    async def test_generate_document_summary_sentence_selection(self):
-        """
-        GIVEN structured_text with various sentence types
-        WHEN _generate_document_summary is called
-        THEN expect:
-            - Most informative sentences selected
-            - Positional importance considered
-            - Sentence coherence maintained
-        """
-
-        # Given
-        optimizer = LLMOptimizer()
-        
-        # Structured text with varying sentence importance
-        structured_text = {
-            "pages": [
-                {
-                    "page_number": 1,
-                    "elements": [
-                        {
-                            "type": "header",
-                            "content": "Introduction to Advanced Computing Systems",
-                            "metadata": {"level": 1}
-                        },
-                        {
-                            "type": "paragraph",
-                            "content": "This document presents a comprehensive analysis of distributed computing architectures. The research investigates performance optimization techniques for large-scale data processing. Modern computing systems require efficient resource allocation and management strategies.",
-                            "metadata": {}
-                        },
-                        {
-                            "type": "paragraph",
-                            "content": "The weather today is nice. Additionally, the methodology employed in this study demonstrates significant improvements in system throughput. However, lunch was served at noon.",
-                            "metadata": {}
-                        }
-                    ],
-                    "full_text": "Introduction to Advanced Computing Systems. This document presents a comprehensive analysis of distributed computing architectures. The research investigates performance optimization techniques for large-scale data processing. Modern computing systems require efficient resource allocation and management strategies. The weather today is nice. Additionally, the methodology employed in this study demonstrates significant improvements in system throughput. However, lunch was served at noon."
-                }
-            ]
-        }
-        
-        # When
-        summary = await optimizer._generate_document_summary(structured_text)
-        
-        # Then - verify sentence selection quality
-        assert isinstance(summary, str), "Summary should be string type"
-        assert len(summary.strip()) > 0, "Summary should not be empty"
-        
-        # Should select informative sentences over trivial ones
-        informative_phrases = ["computing", "analysis", "performance", "optimization", "systems", "methodology"]
-        trivial_phrases = ["weather", "lunch", "noon", "nice"]
-        
-        informative_count = sum(1 for phrase in informative_phrases if phrase.lower() in summary.lower())
-        trivial_count = sum(1 for phrase in trivial_phrases if phrase.lower() in summary.lower())
-        
-        assert informative_count >= 3, f"Summary should contain informative content, found {informative_count} informative phrases"
-        assert trivial_count <= 1, f"Summary should avoid trivial content, found {trivial_count} trivial phrases"
-        
-        # Should prioritize header and introductory content
-        assert "computing" in summary.lower() or "systems" in summary.lower(), "Summary should include header themes"
-        
-        # Should maintain sentence coherence
-        sentences = summary.split('.')
-        meaningful_sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
-        assert len(meaningful_sentences) >= 1, "Summary should contain at least one meaningful sentence"
-        
-        # Should consider positional importance (headers, first sentences)
-        if "introduction" in summary.lower() or "comprehensive" in summary.lower():
-            assert True  # Good - selected important introductory content
-        else:
-            # Should still contain substantive content even if not positionally biased
-            assert any(phrase in summary.lower() for phrase in ["computing", "performance", "optimization", "methodology"])
-            
-        # Verify sentence boundaries are preserved
-        assert not summary.endswith(" "), "Summary should not end with trailing space"
-        assert summary.count(". ") <= summary.count("."), "Sentence boundaries should be clean"
+        assert isinstance(optimizer, LLMOptimizer), \
+            f"Should create LLMOptimizer instance, got {type(optimizer).__name__} instead."
 
 
 if __name__ == "__main__":

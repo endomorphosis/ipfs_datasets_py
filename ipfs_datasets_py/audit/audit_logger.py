@@ -285,6 +285,7 @@ class AuditLogger:
         self.excluded_categories: Set[AuditCategory] = set()
         self._lock = threading.RLock()
         self._thread_local = threading.local()
+        self._events = [] # Store events for testing or retrieval
 
         # Event listeners for integration with other systems
         # Map from category to list of listener functions
@@ -478,6 +479,7 @@ class AuditLogger:
 
             # Notify event listeners
             self.notify_listeners(event)
+            self._events.append(event)
 
         return event.event_id
 
@@ -581,6 +583,10 @@ class AuditLogger:
                 return True
             except ValueError:
                 return False
+
+    @property
+    def events(self):
+        return self._events
 
     def notify_listeners(self, event: AuditEvent) -> None:
         """

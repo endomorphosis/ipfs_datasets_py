@@ -198,7 +198,57 @@ class UCANRevocation:
 
 
 class UCANManager:
-    """Manager for UCAN operations."""
+    """
+    Comprehensive manager for UCAN (User Controlled Authorization Networks) operations.
+    
+    The UCANManager class provides a complete implementation for managing decentralized
+    authorization through cryptographically verifiable capability tokens. It handles
+    the full lifecycle of UCAN operations including keypair management, token creation,
+    verification, delegation, and revocation.
+    
+    This manager implements the UCAN specification for capability-based authorization,
+    enabling secure delegation of permissions between decentralized identities (DIDs)
+    without requiring a central authority. Each operation is cryptographically secured
+    and maintains an immutable audit trail.
+    
+    Key Features:
+    - **Keypair Management**: Generate, import, and store RSA keypairs with DIDs
+    - **Token Lifecycle**: Create, verify, delegate, and revoke UCAN tokens
+    - **Capability Control**: Fine-grained resource and action permissions
+    - **Delegation Chains**: Secure capability inheritance with cryptographic proof
+    - **Revocation Support**: Immediate token invalidation with audit trails
+    - **Persistent Storage**: Automatic persistence of keypairs, tokens, and revocations
+    - **Cryptographic Security**: RS256 signatures for token integrity
+    
+    Supported Capabilities:
+    - encrypt: Permission to encrypt data or resources
+    - decrypt: Permission to decrypt data or resources  
+    - delegate: Permission to delegate capabilities to others
+    - revoke: Permission to revoke previously granted capabilities
+    - manage: Permission to manage keys and system operations
+    
+    Storage Structure:
+    The manager maintains persistent storage in ~/.ipfs_datasets/ucan/:
+    - keypairs.json: RSA keypairs with DIDs and metadata
+    - tokens.json: Active UCAN tokens with capabilities and signatures
+    - revocations.json: Revoked token registry with timestamps and reasons
+
+    Example:
+        >>> manager = UCANManager.get_instance()
+        >>> manager.initialize()
+        >>> alice = manager.generate_keypair()
+        >>> bob = manager.generate_keypair()
+        >>> 
+        >>> capability = UCANCapability("file://secret.txt", "read")
+        >>> token = manager.create_token(
+        ...     issuer_did=alice.did,
+        ...     audience_did=bob.did,
+        ...     capabilities=[capability]
+        ... )
+        >>> 
+        >>> is_valid, error = manager.verify_token(token.token_id)
+        >>> has_access = manager.has_capability(bob.did, "file://secret.txt", "read")
+    """
 
     _instance = None
 
@@ -719,18 +769,63 @@ class UCANManager:
                     ttl: int = DEFAULT_TTL, not_before: Optional[str] = None,
                     proof: Optional[str] = None) -> UCANToken:
         """
-        Create a new UCAN token.
+        Create a new UCAN (User Controlled Authorization Network) token for decentralized authorization.
+
+        This method creates a cryptographically signed UCAN token that grants specific capabilities
+        from an issuer to an audience. The token follows the UCAN specification for capability-based
+        authorization.
+
+        The created token includes:
+        - Cryptographic proof of issuer identity through digital signatures
+        - Capability grants specifying what resources and actions are authorized
+        - Temporal constraints (expiration and not-before times)
+        - Optional delegation proof for capability inheritance
+        - Unique token identifier for tracking and revocation
 
         Args:
-            issuer_did: DID of the issuer
-            audience_did: DID of the audience
-            capabilities: List of capabilities to include in the token
-            ttl: Time-to-live in seconds
-            not_before: ISO timestamp before which the token is not valid
-            proof: Proof of delegation (token ID of parent token)
+            issuer_did (str): Decentralized Identifier (DID) of the entity issuing the token.
+            Must exist in the keypair store and have an associated private key for signing.
+            audience_did (str): Decentralized Identifier (DID) of the entity receiving the 
+            authorization. Must exist in the keypair store.
+            capabilities (List[UCANCapability]): List of specific capabilities being granted.
+            Each capability defines a resource, action, and optional caveats that constrain
+            usage. All capability actions must be from SUPPORTED_CAPABILITIES.
+            ttl (int, optional): Time-to-live in seconds from creation time. Determines when
+            the token expires. Defaults to DEFAULT_TTL (3600 seconds).
+            not_before (Optional[str], optional): ISO 8601 timestamp before which the token
+            is not valid. If None, the token is valid immediately. Defaults to None.
+            proof (Optional[str], optional): Token ID of a parent UCAN token that proves
+            the issuer has delegation rights for the granted capabilities. Required
+            when creating derived tokens in a delegation chain. Defaults to None.
 
         Returns:
-            UCANToken: The created token
+            UCANToken: A fully formed UCAN token containing the granted capabilities,
+            cryptographic signature, and all necessary metadata for verification.
+
+        Raises:
+            RuntimeError: If the UCAN manager is not initialized.
+            ValueError: If the issuer DID is not found, lacks a private key, the audience
+            DID is not found, or any capability action is not supported.
+
+        Example:
+            >>> capability = UCANCapability(
+            ...     resource="ipfs://QmExample",
+            ...     action="read",
+            ...     caveats={"max_uses": 10}
+            ... )
+            >>> token = manager.create_token(
+            ...     issuer_did="did:key:alice123",
+            ...     audience_did="did:key:bob456", 
+            ...     capabilities=[capability],
+            ...     ttl=7200,
+            ...     proof="parent-token-id"
+            ... )
+
+        Note:
+            The token is automatically stored in the manager's token cache and persisted
+            to disk. Token signatures use RS256 (RSA with SHA-256) for cryptographic
+            verification. If a proof token is provided, it must be valid and grant
+            delegation capabilities to the issuer.
         """
         if not self.initialized:
             raise RuntimeError("UCAN manager not initialized")
@@ -800,13 +895,42 @@ class UCANManager:
 
     def verify_token(self, token_id: str) -> Tuple[bool, Optional[str]]:
         """
-        Verify a UCAN token.
+        Verify the validity and authenticity of a UCAN token.
+
+        This method performs comprehensive verification of a UCAN token, including
+        cryptographic signature validation, temporal constraints, revocation status,
+        and delegation chain integrity.
+
+        Verification steps include:
+        - Token existence and accessibility
+        - Revocation status checking
+        - Temporal validity (expiration and not-before times)
+        - Issuer identity and keypair validation
+        - Cryptographic signature verification
+        - Delegation chain validation (if applicable)
 
         Args:
-            token_id: ID of the token to verify
+            token_id (str): Unique identifier of the UCAN token to verify.
+            Must correspond to an existing token in the manager's storage.
 
         Returns:
-            tuple: (is_valid, error_message)
+            Tuple[bool, Optional[str]]: A tuple containing:
+            - bool: True if the token is valid and passes all verification
+              checks, False otherwise.
+            - Optional[str]: Error message describing why verification failed,
+              or None if the token is valid. Common error messages include
+              "Token not found", "Token expired", "Token revoked", or
+              "Signature verification failed".
+
+        Raises:
+            RuntimeError: If the UCAN manager is not initialized.
+
+        Example:
+            >>> is_valid, error = manager.verify_token("token_abc123")
+            >>> if is_valid:
+            ...     print("Token is valid and can be trusted")
+            ... else:
+            ...     print(f"Token verification failed: {error}")
         """
         if not self.initialized:
             raise RuntimeError("UCAN manager not initialized")
@@ -873,15 +997,32 @@ class UCANManager:
 
     def revoke_token(self, token_id: str, revoker_did: str, reason: str) -> bool:
         """
-        Revoke a UCAN token.
+        Revoke a UCAN token by marking it as invalid.
 
-        Args:
-            token_id: ID of the token to revoke
-            revoker_did: DID of the revoker
-            reason: Reason for revocation
+        This method allows the issuer or audience of a UCAN token to revoke it,
+        preventing its future use. The revocation is permanently recorded with
+        a timestamp and reason for audit purposes.
 
-        Returns:
-            bool: Whether revocation was successful
+            token_id (str): Unique identifier of the UCAN token to revoke
+            revoker_did (str): Decentralized identifier (DID) of the entity 
+                              requesting revocation. Must be either the token's 
+                              issuer or audience
+            reason (str): Human-readable explanation for the revocation
+                         (e.g., "compromised", "expired", "no longer needed")
+
+            bool: True if the token was successfully revoked, False if the token
+                  doesn't exist or the revoker lacks permission
+
+        Raises:
+            RuntimeError: If the UCAN manager has not been initialized
+
+        Example:
+            >>> success = ucan_manager.revoke_token(
+            ...     token_id="ucan_123456",
+            ...     revoker_did="did:key:z6Mk...",
+            ...     reason="Security breach detected"
+            ... )
+            >>> print(success)  # True if revocation succeeded
         """
         if not self.initialized:
             raise RuntimeError("UCAN manager not initialized")
@@ -912,13 +1053,39 @@ class UCANManager:
 
     def get_token(self, token_id: str) -> Optional[UCANToken]:
         """
-        Get a token by ID.
+        Retrieve a UCAN token by its unique identifier.
+
+        This method looks up and returns a specific UCAN token from the manager's
+        internal storage using the provided token ID. The method performs a simple
+        dictionary lookup without any validation or verification of the token's
+        current validity status.
 
         Args:
-            token_id: ID of the token
+            token_id (str): The unique identifier of the UCAN token to retrieve.
+                   Must be a valid UUID string that corresponds to an
+                   existing token in the manager's storage.
 
         Returns:
-            UCANToken: The token, or None if not found
+            Optional[UCANToken]: The UCAN token object if found, containing all
+                    token metadata including issuer, audience, capabilities,
+                    expiration times, proof, and signature. Returns None
+                    if no token exists with the specified ID.
+
+        Raises:
+            RuntimeError: If the UCAN manager has not been initialized prior
+                 to calling this method.
+
+        Example:
+            >>> token = ucan_manager.get_token("550e8400-e29b-41d4-a716-446655440000")
+            >>> if token:
+            ...     print(f"Found token issued by {token.issuer} to {token.audience}")
+            ... else:
+            ...     print("Token not found")
+
+        Note:
+            This method only retrieves the token data and does not perform any
+            validation checks such as expiration, revocation status, or signature
+            verification. Use verify_token() to check token validity before use.
         """
         if not self.initialized:
             raise RuntimeError("UCAN manager not initialized")
@@ -952,15 +1119,50 @@ class UCANManager:
 
     def has_capability(self, did: str, resource: str, action: str) -> bool:
         """
-        Check if a DID has a specific capability.
+        Check if a DID has authorization for a specific resource and action.
+
+        This method performs a comprehensive capability check by examining all valid
+        UCAN tokens where the specified DID is the audience. It supports wildcard
+        matching for both resources and actions, allowing for flexible permission
+        schemes.
+
+        The method checks for:
+        - Exact resource and action matches
+        - Wildcard resource matches (resource="*") with specific actions
+        - Wildcard action matches (action="*") with specific resources  
+        - Full wildcard matches (resource="*", action="*") for unrestricted access
 
         Args:
-            did: DID to check
-            resource: Resource to check
-            action: Action to check
+            did (str): Decentralized Identifier to check capabilities for. Must be
+            a valid DID that exists in the system.
+            resource (str): The resource identifier to check access for. Can be any
+            string identifier such as file paths, URLs, or service endpoints.
+            action (str): The specific action to check authorization for. Must be
+            one of the supported capability actions (encrypt, decrypt, delegate,
+            revoke, manage) or a wildcard "*".
 
         Returns:
-            bool: Whether the DID has the capability
+            bool: True if the DID has the requested capability through any valid
+            UCAN token, False if no matching capability is found or all
+            matching tokens are invalid/expired.
+
+        Raises:
+            RuntimeError: If the UCAN manager has not been initialized.
+
+        Example:
+            >>> # Check specific capability
+            >>> has_access = manager.has_capability(
+            ...     "did:key:alice123",
+            ...     "ipfs://QmExample",
+            ...     "read"
+            ... )
+            >>> 
+            >>> # Check with wildcard resource
+            >>> has_admin = manager.has_capability(
+            ...     "did:key:admin456", 
+            ...     "*",
+            ...     "manage"
+            ... )
         """
         if not self.initialized:
             raise RuntimeError("UCAN manager not initialized")
@@ -989,18 +1191,47 @@ class UCANManager:
                          action: str, caveats: Optional[Dict[str, Any]] = None,
                          ttl: int = DEFAULT_TTL) -> Optional[UCANToken]:
         """
-        Delegate a capability to another DID.
+        Delegate a specific capability from one DID to another through UCAN token creation.
+
+        This method enables secure delegation of capabilities in a UCAN-based authorization
+        system. The issuer must possess both the target capability and delegation rights
+        for the specified resource to successfully create a delegation token.
 
         Args:
-            issuer_did: DID of the issuer
-            audience_did: DID of the audience
-            resource: Resource to delegate
-            action: Action to delegate
-            caveats: Caveats on the capability
-            ttl: Time-to-live in seconds
+            issuer_did (str): Decentralized Identifier of the entity delegating the capability.
+            Must have both the target capability and delegation rights.
+            audience_did (str): Decentralized Identifier of the entity receiving the capability.
+            Must exist in the system's keypair registry.
+            resource (str): URI or identifier of the resource being granted access to.
+            Can be any string such as file paths, encryption keys, or service endpoints.
+            action (str): Specific action being delegated (e.g., 'encrypt', 'decrypt', 'read').
+            Must be from SUPPORTED_CAPABILITIES list.
+            caveats (Optional[Dict[str, Any]]): Additional constraints on capability usage.
+            Common caveats include usage limits, IP restrictions, or time windows.
+            Defaults to None (no additional restrictions).
+            ttl (int): Time-to-live in seconds for the delegated capability.
+            Token will expire this many seconds after creation. Defaults to DEFAULT_TTL.
 
         Returns:
-            UCANToken: The created token, or None if delegation failed
+            Optional[UCANToken]: The newly created UCAN token containing the delegated
+            capability if delegation succeeds, None if the issuer lacks required
+            permissions or delegation rights.
+
+        Raises:
+            RuntimeError: If the UCAN manager has not been initialized.
+
+        Example:
+            >>> # Delegate encryption capability with usage limit
+            >>> token = manager.delegate_capability(
+            ...     issuer_did="did:key:alice123",
+            ...     audience_did="did:key:bob456",
+            ...     resource="encryption-key-789",
+            ...     action="encrypt",
+            ...     caveats={"max_uses": 10, "expires_after": "2024-12-31"},
+            ...     ttl=86400  # 24 hours
+            ... )
+            >>> if token:
+            ...     print(f"Successfully delegated capability: {token.token_id}")
         """
         if not self.initialized:
             raise RuntimeError("UCAN manager not initialized")

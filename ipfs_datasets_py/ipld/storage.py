@@ -54,7 +54,10 @@ except ImportError:
     HAVE_IPLD_CAR = False
 
 
+# Import optimized codec if needed
+from ipfs_datasets_py.ipld.optimized_codec import OptimizedEncoder, PBNode
 from ipfs_datasets_py.ipld.dag_pb import create_dag_node
+from ipfs_datasets_py.ipld.optimized_codec import BatchProcessor
 
 
 T = TypeVar('T')
@@ -454,9 +457,6 @@ class IPLDStorage:
             This method is much more efficient than calling store() multiple times
             as it processes blocks in parallel and minimizes overhead.
         """
-        # Import optimized codec if needed
-        from ipfs_datasets_py.ipld.optimized_codec import OptimizedEncoder, PBNode
-
         # Prepare encoder
         encoder = OptimizedEncoder(use_cache=True)
 
@@ -653,8 +653,7 @@ class IPLDStorage:
             output_file.write(b"mock CAR data")
             return cids[0] if cids else None
 
-        # Import batch processor
-        from ipfs_datasets_py.ipld.optimized_codec import BatchProcessor
+
 
         # Create a batch processor
         processor = BatchProcessor(batch_size=100)

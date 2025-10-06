@@ -274,10 +274,17 @@ class MetricsRegistry:
         self.prometheus_registry = prometheus_client.CollectorRegistry()
 
         # Start the HTTP server for Prometheus scraping
-        prometheus_client.start_http_server(
-            port=self.config.prometheus_port,
-            registry=self.prometheus_registry
-        )
+        try:
+            prometheus_client.start_http_server(
+                port=self.config.prometheus_port,
+                registry=self.prometheus_registry
+            )
+        except OSError as e:
+            if "Address already in use" in str(e):
+                # Server already exists, skip
+                pass
+            else:
+                raise
 
     def _get_prometheus_metric(self, name: str, metric_type: MetricType, description: str = "", labels: List[str] = None):
         """Get or create a Prometheus metric."""
@@ -1101,6 +1108,9 @@ class MonitoringSystem:
         Returns:
             MonitoringSystem: The initialized monitoring system
         """
+        if cls._instance is not None:
+            return cls._instance
+
         instance = cls.get_instance()
         instance.configure(config or MonitoringConfig())
         return instance

@@ -6,21 +6,16 @@ analysis, trend detection, and integration with the security and audit systems f
 comprehensive monitoring of query patterns and anomalies.
 """
 
-import os
-import json
-import time
-import logging
 import datetime
+import json
+import logging
+import os
+import shutil
+import tempfile
 import threading
+import time
 from collections import Counter, defaultdict
-from typing import Dict, List, Any, Optional, Tuple, Union, Callable, Set, TYPE_CHECKING
-
-# Type checking imports
-if TYPE_CHECKING:
-    try:
-        import matplotlib.pyplot as plt
-    except ImportError:
-        plt = Any
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 # Add UTC import to fix deprecation warnings
 # Python 3.11+ supports datetime.UTC directly, older versions need to use timezone.utc
@@ -34,14 +29,17 @@ try:
     import numpy as np
     import pandas as pd
     import matplotlib
+    from scipy import stats
     matplotlib.use('Agg')  # Non-interactive backend
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.ticker import MaxNLocator
     import seaborn as sns
     VISUALIZATION_LIBS_AVAILABLE = True
+    PANDAS_AVAILABLE = True
 except ImportError:
     VISUALIZATION_LIBS_AVAILABLE = False
+    PANDAS_AVAILABLE = False
 
 try:
     import plotly.graph_objects as go
@@ -59,6 +57,12 @@ except ImportError:
 
 from ipfs_datasets_py.audit.audit_visualization import create_query_audit_timeline
 
+def _load_template_string(template_file_name: str) -> str: 
+    """Load a Jinja2 template file as a string."""
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    template_path = os.path.join(this_dir, 'templates', template_file_name)
+    with open(template_path, 'r', encoding='utf-8') as f:
+        return f.read()
 
 class QueryMetricsCollector:
     """
@@ -69,25 +73,25 @@ class QueryMetricsCollector:
     detecting anomalies, and generating statistical summaries.
     """
 
-    def __init__(self, window_size=3600):
+    def __init__(self, window_size: int = 3600) -> None:
         """
         Initialize the metrics collector.
 
         Args:
             window_size (int): Time window for metrics in seconds (default: 1 hour)
         """
-        self.query_metrics = {}  # Store metrics by query ID
-        self.window_size = window_size  # Time window for analysis in seconds
-        self.current_queries = set()  # Currently executing queries
-        self.anomaly_thresholds = {
+        self.query_metrics: Dict[str, Dict[str, Any]] = {}  # Store metrics by query ID
+        self.window_size: int = window_size  # Time window for analysis in seconds
+        self.current_queries: Set[str] = set()  # Currently executing queries
+        self.anomaly_thresholds: Dict[str, float] = {
             'duration': 5.0,  # Seconds
             'vector_search_time': 2.0,  # Seconds
             'graph_search_time': 3.0,  # Seconds
             'error_rate': 0.1  # 10% error rate threshold
         }
-        self._lock = threading.RLock()  # Thread safety for metrics updates
+        self._lock: threading.RLock = threading.RLock()  # Thread safety for metrics updates
 
-    def record_query_start(self, query_id, query_params):
+    def record_query_start(self, query_id: str, query_params: Dict[str, Any]) -> None:
         """
         Record the start of a query execution.
 
@@ -105,7 +109,8 @@ class QueryMetricsCollector:
             }
             self.current_queries.add(query_id)
 
-    def record_query_end(self, query_id, results=None, error=None, metrics=None):
+    def record_query_end(self, query_id: str, results: Optional[List[Any]] = None, 
+                        error: Optional[str] = None, metrics: Optional[Dict[str, Any]] = None) -> None:
         """
         Record the end of a query execution with results or error.
 
@@ -157,7 +162,7 @@ class QueryMetricsCollector:
             # Check for anomalies after recording metrics
             self._check_for_anomalies(query_id, query_data)
 
-    def get_performance_metrics(self, time_window=None):
+    def get_performance_metrics(self, time_window: Optional[int] = None) -> Dict[str, Any]:
         """
         Get performance metrics based on recorded queries.
 
@@ -217,7 +222,7 @@ class QueryMetricsCollector:
                 'anomalies_detected': sum(1 for q in recent_queries.values() if q.get('is_anomaly', False))
             }
 
-    def _calculate_hourly_trends(self, queries):
+    def _calculate_hourly_trends(self, queries: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Calculate hourly trends from query data.
 
@@ -264,13 +269,16 @@ class QueryMetricsCollector:
 
         return hours
 
-    def _check_for_anomalies(self, query_id, query_data):
+    def _check_for_anomalies(self, query_id: str, query_data: Dict[str, Any]) -> List[str]:
         """
         Check if a query is anomalous based on defined thresholds.
 
         Args:
             query_id (str): Query identifier
             query_data (dict): Query metrics data
+            
+        Returns:
+            List[str]: List of anomaly reasons
         """
         # Initialize anomaly flag
         query_data['is_anomaly'] = False
@@ -306,7 +314,7 @@ class RAGQueryVisualizer:
     including timelines, histograms, and statistical charts.
     """
 
-    def __init__(self, metrics_collector):
+    def __init__(self, metrics_collector: QueryMetricsCollector) -> None:
         """
         Initialize the query visualizer.
 
@@ -325,7 +333,8 @@ class RAGQueryVisualizer:
             "anomaly": "#ff9800"
         }
 
-    def plot_query_performance(self, time_window=None, figsize=None, output_file=None, show_plot=True):
+    def plot_query_performance(self, time_window: Optional[int] = None, figsize: Optional[Tuple[int, int]] = None, 
+                              output_file: Optional[str] = None, show_plot: bool = True) -> Optional[Any]:
         """
         Create a performance visualization for RAG queries.
 
@@ -460,7 +469,8 @@ class RAGQueryVisualizer:
 
         return fig
 
-    def plot_query_term_frequency(self, max_terms=20, figsize=None, output_file=None, show_plot=True):
+    def plot_query_term_frequency(self, max_terms: int = 20, figsize: Optional[Tuple[int, int]] = None, 
+                                 output_file: Optional[str] = None, show_plot: bool = True) -> Optional[Any]:
         """
         Plot frequency of terms used in queries.
 
@@ -553,7 +563,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
     and advanced visualization capabilities.
     """
 
-    def __init__(self, metrics_collector):
+    def __init__(self, metrics_collector: QueryMetricsCollector) -> None:
         """
         Initialize the enhanced query visualizer.
 
@@ -562,8 +572,9 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
         """
         super().__init__(metrics_collector)
 
-    def visualize_query_performance_timeline(self, time_window=None, figsize=None,
-                                           output_file=None, show_plot=True):
+    def visualize_query_performance_timeline(self, time_window: Optional[int] = None, 
+                                           figsize: Optional[Tuple[int, int]] = None,
+                                           output_file: Optional[str] = None, show_plot: bool = True) -> Optional[str]:
         """
         Create a timeline visualization of query performance.
 
@@ -696,7 +707,7 @@ class EnhancedQueryVisualizer(RAGQueryVisualizer):
 
         return fig
 
-    def create_interactive_dashboard(self, output_dir, time_window=None):
+    def create_interactive_dashboard(self, output_dir: str, time_window: Optional[int] = None) -> str:
         """
         Create an interactive HTML dashboard with multiple visualizations.
 
@@ -906,7 +917,9 @@ class RAGQueryDashboard:
     provide a comprehensive monitoring system.
     """
 
-    def __init__(self, metrics_collector, visualizer=None, dashboard_dir=None, audit_logger=None):
+    def __init__(self, metrics_collector: QueryMetricsCollector, 
+                 visualizer: Optional['EnhancedQueryVisualizer'] = None, 
+                 dashboard_dir: Optional[str] = None, audit_logger: Optional[Any] = None) -> None:
         """
         Initialize the RAG query dashboard.
 
@@ -924,7 +937,7 @@ class RAGQueryDashboard:
         # Create dashboard directory if it doesn't exist
         os.makedirs(self.dashboard_dir, exist_ok=True)
 
-    def generate_dashboard(self, time_window=None):
+    def generate_dashboard(self, time_window: Optional[int] = None) -> str:
         """
         Generate the query monitoring dashboard.
 
@@ -938,7 +951,8 @@ class RAGQueryDashboard:
             self.dashboard_dir, time_window=time_window
         )
 
-    def generate_performance_report(self, output_file=None, time_window=None):
+    def generate_performance_report(self, output_file: Optional[str] = None, 
+                                  time_window: Optional[int] = None) -> str:
         """
         Generate a comprehensive performance report with visualizations.
 
@@ -994,102 +1008,7 @@ class RAGQueryDashboard:
             plot_files['terms'] = os.path.basename(terms_path)
 
         # Generate HTML report
-        report_template = Template('''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>RAG Query Performance Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-                .header { background-color: #2196F3; color: white; padding: 20px; margin-bottom: 20px; }
-                .section { margin-bottom: 30px; }
-                .metrics-table { width: 100%; border-collapse: collapse; }
-                .metrics-table th, .metrics-table td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-                .metrics-table th { background-color: #f2f2f2; }
-                .plot-container { margin: 20px 0; }
-                .plot-container img { max-width: 100%; height: auto; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>RAG Query Performance Report</h1>
-                <p>Generated: {{ timestamp }}</p>
-                <p>Time Window: {{ time_window_text }}</p>
-            </div>
-
-            <div class="section">
-                <h2>Performance Metrics</h2>
-                <table class="metrics-table">
-                    <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                    </tr>
-                    <tr>
-                        <td>Total Queries</td>
-                        <td>{{ metrics.total_queries }}</td>
-                    </tr>
-                    <tr>
-                        <td>Completed Queries</td>
-                        <td>{{ metrics.completed_queries }}</td>
-                    </tr>
-                    <tr>
-                        <td>Error Queries</td>
-                        <td>{{ metrics.error_queries }}</td>
-                    </tr>
-                    <tr>
-                        <td>Success Rate</td>
-                        <td>{{ "%.1f"|format(metrics.success_rate * 100) }}%</td>
-                    </tr>
-                    <tr>
-                        <td>Average Duration</td>
-                        <td>{{ "%.3f"|format(metrics.avg_duration) }} seconds</td>
-                    </tr>
-                    <tr>
-                        <td>Average Results</td>
-                        <td>{{ "%.1f"|format(metrics.avg_results) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Peak Duration</td>
-                        <td>{{ "%.3f"|format(metrics.peak_duration) }} seconds</td>
-                    </tr>
-                    <tr>
-                        <td>Anomalies Detected</td>
-                        <td>{{ metrics.anomalies_detected|default(0) }}</td>
-                    </tr>
-                </table>
-            </div>
-
-            {% for name, file in plot_files.items() %}
-            <div class="section">
-                <h2>{{ name|capitalize }} Visualization</h2>
-                <div class="plot-container">
-                    <img src="{{ file }}" alt="{{ name }} visualization">
-                </div>
-            </div>
-            {% endfor %}
-
-            <div class="section">
-                <h2>Hourly Trends</h2>
-                <table class="metrics-table">
-                    <tr>
-                        <th>Hour</th>
-                        <th>Query Count</th>
-                        <th>Avg Duration</th>
-                        <th>Success Rate</th>
-                    </tr>
-                    {% for hour, stats in hourly_trends|dictsort %}
-                    <tr>
-                        <td>{{ hour }}</td>
-                        <td>{{ stats.count }}</td>
-                        <td>{{ "%.3f"|format(stats.avg_duration) }}s</td>
-                        <td>{{ "%.1f"|format(stats.success_rate * 100) }}%</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </body>
-        </html>
-        ''')
+        report_template = Template()
 
         # Format time window text
         if time_window:
@@ -1117,7 +1036,8 @@ class RAGQueryDashboard:
 
         return output_file
 
-    def visualize_query_audit_metrics(self, time_window=None, output_file=None, show_plot=True):
+    def visualize_query_audit_metrics(self, time_window: Optional[int] = None, 
+                                     output_file: Optional[str] = None, show_plot: bool = True) -> Optional[str]:
         """
         Visualize audit metrics related to queries.
 
@@ -1140,7 +1060,7 @@ class RAGQueryDashboard:
             show_plot=show_plot
         )
 
-    def generate_interactive_audit_trends(self, output_file=None):
+    def generate_interactive_audit_trends(self, output_file: Optional[str] = None) -> Optional[str]:
         """
         Generate interactive audit trend visualization.
 
@@ -1159,7 +1079,7 @@ class RAGQueryDashboard:
             return None
 
 
-def create_integrated_monitoring_system(dashboard_dir=None):
+def create_integrated_monitoring_system(dashboard_dir: Optional[str] = None) -> Tuple[Any, Any, QueryMetricsCollector, 'RAGQueryDashboard']:
     """
     Create an integrated monitoring system for RAG queries.
 
@@ -1204,7 +1124,7 @@ class PerformanceMetricsVisualizer:
     throughput analysis, and resource utilization patterns.
     """
 
-    def __init__(self, metrics_collector):
+    def __init__(self, metrics_collector: QueryMetricsCollector) -> None:
         """
         Initialize the performance metrics visualizer.
 
@@ -1228,7 +1148,7 @@ class PerformanceMetricsVisualizer:
         # Set default theme based on matplotlib style
         self.theme = "light"
 
-    def set_theme(self, theme="light"):
+    def set_theme(self, theme: str = "light") -> None:
         """
         Set visualization theme (light or dark).
 
@@ -1264,11 +1184,11 @@ class PerformanceMetricsVisualizer:
             }
 
     def visualize_processing_time_breakdown(self,
-                                          time_window=None,
-                                          figsize=None,
-                                          output_file=None,
-                                          show_plot=True,
-                                          interactive=False):
+                                          time_window: Optional[int] = None,
+                                          figsize: Optional[Tuple[int, int]] = None,
+                                          output_file: Optional[str] = None,
+                                          show_plot: bool = True,
+                                          interactive: bool = False) -> Optional[Any]:
         """
         Visualize the breakdown of processing time across query phases.
 
@@ -1607,11 +1527,11 @@ class PerformanceMetricsVisualizer:
             return fig
 
     def visualize_latency_distribution(self,
-                                     time_window=None,
-                                     figsize=None,
-                                     output_file=None,
-                                     show_plot=True,
-                                     interactive=False):
+                                     time_window: Optional[int] = None,
+                                     figsize: Optional[Tuple[int, int]] = None,
+                                     output_file: Optional[str] = None,
+                                     show_plot: bool = True,
+                                     interactive: bool = False) -> Optional[Any]:
         """
         Visualize the distribution of query latency.
 
@@ -1904,7 +1824,7 @@ class PerformanceMetricsVisualizer:
 
             return fig
 
-    def _extract_summary_metrics(self, time_window=None):
+    def _extract_summary_metrics(self, time_window: Optional[int] = None) -> Dict[str, Any]:
         """Extract summary metrics from query collector for dashboard display."""
         metrics = self.metrics_collector.query_metrics
 
@@ -2394,7 +2314,7 @@ class RAGQueryVisualizer:
     RAG system behavior.
     """
 
-    def __init__(self, metrics_collector: QueryMetricsCollector):
+    def __init__(self, metrics_collector: QueryMetricsCollector) -> None:
         """
         Initialize the visualizer with a metrics collector.
 
@@ -2657,7 +2577,7 @@ class RAGQueryVisualizer:
                               title: str = "RAG Query Performance Dashboard",
                               include_optimization: bool = True,
                               include_patterns: bool = True,
-                              include_security_correlation: bool = True,
+                              include_security_correlation: bool = True, # TODO not implemented
                               anomalies: List[Dict[str, Any]] = None,
                               audit_metrics = None) -> str:
         """
@@ -2744,297 +2664,8 @@ class RAGQueryVisualizer:
                 chart_paths['timeline'] = timeline_chart
 
             # Create HTML template
-            dashboard_template = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{{ title }}</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 20px;
-                        background-color: #f5f5f5;
-                    }
-                    .dashboard {
-                        max-width: 1200px;
-                        margin: 0 auto;
-                        background-color: white;
-                        padding: 20px;
-                        border-radius: 5px;
-                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                    }
-                    h1, h2, h3 {
-                        color: #333;
-                    }
-                    .metric-card {
-                        background-color: #f9f9f9;
-                        border-radius: 5px;
-                        padding: 15px;
-                        margin-bottom: 15px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    }
-                    .metric-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                        gap: 15px;
-                        margin-bottom: 20px;
-                    }
-                    .key-metric {
-                        background-color: #e9f5ff;
-                        padding: 10px;
-                        border-radius: 5px;
-                        text-align: center;
-                    }
-                    .key-metric h3 {
-                        margin-top: 0;
-                        font-size: 16px;
-                    }
-                    .key-metric p {
-                        font-size: 24px;
-                        font-weight: bold;
-                        margin: 5px 0;
-                    }
-                    .chart-container {
-                        margin-bottom: 20px;
-                    }
-                    .chart-container img {
-                        max-width: 100%;
-                        height: auto;
-                        border: 1px solid #ddd;
-                        border-radius: 5px;
-                    }
-                    .chart-description {
-                        font-size: 0.9em;
-                        color: #666;
-                        margin-top: 5px;
-                        font-style: italic;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 20px;
-                    }
-                    table th, table td {
-                        padding: 8px;
-                        text-align: left;
-                        border-bottom: 1px solid #ddd;
-                    }
-                    table th {
-                        background-color: #f2f2f2;
-                    }
-                    .footer {
-                        text-align: center;
-                        color: #777;
-                        margin-top: 20px;
-                        font-size: 12px;
-                    }
-                    .alert-section {
-                        margin-top: 30px;
-                        padding: 10px;
-                        border-radius: 5px;
-                    }
-                    .alert-card {
-                        border-left: 5px solid #ff9800;
-                        padding: 10px;
-                        margin-bottom: 10px;
-                        background-color: #fff8e1;
-                        border-radius: 3px;
-                    }
-                    .alert-card.critical {
-                        border-left-color: #f44336;
-                        background-color: #ffebee;
-                    }
-                    .alert-card.high {
-                        border-left-color: #ff5722;
-                        background-color: #fbe9e7;
-                    }
-                    .alert-card.medium {
-                        border-left-color: #ff9800;
-                        background-color: #fff8e1;
-                    }
-                    .alert-card.low {
-                        border-left-color: #4caf50;
-                        background-color: #e8f5e9;
-                    }
-                    .alert-header {
-                        font-weight: bold;
-                        margin-bottom: 5px;
-                    }
-                    .alert-body {
-                        margin-bottom: 5px;
-                    }
-                    .alert-timestamp {
-                        color: #777;
-                        font-size: 12px;
-                    }
-                    .optimization-card {
-                        border-left: 5px solid #2196f3;
-                        padding: 10px;
-                        margin-bottom: 10px;
-                        background-color: #e3f2fd;
-                        border-radius: 3px;
-                    }
-                    .optimization-header {
-                        font-weight: bold;
-                        margin-bottom: 5px;
-                    }
-                    .optimization-details {
-                        font-size: 14px;
-                        color: #555;
-                        margin-bottom: 10px;
-                    }
-                    .optimization-examples {
-                        font-family: monospace;
-                        background-color: #f5f5f5;
-                        padding: 8px;
-                        border-radius: 3px;
-                        margin-top: 5px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="dashboard">
-                    <h1>{{ title }}</h1>
-                    <p>Generated at {{ current_time }}</p>
-
-                    {% if anomalies %}
-                    <div class="alert-section">
-                        <h2>Query Anomalies</h2>
-                        {% for anomaly in anomalies %}
-                        <div class="alert-card {{ anomaly.severity }}">
-                            <div class="alert-header">{{ anomaly.type }}</div>
-                            <div class="alert-body">
-                                {% if anomaly.type == 'performance_anomaly' %}
-                                <p>Query took {{ anomaly.value|round(2) }}s, which is {{ anomaly.ratio|round(1) }}x the average time</p>
-                                {% elif anomaly.type == 'empty_results_anomaly' %}
-                                <p>Query returned zero results: "{{ anomaly.query_text }}"</p>
-                                {% elif anomaly.type == 'relevance_anomaly' %}
-                                <p>Average result score was {{ anomaly.value|round(2) }}, which is below threshold</p>
-                                {% else %}
-                                <p>{{ anomaly.type }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="alert-timestamp">{{ anomaly.timestamp }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    <h2>Performance Summary</h2>
-                    <div class="metric-grid">
-                        <div class="key-metric">
-                            <h3>Total Queries</h3>
-                            <p>{{ performance.total_queries }}</p>
-                        </div>
-                        <div class="key-metric">
-                            <h3>Avg. Duration</h3>
-                            <p>{{ performance.avg_duration|round(2) }}s</p>
-                        </div>
-                        <div class="key-metric">
-                            <h3>Success Rate</h3>
-                            <p>{{ (performance.success_rate * 100)|round(1) }}%</p>
-                        </div>
-                        <div class="key-metric">
-                            <h3>Error Rate</h3>
-                            <p>{{ (performance.error_rate * 100)|round(1) }}%</p>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <h3>Query Performance Over Time</h3>
-                        {% if chart_data.performance %}
-                        <img src="data:image/png;base64,{{ chart_data.performance }}" alt="Query Performance">
-                        {% else %}
-                        <p>No performance data available</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="chart-container">
-                        <h3>Query Duration Distribution</h3>
-                        {% if chart_data.durations %}
-                        <img src="data:image/png;base64,{{ chart_data.durations }}" alt="Query Durations">
-                        {% else %}
-                        <p>No duration data available</p>
-                        {% endif %}
-                    </div>
-
-                    {% if chart_data.timeline %}
-                    <div class="chart-container">
-                        <h3>Query and Audit Event Timeline</h3>
-                        <img src="data:image/png;base64,{{ chart_data.timeline }}" alt="Query and Audit Timeline">
-                    </div>
-                    {% endif %}
-
-                    {% if chart_data.security_correlation %}
-                    <div class="chart-container">
-                        <h3>Query Performance & Security Event Correlation</h3>
-                        <img src="data:image/png;base64,{{ chart_data.security_correlation }}" alt="Security Correlation">
-                        <p class="chart-description">This visualization shows the correlation between query performance and security events, helping identify if security incidents impact query performance or if performance anomalies correlate with security events.</p>
-                    </div>
-                    {% endif %}
-
-                    {% if include_patterns and patterns %}
-                    <h2>Query Patterns</h2>
-
-                    {% if chart_data.terms %}
-                    <div class="chart-container">
-                        <h3>Most Common Query Terms</h3>
-                        <img src="data:image/png;base64,{{ chart_data.terms }}" alt="Term Frequency">
-                    </div>
-                    {% endif %}
-
-                    <div class="metric-card">
-                        <h3>Top Query Terms</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Term</th>
-                                    <th>Frequency</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for term, count in patterns.common_terms.items() %}
-                                <tr>
-                                    <td>{{ term }}</td>
-                                    <td>{{ count }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% endif %}
-
-                    {% if include_optimization and optimization and optimization.opportunities %}
-                    <h2>Optimization Opportunities</h2>
-
-                    {% for opportunity in optimization.opportunities %}
-                    <div class="optimization-card">
-                        <div class="optimization-header">{{ opportunity.type }}</div>
-                        <div class="optimization-details">{{ opportunity.description }}</div>
-
-                        {% if opportunity.queries %}
-                        <h4>Example Queries:</h4>
-                        {% for query in opportunity.queries %}
-                        <div class="optimization-examples">
-                            <div>{{ query.query_text }}</div>
-                            <small>{{ query.timestamp }} - Duration: {{ query.duration|round(2) if query.duration else 'N/A' }}s</small>
-                        </div>
-                        {% endfor %}
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-
-                    <div class="footer">
-                        <p>Generated by RAGQueryVisualizer</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
+            template_name = "generate_dashboard_html.html.jinja2"
+            dashboard_template = _load_template_string(template_name)
 
             # Convert chart images to base64 for embedding in HTML
             chart_data = {}
@@ -3112,15 +2743,15 @@ class OptimizerLearningMetricsCollector:
     allowing monitoring of learning cycles, parameter adaptations, and optimization effectiveness.
     """
 
-    def __init__(self, max_history_size=1000):
+    def __init__(self, max_history_size: int = 1000) -> None:
         """
         Initialize the learning metrics collector.
 
         Args:
             max_history_size (int): Maximum number of learning events to store
         """
-        self.learning_events = []  # Learning events with timestamps
-        self.learning_results = []  # Results from learning cycles
+        self.learning_events: List[Dict[str, Any]] = []  # Learning events with timestamps
+        self.learning_results: List[Dict[str, Any]] = []  # Results from learning cycles
         self.parameter_adaptations = {}  # Track parameter changes over time
         self.optimization_strategies = {}  # Track strategy effectiveness
         self.circuit_breaker_events = []  # Circuit breaker activations/resets
@@ -3128,7 +2759,7 @@ class OptimizerLearningMetricsCollector:
         self.audit_logger = None
         self._lock = threading.RLock()  # Thread safety
 
-    def set_audit_logger(self, audit_logger):
+    def set_audit_logger(self, audit_logger: Any) -> None:
         """
         Set the audit logger for recording learning events.
 
@@ -3137,8 +2768,9 @@ class OptimizerLearningMetricsCollector:
         """
         self.audit_logger = audit_logger
 
-    def record_learning_cycle(self, cycle_id, time_started, query_count, is_success=True,
-                             duration=None, results=None, error=None):
+    def record_learning_cycle(self, cycle_id: str, time_started: float, query_count: int, 
+                             is_success: bool = True, duration: Optional[float] = None, 
+                             results: Optional[Dict[str, Any]] = None, error: Optional[str] = None) -> None:
         """
         Record metrics from a learning cycle.
 
@@ -3205,8 +2837,8 @@ class OptimizerLearningMetricsCollector:
             if len(self.learning_events) > self.max_history_size:
                 self.learning_events = self.learning_events[-self.max_history_size:]
 
-    def record_parameter_adaptation(self, parameter_name, old_value, new_value,
-                                  confidence, cycle_id=None):
+    def record_parameter_adaptation(self, parameter_name: str, old_value: Any, new_value: Any,
+                                  confidence: float, cycle_id: Optional[str] = None) -> None:
         """
         Record parameter adaptation from the learning process.
 
@@ -3261,7 +2893,8 @@ class OptimizerLearningMetricsCollector:
                     # Ignore errors in audit logging
                     pass
 
-    def record_circuit_breaker_event(self, event_type, reason, backoff_minutes=None):
+    def record_circuit_breaker_event(self, event_type: str, reason: str, 
+                                    backoff_minutes: Optional[int] = None) -> None:
         """
         Record circuit breaker activation or reset.
 
@@ -3319,7 +2952,7 @@ class OptimizerLearningMetricsCollector:
                     # Ignore errors in audit logging
                     pass
 
-    def get_learning_performance_metrics(self, window_seconds=86400):
+    def get_learning_performance_metrics(self, window_seconds: int = 86400) -> Dict[str, Any]:
         """
         Get performance metrics for learning cycles within a time window.
 
@@ -3381,7 +3014,8 @@ class OptimizerLearningMetricsCollector:
                 'is_active': self._check_if_active(recent_events)
             }
 
-    def visualize_learning_performance(self, output_file=None, interactive=True):
+    def visualize_learning_performance(self, output_file: Optional[str] = None, 
+                                      interactive: bool = True) -> Optional[Any]:
         """
         Create visualization of learning performance metrics.
 
@@ -3430,7 +3064,7 @@ class OptimizerLearningMetricsCollector:
         # Create static matplotlib visualization
         return self._create_static_learning_visualization(output_file)
 
-    def _create_interactive_learning_visualization(self, output_file=None):
+    def _create_interactive_learning_visualization(self, output_file: Optional[str] = None) -> Optional[Any]:
         """Create interactive Plotly visualization of learning metrics."""
         if not INTERACTIVE_VISUALIZATION_AVAILABLE:
             return None
@@ -3579,7 +3213,7 @@ class OptimizerLearningMetricsCollector:
 
         return fig
 
-    def _create_static_learning_visualization(self, output_file=None):
+    def _create_static_learning_visualization(self, output_file: Optional[str] = None) -> Optional[Any]:
         """Create static matplotlib visualization of learning metrics."""
         # Sort events by timestamp
         sorted_events = sorted(self.learning_events, key=lambda x: x['timestamp'])
@@ -3673,7 +3307,7 @@ class OptimizerLearningMetricsCollector:
 
         return fig
 
-    def _calculate_change(self, old_value, new_value):
+    def _calculate_change(self, old_value: Any, new_value: Any) -> Optional[float]:
         """
         Calculate relative change between values.
 
@@ -3708,7 +3342,7 @@ class OptimizerLearningMetricsCollector:
         except Exception:
             return None
 
-    def _check_if_active(self, events):
+    def _check_if_active(self, events: List[Dict[str, Any]]) -> bool:
         """
         Check if learning appears to be active based on recent events.
 
@@ -5123,7 +4757,7 @@ class PerformanceMetricsVisualizer:
     throughput analysis, and resource utilization patterns.
     """
 
-    def __init__(self, metrics_collector: QueryMetricsCollector):
+    def __init__(self, metrics_collector: QueryMetricsCollector) -> None:
         """
         Initialize the performance metrics visualizer.
 
@@ -5807,7 +5441,7 @@ class OptimizerLearningMetricsCollector:
     the optimizer's learning behavior and performance improvements over time.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metrics collector."""
         self.learning_cycles = []
         self.parameter_adaptations = []
@@ -6655,11 +6289,6 @@ class OptimizerLearningMetricsCollector:
             # Add linear trend line
             if len(dates) > 1 and PANDAS_AVAILABLE:
                 try:
-                    # Convert to pandas for trend analysis
-                    import pandas as pd
-                    import numpy as np
-                    from scipy import stats
-
                     # Convert timestamps to numeric values for linear regression
                     timestamps_numeric = mdates.date2num(dates)
                     slope, intercept, r_value, p_value, std_err = stats.linregress(
@@ -6685,11 +6314,6 @@ class OptimizerLearningMetricsCollector:
             # Add linear trend line
             if len(dates) > 1 and PANDAS_AVAILABLE:
                 try:
-                    # Convert to pandas for trend analysis
-                    import pandas as pd
-                    import numpy as np
-                    from scipy import stats
-
                     # Convert timestamps to numeric values for linear regression
                     timestamps_numeric = mdates.date2num(dates)
                     slope, intercept, r_value, p_value, std_err = stats.linregress(
@@ -6800,167 +6424,11 @@ class OptimizerLearningMetricsCollector:
         Returns:
             HTML content for the dashboard
         """
-        # Define dashboard template
-        template_str = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>RAG Optimizer Learning Dashboard</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: {{ 'rgba(0,0,0,0.9)' if theme == 'dark' else '#f5f5f5' }};
-                    color: {{ '#eee' if theme == 'dark' else '#333' }};
-                }
-                .container {
-                    width: 95%;
-                    margin: 0 auto;
-                    padding: 20px 0;
-                }
-                header {
-                    background-color: {{ '#333' if theme == 'dark' else '#fff' }};
-                    padding: 20px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                    margin-bottom: 20px;
-                    border-radius: 5px;
-                }
-                h1, h2, h3 {
-                    margin: 0;
-                    color: {{ '#fff' if theme == 'dark' else '#333' }};
-                }
-                .metrics-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                    gap: 15px;
-                    margin-bottom: 30px;
-                }
-                .metric-card {
-                    background-color: {{ '#333' if theme == 'dark' else '#fff' }};
-                    border-radius: 5px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                    padding: 20px;
-                }
-                .metric-title {
-                    font-size: 14px;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                    color: {{ '#ccc' if theme == 'dark' else '#666' }};
-                }
-                .metric-value {
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: {{ '#4CAF50' if theme == 'dark' else '#2196F3' }};
-                }
-                .visualization-section {
-                    background-color: {{ '#333' if theme == 'dark' else '#fff' }};
-                    border-radius: 5px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                    margin-bottom: 20px;
-                    padding: 20px;
-                }
-                .visualization-title {
-                    font-size: 18px;
-                    margin-bottom: 15px;
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid {{ '#444' if theme == 'dark' else '#eee' }};
-                }
-                iframe {
-                    border: none;
-                    width: 100%;
-                    height: 500px;
-                }
-                .footer {
-                    text-align: center;
-                    margin-top: 40px;
-                    padding: 20px;
-                    font-size: 12px;
-                    color: {{ '#999' if theme == 'dark' else '#999' }};
-                }
-                .key-metric {
-                    color: {{ '#8BC34A' if theme == 'dark' else '#4CAF50' }};
-                }
-                .warning-metric {
-                    color: {{ '#FFC107' if theme == 'dark' else '#FF9800' }};
-                }
-                .danger-metric {
-                    color: {{ '#F44336' if theme == 'dark' else '#F44336' }};
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <header>
-                    <h1>RAG Optimizer Learning Dashboard</h1>
-                    <p>Statistical learning metrics and performance visualization</p>
-                </header>
-
-                <section class="metrics-overview">
-                    <h2>Learning Metrics Summary</h2>
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-title">Learning Cycles</div>
-                            <div class="metric-value">{{ metrics.total_learning_cycles }}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Success Rate</div>
-                            <div class="metric-value {{ 'key-metric' if metrics.success_rate >= 0.9 else 'warning-metric' if metrics.success_rate >= 0.7 else 'danger-metric' }}">
-                                {{ "%.1f"|format(metrics.success_rate * 100) }}%
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Analyzed Queries</div>
-                            <div class="metric-value">{{ metrics.total_analyzed_queries }}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Optimized Queries</div>
-                            <div class="metric-value">{{ metrics.total_optimized_queries }}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Optimization Rate</div>
-                            <div class="metric-value {{ 'key-metric' if metrics.optimization_rate >= 0.8 else 'warning-metric' if metrics.optimization_rate >= 0.5 else 'danger-metric' }}">
-                                {{ "%.1f"|format(metrics.optimization_rate * 100) }}%
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Learning Rate (cycles/hr)</div>
-                            <div class="metric-value">{{ "%.2f"|format(metrics.learning_rate) }}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Avg Duration Improvement</div>
-                            <div class="metric-value {{ 'key-metric' if metrics.avg_duration_improvement >= 100 else 'warning-metric' if metrics.avg_duration_improvement > 0 else 'danger-metric' }}">
-                                {{ "%.0f"|format(metrics.avg_duration_improvement) }} ms
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-title">Avg Quality Improvement</div>
-                            <div class="metric-value {{ 'key-metric' if metrics.avg_quality_improvement >= 0.1 else 'warning-metric' if metrics.avg_quality_improvement > 0 else 'danger-metric' }}">
-                                {{ "%.2f"|format(metrics.avg_quality_improvement) }}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {% for viz in visualizations %}
-                <section class="visualization-section">
-                    <h2 class="visualization-title">{{ viz.title }}</h2>
-                    <iframe src="{{ viz.file }}" frameborder="0"></iframe>
-                </section>
-                {% endfor %}
-
-                <div class="footer">
-                    <p>Generated on {{ timestamp }}</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        # Load dashboard template
+        template_file_name = "_create_dashboard_html.html.jinja2"
+        template_str = _load_template_string(template_file_name)
 
         # Create template and render HTML
-        from jinja2 import Template
         template = Template(template_str)
 
         return template.render(
@@ -7019,7 +6487,7 @@ class RAGQueryDashboard:
                          output_file: str,
                          title: str = "RAG Query Analytics Dashboard",
                          include_audit_metrics: bool = True,
-                         include_performance_metrics: bool = True) -> str:
+                         include_performance_metrics: bool = True) -> str: # TODO Not implemented
         """
         Generate a combined dashboard with query and audit metrics.
 
@@ -7161,618 +6629,8 @@ class RAGQueryDashboard:
                 return output_file
 
             # Create dashboard template
-            dashboard_template = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{{ title }}</title>
-                <style>
-                    :root {
-                        {% if theme == 'dark' %}
-                        --bg-color: #2E3440;
-                        --card-bg: #3B4252;
-                        --text-color: #ECEFF4;
-                        --border-color: #4C566A;
-                        --highlight-color: #88C0D0;
-                        --accent-color: #5E81AC;
-                        --error-color: #BF616A;
-                        --warning-color: #EBCB8B;
-                        --success-color: #A3BE8C;
-                        {% else %}
-                        --bg-color: #F8F9FA;
-                        --card-bg: #FFFFFF;
-                        --text-color: #212529;
-                        --border-color: #DEE2E6;
-                        --highlight-color: #0D6EFD;
-                        --accent-color: #6610F2;
-                        --error-color: #DC3545;
-                        --warning-color: #FFC107;
-                        --success-color: #198754;
-                        {% endif %}
-                    }
-
-                    body {
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        background-color: var(--bg-color);
-                        color: var(--text-color);
-                    }
-
-                    .dashboard-container {
-                        max-width: 1200px;
-                        margin: 0 auto;
-                        padding: 2rem;
-                    }
-
-                    .dashboard-header {
-                        margin-bottom: 2rem;
-                        border-bottom: 1px solid var(--border-color);
-                        padding-bottom: 1rem;
-                    }
-
-                    .dashboard-header h1 {
-                        margin: 0;
-                        font-size: 2rem;
-                        color: var(--text-color);
-                    }
-
-                    .dashboard-header p {
-                        margin: 0.5rem 0 0;
-                        font-size: 1rem;
-                        color: var(--text-color);
-                        opacity: 0.8;
-                    }
-
-                    .dashboard-section {
-                        margin-bottom: 2rem;
-                        padding: 1.5rem;
-                        background-color: var(--card-bg);
-                        border-radius: 0.5rem;
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    }
-
-                    .dashboard-section h2 {
-                        margin-top: 0;
-                        margin-bottom: 1rem;
-                        font-size: 1.5rem;
-                        color: var(--text-color);
-                    }
-
-                    .metrics-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                        gap: 1rem;
-                        margin-bottom: 1.5rem;
-                    }
-
-                    .metric-card {
-                        background-color: var(--card-bg);
-                        padding: 1.25rem;
-                        border-radius: 0.375rem;
-                        border-left: 4px solid var(--highlight-color);
-                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-                    }
-
-                    .metric-card.error {
-                        border-left-color: var(--error-color);
-                    }
-
-                    .metric-card.warning {
-                        border-left-color: var(--warning-color);
-                    }
-
-                    .metric-card.success {
-                        border-left-color: var(--success-color);
-                    }
-
-                    .metric-title {
-                        font-size: 0.875rem;
-                        font-weight: 600;
-                        margin: 0 0 0.5rem 0;
-                        color: var(--text-color);
-                        opacity: 0.8;
-                    }
-
-                    .metric-value {
-                        font-size: 1.5rem;
-                        font-weight: 700;
-                        margin: 0;
-                        color: var(--text-color);
-                    }
-
-                    .metric-trend {
-                        display: flex;
-                        align-items: center;
-                        font-size: 0.75rem;
-                        margin-top: 0.5rem;
-                    }
-
-                    .trend-up {
-                        color: var(--success-color);
-                    }
-
-                    .trend-down {
-                        color: var(--error-color);
-                    }
-
-                    .visualization-container {
-                        margin-top: 1.5rem;
-                        width: 100%;
-                        border: 1px solid var(--border-color);
-                        border-radius: 0.375rem;
-                        overflow: hidden;
-                    }
-
-                    .visualization-container iframe {
-                        width: 100%;
-                        height: 600px;
-                        border: none;
-                    }
-
-                    .visualization-container img {
-                        width: 100%;
-                        height: auto;
-                        display: block;
-                    }
-
-                    .visualization-section {
-                        margin-top: 2rem;
-                        border-top: 1px solid var(--border-color);
-                        padding-top: 1.5rem;
-                    }
-
-                    .visualization-section h3 {
-                        margin-top: 0;
-                        margin-bottom: 1rem;
-                        font-size: 1.3rem;
-                        color: var(--text-color);
-                    }
-
-                    /* Tabs for learning metrics */
-                    .visualization-tabs {
-                        width: 100%;
-                        margin-top: 20px;
-                    }
-
-                    .tab-buttons {
-                        display: flex;
-                        overflow-x: auto;
-                        border-bottom: 1px solid var(--border-color);
-                        margin-bottom: 15px;
-                    }
-
-                    .tab-button {
-                        background-color: transparent;
-                        border: none;
-                        padding: 10px 20px;
-                        font-size: 14px;
-                        cursor: pointer;
-                        transition: background-color 0.3s;
-                        border-bottom: 2px solid transparent;
-                        color: var(--text-color);
-                    }
-
-                    .tab-button:hover {
-                        background-color: rgba(0,0,0,0.05);
-                    }
-
-                    .tab-button.active {
-                        border-bottom: 2px solid var(--primary-color);
-                        color: var(--primary-color);
-                        font-weight: bold;
-                    }
-
-                    .tab-content {
-                        display: none;
-                        padding: 15px 0;
-                    }
-
-                    .tab-content.active {
-                        display: block;
-                    }
-
-                    .visualization-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-                        gap: 20px;
-                        margin-top: 20px;
-                    }
-
-                    .visualization-description {
-                        margin-top: 1rem;
-                        padding: 0.8rem;
-                        background-color: rgba(0,0,0,0.03);
-                        border-left: 3px solid var(--highlight-color);
-                        font-size: 0.9rem;
-                        color: var(--text-color);
-                    }
-
-                    .tabs {
-                        display: flex;
-                        border-bottom: 1px solid var(--border-color);
-                        margin-bottom: 1.5rem;
-                    }
-
-                    .tab {
-                        padding: 0.75rem 1rem;
-                        cursor: pointer;
-                        border-bottom: 2px solid transparent;
-                        font-weight: 500;
-                    }
-
-                    .tab.active {
-                        border-bottom-color: var(--highlight-color);
-                        color: var(--highlight-color);
-                    }
-
-                    .tab-content {
-                        display: none;
-                    }
-
-                    .tab-content.active {
-                        display: block;
-                    }
-
-                    .anomaly-list {
-                        margin-top: 1.5rem;
-                    }
-
-                    .anomaly-item {
-                        padding: 1rem;
-                        margin-bottom: 0.75rem;
-                        border-radius: 0.375rem;
-                        border-left: 4px solid var(--error-color);
-                        background-color: {{  'rgba(191, 97, 106, 0.1)' if theme == 'dark' else 'rgba(220, 53, 69, 0.1)' }};
-                    }
-
-                    .anomaly-item-header {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 0.5rem;
-                    }
-
-                    .anomaly-type {
-                        font-weight: 600;
-                    }
-
-                    .anomaly-timestamp {
-                        font-size: 0.75rem;
-                        opacity: 0.8;
-                    }
-
-                    .anomaly-details {
-                        font-size: 0.875rem;
-                    }
-
-                    .footer {
-                        margin-top: 2rem;
-                        padding-top: 1rem;
-                        border-top: 1px solid var(--border-color);
-                        text-align: center;
-                        font-size: 0.875rem;
-                        opacity: 0.7;
-                    }
-                </style>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        // Tab functionality
-                        const tabs = document.querySelectorAll('.tab');
-                        const tabContents = document.querySelectorAll('.tab-content');
-
-                        tabs.forEach(tab => {
-                            tab.addEventListener('click', () => {
-                                // Remove active class from all tabs and contents
-                                tabs.forEach(t => t.classList.remove('active'));
-                                tabContents.forEach(c => c.classList.remove('active'));
-
-                                // Add active class to clicked tab and corresponding content
-                                tab.classList.add('active');
-                                const contentId = tab.getAttribute('data-tab');
-                                document.getElementById(contentId).classList.add('active');
-                            });
-                        });
-                    });
-                </script>
-            </head>
-            <body>
-                <div class="dashboard-container">
-                    <div class="dashboard-header">
-                        <h1>{{ title }}</h1>
-                        <p>Generated at {{ current_time }}</p>
-                    </div>
-
-                    {% if include_performance %}
-                    <div class="dashboard-section">
-                        <h2>Performance Metrics</h2>
-                        <div class="metrics-grid">
-                            <div class="metric-card {{ 'success' if performance.success_rate > 0.95 else 'warning' if performance.success_rate > 0.8 else 'error' }}">
-                                <div class="metric-title">Success Rate</div>
-                                <div class="metric-value">{{ (performance.success_rate * 100)|round(1) }}%</div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Average Duration</div>
-                                <div class="metric-value">{{ performance.avg_duration|round(3) }}s</div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Total Queries</div>
-                                <div class="metric-value">{{ performance.total_queries }}</div>
-                            </div>
-
-                            <div class="metric-card {{ 'error' if performance.error_rate > 0.1 else 'warning' if performance.error_rate > 0.05 else 'success' }}">
-                                <div class="metric-title">Error Rate</div>
-                                <div class="metric-value">{{ (performance.error_rate * 100)|round(1) }}%</div>
-                            </div>
-                        </div>
-
-                        <div class="tabs">
-                            <div class="tab active" data-tab="tab-performance-timeline">Timeline</div>
-                            <div class="tab" data-tab="tab-performance-distribution">Duration Distribution</div>
-                            <div class="tab" data-tab="tab-query-patterns">Query Patterns</div>
-                        </div>
-
-                        <div id="tab-performance-timeline" class="tab-content active">
-                            <div class="visualization-container">
-                                {% if visualizations.timeline_html %}
-                                <iframe srcdoc="{{ visualizations.timeline_html }}" title="Performance Timeline"></iframe>
-                                {% elif visualizations.timeline_img %}
-                                <img src="data:image/png;base64,{{ visualizations.timeline_img }}" alt="Performance Timeline">
-                                {% else %}
-                                <p>No timeline visualization available.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div id="tab-performance-distribution" class="tab-content">
-                            <div class="visualization-container">
-                                {% if visualizations.duration_html %}
-                                <iframe srcdoc="{{ visualizations.duration_html }}" title="Duration Distribution"></iframe>
-                                {% elif visualizations.duration_img %}
-                                <img src="data:image/png;base64,{{ visualizations.duration_img }}" alt="Duration Distribution">
-                                {% else %}
-                                <p>No duration distribution visualization available.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div id="tab-query-patterns" class="tab-content">
-                            <div class="visualization-container">
-                                {% if visualizations.terms_html %}
-                                <iframe srcdoc="{{ visualizations.terms_html }}" title="Query Patterns"></iframe>
-                                {% elif visualizations.terms_img %}
-                                <img src="data:image/png;base64,{{ visualizations.terms_img }}" alt="Query Patterns">
-                                {% else %}
-                                <p>No query pattern visualization available.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if include_query_audit_timeline and visualizations.query_audit_html %}
-                    <div class="dashboard-section">
-                        <h2>Query-Audit Correlation Timeline</h2>
-                        <div class="visualization-container">
-                            <iframe srcdoc="{{ visualizations.query_audit_html }}" title="Query-Audit Timeline"></iframe>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if include_security and audit_metrics %}
-                    <div class="dashboard-section">
-                        <h2>Security Metrics</h2>
-
-                        <div class="metrics-grid">
-                            {% for level, count in audit_metrics.totals.by_level.items() %}
-                            <div class="metric-card {{ 'error' if level in ['CRITICAL', 'ERROR'] else 'warning' if level == 'WARNING' else 'success' }}">
-                                <div class="metric-title">{{ level }} Events</div>
-                                <div class="metric-value">{{ count }}</div>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        {% if include_security_correlation %}
-                        <div class="visualization-section">
-                            <h3>Security Event Correlation with Query Performance</h3>
-                            <div class="visualization-container">
-                                {% if visualizations.security_correlation_html %}
-                                <iframe srcdoc="{{ visualizations.security_correlation_html }}" title="Security Correlation" style="width:100%; height:600px; border:none;"></iframe>
-                                {% elif visualizations.security_correlation_img %}
-                                <img src="data:image/png;base64,{{ visualizations.security_correlation_img }}" alt="Security Correlation Visualization" style="max-width:100%;">
-                                {% else %}
-                                <p>No security correlation visualization available.</p>
-                                {% endif %}
-                            </div>
-                            <div class="visualization-description">
-                                <p>This visualization shows the correlation between query performance and security events, highlighting potential relationships between performance anomalies and security incidents.</p>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <div class="tabs">
-                            <div class="tab active" data-tab="tab-security-trends">Security Trends</div>
-                            <div class="tab" data-tab="tab-anomalies">Anomalies</div>
-                        </div>
-
-                        <div id="tab-security-trends" class="tab-content active">
-                            <div class="visualization-container">
-                                {% if visualizations.security_trends_html %}
-                                <iframe srcdoc="{{ visualizations.security_trends_html }}" title="Security Trends"></iframe>
-                                {% else %}
-                                <p>No security trends visualization available.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div id="tab-anomalies" class="tab-content">
-                            <div class="anomaly-list">
-                                {% if anomalies %}
-                                {% for anomaly in anomalies %}
-                                <div class="anomaly-item">
-                                    <div class="anomaly-item-header">
-                                        <span class="anomaly-type">{{ anomaly.type }}</span>
-                                        <span class="anomaly-timestamp">{{ anomaly.timestamp }}</span>
-                                    </div>
-                                    <div class="anomaly-details">
-                                        {% if anomaly.type == 'performance_anomaly' %}
-                                        Query took {{ anomaly.value|round(2) }}s, which is {{ anomaly.ratio|round(1) }}x the average time.
-                                        {% elif anomaly.type == 'empty_results_anomaly' %}
-                                        Query returned zero results: "{{ anomaly.query_text }}"
-                                        {% elif anomaly.type == 'relevance_anomaly' %}
-                                        Average result score was {{ anomaly.value|round(2) }}, which is below threshold.
-                                        {% else %}
-                                        Anomaly details not available.
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-                                {% else %}
-                                <p>No anomalies detected.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if include_learning_metrics and learning_metrics %}
-                    <div class="dashboard-section">
-                        <h2>Optimizer Learning Metrics</h2>
-
-                        <div class="metrics-grid">
-                            <div class="metric-card">
-                                <div class="metric-title">Learning Cycles</div>
-                                <div class="metric-value">{{ learning_metrics.get_learning_metrics().total_learning_cycles }}</div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Success Rate</div>
-                                <div class="metric-value {{ 'success-value' if learning_metrics.get_learning_metrics().success_rate >= 0.9 else 'warning-value' if learning_metrics.get_learning_metrics().success_rate >= 0.7 else 'error-value' }}">
-                                    {{ "%.1f"|format(learning_metrics.get_learning_metrics().success_rate * 100) }}%
-                                </div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Analyzed Queries</div>
-                                <div class="metric-value">{{ learning_metrics.get_learning_metrics().total_analyzed_queries }}</div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Optimized Queries</div>
-                                <div class="metric-value">{{ learning_metrics.get_learning_metrics().total_optimized_queries }}</div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Avg Duration Improvement</div>
-                                <div class="metric-value">{{ "%.0f"|format(learning_metrics.get_learning_metrics().avg_duration_improvement) }} ms</div>
-                            </div>
-
-                            <div class="metric-card">
-                                <div class="metric-title">Tracked Parameters</div>
-                                <div class="metric-value">{{ learning_metrics.get_learning_metrics().tracked_parameters }}</div>
-                            </div>
-                        </div>
-
-                        <div class="visualization-container">
-                            {% if interactive %}
-                                <div class="visualization-tabs">
-                                    <div class="tab-buttons">
-                                        <button class="tab-button active" onclick="openTab(event, 'cycles-tab')">Learning Cycles</button>
-                                        <button class="tab-button" onclick="openTab(event, 'params-tab')">Parameter Adaptations</button>
-                                        <button class="tab-button" onclick="openTab(event, 'strategies-tab')">Strategy Effectiveness</button>
-                                        <button class="tab-button" onclick="openTab(event, 'performance-tab')">Learning Performance</button>
-                                    </div>
-
-                                    <div id="cycles-tab" class="tab-content active">
-                                        {% if visualizations.learning_cycles_html %}
-                                        <iframe srcdoc="{{ visualizations.learning_cycles_html }}" title="Learning Cycles" style="width:100%; height:500px; border:none;"></iframe>
-                                        {% endif %}
-                                    </div>
-
-                                    <div id="params-tab" class="tab-content">
-                                        {% if visualizations.learning_params_html %}
-                                        <iframe srcdoc="{{ visualizations.learning_params_html }}" title="Parameter Adaptations" style="width:100%; height:500px; border:none;"></iframe>
-                                        {% endif %}
-                                    </div>
-
-                                    <div id="strategies-tab" class="tab-content">
-                                        {% if visualizations.learning_strategies_html %}
-                                        <iframe srcdoc="{{ visualizations.learning_strategies_html }}" title="Strategy Effectiveness" style="width:100%; height:500px; border:none;"></iframe>
-                                        {% endif %}
-                                    </div>
-
-                                    <div id="performance-tab" class="tab-content">
-                                        {% if visualizations.learning_performance_html %}
-                                        <iframe srcdoc="{{ visualizations.learning_performance_html }}" title="Learning Performance" style="width:100%; height:500px; border:none;"></iframe>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <script>
-                                function openTab(evt, tabName) {
-                                    var i, tabcontent, tabbuttons;
-                                    tabcontent = document.getElementsByClassName("tab-content");
-                                    for (i = 0; i < tabcontent.length; i++) {
-                                        tabcontent[i].classList.remove("active");
-                                    }
-                                    tabbuttons = document.getElementsByClassName("tab-button");
-                                    for (i = 0; i < tabbuttons.length; i++) {
-                                        tabbuttons[i].classList.remove("active");
-                                    }
-                                    document.getElementById(tabName).classList.add("active");
-                                    evt.currentTarget.classList.add("active");
-                                }
-                                </script>
-
-                            {% else %}
-                                <div class="visualization-grid">
-                                    {% if visualizations.learning_cycles_img %}
-                                    <div class="visualization-section">
-                                        <h3>Learning Cycles</h3>
-                                        <img src="data:image/png;base64,{{ visualizations.learning_cycles_img }}" alt="Learning Cycles" style="max-width:100%;">
-                                    </div>
-                                    {% endif %}
-
-                                    {% if visualizations.learning_params_img %}
-                                <div class="visualization-section">
-                                    <h3>Parameter Adaptations</h3>
-                                    <img src="data:image/png;base64,{{ visualizations.learning_params_img }}" alt="Parameter Adaptations" style="max-width:100%;">
-                                </div>
-                                {% endif %}
-
-                                {% if visualizations.learning_strategies_img %}
-                                <div class="visualization-section">
-                                    <h3>Strategy Effectiveness</h3>
-                                    <img src="data:image/png;base64,{{ visualizations.learning_strategies_img }}" alt="Strategy Effectiveness" style="max-width:100%;">
-                                </div>
-                                {% endif %}
-
-                                {% if visualizations.learning_performance_img %}
-                                <div class="visualization-section">
-                                    <h3>Learning Performance</h3>
-                                    <img src="data:image/png;base64,{{ visualizations.learning_performance_img }}" alt="Learning Performance" style="max-width:100%;">
-                                </div>
-                                {% endif %}
-
-                            {% endif %}
-                        </div>
-
-                        <div class="visualization-description">
-                            <p>This section shows metrics related to the statistical learning process of the RAG query optimizer, including learning cycles, parameter adaptations over time, and strategy effectiveness.</p>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <div class="footer">
-                        <p>Generated by RAGQueryDashboard | IPFS Datasets Python</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
+            template_file_name = "generate_integrated_dashboard.html.jinja2"
+            dashboard_template = _load_template_string(template_file_name)
 
             # Collect performance metrics
             performance = self.metrics.get_performance_metrics()
@@ -7961,6 +6819,7 @@ class RAGQueryDashboard:
                             import base64
                             visualizations['learning_cycles_img'] = base64.b64encode(f.read()).decode('utf-8')
 
+                    param_adaptations_path = None # FIXME param_adaptations_path is not set anywhere. 
                     if os.path.exists(param_adaptations_path):
                         with open(param_adaptations_path, 'rb') as f:
                             import base64
@@ -8164,7 +7023,7 @@ class RAGQueryDashboard:
         """
         # Method body will be restored by the next edit
 
-    def visualize_learning_metrics(self, output_file=None, interactive=True, **kwargs):
+    def visualize_learning_metrics(self, output_file: Optional[str] = None, interactive: bool = True, **kwargs: Any) -> Any:
         """
         Visualize statistical learning metrics from the optimizer.
 
@@ -8249,6 +7108,14 @@ class RAGQueryDashboard:
                     plt.savefig(output_file, dpi=100, bbox_inches='tight')
 
                 return fig
+
+    def _create_static_performance_dashboard(self, 
+        title: str, 
+        processing_chart: str, 
+        latency_chart: str,
+        throughput_chart: str,
+        complexity_chart: str 
+        ):
         """
         Create a static HTML dashboard from image files.
 
@@ -8263,7 +7130,7 @@ class RAGQueryDashboard:
             str: HTML content for the dashboard
         """
         # Convert image paths to relative paths for the HTML
-        def get_relative_path(path):
+        def get_relative_path(path: str) -> str:
             return os.path.basename(path)
 
         processing_rel = get_relative_path(processing_chart)
@@ -8491,7 +7358,7 @@ class RAGQueryDashboard:
             return None
 
 
-def create_integrated_monitoring_system(dashboard_dir: str = None):
+def create_integrated_monitoring_system(dashboard_dir: Optional[str] = None) -> Tuple[Any, Any, QueryMetricsCollector, 'RAGQueryDashboard']:
     """
     Create an integrated monitoring system with audit logging and query metrics.
 
@@ -8557,7 +7424,7 @@ class OptimizerLearningMetricsCollector:
     the optimizer's learning behavior and performance improvements over time.
     """
 
-    def __init__(self, metrics_dir=None, max_history_size=1000):
+    def __init__(self, metrics_dir: Optional[str] = None, max_history_size: int = 1000) -> None:
         """
         Initialize the learning metrics collector.
 
@@ -8584,7 +7451,7 @@ class OptimizerLearningMetricsCollector:
         self.total_queries_analyzed = 0
         self.last_learning_cycle_time = None
 
-    def record_learning_cycle(self, cycle_data):
+    def record_learning_cycle(self, cycle_data: Dict[str, Any]) -> None:
         """
         Record a completed learning cycle.
 
@@ -8620,7 +7487,7 @@ class OptimizerLearningMetricsCollector:
             if self.metrics_dir:
                 self._save_metrics_to_disk('learning_cycles.json', self.learning_cycles)
 
-    def record_parameter_adaptation(self, param_name, old_value, new_value, timestamp=None):
+    def record_parameter_adaptation(self, param_name: str, old_value: Any, new_value: Any, timestamp: Optional[datetime.datetime] = None) -> None:
         """
         Record a parameter adaptation from learning.
 
@@ -8658,7 +7525,7 @@ class OptimizerLearningMetricsCollector:
             if self.metrics_dir:
                 self._save_metrics_to_disk('parameter_adaptations.json', self.parameter_adaptations)
 
-    def record_strategy_effectiveness(self, strategy_name, success, execution_time):
+    def record_strategy_effectiveness(self, strategy_name: str, success: bool, execution_time: float) -> None:
         """
         Record effectiveness of an optimization strategy.
 
@@ -8701,7 +7568,7 @@ class OptimizerLearningMetricsCollector:
             if self.metrics_dir:
                 self._save_metrics_to_disk('strategy_effectiveness.json', self.strategy_effectiveness)
 
-    def record_query_pattern(self, pattern):
+    def record_query_pattern(self, pattern: Dict[str, Any]) -> None:
         """
         Record a recognized query pattern.
 
@@ -8728,7 +7595,7 @@ class OptimizerLearningMetricsCollector:
             if self.metrics_dir:
                 self._save_metrics_to_disk('query_patterns.json', self.pattern_recognition)
 
-    def get_learning_metrics(self):
+    def get_learning_metrics(self) -> Dict[str, Any]:
         """
         Get aggregated learning metrics.
 
@@ -8746,7 +7613,7 @@ class OptimizerLearningMetricsCollector:
                 'tracked_parameters': len(self.parameter_adaptations)
             }
 
-    def get_parameter_history(self, param_name=None, limit=None):
+    def get_parameter_history(self, param_name: Optional[str] = None, limit: Optional[int] = None) -> Dict[str, Any]:
         """
         Get parameter adaptation history.
 
@@ -8773,7 +7640,7 @@ class OptimizerLearningMetricsCollector:
                 return self.parameter_adaptations
             return {}
 
-    def get_strategy_metrics(self, strategy_name=None):
+    def get_strategy_metrics(self, strategy_name: Optional[str] = None) -> Dict[str, Any]:
         """
         Get metrics for optimization strategies.
 
@@ -8788,7 +7655,7 @@ class OptimizerLearningMetricsCollector:
                 return {strategy_name: self.strategy_effectiveness[strategy_name]}
             return self.strategy_effectiveness
 
-    def get_top_query_patterns(self, top_n=10):
+    def get_top_query_patterns(self, top_n: int = 10) -> List[Tuple[str, Dict[str, Any]]]:
         """
         Get the most common query patterns.
 
@@ -8818,7 +7685,7 @@ class OptimizerLearningMetricsCollector:
                 for key, data in sorted_patterns[:top_n]
             ]
 
-    def visualize_learning_cycles(self, output_file=None, show_plot=True, figsize=None):
+    def visualize_learning_cycles(self, output_file: Optional[str] = None, show_plot: bool = True, figsize: Optional[Tuple[int, int]] = None) -> Optional[Any]:
         """
         Visualize learning cycles over time.
 
@@ -8974,7 +7841,7 @@ class OptimizerLearningMetricsCollector:
 
         return fig
 
-    def visualize_strategy_effectiveness(self, output_file=None, show_plot=True, figsize=None):
+    def visualize_strategy_effectiveness(self, output_file: Optional[str] = None, show_plot: bool = True, figsize: Optional[Tuple[int, int]] = None) -> Optional[Any]:
         """
         Visualize the effectiveness of different optimization strategies.
 
@@ -9048,7 +7915,7 @@ class OptimizerLearningMetricsCollector:
 
         return fig
 
-    def visualize_query_patterns(self, output_file=None, top_n=5, show_plot=True, figsize=None):
+    def visualize_query_patterns(self, output_file: Optional[str] = None, top_n: int = 5, show_plot: bool = True, figsize: Optional[Tuple[int, int]] = None) -> Optional[Any]:
         """
         Visualize the distribution of query patterns recognized by the optimizer.
 
@@ -9296,7 +8163,7 @@ class OptimizerLearningMetricsCollector:
 
         return output_file
 
-    def _save_metrics_to_disk(self, filename, data):
+    def _save_metrics_to_disk(self, filename: str, data: Dict[str, Any]) -> None:
         """Save metrics data to disk in JSON format."""
         try:
             filepath = os.path.join(self.metrics_dir, filename)
@@ -9322,7 +8189,10 @@ class OptimizerLearningMetricsCollector:
         else:
             return obj
 
-    def _calculate_delta(self, old_value, new_value):
+    def _calculate_delta(self, 
+        old_value: int | float | list | np.ndarray, 
+        new_value: int | float | list | np.ndarray
+        ):
         """Calculate delta between old and new values, handling different types."""
         try:
             if isinstance(old_value, (int, float)) and isinstance(new_value, (int, float)):
@@ -9338,7 +8208,7 @@ class OptimizerLearningMetricsCollector:
         except:
             return None
 
-    def _create_pattern_key(self, pattern):
+    def _create_pattern_key(self, pattern: Dict[str, Any]) -> str:
         """Create a stable string key from a pattern dictionary."""
         try:
             # Sort the dictionary items to create a stable representation
@@ -9357,7 +8227,7 @@ class OptimizerLearningMetricsCollector:
 ENHANCED_VIS_AVAILABLE = True
 
 
-def create_learning_metrics_visualizations(output_dir=None, theme="light"):
+def create_learning_metrics_visualizations(output_dir: str = None, theme: str = "light"):
     """
     Create example visualizations for RAG query optimizer learning metrics.
 

@@ -181,7 +181,7 @@ class IntegrationValidator:
             # Test validation scripts
             try:
                 import validate_fastapi
-                import test_fastapi_service
+                import archive.validation._test_fastapi_service as _test_fastapi_service
                 logger.info("  ✅ Testing scripts available")
             except ImportError as e:
                 logger.warning(f"  ⚠️ Testing scripts: {e}")

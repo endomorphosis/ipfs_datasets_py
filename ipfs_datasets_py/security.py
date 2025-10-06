@@ -92,7 +92,103 @@ ACCESS_LEVELS = ["read", "write", "admin"]
 
 @dataclass
 class SecurityConfig:
-    """Configuration for security features."""
+    """
+    Configuration for Security and Governance Features
+
+    The SecurityConfig dataclass provides comprehensive configuration options for the
+    IPFS Datasets security and governance system. It controls all aspects of security
+    functionality including encryption, authentication, access control, audit logging,
+    data provenance tracking, and UCAN (User Controlled Authorization Networks) integration.
+    This configuration enables fine-tuned control over security policies and operational
+    parameters for different deployment scenarios.
+
+    Key Configuration Areas:
+    - Security enablement and core directory settings
+    - Encryption algorithms and cryptographic parameters
+    - Authentication and access control requirements
+    - Audit logging and provenance tracking settings
+    - System keyring integration for secure credential storage
+    - UCAN capability-based authorization system
+    - Default time-to-live settings for capabilities
+
+    Attributes:
+        enabled (bool): Master switch for all security features. When False, security
+                       checks are bypassed and data is processed without encryption
+                       or access control. Defaults to True.
+        security_dir (str): Filesystem directory for storing security-related files
+                           including user credentials, encryption keys, policies,
+                           and audit logs. Defaults to "~/.ipfs_datasets/security".
+        encryption_algorithm (str): Default encryption algorithm for data protection.
+                                   Supported values: "AES-128", "AES-192", "AES-256".
+                                   Affects key generation and encryption operations.
+                                   Defaults to "AES-256".
+        kdf_iterations (int): Number of iterations for PBKDF2 key derivation function.
+                             Higher values increase security but require more CPU time.
+                             Recommended minimum: 100,000. Defaults to 100,000.
+        pbkdf2_hash (str): Hash algorithm for PBKDF2 password-based key derivation.
+                          Supported values: "SHA-256", "SHA-384", "SHA-512".
+                          Defaults to "SHA-256".
+        require_authentication (bool): Whether to enforce user authentication for
+                                      all operations. When True, users must log in
+                                      before accessing any functionality. Defaults to False.
+        log_all_access (bool): Whether to log all data access operations for audit
+                              purposes. Creates comprehensive audit trails but may
+                              impact performance. Defaults to True.
+        track_provenance (bool): Whether to enable detailed data provenance tracking.
+                               Records data lineage, transformations, and access
+                               history for governance and compliance. Defaults to True.
+        audit_log_path (Optional[str]): File path for centralized audit logging.
+                                       If None, audit events are logged through
+                                       the standard logging system. Defaults to None.
+        use_system_keyring (bool): Whether to use the system keyring for secure
+                                  credential storage. Requires keyring package.
+                                  Provides better security than file-based storage.
+                                  Defaults to KEYRING_AVAILABLE.
+        use_ucan (bool): Whether to enable UCAN capability-based authorization.
+                        Provides fine-grained, delegatable access control using
+                        decentralized identifiers and cryptographic capabilities.
+                        Defaults to UCAN_AVAILABLE.
+        default_capability_ttl (int): Default time-to-live in seconds for UCAN
+                                     capabilities. Capabilities expire after this
+                                     duration unless explicitly renewed.
+                                     Defaults to 3600 (1 hour).
+
+    Usage Example:
+        # Basic security configuration
+        config = SecurityConfig(
+            enabled=True,
+            encryption_algorithm="AES-256",
+            require_authentication=True,
+            log_all_access=True
+        )
+        
+        # High-security configuration
+        config = SecurityConfig(
+            enabled=True,
+            encryption_algorithm="AES-256",
+            kdf_iterations=200000,
+            require_authentication=True,
+            log_all_access=True,
+            track_provenance=True,
+            use_system_keyring=True,
+            use_ucan=True,
+            default_capability_ttl=1800  # 30 minutes
+        )
+        
+        # Development configuration
+        config = SecurityConfig(
+            enabled=False,  # Disable security for development
+            log_all_access=False,
+            track_provenance=False
+        )
+
+    Notes:
+        - Configuration changes require SecurityManager reinitialization
+        - Security directory must be writable by the application
+        - Higher kdf_iterations improve security but impact performance
+        - System keyring integration depends on platform support
+        - UCAN features require the ipfs_datasets_py.ucan module
+    """
     enabled: bool = True
     security_dir: str = DEFAULT_SECURITY_DIR
     encryption_algorithm: str = DEFAULT_ENCRYPTION_ALGORITHM
@@ -109,7 +205,99 @@ class SecurityConfig:
 
 @dataclass
 class UserCredentials:
-    """User credentials and permissions."""
+    """
+    User Credentials and Authorization Information
+
+    The UserCredentials dataclass stores comprehensive authentication and authorization
+    information for users within the IPFS Datasets security system. It maintains secure
+    password hashing, access levels, permissions, group memberships, and audit trail
+    information for each user account. This class supports both simple role-based
+    access control and fine-grained permission systems.
+
+    Security Features:
+    - Secure password hashing using PBKDF2 with configurable iterations
+    - Salt-based password storage to prevent rainbow table attacks
+    - Hierarchical access levels with inheritance (read < write < admin)
+    - Fine-grained resource-specific permissions
+    - Group-based access control for scalable permission management
+    - Comprehensive audit trail with creation and access timestamps
+
+    Attributes:
+        username (str): Unique identifier for the user account. Must be unique
+                       within the security system. Used for authentication
+                       and authorization lookups.
+        password_hash (str): Secure hash of the user's password generated using
+                            PBKDF2 with the associated salt. Never stores
+                            plaintext passwords. Base64-encoded hash value.
+        salt (str): Cryptographic salt used for password hashing. Randomly
+                   generated during user creation to prevent rainbow table
+                   attacks. Base64-encoded salt value.
+        access_level (str): Primary access level determining broad permissions.
+                           Valid values: "read", "write", "admin".
+                           - "read": Can view and retrieve data
+                           - "write": Can modify and create data
+                           - "admin": Full system administration rights
+                           Defaults to "read".
+        created_at (str): ISO 8601 timestamp when the user account was created.
+                         Used for audit purposes and account lifecycle management.
+                         Automatically set during user creation.
+        last_login (Optional[str]): ISO 8601 timestamp of the user's last
+                                   successful authentication. None if user has
+                                   never logged in. Updated during authentication.
+        permissions (Dict[str, List[str]]): Fine-grained permissions mapping
+                                           resource types to allowed actions.
+                                           Format: {"resource_type": ["action1", "action2"]}
+                                           Example: {"datasets": ["read", "write"],
+                                                    "models": ["read"]}
+        groups (List[str]): List of group names the user belongs to.
+                           Groups provide scalable permission management
+                           by allowing batch assignment of permissions
+                           to multiple users.
+
+    Access Level Hierarchy:
+        - "read": Basic data access and retrieval operations
+        - "write": Includes "read" plus data modification and creation
+        - "admin": Includes "write" plus user management and system configuration
+
+    Usage Example:
+        # Create user with basic read access
+        user = UserCredentials(
+            username="data_analyst",
+            password_hash="hashed_password_value",
+            salt="random_salt_value",
+            access_level="read"
+        )
+        
+        # Create user with specific permissions and group membership
+        user = UserCredentials(
+            username="project_lead",
+            password_hash="hashed_password_value",
+            salt="random_salt_value",
+            access_level="write",
+            permissions={
+                "datasets": ["read", "write", "delete"],
+                "models": ["read", "write"],
+                "indices": ["read"]
+            },
+            groups=["project_team", "data_scientists"]
+        )
+
+    Security Considerations:
+        - Password hashes are generated using PBKDF2 with configurable iterations
+        - Salts are unique per user to prevent rainbow table attacks
+        - Plaintext passwords are never stored or logged
+        - Access levels provide defense in depth with permission inheritance
+        - Group memberships enable scalable permission management
+        - Audit timestamps support compliance and security monitoring
+
+    Notes:
+        - Username must be unique within the security system
+        - Password hash and salt are generated by SecurityManager.create_user()
+        - Access levels are hierarchical: admin > write > read
+        - Permissions override access levels for specific resources
+        - Group permissions are combined with individual permissions
+        - Timestamps are stored in ISO 8601 format for consistency
+    """
     username: str
     # Password hash is stored as a secure hash, not plaintext
     password_hash: str
@@ -123,7 +311,111 @@ class UserCredentials:
 
 @dataclass
 class EncryptionKey:
-    """Encryption key with metadata."""
+    """
+    Encryption Key with Comprehensive Metadata and UCAN Integration
+
+    The EncryptionKey dataclass represents a cryptographic key used for data encryption
+    and decryption operations within the IPFS Datasets security system. It includes
+    comprehensive metadata for key management, lifecycle tracking, and integration
+    with UCAN (User Controlled Authorization Networks) for capability-based access control.
+    This class supports various encryption algorithms and provides secure key storage
+    with expiration and context-aware management.
+
+    Key Management Features:
+    - Support for multiple encryption algorithms (AES-128, AES-192, AES-256)
+    - Automatic key lifecycle management with creation and expiration tracking
+    - Context-aware key usage for different data types and scenarios
+    - UCAN integration for decentralized capability-based authorization
+    - Secure key material storage with proper metadata association
+
+    Attributes:
+        key_id (str): Unique identifier for the encryption key. Generated as a
+                     UUID during key creation. Used for key lookup and reference
+                     in encryption/decryption operations and UCAN capabilities.
+        algorithm (str): Encryption algorithm associated with this key.
+                        Supported values: "AES-128", "AES-192", "AES-256".
+                        Determines key size and encryption parameters.
+                        Must match KEY_SIZES configuration.
+        key_material (bytes): Raw cryptographic key material used for encryption
+                             and decryption operations. Size determined by algorithm:
+                             - AES-128: 16 bytes (128 bits)
+                             - AES-192: 24 bytes (192 bits)
+                             - AES-256: 32 bytes (256 bits)
+                             Generated using cryptographically secure random sources.
+        created_at (str): ISO 8601 timestamp when the key was generated.
+                         Used for key lifecycle management, audit trails,
+                         and determining key age for rotation policies.
+                         Automatically set during key generation.
+        expires_at (Optional[str]): ISO 8601 timestamp when the key expires.
+                                   Keys past expiration should not be used
+                                   for new encryption operations but may be
+                                   needed for decrypting existing data.
+                                   None indicates no expiration.
+        context (Dict[str, Any]): Additional context information about the key's
+                                 intended use, restrictions, and metadata.
+                                 Common context fields:
+                                 - "purpose": Intended use ("data", "communication", "backup")
+                                 - "data_type": Type of data to encrypt ("dataset", "model", "index")
+                                 - "owner": Key owner or responsible party
+                                 - "rotation_policy": Key rotation requirements
+                                 - "compliance": Regulatory compliance requirements
+        ucan_did (Optional[str]): Decentralized Identifier (DID) associated with
+                                 this key for UCAN capability-based authorization.
+                                 When present, enables fine-grained access control
+                                 through cryptographic capabilities that can be
+                                 delegated, revoked, and audited.
+
+    UCAN Integration:
+        When ucan_did is present, the key participates in UCAN-based access control:
+        - DID represents the key's identity in the capability system
+        - Capabilities can be granted for encrypt, decrypt, delegate, revoke actions
+        - Delegation enables secure sharing of key access without key sharing
+        - Revocation provides immediate capability invalidation
+        - Audit trails track all capability operations
+
+    Usage Example:
+        # Basic encryption key
+        key = EncryptionKey(
+            key_id="550e8400-e29b-41d4-a716-446655440000",
+            algorithm="AES-256",
+            key_material=os.urandom(32),  # 256 bits for AES-256
+            context={
+                "purpose": "dataset_encryption",
+                "data_type": "research_data",
+                "owner": "data_team"
+            }
+        )
+        
+        # Key with expiration and UCAN DID
+        key = EncryptionKey(
+            key_id="550e8400-e29b-41d4-a716-446655440001",
+            algorithm="AES-256",
+            key_material=os.urandom(32),
+            expires_at="2025-12-31T23:59:59Z",
+            context={
+                "purpose": "temporary_encryption",
+                "rotation_policy": "monthly",
+                "compliance": "GDPR"
+            },
+            ucan_did="did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        )
+
+    Security Considerations:
+        - Key material should be generated using cryptographically secure random sources
+        - Keys should be stored securely and never logged in plaintext
+        - Expired keys should be handled according to data retention policies
+        - UCAN DIDs provide additional access control beyond key possession
+        - Context information helps enforce proper key usage policies
+        - Key rotation should be performed according to security best practices
+
+    Notes:
+        - Key IDs are globally unique within the security system
+        - Algorithm determines key size and encryption parameters
+        - Key material is the actual cryptographic key bytes
+        - Context provides flexible metadata for key management policies
+        - UCAN integration enables decentralized access control
+        - Expiration dates are advisory and enforced by policy
+    """
     key_id: str
     algorithm: str
     key_material: bytes
@@ -135,7 +427,125 @@ class EncryptionKey:
 
 @dataclass
 class ResourcePolicy:
-    """Access policy for a resource."""
+    """
+    Access Control Policy for Protected Resources
+
+    The ResourcePolicy dataclass defines comprehensive access control policies for
+    protected resources within the IPFS Datasets security system. It implements
+    fine-grained, multi-level authorization that supports both user-based and
+    group-based access controls with separate permissions for different operation
+    types. This policy system enables secure resource sharing, delegation, and
+    audit compliance across the distributed data management platform.
+
+    Access Control Model:
+    - Resource-centric policy definition with unique resource identification
+    - Multi-tier access levels: read, write, admin with escalating permissions
+    - User-based and group-based access control lists for scalable management
+    - Owner-based access control with administrative override capabilities
+    - Temporal tracking for policy creation and modification audit trails
+
+    Attributes:
+        resource_id (str): Unique identifier for the protected resource.
+                          This ID must be unique within the resource type
+                          and is used for policy lookup during access checks.
+                          Examples: dataset IDs, model IDs, file hashes.
+        resource_type (str): Classification of the resource being protected.
+                            Common types: "dataset", "model", "index", "embedding",
+                            "file", "directory", "encryption_key", "capability".
+                            Used for type-specific access control logic.
+        owner (str): Username of the resource owner who has full administrative
+                    rights regardless of other policy settings. The owner can
+                    modify policies, grant/revoke access, and perform any
+                    operation on the resource. Typically set to the creator.
+        allowed_users (List[str]): List of usernames explicitly granted access
+                                  to this resource. Users in this list are
+                                  subject to the read_access, write_access,
+                                  and admin_access restrictions.
+        allowed_groups (List[str]): List of group names whose members are granted
+                                   access to this resource. Group membership
+                                   is resolved dynamically during access checks.
+                                   Enables scalable permission management.
+        read_access (List[str]): List of usernames and/or group names granted
+                                read-only access to the resource. Read access
+                                typically includes viewing, downloading, and
+                                basic querying operations.
+        write_access (List[str]): List of usernames and/or group names granted
+                                 write access to the resource. Write access
+                                 includes read permissions plus modification,
+                                 updating, and content manipulation operations.
+        admin_access (List[str]): List of usernames and/or group names granted
+                                 administrative access to the resource. Admin
+                                 access includes write permissions plus policy
+                                 modification, access delegation, and deletion.
+        created_at (str): ISO 8601 timestamp when the policy was initially created.
+                         Used for audit trails, policy lifecycle management,
+                         and compliance reporting. Automatically set during
+                         policy creation.
+        modified_at (str): ISO 8601 timestamp when the policy was last modified.
+                          Updated whenever any policy attribute is changed.
+                          Used for change tracking and audit compliance.
+
+    Access Level Hierarchy:
+        - read_access: Basic resource consumption operations
+        - write_access: Includes read_access plus content modification
+        - admin_access: Includes write_access plus policy administration
+        - owner: Implicit admin_access plus ownership privileges
+
+    Permission Resolution:
+        Access is granted if any of the following conditions are met:
+        1. User is the resource owner (full admin access)
+        2. User is in allowed_users AND in appropriate access list
+        3. User belongs to a group in allowed_groups AND group in access list
+        4. User has sufficient access level in their UserCredentials
+
+    Usage Example:
+        # Basic dataset policy with mixed user and group access
+        policy = ResourcePolicy(
+            resource_id="dataset_research_2024",
+            resource_type="dataset",
+            owner="lead_researcher",
+            allowed_users=["analyst1", "analyst2", "intern1"],
+            allowed_groups=["research_team", "data_scientists"],
+            read_access=["analyst1", "analyst2", "research_team"],
+            write_access=["analyst1", "data_scientists"],
+            admin_access=["lead_researcher"]
+        )
+        
+        # Restrictive model policy with limited access
+        policy = ResourcePolicy(
+            resource_id="model_proprietary_v2",
+            resource_type="model",
+            owner="model_owner",
+            allowed_users=["model_owner", "deployment_admin"],
+            allowed_groups=[],
+            read_access=["deployment_admin"],
+            write_access=["model_owner"],
+            admin_access=["model_owner"]
+        )
+
+    Access Control Patterns:
+        - Public Read: Include "*" in read_access for unrestricted reading
+        - Team Collaboration: Use groups for scalable team-based access
+        - Hierarchical Access: Leverage access level inheritance
+        - Owner Override: Owner always has full access regardless of lists
+        - Temporal Policies: Use created_at/modified_at for time-based policies
+
+    Security Considerations:
+        - Owner privileges cannot be restricted by access lists
+        - Group membership is resolved dynamically during access checks
+        - Access lists are additive (any matching condition grants access)
+        - Policy modifications are tracked with timestamps for audit
+        - Empty access lists deny access to all users except owner
+        - Wildcard access ("*") should be used cautiously
+
+    Notes:
+        - Resource IDs must be unique within their resource type
+        - Owner can always modify policies regardless of admin_access lists
+        - Group access requires active group membership at access time
+        - Access lists support both individual users and groups
+        - Policy timestamps support audit and compliance requirements
+        - Resource types enable type-specific access control logic
+    """
     resource_id: str
     resource_type: str
     owner: str
@@ -150,7 +560,170 @@ class ResourcePolicy:
 
 @dataclass
 class ProcessStep:
-    """A single processing step in a data transformation pipeline."""
+    """
+    Individual Data Transformation Step in Processing Pipeline
+
+    The ProcessStep dataclass represents a single, atomic operation within a data
+    transformation pipeline, providing comprehensive tracking of data processing
+    activities for governance, reproducibility, and audit purposes. Each step
+    captures detailed information about the operation performed, execution context,
+    performance metrics, and relationships to input and output data items.
+    This granular tracking enables complete reconstruction of data lineage and
+    supports compliance with data governance requirements.
+
+    Pipeline Integration Features:
+    - Atomic operation tracking with unique step identification
+    - Input/output data relationship mapping for lineage construction
+    - Execution environment capture for reproducibility requirements
+    - Performance metrics collection for optimization and monitoring
+    - Error handling and status tracking for pipeline reliability
+    - Operator attribution for accountability and audit trails
+
+    Attributes:
+        step_id (str): Unique identifier for this processing step within the
+                      pipeline or system. Used for step lookup, dependency
+                      tracking, and lineage graph construction. Typically
+                      a UUID or hierarchical identifier.
+        operation (str): Type or category of the operation performed in this step.
+                        Common operation types:
+                        - "filter": Data filtering and selection operations
+                        - "transform": Data structure or format transformations
+                        - "join": Data combination and merging operations
+                        - "aggregate": Data summarization and aggregation
+                        - "validate": Data quality validation and checking
+                        - "extract": Data extraction from sources
+                        - "load": Data loading and persistence operations
+        description (str): Human-readable description of what this step accomplishes.
+                          Should be clear enough for non-technical stakeholders
+                          to understand the step's purpose and impact on the data.
+                          Used in documentation and audit reports.
+        tool (str): Name of the tool, library, or system used to execute this step.
+                   Examples: "duckdb", "arrow", "pandas", "spark", "custom",
+                   "manual". Used for dependency tracking and reproducibility
+                   requirements.
+        parameters (Dict[str, Any]): Dictionary of parameters and configuration
+                                   used for this operation. Should include all
+                                   settings necessary to reproduce the operation.
+                                   Keys should be parameter names, values can be
+                                   any JSON-serializable type.
+        start_time (str): ISO 8601 timestamp when the step execution began.
+                         Used for performance analysis, scheduling optimization,
+                         and audit trail construction. Automatically set when
+                         step execution starts.
+        end_time (Optional[str]): ISO 8601 timestamp when the step execution
+                                 completed (successfully or with failure).
+                                 None if the step is still running.
+                                 Used for duration calculation and monitoring.
+        status (str): Current execution status of the step.
+                     Valid values:
+                     - "running": Step is currently executing
+                     - "completed": Step finished successfully
+                     - "failed": Step encountered an error and failed
+                     - "cancelled": Step was cancelled before completion
+                     - "pending": Step is queued but not yet started
+                     Defaults to "running".
+        error (Optional[str]): Error message if the step failed (status="failed").
+                              Should include sufficient detail for debugging
+                              and error resolution. None for successful steps.
+        inputs (List[str]): List of data identifiers that serve as inputs to
+                           this step. These IDs reference other data items
+                           in the system and are used to construct lineage
+                           graphs and dependency tracking.
+        outputs (List[str]): List of data identifiers produced by this step.
+                            These IDs reference the data items created or
+                            modified by this operation. Used for forward
+                            lineage tracking and impact analysis.
+        metrics (Dict[str, Any]): Performance and execution metrics for this step.
+                                 Common metrics include:
+                                 - "duration_seconds": Step execution time
+                                 - "memory_peak_mb": Peak memory usage
+                                 - "cpu_percent": CPU utilization
+                                 - "records_processed": Number of data records
+                                 - "bytes_processed": Data volume processed
+                                 - "error_rate": Error rate for the operation
+        environment (Dict[str, Any]): Execution environment details for
+                                     reproducibility and debugging.
+                                     Common environment information:
+                                     - "hostname": Execution host
+                                     - "os_version": Operating system version
+                                     - "python_version": Python interpreter version
+                                     - "library_versions": Dependency versions
+                                     - "config_hash": Configuration checksum
+        operator (Optional[str]): User or system component that executed this step.
+                                 For automated steps, this might be "system" or
+                                 a service name. For manual steps, this should be
+                                 the username. Used for accountability and audit.
+
+    Step Lifecycle:
+        1. **Pending**: Step is defined but not yet started
+        2. **Running**: Step is actively executing (start_time set)
+        3. **Completed/Failed**: Step finished (end_time set, status updated)
+        4. **Metrics Collection**: Performance metrics are recorded
+        5. **Lineage Integration**: Step is linked into the lineage graph
+
+    Usage Example:
+        # Data filtering step
+        filter_step = ProcessStep(
+            step_id="step_001_filter",
+            operation="filter",
+            description="Remove records with missing critical fields",
+            tool="pandas",
+            parameters={
+                "filter_condition": "not null",
+                "columns": ["id", "timestamp", "value"],
+                "drop_na": True
+            },
+            start_time="2025-09-11T10:30:00Z",
+            inputs=["raw_data_001"],
+            operator="data_engineer_alice"
+        )
+        
+        # Completed transformation step with metrics
+        transform_step = ProcessStep(
+            step_id="step_002_transform",
+            operation="transform",
+            description="Convert timestamps to UTC and normalize values",
+            tool="arrow",
+            parameters={
+                "timezone_source": "US/Eastern",
+                "timezone_target": "UTC",
+                "normalization_method": "z_score"
+            },
+            start_time="2025-09-11T10:35:00Z",
+            end_time="2025-09-11T10:37:30Z",
+            status="completed",
+            inputs=["filtered_data_001"],
+            outputs=["normalized_data_001"],
+            metrics={
+                "duration_seconds": 150.5,
+                "records_processed": 1000000,
+                "memory_peak_mb": 512,
+                "cpu_percent": 85.2
+            },
+            environment={
+                "hostname": "processing-node-01",
+                "python_version": "3.11.5",
+                "arrow_version": "13.0.0"
+            },
+            operator="automated_pipeline"
+        )
+
+    Governance Integration:
+        - Steps are automatically linked into data provenance records
+        - Execution details support compliance audit requirements
+        - Parameter tracking enables operation reproducibility
+        - Error tracking supports quality assurance processes
+        - Metrics collection enables performance optimization
+        - Operator attribution supports accountability requirements
+
+    Notes:
+        - Step IDs should be unique within the processing context
+        - Parameters should include all settings needed for reproduction
+        - Status transitions should be atomic and properly tracked
+        - Metrics collection should not significantly impact performance
+        - Environment capture supports containerized execution contexts
+        - Input/output relationships form the basis of lineage graphs
+    """
     step_id: str
     operation: str  # Type of operation (e.g., "filter", "transform", "join")
     description: str  # Human-readable description
@@ -168,7 +741,171 @@ class ProcessStep:
 
 @dataclass
 class DataLineage:
-    """Detailed lineage information tracking data through its lifecycle."""
+    """
+    Comprehensive Data Lineage Tracking Through Complete Lifecycle
+
+    The DataLineage dataclass captures detailed information about a data item's
+    complete lifecycle journey, from its original source through all transformations,
+    derivations, and relationships with other data items. This comprehensive lineage
+    tracking enables data governance, impact analysis, regulatory compliance, and
+    quality assurance by maintaining a complete audit trail of data evolution
+    and relationships within the distributed data ecosystem.
+
+    Lineage Tracking Capabilities:
+    - Source system identification and extraction methodology documentation
+    - Complete transformation history with step-by-step processing records
+    - Bidirectional relationship mapping between related data items
+    - Graph-based lineage representation for complex dependency analysis
+    - Version control integration for change tracking and rollback capabilities
+    - Quality metrics tracking throughout the data lifecycle
+
+    Attributes:
+        source_system (str): Identifier of the original system or location where
+                           the data originated. Examples: "production_db",
+                           "external_api", "manual_upload", "sensor_network".
+                           Used for source attribution and impact analysis
+                           when source systems change.
+        source_type (str): Classification of the data source type to understand
+                          extraction patterns and reliability characteristics.
+                          Common types:
+                          - "database": Structured database systems
+                          - "file": File-based data sources
+                          - "api": RESTful or GraphQL APIs
+                          - "stream": Real-time data streams
+                          - "manual": Manually entered or uploaded data
+                          - "sensor": IoT or sensor-generated data
+        extraction_method (str): Detailed description of how the data was
+                               extracted from its source system.
+                               Examples: "full_table_export", "incremental_sync",
+                               "api_pagination", "manual_download", "stream_capture".
+                               Critical for understanding data completeness and
+                               potential extraction artifacts.
+        extraction_time (str): ISO 8601 timestamp when the data was extracted
+                              from its source system. This is distinct from
+                              creation_time as it represents when the data
+                              entered the managed ecosystem rather than when
+                              it was originally created.
+        transformations (List[str]): Ordered list of ProcessStep IDs that
+                                   represent all transformations applied to
+                                   this data item. Maintains the sequence of
+                                   operations for reproducibility and debugging.
+                                   Each ID references a ProcessStep object.
+        derived_datasets (List[str]): List of data item IDs that were created
+                                     or derived from this data item. Used for
+                                     forward impact analysis to understand
+                                     what downstream data might be affected
+                                     by changes to this item.
+        upstream_datasets (List[str]): List of data item IDs that this data
+                                      item was derived from or depends on.
+                                      Used for backward dependency analysis
+                                      and root cause investigation when
+                                      data quality issues are discovered.
+        lineage_graph (Dict[str, List[str]]): Graph representation of the
+                                             complete lineage relationships
+                                             where keys are data item IDs and
+                                             values are lists of directly
+                                             related data item IDs.
+                                             Enables efficient graph traversal
+                                             and relationship queries.
+        versioning (Dict[str, Any]): Version control information for tracking
+                                   data evolution and enabling rollback
+                                   capabilities. Common fields:
+                                   - "version": Current version identifier
+                                   - "previous_versions": List of prior versions
+                                   - "branching": Information about data branches
+                                   - "merge_history": Record of data merges
+                                   - "commit_hash": Git-style commit identifier
+        quality_metrics (Dict[str, Any]): Data quality metrics collected
+                                         throughout the data lifecycle.
+                                         Common metrics:
+                                         - "completeness": Percentage of non-null values
+                                         - "accuracy": Validation against known standards
+                                         - "consistency": Internal consistency checks
+                                         - "timeliness": Data freshness measurements
+                                         - "validity": Schema compliance metrics
+
+    Lineage Analysis Patterns:
+        - **Forward Impact**: Use derived_datasets to find downstream dependencies
+        - **Backward Tracing**: Use upstream_datasets to trace data origins
+        - **Transformation Analysis**: Use transformations for process debugging
+        - **Quality Tracking**: Use quality_metrics for data reliability assessment
+        - **Version Management**: Use versioning for change impact analysis
+
+    Usage Example:
+        # Simple linear lineage
+        lineage = DataLineage(
+            source_system="customer_database",
+            source_type="database",
+            extraction_method="incremental_sync",
+            extraction_time="2025-09-11T08:00:00Z",
+            transformations=["step_001_clean", "step_002_normalize"],
+            upstream_datasets=["raw_customer_data"],
+            derived_datasets=["customer_features", "customer_segments"],
+            quality_metrics={
+                "completeness": 0.98,
+                "accuracy": 0.95,
+                "timeliness_hours": 2.5
+            }
+        )
+        
+        # Complex lineage with versioning and graph
+        complex_lineage = DataLineage(
+            source_system="multi_source_etl",
+            source_type="api",
+            extraction_method="api_batch_processing",
+            extraction_time="2025-09-11T10:00:00Z",
+            transformations=[
+                "extract_001", "transform_002", "join_003", "aggregate_004"
+            ],
+            upstream_datasets=[
+                "sales_data", "customer_data", "product_catalog"
+            ],
+            derived_datasets=[
+                "monthly_reports", "dashboard_metrics", "ml_features"
+            ],
+            lineage_graph={
+                "sales_data": ["current_dataset"],
+                "customer_data": ["current_dataset"],
+                "current_dataset": ["monthly_reports", "dashboard_metrics"]
+            },
+            versioning={
+                "version": "v2.1.0",
+                "previous_versions": ["v2.0.0", "v1.9.5"],
+                "commit_hash": "abc123def456",
+                "branch": "production"
+            },
+            quality_metrics={
+                "completeness": 0.99,
+                "accuracy": 0.96,
+                "consistency": 0.94,
+                "schema_compliance": 1.0,
+                "freshness_minutes": 15
+            }
+        )
+
+    Graph Operations:
+        The lineage_graph enables efficient queries:
+        - Find all dependencies: traverse upstream relationships
+        - Impact analysis: traverse downstream relationships
+        - Shortest path: find connection between any two data items
+        - Cycle detection: identify circular dependencies
+        - Subgraph extraction: isolate specific lineage branches
+
+    Compliance and Governance:
+        - Regulatory compliance through complete audit trails
+        - Data sovereignty tracking via source_system attribution
+        - Quality assurance through metrics collection
+        - Impact assessment for change management
+        - Reproducibility through transformation tracking
+
+    Notes:
+        - Lineage graphs should be acyclic to prevent infinite loops
+        - Transformation order is critical for reproducibility
+        - Quality metrics should be collected consistently
+        - Version information supports data rollback scenarios
+        - Source attribution is essential for compliance requirements
+        - Graph representation enables efficient relationship queries
+    """
     source_system: str  # Original system/location the data came from
     source_type: str  # Type of source (e.g., "database", "file", "api")
     extraction_method: str  # How the data was extracted

@@ -8,7 +8,7 @@ import asyncio
 import re
 import time
 import networkx as nx
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
@@ -71,286 +71,541 @@ except ImportError as e:
     raise ImportError(f"Could into import the module's dependencies: {e}") 
 
 
+@pytest.fixture
+def test_constants():
+    """Provide common test constants to eliminate magic numbers and strings."""
+    return {
+        'DEFAULT_SIMILARITY_THRESHOLD': 0.8,
+        'DEFAULT_ENTITY_EXTRACTION_CONFIDENCE': 0.6,
+        'CUSTOM_SIMILARITY_THRESHOLD': 0.9,
+        'CUSTOM_ENTITY_EXTRACTION_CONFIDENCE': 0.7,
+        'HIGH_SIMILARITY_THRESHOLD': 0.95,
+        'HIGH_ENTITY_EXTRACTION_CONFIDENCE': 0.75,
+        'BOUNDARY_MIN_VALUE': 0.0,
+        'BOUNDARY_MAX_VALUE': 1.0,
+        'INVALID_LOW_VALUE': -0.1,
+        'INVALID_HIGH_SIMILARITY': 1.5,
+        'INVALID_HIGH_CONFIDENCE': 1.2,
+        'EMPTY_DICT': {},
+        'EMPTY_LIST': [],
+        'ZERO_LENGTH': 0,
+    }
+
+
+@pytest.fixture
+def default_parameters(test_constants):
+    """Fixture to provide default parameters."""
+    return {
+        "storage": None,
+        "similarity_threshold": test_constants['DEFAULT_SIMILARITY_THRESHOLD'],
+        "entity_extraction_confidence": test_constants['DEFAULT_ENTITY_EXTRACTION_CONFIDENCE']
+    }
+
+
+@pytest.fixture
+def custom_storage():
+    return AsyncMock(spec=IPLDStorage)
+
+@pytest.fixture
+def non_default_parameters(custom_storage, test_constants):
+    """Fixture to provide non-default parameters."""
+    return {
+        "storage": custom_storage,
+        "similarity_threshold": test_constants['CUSTOM_SIMILARITY_THRESHOLD'],
+        "entity_extraction_confidence": test_constants['CUSTOM_ENTITY_EXTRACTION_CONFIDENCE']
+    }
+
+@pytest.fixture
+def integrator_custom_storage(custom_storage):
+    """Fixture to provide a custom IPLDStorage instance."""
+    return GraphRAGIntegrator(storage=custom_storage)
+
+@pytest.fixture
+def integrator_custom_similarity(non_default_parameters):
+    """Fixture to provide a custom similarity_threshold value."""
+    return GraphRAGIntegrator(
+        similarity_threshold=non_default_parameters["similarity_threshold"]
+    )
+
+@pytest.fixture
+def integrator_custom_confidence(non_default_parameters):
+    """Fixture to provide a custom entity_extraction_confidence value."""
+    return GraphRAGIntegrator(
+        entity_extraction_confidence=non_default_parameters["entity_extraction_confidence"]
+    )
+
+@pytest.fixture
+def integrator_all_custom(custom_storage, non_default_parameters):
+    """Create a GraphRAGIntegrator instance with all custom parameters for testing."""
+    return GraphRAGIntegrator(
+        storage=custom_storage,
+        similarity_threshold=non_default_parameters["similarity_threshold"],
+        entity_extraction_confidence=non_default_parameters["entity_extraction_confidence"]
+    )
+
+
+@pytest.fixture
+def real_integrator():
+    """Create a GraphRAGIntegrator instance with default parameters for testing."""
+    return GraphRAGIntegrator()
+
+
+@pytest.fixture
+def integrator_with_custom_confidence(test_constants):
+    """Create a GraphRAGIntegrator instance with custom entity_extraction_confidence for testing."""
+    return GraphRAGIntegrator(
+        entity_extraction_confidence=test_constants['CUSTOM_ENTITY_EXTRACTION_CONFIDENCE']
+    )
+
+
+@pytest.fixture
+def integrator_with_all_high_custom_params(test_constants):
+    """Create a GraphRAGIntegrator instance with all high custom parameters for testing."""
+    custom_storage = Mock(spec=IPLDStorage)
+    return GraphRAGIntegrator(
+        storage=custom_storage,
+        similarity_threshold=test_constants['HIGH_SIMILARITY_THRESHOLD'],
+        entity_extraction_confidence=test_constants['HIGH_ENTITY_EXTRACTION_CONFIDENCE']
+    ), custom_storage
+
+
+@pytest.fixture
+def two_independent_integrators():
+    """Create two independent GraphRAGIntegrator instances for testing isolation."""
+    return GraphRAGIntegrator(), GraphRAGIntegrator()
+
 
 class TestGraphRAGIntegratorInit:
     """Test class for GraphRAGIntegrator.__init__ method."""
 
-    def test_init_with_default_parameters(self):
+    def test_init_default_storage_is_ipld_storage_instance(self, real_integrator):
+        """
+        GIVEN no storage parameter is provided to GraphRAGIntegrator constructor
+        WHEN a new GraphRAGIntegrator instance is created
+        THEN the storage should be an IPLDStorage instance
+        """
+        assert isinstance(real_integrator.storage, IPLDStorage)
+
+    @pytest.mark.parametrize("attribute", [
+        "similarity_threshold",
+        "entity_extraction_confidence"
+    ])
+    def test_init_default_parameters(self, real_integrator, default_parameters, attribute):
         """
         GIVEN no parameters are provided to GraphRAGIntegrator constructor
         WHEN a new GraphRAGIntegrator instance is created
-        THEN the instance should be initialized with default values:
-            - storage should be a new IPLDStorage instance
-            - similarity_threshold should be 0.8
-            - entity_extraction_confidence should be 0.6
-            - knowledge_graphs should be an empty dict
-            - global_entities should be an empty dict
-            - cross_document_relationships should be an empty list
-            - document_graphs should be an empty dict
-            - global_graph should be an empty NetworkX DiGraph
+        THEN the attribute should have the default value
         """
-        integrator = GraphRAGIntegrator()
-        
-        assert isinstance(integrator.storage, IPLDStorage)
-        assert integrator.similarity_threshold == 0.8
-        assert integrator.entity_extraction_confidence == 0.6
-        assert integrator.knowledge_graphs == {}
-        assert integrator.global_entities == {}
-        assert integrator.cross_document_relationships == []
-        assert integrator.document_graphs == {}
-        assert isinstance(integrator.global_graph, nx.DiGraph)
-        assert len(integrator.global_graph.nodes) == 0
-        assert len(integrator.global_graph.edges) == 0
+        expected_value = default_parameters[attribute]
+        actual_value = getattr(real_integrator, attribute)
+        assert actual_value == expected_value, \
+            f"Expected default {attribute} to be {expected_value}, but got {actual_value}"
 
-    def test_init_with_custom_storage(self):
+    @pytest.mark.parametrize("attribute,expected_value", [
+        ("knowledge_graphs", {}),
+        ("global_entities", {}),
+        ("cross_document_relationships", []),
+        ("document_graphs", {})
+    ])
+    def test_init_default_collections_empty(self, real_integrator, attribute, expected_value):
+        """
+        GIVEN no parameters are provided to GraphRAGIntegrator constructor
+        WHEN a new GraphRAGIntegrator instance is created
+        THEN the collection attributes should be empty
+        """
+        actual_value = getattr(real_integrator, attribute)
+        assert actual_value == expected_value, \
+            f"Expected default {attribute} to be {expected_value}, but got {actual_value}"
+
+    def test_init_default_global_graph_is_networkx_digraph(self, real_integrator):
+        """
+        GIVEN no parameters are provided to GraphRAGIntegrator constructor
+        WHEN a new GraphRAGIntegrator instance is created
+        THEN the global_graph should be a NetworkX DiGraph instance
+        """
+        assert isinstance(real_integrator.global_graph, nx.DiGraph)
+
+    @pytest.mark.parametrize("graph_property,expected_length", [
+        ("nodes", 0),
+        ("edges", 0)
+    ])
+    def test_init_default_global_graph_empty(self, real_integrator, graph_property, expected_length):
+        """
+        GIVEN no parameters are provided to GraphRAGIntegrator constructor
+        WHEN a new GraphRAGIntegrator instance is created
+        THEN the global_graph should have no nodes or edges
+        """
+        actual_length = len(getattr(real_integrator.global_graph, graph_property))
+        assert actual_length == expected_length, \
+            f"Expected global_graph.{graph_property} length to be {expected_length}, but got {actual_length}"
+
+    def test_init_with_custom_storage_uses_provided_storage(self, 
+        integrator_custom_storage, custom_storage
+    ):
         """
         GIVEN a custom IPLDStorage instance is provided
         WHEN GraphRAGIntegrator is initialized with that storage
         THEN the instance should use the provided storage object
-        AND other parameters should use default values
         """
-        custom_storage = Mock(spec=IPLDStorage)
-        integrator = GraphRAGIntegrator(storage=custom_storage)
-        
-        assert integrator.storage is custom_storage
-        assert integrator.similarity_threshold == 0.8
-        assert integrator.entity_extraction_confidence == 0.6
+        assert integrator_custom_storage.storage is custom_storage, \
+            f"Expected storage to be custom instance, but got {type(integrator_custom_storage.storage)}"
 
-    def test_init_with_custom_similarity_threshold(self):
+    def test_init_with_custom_storage_uses_default_similarity_threshold(self, 
+        integrator_custom_storage, default_parameters
+    ):
         """
-        GIVEN a custom similarity_threshold value (e.g., 0.9)
+        GIVEN a custom IPLDStorage instance is provided
+        WHEN GraphRAGIntegrator is initialized with that storage
+        THEN the similarity_threshold should use the default value
+        """
+        expected_threshold = default_parameters["similarity_threshold"]
+        assert integrator_custom_storage.similarity_threshold == expected_threshold, \
+            f"Expected similarity_threshold to be {expected_threshold}, but got {integrator_custom_storage.similarity_threshold}"
+
+    def test_init_with_custom_storage_uses_default_entity_extraction_confidence(self, 
+        integrator_custom_storage, default_parameters
+    ):
+        """
+        GIVEN a custom IPLDStorage instance is provided
+        WHEN GraphRAGIntegrator is initialized with that storage
+        THEN the entity_extraction_confidence should use the default value
+        """
+        expected_confidence = default_parameters["entity_extraction_confidence"]
+        assert integrator_custom_storage.entity_extraction_confidence == expected_confidence, \
+            f"Expected entity_extraction_confidence to be {expected_confidence}, but got {integrator_custom_storage.entity_extraction_confidence}"
+
+    def test_init_with_custom_similarity_threshold_stores_custom_value(self, 
+        integrator_custom_similarity, non_default_parameters
+    ):
+        """
+        GIVEN a custom similarity_threshold value
         WHEN GraphRAGIntegrator is initialized with that threshold
         THEN the instance should store the custom threshold value
-        AND other parameters should use default values
         """
-        integrator = GraphRAGIntegrator(similarity_threshold=0.9)
-        
-        assert integrator.similarity_threshold == 0.9
-        assert integrator.entity_extraction_confidence == 0.6
-        assert isinstance(integrator.storage, IPLDStorage)
+        expected_threshold = non_default_parameters['similarity_threshold']
+        assert integrator_custom_similarity.similarity_threshold == expected_threshold, \
+            f"Expected similarity_threshold to be {expected_threshold}, but got {integrator_custom_similarity.similarity_threshold}"
 
-    def test_init_with_custom_entity_extraction_confidence(self):
+
+    def test_init_with_custom_similarity_threshold_uses_default_confidence(self, 
+        integrator_custom_similarity, default_parameters
+    ):
         """
-        GIVEN a custom entity_extraction_confidence value (e.g., 0.7)
+        GIVEN a custom similarity_threshold value
+        WHEN GraphRAGIntegrator is initialized with that threshold
+        THEN the entity_extraction_confidence should use the default value
+        """
+        expected_confidence = default_parameters['entity_extraction_confidence']
+        assert integrator_custom_similarity.entity_extraction_confidence == expected_confidence, \
+            f"Expected entity_extraction_confidence to be {expected_confidence}, but got {integrator_custom_similarity.entity_extraction_confidence}"
+
+
+    def test_init_with_custom_similarity_threshold_creates_default_storage(self, 
+        integrator_custom_similarity
+    ):
+        """
+        GIVEN a custom similarity_threshold value
+        WHEN GraphRAGIntegrator is initialized with that threshold
+        THEN the storage should be a default IPLDStorage instance
+        """
+        assert isinstance(integrator_custom_similarity.storage, IPLDStorage), \
+            f"Expected storage to be IPLDStorage instance, but got {type(integrator_custom_similarity.storage)}"
+
+    def test_init_with_custom_entity_extraction_confidence_stores_custom_value(
+        self, integrator_with_custom_confidence, test_constants
+    ):
+        """
+        GIVEN a custom entity_extraction_confidence value
         WHEN GraphRAGIntegrator is initialized with that confidence
         THEN the instance should store the custom confidence value
-        AND other parameters should use default values
         """
-        integrator = GraphRAGIntegrator(entity_extraction_confidence=0.7)
-        
-        assert integrator.entity_extraction_confidence == 0.7
-        assert integrator.similarity_threshold == 0.8
-        assert isinstance(integrator.storage, IPLDStorage)
+        expected_confidence = test_constants['CUSTOM_ENTITY_EXTRACTION_CONFIDENCE']
+        assert integrator_with_custom_confidence.entity_extraction_confidence == expected_confidence, \
+            f"Expected entity_extraction_confidence to be {expected_confidence}, but got {integrator_with_custom_confidence.entity_extraction_confidence}"
 
-    def test_init_with_all_custom_parameters(self):
+    def test_init_with_custom_entity_extraction_confidence_uses_default_similarity(
+        self, integrator_with_custom_confidence, test_constants
+    ):
+        """
+        GIVEN a custom entity_extraction_confidence value
+        WHEN GraphRAGIntegrator is initialized with that confidence
+        THEN the similarity_threshold should use the default value
+        """
+        expected_similarity = test_constants['DEFAULT_SIMILARITY_THRESHOLD']
+        assert integrator_with_custom_confidence.similarity_threshold == expected_similarity, \
+            f"Expected similarity_threshold to be {expected_similarity}, but got {integrator_with_custom_confidence.similarity_threshold}"
+
+    def test_init_with_custom_entity_extraction_confidence_creates_default_storage(
+        self, integrator_with_custom_confidence
+    ):
+        """
+        GIVEN a custom entity_extraction_confidence value
+        WHEN GraphRAGIntegrator is initialized with that confidence
+        THEN the storage should be a default IPLDStorage instance
+        """
+        assert isinstance(integrator_with_custom_confidence.storage, IPLDStorage), \
+            f"Expected storage to be IPLDStorage instance, but got {type(integrator_with_custom_confidence.storage)}"
+
+    def test_init_with_all_custom_parameters_uses_custom_storage(self, integrator_with_all_high_custom_params):
         """
         GIVEN custom values for all parameters (storage, similarity_threshold, entity_extraction_confidence)
         WHEN GraphRAGIntegrator is initialized with these values
-        THEN the instance should use all provided custom values
-        AND all attributes should be properly initialized
+        THEN the instance should use the provided custom storage object
         """
-        custom_storage = Mock(spec=IPLDStorage)
-        integrator = GraphRAGIntegrator(
-            storage=custom_storage,
-            similarity_threshold=0.95,
-            entity_extraction_confidence=0.75
-        )
-        
-        assert integrator.storage is custom_storage
-        assert integrator.similarity_threshold == 0.95
-        assert integrator.entity_extraction_confidence == 0.75
+        integrator, custom_storage = integrator_with_all_high_custom_params
+        assert integrator.storage is custom_storage, \
+            f"Expected storage to be custom instance, but got {type(integrator.storage)}"
 
-    def test_init_similarity_threshold_boundary_values(self):
+    def test_init_with_all_custom_parameters_uses_custom_similarity_threshold(
+        self, integrator_with_all_high_custom_params, test_constants
+    ):
         """
-        GIVEN boundary values for similarity_threshold (0.0, 1.0)
+        GIVEN custom values for all parameters (storage, similarity_threshold, entity_extraction_confidence)
+        WHEN GraphRAGIntegrator is initialized with these values
+        THEN the instance should use the provided custom similarity_threshold value
+        """
+        integrator, _ = integrator_with_all_high_custom_params
+        expected_similarity = test_constants['HIGH_SIMILARITY_THRESHOLD']
+        assert integrator.similarity_threshold == expected_similarity, \
+            f"Expected similarity_threshold to be {expected_similarity}, but got {integrator.similarity_threshold}"
+
+    def test_init_with_all_custom_parameters_uses_custom_entity_extraction_confidence(
+        self, integrator_with_all_high_custom_params, test_constants
+    ):
+        """
+        GIVEN custom values for all parameters (storage, similarity_threshold, entity_extraction_confidence)
+        WHEN GraphRAGIntegrator is initialized with these values
+        THEN the instance should use the provided custom entity_extraction_confidence value
+        """
+        integrator, _ = integrator_with_all_high_custom_params
+        expected_confidence = test_constants['HIGH_ENTITY_EXTRACTION_CONFIDENCE']
+        assert integrator.entity_extraction_confidence == expected_confidence, \
+            f"Expected entity_extraction_confidence to be {expected_confidence}, but got {integrator.entity_extraction_confidence}"
+
+    @pytest.mark.parametrize("param_name,boundary_key", [
+        ("similarity_threshold", "BOUNDARY_MIN_VALUE"),
+        ("similarity_threshold", "BOUNDARY_MAX_VALUE"),
+        ("entity_extraction_confidence", "BOUNDARY_MIN_VALUE"),
+        ("entity_extraction_confidence", "BOUNDARY_MAX_VALUE"),
+    ])
+    def test_init_boundary_values(self, param_name, boundary_key, test_constants):
+        """
+        GIVEN boundary values for similarity_threshold or entity_extraction_confidence (0.0, 1.0)
         WHEN GraphRAGIntegrator is initialized with these values
         THEN the instance should accept and store these boundary values
         """
-        integrator_min = GraphRAGIntegrator(similarity_threshold=0.0)
-        integrator_max = GraphRAGIntegrator(similarity_threshold=1.0)
+        # Arrange
+        boundary_value = test_constants[boundary_key]
+        kwargs = {param_name: boundary_value}
         
-        assert integrator_min.similarity_threshold == 0.0
-        assert integrator_max.similarity_threshold == 1.0
-
-    def test_init_entity_extraction_confidence_boundary_values(self):
-        """
-        GIVEN boundary values for entity_extraction_confidence (0.0, 1.0)
-        WHEN GraphRAGIntegrator is initialized with these values
-        THEN the instance should accept and store these boundary values
-        """
-        integrator_min = GraphRAGIntegrator(entity_extraction_confidence=0.0)
-        integrator_max = GraphRAGIntegrator(entity_extraction_confidence=1.0)
+        # Act
+        integrator = GraphRAGIntegrator(**kwargs)
+        actual_value = getattr(integrator, param_name)
         
-        assert integrator_min.entity_extraction_confidence == 0.0
-        assert integrator_max.entity_extraction_confidence == 1.0
+        # Assert
+        assert actual_value == boundary_value, \
+            f"Expected {param_name} to be set to {boundary_value}, but got {actual_value} instead."
 
-    def test_init_invalid_similarity_threshold_negative(self):
+    @pytest.mark.parametrize("param_name,invalid_key,expected_error_message", [
+        ("similarity_threshold", "INVALID_LOW_VALUE", "similarity_threshold must be between 0.0 and 1.0"),
+        ("similarity_threshold", "INVALID_HIGH_SIMILARITY", "similarity_threshold must be between 0.0 and 1.0"),
+        ("entity_extraction_confidence", "INVALID_LOW_VALUE", "entity_extraction_confidence must be between 0.0 and 1.0"),
+        ("entity_extraction_confidence", "INVALID_HIGH_CONFIDENCE", "entity_extraction_confidence must be between 0.0 and 1.0"),
+    ])
+    def test_init_invalid_range_values(self, param_name, invalid_key, expected_error_message, test_constants):
         """
-        GIVEN a negative similarity_threshold value (e.g., -0.1)
-        WHEN GraphRAGIntegrator is initialized with this value
+        GIVEN an invalid parameter value outside the valid range [0.0, 1.0]
+        WHEN GraphRAGIntegrator is initialized with this parameter
         THEN a ValueError should be raised
-        AND the error message should indicate invalid threshold range
+        AND the error message should indicate the invalid range
         """
-        with pytest.raises(ValueError) as exc_info:
-            GraphRAGIntegrator(similarity_threshold=-0.1)
+        # Arrange
+        invalid_value = test_constants[invalid_key]
+        kwargs = {param_name: invalid_value}
         
-        assert "similarity_threshold must be between 0.0 and 1.0" in str(exc_info.value)
-
-    def test_init_invalid_similarity_threshold_greater_than_one(self):
-        """
-        GIVEN a similarity_threshold value greater than 1.0 (e.g., 1.5)
-        WHEN GraphRAGIntegrator is initialized with this value
-        THEN a ValueError should be raised
-        AND the error message should indicate invalid threshold range
-        """
+        # Act & Assert
         with pytest.raises(ValueError) as exc_info:
-            GraphRAGIntegrator(similarity_threshold=1.5)
+            GraphRAGIntegrator(**kwargs)
         
-        assert "similarity_threshold must be between 0.0 and 1.0" in str(exc_info.value)
+        assert expected_error_message in str(exc_info.value), \
+            f"Expected error message to contain '{expected_error_message}', but got '{str(exc_info.value)}' instead."
 
-    def test_init_invalid_entity_extraction_confidence_negative(self):
+    @pytest.mark.parametrize("param_name,invalid_value,expected_error_message", [
+        ("storage", "not_an_ipld_storage", "storage"),
+        ("similarity_threshold", "0.8", "similarity_threshold must be an int or float"),
+        ("entity_extraction_confidence", "0.6", "entity_extraction_confidence must be an int or float"),
+    ])
+    def test_init_type_validation(self, param_name, invalid_value, expected_error_message):
         """
-        GIVEN a negative entity_extraction_confidence value (e.g., -0.1)
-        WHEN GraphRAGIntegrator is initialized with this value
-        THEN a ValueError should be raised
-        AND the error message should indicate invalid confidence range
-        """
-        with pytest.raises(ValueError) as exc_info:
-            GraphRAGIntegrator(entity_extraction_confidence=-0.1)
-        
-        assert "entity_extraction_confidence must be between 0.0 and 1.0" in str(exc_info.value)
-
-    def test_init_invalid_entity_extraction_confidence_greater_than_one(self):
-        """
-        GIVEN an entity_extraction_confidence value greater than 1.0 (e.g., 1.2)
-        WHEN GraphRAGIntegrator is initialized with this value
-        THEN a ValueError should be raised
-        AND the error message should indicate invalid confidence range
-        """
-        with pytest.raises(ValueError) as exc_info:
-            GraphRAGIntegrator(entity_extraction_confidence=1.2)
-        
-        assert "entity_extraction_confidence must be between 0.0 and 1.0" in str(exc_info.value)
-
-    def test_init_storage_type_validation(self):
-        """
-        GIVEN an invalid storage parameter (not an IPLDStorage instance)
+        GIVEN an invalid parameter type
         WHEN GraphRAGIntegrator is initialized with this parameter
         THEN a TypeError should be raised
-        AND the error message should indicate expected type
+        AND the error message should indicate the expected type
         """
+        kwargs = {param_name: invalid_value}
         with pytest.raises(TypeError) as exc_info:
-            GraphRAGIntegrator(storage="not_an_ipld_storage")
+            GraphRAGIntegrator(**kwargs)
         
-        assert "storage" in str(exc_info.value)
+        assert expected_error_message in str(exc_info.value), \
+            f"Expected error message to contain '{expected_error_message}', but got '{str(exc_info.value)}' instead."
 
-    def test_init_similarity_threshold_type_validation(self):
+    def test_init_knowledge_graphs_attribute_immutability(self, two_independent_integrators, test_constants):
         """
-        GIVEN a non-numeric similarity_threshold parameter (e.g., string)
-        WHEN GraphRAGIntegrator is initialized with this parameter
-        THEN a TypeError should be raised
-        AND the error message should indicate expected numeric type
+        GIVEN multiple GraphRAGIntegrator instances are created
+        WHEN modifying knowledge_graphs in the first instance
+        THEN the second instance's knowledge_graphs should remain unaffected
         """
-        with pytest.raises(TypeError) as exc_info:
-            GraphRAGIntegrator(similarity_threshold="0.8")
+        integrator1, integrator2 = two_independent_integrators
+        expected_dict = test_constants['EMPTY_DICT']
         
-        assert "similarity_threshold must be an int or float" in str(exc_info.value)
-
-    def test_init_entity_extraction_confidence_type_validation(self):
-        """
-        GIVEN a non-numeric entity_extraction_confidence parameter (e.g., string)
-        WHEN GraphRAGIntegrator is initialized with this parameter
-        THEN a TypeError should be raised
-        AND the error message should indicate expected numeric type
-        """
-        with pytest.raises(TypeError) as exc_info:
-            GraphRAGIntegrator(entity_extraction_confidence="0.6")
-        
-        assert "entity_extraction_confidence must be an int or float" in str(exc_info.value)
-
-    def test_init_attributes_immutability(self):
-        """
-        GIVEN a GraphRAGIntegrator instance is created
-        WHEN attempting to modify core attributes after initialization
-        THEN the attributes should maintain their expected types and structure
-        AND collections should be properly isolated (not shared references)
-        """
-        integrator1 = GraphRAGIntegrator()
-        integrator2 = GraphRAGIntegrator()
-        
-        # Modify first integrator's collections
         integrator1.knowledge_graphs["test"] = "value"
+        
+        assert integrator2.knowledge_graphs == expected_dict, \
+            f"Expected integrator2.knowledge_graphs to remain {expected_dict}, but got {integrator2.knowledge_graphs}"
+
+    def test_init_global_entities_attribute_immutability(self, two_independent_integrators, test_constants):
+        """
+        GIVEN multiple GraphRAGIntegrator instances are created
+        WHEN modifying global_entities in the first instance
+        THEN the second instance's global_entities should remain unaffected
+        """
+        integrator1, integrator2 = two_independent_integrators
+        expected_dict = test_constants['EMPTY_DICT']
+        
         integrator1.global_entities["entity"] = "data"
+        
+        assert integrator2.global_entities == expected_dict, \
+            f"Expected integrator2.global_entities to remain {expected_dict}, but got {integrator2.global_entities}"
+
+    def test_init_cross_document_relationships_attribute_immutability(self, two_independent_integrators, test_constants):
+        """
+        GIVEN multiple GraphRAGIntegrator instances are created
+        WHEN modifying cross_document_relationships in the first instance
+        THEN the second instance's cross_document_relationships should remain unaffected
+        """
+        integrator1, integrator2 = two_independent_integrators
+        expected_list = test_constants['EMPTY_LIST']
+        
         integrator1.cross_document_relationships.append("relationship")
+        
+        assert integrator2.cross_document_relationships == expected_list, \
+            f"Expected integrator2.cross_document_relationships to remain {expected_list}, but got {integrator2.cross_document_relationships}"
+
+    def test_init_document_graphs_attribute_immutability(self, two_independent_integrators, test_constants):
+        """
+        GIVEN multiple GraphRAGIntegrator instances are created
+        WHEN modifying document_graphs in the first instance
+        THEN the second instance's document_graphs should remain unaffected
+        """
+        integrator1, integrator2 = two_independent_integrators
+        expected_dict = test_constants['EMPTY_DICT']
+        
         integrator1.document_graphs["doc"] = "graph"
         
-        # Second integrator should be unaffected
-        assert integrator2.knowledge_graphs == {}
-        assert integrator2.global_entities == {}
-        assert integrator2.cross_document_relationships == []
-        assert integrator2.document_graphs == {}
+        assert integrator2.document_graphs == expected_dict, \
+            f"Expected integrator2.document_graphs to remain {expected_dict}, but got {integrator2.document_graphs}"
 
-    @pytest.fixture
-    def mock_ipld_storage(self):
-        """Mock IPLDStorage for testing."""
-        return Mock(spec=IPLDStorage)
-
-    def test_init_default_storage_creation(self, mock_ipld_storage):
+    def test_init_default_storage_creation(self, real_integrator):
         """
         GIVEN no storage parameter is provided
         WHEN GraphRAGIntegrator is initialized
         THEN a new IPLDStorage instance should be created
-        AND the constructor should be called once with no arguments
         """
-        # This test verifies that when no storage is provided, 
-        # a default IPLDStorage instance is created
-        integrator = GraphRAGIntegrator()
-        assert isinstance(integrator.storage, IPLDStorage)
+        assert isinstance(real_integrator.storage, IPLDStorage), \
+            f"Expected storage to be IPLDStorage instance, but got {type(real_integrator.storage)}"
 
-    def test_init_networkx_graph_initialization(self):
+    def test_init_global_graph_is_networkx_digraph(self, real_integrator):
         """
         GIVEN GraphRAGIntegrator is initialized
         WHEN checking the global_graph attribute
         THEN it should be a NetworkX DiGraph instance
-        AND it should be empty (no nodes or edges)
-        AND it should be a directed graph
         """
-        integrator = GraphRAGIntegrator()
-        
-        assert isinstance(integrator.global_graph, nx.DiGraph)
-        assert integrator.global_graph.is_directed()
-        assert len(integrator.global_graph.nodes) == 0
-        assert len(integrator.global_graph.edges) == 0
+        assert isinstance(real_integrator.global_graph, nx.DiGraph), \
+            f"Expected global_graph to be nx.DiGraph, but got {type(real_integrator.global_graph)}"
 
-    def test_init_collections_independence(self):
+    def test_init_global_graph_is_directed(self, real_integrator: GraphRAGIntegrator):
+        """
+        GIVEN GraphRAGIntegrator is initialized
+        WHEN checking the global_graph directedness
+        THEN it should be a directed graph
+        """
+        assert real_integrator.global_graph.is_directed(), \
+            "Expected global_graph to be directed, but it was not"
+
+    def test_init_global_graph_has_no_nodes(self, real_integrator, test_constants):
+        """
+        GIVEN GraphRAGIntegrator is initialized
+        WHEN checking the global_graph nodes
+        THEN it should have no nodes initially
+        """
+        expected_count = test_constants['ZERO_LENGTH']
+        actual_count = len(real_integrator.global_graph.nodes)
+        assert actual_count == expected_count, \
+            f"Expected global_graph to have {expected_count} nodes, but got {actual_count}"
+
+    def test_init_global_graph_has_no_edges(self, real_integrator, test_constants):
+        """
+        GIVEN GraphRAGIntegrator is initialized
+        WHEN checking the global_graph edges
+        THEN it should have no edges initially
+        """
+        expected_count = test_constants['ZERO_LENGTH']
+        actual_count = len(real_integrator.global_graph.edges)
+        assert actual_count == expected_count, \
+            f"Expected global_graph to have {expected_count} edges, but got {actual_count}"
+
+    def test_init_knowledge_graphs_collections_are_independent(self, two_independent_integrators):
         """
         GIVEN multiple GraphRAGIntegrator instances are created
-        WHEN modifying collections in one instance
+        WHEN modifying knowledge_graphs in one instance
         THEN other instances should not be affected
-        AND each instance should have independent collections
         """
-        integrator1 = GraphRAGIntegrator()
-        integrator2 = GraphRAGIntegrator()
-        integrator3 = GraphRAGIntegrator()
+        integrator1, integrator2 = two_independent_integrators
         
-        # Modify first integrator
         integrator1.knowledge_graphs["doc1"] = "kg1"
-        integrator1.global_entities["ent1"] = "entity1"
-        integrator1.cross_document_relationships.append("rel1")
-        
-        # Modify second integrator differently
         integrator2.knowledge_graphs["doc2"] = "kg2"
+        
+        assert "doc1" not in integrator2.knowledge_graphs, \
+            "Expected integrator2.knowledge_graphs to not contain 'doc1', but it did"
+
+    def test_init_global_entities_collections_are_independent(self, two_independent_integrators):
+        """
+        GIVEN multiple GraphRAGIntegrator instances are created
+        WHEN modifying global_entities in one instance
+        THEN other instances should not be affected
+        """
+        integrator1, integrator2 = two_independent_integrators
+        
+        integrator1.global_entities["ent1"] = "entity1"
         integrator2.global_entities["ent2"] = "entity2"
         
-        # Verify independence
-        assert "doc1" not in integrator2.knowledge_graphs
-        assert "doc2" not in integrator1.knowledge_graphs
-        assert "ent1" not in integrator2.global_entities
-        assert "ent2" not in integrator1.global_entities
-        assert len(integrator2.cross_document_relationships) == 0
-        assert len(integrator3.cross_document_relationships) == 0
-        assert integrator3.knowledge_graphs == {}
-        assert integrator3.global_entities == {}
+        assert "ent1" not in integrator2.global_entities, \
+            "Expected integrator2.global_entities to not contain 'ent1', but it did"
+
+    def test_init_cross_document_relationships_collections_are_independent(self, two_independent_integrators, test_constants):
+        """
+        GIVEN multiple GraphRAGIntegrator instances are created
+        WHEN modifying cross_document_relationships in one instance
+        THEN other instances should not be affected
+        """
+        integrator1, integrator2 = two_independent_integrators
+        expected_length = test_constants['ZERO_LENGTH']
+        
+        integrator1.cross_document_relationships.append("rel1")
+        
+        assert len(integrator2.cross_document_relationships) == expected_length, \
+            f"Expected integrator2.cross_document_relationships length to be {expected_length}, but got {len(integrator2.cross_document_relationships)}"
+
+    def test_init_collections_start_with_expected_empty_values(self, real_integrator, test_constants):
+        """
+        GIVEN a new GraphRAGIntegrator instance is created
+        WHEN checking initial collection states
+        THEN all collections should start with expected empty values
+        """
+        expected_dict = test_constants['EMPTY_DICT']
+        
+        assert real_integrator.knowledge_graphs == expected_dict, \
+            f"Expected knowledge_graphs to be {expected_dict}, but got {real_integrator.knowledge_graphs}"
 
 
 if __name__ == "__main__":

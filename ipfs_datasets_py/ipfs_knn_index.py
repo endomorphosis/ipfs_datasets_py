@@ -161,7 +161,7 @@ class IPFSKnnIndex:
         - Memory usage scales with active vector count and should be monitored for large indexes
     """
 
-    def __init__(self, dimension: int, metric: str = 'cosine', storage=None):
+    def __init__(self, dimension: int, metric: str = 'cosine', storage: Optional[IPLDStorage] = None):
         """
         Initialize Distributed K-Nearest Neighbors Vector Index with IPFS Integration
 
@@ -482,7 +482,7 @@ class IPFSKnnIndex:
             return self._index_cid
 
     @classmethod
-    def load_from_ipfs(cls, cid: str, storage=None) -> 'IPFSKnnIndex':
+    def load_from_ipfs(cls, cid: str, storage: Optional[IPLDStorage] = None) -> 'IPFSKnnIndex':
         """
         Load an index from IPFS.
 
@@ -565,7 +565,7 @@ class IPFSKnnIndex:
         return self.storage.export_to_car([self._index_cid], output_path)
 
     @classmethod
-    def import_from_car(cls, car_path: str, storage=None) -> 'IPFSKnnIndex':
+    def import_from_car(cls, car_path: str, storage: Optional[IPLDStorage] = None) -> 'IPFSKnnIndex':
         """
         Import an index from a CAR file.
 
@@ -601,7 +601,7 @@ class IPFSKnnIndexManager:
     stored in IPFS, including creation, search, and lifecycle management.
     """
 
-    def __init__(self, storage=None):
+    def __init__(self, storage: Optional[IPLDStorage] = None):
         """Initialize the index manager."""
         self.storage = storage or IPLDStorage()
         self.indexes = {}  # index_id -> IPFSKnnIndex

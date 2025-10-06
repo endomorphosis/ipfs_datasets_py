@@ -19,7 +19,7 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-from .conftest import TestImplementationDetailError
+from .conftest import _TestImplementationDetailError
 
 # Test data constants for remaining behavioral specifications
 CONVERSION_TIMING_PRECISION = 1000  # microseconds - minimum timing measurement precision

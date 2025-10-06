@@ -14,7 +14,7 @@
 - **Test Organization**: Moved original tests to archive, created standardized stubs
 
 ### Fixed
-- **IPFSEmbeddings Class Name**: Corrected `IpfsEmbeddings` to `IPFSEmbeddings` in FastAPI integration
+- **IPFSEmbeddings Class Name**: Corrected `IPFSEmbeddings` to `IPFSEmbeddings` in FastAPI integration
 - **Missing Class Imports**: Removed non-existent `MultimodalEmbeddingTool` from embedding_tools module
 - **Import Validation**: Fixed multiple import issues discovered through validation process
 - **test_fio.py**: Corrected class name from `test_fio` to `TestFio` (pytest convention)
@@ -81,7 +81,7 @@
 
 ### Bug Fixes Identified and Resolved
 1. **Missing Class Definition**: `MultimodalEmbeddingTool` was imported but not defined
-2. **Incorrect Class Name**: `IpfsEmbeddings` corrected to `IPFSEmbeddings`
+2. **Incorrect Class Name**: `IPFSEmbeddings` corrected to `IPFSEmbeddings`
 3. **Import Chain Issues**: Fixed broken import chains in embedding_tools module
 
 ### Known Issues
