@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temporal Deontic Logic RAG - Caselaw Dashboard (MCP)</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap5.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -655,6 +655,85 @@
                             </a>
                         </li>
                     </ul>
+                    
+                    <!-- Analysis Tools Section -->
+                    <div class="nav-section mt-4">
+                        <div class="nav-section-title px-3 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Analysis Tools</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#document-analysis" role="tab">
+                                    <i class="fas fa-file-text"></i> Document Analysis
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#query-theorems" role="tab">
+                                    <i class="fas fa-search"></i> Query Theorems
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#bulk-process" role="tab">
+                                    <i class="fas fa-tasks"></i> Bulk Process Caselaw
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#precedent-search" role="tab">
+                                    <i class="fas fa-balance-scale"></i> Case Precedent Search
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#conflict-analyzer" role="tab">
+                                    <i class="fas fa-exclamation-triangle"></i> Conflict Analyzer
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#citation-network" role="tab">
+                                    <i class="fas fa-project-diagram"></i> Citation Network
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#brief-generator" role="tab">
+                                    <i class="fas fa-file-contract"></i> Legal Brief Generator
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#jurisdiction-compare" role="tab">
+                                    <i class="fas fa-exchange-alt"></i> Jurisdiction Comparison
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#timeline" role="tab">
+                                    <i class="fas fa-history"></i> Timeline Analysis
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Dataset Workflows Section -->
+                    <div class="nav-section mt-4">
+                        <div class="nav-section-title px-3 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Dataset Workflows</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-cap" role="tab">
+                                    <i class="fas fa-database"></i> Case Law Access Project
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-uscode" role="tab">
+                                    <i class="fas fa-book"></i> US Code & Federal Register
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-state" role="tab">
+                                    <i class="fas fa-landmark"></i> State Laws
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-municipal" role="tab">
+                                    <i class="fas fa-city"></i> Municipal Laws
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </nav>
 
@@ -665,112 +744,7 @@
                     <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
                 </div>
 
-                <!-- Priority 5: Quick Start Guide -->
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <h5 class="alert-heading"><i class="fas fa-rocket"></i> Quick Start Guide</h5>
-                    <p><strong>New to the dashboard?</strong> Try these steps:</p>
-                    <ol class="mb-2">
-                        <li>Click any <span class="badge bg-success">Try Example</span> button to see how tools work</li>
-                        <li>Start with <strong>Precedent Search</strong> to find similar cases</li>
-                        <li>Use <strong>Conflict Analyzer</strong> to identify legal conflicts</li>
-                        <li>Generate briefs with <strong>Brief Generator</strong></li>
-                    </ol>
-                    <p class="mb-0"><i class="fas fa-info-circle"></i> Hover over <i class="fas fa-question-circle text-primary"></i> icons for help on each field.</p>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-
-                <!-- MCP Status Indicator -->
-                <div class="mcp-indicator">
-                    <h5><i class="fas fa-plug"></i> MCP Connection Status</h5>
-                    <p class="mb-2">
-                        <span id="mcpStatus" class="mcp-status mcp-disconnected">Disconnected</span>
-                        <span class="ml-2" id="mcpStatusText">Initializing MCP connection...</span>
-                    </p>
-                    <p class="mb-0">
-                        <small>This dashboard uses Model Context Protocol (MCP) JSON-RPC tools instead of REST APIs for legal analysis.</small>
-                    </p>
-                </div>
-
-                <!-- System Status -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5><i class="fas fa-database"></i> System Status</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <h6>Theorem Corpus</h6>
-                                        <p class="h4" id="theoremCount">{{ system_status.theorem_count }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h6>Jurisdictions</h6>
-                                        <p class="h4" id="jurisdictionCount">{{ system_status.jurisdictions|length }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h6>Legal Domains</h6>
-                                        <p class="h4" id="legalDomainCount">{{ system_status.legal_domains|length }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h6>MCP Tools Available</h6>
-                                        <p class="h4" id="mcpToolCount">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Navigation Tabs -->
-                <ul class="nav nav-tabs" id="caselawTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="document-analysis-tab" data-bs-toggle="tab" data-bs-target="#document-analysis" type="button" role="tab">
-                            <i class="fas fa-file-text"></i> Document Analysis
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="query-theorems-tab" data-bs-toggle="tab" data-bs-target="#query-theorems" type="button" role="tab">
-                            <i class="fas fa-search"></i> Query Theorems
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="bulk-process-tab" data-bs-toggle="tab" data-bs-target="#bulk-process" type="button" role="tab">
-                            <i class="fas fa-tasks"></i> Bulk Process Caselaw
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="precedent-search-tab" data-bs-toggle="tab" data-bs-target="#precedent-search" type="button" role="tab">
-                            <i class="fas fa-balance-scale"></i> Case Precedent Search
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="conflict-analyzer-tab" data-bs-toggle="tab" data-bs-target="#conflict-analyzer" type="button" role="tab">
-                            <i class="fas fa-exclamation-triangle"></i> Conflict Analyzer
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="citation-network-tab" data-bs-toggle="tab" data-bs-target="#citation-network" type="button" role="tab">
-                            <i class="fas fa-project-diagram"></i> Citation Network
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="brief-generator-tab" data-bs-toggle="tab" data-bs-target="#brief-generator" type="button" role="tab">
-                            <i class="fas fa-file-contract"></i> Legal Brief Generator
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="jurisdiction-compare-tab" data-bs-toggle="tab" data-bs-target="#jurisdiction-compare" type="button" role="tab">
-                            <i class="fas fa-exchange-alt"></i> Jurisdiction Comparison
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab">
-                            <i class="fas fa-history"></i> Timeline Analysis
-                        </button>
-                    </li>
-                </ul>
-
                 <div class="tab-content" id="caselawTabContent">
                     <!-- Document Analysis Tab -->
                     <div class="tab-pane fade show active" id="document-analysis" role="tabpanel">
@@ -1799,13 +1773,746 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             </div>
                         </div>
                     </div>
+
+                    <!-- Case Law Access Project Dataset Tab -->
+                    <div class="tab-pane fade" id="dataset-cap" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-database"></i> Case Law Access Project Dataset Builder</h5>
+                                <small class="text-muted">Scrape, filter, and transform case law from the Case Law Access Project</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About Case Law Access Project</h6>
+                                    <p class="mb-0">The Case Law Access Project provides access to millions of US court decisions. Configure the scraping parameters below to build your custom dataset.</p>
+                                </div>
+
+                                <!-- Configuration Section -->
+                                <h6 class="mt-4">Data Source Configuration</h6>
+                                <form id="capConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="capApiKey" class="form-label">API Key</label>
+                                            <input type="password" class="form-control" id="capApiKey" placeholder="Enter CAP API key">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="capJurisdiction" class="form-label">Jurisdiction</label>
+                                            <select class="form-select" id="capJurisdiction" multiple>
+                                                <option value="us">Federal (all)</option>
+                                                <option value="us-ca">California</option>
+                                                <option value="us-ny">New York</option>
+                                                <option value="us-tx">Texas</option>
+                                                <option value="us-fl">Florida</option>
+                                                <option value="all">All jurisdictions</option>
+                                            </select>
+                                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="capDateStart" class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" id="capDateStart">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="capDateEnd" class="form-label">End Date</label>
+                                            <input type="date" class="form-control" id="capDateEnd">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="capMaxRecords" class="form-label">Max Records</label>
+                                            <input type="number" class="form-control" id="capMaxRecords" value="1000" min="1">
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Scraping Controls -->
+                                <h6 class="mt-4">Scraping & Processing</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-success me-2" id="capStartScraping">
+                                            <i class="fas fa-play"></i> Start Scraping
+                                        </button>
+                                        <button class="btn btn-danger me-2" id="capStopScraping" disabled>
+                                            <i class="fas fa-stop"></i> Stop
+                                        </button>
+                                        <button class="btn btn-warning me-2" id="capPauseScraping" disabled>
+                                            <i class="fas fa-pause"></i> Pause
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Progress Monitoring -->
+                                <h6 class="mt-4">Progress</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <strong>Status:</strong> <span id="capStatus" class="badge bg-secondary">Idle</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Records Fetched:</strong> <span id="capRecordsFetched">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Records Filtered:</strong> <span id="capRecordsFiltered">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Elapsed Time:</strong> <span id="capElapsedTime">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress" style="height: 25px;">
+                                            <div id="capProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Filtering & Transformation -->
+                                <h6 class="mt-4">Filtering & Transformation</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Text Filters</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="capFilterMinWords">
+                                            <label class="form-check-label" for="capFilterMinWords">
+                                                Minimum word count: <input type="number" class="form-control form-control-sm d-inline" style="width: 80px;" value="100">
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="capFilterCitations">
+                                            <label class="form-check-label" for="capFilterCitations">
+                                                Only cases with citations
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Transformations</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="capExtractCitations" checked>
+                                            <label class="form-check-label" for="capExtractCitations">
+                                                Extract citation network
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="capExtractEntities" checked>
+                                            <label class="form-check-label" for="capExtractEntities">
+                                                Extract legal entities (parties, judges, etc.)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="capGenerateEmbeddings">
+                                            <label class="form-check-label" for="capGenerateEmbeddings">
+                                                Generate embeddings for RAG
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dataset Preview -->
+                                <h6 class="mt-4">Dataset Preview</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Case ID</th>
+                                                <th>Name</th>
+                                                <th>Court</th>
+                                                <th>Date</th>
+                                                <th>Citations</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="capPreviewTable">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No data yet. Start scraping to see preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Export Options -->
+                                <h6 class="mt-4">Export & Save</h6>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-primary me-2" id="capExportJson">
+                                            <i class="fas fa-download"></i> Export as JSON
+                                        </button>
+                                        <button class="btn btn-primary me-2" id="capExportParquet">
+                                            <i class="fas fa-download"></i> Export as Parquet
+                                        </button>
+                                        <button class="btn btn-success me-2" id="capSaveToIPFS">
+                                            <i class="fas fa-cloud-upload-alt"></i> Save to IPFS
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- US Code & Federal Register Dataset Tab -->
+                    <div class="tab-pane fade" id="dataset-uscode" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-book"></i> US Code & Federal Register Dataset Builder</h5>
+                                <small class="text-muted">Scrape, filter, and transform federal laws and regulations</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About US Code & Federal Register</h6>
+                                    <p class="mb-0">Build datasets from the United States Code and Federal Register. These are the primary sources of federal statutory and regulatory law.</p>
+                                </div>
+
+                                <!-- Source Selection -->
+                                <h6 class="mt-4">Data Source Selection</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uscodeInclude" checked>
+                                            <label class="form-check-label" for="uscodeInclude">
+                                                <strong>US Code</strong> - Federal statutory law
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="fedreg Include" checked>
+                                            <label class="form-check-label" for="fedregInclude">
+                                                <strong>Federal Register</strong> - Federal regulations and notices
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configuration Section -->
+                                <h6 class="mt-4">Configuration</h6>
+                                <form id="uscodeConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="uscodeTitles" class="form-label">US Code Titles</label>
+                                            <select class="form-select" id="uscodeTitles" multiple size="5">
+                                                <option value="all">All Titles</option>
+                                                <option value="1">Title 1 - General Provisions</option>
+                                                <option value="7">Title 7 - Agriculture</option>
+                                                <option value="15">Title 15 - Commerce and Trade</option>
+                                                <option value="18">Title 18 - Crimes and Criminal Procedure</option>
+                                                <option value="26">Title 26 - Internal Revenue Code</option>
+                                                <option value="42">Title 42 - Public Health and Welfare</option>
+                                            </select>
+                                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fedregAgencies" class="form-label">Federal Agencies</label>
+                                            <select class="form-select" id="fedregAgencies" multiple size="5">
+                                                <option value="all">All Agencies</option>
+                                                <option value="EPA">EPA - Environmental Protection Agency</option>
+                                                <option value="FDA">FDA - Food and Drug Administration</option>
+                                                <option value="DOL">DOL - Department of Labor</option>
+                                                <option value="SEC">SEC - Securities and Exchange Commission</option>
+                                                <option value="FTC">FTC - Federal Trade Commission</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="uscodeStartDate" class="form-label">Start Date (Fed Register)</label>
+                                            <input type="date" class="form-control" id="uscodeStartDate">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="uscodeEndDate" class="form-label">End Date (Fed Register)</label>
+                                            <input type="date" class="form-control" id="uscodeEndDate">
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Scraping Controls -->
+                                <h6 class="mt-4">Scraping & Processing</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-success me-2" id="uscodeStartScraping">
+                                            <i class="fas fa-play"></i> Start Scraping
+                                        </button>
+                                        <button class="btn btn-danger me-2" id="uscodeStopScraping" disabled>
+                                            <i class="fas fa-stop"></i> Stop
+                                        </button>
+                                        <button class="btn btn-warning me-2" id="uscodePauseScraping" disabled>
+                                            <i class="fas fa-pause"></i> Pause
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Progress Monitoring -->
+                                <h6 class="mt-4">Progress</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <strong>Status:</strong> <span id="uscodeStatus" class="badge bg-secondary">Idle</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Sections Fetched:</strong> <span id="uscodeSectionsFetched">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Regulations Fetched:</strong> <span id="uscodeRegsFetched">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Elapsed Time:</strong> <span id="uscodeElapsedTime">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress" style="height: 25px;">
+                                            <div id="uscodeProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Filtering & Transformation -->
+                                <h6 class="mt-4">Filtering & Transformation</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Content Filters</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uscodeFilterActive" checked>
+                                            <label class="form-check-label" for="uscodeFilterActive">
+                                                Only active/current provisions
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uscodeFilterAmended">
+                                            <label class="form-check-label" for="uscodeFilterAmended">
+                                                Include amendment history
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Transformations</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uscodeExtractCitations" checked>
+                                            <label class="form-check-label" for="uscodeExtractCitations">
+                                                Extract cross-references
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uscodeExtractDefinitions" checked>
+                                            <label class="form-check-label" for="uscodeExtractDefinitions">
+                                                Extract legal definitions
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="uscodeGenerateEmbeddings">
+                                            <label class="form-check-label" for="uscodeGenerateEmbeddings">
+                                                Generate embeddings for RAG
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dataset Preview -->
+                                <h6 class="mt-4">Dataset Preview</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Citation</th>
+                                                <th>Title/Subject</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="uscodePreviewTable">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No data yet. Start scraping to see preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Export Options -->
+                                <h6 class="mt-4">Export & Save</h6>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-primary me-2" id="uscodeExportJson">
+                                            <i class="fas fa-download"></i> Export as JSON
+                                        </button>
+                                        <button class="btn btn-primary me-2" id="uscodeExportParquet">
+                                            <i class="fas fa-download"></i> Export as Parquet
+                                        </button>
+                                        <button class="btn btn-success me-2" id="uscodeSaveToIPFS">
+                                            <i class="fas fa-cloud-upload-alt"></i> Save to IPFS
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State Laws Dataset Tab -->
+                    <div class="tab-pane fade" id="dataset-state" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-landmark"></i> State Laws Dataset Builder</h5>
+                                <small class="text-muted">Scrape, filter, and transform state statutes and regulations</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About State Laws</h6>
+                                    <p class="mb-0">Build comprehensive datasets of state statutes, regulations, and administrative codes from all 50 states.</p>
+                                </div>
+
+                                <!-- Configuration Section -->
+                                <h6 class="mt-4">Configuration</h6>
+                                <form id="stateConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="stateSelection" class="form-label">States</label>
+                                            <select class="form-select" id="stateSelection" multiple size="8">
+                                                <option value="all">All States</option>
+                                                <option value="AL">Alabama</option>
+                                                <option value="AK">Alaska</option>
+                                                <option value="AZ">Arizona</option>
+                                                <option value="CA">California</option>
+                                                <option value="FL">Florida</option>
+                                                <option value="NY">New York</option>
+                                                <option value="TX">Texas</option>
+                                                <!-- More states would be added here -->
+                                            </select>
+                                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="stateLawTypes" class="form-label">Law Types</label>
+                                            <select class="form-select" id="stateLawTypes" multiple size="8">
+                                                <option value="statutes" selected>Statutes</option>
+                                                <option value="regulations" selected>Regulations</option>
+                                                <option value="admin-codes">Administrative Codes</option>
+                                                <option value="session-laws">Session Laws</option>
+                                                <option value="court-rules">Court Rules</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="stateLegalAreas" class="form-label">Legal Areas (Optional Filter)</label>
+                                            <input type="text" class="form-control" id="stateLegalAreas" 
+                                                   placeholder="e.g., criminal law, employment law, environmental law">
+                                            <small class="text-muted">Comma-separated list of legal areas to focus on</small>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Scraping Controls -->
+                                <h6 class="mt-4">Scraping & Processing</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-success me-2" id="stateStartScraping">
+                                            <i class="fas fa-play"></i> Start Scraping
+                                        </button>
+                                        <button class="btn btn-danger me-2" id="stateStopScraping" disabled>
+                                            <i class="fas fa-stop"></i> Stop
+                                        </button>
+                                        <button class="btn btn-warning me-2" id="statePauseScraping" disabled>
+                                            <i class="fas fa-pause"></i> Pause
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Progress Monitoring -->
+                                <h6 class="mt-4">Progress</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <strong>Status:</strong> <span id="stateStatus" class="badge bg-secondary">Idle</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>States Processed:</strong> <span id="stateStatesProcessed">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Provisions Fetched:</strong> <span id="stateProvisionsFetched">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Elapsed Time:</strong> <span id="stateElapsedTime">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress" style="height: 25px;">
+                                            <div id="stateProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <small class="text-muted">Current: <span id="stateCurrentState">-</span></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Filtering & Transformation -->
+                                <h6 class="mt-4">Filtering & Transformation</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Content Filters</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stateFilterActive" checked>
+                                            <label class="form-check-label" for="stateFilterActive">
+                                                Only currently effective laws
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stateFilterRepealed">
+                                            <label class="form-check-label" for="stateFilterRepealed">
+                                                Exclude repealed provisions
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Transformations</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stateExtractCitations" checked>
+                                            <label class="form-check-label" for="stateExtractCitations">
+                                                Extract cross-references
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stateHarmonize" checked>
+                                            <label class="form-check-label" for="stateHarmonize">
+                                                Harmonize citation formats across states
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stateGenerateEmbeddings">
+                                            <label class="form-check-label" for="stateGenerateEmbeddings">
+                                                Generate embeddings for RAG
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dataset Preview -->
+                                <h6 class="mt-4">Dataset Preview</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>State</th>
+                                                <th>Type</th>
+                                                <th>Citation</th>
+                                                <th>Title/Subject</th>
+                                                <th>Effective Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="statePreviewTable">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No data yet. Start scraping to see preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Export Options -->
+                                <h6 class="mt-4">Export & Save</h6>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-primary me-2" id="stateExportJson">
+                                            <i class="fas fa-download"></i> Export as JSON
+                                        </button>
+                                        <button class="btn btn-primary me-2" id="stateExportParquet">
+                                            <i class="fas fa-download"></i> Export as Parquet
+                                        </button>
+                                        <button class="btn btn-success me-2" id="stateSaveToIPFS">
+                                            <i class="fas fa-cloud-upload-alt"></i> Save to IPFS
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Municipal Laws Dataset Tab -->
+                    <div class="tab-pane fade" id="dataset-municipal" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-city"></i> Municipal Laws Dataset Builder</h5>
+                                <small class="text-muted">Scrape, filter, and transform city and county ordinances</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About Municipal Laws</h6>
+                                    <p class="mb-0">Build datasets of local ordinances, city codes, and county regulations from municipalities across the United States.</p>
+                                </div>
+
+                                <!-- Configuration Section -->
+                                <h6 class="mt-4">Configuration</h6>
+                                <form id="municipalConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="municipalState" class="form-label">State</label>
+                                            <select class="form-select" id="municipalState">
+                                                <option value="">Select State...</option>
+                                                <option value="CA">California</option>
+                                                <option value="FL">Florida</option>
+                                                <option value="NY">New York</option>
+                                                <option value="TX">Texas</option>
+                                                <!-- More states would be added here -->
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="municipalType" class="form-label">Municipality Type</label>
+                                            <select class="form-select" id="municipalType" multiple size="3">
+                                                <option value="city" selected>Cities</option>
+                                                <option value="county" selected>Counties</option>
+                                                <option value="town">Towns/Townships</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="municipalPopulationMin" class="form-label">Minimum Population</label>
+                                            <input type="number" class="form-control" id="municipalPopulationMin" 
+                                                   value="50000" placeholder="e.g., 50000">
+                                            <small class="text-muted">Filter municipalities by population size</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="municipalSpecific" class="form-label">Specific Municipalities (Optional)</label>
+                                            <input type="text" class="form-control" id="municipalSpecific" 
+                                                   placeholder="e.g., Los Angeles, San Francisco">
+                                            <small class="text-muted">Comma-separated list</small>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="municipalTopics" class="form-label">Topics of Interest (Optional)</label>
+                                            <input type="text" class="form-control" id="municipalTopics" 
+                                                   placeholder="e.g., zoning, business licenses, public safety">
+                                            <small class="text-muted">Comma-separated list of ordinance topics to focus on</small>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Scraping Controls -->
+                                <h6 class="mt-4">Scraping & Processing</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-success me-2" id="municipalStartScraping">
+                                            <i class="fas fa-play"></i> Start Scraping
+                                        </button>
+                                        <button class="btn btn-danger me-2" id="municipalStopScraping" disabled>
+                                            <i class="fas fa-stop"></i> Stop
+                                        </button>
+                                        <button class="btn btn-warning me-2" id="municipalPauseScraping" disabled>
+                                            <i class="fas fa-pause"></i> Pause
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Progress Monitoring -->
+                                <h6 class="mt-4">Progress</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <strong>Status:</strong> <span id="municipalStatus" class="badge bg-secondary">Idle</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Municipalities Processed:</strong> <span id="municipalMunicipalitiesProcessed">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Ordinances Fetched:</strong> <span id="municipalOrdinancesFetched">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Elapsed Time:</strong> <span id="municipalElapsedTime">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress" style="height: 25px;">
+                                            <div id="municipalProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <small class="text-muted">Current: <span id="municipalCurrentMunicipality">-</span></small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Filtering & Transformation -->
+                                <h6 class="mt-4">Filtering & Transformation</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Content Filters</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="municipalFilterActive" checked>
+                                            <label class="form-check-label" for="municipalFilterActive">
+                                                Only currently effective ordinances
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="municipalFilterMinLength">
+                                            <label class="form-check-label" for="municipalFilterMinLength">
+                                                Minimum text length: <input type="number" class="form-control form-control-sm d-inline" style="width: 80px;" value="500">
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Transformations</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="municipalExtractMetadata" checked>
+                                            <label class="form-check-label" for="municipalExtractMetadata">
+                                                Extract ordinance metadata
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="municipalNormalize" checked>
+                                            <label class="form-check-label" for="municipalNormalize">
+                                                Normalize citation formats
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="municipalGenerateEmbeddings">
+                                            <label class="form-check-label" for="municipalGenerateEmbeddings">
+                                                Generate embeddings for RAG
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dataset Preview -->
+                                <h6 class="mt-4">Dataset Preview</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Municipality</th>
+                                                <th>Type</th>
+                                                <th>Ordinance No.</th>
+                                                <th>Title/Subject</th>
+                                                <th>Effective Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="municipalPreviewTable">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No data yet. Start scraping to see preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Export Options -->
+                                <h6 class="mt-4">Export & Save</h6>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-primary me-2" id="municipalExportJson">
+                                            <i class="fas fa-download"></i> Export as JSON
+                                        </button>
+                                        <button class="btn btn-primary me-2" id="municipalExportParquet">
+                                            <i class="fas fa-download"></i> Export as Parquet
+                                        </button>
+                                        <button class="btn btn-success me-2" id="municipalSaveToIPFS">
+                                            <i class="fas fa-cloud-upload-alt"></i> Save to IPFS
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
     </div>
 
     <!-- JavaScript Libraries: local first, then CDN fallback -->
-    <script src="{{ url_for('static', filename='js/bootstrap5.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script>
         if (typeof bootstrap === 'undefined') {
             var b = document.createElement('script');
@@ -2886,6 +3593,12 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 setupJurisdictionCompareForm();
                 setupTimelineForm();
                 
+                // Dataset building tabs
+                setupCAPDatasetBuilder();
+                setupUSCodeDatasetBuilder();
+                setupStateDatasetBuilder();
+                setupMunicipalDatasetBuilder();
+                
                 // Demo buttons (Priority 2)
                 setupDemoButtons();
                 
@@ -2893,6 +3606,419 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 setupHelpTooltips();
             });
         });
+
+        // Dataset Builder Functions
+        
+        // Case Law Access Project Dataset Builder
+        function setupCAPDatasetBuilder() {
+            let scrapingActive = false;
+            let startTime = null;
+            let timerInterval = null;
+            
+            document.getElementById('capStartScraping').addEventListener('click', function() {
+                if (!scrapingActive) {
+                    scrapingActive = true;
+                    startTime = Date.now();
+                    
+                    // Update UI
+                    document.getElementById('capStatus').textContent = 'Running';
+                    document.getElementById('capStatus').className = 'badge bg-success';
+                    document.getElementById('capStartScraping').disabled = true;
+                    document.getElementById('capStopScraping').disabled = false;
+                    document.getElementById('capPauseScraping').disabled = false;
+                    
+                    // Start progress simulation
+                    simulateCAPProgress();
+                    
+                    // Start timer
+                    timerInterval = setInterval(updateCAPTimer, 1000);
+                }
+            });
+            
+            document.getElementById('capStopScraping').addEventListener('click', function() {
+                stopCAPScraping();
+            });
+            
+            document.getElementById('capPauseScraping').addEventListener('click', function() {
+                // Toggle pause state
+                const statusElem = document.getElementById('capStatus');
+                if (statusElem.textContent === 'Running') {
+                    statusElem.textContent = 'Paused';
+                    statusElem.className = 'badge bg-warning';
+                } else if (statusElem.textContent === 'Paused') {
+                    statusElem.textContent = 'Running';
+                    statusElem.className = 'badge bg-success';
+                }
+            });
+            
+            function stopCAPScraping() {
+                scrapingActive = false;
+                clearInterval(timerInterval);
+                document.getElementById('capStatus').textContent = 'Stopped';
+                document.getElementById('capStatus').className = 'badge bg-danger';
+                document.getElementById('capStartScraping').disabled = false;
+                document.getElementById('capStopScraping').disabled = true;
+                document.getElementById('capPauseScraping').disabled = true;
+            }
+            
+            function updateCAPTimer() {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const hours = Math.floor(elapsed / 3600);
+                    const minutes = Math.floor((elapsed % 3600) / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('capElapsedTime').textContent = 
+                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+            
+            function simulateCAPProgress() {
+                let progress = 0;
+                const progressInterval = setInterval(function() {
+                    if (!scrapingActive || progress >= 100) {
+                        clearInterval(progressInterval);
+                        if (progress >= 100) {
+                            document.getElementById('capStatus').textContent = 'Completed';
+                            document.getElementById('capStatus').className = 'badge bg-primary';
+                            stopCAPScraping();
+                        }
+                        return;
+                    }
+                    
+                    progress += Math.random() * 5;
+                    if (progress > 100) progress = 100;
+                    
+                    const recordsFetched = Math.floor(progress * 10);
+                    const recordsFiltered = Math.floor(recordsFetched * 0.8);
+                    
+                    document.getElementById('capProgressBar').style.width = progress + '%';
+                    document.getElementById('capProgressBar').textContent = Math.floor(progress) + '%';
+                    document.getElementById('capRecordsFetched').textContent = recordsFetched;
+                    document.getElementById('capRecordsFiltered').textContent = recordsFiltered;
+                }, 1000);
+            }
+            
+            // Export buttons
+            document.getElementById('capExportJson').addEventListener('click', function() {
+                alert('Export as JSON functionality would be implemented here.');
+            });
+            
+            document.getElementById('capExportParquet').addEventListener('click', function() {
+                alert('Export as Parquet functionality would be implemented here.');
+            });
+            
+            document.getElementById('capSaveToIPFS').addEventListener('click', function() {
+                alert('Save to IPFS functionality would be implemented here.');
+            });
+        }
+        
+        // US Code & Federal Register Dataset Builder
+        function setupUSCodeDatasetBuilder() {
+            let scrapingActive = false;
+            let startTime = null;
+            let timerInterval = null;
+            
+            document.getElementById('uscodeStartScraping').addEventListener('click', function() {
+                if (!scrapingActive) {
+                    scrapingActive = true;
+                    startTime = Date.now();
+                    
+                    document.getElementById('uscodeStatus').textContent = 'Running';
+                    document.getElementById('uscodeStatus').className = 'badge bg-success';
+                    document.getElementById('uscodeStartScraping').disabled = true;
+                    document.getElementById('uscodeStopScraping').disabled = false;
+                    document.getElementById('uscodePauseScraping').disabled = false;
+                    
+                    simulateUSCodeProgress();
+                    timerInterval = setInterval(updateUSCodeTimer, 1000);
+                }
+            });
+            
+            document.getElementById('uscodeStopScraping').addEventListener('click', function() {
+                stopUSCodeScraping();
+            });
+            
+            document.getElementById('uscodePauseScraping').addEventListener('click', function() {
+                const statusElem = document.getElementById('uscodeStatus');
+                if (statusElem.textContent === 'Running') {
+                    statusElem.textContent = 'Paused';
+                    statusElem.className = 'badge bg-warning';
+                } else if (statusElem.textContent === 'Paused') {
+                    statusElem.textContent = 'Running';
+                    statusElem.className = 'badge bg-success';
+                }
+            });
+            
+            function stopUSCodeScraping() {
+                scrapingActive = false;
+                clearInterval(timerInterval);
+                document.getElementById('uscodeStatus').textContent = 'Stopped';
+                document.getElementById('uscodeStatus').className = 'badge bg-danger';
+                document.getElementById('uscodeStartScraping').disabled = false;
+                document.getElementById('uscodeStopScraping').disabled = true;
+                document.getElementById('uscodePauseScraping').disabled = true;
+            }
+            
+            function updateUSCodeTimer() {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const hours = Math.floor(elapsed / 3600);
+                    const minutes = Math.floor((elapsed % 3600) / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('uscodeElapsedTime').textContent = 
+                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+            
+            function simulateUSCodeProgress() {
+                let progress = 0;
+                const progressInterval = setInterval(function() {
+                    if (!scrapingActive || progress >= 100) {
+                        clearInterval(progressInterval);
+                        if (progress >= 100) {
+                            document.getElementById('uscodeStatus').textContent = 'Completed';
+                            document.getElementById('uscodeStatus').className = 'badge bg-primary';
+                            stopUSCodeScraping();
+                        }
+                        return;
+                    }
+                    
+                    progress += Math.random() * 3;
+                    if (progress > 100) progress = 100;
+                    
+                    const sectionsFetched = Math.floor(progress * 15);
+                    const regsFetched = Math.floor(progress * 8);
+                    
+                    document.getElementById('uscodeProgressBar').style.width = progress + '%';
+                    document.getElementById('uscodeProgressBar').textContent = Math.floor(progress) + '%';
+                    document.getElementById('uscodeSectionsFetched').textContent = sectionsFetched;
+                    document.getElementById('uscodeRegsFetched').textContent = regsFetched;
+                }, 1200);
+            }
+            
+            // Export buttons
+            document.getElementById('uscodeExportJson').addEventListener('click', function() {
+                alert('Export as JSON functionality would be implemented here.');
+            });
+            
+            document.getElementById('uscodeExportParquet').addEventListener('click', function() {
+                alert('Export as Parquet functionality would be implemented here.');
+            });
+            
+            document.getElementById('uscodeSaveToIPFS').addEventListener('click', function() {
+                alert('Save to IPFS functionality would be implemented here.');
+            });
+        }
+        
+        // State Laws Dataset Builder
+        function setupStateDatasetBuilder() {
+            let scrapingActive = false;
+            let startTime = null;
+            let timerInterval = null;
+            
+            document.getElementById('stateStartScraping').addEventListener('click', function() {
+                if (!scrapingActive) {
+                    scrapingActive = true;
+                    startTime = Date.now();
+                    
+                    document.getElementById('stateStatus').textContent = 'Running';
+                    document.getElementById('stateStatus').className = 'badge bg-success';
+                    document.getElementById('stateStartScraping').disabled = true;
+                    document.getElementById('stateStopScraping').disabled = false;
+                    document.getElementById('statePauseScraping').disabled = false;
+                    
+                    simulateStateProgress();
+                    timerInterval = setInterval(updateStateTimer, 1000);
+                }
+            });
+            
+            document.getElementById('stateStopScraping').addEventListener('click', function() {
+                stopStateScraping();
+            });
+            
+            document.getElementById('statePauseScraping').addEventListener('click', function() {
+                const statusElem = document.getElementById('stateStatus');
+                if (statusElem.textContent === 'Running') {
+                    statusElem.textContent = 'Paused';
+                    statusElem.className = 'badge bg-warning';
+                } else if (statusElem.textContent === 'Paused') {
+                    statusElem.textContent = 'Running';
+                    statusElem.className = 'badge bg-success';
+                }
+            });
+            
+            function stopStateScraping() {
+                scrapingActive = false;
+                clearInterval(timerInterval);
+                document.getElementById('stateStatus').textContent = 'Stopped';
+                document.getElementById('stateStatus').className = 'badge bg-danger';
+                document.getElementById('stateStartScraping').disabled = false;
+                document.getElementById('stateStopScraping').disabled = true;
+                document.getElementById('statePauseScraping').disabled = true;
+            }
+            
+            function updateStateTimer() {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const hours = Math.floor(elapsed / 3600);
+                    const minutes = Math.floor((elapsed % 3600) / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('stateElapsedTime').textContent = 
+                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+            
+            function simulateStateProgress() {
+                let progress = 0;
+                const states = ['California', 'New York', 'Texas', 'Florida'];
+                let currentStateIndex = 0;
+                
+                const progressInterval = setInterval(function() {
+                    if (!scrapingActive || progress >= 100) {
+                        clearInterval(progressInterval);
+                        if (progress >= 100) {
+                            document.getElementById('stateStatus').textContent = 'Completed';
+                            document.getElementById('stateStatus').className = 'badge bg-primary';
+                            stopStateScraping();
+                        }
+                        return;
+                    }
+                    
+                    progress += Math.random() * 2.5;
+                    if (progress > 100) progress = 100;
+                    
+                    currentStateIndex = Math.floor((progress / 100) * states.length);
+                    if (currentStateIndex >= states.length) currentStateIndex = states.length - 1;
+                    
+                    const statesProcessed = Math.floor(progress / 25);
+                    const provisionsFetched = Math.floor(progress * 12);
+                    
+                    document.getElementById('stateProgressBar').style.width = progress + '%';
+                    document.getElementById('stateProgressBar').textContent = Math.floor(progress) + '%';
+                    document.getElementById('stateStatesProcessed').textContent = statesProcessed;
+                    document.getElementById('stateProvisionsFetched').textContent = provisionsFetched;
+                    document.getElementById('stateCurrentState').textContent = states[currentStateIndex];
+                }, 1500);
+            }
+            
+            // Export buttons
+            document.getElementById('stateExportJson').addEventListener('click', function() {
+                alert('Export as JSON functionality would be implemented here.');
+            });
+            
+            document.getElementById('stateExportParquet').addEventListener('click', function() {
+                alert('Export as Parquet functionality would be implemented here.');
+            });
+            
+            document.getElementById('stateSaveToIPFS').addEventListener('click', function() {
+                alert('Save to IPFS functionality would be implemented here.');
+            });
+        }
+        
+        // Municipal Laws Dataset Builder
+        function setupMunicipalDatasetBuilder() {
+            let scrapingActive = false;
+            let startTime = null;
+            let timerInterval = null;
+            
+            document.getElementById('municipalStartScraping').addEventListener('click', function() {
+                if (!scrapingActive) {
+                    scrapingActive = true;
+                    startTime = Date.now();
+                    
+                    document.getElementById('municipalStatus').textContent = 'Running';
+                    document.getElementById('municipalStatus').className = 'badge bg-success';
+                    document.getElementById('municipalStartScraping').disabled = true;
+                    document.getElementById('municipalStopScraping').disabled = false;
+                    document.getElementById('municipalPauseScraping').disabled = false;
+                    
+                    simulateMunicipalProgress();
+                    timerInterval = setInterval(updateMunicipalTimer, 1000);
+                }
+            });
+            
+            document.getElementById('municipalStopScraping').addEventListener('click', function() {
+                stopMunicipalScraping();
+            });
+            
+            document.getElementById('municipalPauseScraping').addEventListener('click', function() {
+                const statusElem = document.getElementById('municipalStatus');
+                if (statusElem.textContent === 'Running') {
+                    statusElem.textContent = 'Paused';
+                    statusElem.className = 'badge bg-warning';
+                } else if (statusElem.textContent === 'Paused') {
+                    statusElem.textContent = 'Running';
+                    statusElem.className = 'badge bg-success';
+                }
+            });
+            
+            function stopMunicipalScraping() {
+                scrapingActive = false;
+                clearInterval(timerInterval);
+                document.getElementById('municipalStatus').textContent = 'Stopped';
+                document.getElementById('municipalStatus').className = 'badge bg-danger';
+                document.getElementById('municipalStartScraping').disabled = false;
+                document.getElementById('municipalStopScraping').disabled = true;
+                document.getElementById('municipalPauseScraping').disabled = true;
+            }
+            
+            function updateMunicipalTimer() {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const hours = Math.floor(elapsed / 3600);
+                    const minutes = Math.floor((elapsed % 3600) / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('municipalElapsedTime').textContent = 
+                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+            
+            function simulateMunicipalProgress() {
+                let progress = 0;
+                const municipalities = ['Los Angeles', 'San Francisco', 'San Diego', 'Oakland'];
+                let currentMunicipalityIndex = 0;
+                
+                const progressInterval = setInterval(function() {
+                    if (!scrapingActive || progress >= 100) {
+                        clearInterval(progressInterval);
+                        if (progress >= 100) {
+                            document.getElementById('municipalStatus').textContent = 'Completed';
+                            document.getElementById('municipalStatus').className = 'badge bg-primary';
+                            stopMunicipalScraping();
+                        }
+                        return;
+                    }
+                    
+                    progress += Math.random() * 2;
+                    if (progress > 100) progress = 100;
+                    
+                    currentMunicipalityIndex = Math.floor((progress / 100) * municipalities.length);
+                    if (currentMunicipalityIndex >= municipalities.length) currentMunicipalityIndex = municipalities.length - 1;
+                    
+                    const municipalitiesProcessed = Math.floor(progress / 25);
+                    const ordinancesFetched = Math.floor(progress * 8);
+                    
+                    document.getElementById('municipalProgressBar').style.width = progress + '%';
+                    document.getElementById('municipalProgressBar').textContent = Math.floor(progress) + '%';
+                    document.getElementById('municipalMunicipalitiesProcessed').textContent = municipalitiesProcessed;
+                    document.getElementById('municipalOrdinancesFetched').textContent = ordinancesFetched;
+                    document.getElementById('municipalCurrentMunicipality').textContent = municipalities[currentMunicipalityIndex];
+                }, 1800);
+            }
+            
+            // Export buttons
+            document.getElementById('municipalExportJson').addEventListener('click', function() {
+                alert('Export as JSON functionality would be implemented here.');
+            });
+            
+            document.getElementById('municipalExportParquet').addEventListener('click', function() {
+                alert('Export as Parquet functionality would be implemented here.');
+            });
+            
+            document.getElementById('municipalSaveToIPFS').addEventListener('click', function() {
+                alert('Save to IPFS functionality would be implemented here.');
+            });
+        }
     </script>
 </body>
 </html>
