@@ -1,0 +1,64 @@
+; Legal Theory: Springfield Construction Contract
+; Generated deontic logic formulas
+
+(set-logic QF_UF)
+(set-info :source |Generated from deontic logic formulas|)
+
+; Agent sort
+(declare-sort Agent 0)
+
+; Deontic predicates
+(declare-fun obligatory (Agent Bool) Bool)
+(declare-fun permitted (Agent Bool) Bool)
+(declare-fun forbidden (Agent Bool) Bool)
+(declare-fun right (Agent Bool) Bool)
+(declare-fun liberty (Agent Bool) Bool)
+
+; Proposition predicates
+(declare-fun resolve_disputes_through_arbitration () Bool)
+(declare-fun subcontract_without_approval () Bool)
+(declare-fun use_substandard_materials () Bool)
+(declare-fun complete_all_construction_work_by_december_31 () Bool)
+(declare-fun maintain_insurance_coverage () Bool)
+(declare-fun terminate_agreement () Bool)
+(declare-fun pay_the_contractor_within_30_days_of_completion () Bool)
+(declare-fun inspect_work () Bool)
+(declare-fun pay_contractor () Bool)
+(declare-fun complete_construction_work () Bool)
+(declare-const client_springfield Agent)
+(declare-const contractor_abc Agent)
+(declare-const agent_3583 Agent)
+(declare-const agent_8208 Agent)
+(declare-const agent_9415 Agent)
+
+; Legal formulas
+(assert (=> (and December_31) (obligatory contractor_abc complete_all_construction_work_by_december_31)))
+; Source: The Contractor shall complete all construction work by Decem...
+(assert (=> (and id_30_days_of_completion) (obligatory client_springfield pay_the_contractor_within_30_days_of_completion)))
+; Source: The Client shall pay the Contractor within 30 days of comple...
+(assert (=> (and December_31) (obligatory agent_3583 complete_construction_work)))
+; Source: The Contractor shall complete all construction work by Decem...
+(assert (=> (and id_30_days_of_completion) (obligatory agent_3583 pay_contractor)))
+; Source: The Client shall pay the Contractor within 30 days of comple...
+(assert (permitted agent_9415 inspect_work))
+; Source: The Client may inspect the work at any time with 24 hours ad...
+(assert (forbidden agent_3583 use_substandard_materials))
+; Source: The Contractor must not use materials that do not meet speci...
+(assert (forbidden agent_3583 subcontract_without_approval))
+; Source: The Contractor shall not subcontract work without prior writ...
+(assert (obligatory agent_3583 maintain_insurance_coverage))
+; Source: The Contractor is required to maintain comprehensive insuran...
+(assert (permitted agent_8208 terminate_agreement))
+; Source: Either party may terminate this agreement with 30 days writt...
+(assert (obligatory resolve_disputes_through_arbitration))
+; Source: All disputes shall be resolved through binding arbitration i...
+
+; Consistency constraints
+(assert (forall ((a Agent) (p Bool))
+  (not (and (obligatory a p) (forbidden a p)))))
+
+(assert (forall ((a Agent) (p Bool))
+  (=> (permitted a p) (not (forbidden a p)))))
+
+(check-sat)
+(get-model)

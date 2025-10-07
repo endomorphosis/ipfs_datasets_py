@@ -1,0 +1,42 @@
+{
+  "formula_id": "d2823c4fe4b7",
+  "deontic_formula": {
+    "formula_id": "d2823c4fe4b7",
+    "operator": "O",
+    "proposition": "maintain_insurance_coverage",
+    "agent": {
+      "identifier": "agent_2400",
+      "name": "Contractor",
+      "agent_type": "organization",
+      "properties": {},
+      "hash": "35b4d633"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Contractor is required to maintain comprehensive insurance coverage",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "O[agent_2400](maintain_insurance_coverage)",
+    "creation_timestamp": "2025-08-31T19:11:06.624910"
+  },
+  "source_document_cid": "mock_doc_cid",
+  "source_text_excerpt": "The Contractor is required to maintain comprehensive insurance coverage",
+  "extraction_metadata": {
+    "collection": "Springfield Construction Contract"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:11:06.636888",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

@@ -10,6 +10,7 @@ import sys
 import json
 import importlib
 import inspect
+import pytest
 from pathlib import Path
 from typing import Dict, List, Set, Any, Optional
 
@@ -29,9 +30,10 @@ try:
         except ImportError:
             print("Warning: Could not import MCP server module")
             server = None
+    MCP_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing ipfs_datasets_py: {e}")
-    sys.exit(1)
+    MCP_AVAILABLE = False
 
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parent

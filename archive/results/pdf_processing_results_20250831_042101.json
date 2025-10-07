@@ -1,0 +1,11 @@
+{
+  "status": "error",
+  "stages_completed": [
+    "PDF validated and analyzed",
+    "PDF decomposed",
+    "IPLD structure created with decomposed PDF content",
+    "Decomposed PDF content processed with OCR"
+  ],
+  "error": "'dict' object has no attribute 'chunks'",
+  "pdf_path": "/tmp/tmp5sori_fq.pdf"
+}

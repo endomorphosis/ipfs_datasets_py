@@ -3,6 +3,7 @@
 import logging
 import asyncio
 from typing import Dict, Any, List, Optional, Union
+from datetime import datetime
 
 from ipfs_datasets_py.mcp_server.tools.validators import (
     validator, ValidationError
@@ -10,9 +11,7 @@ from ipfs_datasets_py.mcp_server.tools.validators import (
 # from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import metrics_collector
 
 from ...monitoring import metrics_collector
-from ipfs_datasets_py.mcp_server.tools.vector_store_tools.enhanced_vector_store_tools import (
-    EnhancedBaseMCPTool
-)
+from ..tool_wrapper import EnhancedBaseMCPTool
 logger = logging.getLogger(__name__)
 
 class MockVectorStoreService:
@@ -30,7 +29,7 @@ class MockVectorStoreService:
             'dimension': config.get('dimension', 768),
             'metric': config.get('metric', 'cosine'),
             'index_type': config.get('index_type', 'faiss'),
-            'created_at': validator.get_current_timestamp(),
+            'created_at': datetime.now().isoformat(),
             'vector_count': 0
         }
         return {'status': 'created', 'index_name': index_name, 'config': config}
@@ -226,7 +225,7 @@ class EnhancedVectorIndexTool(EnhancedBaseMCPTool):
                 "index_name": index_name,
                 "result": result,
                 "status": "success",
-                "timestamp": validator.get_current_timestamp() if hasattr(validator, 'get_current_timestamp') else None
+                "timestamp": datetime.now().isoformat()
             }
             
         except Exception as e:

@@ -1,0 +1,52 @@
+{
+  "formula_id": "999684f16a0e",
+  "deontic_formula": {
+    "formula_id": "999684f16a0e",
+    "operator": "O",
+    "proposition": "pay_contractor",
+    "agent": {
+      "identifier": "agent_2969",
+      "name": "Contractor",
+      "agent_type": "organization",
+      "properties": {},
+      "hash": "a905e155"
+    },
+    "beneficiary": null,
+    "conditions": [
+      "30 days of completion"
+    ],
+    "temporal_conditions": [
+      {
+        "operator": "U",
+        "condition": "30 days",
+        "start_time": null,
+        "end_time": "30 days",
+        "duration": null
+      }
+    ],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Client shall pay the Contractor within 30 days of completion",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "O[agent_2969](U((30 days of completion) \u2192 (pay_contractor)))",
+    "creation_timestamp": "2025-08-31T19:15:31.058234"
+  },
+  "source_document_cid": null,
+  "source_text_excerpt": "The Client shall pay the Contractor within 30 days of completion",
+  "extraction_metadata": {
+    "source_method": "graphrag_conversion"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:15:31.061346",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

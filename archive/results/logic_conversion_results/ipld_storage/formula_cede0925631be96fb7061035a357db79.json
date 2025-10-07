@@ -1,0 +1,42 @@
+{
+  "formula_id": "142e8ad8edda",
+  "deontic_formula": {
+    "formula_id": "142e8ad8edda",
+    "operator": "P",
+    "proposition": "inspect_work",
+    "agent": {
+      "identifier": "agent_4357",
+      "name": "Client",
+      "agent_type": "person",
+      "properties": {},
+      "hash": "32b66eec"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Client may inspect the work at any time with 24 hours advance notice",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "P[agent_4357](inspect_work)",
+    "creation_timestamp": "2025-08-31T19:11:06.624467"
+  },
+  "source_document_cid": "mock_doc_cid",
+  "source_text_excerpt": "The Client may inspect the work at any time with 24 hours advance notice",
+  "extraction_metadata": {
+    "collection": "Springfield Construction Contract"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:11:06.636146",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}
