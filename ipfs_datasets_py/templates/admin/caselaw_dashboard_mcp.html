@@ -732,6 +732,11 @@
                                     <i class="fas fa-city"></i> Municipal Laws
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-recap" role="tab">
+                                    <i class="fas fa-gavel"></i> RECAP Archive
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -2506,6 +2511,165 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             </div>
                         </div>
                     </div>
+
+                    <!-- RECAP Archive Dataset Tab -->
+                    <div class="tab-pane fade" id="dataset-recap" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-gavel"></i> RECAP Archive Dataset Builder</h5>
+                                <small class="text-white">Scrape federal court documents from the RECAP Archive (courtlistener.com)</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About RECAP Archive</h6>
+                                    <p class="mb-0">RECAP (PACER Backwards) is a free and open archive of federal court documents from PACER. Build datasets of court opinions, dockets, complaints, motions, and other filings from federal courts.</p>
+                                </div>
+
+                                <!-- Configuration Section -->
+                                <h6 class="mt-4">Configuration</h6>
+                                <form id="recapConfigForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="recapCourts" class="form-label">Courts</label>
+                                            <select class="form-select" id="recapCourts" multiple size="5">
+                                                <option value="all">All Courts</option>
+                                                <option value="ca9">Ninth Circuit</option>
+                                                <option value="nysd">S.D.N.Y. (Southern District of New York)</option>
+                                                <option value="dcd">D.C. District Court</option>
+                                                <option value="txnd">N.D. Texas</option>
+                                                <option value="cacd">C.D. California</option>
+                                            </select>
+                                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="recapDocTypes" class="form-label">Document Types</label>
+                                            <select class="form-select" id="recapDocTypes" multiple size="5">
+                                                <option value="opinion" selected>Opinions</option>
+                                                <option value="complaint">Complaints</option>
+                                                <option value="docket">Dockets</option>
+                                                <option value="order">Orders</option>
+                                                <option value="motion">Motions</option>
+                                                <option value="brief">Briefs</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="recapFiledAfter" class="form-label">Filed After</label>
+                                            <input type="date" class="form-control" id="recapFiledAfter">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="recapFiledBefore" class="form-label">Filed Before</label>
+                                            <input type="date" class="form-control" id="recapFiledBefore">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="recapCaseName" class="form-label">Case Name Pattern (Optional)</label>
+                                            <input type="text" class="form-control" id="recapCaseName" placeholder="e.g., Smith v.">
+                                            <small class="text-muted">Filter by case name pattern</small>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="recapIncludeText" checked>
+                                                <label class="form-check-label" for="recapIncludeText">
+                                                    Include full document text
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="recapIncludeMetadata" checked>
+                                                <label class="form-check-label" for="recapIncludeMetadata">
+                                                    Include metadata
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Scraping Controls -->
+                                <h6 class="mt-4">Scraping & Processing</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-success me-2" id="recapStartScraping">
+                                            <i class="fas fa-play"></i> Start Scraping
+                                        </button>
+                                        <button class="btn btn-danger me-2" id="recapStopScraping" disabled>
+                                            <i class="fas fa-stop"></i> Stop
+                                        </button>
+                                        <button class="btn btn-warning me-2" id="recapPauseScraping" disabled>
+                                            <i class="fas fa-pause"></i> Pause
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Progress Monitoring -->
+                                <h6 class="mt-4">Progress</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <strong>Status:</strong> <span id="recapStatus" class="badge bg-secondary">Idle</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Documents Fetched:</strong> <span id="recapDocsFetched">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Courts Processed:</strong> <span id="recapCourtsProcessed">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Elapsed Time:</strong> <span id="recapElapsedTime">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress" style="height: 25px;">
+                                            <div id="recapProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%;">0%</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dataset Preview -->
+                                <h6 class="mt-4">Dataset Preview</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Case Name</th>
+                                                <th>Court</th>
+                                                <th>Doc Type</th>
+                                                <th>Filed Date</th>
+                                                <th>Pages</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recapPreviewTable">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No data yet. Start scraping to see preview.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Export Options -->
+                                <h6 class="mt-4">Export & Save</h6>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-primary me-2" id="recapExportJson">
+                                            <i class="fas fa-download"></i> Export as JSON
+                                        </button>
+                                        <button class="btn btn-primary me-2" id="recapExportParquet">
+                                            <i class="fas fa-download"></i> Export as Parquet
+                                        </button>
+                                        <button class="btn btn-success me-2" id="recapSaveToIPFS">
+                                            <i class="fas fa-cloud-upload-alt"></i> Save to IPFS
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -3598,6 +3762,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 setupUSCodeDatasetBuilder();
                 setupStateDatasetBuilder();
                 setupMunicipalDatasetBuilder();
+                setupRECAPDatasetBuilder();
                 
                 // Demo buttons (Priority 2)
                 setupDemoButtons();
@@ -3717,6 +3882,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             let scrapingActive = false;
             let startTime = null;
             let timerInterval = null;
+            let scrapingResult = null;
             
             document.getElementById('uscodeStartScraping').addEventListener('click', function() {
                 if (!scrapingActive) {
@@ -3729,7 +3895,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     document.getElementById('uscodeStopScraping').disabled = false;
                     document.getElementById('uscodePauseScraping').disabled = false;
                     
-                    simulateUSCodeProgress();
+                    startUSCodeScraping();
                     timerInterval = setInterval(updateUSCodeTimer, 1000);
                 }
             });
@@ -3770,43 +3936,80 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 }
             }
             
-            function simulateUSCodeProgress() {
-                let progress = 0;
-                const progressInterval = setInterval(function() {
-                    if (!scrapingActive || progress >= 100) {
-                        clearInterval(progressInterval);
-                        if (progress >= 100) {
-                            document.getElementById('uscodeStatus').textContent = 'Completed';
-                            document.getElementById('uscodeStatus').className = 'badge bg-primary';
-                            stopUSCodeScraping();
-                        }
-                        return;
+            async function startUSCodeScraping() {
+                try {
+                    // Get selected titles
+                    const titleSelect = document.getElementById('uscodeTitles');
+                    const selectedTitles = Array.from(titleSelect.selectedOptions).map(opt => opt.value);
+                    
+                    // Prepare request data
+                    const requestData = {
+                        titles: selectedTitles.includes('all') ? null : selectedTitles,
+                        output_format: 'json',
+                        include_metadata: true,
+                        rate_limit_delay: 1.0,
+                        max_sections: 100  // Limit for demo purposes
+                    };
+                    
+                    // Call backend API
+                    const response = await fetch('/api/mcp/dataset/uscode/scrape', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        scrapingResult = result;
+                        document.getElementById('uscodeStatus').textContent = 'Completed';
+                        document.getElementById('uscodeStatus').className = 'badge bg-primary';
+                        
+                        // Update stats
+                        const metadata = result.metadata || {};
+                        document.getElementById('uscodeSectionsFetched').textContent = metadata.sections_count || 0;
+                        document.getElementById('uscodeRegsFetched').textContent = Math.floor((metadata.sections_count || 0) / 2);
+                        document.getElementById('uscodeProgressBar').style.width = '100%';
+                        document.getElementById('uscodeProgressBar').textContent = '100%';
+                        
+                        stopUSCodeScraping();
+                    } else {
+                        throw new Error(result.error || 'Scraping failed');
                     }
                     
-                    progress += Math.random() * 3;
-                    if (progress > 100) progress = 100;
-                    
-                    const sectionsFetched = Math.floor(progress * 15);
-                    const regsFetched = Math.floor(progress * 8);
-                    
-                    document.getElementById('uscodeProgressBar').style.width = progress + '%';
-                    document.getElementById('uscodeProgressBar').textContent = Math.floor(progress) + '%';
-                    document.getElementById('uscodeSectionsFetched').textContent = sectionsFetched;
-                    document.getElementById('uscodeRegsFetched').textContent = regsFetched;
-                }, 1200);
+                } catch (error) {
+                    console.error('US Code scraping error:', error);
+                    document.getElementById('uscodeStatus').textContent = 'Error';
+                    document.getElementById('uscodeStatus').className = 'badge bg-danger';
+                    alert('US Code scraping failed: ' + error.message);
+                    stopUSCodeScraping();
+                }
             }
             
             // Export buttons
             document.getElementById('uscodeExportJson').addEventListener('click', function() {
-                alert('Export as JSON functionality would be implemented here.');
+                if (scrapingResult && scrapingResult.data) {
+                    const dataStr = JSON.stringify(scrapingResult.data, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'us_code_dataset.json';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert('No data available to export. Please run scraping first.');
+                }
             });
             
             document.getElementById('uscodeExportParquet').addEventListener('click', function() {
-                alert('Export as Parquet functionality would be implemented here.');
+                alert('Parquet export functionality will be available in a future update.');
             });
             
             document.getElementById('uscodeSaveToIPFS').addEventListener('click', function() {
-                alert('Save to IPFS functionality would be implemented here.');
+                alert('IPFS save functionality will be available in a future update.');
             });
         }
         
@@ -4017,6 +4220,182 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             
             document.getElementById('municipalSaveToIPFS').addEventListener('click', function() {
                 alert('Save to IPFS functionality would be implemented here.');
+            });
+        }
+        
+        // RECAP Archive Dataset Builder
+        function setupRECAPDatasetBuilder() {
+            let scrapingActive = false;
+            let startTime = null;
+            let timerInterval = null;
+            let scrapingResult = null;
+            
+            document.getElementById('recapStartScraping').addEventListener('click', function() {
+                if (!scrapingActive) {
+                    scrapingActive = true;
+                    startTime = Date.now();
+                    
+                    document.getElementById('recapStatus').textContent = 'Running';
+                    document.getElementById('recapStatus').className = 'badge bg-success';
+                    document.getElementById('recapStartScraping').disabled = true;
+                    document.getElementById('recapStopScraping').disabled = false;
+                    document.getElementById('recapPauseScraping').disabled = false;
+                    
+                    startRECAPScraping();
+                    timerInterval = setInterval(updateRECAPTimer, 1000);
+                }
+            });
+            
+            document.getElementById('recapStopScraping').addEventListener('click', function() {
+                stopRECAPScraping();
+            });
+            
+            document.getElementById('recapPauseScraping').addEventListener('click', function() {
+                const statusElem = document.getElementById('recapStatus');
+                if (statusElem.textContent === 'Running') {
+                    statusElem.textContent = 'Paused';
+                    statusElem.className = 'badge bg-warning';
+                } else if (statusElem.textContent === 'Paused') {
+                    statusElem.textContent = 'Running';
+                    statusElem.className = 'badge bg-success';
+                }
+            });
+            
+            function stopRECAPScraping() {
+                scrapingActive = false;
+                clearInterval(timerInterval);
+                document.getElementById('recapStatus').textContent = 'Stopped';
+                document.getElementById('recapStatus').className = 'badge bg-danger';
+                document.getElementById('recapStartScraping').disabled = false;
+                document.getElementById('recapStopScraping').disabled = true;
+                document.getElementById('recapPauseScraping').disabled = true;
+            }
+            
+            function updateRECAPTimer() {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const hours = Math.floor(elapsed / 3600);
+                    const minutes = Math.floor((elapsed % 3600) / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('recapElapsedTime').textContent = 
+                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+            
+            async function startRECAPScraping() {
+                try {
+                    // Get selected parameters
+                    const courtsSelect = document.getElementById('recapCourts');
+                    const selectedCourts = Array.from(courtsSelect.selectedOptions).map(opt => opt.value);
+                    
+                    const docTypesSelect = document.getElementById('recapDocTypes');
+                    const selectedDocTypes = Array.from(docTypesSelect.selectedOptions).map(opt => opt.value);
+                    
+                    const filedAfter = document.getElementById('recapFiledAfter').value;
+                    const filedBefore = document.getElementById('recapFiledBefore').value;
+                    const caseName = document.getElementById('recapCaseName').value;
+                    const includeText = document.getElementById('recapIncludeText').checked;
+                    const includeMetadata = document.getElementById('recapIncludeMetadata').checked;
+                    
+                    // Prepare request data
+                    const requestData = {
+                        courts: selectedCourts.includes('all') ? null : selectedCourts,
+                        document_types: selectedDocTypes.length > 0 ? selectedDocTypes : ['opinion'],
+                        filed_after: filedAfter || null,
+                        filed_before: filedBefore || null,
+                        case_name_pattern: caseName || null,
+                        output_format: 'json',
+                        include_text: includeText,
+                        include_metadata: includeMetadata,
+                        rate_limit_delay: 1.0,
+                        max_documents: 50  // Limit for demo purposes
+                    };
+                    
+                    // Call backend API
+                    const response = await fetch('/api/mcp/dataset/recap/scrape', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        scrapingResult = result;
+                        document.getElementById('recapStatus').textContent = 'Completed';
+                        document.getElementById('recapStatus').className = 'badge bg-primary';
+                        
+                        // Update stats
+                        const metadata = result.metadata || {};
+                        document.getElementById('recapDocsFetched').textContent = metadata.documents_count || 0;
+                        document.getElementById('recapCourtsProcessed').textContent = metadata.courts_count || 0;
+                        document.getElementById('recapProgressBar').style.width = '100%';
+                        document.getElementById('recapProgressBar').textContent = '100%';
+                        
+                        // Update preview table
+                        updateRECAPPreview(result.data);
+                        
+                        stopRECAPScraping();
+                    } else {
+                        throw new Error(result.error || 'Scraping failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('RECAP scraping error:', error);
+                    document.getElementById('recapStatus').textContent = 'Error';
+                    document.getElementById('recapStatus').className = 'badge bg-danger';
+                    alert('RECAP scraping failed: ' + error.message);
+                    stopRECAPScraping();
+                }
+            }
+            
+            function updateRECAPPreview(data) {
+                const tbody = document.getElementById('recapPreviewTable');
+                tbody.innerHTML = '';
+                
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No data available</td></tr>';
+                    return;
+                }
+                
+                // Show first 10 documents
+                data.slice(0, 10).forEach(doc => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${doc.case_name || 'N/A'}</td>
+                        <td>${doc.court || 'N/A'}</td>
+                        <td>${doc.document_type || 'N/A'}</td>
+                        <td>${doc.date_filed || 'N/A'}</td>
+                        <td>${doc.page_count || 'N/A'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // Export buttons
+            document.getElementById('recapExportJson').addEventListener('click', function() {
+                if (scrapingResult && scrapingResult.data) {
+                    const dataStr = JSON.stringify(scrapingResult.data, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'recap_archive_dataset.json';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert('No data available to export. Please run scraping first.');
+                }
+            });
+            
+            document.getElementById('recapExportParquet').addEventListener('click', function() {
+                alert('Parquet export functionality will be available in a future update.');
+            });
+            
+            document.getElementById('recapSaveToIPFS').addEventListener('click', function() {
+                alert('IPFS save functionality will be available in a future update.');
             });
         }
     </script>
