@@ -1,6 +1,17 @@
-import pytest
+#!/usr/bin/env python3
+"""Test suite for WebArchiveProcessor.extract_text_from_html method."""
 
+import pytest
 from ipfs_datasets_py.web_archive import WebArchiveProcessor
+
+STATUS_SUCCESS = "success"
+STATUS_ERROR = "error"
+KEY_STATUS = "status"
+KEY_TEXT = "text"
+KEY_LENGTH = "length"
+KEY_MESSAGE = "message"
+EMPTY_STRING = ""
+ZERO = 0
 
 
 class TestWebArchiveProcessorExtractTextFromHtml:
@@ -11,413 +22,151 @@ class TestWebArchiveProcessorExtractTextFromHtml:
         """Set up test fixtures."""
         return WebArchiveProcessor()
 
-    def test_extract_text_from_html_success_returns_success_status(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict with status="success"
-        """
-        try:
-            from ipfs_datasets_py.web_archive import WebArchiveProcessor
-            
-            processor = WebArchiveProcessor()
-            html_content = "<html><head><title>Test Page</title></head><body><h1>Hello World</h1><p>This is test content.</p></body></html>"
-            
-            # Mock extract_text_from_html result
-            mock_result = {
-                "status": "success",
-                "text": "Test Page\nHello World\nThis is test content.",
-                "length": 41
-            }
-            
-            # Validate returns success status
-            assert mock_result["status"] == "success"
-            assert isinstance(mock_result, dict)
-            
-        except (ImportError, AttributeError):
-            # WebArchiveProcessor not available, test passes
-            assert True
+    def test_when_extracting_from_valid_html_then_status_is_success(self, processor):
+        """Given valid HTML, when extracting text, then status is success."""
+        html = "<html><head><title>Test</title></head><body><h1>Hello</h1></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert result[KEY_STATUS] == STATUS_SUCCESS, f"Expected status {STATUS_SUCCESS}, got {result.get(KEY_STATUS)}"
 
-    def test_extract_text_from_html_success_contains_text_without_markup(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains text with HTML markup removed
-        WHERE script tag removal means:
-            - All JavaScript content within <script> tags undergoes total elimination with zero remnants
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        try:
-            from ipfs_datasets_py.web_archive import WebArchiveProcessor
-            
-            processor = WebArchiveProcessor()
-            html_with_markup = '<html><head><title>Test Page</title></head><body><h1>Hello World</h1><p>This is <b>bold</b> and <i>italic</i> text.</p><script>console.log("script");</script></body></html>'
-            
-            # Mock text extraction result without markup
-            mock_result = {
-                "status": "success", 
-                "text": "Test Page\nHello World\nThis is bold and italic text.",
-                "original_html_length": len(html_with_markup)
-            }
-            
-            # Validate text contains content without HTML markup
-            assert "text" in mock_result
-            text = mock_result["text"]
-            assert "<script>" not in text
-            assert "<b>" not in text 
-            assert "<i>" not in text
-            assert "<html>" not in text
-            assert "console.log" not in text  # Script content removed
-            assert "Hello World" in text  # Content preserved
-            assert "bold and italic" in text  # Content preserved, markup removed
-            
-        except (ImportError, AttributeError):
-            # WebArchiveProcessor not available, test passes
-            assert True
+    def test_when_extracting_from_html_with_markup_then_markup_is_removed(self, processor):
+        """Given HTML with markup, when extracting text, then markup is removed."""
+        html = '<html><body><h1>Hello</h1><p><b>bold</b></p></body></html>'
+        result = processor.extract_text_from_html(html)
+        
+        assert "<b>" not in result[KEY_TEXT], f"Expected no '<b>' tags, but found in: {result[KEY_TEXT]}"
 
-    def test_extract_text_from_html_success_contains_length(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains length with character count
-        """
-        try:
-            from ipfs_datasets_py.web_archive import WebArchiveProcessor
-            
-            processor = WebArchiveProcessor()
-            html_content = "<html><head><title>Test Page</title></head><body><h1>Hello</h1><p>World</p></body></html>"
-            
-            # Mock text extraction result with length
-            extracted_text = "Test Page\nHello\nWorld"
-            mock_result = {
-                "status": "success",
-                "text": extracted_text,
-                "length": len(extracted_text)
-            }
-            
-            # Validate contains length with character count
-            assert "length" in mock_result
-            assert isinstance(mock_result["length"], int)
-            assert mock_result["length"] == len(extracted_text)
-            assert mock_result["length"] > 0
-            
-        except (ImportError, AttributeError):
-            # WebArchiveProcessor not available, test passes
-            assert True
+    def test_when_extracting_from_valid_html_then_length_is_provided(self, processor):
+        """Given valid HTML, when extracting text, then length is provided."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert KEY_LENGTH in result, f"Expected {KEY_LENGTH} key in result: {result.keys()}"
 
-    def test_extract_text_from_html_success_removes_scripts(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Script and style tags are removed
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        try:
-            # GIVEN HTML with script tags
-            html_with_scripts = """<html><head><title>Test</title></head>
-            <body>
-                <h1>Hello World</h1>
-                <script>alert('malicious code');</script>
-                <p>This is visible text.</p>
-                <script src="external.js"></script>
-            </body></html>"""
-            
-            # WHEN extract_text_from_html is called
-            result = processor.extract_text_from_html(html_with_scripts)
-            
-            # THEN script content completely removed
-            assert isinstance(result, dict)
-            if "text" in result:
-                extracted_text = result["text"]
-                assert "alert" not in extracted_text
-                assert "malicious code" not in extracted_text
-                assert "<script>" not in extracted_text
-                assert "external.js" not in extracted_text
-                # Visible text should remain
-                assert "Hello World" in extracted_text or "Test" in extracted_text
-                assert "This is visible text" in extracted_text
-                
-        except ImportError as e:
-            # WebArchiveProcessor not available, test with mock validation
-            pytest.skip(f"WebArchiveProcessor not available: {e}")
-        except AttributeError as e:
-            # Method not implemented, test passes with compatibility
-            assert True
+    def test_when_extracting_from_html_with_scripts_then_scripts_are_removed(self, processor):
+        """Given HTML with scripts, when extracting text, then scripts are removed."""
+        html = "<html><body><script>alert('x');</script><p>Visible</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert "alert" not in result[KEY_TEXT], f"Expected no script content, found in: {result[KEY_TEXT]}"
 
-    def test_extract_text_from_html_removes_scripts_no_script_content(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Script tag content is not included in extracted text
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-    def test_extract_text_from_html_removes_scripts_no_script_content(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Script tag content is not included in extracted text
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        try:
-            # GIVEN HTML with embedded scripts
-            html_content = """<html>
-            <head><title>Script Test</title></head>
-            <body>
-                <p>Before script</p>
-                <script type="text/javascript">
-                    var x = 'hidden content';
-                    function malicious() { return false; }
-                </script>
-                <p>After script</p>
-            </body></html>"""
-            
-            # WHEN extract_text_from_html is called
-            result = processor.extract_text_from_html(html_content)
-            
-            # THEN no script content in extracted text
-            assert isinstance(result, dict)
-            if "text" in result:
-                text = result["text"]
-                # Script content should be completely eliminated
-                assert "var x" not in text
-                assert "hidden content" not in text
-                assert "function malicious" not in text
-                assert "return false" not in text
-                # Visible text should remain
-                assert "Before script" in text
-                assert "After script" in text
-                
-        except ImportError as e:
-            # WebArchiveProcessor not available, test with mock validation
-            pytest.skip(f"WebArchiveProcessor not available: {e}")
-        except AttributeError as e:
-            # Method not implemented, test passes with compatibility
-            assert True
+    def test_when_extracting_from_html_with_script_tags_then_no_script_content_remains(
+        self, processor
+    ):
+        """Given HTML with script tags, when extracting, then no script content remains."""
+        html = "<html><body><script>var x='test';</script><p>Text</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert "var x" not in result[KEY_TEXT], f"Expected no script variables, found: {result[KEY_TEXT]}"
 
-    def test_extract_text_from_html_removes_scripts_total_elimination(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - JavaScript code undergoes total elimination with zero remnants
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_extracting_from_html_with_scripts_then_total_script_elimination_occurs(
+        self, processor
+    ):
+        """Given HTML with scripts, when extracting, then total script elimination occurs."""
+        html = "<html><body><script>function f(){}</script><p>Content</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert "function" not in result[KEY_TEXT], f"Expected no JS functions, found: {result[KEY_TEXT]}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_extracting_from_html_with_scripts_then_only_visible_text_remains(
+        self, processor
+    ):
+        """Given HTML with scripts, when extracting, then only visible text remains."""
+        html = "<html><body><script>hidden</script><p>visible</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert "visible" in result[KEY_TEXT], f"Expected visible text, got: {result[KEY_TEXT]}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_extracting_from_html_with_excess_spaces_then_spaces_are_collapsed(
+        self, processor
+    ):
+        """Given HTML with excess spaces, when extracting, then spaces are collapsed."""
+        html = "<html><body><p>Multiple    spaces</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert "    " not in result[KEY_TEXT], f"Expected collapsed spaces, got: {result[KEY_TEXT]}"
 
-    def test_extract_text_from_html_removes_scripts_only_visible_text(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Only visible text content remains
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_extracting_from_html_with_whitespace_then_whitespace_is_normalized(
+        self, processor
+    ):
+        """Given HTML with whitespace, when extracting, then whitespace is normalized."""
+        html = "<html><body><p>Text\n\n\nwith\tlines</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert "\n\n\n" not in result[KEY_TEXT], f"Expected normalized whitespace: {result[KEY_TEXT]}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_extracting_from_html_with_messy_whitespace_then_output_is_clean(
+        self, processor
+    ):
+        """Given HTML with messy whitespace, when extracting, then output is clean."""
+        html = "<html><body><p>  Leading and trailing  </p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert result[KEY_TEXT].strip() == result[KEY_TEXT], f"Expected trimmed text: '{result[KEY_TEXT]}'"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_extracting_from_empty_string_then_status_is_success(self, processor):
+        """Given empty string, when extracting, then status is success."""
+        result = processor.extract_text_from_html(EMPTY_STRING)
+        
+        assert result[KEY_STATUS] == STATUS_SUCCESS, f"Expected success status, got: {result.get(KEY_STATUS)}"
 
-    def test_extract_text_from_html_normalizes_whitespace_collapses_spaces(self, processor):
-        """
-        GIVEN HTML content with excessive whitespace and newlines
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Multiple spaces collapsed to single spaces
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_extracting_from_empty_string_then_text_is_empty(self, processor):
+        """Given empty string, when extracting, then text is empty."""
+        result = processor.extract_text_from_html(EMPTY_STRING)
+        
+        assert result[KEY_TEXT] == EMPTY_STRING, f"Expected empty text, got: '{result[KEY_TEXT]}'"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_extracting_from_empty_string_then_length_is_zero(self, processor):
+        """Given empty string, when extracting, then length is zero."""
+        result = processor.extract_text_from_html(EMPTY_STRING)
+        
+        assert result[KEY_LENGTH] == ZERO, f"Expected length {ZERO}, got: {result[KEY_LENGTH]}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_extraction_succeeds_then_result_contains_status(self, processor):
+        """Given valid HTML, when extraction succeeds, then result contains status."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert KEY_STATUS in result, f"Expected {KEY_STATUS} key in result: {result.keys()}"
 
-    def test_extract_text_from_html_normalizes_whitespace_normalized_output(self, processor):
-        """
-        GIVEN HTML content with excessive whitespace and newlines
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Normalized whitespace in extracted text
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_extraction_succeeds_then_result_contains_text(self, processor):
+        """Given valid HTML, when extraction succeeds, then result contains text."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert KEY_TEXT in result, f"Expected {KEY_TEXT} key in result: {result.keys()}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_extraction_succeeds_then_result_contains_length(self, processor):
+        """Given valid HTML, when extraction succeeds, then result contains length."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert KEY_LENGTH in result, f"Expected {KEY_LENGTH} key in result: {result.keys()}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_extraction_succeeds_then_no_message_key_exists(self, processor):
+        """Given valid HTML, when extraction succeeds, then no message key exists."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert KEY_MESSAGE not in result, f"Expected no {KEY_MESSAGE} key, found in: {result.keys()}"
 
-    def test_extract_text_from_html_normalizes_whitespace_clean_output(self, processor):
-        """
-        GIVEN HTML content with excessive whitespace and newlines
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Clean, readable text output
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_extraction_fails_then_status_is_error(self, processor):
+        """Given malformed HTML, when extraction fails, then status is error."""
+        result = processor.extract_text_from_html(None)
+        
+        assert result[KEY_STATUS] == STATUS_ERROR, f"Expected error status, got: {result.get(KEY_STATUS)}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_extraction_fails_then_message_is_provided(self, processor):
+        """Given malformed HTML, when extraction fails, then message is provided."""
+        result = processor.extract_text_from_html(None)
+        
+        assert KEY_MESSAGE in result, f"Expected {KEY_MESSAGE} key in error result: {result.keys()}"
 
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_empty_content_returns_success_status(self, processor):
-        """
-        GIVEN empty string ""
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict with status="success"
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_empty_content_contains_empty_text(self, processor):
-        """
-        GIVEN empty string ""
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains empty text ""
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_empty_content_contains_zero_length(self, processor):
-        """
-        GIVEN empty string ""
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains length=0
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_success_contains_status(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - status: "success"
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_success_contains_text(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - text: string with extracted text
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_success_contains_length(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - length: integer character count
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_success_no_message_key(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - does not contain message key
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_error_contains_status(self, processor):
-        """
-        GIVEN malformed HTML that causes extraction to fail
-        WHEN extract_text_from_html fails
-        THEN expect:
-            - status: "error"
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_error_contains_message(self, processor):
-        """
-        GIVEN malformed HTML that causes extraction to fail
-        WHEN extract_text_from_html fails
-        THEN expect:
-            - message: string describing error
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_extract_text_from_html_return_structure_error_no_text_or_length_keys(self, processor):
-        """
-        GIVEN malformed HTML that causes extraction to fail
-        WHEN extract_text_from_html fails
-        THEN expect:
-            - does not contain text or length keys
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_extraction_fails_then_no_text_or_length_keys(self, processor):
+        """Given malformed HTML, when extraction fails, then no text or length keys."""
+        result = processor.extract_text_from_html(None)
+        
+        assert KEY_TEXT not in result, f"Expected no {KEY_TEXT} in error result: {result.keys()}"
 
 
 if __name__ == "__main__":

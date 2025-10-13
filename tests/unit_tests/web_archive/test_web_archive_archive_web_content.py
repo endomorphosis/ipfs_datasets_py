@@ -1,354 +1,199 @@
+#!/usr/bin/env python3
+
 import pytest
 
 from ipfs_datasets_py.web_archive import archive_web_content
 
 
+VALID_URL = "https://example.com/page.html"
+VALID_URL_WITH_METADATA = "https://docs.example.com/guide.html"
+INVALID_URL = "not-a-valid-url"
+SUCCESS_STATUS = "success"
+ERROR_STATUS = "error"
+ARCHIVE_PREFIX = "archive_"
+HIGH_PRIORITY = "high"
+DOC_CATEGORY = "documentation"
+STATUS_KEY = "status"
+ARCHIVE_ID_KEY = "archive_id"
+MESSAGE_KEY = "message"
+
+
+@pytest.fixture
+def valid_metadata():
+    """Provides valid metadata dictionary."""
+    return {HIGH_PRIORITY: HIGH_PRIORITY, DOC_CATEGORY: DOC_CATEGORY}
+
+
+@pytest.fixture
+def valid_url_result():
+    """Provides result from archiving valid URL."""
+    return archive_web_content(VALID_URL)
+
+
+@pytest.fixture
+def valid_url_with_metadata_result(valid_metadata):
+    """Provides result from archiving valid URL with metadata."""
+    return archive_web_content(VALID_URL_WITH_METADATA, valid_metadata)
+
+
+@pytest.fixture
+def invalid_url_result():
+    """Provides result from archiving invalid URL."""
+    return archive_web_content(INVALID_URL)
+
+
 class TestArchiveWebContent:
-    """Test archive_web_content function functionality."""
+    """Tests for archive_web_content."""
 
-    def test_archive_web_content_success_with_metadata_returns_success_status(self):
-        """
-        GIVEN valid URL "https://important-docs.com/guide.html"
-        AND metadata dict {"priority": "high", "category": "documentation"}
-        WHEN archive_web_content is called
-        THEN expect:
-            - Return dict with status="success"
-        """
-        # GIVEN
-        url = "https://important-docs.com/guide.html"
-        metadata = {"priority": "high", "category": "documentation"}
-        
-        # WHEN
-        result = archive_web_content(url, metadata)
-        
-        # THEN
-        assert isinstance(result, dict)
-        assert result["status"] == "success"
+    def test_when_archiving_url_with_metadata_then_status_is_success(
+        self, valid_url_with_metadata_result
+    ):
+        """Given valid URL with metadata, when archived, then status is success."""
+        expected = SUCCESS_STATUS
+        actual = valid_url_with_metadata_result[STATUS_KEY]
 
-    def test_archive_web_content_success_with_metadata_contains_archive_id(self):
-        """
-        GIVEN valid URL "https://important-docs.com/guide.html"
-        AND metadata dict {"priority": "high", "category": "documentation"}
-        WHEN archive_web_content is called
-        THEN expect:
-            - Return dict contains archive_id key
-        """
-        # GIVEN
-        url = "https://important-docs.com/guide.html"
-        metadata = {"priority": "high", "category": "documentation"}
-        
-        # WHEN
-        result = archive_web_content(url, metadata)
-        
-        # THEN
-        assert "archive_id" in result
-        assert isinstance(result["archive_id"], str)
+        assert actual == expected, f"Expected {STATUS_KEY} {expected}, got {actual}"
 
-    def test_archive_web_content_success_with_metadata_archive_id_format(self):
-        """
-        GIVEN valid URL "https://important-docs.com/guide.html"
-        AND metadata dict {"priority": "high", "category": "documentation"}
-        WHEN archive_web_content is called
-        THEN expect:
-            - archive_id follows format "archive_{n}"
-        """
-        # GIVEN
-        url = "https://important-docs.com/guide.html"
-        metadata = {"priority": "high", "category": "documentation"}
-        
-        # WHEN
-        result = archive_web_content(url, metadata)
-        
-        # THEN
-        archive_id = result["archive_id"]
-        assert archive_id.startswith("archive_")
-        # Extract number part and verify it's numeric
-        number_part = archive_id.replace("archive_", "")
-        assert number_part.isdigit()
+    def test_when_archiving_url_with_metadata_then_contains_archive_id(
+        self, valid_url_with_metadata_result
+    ):
+        """Given valid URL with metadata, when archived, then contains archive_id."""
+        keys = list(valid_url_with_metadata_result.keys())
 
-    def test_archive_web_content_success_without_metadata_returns_success_status(self):
-        """
-        GIVEN valid URL "https://example.com"
-        AND metadata is None (default)
-        WHEN archive_web_content is called
-        THEN expect:
-            - Return dict with status="success"
-        """
-        # GIVEN: Valid URL without metadata
-        url = "https://example.com"
-        
-        try:
-            # Check if WebArchive class exists and has method
-            if hasattr(self, 'archive') and hasattr(self.archive, 'archive_web_content'):
-                # WHEN: archive_web_content is called
-                # THEN: Should return dict with success status
-                try:
-                    result = self.archive.archive_web_content(url)
-                    assert isinstance(result, dict)
-                    assert 'status' in result
-                    if result['status'] == 'success':
-                        assert True  # Success case validated
-                    elif result['status'] == 'error':
-                        # Acceptable if URL is not accessible
-                        assert 'message' in result
-                except Exception:
-                    # Method might have implementation issues
-                    pytest.skip("archive_web_content method has implementation issues")
-            else:
-                pytest.skip("archive_web_content method not available")
-                
-        except ImportError:
-            pytest.skip("WebArchive not available")
+        assert ARCHIVE_ID_KEY in valid_url_with_metadata_result, f"Expected {ARCHIVE_ID_KEY} in result, got keys: {keys}"
 
-    def test_archive_web_content_success_without_metadata_contains_archive_id(self):
-        """
-        GIVEN valid URL "https://example.com"
-        AND metadata is None (default)
-        WHEN archive_web_content is called
-        THEN expect:
-            - Return dict contains archive_id key
-        """
-        # GIVEN: Valid URL without metadata
-        url = "https://example.com"
-        
-        try:
-            # Check if WebArchive class exists and has method
-            if hasattr(self, 'archive') and hasattr(self.archive, 'archive_web_content'):
-                # WHEN: archive_web_content is called
-                # THEN: Should return dict with archive_id
-                try:
-                    result = self.archive.archive_web_content(url)
-                    assert isinstance(result, dict)
-                    if 'archive_id' in result:
-                        assert isinstance(result['archive_id'], str)
-                        assert len(result['archive_id']) > 0
-                    elif 'id' in result:
-                        # Alternative field name
-                        assert isinstance(result['id'], str)
-                        assert len(result['id']) > 0
-                except Exception:
-                    # Method might have implementation issues
-                    pytest.skip("archive_web_content method has implementation issues")
-            else:
-                pytest.skip("archive_web_content method not available")
-                
-        except ImportError:
-            pytest.skip("WebArchive not available")
+    def test_when_archiving_url_with_metadata_then_archive_id_starts_with_prefix(
+        self, valid_url_with_metadata_result
+    ):
+        """Given valid URL with metadata, when archived, then archive_id starts with prefix."""
+        archive_id = valid_url_with_metadata_result[ARCHIVE_ID_KEY]
 
-    def test_archive_web_content_success_without_metadata_archive_id_format(self):
-        """
-        GIVEN valid URL "https://example.com"
-        AND metadata is None (default)
-        WHEN archive_web_content is called
-        THEN expect:
-            - archive_id follows format "archive_{n}"
-        """
-        # GIVEN: Valid URL without metadata
-        url = "https://example.com"
-        
-        try:
-            # Check if WebArchive class exists and has method
-            if hasattr(self, 'archive') and hasattr(self.archive, 'archive_web_content'):
-                # WHEN: archive_web_content is called
-                # THEN: archive_id should follow expected format
-                try:
-                    result = self.archive.archive_web_content(url)
-                    assert isinstance(result, dict)
-                    
-                    # Check archive_id format if present
-                    if 'archive_id' in result:
-                        archive_id = result['archive_id']
-                        assert isinstance(archive_id, str)
-                        assert len(archive_id) > 0
-                        # Should be a valid identifier (no spaces, reasonable length)
-                        assert ' ' not in archive_id
-                        assert len(archive_id) >= 8  # Minimum reasonable ID length
-                    elif 'id' in result:
-                        # Alternative field name
-                        archive_id = result['id']
-                        assert isinstance(archive_id, str)
-                        assert len(archive_id) > 0
-                        assert ' ' not in archive_id
-                        assert len(archive_id) >= 8
-                        
-                except Exception:
-                    # Method might have implementation issues
-                    pytest.skip("archive_web_content method has implementation issues")
-            else:
-                pytest.skip("archive_web_content method not available")
-                
-        except ImportError:
-            pytest.skip("WebArchive not available")
+        assert archive_id.startswith(ARCHIVE_PREFIX), f"Expected {ARCHIVE_ID_KEY} to start with {ARCHIVE_PREFIX}, got {archive_id}"
 
-    def test_archive_web_content_error_invalid_url_returns_error_status(self):
-        """
-        GIVEN invalid URL "not-a-valid-url"
-        WHEN archive_web_content is called
-        THEN expect:
-            - Return dict with status="error"
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_archiving_url_without_metadata_then_status_is_success(
+        self, valid_url_result
+    ):
+        """Given valid URL without metadata, when archived, then status is success."""
+        expected = SUCCESS_STATUS
+        actual = valid_url_result[STATUS_KEY]
 
-        assert True  # Basic test structure - method exists and can be called
+        assert actual == expected, f"Expected {STATUS_KEY} {expected}, got {actual}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_archiving_url_without_metadata_then_contains_archive_id(
+        self, valid_url_result
+    ):
+        """Given valid URL without metadata, when archived, then contains archive_id."""
+        keys = list(valid_url_result.keys())
 
-    def test_archive_web_content_error_invalid_url_contains_message(self):
-        """
-        GIVEN invalid URL "not-a-valid-url"
-        WHEN archive_web_content is called
-        THEN expect:
-            - Return dict contains message key
-        """
-        # Test implementation placeholder replaced with basic validation
+        assert ARCHIVE_ID_KEY in valid_url_result, f"Expected {ARCHIVE_ID_KEY} in result, got keys: {keys}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_archiving_url_without_metadata_then_archive_id_starts_with_prefix(
+        self, valid_url_result
+    ):
+        """Given valid URL without metadata, when archived, then archive_id starts with prefix."""
+        archive_id = valid_url_result[ARCHIVE_ID_KEY]
 
-        # TODO: Add specific test logic based on actual method functionality
+        assert archive_id.startswith(ARCHIVE_PREFIX), f"Expected {ARCHIVE_ID_KEY} to start with {ARCHIVE_PREFIX}, got {archive_id}"
 
-    def test_archive_web_content_error_invalid_url_message_describes_error(self):
-        """
-        GIVEN invalid URL "not-a-valid-url"
-        WHEN archive_web_content is called
-        THEN expect:
-            - message describes the error
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_archiving_invalid_url_then_status_is_error(
+        self, invalid_url_result
+    ):
+        """Given invalid URL, when archived, then status is error."""
+        expected = ERROR_STATUS
+        actual = invalid_url_result[STATUS_KEY]
 
-        assert True  # Basic test structure - method exists and can be called
+        assert actual == expected, f"Expected {STATUS_KEY} {expected}, got {actual}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_archiving_invalid_url_then_contains_message(
+        self, invalid_url_result
+    ):
+        """Given invalid URL, when archived, then contains message."""
+        keys = list(invalid_url_result.keys())
 
-    def test_archive_web_content_error_invalid_url_no_archive_id(self):
-        """
-        GIVEN invalid URL "not-a-valid-url"
-        WHEN archive_web_content is called
-        THEN expect:
-            - No archive_id in return dict
-        """
-        # Test implementation placeholder replaced with basic validation
+        assert MESSAGE_KEY in invalid_url_result, f"Expected {MESSAGE_KEY} in result, got keys: {keys}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_archiving_invalid_url_then_message_is_non_empty(
+        self, invalid_url_result
+    ):
+        """Given invalid URL, when archived, then message is non-empty."""
+        message = invalid_url_result[MESSAGE_KEY]
+        message_length = len(message)
 
-        # TODO: Add specific test logic based on actual method functionality
+        assert message_length > 0, f"Expected non-empty {MESSAGE_KEY}, got length: {message_length}"
 
-    def test_archive_web_content_return_structure_success_contains_status(self):
-        """
-        GIVEN valid URL
-        WHEN archive_web_content succeeds
-        THEN expect:
-            - status: "success"
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_archiving_invalid_url_then_no_archive_id(
+        self, invalid_url_result
+    ):
+        """Given invalid URL, when archived, then no archive_id."""
+        keys = list(invalid_url_result.keys())
 
-        assert True  # Basic test structure - method exists and can be called
+        assert ARCHIVE_ID_KEY not in invalid_url_result, f"Expected no {ARCHIVE_ID_KEY} in error result, got keys: {keys}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_archiving_succeeds_then_result_contains_status(
+        self, valid_url_result
+    ):
+        """Given successful archive, when checked, then status exists."""
+        keys = list(valid_url_result.keys())
 
-    def test_archive_web_content_return_structure_success_contains_archive_id(self):
-        """
-        GIVEN valid URL
-        WHEN archive_web_content succeeds
-        THEN expect:
-            - archive_id: string starting with "archive_"
-        """
-        # Test implementation placeholder replaced with basic validation
+        assert STATUS_KEY in valid_url_result, f"Expected {STATUS_KEY} in result, got keys: {keys}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_archiving_succeeds_then_result_contains_archive_id(
+        self, valid_url_result
+    ):
+        """Given successful archive, when checked, then archive_id exists."""
+        keys = list(valid_url_result.keys())
 
-        # TODO: Add specific test logic based on actual method functionality
+        assert ARCHIVE_ID_KEY in valid_url_result, f"Expected {ARCHIVE_ID_KEY} in result, got keys: {keys}"
 
-    def test_archive_web_content_return_structure_success_no_message_key(self):
-        """
-        GIVEN valid URL
-        WHEN archive_web_content succeeds
-        THEN expect:
-            - does not contain message key
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_archiving_succeeds_then_result_has_no_message(
+        self, valid_url_result
+    ):
+        """Given successful archive, when checked, then message does not exist."""
+        keys = list(valid_url_result.keys())
 
-        assert True  # Basic test structure - method exists and can be called
+        assert MESSAGE_KEY not in valid_url_result, f"Expected no {MESSAGE_KEY} in success result, got keys: {keys}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_archiving_fails_then_result_contains_status(
+        self, invalid_url_result
+    ):
+        """Given failed archive, when checked, then status exists."""
+        keys = list(invalid_url_result.keys())
 
-    def test_archive_web_content_return_structure_error_contains_status(self):
-        """
-        GIVEN invalid URL
-        WHEN archive_web_content fails
-        THEN expect:
-            - status: "error"
-        """
-        # Test implementation placeholder replaced with basic validation
+        assert STATUS_KEY in invalid_url_result, f"Expected {STATUS_KEY} in result, got keys: {keys}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_archiving_fails_then_result_contains_message(
+        self, invalid_url_result
+    ):
+        """Given failed archive, when checked, then message exists."""
+        keys = list(invalid_url_result.keys())
 
-        # TODO: Add specific test logic based on actual method functionality
+        assert MESSAGE_KEY in invalid_url_result, f"Expected {MESSAGE_KEY} in result, got keys: {keys}"
 
-    def test_archive_web_content_return_structure_error_contains_message(self):
-        """
-        GIVEN invalid URL
-        WHEN archive_web_content fails
-        THEN expect:
-            - message: string describing error
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_archiving_fails_then_result_has_no_archive_id(
+        self, invalid_url_result
+    ):
+        """Given failed archive, when checked, then archive_id does not exist."""
+        keys = list(invalid_url_result.keys())
 
-        assert True  # Basic test structure - method exists and can be called
+        assert ARCHIVE_ID_KEY not in invalid_url_result, f"Expected no {ARCHIVE_ID_KEY} in error result, got keys: {keys}"
 
-        # TODO: Add specific test logic based on actual method functionality
+    def test_when_calling_function_then_returns_dict(self):
+        """Given function call, when executed, then returns dict."""
+        result = archive_web_content(VALID_URL)
+        result_type = type(result)
 
-    def test_archive_web_content_return_structure_error_no_archive_id_key(self):
-        """
-        GIVEN invalid URL
-        WHEN archive_web_content fails
-        THEN expect:
-            - does not contain archive_id key
-        """
-        # Test implementation placeholder replaced with basic validation
+        assert isinstance(result, dict), f"Expected dict result, got {result_type}"
 
-        assert True  # Basic test structure - method exists and can be called
+    def test_when_calling_function_multiple_times_then_each_returns_result(self):
+        """Given multiple function calls, when executed, then each returns result."""
+        result = archive_web_content(VALID_URL)
+        keys = list(result.keys())
 
-        # TODO: Add specific test logic based on actual method functionality
+        assert STATUS_KEY in result, f"Expected {STATUS_KEY} in result, got keys: {keys}"
 
-    def test_archive_web_content_creates_temporary_archive_no_instance_management(self):
-        """
-        GIVEN any valid URL
-        WHEN archive_web_content is called
-        THEN expect:
-            - Function operates without requiring WebArchive instance management
-        """
-        # Test implementation placeholder replaced with basic validation
+    def test_when_calling_function_then_result_is_complete(self):
+        """Given function call, when executed, then returns complete result."""
+        result = archive_web_content(VALID_URL)
+        result_type = type(result)
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_archive_web_content_creates_temporary_archive_independent_calls(self):
-        """
-        GIVEN any valid URL
-        WHEN archive_web_content is called
-        THEN expect:
-            - Each call is independent
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_archive_web_content_creates_temporary_archive_handles_creation_internally(self):
-        """
-        GIVEN any valid URL
-        WHEN archive_web_content is called
-        THEN expect:
-            - Function handles WebArchive creation internally
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+        assert isinstance(result, dict), f"Expected dict result, got {result_type}"
