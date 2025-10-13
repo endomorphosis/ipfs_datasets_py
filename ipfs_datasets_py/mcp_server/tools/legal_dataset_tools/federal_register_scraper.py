@@ -85,34 +85,106 @@ async def search_federal_register(
             "limit": limit
         }
         
-        # In production, this would query the Federal Register API
+        # Query the Federal Register API
         # API endpoint: https://www.federalregister.gov/api/v1/documents.json
+        # Documentation: https://www.federalregister.gov/developers/documentation/api/v1
         
-        # Placeholder search results
-        documents = []
-        if agencies:
-            for agency in agencies[:3]:  # Limit to 3 agencies for placeholder
-                if agency in FEDERAL_AGENCIES:
-                    documents.append({
-                        "document_number": f"2024-{len(documents)+1:05d}",
-                        "title": f"Sample {FEDERAL_AGENCIES[agency]} Regulation",
-                        "agency": FEDERAL_AGENCIES[agency],
-                        "agency_abbr": agency,
-                        "type": "RULE",
-                        "publication_date": datetime.now().strftime("%Y-%m-%d"),
-                        "abstract": f"This is a placeholder document from {FEDERAL_AGENCIES[agency]}. Production version would fetch actual Federal Register documents.",
-                        "url": f"https://www.federalregister.gov/documents/2024/01/01/2024-{len(documents)+1:05d}",
-                        "cfr_references": [f"{len(documents)+1} CFR Part {100+len(documents)}"]
-                    })
-        
-        return {
-            "status": "success",
-            "documents": documents,
-            "count": len(documents),
-            "search_params": search_params,
-            "api_endpoint": "https://www.federalregister.gov/api/v1/documents.json",
-            "note": "This is a placeholder implementation. Production version would query the actual Federal Register API."
-        }
+        try:
+            # Build API query parameters
+            api_params = {
+                "per_page": min(limit, 1000),  # API max is 1000
+                "order": "newest"
+            }
+            
+            # Add date filters
+            if start_date:
+                api_params["conditions[publication_date][gte]"] = start_date
+            if end_date:
+                api_params["conditions[publication_date][lte]"] = end_date
+            
+            # Add agency filter
+            if agencies:
+                # Federal Register uses agency slugs
+                api_params["conditions[agencies][]"] = agencies
+            
+            # Add document type filter
+            if document_types:
+                api_params["conditions[type][]"] = document_types
+            
+            # Add keyword search
+            if keywords:
+                api_params["conditions[term]"] = keywords
+            
+            # Make API request
+            api_url = "https://www.federalregister.gov/api/v1/documents.json"
+            logger.info(f"Querying Federal Register API: {api_url}")
+            
+            response = requests.get(api_url, params=api_params, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get('results', [])
+                
+                # Transform results to our standardized format
+                documents = []
+                for result in results:
+                    doc = {
+                        "document_number": result.get('document_number', ''),
+                        "title": result.get('title', ''),
+                        "agency": result.get('agencies', [{}])[0].get('name', '') if result.get('agencies') else '',
+                        "agency_abbr": result.get('agencies', [{}])[0].get('slug', '').upper() if result.get('agencies') else '',
+                        "document_type": result.get('type', ''),
+                        "publication_date": result.get('publication_date', ''),
+                        "abstract": result.get('abstract', '')[:500] if result.get('abstract') else '',
+                        "citation": result.get('citation', ''),
+                        "fr_url": result.get('html_url', ''),
+                        "pdf_url": result.get('pdf_url', ''),
+                        "raw_text_url": result.get('raw_text_url', ''),
+                        "signing_date": result.get('signing_date', ''),
+                        "docket_ids": result.get('docket_ids', []),
+                        "regulation_id_numbers": result.get('regulation_id_numbers', []),
+                        "topics": result.get('topics', []),
+                        "significant": result.get('significant', False)
+                    }
+                    documents.append(doc)
+                
+                return {
+                    "status": "success",
+                    "documents": documents,
+                    "count": len(documents),
+                    "total_available": data.get('count', len(documents)),
+                    "search_params": search_params,
+                    "api_endpoint": api_url,
+                    "note": "Results from Federal Register API at federalregister.gov"
+                }
+            else:
+                # API request failed
+                logger.warning(f"Federal Register API returned status {response.status_code}")
+                return {
+                    "status": "error",
+                    "error": f"API request failed with status {response.status_code}: {response.text[:200]}",
+                    "documents": [],
+                    "count": 0,
+                    "search_params": search_params,
+                    "api_endpoint": api_url
+                }
+                
+        except requests.exceptions.Timeout:
+            logger.error("Federal Register API request timed out")
+            return {
+                "status": "error",
+                "error": "API request timed out after 30 seconds",
+                "documents": [],
+                "count": 0
+            }
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Federal Register API request failed: {e}")
+            return {
+                "status": "error",
+                "error": f"API request failed: {str(e)}",
+                "documents": [],
+                "count": 0
+            }
         
     except Exception as e:
         logger.error(f"Federal Register search failed: {e}")
@@ -191,7 +263,7 @@ async def scrape_federal_register(
         scraped_documents = []
         documents_count = 0
         
-        # Scrape each selected agency
+        # Use the search function to get documents from all agencies
         for agency in selected_agencies:
             if max_documents and documents_count >= max_documents:
                 logger.info(f"Reached max_documents limit of {max_documents}")
@@ -200,32 +272,35 @@ async def scrape_federal_register(
             agency_name = FEDERAL_AGENCIES[agency]
             logger.info(f"Scraping {agency}: {agency_name}")
             
-            # In production, this would query Federal Register API
-            # API endpoint: https://www.federalregister.gov/api/v1/documents.json
-            # with params: agencies[]={agency}&fields[]=title,abstract,document_number,publication_date
+            # Use search function to query Federal Register API
+            search_result = await search_federal_register(
+                agencies=[agency],
+                start_date=start_date,
+                end_date=end_date,
+                document_types=document_types,
+                limit=min(100, max_documents - documents_count if max_documents else 100)
+            )
             
-            # Placeholder data
-            doc_data = {
-                "document_number": f"2024-{documents_count+1:05d}",
-                "title": f"Sample {agency_name} Regulation Document",
-                "agency": agency_name,
-                "agency_abbreviation": agency,
-                "type": "RULE",
-                "publication_date": end_date,
-                "effective_date": end_date,
-                "abstract": f"This is a placeholder Federal Register document from {agency_name}. Production version would fetch actual documents from federalregister.gov API.",
-                "action": "Final rule",
-                "citation": f"89 FR {10000 + documents_count}",
-                "url": f"https://www.federalregister.gov/documents/2024/01/01/2024-{documents_count+1:05d}",
-                "cfr_references": [f"{documents_count+10} CFR Part {100+documents_count}"],
-                "full_text": "Full document text would be included here if include_full_text=True" if include_full_text else None,
-                "scraped_at": datetime.now().isoformat()
-            }
+            if search_result['status'] == 'success' and search_result['documents']:
+                for doc in search_result['documents']:
+                    if max_documents and documents_count >= max_documents:
+                        break
+                    
+                    # Optionally fetch full text
+                    if include_full_text and doc.get('raw_text_url'):
+                        try:
+                            text_response = requests.get(doc['raw_text_url'], timeout=30)
+                            if text_response.status_code == 200:
+                                doc['full_text'] = text_response.text
+                        except Exception as e:
+                            logger.warning(f"Failed to fetch full text for {doc.get('document_number')}: {e}")
+                            doc['full_text'] = None
+                    
+                    doc['scraped_at'] = datetime.now().isoformat()
+                    scraped_documents.append(doc)
+                    documents_count += 1
             
-            scraped_documents.append(doc_data)
-            documents_count += 1
-            
-            # Rate limiting
+            # Rate limiting between agency requests
             time.sleep(rate_limit_delay)
         
         elapsed_time = time.time() - start_time
@@ -240,7 +315,7 @@ async def scrape_federal_register(
             },
             "elapsed_time_seconds": elapsed_time,
             "scraped_at": datetime.now().isoformat(),
-            "source": "federalregister.gov",
+            "source": "Federal Register API (federalregister.gov)",
             "api_endpoint": "https://www.federalregister.gov/api/v1/documents.json",
             "rate_limit_delay": rate_limit_delay,
             "include_full_text": include_full_text
@@ -253,7 +328,7 @@ async def scrape_federal_register(
             "data": scraped_documents,
             "metadata": metadata,
             "output_format": output_format,
-            "note": "This is a placeholder implementation. Production version would fetch actual data from federalregister.gov API."
+            "note": "Documents fetched from Federal Register API at federalregister.gov"
         }
         
     except Exception as e:
