@@ -288,6 +288,185 @@ class MCPClient {
     tool(category, toolName) {
         return new ToolExecutionBuilder(this, category, toolName);
     }
+
+    // ============================================================
+    // Legal Dataset Tools - Convenience Methods
+    // ============================================================
+
+    /**
+     * Scrape RECAP Archive (federal court documents)
+     * @param {Object} params - Scraping parameters
+     * @param {string[]} params.courts - Court identifiers (e.g., ["ca9", "nysd"])
+     * @param {string[]} params.document_types - Document types (e.g., ["opinion", "complaint"])
+     * @param {string} params.filed_after - Start date (YYYY-MM-DD)
+     * @param {string} params.filed_before - End date (YYYY-MM-DD)
+     * @param {string} params.case_name_pattern - Case name pattern to match
+     * @param {boolean} params.include_text - Include full document text
+     * @param {boolean} params.include_metadata - Include document metadata
+     * @param {number} params.max_documents - Maximum documents to scrape
+     * @param {string} params.job_id - Job ID for resume capability
+     * @param {boolean} params.resume - Resume from previous state
+     * @returns {Promise<Object>} Scraping results with data and metadata
+     */
+    async scrapeRECAPArchive(params = {}) {
+        return this.executeTool('legal_datasets', 'scrape_recap_archive', params);
+    }
+
+    /**
+     * Search RECAP Archive
+     * @param {Object} params - Search parameters
+     * @param {string} params.query - Search query
+     * @param {string} params.court - Court identifier
+     * @param {string} params.case_name - Case name
+     * @param {number} params.limit - Maximum results
+     * @returns {Promise<Object>} Search results
+     */
+    async searchRECAP(params = {}) {
+        return this.executeTool('legal_datasets', 'search_recap_documents', params);
+    }
+
+    /**
+     * Get RECAP document details
+     * @param {string} documentId - Document ID
+     * @param {boolean} includeText - Include full text
+     * @param {boolean} includeMetadata - Include metadata
+     * @returns {Promise<Object>} Document details
+     */
+    async getRECAPDocument(documentId, includeText = true, includeMetadata = true) {
+        return this.executeTool('legal_datasets', 'get_recap_document', {
+            document_id: documentId,
+            include_text: includeText,
+            include_metadata: includeMetadata
+        });
+    }
+
+    /**
+     * Incrementally update RECAP Archive dataset
+     * @param {Object} params - Update parameters
+     * @param {string[]} params.courts - Court identifiers
+     * @param {string[]} params.document_types - Document types
+     * @returns {Promise<Object>} Update results with incremental metadata
+     */
+    async updateRECAPIncremental(params = {}) {
+        return this.executeTool('legal_datasets', 'scrape_recap_incremental', params);
+    }
+
+    /**
+     * Scrape US Code titles
+     * @param {Object} params - Scraping parameters
+     * @param {string[]} params.titles - Title numbers to scrape
+     * @param {boolean} params.include_metadata - Include metadata
+     * @param {number} params.max_sections - Maximum sections
+     * @returns {Promise<Object>} Scraped US Code data
+     */
+    async scrapeUSCode(params = {}) {
+        return this.executeTool('legal_datasets', 'scrape_us_code', params);
+    }
+
+    /**
+     * Get available US Code titles
+     * @returns {Promise<Object>} List of US Code titles
+     */
+    async getUSCodeTitles() {
+        return this.executeTool('legal_datasets', 'get_us_code_titles', {});
+    }
+
+    /**
+     * Scrape Federal Register documents
+     * @param {Object} params - Scraping parameters
+     * @param {string[]} params.agencies - Federal agencies
+     * @param {string} params.start_date - Start date
+     * @param {string} params.end_date - End date
+     * @param {string[]} params.document_types - Document types
+     * @param {number} params.max_documents - Maximum documents
+     * @returns {Promise<Object>} Scraped Federal Register data
+     */
+    async scrapeFederalRegister(params = {}) {
+        return this.executeTool('legal_datasets', 'scrape_federal_register', params);
+    }
+
+    /**
+     * Search Federal Register
+     * @param {Object} params - Search parameters
+     * @param {string} params.query - Search query
+     * @param {string} params.agency - Agency
+     * @returns {Promise<Object>} Search results
+     */
+    async searchFederalRegister(params = {}) {
+        return this.executeTool('legal_datasets', 'search_federal_register', params);
+    }
+
+    /**
+     * Scrape state laws
+     * @param {Object} params - Scraping parameters
+     * @param {string[]} params.states - State codes (e.g., ["CA", "NY"])
+     * @param {string[]} params.legal_areas - Legal areas
+     * @param {number} params.max_statutes - Maximum statutes
+     * @returns {Promise<Object>} Scraped state laws data
+     */
+    async scrapeStateLaws(params = {}) {
+        return this.executeTool('legal_datasets', 'scrape_state_laws', params);
+    }
+
+    /**
+     * List available state jurisdictions
+     * @returns {Promise<Object>} List of state jurisdictions
+     */
+    async listStateJurisdictions() {
+        return this.executeTool('legal_datasets', 'list_state_jurisdictions', {});
+    }
+
+    /**
+     * Scrape municipal laws
+     * @param {Object} params - Scraping parameters
+     * @param {string[]} params.cities - City codes
+     * @param {number} params.max_ordinances - Maximum ordinances
+     * @returns {Promise<Object>} Scraped municipal laws data
+     */
+    async scrapeMunicipalLaws(params = {}) {
+        return this.executeTool('legal_datasets', 'scrape_municipal_laws', params);
+    }
+
+    /**
+     * Search municipal codes
+     * @param {Object} params - Search parameters
+     * @param {string} params.city_name - City name
+     * @param {string} params.query - Search query
+     * @returns {Promise<Object>} Search results
+     */
+    async searchMunicipalCodes(params = {}) {
+        return this.executeTool('legal_datasets', 'search_municipal_codes', params);
+    }
+
+    /**
+     * Export legal dataset in various formats
+     * @param {Object} params - Export parameters
+     * @param {Array} params.data - Dataset to export
+     * @param {string} params.output_path - Output file path
+     * @param {string} params.format - Format (json, parquet, csv)
+     * @param {Object} params.options - Format-specific options
+     * @returns {Promise<Object>} Export result with file info
+     */
+    async exportLegalDataset(params = {}) {
+        return this.executeTool('legal_datasets', 'export_legal_dataset', params);
+    }
+
+    /**
+     * List all scraping jobs (for resume capability)
+     * @returns {Promise<Object>} List of scraping jobs
+     */
+    async listScrapingJobs() {
+        return this.executeTool('legal_datasets', 'list_scraping_jobs', {});
+    }
+
+    /**
+     * Delete a scraping job
+     * @param {string} jobId - Job ID to delete
+     * @returns {Promise<Object>} Deletion result
+     */
+    async deleteScrapingJob(jobId) {
+        return this.executeTool('legal_datasets', 'delete_scraping_job', { job_id: jobId });
+    }
 }
 
 /**
