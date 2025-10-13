@@ -94,60 +94,111 @@ async def search_recap_documents(
             "limit": limit
         }
         
-        # In production, this would query the CourtListener API
+        # Query the CourtListener API
         # API endpoint: https://www.courtlistener.com/api/rest/v3/search/
         # Documentation: https://www.courtlistener.com/api/rest-info/
         
-        # Placeholder search results
-        documents = [
-            {
-                "id": "recap-doc-001",
-                "docket_id": "12345",
-                "case_name": "Sample v. Example Corp.",
-                "court": court or "ca9",
-                "court_full_name": "United States Court of Appeals for the Ninth Circuit",
-                "document_type": document_type or "opinion",
-                "document_number": "1",
-                "description": "Opinion filed on sample case",
-                "date_filed": filed_after or "2024-01-15",
-                "page_count": 25,
-                "pacer_doc_id": "1234567890",
-                "recap_url": "https://www.courtlistener.com/recap/gov.uscourts.ca9.12345.1.0.pdf",
-                "docket_url": "https://www.courtlistener.com/docket/12345/sample-v-example-corp/",
-                "plain_text_available": True,
-                "pdf_available": True,
-                "ocr_status": "complete",
-                "abstract": "This is a placeholder RECAP document. Production version would fetch actual court documents from CourtListener API.",
-            },
-            {
-                "id": "recap-doc-002",
-                "docket_id": "12346",
-                "case_name": "Test v. Demo Inc.",
-                "court": court or "nysd",
-                "court_full_name": "United States District Court for the Southern District of New York",
-                "document_type": "complaint",
-                "document_number": "1",
-                "description": "Complaint",
-                "date_filed": filed_after or "2024-01-20",
-                "page_count": 15,
-                "pacer_doc_id": "1234567891",
-                "recap_url": "https://www.courtlistener.com/recap/gov.uscourts.nysd.12346.1.0.pdf",
-                "docket_url": "https://www.courtlistener.com/docket/12346/test-v-demo-inc/",
-                "plain_text_available": True,
-                "pdf_available": True,
-                "ocr_status": "complete",
-                "abstract": "Another placeholder RECAP document for demonstration purposes.",
+        try:
+            # Build API query parameters
+            api_params = {}
+            
+            # Add search query if provided
+            if query:
+                api_params['q'] = query
+            elif case_name:
+                api_params['case_name'] = case_name
+                
+            # Add court filter
+            if court:
+                api_params['court'] = court
+                
+            # Add date filters
+            if filed_after:
+                api_params['filed_after'] = filed_after
+            if filed_before:
+                api_params['filed_before'] = filed_before
+                
+            # Add document type filter (map to CourtListener types)
+            if document_type:
+                if document_type == 'opinion':
+                    api_params['type'] = 'o'  # Opinion
+                elif document_type == 'docket':
+                    api_params['type'] = 'r'  # RECAP document
+                    
+            # Set result limit
+            api_params['page_size'] = min(limit, 100)  # API max is typically 100
+            
+            # Make API request
+            api_url = "https://www.courtlistener.com/api/rest/v3/search/"
+            logger.info(f"Querying CourtListener API: {api_url} with params {api_params}")
+            
+            response = requests.get(api_url, params=api_params, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get('results', [])
+                
+                # Transform results to our standardized format
+                documents = []
+                for result in results:
+                    doc = {
+                        "id": result.get('id', ''),
+                        "docket_id": result.get('docket_id', ''),
+                        "case_name": result.get('caseName', result.get('case_name', '')),
+                        "court": result.get('court', court or ''),
+                        "court_full_name": result.get('court_name', ''),
+                        "document_type": document_type or 'unknown',
+                        "document_number": result.get('document_number', ''),
+                        "description": result.get('description', result.get('snippet', '')),
+                        "date_filed": result.get('dateFiled', result.get('date_filed', '')),
+                        "page_count": result.get('page_count', 0),
+                        "pacer_doc_id": result.get('pacer_doc_id', ''),
+                        "recap_url": result.get('download_url', ''),
+                        "docket_url": result.get('absolute_url', ''),
+                        "plain_text_available": result.get('plain_text', '') != '',
+                        "pdf_available": result.get('filepath_local', '') != '',
+                        "ocr_status": result.get('ocr_status', 'unknown'),
+                        "abstract": result.get('snippet', '')[:500] if result.get('snippet') else '',
+                    }
+                    documents.append(doc)
+                
+                return {
+                    "status": "success",
+                    "documents": documents,
+                    "count": len(documents),
+                    "total_available": data.get('count', len(documents)),
+                    "search_params": search_params,
+                    "api_endpoint": api_url,
+                    "note": "Results from CourtListener RECAP Archive API"
+                }
+            else:
+                # API request failed, return error with details
+                logger.warning(f"CourtListener API returned status {response.status_code}")
+                return {
+                    "status": "error",
+                    "error": f"API request failed with status {response.status_code}: {response.text[:200]}",
+                    "documents": [],
+                    "count": 0,
+                    "search_params": search_params,
+                    "api_endpoint": api_url
+                }
+                
+        except requests.exceptions.Timeout:
+            logger.error("CourtListener API request timed out")
+            return {
+                "status": "error",
+                "error": "API request timed out after 30 seconds",
+                "documents": [],
+                "count": 0
             }
-        ]
-        
-        return {
-            "status": "success",
-            "documents": documents[:limit],
-            "count": len(documents[:limit]),
-            "search_params": search_params,
-            "api_endpoint": "https://www.courtlistener.com/api/rest/v3/search/",
-            "note": "This is a placeholder implementation. Production version would query the actual CourtListener/RECAP API."
-        }
+        except requests.exceptions.RequestException as e:
+            logger.error(f"CourtListener API request failed: {e}")
+            return {
+                "status": "error",
+                "error": f"API request failed: {str(e)}",
+                "documents": [],
+                "count": 0
+            }
         
     except Exception as e:
         logger.error(f"RECAP Archive search failed: {e}")
@@ -180,33 +231,75 @@ async def get_recap_document(
     try:
         logger.info(f"Fetching RECAP document: {document_id}")
         
-        # In production, this would fetch from CourtListener API
+        # Import required libraries
+        try:
+            import requests
+        except ImportError as ie:
+            return {
+                "status": "error",
+                "error": f"Required library not available: {ie}. Install with: pip install requests",
+                "document": None
+            }
+        
+        # Fetch from CourtListener API
         # API endpoint: https://www.courtlistener.com/api/rest/v3/recap-documents/{id}/
+        api_url = f"https://www.courtlistener.com/api/rest/v3/recap-documents/{document_id}/"
         
-        document = {
-            "id": document_id,
-            "docket_id": "12345",
-            "case_name": "Sample Case v. Example",
-            "court": "ca9",
-            "document_type": "opinion",
-            "date_filed": "2024-01-15",
-            "page_count": 25,
-            "recap_url": f"https://www.courtlistener.com/recap/gov.uscourts.ca9.{document_id}.pdf",
-            "text": "This is placeholder document text. Production version would fetch actual document text from CourtListener." if include_text else None,
-            "metadata": {
-                "pacer_doc_id": "1234567890",
-                "pacer_case_id": "123456",
-                "ocr_status": "complete",
-                "plain_text_available": True,
-                "pdf_available": True
-            } if include_metadata else None
-        }
-        
-        return {
-            "status": "success",
-            "document": document,
-            "note": "This is a placeholder implementation. Production version would fetch actual data from CourtListener API."
-        }
+        try:
+            response = requests.get(api_url, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Transform to our standardized format
+                document = {
+                    "id": document_id,
+                    "docket_id": data.get('docket', ''),
+                    "case_name": data.get('case_name', ''),
+                    "court": data.get('court', ''),
+                    "document_type": data.get('document_type', ''),
+                    "date_filed": data.get('date_filed', ''),
+                    "page_count": data.get('page_count', 0),
+                    "recap_url": data.get('filepath_local', ''),
+                    "text": data.get('plain_text', '') if include_text else None,
+                    "metadata": {
+                        "pacer_doc_id": data.get('pacer_doc_id', ''),
+                        "pacer_case_id": data.get('pacer_case_id', ''),
+                        "ocr_status": data.get('ocr_status', ''),
+                        "plain_text_available": data.get('plain_text', '') != '',
+                        "pdf_available": data.get('filepath_local', '') != '',
+                        "description": data.get('description', ''),
+                        "document_number": data.get('document_number', '')
+                    } if include_metadata else None
+                }
+                
+                return {
+                    "status": "success",
+                    "document": document,
+                    "api_endpoint": api_url,
+                    "note": "Document fetched from CourtListener RECAP Archive API"
+                }
+            else:
+                logger.warning(f"CourtListener API returned status {response.status_code}")
+                return {
+                    "status": "error",
+                    "error": f"API request failed with status {response.status_code}: {response.text[:200]}",
+                    "document": None,
+                    "api_endpoint": api_url
+                }
+                
+        except requests.exceptions.Timeout:
+            return {
+                "status": "error",
+                "error": "API request timed out after 30 seconds",
+                "document": None
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                "status": "error",
+                "error": f"API request failed: {str(e)}",
+                "document": None
+            }
         
     except Exception as e:
         logger.error(f"Failed to get RECAP document {document_id}: {e}")
@@ -290,7 +383,7 @@ async def scrape_recap_archive(
         else:
             courts_to_scrape = courts
         
-        # Scrape documents
+        # Scrape documents using search API
         for court in courts_to_scrape:
             if max_documents and documents_count >= max_documents:
                 logger.info(f"Reached max_documents limit of {max_documents}")
@@ -298,46 +391,43 @@ async def scrape_recap_archive(
             
             logger.info(f"Scraping RECAP documents from court: {court}")
             
-            # In production, this would:
-            # 1. Query CourtListener API: https://www.courtlistener.com/api/rest/v3/search/
-            # 2. Iterate through results
-            # 3. Download PDFs if needed
-            # 4. Extract text using OCR if needed
-            # 5. Parse metadata from docket entries
-            
-            # Placeholder data
+            # Query CourtListener API for this court
             for doc_type in document_types:
                 if max_documents and documents_count >= max_documents:
                     break
                 
-                doc_data = {
-                    "id": f"recap-{court}-{doc_type}-{documents_count+1:05d}",
-                    "docket_id": f"{documents_count+10000}",
-                    "case_name": f"Sample Case {documents_count+1} v. Example {documents_count+1}",
-                    "court": court,
-                    "document_type": doc_type,
-                    "date_filed": filed_after,
-                    "page_count": 10 + (documents_count % 40),
-                    "pacer_doc_id": f"{1234567890 + documents_count}",
-                    "recap_url": f"https://www.courtlistener.com/recap/gov.uscourts.{court}.{documents_count+10000}.1.0.pdf",
-                    "docket_url": f"https://www.courtlistener.com/docket/{documents_count+10000}/",
-                    "text": f"This is placeholder document text for a {doc_type} from {court}. Production version would fetch actual document text and metadata from CourtListener/RECAP API." if include_text else None,
-                    "metadata": {
-                        "plain_text_available": True,
-                        "pdf_available": True,
-                        "ocr_status": "complete",
-                        "pacer_case_id": f"{documents_count+100000}",
-                        "nature_of_suit": "Sample litigation",
-                        "cause": "28:1331 Federal Question",
-                    } if include_metadata else None,
-                    "scraped_at": datetime.now().isoformat()
-                }
+                # Use the search function to get documents
+                search_result = await search_recap_documents(
+                    court=court,
+                    document_type=doc_type,
+                    filed_after=filed_after,
+                    filed_before=filed_before,
+                    case_name=case_name_pattern,
+                    limit=min(20, max_documents - documents_count if max_documents else 20)
+                )
                 
-                scraped_documents.append(doc_data)
-                documents_count += 1
+                if search_result['status'] == 'success' and search_result['documents']:
+                    for doc in search_result['documents']:
+                        if max_documents and documents_count >= max_documents:
+                            break
+                        
+                        # Optionally fetch full document details
+                        if include_text and doc.get('id'):
+                            doc_details = await get_recap_document(
+                                doc['id'],
+                                include_text=include_text,
+                                include_metadata=include_metadata
+                            )
+                            if doc_details['status'] == 'success' and doc_details.get('document'):
+                                # Merge search result with detailed document
+                                doc.update(doc_details['document'])
+                        
+                        scraped_documents.append(doc)
+                        documents_count += 1
                 
-                # Rate limiting
+                # Rate limiting between requests
                 time.sleep(rate_limit_delay)
+
         
         elapsed_time = time.time() - start_time
         
@@ -366,7 +456,7 @@ async def scrape_recap_archive(
             "data": scraped_documents,
             "metadata": metadata,
             "output_format": output_format,
-            "note": "This is a placeholder implementation. Production version would fetch actual data from CourtListener/RECAP API at courtlistener.com"
+            "note": "Documents fetched from CourtListener/RECAP Archive API at courtlistener.com"
         }
         
     except Exception as e:

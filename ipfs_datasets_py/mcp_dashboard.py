@@ -1421,6 +1421,39 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"RECAP search failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/export', methods=['POST'])
+        def api_export_dataset():
+            """API endpoint to export dataset in various formats."""
+            try:
+                from .mcp_server.tools.legal_dataset_tools import export_dataset
+                
+                data = request.json or {}
+                dataset_data = data.get('data', [])
+                output_path = data.get('output_path', '/tmp/dataset_export')
+                format = data.get('format', 'json')
+                
+                # Export options
+                export_options = {}
+                if format == 'json':
+                    export_options['pretty'] = data.get('pretty', True)
+                elif format == 'parquet':
+                    export_options['compression'] = data.get('compression', 'snappy')
+                elif format == 'csv':
+                    export_options['delimiter'] = data.get('delimiter', ',')
+                
+                result = export_dataset(
+                    data=dataset_data,
+                    output_path=output_path,
+                    format=format,
+                    **export_options
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset export failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
