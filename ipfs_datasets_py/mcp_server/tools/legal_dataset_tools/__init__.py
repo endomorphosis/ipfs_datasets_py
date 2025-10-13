@@ -9,6 +9,7 @@ These tools allow AI assistants to scrape legal datasets including:
 
 Also includes:
 - IPFS storage integration
+- Citation extraction and analysis
 - Multi-format export utilities
 - Resume capability for interrupted scraping
 - Incremental update tracking
@@ -32,6 +33,13 @@ from .ipfs_storage_integration import (
     store_dataset_to_ipfs,
     retrieve_dataset_from_ipfs,
     list_ipfs_datasets
+)
+from .citation_extraction import (
+    CitationExtractor,
+    Citation,
+    extract_citations_from_text,
+    analyze_document_citations,
+    create_citation_network
 )
 
 __all__ = [
@@ -79,4 +87,11 @@ __all__ = [
     "store_dataset_to_ipfs",
     "retrieve_dataset_from_ipfs",
     "list_ipfs_datasets",
+    
+    # Citation extraction and analysis
+    "CitationExtractor",
+    "Citation",
+    "extract_citations_from_text",
+    "analyze_document_citations",
+    "create_citation_network",
 ]
