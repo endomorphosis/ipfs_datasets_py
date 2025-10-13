@@ -1494,6 +1494,40 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Failed to delete scraping job: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/recap/incremental', methods=['POST'])
+        def api_scrape_recap_incremental():
+            """API endpoint for incremental RECAP Archive scraping."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_recap_incremental
+                
+                data = request.json or {}
+                courts = data.get('courts', None)
+                document_types = data.get('document_types', None)
+                
+                # Other optional parameters
+                kwargs = {
+                    'output_format': data.get('output_format', 'json'),
+                    'include_text': data.get('include_text', True),
+                    'include_metadata': data.get('include_metadata', True),
+                    'rate_limit_delay': data.get('rate_limit_delay', 1.0),
+                    'max_documents': data.get('max_documents', None),
+                    'job_id': data.get('job_id', None),
+                    'resume': data.get('resume', False)
+                }
+                
+                result = asyncio.run(scrape_recap_incremental(
+                    courts=courts,
+                    document_types=document_types,
+                    **kwargs
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Incremental RECAP scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
