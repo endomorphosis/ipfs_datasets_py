@@ -6,9 +6,15 @@ These tools allow AI assistants to scrape legal datasets including:
 - State Laws
 - Municipal Laws
 - RECAP Archive (Court Documents)
+
+Also includes:
+- IPFS storage integration
+- Multi-format export utilities
+- Resume capability for interrupted scraping
+- Incremental update tracking
 """
 
-from .us_code_scraper import scrape_us_code, get_us_code_titles
+from .us_code_scraper import scrape_us_code, get_us_code_titles, search_us_code
 from .federal_register_scraper import scrape_federal_register, search_federal_register
 from .state_laws_scraper import scrape_state_laws, list_state_jurisdictions
 from .municipal_laws_scraper import scrape_municipal_laws, search_municipal_codes
@@ -21,11 +27,18 @@ from .incremental_updates import (
     scrape_with_incremental_update,
     calculate_update_parameters
 )
+from .ipfs_storage_integration import (
+    IPFSStorageManager,
+    store_dataset_to_ipfs,
+    retrieve_dataset_from_ipfs,
+    list_ipfs_datasets
+)
 
 __all__ = [
     # US Code tools
     "scrape_us_code",
     "get_us_code_titles",
+    "search_us_code",
     
     # Federal Register tools
     "scrape_federal_register",
@@ -60,4 +73,10 @@ __all__ = [
     "scrape_recap_incremental",
     "scrape_with_incremental_update",
     "calculate_update_parameters",
+    
+    # IPFS storage integration
+    "IPFSStorageManager",
+    "store_dataset_to_ipfs",
+    "retrieve_dataset_from_ipfs",
+    "list_ipfs_datasets",
 ]
