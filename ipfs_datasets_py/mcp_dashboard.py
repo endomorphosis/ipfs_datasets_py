@@ -383,6 +383,9 @@ class MCPDashboard(AdminDashboard):
         
         # Set up caselaw/legal text to deontic logic routes (always enabled)
         self._setup_caselaw_routes()
+        
+        # Set up legal dataset scraping routes
+        self._setup_legal_dataset_routes()
     
     def _setup_graphrag_routes(self) -> None:
         """Set up GraphRAG processing routes."""
@@ -1224,6 +1227,307 @@ class MCPDashboard(AdminDashboard):
                     "success": False,
                     "error": str(e)
                 }), 500
+
+    def _setup_legal_dataset_routes(self) -> None:
+        """Set up legal dataset scraping routes."""
+        
+        @self.app.route('/api/mcp/dataset/uscode/scrape', methods=['POST'])
+        def api_scrape_us_code():
+            """API endpoint to scrape US Code."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_us_code
+                
+                data = request.json or {}
+                titles = data.get('titles', None)
+                output_format = data.get('output_format', 'json')
+                include_metadata = data.get('include_metadata', True)
+                rate_limit_delay = data.get('rate_limit_delay', 1.0)
+                max_sections = data.get('max_sections', None)
+                
+                # Run async scraper
+                result = asyncio.run(scrape_us_code(
+                    titles=titles,
+                    output_format=output_format,
+                    include_metadata=include_metadata,
+                    rate_limit_delay=rate_limit_delay,
+                    max_sections=max_sections
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"US Code scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/federal_register/scrape', methods=['POST'])
+        def api_scrape_federal_register():
+            """API endpoint to scrape Federal Register."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_federal_register
+                
+                data = request.json or {}
+                agencies = data.get('agencies', None)
+                start_date = data.get('start_date', None)
+                end_date = data.get('end_date', None)
+                document_types = data.get('document_types', None)
+                output_format = data.get('output_format', 'json')
+                include_full_text = data.get('include_full_text', False)
+                rate_limit_delay = data.get('rate_limit_delay', 1.0)
+                max_documents = data.get('max_documents', None)
+                
+                result = asyncio.run(scrape_federal_register(
+                    agencies=agencies,
+                    start_date=start_date,
+                    end_date=end_date,
+                    document_types=document_types,
+                    output_format=output_format,
+                    include_full_text=include_full_text,
+                    rate_limit_delay=rate_limit_delay,
+                    max_documents=max_documents
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Federal Register scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/state_laws/scrape', methods=['POST'])
+        def api_scrape_state_laws():
+            """API endpoint to scrape state laws."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_state_laws
+                
+                data = request.json or {}
+                states = data.get('states', None)
+                legal_areas = data.get('legal_areas', None)
+                output_format = data.get('output_format', 'json')
+                include_metadata = data.get('include_metadata', True)
+                rate_limit_delay = data.get('rate_limit_delay', 2.0)
+                max_statutes = data.get('max_statutes', None)
+                
+                result = asyncio.run(scrape_state_laws(
+                    states=states,
+                    legal_areas=legal_areas,
+                    output_format=output_format,
+                    include_metadata=include_metadata,
+                    rate_limit_delay=rate_limit_delay,
+                    max_statutes=max_statutes
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"State laws scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/municipal_laws/scrape', methods=['POST'])
+        def api_scrape_municipal_laws():
+            """API endpoint to scrape municipal laws."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_municipal_laws
+                
+                data = request.json or {}
+                cities = data.get('cities', None)
+                output_format = data.get('output_format', 'json')
+                include_metadata = data.get('include_metadata', True)
+                rate_limit_delay = data.get('rate_limit_delay', 2.0)
+                max_ordinances = data.get('max_ordinances', None)
+                
+                result = asyncio.run(scrape_municipal_laws(
+                    cities=cities,
+                    output_format=output_format,
+                    include_metadata=include_metadata,
+                    rate_limit_delay=rate_limit_delay,
+                    max_ordinances=max_ordinances
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Municipal laws scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/recap/scrape', methods=['POST'])
+        def api_scrape_recap_archive():
+            """API endpoint to scrape RECAP Archive."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_recap_archive
+                
+                data = request.json or {}
+                courts = data.get('courts', None)
+                document_types = data.get('document_types', None)
+                filed_after = data.get('filed_after', None)
+                filed_before = data.get('filed_before', None)
+                case_name_pattern = data.get('case_name_pattern', None)
+                output_format = data.get('output_format', 'json')
+                include_text = data.get('include_text', True)
+                include_metadata = data.get('include_metadata', True)
+                rate_limit_delay = data.get('rate_limit_delay', 1.0)
+                max_documents = data.get('max_documents', None)
+                
+                result = asyncio.run(scrape_recap_archive(
+                    courts=courts,
+                    document_types=document_types,
+                    filed_after=filed_after,
+                    filed_before=filed_before,
+                    case_name_pattern=case_name_pattern,
+                    output_format=output_format,
+                    include_text=include_text,
+                    include_metadata=include_metadata,
+                    rate_limit_delay=rate_limit_delay,
+                    max_documents=max_documents
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"RECAP Archive scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/recap/search', methods=['POST'])
+        def api_search_recap():
+            """API endpoint to search RECAP Archive."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import search_recap_documents
+                
+                data = request.json or {}
+                query = data.get('query', None)
+                court = data.get('court', None)
+                case_name = data.get('case_name', None)
+                filed_after = data.get('filed_after', None)
+                filed_before = data.get('filed_before', None)
+                document_type = data.get('document_type', None)
+                limit = data.get('limit', 100)
+                
+                result = asyncio.run(search_recap_documents(
+                    query=query,
+                    court=court,
+                    case_name=case_name,
+                    filed_after=filed_after,
+                    filed_before=filed_before,
+                    document_type=document_type,
+                    limit=limit
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"RECAP search failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/export', methods=['POST'])
+        def api_export_dataset():
+            """API endpoint to export dataset in various formats."""
+            try:
+                from .mcp_server.tools.legal_dataset_tools import export_dataset
+                
+                data = request.json or {}
+                dataset_data = data.get('data', [])
+                output_path = data.get('output_path', '/tmp/dataset_export')
+                format = data.get('format', 'json')
+                
+                # Export options
+                export_options = {}
+                if format == 'json':
+                    export_options['pretty'] = data.get('pretty', True)
+                elif format == 'parquet':
+                    export_options['compression'] = data.get('compression', 'snappy')
+                elif format == 'csv':
+                    export_options['delimiter'] = data.get('delimiter', ',')
+                
+                result = export_dataset(
+                    data=dataset_data,
+                    output_path=output_path,
+                    format=format,
+                    **export_options
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset export failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/jobs', methods=['GET'])
+        def api_list_scraping_jobs():
+            """API endpoint to list all saved scraping jobs."""
+            try:
+                from .mcp_server.tools.legal_dataset_tools import list_scraping_jobs
+                
+                jobs = list_scraping_jobs()
+                return jsonify({
+                    "status": "success",
+                    "jobs": jobs,
+                    "count": len(jobs)
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Failed to list scraping jobs: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/jobs/<job_id>', methods=['DELETE'])
+        def api_delete_scraping_job(job_id):
+            """API endpoint to delete a saved scraping job."""
+            try:
+                from .mcp_server.tools.legal_dataset_tools import delete_scraping_job
+                
+                success = delete_scraping_job(job_id)
+                if success:
+                    return jsonify({
+                        "status": "success",
+                        "job_id": job_id,
+                        "message": "Job deleted successfully"
+                    })
+                else:
+                    return jsonify({
+                        "status": "error",
+                        "error": "Failed to delete job"
+                    }), 500
+                
+            except Exception as e:
+                self.logger.error(f"Failed to delete scraping job: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/recap/incremental', methods=['POST'])
+        def api_scrape_recap_incremental():
+            """API endpoint for incremental RECAP Archive scraping."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import scrape_recap_incremental
+                
+                data = request.json or {}
+                courts = data.get('courts', None)
+                document_types = data.get('document_types', None)
+                
+                # Other optional parameters
+                kwargs = {
+                    'output_format': data.get('output_format', 'json'),
+                    'include_text': data.get('include_text', True),
+                    'include_metadata': data.get('include_metadata', True),
+                    'rate_limit_delay': data.get('rate_limit_delay', 1.0),
+                    'max_documents': data.get('max_documents', None),
+                    'job_id': data.get('job_id', None),
+                    'resume': data.get('resume', False)
+                }
+                
+                result = asyncio.run(scrape_recap_incremental(
+                    courts=courts,
+                    document_types=document_types,
+                    **kwargs
+                ))
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Incremental RECAP scraping failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""
