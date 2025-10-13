@@ -1,6 +1,31 @@
 # Legal Dataset Tools
 
-This package provides MCP server tools for scraping and building datasets from various legal sources.
+This package provides MCP server tools for scraping and building datasets from various legal sources with production-ready features including real API integration, resume capability, incremental updates, and multiple export formats.
+
+## Features
+
+### ✅ Real Data Source Integration
+- **RECAP Archive**: Connected to CourtListener API (courtlistener.com)
+- Real-time document fetching from federal courts
+- Search and individual document retrieval
+
+### ✅ Export Formats
+- **JSON**: Standard JSON with pretty-printing option
+- **Parquet**: Apache Parquet with compression (snappy/gzip/brotli)
+- **CSV**: Standard CSV with configurable delimiter
+- Automatic nested structure flattening
+
+### ✅ Resume Capability
+- State persistence for interrupted scraping jobs
+- Automatic deduplication on resume
+- Progress tracking with percentage completion
+- Error logging with timestamps
+
+### ✅ Incremental Updates
+- Automatic date range calculation based on last update
+- Per-scope tracking (e.g., per court, per jurisdiction)
+- Configurable overlap to prevent missing documents
+- Update tracker with metadata storage
 
 ## Available Scrapers
 
@@ -12,6 +37,8 @@ Scrapes the United States Code from uscode.house.gov.
 - Configurable title selection
 - Metadata includes effective dates and amendments
 - Rate limiting support
+
+**Status:** ⚠️ Placeholder data (production API connection pending)
 
 **Usage:**
 ```python
@@ -43,6 +70,8 @@ Scrapes Federal Register documents from federalregister.gov.
 - Document type filtering (RULE, NOTICE, PRORULE)
 - Keyword search capability
 
+**Status:** ⚠️ Placeholder data (production API connection pending)
+
 **Usage:**
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_federal_register
@@ -69,6 +98,8 @@ Scrapes state statutes and regulations from state legislative websites.
 - Legal area filtering
 - State-specific rate limiting
 
+**Status:** ⚠️ Placeholder data (production connections pending)
+
 **Usage:**
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_state_laws
@@ -93,6 +124,8 @@ Scrapes municipal codes and ordinances from city and county governments.
 - Population-based filtering
 - City name pattern matching
 
+**Status:** ⚠️ Placeholder data (production connections pending)
+
 **Usage:**
 ```python
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_municipal_laws
@@ -108,16 +141,21 @@ result = await scrape_municipal_laws(
 
 ---
 
-### 5. RECAP Archive Scraper (`recap_archive_scraper.py`)
+### 5. RECAP Archive Scraper (`recap_archive_scraper.py`) ✅ PRODUCTION READY
 Scrapes federal court documents from the RECAP Archive (courtlistener.com).
 
 **Features:**
+- ✅ **Connected to real CourtListener API**
 - Federal court document scraping
 - Court filtering (district, appellate, bankruptcy)
 - Document type filtering (opinions, complaints, dockets, orders, motions, briefs)
 - Case name pattern matching
 - Date range filtering
 - Optional text and metadata inclusion
+- ✅ **Resume capability**
+- ✅ **Incremental updates**
+
+**Status:** ✅ Production-ready with real API integration
 
 **Usage:**
 ```python
@@ -129,13 +167,113 @@ result = await scrape_recap_archive(
     filed_after="2024-01-01",
     filed_before="2024-12-31",
     include_text=True,
-    max_documents=100
+    max_documents=100,
+    job_id="my_job"  # For resume capability
 )
+```
+
+**Resume interrupted job:**
+```python
+result = await scrape_recap_archive(
+    job_id="my_job",
+    resume=True  # Continues from where it left off
+)
+```
+
+**Incremental update (fetch only new documents):**
+```python
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_recap_incremental
+
+result = await scrape_recap_incremental(
+    courts=["ca9"],
+    document_types=["opinion"]
+)
+# Automatically uses date range from last update
 ```
 
 **API Endpoints:**
 - `POST /api/mcp/dataset/recap/scrape` - Scrape RECAP documents
 - `POST /api/mcp/dataset/recap/search` - Search RECAP archive
+- `POST /api/mcp/dataset/recap/incremental` - Incremental update
+
+---
+
+## Export Utilities
+
+### Export to Multiple Formats
+
+```python
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import export_dataset
+
+# Export to JSON
+result = export_dataset(
+    data=scraped_data,
+    output_path="/path/to/output",
+    format="json",
+    pretty=True
+)
+
+# Export to Parquet
+result = export_dataset(
+    data=scraped_data,
+    output_path="/path/to/output",
+    format="parquet",
+    compression="snappy"
+)
+
+# Export to CSV
+result = export_dataset(
+    data=scraped_data,
+    output_path="/path/to/output",
+    format="csv",
+    delimiter=","
+)
+```
+
+**API Endpoint:** `POST /api/mcp/dataset/export`
+
+---
+
+## State Management & Resume
+
+### Save and Resume Scraping Jobs
+
+```python
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import ScrapingState, list_scraping_jobs
+
+# List all saved jobs
+jobs = list_scraping_jobs()
+
+# Delete a job
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import delete_scraping_job
+delete_scraping_job("job_id")
+```
+
+**State Storage:** `~/.ipfs_datasets/scraping_state/`
+
+**API Endpoints:**
+- `GET /api/mcp/dataset/jobs` - List all scraping jobs
+- `DELETE /api/mcp/dataset/jobs/<job_id>` - Delete a job
+
+---
+
+## Incremental Updates
+
+### Automatic Update Tracking
+
+```python
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import IncrementalUpdateTracker
+
+tracker = IncrementalUpdateTracker()
+
+# Get last update time
+last_update = tracker.get_last_update("recap_archive", "ca9")
+
+# List all tracked datasets
+trackers = tracker.get_all_trackers()
+```
+
+**Tracker Storage:** `~/.ipfs_datasets/update_tracker/`
 
 ---
 
@@ -152,8 +290,12 @@ Each section provides:
 - Configuration forms for parameters
 - Real-time progress tracking
 - Dataset preview tables
-- Export to JSON functionality
+- Export functionality (JSON/Parquet/CSV)
 - Status monitoring
+- Resume capability
+- Incremental update option
+
+---
 
 ## Common Parameters
 
@@ -163,6 +305,10 @@ All scrapers support these common parameters:
 - `rate_limit_delay`: Delay between requests in seconds
 - `include_metadata`: Include additional metadata
 - `max_*`: Maximum number of items to scrape (for testing/limiting)
+- `job_id`: Unique identifier for resume capability
+- `resume`: Boolean to resume from previous state
+
+---
 
 ## Output Format
 
@@ -177,19 +323,35 @@ All scrapers return a standardized response:
     "elapsed_time_seconds": 45.6,
     "scraped_at": "2024-01-01T12:00:00",
     "source": "...",
-    ...
+    "job_id": "...",
+    "resumed": false
   },
   "output_format": "json",
+  "job_id": "...",  // For resume capability
+  "incremental_update": {  // If incremental
+    "last_update": "2024-01-01T00:00:00",
+    "date_range_used": {...},
+    "is_first_update": false
+  },
   "error": "..."  // Only present if status is "error"
 }
 ```
 
+---
+
 ## Dependencies
 
-- `requests`: HTTP requests (optional, provides better error handling)
-- `beautifulsoup4`: HTML parsing (optional, for scrapers that need it)
+**Required:**
+- Python 3.10+
+
+**Optional (handled gracefully if missing):**
+- `requests` - HTTP requests
+- `beautifulsoup4` - HTML parsing (for some scrapers)
+- `pyarrow` - Parquet export support
 
 Scrapers handle missing dependencies gracefully with informative error messages.
+
+---
 
 ## Testing
 
@@ -199,22 +361,35 @@ Run the test suite:
 python test_legal_scrapers_simple.py
 ```
 
-This will test all scrapers and generate a detailed report.
+---
 
-## Notes
+## Production Status
 
-- Current implementation uses placeholder data with production-ready structure
-- Production implementation would connect to actual data sources
-- All scrapers include rate limiting to respect server limits
-- Comprehensive error handling and logging throughout
-- Async implementation for efficient I/O operations
+| Scraper | Status | API Connection |
+|---------|--------|----------------|
+| RECAP Archive | ✅ Production | CourtListener API |
+| Federal Register | ⚠️ Placeholder | Pending |
+| US Code | ⚠️ Placeholder | Pending |
+| State Laws | ⚠️ Placeholder | Pending |
+| Municipal Laws | ⚠️ Placeholder | Pending |
+
+---
 
 ## Future Enhancements
 
-- [ ] Connect to actual data sources (uscode.house.gov, federalregister.gov, etc.)
-- [ ] Add Parquet export support
+- [ ] Connect remaining scrapers to production APIs
 - [ ] Add IPFS storage integration
-- [ ] Add resume capability for interrupted scraping
-- [ ] Add incremental updates for existing datasets
-- [ ] Add more court types for RECAP scraper
 - [ ] Add citation extraction and linking
+- [ ] Add more court types for RECAP scraper
+- [ ] Add authentication support for APIs requiring keys
+- [ ] Add caching layer for frequently accessed data
+
+---
+
+## Notes
+
+- All scrapers include rate limiting to respect server limits
+- Comprehensive error handling and logging throughout
+- Async implementation for efficient I/O operations
+- State persistence enables long-running jobs
+- Incremental updates minimize bandwidth and API calls
