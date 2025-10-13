@@ -367,11 +367,26 @@ python test_legal_scrapers_simple.py
 
 | Scraper | Status | API Connection |
 |---------|--------|----------------|
-| RECAP Archive | ✅ Production | CourtListener API |
-| Federal Register | ⚠️ Placeholder | Pending |
-| US Code | ⚠️ Placeholder | Pending |
-| State Laws | ⚠️ Placeholder | Pending |
-| Municipal Laws | ⚠️ Placeholder | Pending |
+| **RECAP Archive** | ✅ **Production Ready** | ✅ **CourtListener API (courtlistener.com)** |
+| **Federal Register** | ✅ **Production Ready** | ✅ **Federal Register API (federalregister.gov)** |
+| US Code | ⚠️ Placeholder | ⚠️ Pending (uscode.house.gov) |
+| State Laws | ⚠️ Placeholder | ⚠️ Pending (varies by state) |
+| Municipal Laws | ⚠️ Placeholder | ⚠️ Pending (varies by municipality) |
+
+### Integration Status
+
+| Feature | Status |
+|---------|--------|
+| MCP Tool Registration | ✅ Complete (15 tools registered in `tool_registration.py`) |
+| JavaScript SDK Methods | ✅ Complete (15 convenience methods in `mcp-sdk.js`) |
+| Dashboard UI Integration | ✅ Complete (all tabs functional with real API calls) |
+| Playwright E2E Tests | ✅ Complete (20+ test methods in `test_legal_dataset_dashboard_ui.py`) |
+| Parquet Export | ✅ Production Ready (with PyArrow) |
+| JSON Export | ✅ Production Ready |
+| CSV Export | ✅ Production Ready |
+| Resume Capability | ✅ Production Ready (state persistence) |
+| Incremental Updates | ✅ Production Ready (automatic date tracking) |
+| State Persistence | ✅ Production Ready (job management) |
 
 ---
 
