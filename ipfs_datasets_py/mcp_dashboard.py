@@ -1454,6 +1454,46 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Dataset export failed: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/jobs', methods=['GET'])
+        def api_list_scraping_jobs():
+            """API endpoint to list all saved scraping jobs."""
+            try:
+                from .mcp_server.tools.legal_dataset_tools import list_scraping_jobs
+                
+                jobs = list_scraping_jobs()
+                return jsonify({
+                    "status": "success",
+                    "jobs": jobs,
+                    "count": len(jobs)
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Failed to list scraping jobs: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/jobs/<job_id>', methods=['DELETE'])
+        def api_delete_scraping_job(job_id):
+            """API endpoint to delete a saved scraping job."""
+            try:
+                from .mcp_server.tools.legal_dataset_tools import delete_scraping_job
+                
+                success = delete_scraping_job(job_id)
+                if success:
+                    return jsonify({
+                        "status": "success",
+                        "job_id": job_id,
+                        "message": "Job deleted successfully"
+                    })
+                else:
+                    return jsonify({
+                        "status": "error",
+                        "error": "Failed to delete job"
+                    }), 500
+                
+            except Exception as e:
+                self.logger.error(f"Failed to delete scraping job: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
 
     def _setup_mcp_tool_routes(self) -> None:
         """Set up original MCP tool routes."""

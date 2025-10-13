@@ -320,7 +320,9 @@ async def scrape_recap_archive(
     include_text: bool = True,
     include_metadata: bool = True,
     rate_limit_delay: float = 1.0,
-    max_documents: Optional[int] = None
+    max_documents: Optional[int] = None,
+    job_id: Optional[str] = None,
+    resume: bool = False
 ) -> Dict[str, Any]:
     """Scrape RECAP Archive documents and build a structured dataset.
     
@@ -336,6 +338,8 @@ async def scrape_recap_archive(
         include_metadata: Include full document metadata
         rate_limit_delay: Delay between requests in seconds (default 1.0)
         max_documents: Maximum number of documents to scrape
+        job_id: Unique job identifier for resume capability (auto-generated if not provided)
+        resume: Whether to resume from previous state (requires job_id)
     
     Returns:
         Dict containing:
@@ -343,9 +347,42 @@ async def scrape_recap_archive(
             - data: Scraped RECAP documents
             - metadata: Scraping metadata
             - output_format: Format of the data
+            - job_id: Job identifier (for resume)
             - error: Error message (if failed)
     """
     try:
+        # Import state manager
+        from .state_manager import ScrapingState
+        
+        # Generate job ID if not provided
+        if job_id is None:
+            import uuid
+            job_id = f"recap_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        
+        # Initialize or load state
+        state = ScrapingState(job_id)
+        
+        if resume:
+            if state.load():
+                logger.info(f"Resuming scraping job {job_id}")
+                # Restore scraped data
+                scraped_documents = state.get_data()
+                documents_count = len(scraped_documents)
+                
+                # Get previous parameters
+                prev_params = state.metadata.get("parameters", {})
+                courts = prev_params.get("courts", courts)
+                document_types = prev_params.get("document_types", document_types)
+                filed_after = prev_params.get("filed_after", filed_after)
+                filed_before = prev_params.get("filed_before", filed_before)
+            else:
+                logger.warning(f"No previous state found for job {job_id}, starting fresh")
+                resume = False
+        
+        if not resume:
+            scraped_documents = []
+            documents_count = 0
+        
         # Set default date range if not provided
         if not filed_before:
             filed_before = datetime.now().strftime("%Y-%m-%d")
@@ -359,6 +396,18 @@ async def scrape_recap_archive(
         if not document_types:
             document_types = ["opinion"]  # Default to opinions
         
+        # Save parameters to state
+        state.set_parameters({
+            "courts": courts,
+            "document_types": document_types,
+            "filed_after": filed_after,
+            "filed_before": filed_before,
+            "case_name_pattern": case_name_pattern,
+            "max_documents": max_documents
+        })
+        state.set_status("running")
+        state.save()
+        
         logger.info(f"Starting RECAP Archive scraping: courts={courts}, types={document_types}, dates={filed_after} to {filed_before}")
         start_time = time.time()
         
@@ -366,15 +415,16 @@ async def scrape_recap_archive(
         try:
             import requests
         except ImportError as ie:
+            state.set_status("failed")
+            state.add_error(f"Required library not available: {ie}")
+            state.save()
             return {
                 "status": "error",
                 "error": f"Required library not available: {ie}. Install with: pip install requests",
                 "data": [],
-                "metadata": {}
+                "metadata": {},
+                "job_id": job_id
             }
-        
-        scraped_documents = []
-        documents_count = 0
         
         # Process courts
         if courts is None or "all" in courts:
@@ -383,50 +433,85 @@ async def scrape_recap_archive(
         else:
             courts_to_scrape = courts
         
+        # Calculate total items for progress tracking
+        total_items = len(courts_to_scrape) * len(document_types)
+        items_processed = 0
+        
         # Scrape documents using search API
-        for court in courts_to_scrape:
-            if max_documents and documents_count >= max_documents:
-                logger.info(f"Reached max_documents limit of {max_documents}")
-                break
-            
-            logger.info(f"Scraping RECAP documents from court: {court}")
-            
-            # Query CourtListener API for this court
-            for doc_type in document_types:
+        try:
+            for court in courts_to_scrape:
                 if max_documents and documents_count >= max_documents:
+                    logger.info(f"Reached max_documents limit of {max_documents}")
                     break
                 
-                # Use the search function to get documents
-                search_result = await search_recap_documents(
-                    court=court,
-                    document_type=doc_type,
-                    filed_after=filed_after,
-                    filed_before=filed_before,
-                    case_name=case_name_pattern,
-                    limit=min(20, max_documents - documents_count if max_documents else 20)
-                )
+                logger.info(f"Scraping RECAP documents from court: {court}")
                 
-                if search_result['status'] == 'success' and search_result['documents']:
-                    for doc in search_result['documents']:
-                        if max_documents and documents_count >= max_documents:
-                            break
-                        
-                        # Optionally fetch full document details
-                        if include_text and doc.get('id'):
-                            doc_details = await get_recap_document(
-                                doc['id'],
-                                include_text=include_text,
-                                include_metadata=include_metadata
-                            )
-                            if doc_details['status'] == 'success' and doc_details.get('document'):
-                                # Merge search result with detailed document
-                                doc.update(doc_details['document'])
-                        
-                        scraped_documents.append(doc)
-                        documents_count += 1
-                
-                # Rate limiting between requests
-                time.sleep(rate_limit_delay)
+                # Query CourtListener API for this court
+                for doc_type in document_types:
+                    if max_documents and documents_count >= max_documents:
+                        break
+                    
+                    # Update progress
+                    state.update_progress(items_processed, total_items, f"{court}/{doc_type}")
+                    
+                    # Use the search function to get documents
+                    search_result = await search_recap_documents(
+                        court=court,
+                        document_type=doc_type,
+                        filed_after=filed_after,
+                        filed_before=filed_before,
+                        case_name=case_name_pattern,
+                        limit=min(20, max_documents - documents_count if max_documents else 20)
+                    )
+                    
+                    if search_result['status'] == 'success' and search_result['documents']:
+                        for doc in search_result['documents']:
+                            if max_documents and documents_count >= max_documents:
+                                break
+                            
+                            # Check if already processed (for resume)
+                            doc_id = doc.get('id', '')
+                            if state.is_processed(doc_id):
+                                logger.debug(f"Skipping already processed document: {doc_id}")
+                                continue
+                            
+                            # Optionally fetch full document details
+                            if include_text and doc.get('id'):
+                                doc_details = await get_recap_document(
+                                    doc['id'],
+                                    include_text=include_text,
+                                    include_metadata=include_metadata
+                                )
+                                if doc_details['status'] == 'success' and doc_details.get('document'):
+                                    # Merge search result with detailed document
+                                    doc.update(doc_details['document'])
+                            
+                            # Add to state
+                            state.add_item(doc, doc_id)
+                            scraped_documents.append(doc)
+                            documents_count += 1
+                    
+                    items_processed += 1
+                    
+                    # Save state periodically (every 10 items)
+                    if items_processed % 10 == 0:
+                        state.save()
+                        logger.debug(f"Saved state: {documents_count} documents processed")
+                    
+                    # Rate limiting between requests
+                    time.sleep(rate_limit_delay)
+            
+            # Mark as completed
+            state.set_status("completed")
+            state.update_progress(items_processed, total_items)
+            state.save()
+            
+        except Exception as scrape_error:
+            # Save state on error for resume
+            state.set_status("failed")
+            state.add_error(str(scrape_error))
+            state.save()
+            raise
 
         
         elapsed_time = time.time() - start_time
@@ -446,7 +531,9 @@ async def scrape_recap_archive(
             "api_endpoint": "https://www.courtlistener.com/api/rest/v3/",
             "rate_limit_delay": rate_limit_delay,
             "include_text": include_text,
-            "include_metadata": include_metadata
+            "include_metadata": include_metadata,
+            "job_id": job_id,
+            "resumed": resume
         }
         
         logger.info(f"Completed RECAP Archive scraping: {documents_count} documents in {elapsed_time:.2f}s")
@@ -456,14 +543,23 @@ async def scrape_recap_archive(
             "data": scraped_documents,
             "metadata": metadata,
             "output_format": output_format,
-            "note": "Documents fetched from CourtListener/RECAP Archive API at courtlistener.com"
+            "job_id": job_id,
+            "note": "Documents fetched from CourtListener/RECAP Archive API at courtlistener.com. Job state saved for resume capability."
         }
         
     except Exception as e:
         logger.error(f"RECAP Archive scraping failed: {e}")
+        # Try to get job_id from state if available
+        try:
+            state_job_id = job_id if 'job_id' in locals() else None
+        except:
+            state_job_id = None
+        
         return {
             "status": "error",
             "error": str(e),
             "data": [],
-            "metadata": {}
+            "metadata": {},
+            "job_id": state_job_id,
+            "note": "Scraping failed. State saved for resume if job_id is available."
         }

@@ -14,6 +14,7 @@ from .state_laws_scraper import scrape_state_laws, list_state_jurisdictions
 from .municipal_laws_scraper import scrape_municipal_laws, search_municipal_codes
 from .recap_archive_scraper import scrape_recap_archive, search_recap_documents, get_recap_document
 from .export_utils import export_dataset, export_to_json, export_to_parquet, export_to_csv
+from .state_manager import ScrapingState, list_scraping_jobs, delete_scraping_job
 
 __all__ = [
     # US Code tools
@@ -42,4 +43,9 @@ __all__ = [
     "export_to_json",
     "export_to_parquet",
     "export_to_csv",
+    
+    # State management
+    "ScrapingState",
+    "list_scraping_jobs",
+    "delete_scraping_job",
 ]
