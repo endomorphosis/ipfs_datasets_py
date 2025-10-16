@@ -313,6 +313,35 @@ class BaseStateScraper(ABC):
                 if not link_text or len(link_text) < 3:
                     continue
                 
+                # Filter for statute-related links
+                # Look for common statute keywords in the link text
+                statute_keywords = [
+                    'title', 'chapter', '§', 'section', 'sec.', 'part', 
+                    'code', 'statute', 'article', 'division', 'vol', 'volume',
+                    'act', 'law', 'revised', 'annotated', 'general'
+                ]
+                
+                link_text_lower = link_text.lower()
+                
+                # Check if link contains statute keywords OR has numbers (like "Title 1" or "1-2-3")
+                has_keywords = any(keyword in link_text_lower for keyword in statute_keywords)
+                has_numbers = any(char.isdigit() for char in link_text)
+                
+                # Skip links that don't look like statutes (no keywords and no numbers)
+                if not has_keywords and not has_numbers:
+                    continue
+                
+                # Also skip common navigation/utility links even if they have keywords
+                skip_patterns = [
+                    'home', 'about', 'contact', 'search', 'help', 'login', 'logout',
+                    'privacy', 'terms', 'site map', 'sitemap', 'accessibility',
+                    'disclaimer', 'copyright', 'back to', 'return to', 'print',
+                    'email', 'download', 'subscribe', 'rss', 'feedback'
+                ]
+                
+                if any(pattern in link_text_lower for pattern in skip_patterns):
+                    continue
+                
                 # Make URL absolute if needed
                 if link_url.startswith('/'):
                     from urllib.parse import urljoin
@@ -436,6 +465,34 @@ class BaseStateScraper(ABC):
                         
                         # Skip if link doesn't look useful
                         if not link_text or len(link_text) < 3:
+                            continue
+                        
+                        # Filter for statute-related links
+                        statute_keywords = [
+                            'title', 'chapter', '§', 'section', 'sec.', 'part', 
+                            'code', 'statute', 'article', 'division', 'vol', 'volume',
+                            'act', 'law', 'revised', 'annotated', 'general'
+                        ]
+                        
+                        link_text_lower = link_text.lower()
+                        
+                        # Check if link contains statute keywords OR has numbers
+                        has_keywords = any(keyword in link_text_lower for keyword in statute_keywords)
+                        has_numbers = any(char.isdigit() for char in link_text)
+                        
+                        # Skip links that don't look like statutes
+                        if not has_keywords and not has_numbers:
+                            continue
+                        
+                        # Skip common navigation/utility links
+                        skip_patterns = [
+                            'home', 'about', 'contact', 'search', 'help', 'login', 'logout',
+                            'privacy', 'terms', 'site map', 'sitemap', 'accessibility',
+                            'disclaimer', 'copyright', 'back to', 'return to', 'print',
+                            'email', 'download', 'subscribe', 'rss', 'feedback'
+                        ]
+                        
+                        if any(pattern in link_text_lower for pattern in skip_patterns):
                             continue
                         
                         # Make URL absolute
