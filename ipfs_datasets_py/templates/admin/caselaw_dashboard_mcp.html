@@ -4040,8 +4040,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             let scrapingActive = false;
             let startTime = null;
             let timerInterval = null;
+            let scrapingData = null;
             
-            document.getElementById('stateStartScraping').addEventListener('click', function() {
+            document.getElementById('stateStartScraping').addEventListener('click', async function() {
                 if (!scrapingActive) {
                     scrapingActive = true;
                     startTime = Date.now();
@@ -4052,8 +4053,10 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     document.getElementById('stateStopScraping').disabled = false;
                     document.getElementById('statePauseScraping').disabled = false;
                     
-                    simulateStateProgress();
                     timerInterval = setInterval(updateStateTimer, 1000);
+                    
+                    // Start actual scraping
+                    await startStateScraping();
                 }
             });
             
@@ -4072,11 +4075,82 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 }
             });
             
+            async function startStateScraping() {
+                try {
+                    // Get selected states
+                    const stateSelect = document.getElementById('stateSelection');
+                    const selectedOptions = Array.from(stateSelect.selectedOptions).map(opt => opt.value);
+                    const states = selectedOptions.includes('all') ? null : selectedOptions;
+                    
+                    // Get legal areas
+                    const legalAreasInput = document.getElementById('stateLegalAreas');
+                    const legalAreas = legalAreasInput.value 
+                        ? legalAreasInput.value.split(',').map(s => s.trim()).filter(s => s)
+                        : null;
+                    
+                    // Get law types
+                    const lawTypesSelect = document.getElementById('stateLawTypes');
+                    const lawTypes = Array.from(lawTypesSelect.selectedOptions).map(opt => opt.value);
+                    
+                    // Update UI
+                    document.getElementById('stateStatesProcessed').textContent = '0';
+                    document.getElementById('stateProvisionsFetched').textContent = '0';
+                    document.getElementById('stateProgressBar').style.width = '10%';
+                    document.getElementById('stateProgressBar').textContent = '10%';
+                    
+                    // Make API call
+                    const response = await fetch('/api/mcp/dataset/state_laws/scrape', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            states: states,
+                            legal_areas: legalAreas,
+                            output_format: 'json',
+                            include_metadata: true,
+                            rate_limit_delay: 2.0,
+                            max_statutes: 100  // Limit for initial scraping
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    scrapingData = result;
+                    
+                    // Update UI with results
+                    if (result.status === 'success' || result.status === 'partial_success') {
+                        const metadata = result.metadata || {};
+                        document.getElementById('stateStatesProcessed').textContent = metadata.states_count || 0;
+                        document.getElementById('stateProvisionsFetched').textContent = metadata.statutes_count || 0;
+                        document.getElementById('stateProgressBar').style.width = '100%';
+                        document.getElementById('stateProgressBar').textContent = '100%';
+                        
+                        document.getElementById('stateStatus').textContent = 'Completed';
+                        document.getElementById('stateStatus').className = 'badge bg-success';
+                        
+                        // Show success message
+                        showNotification('State laws scraped successfully!', 'success');
+                    } else {
+                        throw new Error(result.error || 'Unknown error occurred');
+                    }
+                    
+                } catch (error) {
+                    console.error('State scraping error:', error);
+                    document.getElementById('stateStatus').textContent = 'Error';
+                    document.getElementById('stateStatus').className = 'badge bg-danger';
+                    showNotification('State scraping failed: ' + error.message, 'danger');
+                } finally {
+                    stopStateScraping();
+                }
+            }
+            
             function stopStateScraping() {
                 scrapingActive = false;
                 clearInterval(timerInterval);
-                document.getElementById('stateStatus').textContent = 'Stopped';
-                document.getElementById('stateStatus').className = 'badge bg-danger';
                 document.getElementById('stateStartScraping').disabled = false;
                 document.getElementById('stateStopScraping').disabled = true;
                 document.getElementById('statePauseScraping').disabled = true;
@@ -4093,51 +4167,55 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 }
             }
             
-            function simulateStateProgress() {
-                let progress = 0;
-                const states = ['California', 'New York', 'Texas', 'Florida'];
-                let currentStateIndex = 0;
-                
-                const progressInterval = setInterval(function() {
-                    if (!scrapingActive || progress >= 100) {
-                        clearInterval(progressInterval);
-                        if (progress >= 100) {
-                            document.getElementById('stateStatus').textContent = 'Completed';
-                            document.getElementById('stateStatus').className = 'badge bg-primary';
-                            stopStateScraping();
-                        }
-                        return;
-                    }
-                    
-                    progress += Math.random() * 2.5;
-                    if (progress > 100) progress = 100;
-                    
-                    currentStateIndex = Math.floor((progress / 100) * states.length);
-                    if (currentStateIndex >= states.length) currentStateIndex = states.length - 1;
-                    
-                    const statesProcessed = Math.floor(progress / 25);
-                    const provisionsFetched = Math.floor(progress * 12);
-                    
-                    document.getElementById('stateProgressBar').style.width = progress + '%';
-                    document.getElementById('stateProgressBar').textContent = Math.floor(progress) + '%';
-                    document.getElementById('stateStatesProcessed').textContent = statesProcessed;
-                    document.getElementById('stateProvisionsFetched').textContent = provisionsFetched;
-                    document.getElementById('stateCurrentState').textContent = states[currentStateIndex];
-                }, 1500);
-            }
-            
             // Export buttons
             document.getElementById('stateExportJson').addEventListener('click', function() {
-                alert('Export as JSON functionality would be implemented here.');
+                if (!scrapingData) {
+                    showNotification('No data to export. Please run scraping first.', 'warning');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(scrapingData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `state_laws_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                showNotification('Data exported as JSON', 'success');
             });
             
             document.getElementById('stateExportParquet').addEventListener('click', function() {
-                alert('Export as Parquet functionality would be implemented here.');
+                showNotification('Parquet export functionality coming soon.', 'info');
             });
             
-            document.getElementById('stateSaveToIPFS').addEventListener('click', function() {
-                alert('Save to IPFS functionality would be implemented here.');
+            document.getElementById('stateSaveToIPFS').addEventListener('click', async function() {
+                if (!scrapingData) {
+                    showNotification('No data to save. Please run scraping first.', 'warning');
+                    return;
+                }
+                
+                try {
+                    // TODO: Implement IPFS storage
+                    showNotification('IPFS storage functionality coming soon.', 'info');
+                } catch (error) {
+                    showNotification('IPFS save failed: ' + error.message, 'danger');
+                }
             });
+        }
+        
+        // Notification helper
+        function showNotification(message, type) {
+            // Create a simple notification
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
         }
         
         // Municipal Laws Dataset Builder

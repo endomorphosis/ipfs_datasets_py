@@ -1469,6 +1469,107 @@ class MCPDashboard(AdminDashboard):
                 })
                 
             except Exception as e:
+                self.logger.error(f"List scraping jobs failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        # State Laws Scheduler Endpoints
+        @self.app.route('/api/mcp/dataset/state_laws/schedules', methods=['GET'])
+        def api_list_state_law_schedules():
+            """API endpoint to list all state law update schedules."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import list_schedules
+                
+                result = asyncio.run(list_schedules())
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"List schedules failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/state_laws/schedules', methods=['POST'])
+        def api_create_state_law_schedule():
+            """API endpoint to create a new state law update schedule."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import create_schedule
+                
+                data = request.json or {}
+                schedule_id = data.get('schedule_id')
+                states = data.get('states')
+                legal_areas = data.get('legal_areas')
+                interval_hours = data.get('interval_hours', 24)
+                enabled = data.get('enabled', True)
+                
+                if not schedule_id:
+                    return jsonify({
+                        "status": "error",
+                        "error": "schedule_id is required"
+                    }), 400
+                
+                result = asyncio.run(create_schedule(
+                    schedule_id=schedule_id,
+                    states=states,
+                    legal_areas=legal_areas,
+                    interval_hours=interval_hours,
+                    enabled=enabled
+                ))
+                
+                return jsonify({
+                    "status": "success",
+                    "schedule": result
+                })
+                
+            except Exception as e:
+                self.logger.error(f"Create schedule failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/state_laws/schedules/<schedule_id>', methods=['DELETE'])
+        def api_delete_state_law_schedule(schedule_id: str):
+            """API endpoint to delete a state law update schedule."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import remove_schedule
+                
+                result = asyncio.run(remove_schedule(schedule_id))
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Delete schedule failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/state_laws/schedules/<schedule_id>/run', methods=['POST'])
+        def api_run_state_law_schedule(schedule_id: str):
+            """API endpoint to run a schedule immediately."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import run_schedule_now
+                
+                result = asyncio.run(run_schedule_now(schedule_id))
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Run schedule failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/dataset/state_laws/schedules/<schedule_id>/toggle', methods=['POST'])
+        def api_toggle_state_law_schedule(schedule_id: str):
+            """API endpoint to enable/disable a schedule."""
+            try:
+                import asyncio
+                from .mcp_server.tools.legal_dataset_tools import enable_disable_schedule
+                
+                data = request.json or {}
+                enabled = data.get('enabled', True)
+                
+                result = asyncio.run(enable_disable_schedule(schedule_id, enabled))
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Toggle schedule failed: {e}")
+                return jsonify({"status": "error", "error": str(e)}), 500
+                
+            except Exception as e:
                 self.logger.error(f"Failed to list scraping jobs: {e}")
                 return jsonify({"status": "error", "error": str(e)}), 500
         
