@@ -1,220 +1,65 @@
+#!/usr/bin/env python3
 import pytest
 
 from ipfs_datasets_py.web_archive import WebArchive
 
+@pytest.fixture
+def valid_kwargs():
+    return {
+        "valid_path": "/data/archives",
+        "empty_path": "",
+        "none_path": None,
+    }
 
+@pytest.mark.parametrize("scenario", ["valid_path", "empty_path", "none_path"])
 class TestWebArchiveInitialization:
     """Test WebArchive initialization and configuration."""
 
-    def test_init_with_storage_path_creates_instance(self):
-        """
-        GIVEN valid storage_path string "/data/archives"
-        WHEN WebArchive is initialized
-        THEN expect:
-            - Instance created successfully
-        """
-        # GIVEN
-        storage_path = "/data/archives"
-        
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert archive is not None
-        assert isinstance(archive, WebArchive)
+    def test_init_creates_instance(self, scenario, valid_kwargs):
+        """Given valid arguments, when initialized, then an instance is created."""
+        kwarg = valid_kwargs[scenario]
+        archive = WebArchive(storage_path=kwarg)
+        assert isinstance(archive, WebArchive), f"Expected WebArchive instance but got {type(archive).__name__}"
 
-    def test_init_with_storage_path_sets_storage_path_attribute(self):
-        """
-        GIVEN valid storage_path string "/data/archives"
-        WHEN WebArchive is initialized
-        THEN expect:
-            - storage_path attribute is set to "/data/archives"
-        """
-        # GIVEN
-        storage_path = "/data/archives"
-        
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert archive.storage_path == storage_path
+    def test_init_with_storage_path_sets_storage_path_attribute(self, scenario, valid_kwargs):
+        """Given valid storage_path, when initialized, then storage_path set."""
+        kwarg = valid_kwargs[scenario]
+        archive = WebArchive(storage_path=kwarg)
 
-    def test_init_with_storage_path_initializes_archived_items(self):
-        """
-        GIVEN valid storage_path string "/data/archives"
-        WHEN WebArchive is initialized
-        THEN expect:
-            - archived_items attribute is initialized as empty dict
-        """
-        # GIVEN
-        storage_path = "/data/archives"
-        
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert hasattr(archive, 'archived_items')
-        assert archive.archived_items == {}
-        assert isinstance(archive.archived_items, dict)
+        assert archive.storage_path == kwarg, f"Expected {kwarg} but got {archive.storage_path}"
 
-    def test_init_with_storage_path_sets_persistent_mode(self):
-        """
-        GIVEN valid storage_path string "/data/archives"
-        WHEN WebArchive is initialized
-        THEN expect:
-            - persistence_mode is "persistent"
-        """
-        # GIVEN
-        storage_path = "/data/archives"
+    def test_init_without_storage_path_initializes_archived_items(self, scenario, valid_kwargs):
+        """Given no storage_path, when initialized, then archived_items empty dict."""
+        kwarg = valid_kwargs[scenario]
+        archive = WebArchive(storage_path=kwarg)
         
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert hasattr(archive, 'persistence_mode')
-        assert archive.persistence_mode == "persistent"
+        assert archive.archived_items == {}, f"Expected empty dict but got {archive.archived_items}"
 
-    def test_init_without_storage_path_creates_instance(self):
-        """
-        GIVEN storage_path is None (default)
-        WHEN WebArchive is initialized
-        THEN expect:
-            - Instance created successfully
-        """
-        # GIVEN - use default None storage_path
-        
-        # WHEN
-        archive = WebArchive()
-        
-        # THEN
-        assert archive is not None
-        assert isinstance(archive, WebArchive)
+    def test_archived_items_attribute_is_dictionary(self, scenario, valid_kwargs):
+        """Given WebArchive instance, when checking attribute, then archived_items is dict."""
+        kwarg = valid_kwargs[scenario]
+        archive = WebArchive(storage_path=kwarg)
 
-    def test_init_without_storage_path_sets_storage_path_none(self):
-        """
-        GIVEN storage_path is None (default)
-        WHEN WebArchive is initialized
-        THEN expect:
-            - storage_path attribute is None
-        """
-        # GIVEN - use default None storage_path
-        
-        # WHEN
-        archive = WebArchive()
-        
-        # THEN
-        assert archive.storage_path is None
+        assert isinstance(archive.archived_items, dict), \
+            f"Expected dict but got {type(archive.archived_items).__name__}"
 
-    def test_init_without_storage_path_initializes_archived_items(self):
-        """
-        GIVEN storage_path is None (default)
-        WHEN WebArchive is initialized
-        THEN expect:
-            - archived_items attribute is initialized as empty dict
-        """
-        # GIVEN - use default None storage_path
-        
-        # WHEN
-        archive = WebArchive()
-        
-        # THEN
-        assert hasattr(archive, 'archived_items')
-        assert archive.archived_items == {}
-        assert isinstance(archive.archived_items, dict)
 
-    def test_init_without_storage_path_sets_memory_only_mode(self):
-        """
-        GIVEN storage_path is None (default)
-        WHEN WebArchive is initialized
-        THEN expect:
-            - persistence_mode is "memory_only"
-        """
-        # GIVEN - use default None storage_path
-        
-        # WHEN
-        archive = WebArchive()
-        
-        # THEN
-        assert hasattr(archive, 'persistence_mode')
-        assert archive.persistence_mode == "memory_only"
+@pytest.mark.parametrize("scenario,expected_value", 
+    [("valid_path", "persistent"), ("empty_path", "memory_only"), ("none_path", "memory_only")]
+)
+def test_init_without_storage_path_sets_memory_only_mode(scenario, expected_value, valid_kwargs):
+    """Given no storage_path, when initialized, then persistence_mode memory_only."""
+    kwarg = valid_kwargs[scenario]
+    archive = WebArchive(storage_path=kwarg)
+    
+    assert archive.persistence_mode == expected_value, f"Expected {expected_value} but got {archive.persistence_mode}"
 
-    def test_init_with_empty_string_storage_path_creates_instance(self):
-        """
-        GIVEN storage_path is empty string ""
-        WHEN WebArchive is initialized
-        THEN expect:
-            - Instance created successfully
-        """
-        # GIVEN
-        storage_path = ""
-        
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert archive is not None
-        assert isinstance(archive, WebArchive)
-
-    def test_init_with_empty_string_storage_path_sets_attribute(self):
-        """
-        GIVEN storage_path is empty string ""
-        WHEN WebArchive is initialized
-        THEN expect:
-            - storage_path attribute is set to ""
-        """
-        # GIVEN
-        storage_path = ""
-        
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert archive.storage_path == ""
-
-    def test_init_with_empty_string_storage_path_initializes_archived_items(self):
-        """
-        GIVEN storage_path is empty string ""
-        WHEN WebArchive is initialized
-        THEN expect:
-            - archived_items attribute is initialized as empty dict
-        """
-        # GIVEN
-        storage_path = ""
-        
-        # WHEN
-        archive = WebArchive(storage_path=storage_path)
-        
-        # THEN
-        assert hasattr(archive, 'archived_items')
-        assert archive.archived_items == {}
-        assert isinstance(archive.archived_items, dict)
-
-    def test_archived_items_attribute_exists(self):
-        """
-        GIVEN WebArchive instance
-        WHEN checking for archived_items attribute
-        THEN expect:
-            - archived_items attribute exists
-        """
-        # GIVEN
-        archive = WebArchive()
-        
-        # WHEN & THEN
-        assert hasattr(archive, 'archived_items')
-
-    def test_archived_items_attribute_is_dictionary(self):
-        """
-        GIVEN WebArchive instance
-        WHEN checking for archived_items attribute
-        THEN expect:
-            - archived_items is a dictionary
-        """
-        # GIVEN
-        archive = WebArchive()
-        
-        # WHEN & THEN
-        assert isinstance(archive.archived_items, dict)
-
+@pytest.mark.parametrize("attribute_name", ["archived_items", "storage_path"])
+def test_attributes_exist(attribute_name):
+    """Given WebArchive instance, when checking attributes, then expected attributes exist."""
+    archive = WebArchive()
+    
+    assert hasattr(archive, attribute_name), f"Expected {attribute_name} attribute but it does not exist"
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
