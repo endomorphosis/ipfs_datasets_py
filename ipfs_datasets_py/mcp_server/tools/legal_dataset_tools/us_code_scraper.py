@@ -112,69 +112,123 @@ async def fetch_us_code_title(
         }
     
     try:
-        # Fetch title from official US Code API
-        base_url = "https://uscode.house.gov/view.xhtml"
+        # Try multiple approaches to fetch US Code data
         
-        # Try main title view
-        response = requests.get(
-            base_url,
-            params={"req": f"granuleid:USC-prelim-title{title_num}"},
-            timeout=30
-        )
-        
-        if response.status_code != 200:
-            logger.warning(f"Failed to fetch Title {title_num}: HTTP {response.status_code}")
-            return None
+        # Approach 1: Try GovInfo API (more reliable)
+        try:
+            govinfo_url = f"https://www.govinfo.gov/app/details/USCODE-2021-title{title_num}"
+            response = requests.get(govinfo_url, timeout=30, allow_redirects=True)
             
-        soup = BeautifulSoup(response.content, 'html.parser')
+            if response.status_code == 200 and len(response.content) > 1000:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Extract sections from GovInfo
+                sections = []
+                section_elements = soup.find_all(['div', 'section'], class_=lambda x: x and ('section' in str(x).lower() or 'level' in str(x).lower()))
+                
+                for idx, elem in enumerate(section_elements[:20]):  # Limit to first 20 sections
+                    section_num = f"{title_num}.{idx+1}"
+                    
+                    heading_elem = elem.find(['h1', 'h2', 'h3', 'h4', 'strong', 'b'])
+                    heading = heading_elem.get_text(strip=True) if heading_elem else f"Section {idx+1}"
+                    
+                    text_content = elem.get_text(strip=True)
+                    
+                    section_data = {
+                        "section_number": section_num,
+                        "heading": heading[:200],
+                        "text": text_content[:2000],
+                    }
+                    
+                    if include_metadata:
+                        section_data["effective_date"] = "2021"  # GovInfo typically has year in URL
+                        section_data["source_url"] = govinfo_url
+                    
+                    sections.append(section_data)
+                
+                if sections:
+                    logger.info(f"Successfully fetched Title {title_num} from GovInfo (Approach 1)")
+                    return {
+                        "title_number": title_num,
+                        "title_name": title_name,
+                        "source": "US Code (GovInfo.gov)",
+                        "source_url": govinfo_url,
+                        "scraped_at": datetime.now().isoformat(),
+                        "sections": sections
+                    }
+        except Exception as e:
+            logger.debug(f"GovInfo approach failed for Title {title_num}: {e}")
         
-        # Extract sections from the HTML
-        sections = []
+        # Approach 2: Try uscode.house.gov with different URL pattern
+        try:
+            base_url = "https://uscode.house.gov"
+            # Try the browse endpoint
+            browse_url = f"{base_url}/browse/prelim@title{title_num}/edition@prelim"
+            
+            response = requests.get(browse_url, timeout=30, allow_redirects=True)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Check if we got a real page (not an error page)
+                page_text = soup.get_text()
+                if "Document not found" not in page_text and "JavaScript" not in page_text[:500]:
+                    sections = []
+                    
+                    # Find section links or content
+                    links = soup.find_all('a', href=True)
+                    section_links = [l for l in links if 'section' in l.get('href', '').lower() or 'view' in l.get('href', '').lower()]
+                    
+                    for idx, link in enumerate(section_links[:20]):  # Limit to first 20
+                        section_num = f"{title_num}.{idx+1}"
+                        heading = link.get_text(strip=True)
+                        
+                        section_data = {
+                            "section_number": section_num,
+                            "heading": heading[:200],
+                            "text": f"{heading}",  # Basic text for now
+                        }
+                        
+                        if include_metadata:
+                            href = link.get('href', '')
+                            if not href.startswith('http'):
+                                href = f"{base_url}{href}"
+                            section_data["source_url"] = href
+                        
+                        sections.append(section_data)
+                    
+                    if sections:
+                        logger.info(f"Successfully fetched Title {title_num} from house.gov browse (Approach 2)")
+                        return {
+                            "title_number": title_num,
+                            "title_name": title_name,
+                            "source": "US Code (uscode.house.gov)",
+                            "source_url": browse_url,
+                            "scraped_at": datetime.now().isoformat(),
+                            "sections": sections
+                        }
+        except Exception as e:
+            logger.debug(f"House.gov browse approach failed for Title {title_num}: {e}")
         
-        # Find all section headings and content
-        section_elements = soup.find_all(['div', 'section'], class_=lambda x: x and ('section' in x.lower() or 'statute' in x.lower()))
-        
-        if not section_elements:
-            # Try alternative structure - look for any content blocks
-            section_elements = soup.find_all(['p', 'div'], class_=lambda x: x and 'content' in x.lower())
-        
-        for idx, elem in enumerate(section_elements[:20]):  # Limit to first 20 sections per title
-            section_num = f"{title_num}.{idx+1}"
-            
-            # Extract heading
-            heading_elem = elem.find(['h1', 'h2', 'h3', 'h4', 'strong', 'b'])
-            heading = heading_elem.get_text(strip=True) if heading_elem else f"Section {idx+1}"
-            
-            # Extract text content
-            text_content = elem.get_text(strip=True)
-            
-            section_data = {
-                "section_number": section_num,
-                "heading": heading[:200],  # Limit heading length
-                "text": text_content[:2000],  # Limit text length
-            }
-            
-            if include_metadata:
-                section_data["effective_date"] = datetime.now().strftime("%Y-%m-%d")
-                section_data["source_url"] = f"{base_url}?req=granuleid:USC-prelim-title{title_num}-section{idx+1}"
-            
-            sections.append(section_data)
-        
-        if not sections:
-            # If no sections found, create a summary section
-            sections.append({
-                "section_number": f"{title_num}.0",
-                "heading": f"Title {title_num} - {title_name}",
-                "text": soup.get_text(strip=True)[:2000],  # First 2000 chars of content
-            })
+        # Approach 3: Return structured placeholder with note about limitations
+        logger.warning(f"All scraping approaches failed for Title {title_num}. Returning placeholder.")
+        logger.warning("Note: US Code website may require JavaScript or has changed structure.")
+        logger.warning("Consider using the official GovInfo API or Cornell LII for production use.")
         
         return {
             "title_number": title_num,
             "title_name": title_name,
-            "source": "US Code",
+            "source": "US Code (placeholder - website requires JavaScript)",
             "source_url": f"https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title{title_num}",
             "scraped_at": datetime.now().isoformat(),
-            "sections": sections
+            "note": "The US Code official website requires JavaScript. For production use, consider GovInfo API or Cornell LII.",
+            "sections": [
+                {
+                    "section_number": f"{title_num}.1",
+                    "heading": f"Title {title_num} - {title_name}",
+                    "text": f"Placeholder: This is Title {title_num} - {title_name}. The official US Code website (uscode.house.gov) requires JavaScript for full content access. For actual statute text, please use alternative sources like GovInfo.gov or Cornell's Legal Information Institute (LII).",
+                }
+            ]
         }
         
     except Exception as e:
@@ -185,7 +239,8 @@ async def fetch_us_code_title(
 async def search_us_code(
     query: str,
     titles: Optional[List[str]] = None,
-    max_results: int = 100
+    max_results: int = 100,
+    limit: Optional[int] = None  # Alias for max_results
 ) -> Dict[str, Any]:
     """Search US Code for sections matching a query.
     
@@ -193,10 +248,14 @@ async def search_us_code(
         query: Search query string
         titles: Optional list of title numbers to search within
         max_results: Maximum number of results to return
+        limit: Alias for max_results (for compatibility)
         
     Returns:
         Dict with search results
     """
+    # Use limit if provided, otherwise use max_results
+    if limit is not None:
+        max_results = limit
     try:
         if not REQUESTS_AVAILABLE:
             return {
