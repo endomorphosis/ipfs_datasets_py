@@ -40,6 +40,18 @@ class StateScraperRegistry:
         return cls._scrapers.get(state_code.upper())
     
     @classmethod
+    def get_scraper_class(cls, state_code: str) -> Optional[Type[BaseStateScraper]]:
+        """Get scraper class for a state (alias for get_scraper).
+        
+        Args:
+            state_code: Two-letter state code
+            
+        Returns:
+            Scraper class or None if not registered
+        """
+        return cls.get_scraper(state_code)
+    
+    @classmethod
     def get_all_registered_states(cls) -> list:
         """Get list of all states with registered scrapers.
         
