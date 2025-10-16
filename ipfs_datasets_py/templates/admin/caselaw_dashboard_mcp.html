@@ -749,6 +749,18 @@
                     <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
                 </div>
 
+                <!-- MCP Status Indicator -->
+                <div class="mcp-indicator">
+                    <h5><i class="fas fa-plug"></i> MCP Server Connection</h5>
+                    <p class="mb-2">
+                        <span id="mcpStatus" class="mcp-status mcp-disconnected">Connecting...</span>
+                        <span class="ms-3 text-muted"><i class="fas fa-tools"></i> Tools: <span id="mcpToolCount">0</span></span>
+                    </p>
+                    <p class="mb-0">
+                        <small id="mcpStatusText">Initializing MCP JSON-RPC connection...</small>
+                    </p>
+                </div>
+
                 <!-- Navigation Tabs -->
                 <div class="tab-content" id="caselawTabContent">
                     <!-- Document Analysis Tab -->
@@ -2732,12 +2744,22 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     'add_theorem'
                 ];
                 
-                document.getElementById('mcpToolCount').textContent = this.availableTools.length;
+                // Guard against missing DOM element
+                const toolCountElement = document.getElementById('mcpToolCount');
+                if (toolCountElement) {
+                    toolCountElement.textContent = this.availableTools.length;
+                }
             }
 
             updateConnectionStatus(connected) {
                 const statusElement = document.getElementById('mcpStatus');
                 const statusTextElement = document.getElementById('mcpStatusText');
+                
+                // Guard against missing DOM elements
+                if (!statusElement || !statusTextElement) {
+                    console.warn('MCP status elements not found in DOM');
+                    return;
+                }
                 
                 if (connected) {
                     statusElement.className = 'mcp-status mcp-connected';
