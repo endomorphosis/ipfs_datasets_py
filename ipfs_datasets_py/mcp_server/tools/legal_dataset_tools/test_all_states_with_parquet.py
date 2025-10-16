@@ -139,12 +139,14 @@ class StateLawsTester:
             print(f"\nScraping sample from first code: {codes[0]['name']}...")
             statutes = await scraper.scrape_code(
                 code_name=codes[0]['name'],
-                code_url=codes[0]['url'],
-                max_statutes=10  # Limit for testing
+                code_url=codes[0]['url']
             )
             
+            # Limit to first 10 statutes for testing
+            statutes = statutes[:10]
+            
             result["scraped_count"] = len(statutes)
-            print(f"✓ Scraped {result['scraped_count']} statutes")
+            print(f"✓ Scraped {result['scraped_count']} statutes (limited to 10 for testing)")
             
             # Convert to dictionaries
             for statute in statutes:
@@ -221,14 +223,20 @@ class StateLawsTester:
         # Create semaphore to limit concurrent operations
         semaphore = asyncio.Semaphore(max_concurrent)
         
-        async def test_with_semaphore(state_code: str, state_info: Dict[str, Any]):
+        async def test_with_semaphore(state_code: str):
             async with semaphore:
-                return await self.test_state_scraper(state_code, state_info['name'])
+                # Use get_scraper_for_state which handles state name lookup
+                scraper = get_scraper_for_state(state_code, state_code)
+                if scraper:
+                    state_name = scraper.state_name
+                else:
+                    state_name = state_code
+                return await self.test_state_scraper(state_code, state_name)
         
         # Test all states concurrently (but limited)
         tasks = [
-            test_with_semaphore(state_code, state_info)
-            for state_code, state_info in all_states.items()
+            test_with_semaphore(state_code)
+            for state_code in all_states
         ]
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
