@@ -19,7 +19,7 @@ class ConnecticutScraper(BaseStateScraper):
         """Return list of available codes/statutes for Connecticut."""
         return [{
             "name": "Connecticut General Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/current/pub/titles.htm",
             "type": "Code"
         }]
     

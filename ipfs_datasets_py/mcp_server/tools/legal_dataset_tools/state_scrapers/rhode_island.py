@@ -19,7 +19,7 @@ class RhodeIslandScraper(BaseStateScraper):
         """Return list of available codes/statutes for Rhode Island."""
         return [{
             "name": "Rhode Island General Laws",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/Statutes/",
             "type": "Code"
         }]
     

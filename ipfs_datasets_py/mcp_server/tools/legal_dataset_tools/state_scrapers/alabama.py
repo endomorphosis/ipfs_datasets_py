@@ -19,7 +19,7 @@ class AlabamaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Alabama."""
         return [{
             "name": "Alabama Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/alison/CodeOfAlabama/1975/coatoc.htm",
             "type": "Code"
         }]
     

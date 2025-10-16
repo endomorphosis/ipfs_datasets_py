@@ -19,7 +19,7 @@ class MissouriScraper(BaseStateScraper):
         """Return list of available codes/statutes for Missouri."""
         return [{
             "name": "Missouri Revised Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/main/Home.aspx",
             "type": "Code"
         }]
     

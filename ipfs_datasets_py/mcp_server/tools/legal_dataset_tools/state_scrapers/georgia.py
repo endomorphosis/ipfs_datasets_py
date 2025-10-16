@@ -19,7 +19,7 @@ class GeorgiaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Georgia."""
         return [{
             "name": "Official Code of Georgia",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/legislation/laws.html",
             "type": "Code"
         }]
     

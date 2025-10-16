@@ -19,7 +19,7 @@ class DelawareScraper(BaseStateScraper):
         """Return list of available codes/statutes for Delaware."""
         return [{
             "name": "Delaware Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/index.html",
             "type": "Code"
         }]
     

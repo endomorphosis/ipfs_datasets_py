@@ -19,7 +19,7 @@ class IndianaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Indiana."""
         return [{
             "name": "Indiana Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/legislative/laws/2024/ic/titles/",
             "type": "Code"
         }]
     

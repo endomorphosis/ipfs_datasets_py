@@ -19,7 +19,7 @@ class WyomingScraper(BaseStateScraper):
         """Return list of available codes/statutes for Wyoming."""
         return [{
             "name": "Wyoming Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/statutes/statutesintro.aspx",
             "type": "Code"
         }]
     
