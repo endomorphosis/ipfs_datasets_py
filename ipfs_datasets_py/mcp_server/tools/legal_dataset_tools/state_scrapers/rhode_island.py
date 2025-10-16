@@ -4,7 +4,7 @@ This module contains the scraper for Rhode Island statutes from the official sta
 """
 
 from typing import List, Dict
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 

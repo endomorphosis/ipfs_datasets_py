@@ -4,7 +4,7 @@ This module contains the scraper for Alabama statutes from the official state le
 """
 
 from typing import List, Dict
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
