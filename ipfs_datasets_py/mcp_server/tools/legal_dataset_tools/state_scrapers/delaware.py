@@ -80,11 +80,12 @@ class DelawareScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                # Delaware titles often start with "Title" or contain section markers
-                # Delaware Code patterns - relaxed matching
-                keywords_de = ['title', 'chapter', '§', 'section', 'part', 'code', 'statute', 'del.']
-                if not any(keyword in link_text.lower() for keyword in keywords_de):
-                    continue
+                # Delaware - very permissive matching
+                # Accept links with numbers or common statute terms
+                if not any(char.isdigit() for char in link_text):
+                    keywords_de = ['title', 'chapter', '§', 'section', 'part', 'code', 'statute', 'del', 'law']
+                    if not any(keyword in link_text.lower() for keyword in keywords_de):
+                        continue
                 
                 full_url = urljoin(code_url, link_href)
                 

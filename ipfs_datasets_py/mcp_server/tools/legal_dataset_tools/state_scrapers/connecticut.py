@@ -81,10 +81,12 @@ class ConnecticutScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                # Connecticut titles often contain "Title" or chapter numbers - relaxed matching
-                keywords_ct = ['title', 'chapter', 'sec', '§', 'part', 'article', 'statute', 'cgs']
-                if not any(keyword in link_text.lower() for keyword in keywords_ct):
-                    continue
+                # Connecticut - very permissive matching to catch statute links
+                # Accept links with numbers or common statute terms
+                if not any(char.isdigit() for char in link_text):
+                    keywords_ct = ['title', 'chapter', 'sec', '§', 'part', 'article', 'statute', 'cgs', 'law']
+                    if not any(keyword in link_text.lower() for keyword in keywords_ct):
+                        continue
                 
                 full_url = urljoin(code_url, link_href)
                 
