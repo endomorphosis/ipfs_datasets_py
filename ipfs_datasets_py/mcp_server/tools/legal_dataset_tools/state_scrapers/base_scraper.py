@@ -253,3 +253,99 @@ class BaseStateScraper(ABC):
                 return match.group(1)
         
         return None
+    
+    async def _generic_scrape(
+        self,
+        code_name: str,
+        code_url: str,
+        citation_format: str,
+        max_sections: int = 100
+    ) -> List[NormalizedStatute]:
+        """Generic scraper implementation that can be used by most states.
+        
+        This method provides a common scraping pattern that works for many
+        state legislative websites. Individual scrapers can override scrape_code()
+        for more sophisticated parsing.
+        
+        Args:
+            code_name: Name of the code (e.g., "Penal Code")
+            code_url: URL to scrape
+            citation_format: Citation format (e.g., "Cal. Penal Code")
+            max_sections: Maximum number of sections to scrape
+            
+        Returns:
+            List of NormalizedStatute objects
+        """
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+        except ImportError as e:
+            self.logger.error(f"Required library not available: {e}")
+            return []
+        
+        statutes = []
+        
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            response = requests.get(code_url, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Extract legal area from code name
+            legal_area = self._identify_legal_area(code_name)
+            
+            # Try to find section links (common patterns across many state websites)
+            section_links = soup.find_all('a', href=True, limit=max_sections)
+            
+            section_count = 0
+            for link in section_links:
+                if section_count >= max_sections:
+                    break
+                
+                link_text = link.get_text(strip=True)
+                link_url = link.get('href', '')
+                
+                # Skip if link doesn't look like a section reference
+                if not link_text or len(link_text) < 3:
+                    continue
+                
+                # Make URL absolute if needed
+                if link_url.startswith('/'):
+                    from urllib.parse import urljoin
+                    link_url = urljoin(code_url, link_url)
+                elif not link_url.startswith('http'):
+                    continue
+                
+                # Extract section number
+                section_number = self._extract_section_number(link_text)
+                if not section_number:
+                    section_number = f"Section-{section_count + 1}"
+                
+                # Create normalized statute
+                statute = NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=link_text[:200],  # Limit length
+                    full_text=f"Section {section_number}: {link_text}",
+                    legal_area=legal_area,
+                    source_url=link_url,
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata()
+                )
+                
+                statutes.append(statute)
+                section_count += 1
+            
+            self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to scrape {code_name}: {e}")
+        
+        return statutes

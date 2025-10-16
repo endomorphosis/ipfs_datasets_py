@@ -84,29 +84,42 @@ class NewYorkScraper(BaseStateScraper):
             # Parse NY Senate's structure
             # The actual implementation would need detailed parsing of their specific HTML structure
             
+            # Extract legal area
+            legal_area = self._identify_legal_area(code_name)
+            
             # Find section/article links
             section_links = soup.find_all('a', href=re.compile(r'.*/legislation/laws/.*', re.IGNORECASE))
+            if not section_links:
+                # Try finding any links
+                section_links = soup.find_all('a', href=True, limit=100)
             
-            for link in section_links[:100]:  # Limit for demo
+            for i, link in enumerate(section_links[:100]):  # Limit for demo
                 section_text = link.get_text(strip=True)
                 section_url = link.get('href', '')
                 
+                if not section_text or len(section_text) < 3:
+                    continue
+                
                 if not section_url.startswith('http'):
-                    section_url = f"{self.get_base_url()}{section_url}"
+                    from urllib.parse import urljoin
+                    section_url = urljoin(code_url, section_url)
                 
                 # Extract section number
                 section_number = self._extract_section_number(section_text)
+                if not section_number:
+                    section_number = f"{i+1}"
                 
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}" if section_number else section_text,
+                    statute_id=f"{code_name} § {section_number}",
                     code_name=code_name,
                     section_number=section_number,
-                    section_name=section_text,
+                    section_name=section_text[:200],
+                    full_text=f"Section {section_number}: {section_text}",  # Added full_text
                     source_url=section_url,
-                    legal_area=self._identify_legal_area(code_name),
-                    official_cite=f"NY {code_name} § {section_number}" if section_number else None,
+                    legal_area=legal_area,
+                    official_cite=f"NY {code_name} § {section_number}",
                     metadata=StatuteMetadata()
                 )
                 
