@@ -19,12 +19,14 @@ class WashingtonScraper(BaseStateScraper):
         """Return list of available codes/statutes for Washington."""
         return [{
             "name": "Revised Code of Washington",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/RCW/",
             "type": "Code"
         }]
     
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code from Washington's legislative website.
+        
+        Washington RCW database uses JavaScript navigation, so we use Playwright.
         
         Args:
             code_name: Name of the code to scrape
@@ -33,7 +35,13 @@ class WashingtonScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Wash. Rev. Code")
+        return await self._playwright_scrape(
+            code_name, 
+            code_url, 
+            "Wash. Rev. Code",
+            wait_for_selector="a[href*='RCW'], .rcw-link",
+            timeout=45000
+        )
 
 
 # Register this scraper with the registry

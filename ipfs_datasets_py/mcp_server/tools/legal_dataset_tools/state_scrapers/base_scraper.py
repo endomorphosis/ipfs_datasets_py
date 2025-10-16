@@ -349,3 +349,134 @@ class BaseStateScraper(ABC):
             self.logger.error(f"Failed to scrape {code_name}: {e}")
         
         return statutes
+    
+    def has_playwright(self) -> bool:
+        """Check if Playwright is available."""
+        try:
+            from playwright.async_api import async_playwright
+            return True
+        except ImportError:
+            return False
+    
+    async def _playwright_scrape(
+        self,
+        code_name: str,
+        code_url: str,
+        citation_format: str,
+        max_sections: int = 100,
+        wait_for_selector: str = "a",
+        timeout: int = 30000
+    ) -> List[NormalizedStatute]:
+        """Scrape using Playwright for JavaScript-rendered content.
+        
+        This method uses Playwright to render JavaScript content before scraping.
+        It's useful for states with dynamic/modern web interfaces.
+        
+        Args:
+            code_name: Name of the code being scraped
+            code_url: URL of the code index page
+            citation_format: Format string for citations
+            max_sections: Maximum number of sections to scrape
+            wait_for_selector: CSS selector to wait for before scraping
+            timeout: Timeout in milliseconds (default: 30000)
+            
+        Returns:
+            List of NormalizedStatute objects
+        """
+        from urllib.parse import urljoin
+        
+        if not self.has_playwright():
+            self.logger.warning(f"Playwright not available, falling back to generic scrape for {code_name}")
+            return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+        
+        try:
+            from playwright.async_api import async_playwright
+            from bs4 import BeautifulSoup
+        except ImportError as e:
+            self.logger.error(f"Required library not available: {e}")
+            return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+        
+        statutes = []
+        
+        try:
+            async with async_playwright() as p:
+                # Launch browser
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                
+                try:
+                    # Navigate to page
+                    await page.goto(code_url, wait_until="networkidle", timeout=timeout)
+                    
+                    # Wait for specific content
+                    try:
+                        await page.wait_for_selector(wait_for_selector, timeout=timeout)
+                    except:
+                        self.logger.warning(f"Timeout waiting for selector '{wait_for_selector}' on {code_url}")
+                    
+                    # Get page content after JavaScript execution
+                    content = await page.content()
+                    
+                    # Parse with BeautifulSoup
+                    soup = BeautifulSoup(content, 'html.parser')
+                    
+                    # Extract legal area
+                    legal_area = self._identify_legal_area(code_name)
+                    
+                    # Find statute links
+                    section_links = soup.find_all('a', href=True, limit=max_sections)
+                    
+                    section_count = 0
+                    for link in section_links:
+                        if section_count >= max_sections:
+                            break
+                        
+                        link_text = link.get_text(strip=True)
+                        link_url = link.get('href', '')
+                        
+                        # Skip if link doesn't look useful
+                        if not link_text or len(link_text) < 3:
+                            continue
+                        
+                        # Make URL absolute
+                        if link_url.startswith('/'):
+                            link_url = urljoin(code_url, link_url)
+                        elif not link_url.startswith('http'):
+                            continue
+                        
+                        # Extract section number
+                        section_number = self._extract_section_number(link_text)
+                        if not section_number:
+                            section_number = f"Section-{section_count + 1}"
+                        
+                        # Create normalized statute
+                        statute = NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § {section_number}",
+                            code_name=code_name,
+                            section_number=section_number,
+                            section_name=link_text[:200],
+                            full_text=f"Section {section_number}: {link_text}",
+                            legal_area=legal_area,
+                            source_url=link_url,
+                            official_cite=f"{citation_format} § {section_number}",
+                            metadata=StatuteMetadata()
+                        )
+                        
+                        statutes.append(statute)
+                        section_count += 1
+                    
+                    self.logger.info(f"Scraped {len(statutes)} sections using Playwright from {code_name}")
+                    
+                finally:
+                    # Always close browser
+                    await browser.close()
+            
+        except Exception as e:
+            self.logger.error(f"Error in Playwright scrape for {code_name}: {str(e)}")
+            # Try fallback to generic scrape
+            self.logger.info(f"Falling back to generic scrape for {code_name}")
+            return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+        
+        return statutes

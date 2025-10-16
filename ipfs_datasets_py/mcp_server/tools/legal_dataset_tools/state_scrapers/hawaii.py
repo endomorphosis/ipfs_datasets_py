@@ -19,12 +19,14 @@ class HawaiiScraper(BaseStateScraper):
         """Return list of available codes/statutes for Hawaii."""
         return [{
             "name": "Hawaii Revised Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/hrscurrent/",
             "type": "Code"
         }]
     
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code from Hawaii's legislative website.
+        
+        Hawaii uses JavaScript for statute navigation, so we use Playwright.
         
         Args:
             code_name: Name of the code to scrape
@@ -33,7 +35,13 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Haw. Rev. Stat.")
+        return await self._playwright_scrape(
+            code_name, 
+            code_url, 
+            "Haw. Rev. Stat.",
+            wait_for_selector="a[href*='Vol'], .statute-link",
+            timeout=45000
+        )
 
 
 # Register this scraper with the registry
