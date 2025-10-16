@@ -7,15 +7,26 @@ Tests:
 1. State laws scraper import and basic functions
 2. Scheduler functionality
 3. CLI tool availability
+
+Usage:
+    # From repository root:
+    python ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/test_state_laws_integration.py
+    
+    # From this directory:
+    cd ipfs_datasets_py/mcp_server/tools/legal_dataset_tools
+    PYTHONPATH=/path/to/repo python test_state_laws_integration.py
 """
 
 import asyncio
+import os
 import sys
 import tempfile
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
+# Add repository root to path if not already there
+repo_root = Path(__file__).parent.parent.parent.parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
 
 def test_imports():
@@ -36,6 +47,7 @@ def test_imports():
         return True
     except ImportError as e:
         print(f"  ✗ Import failed: {e}")
+        print(f"  Note: Run from repository root or set PYTHONPATH")
         return False
 
 
@@ -91,43 +103,48 @@ async def test_scheduler():
     """Test scheduler functionality."""
     print("\nTesting scheduler...")
     
+    temp_dir = None
     try:
-        # Import scheduler directly to use temp directory
-        sys.path.insert(0, str(Path(__file__).parent))
-        from state_laws_scheduler import StateLawsUpdateScheduler
+        # Import scheduler module using importlib for cleaner import
+        import importlib.util
         
-        # Use temporary directory for testing
-        temp_dir = tempfile.mkdtemp()
-        scheduler = StateLawsUpdateScheduler(output_dir=temp_dir)
+        scheduler_path = Path(__file__).parent / 'state_laws_scheduler.py'
+        spec = importlib.util.spec_from_file_location("state_laws_scheduler", scheduler_path)
+        state_laws_scheduler = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(state_laws_scheduler)
         
-        # Test adding schedule
-        schedule = scheduler.add_schedule(
-            schedule_id='test_schedule',
-            states=['CA'],
-            interval_hours=24,
-            enabled=True
-        )
-        assert schedule["schedule_id"] == 'test_schedule', "Schedule ID should match"
-        print("  ✓ Schedule creation")
-        
-        # Test listing
-        schedules = scheduler.list_schedules()
-        assert len(schedules) == 1, "Should have 1 schedule"
-        print("  ✓ Schedule listing")
-        
-        # Test enable/disable
-        success = scheduler.enable_schedule('test_schedule', enabled=False)
-        assert success, "Should disable successfully"
-        schedules = scheduler.list_schedules()
-        assert not schedules[0]["enabled"], "Schedule should be disabled"
-        print("  ✓ Schedule enable/disable")
-        
-        # Test removal
-        success = scheduler.remove_schedule('test_schedule')
-        assert success, "Should remove successfully"
-        schedules = scheduler.list_schedules()
-        assert len(schedules) == 0, "Should have 0 schedules"
-        print("  ✓ Schedule removal")
+        # Use TemporaryDirectory context manager for automatic cleanup
+        with tempfile.TemporaryDirectory() as temp_dir:
+            scheduler = state_laws_scheduler.StateLawsUpdateScheduler(output_dir=temp_dir)
+            
+            # Test adding schedule
+            schedule = scheduler.add_schedule(
+                schedule_id='test_schedule',
+                states=['CA'],
+                interval_hours=24,
+                enabled=True
+            )
+            assert schedule["schedule_id"] == 'test_schedule', "Schedule ID should match"
+            print("  ✓ Schedule creation")
+            
+            # Test listing
+            schedules = scheduler.list_schedules()
+            assert len(schedules) == 1, "Should have 1 schedule"
+            print("  ✓ Schedule listing")
+            
+            # Test enable/disable
+            success = scheduler.enable_schedule('test_schedule', enabled=False)
+            assert success, "Should disable successfully"
+            schedules = scheduler.list_schedules()
+            assert not schedules[0]["enabled"], "Schedule should be disabled"
+            print("  ✓ Schedule enable/disable")
+            
+            # Test removal
+            success = scheduler.remove_schedule('test_schedule')
+            assert success, "Should remove successfully"
+            schedules = scheduler.list_schedules()
+            assert len(schedules) == 0, "Should have 0 schedules"
+            print("  ✓ Schedule removal")
         
         return True
     except Exception as e:
