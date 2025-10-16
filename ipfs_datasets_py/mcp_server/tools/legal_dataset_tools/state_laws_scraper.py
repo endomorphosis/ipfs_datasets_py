@@ -206,9 +206,14 @@ async def scrape_state_laws(
                 errors.append(error_msg)
                 
                 # Add minimal data even on error
+                state_info = state_sources.get(state_code, {})
                 statute_data = {
                     "state_code": state_code,
                     "state_name": state_name,
+                    "title": f"{state_name} Code",
+                    "source": "Justia Legal Database",
+                    "source_url": state_info.get("justia_url", ""),
+                    "official_url": state_info.get("official_url", ""),
                     "error": str(e),
                     "scraped_at": datetime.now().isoformat(),
                     "statutes": []
