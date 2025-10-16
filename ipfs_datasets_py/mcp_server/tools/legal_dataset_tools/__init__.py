@@ -13,6 +13,7 @@ Also includes:
 - Multi-format export utilities
 - Resume capability for interrupted scraping
 - Incremental update tracking
+- Periodic update scheduling for automated data refresh
 """
 
 from .us_code_scraper import scrape_us_code, get_us_code_titles, search_us_code
@@ -40,6 +41,14 @@ from .citation_extraction import (
     extract_citations_from_text,
     analyze_document_citations,
     create_citation_network
+)
+from .state_laws_scheduler import (
+    StateLawsUpdateScheduler,
+    create_schedule,
+    remove_schedule,
+    list_schedules,
+    run_schedule_now,
+    enable_disable_schedule
 )
 
 __all__ = [
@@ -94,4 +103,12 @@ __all__ = [
     "extract_citations_from_text",
     "analyze_document_citations",
     "create_citation_network",
+    
+    # State Laws scheduling
+    "StateLawsUpdateScheduler",
+    "create_schedule",
+    "remove_schedule",
+    "list_schedules",
+    "run_schedule_now",
+    "enable_disable_schedule",
 ]
