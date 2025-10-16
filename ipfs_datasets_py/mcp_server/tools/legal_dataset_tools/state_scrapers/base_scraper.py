@@ -313,38 +313,6 @@ class BaseStateScraper(ABC):
                 if not link_text or len(link_text) < 3:
                     continue
                 
-                link_text_lower = link_text.lower()
-                
-                # First, check for common navigation/utility links to skip
-                # These are almost never statutes
-                skip_patterns = [
-                    'home', 'about', 'contact', 'search', 'help', 'login', 'logout',
-                    'privacy', 'terms', 'site map', 'sitemap', 'accessibility',
-                    'disclaimer', 'copyright', 'back to', 'return to', 'print',
-                    'email', 'download', 'subscribe', 'rss', 'feedback'
-                ]
-                
-                # Skip ONLY if it matches navigation patterns AND is short
-                # (to avoid false positives on legitimate statute links)
-                is_navigation = any(pattern in link_text_lower for pattern in skip_patterns)
-                if is_navigation and len(link_text) < 30:
-                    continue
-                
-                # Check for positive statute indicators
-                statute_keywords = [
-                    'title', 'chapter', '§', 'section', 'sec.', 'part', 
-                    'code', 'statute', 'article', 'division', 'vol', 'volume',
-                    'act', 'law', 'revised', 'annotated', 'general'
-                ]
-                
-                has_keywords = any(keyword in link_text_lower for keyword in statute_keywords)
-                has_numbers = any(char.isdigit() for char in link_text)
-                
-                # Accept if: has statute keywords OR has numbers OR is reasonably long
-                # This is more permissive than before but still filters out obvious junk
-                if not (has_keywords or has_numbers or len(link_text) > 15):
-                    continue
-                
                 # Make URL absolute if needed
                 if link_url.startswith('/'):
                     from urllib.parse import urljoin
@@ -468,35 +436,6 @@ class BaseStateScraper(ABC):
                         
                         # Skip if link doesn't look useful
                         if not link_text or len(link_text) < 3:
-                            continue
-                        
-                        link_text_lower = link_text.lower()
-                        
-                        # First, check for common navigation/utility links to skip
-                        skip_patterns = [
-                            'home', 'about', 'contact', 'search', 'help', 'login', 'logout',
-                            'privacy', 'terms', 'site map', 'sitemap', 'accessibility',
-                            'disclaimer', 'copyright', 'back to', 'return to', 'print',
-                            'email', 'download', 'subscribe', 'rss', 'feedback'
-                        ]
-                        
-                        # Skip ONLY if it matches navigation patterns AND is short
-                        is_navigation = any(pattern in link_text_lower for pattern in skip_patterns)
-                        if is_navigation and len(link_text) < 30:
-                            continue
-                        
-                        # Check for positive statute indicators
-                        statute_keywords = [
-                            'title', 'chapter', '§', 'section', 'sec.', 'part', 
-                            'code', 'statute', 'article', 'division', 'vol', 'volume',
-                            'act', 'law', 'revised', 'annotated', 'general'
-                        ]
-                        
-                        has_keywords = any(keyword in link_text_lower for keyword in statute_keywords)
-                        has_numbers = any(char.isdigit() for char in link_text)
-                        
-                        # Accept if: has statute keywords OR has numbers OR is reasonably long
-                        if not (has_keywords or has_numbers or len(link_text) > 15):
                             continue
                         
                         # Make URL absolute

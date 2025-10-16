@@ -33,8 +33,8 @@ class WyomingScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        # Wyoming's custom scraper has issues - use generic scraper directly  
-        return await self._generic_scrape(code_name, code_url, "Wyo. Stat.")
+        # Use custom scraper with Wyoming-specific patterns
+        return await self._custom_scrape_wyoming(code_name, code_url, "Wyo. Stat.")
     
     async def _custom_scrape_wyoming(
         self,

@@ -33,8 +33,8 @@ class IndianaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        # Indiana's custom scraper has issues - use generic scraper directly
-        return await self._generic_scrape(code_name, code_url, "Ind. Code")
+        # Use custom scraper with Indiana-specific patterns
+        return await self._custom_scrape_indiana(code_name, code_url, "Ind. Code")
     
     async def _custom_scrape_indiana(
         self,
