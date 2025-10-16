@@ -91,12 +91,65 @@ result = await scrape_federal_register(
 ---
 
 ### 3. State Laws Scraper (`state_laws_scraper.py`)
-Scrapes state statutes and regulations from state legislative websites.
+Scrapes state statutes and regulations from state legislative websites using Justia.com as an aggregator.
 
 **Features:**
 - All 50 US states + DC
-- Legal area filtering
+- Legal area filtering (criminal, civil, family, employment, etc.)
 - State-specific rate limiting
+- Real data source integration via Justia Legal Database
+- Automatic legal area detection
+- Official state legislature URL references
+
+**Status:** ✅ Production-ready with real data scraping
+
+**Usage:**
+```python
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_state_laws
+
+result = await scrape_state_laws(
+    states=["CA", "NY", "TX"],  # Or ["all"] for all states
+    legal_areas=["criminal", "employment"],
+    output_format="json",
+    include_metadata=True,
+    rate_limit_delay=2.0,
+    max_statutes=100
+)
+```
+
+**API Endpoint:** `POST /api/mcp/dataset/state_laws/scrape`
+
+**Cron Job Support:**
+The state laws scraper includes built-in scheduling support for periodic updates:
+
+```bash
+# Add a daily schedule for California and New York
+python state_laws_cron.py add --schedule-id daily_ca_ny --states CA,NY --interval 24
+
+# List all schedules
+python state_laws_cron.py list
+
+# Run a schedule immediately
+python state_laws_cron.py run --schedule-id daily_ca_ny
+
+# Enable/disable a schedule
+python state_laws_cron.py enable --schedule-id daily_ca_ny
+python state_laws_cron.py disable --schedule-id daily_ca_ny
+
+# Run continuous scheduler daemon
+python state_laws_cron.py daemon --check-interval 300
+```
+
+**Scheduler API Endpoints:**
+- `GET /api/mcp/dataset/state_laws/schedules` - List all schedules
+- `POST /api/mcp/dataset/state_laws/schedules` - Create a new schedule
+- `DELETE /api/mcp/dataset/state_laws/schedules/<id>` - Delete a schedule
+- `POST /api/mcp/dataset/state_laws/schedules/<id>/run` - Run schedule immediately
+- `POST /api/mcp/dataset/state_laws/schedules/<id>/toggle` - Enable/disable schedule
+
+**Scheduler Configuration:**
+Schedules are stored in `~/.ipfs_datasets/state_laws/schedule.json` and persist across restarts.
+Scraped data is saved to `~/.ipfs_datasets/state_laws/` with timestamped filenames.
 
 **Status:** ⚠️ Placeholder data (production connections pending)
 
