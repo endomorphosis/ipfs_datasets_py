@@ -2736,12 +2736,32 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             }
 
             async loadAvailableTools() {
-                // Simulate loading MCP tools
+                // Load all available MCP tools including temporal deontic logic AND legal dataset scraping
                 this.availableTools = [
+                    // Temporal Deontic Logic Tools
                     'check_document_consistency',
                     'query_theorems', 
                     'bulk_process_caselaw',
-                    'add_theorem'
+                    'add_theorem',
+                    
+                    // Legal Dataset Scraping Tools  
+                    'scrape_us_code',
+                    'scrape_federal_register',
+                    'scrape_state_laws',
+                    'scrape_municipal_laws',
+                    'scrape_recap_archive',
+                    'search_recap_documents',
+                    
+                    // Dataset Management Tools
+                    'list_scraping_jobs',
+                    'export_dataset',
+                    
+                    // Scheduling Tools
+                    'create_schedule',
+                    'list_schedules',
+                    'run_schedule_now',
+                    'enable_disable_schedule',
+                    'remove_schedule'
                 ];
                 
                 // Guard against missing DOM element
