@@ -39,6 +39,13 @@ async def test_search():
     print(f"Status: {result['status']}")
     print(f"Documents found: {result['count']}")
     
+    if result['status'] == 'error':
+        print(f"Error: {result.get('error', 'Unknown error')}")
+        return False
+    
+    if result.get('warning'):
+        print(f"Warning: {result['warning']}")
+    
     if result['status'] == 'success' and result['documents']:
         print("\nFirst document:")
         doc = result['documents'][0]
@@ -46,8 +53,20 @@ async def test_search():
         print(f"  Court: {doc.get('court', 'N/A')}")
         print(f"  Filed: {doc.get('date_filed', 'N/A')}")
         print(f"  ID: {doc.get('id', 'N/A')}")
+        return True
+    elif result['status'] == 'success' and not result['documents']:
+        print("\nSearch succeeded but returned 0 documents.")
+        print("This is expected if:")
+        print("  - Testing in restricted network environment")
+        print("  - No documents match the exact criteria")
+        print("  - CourtListener API requires authentication")
+        print("\nTo test with real data:")
+        print("  1. Ensure internet access to www.courtlistener.com")
+        print("  2. Try different date ranges (e.g., last 30 days)")
+        print("  3. Consider getting an API token for production use")
+        return False
     
-    return result['status'] == 'success'
+    return False
 
 
 async def test_get_document():
@@ -114,10 +133,16 @@ async def test_scrape_small():
         print(f"  Elapsed time: {metadata.get('elapsed_time_seconds', 0):.2f}s")
         print(f"  Job ID: {result.get('job_id', 'N/A')}")
         print(f"  Source: {metadata.get('source', 'N/A')}")
+        
+        doc_count = metadata.get('documents_count', 0)
+        if doc_count == 0:
+            print("Warning: Scraping succeeded but fetched 0 documents")
+            print("This likely means the search returned no results for the criteria")
+            return False
+        return True
     else:
         print(f"  Error: {result.get('error', 'Unknown error')}")
-    
-    return result['status'] == 'success'
+        return False
 
 
 async def test_resume():

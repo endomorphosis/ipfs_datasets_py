@@ -6,6 +6,22 @@ dockets, opinions, and filings from PACER.
 
 RECAP (PACER Backwards) is a free and open archive of court documents
 from the federal PACER system.
+
+IMPORTANT NOTES:
+- The CourtListener API is rate-limited and may require authentication for heavy usage
+- Free tier has limits on request rate and results per query
+- Some documents may require PACER access or subscription
+- Results depend on what's been uploaded to RECAP by users
+- Not all court documents are available (only those that have been RECAPed)
+
+For API documentation and rate limits, see:
+https://www.courtlistener.com/api/rest-info/
+https://www.courtlistener.com/help/api/rest/
+
+To get an API token (recommended for production use):
+1. Create account at https://www.courtlistener.com/sign-in/register/
+2. Generate token at https://www.courtlistener.com/api/rest-info/#authentication
+3. Pass as header: Authorization: Token YOUR_TOKEN_HERE
 """
 import logging
 import time
@@ -48,7 +64,8 @@ async def search_recap_documents(
     filed_after: Optional[str] = None,
     filed_before: Optional[str] = None,
     document_type: Optional[str] = None,
-    limit: int = 100
+    limit: int = 100,
+    api_token: Optional[str] = None
 ) -> Dict[str, Any]:
     """Search RECAP Archive for court documents.
     
@@ -60,6 +77,8 @@ async def search_recap_documents(
         filed_before: Date filed before (YYYY-MM-DD format)
         document_type: Type of document (e.g., "opinion", "docket", "complaint")
         limit: Maximum number of results
+        api_token: CourtListener API token (optional but recommended for production)
+                   Get token at: https://www.courtlistener.com/api/rest-info/#authentication
     
     Returns:
         Dict containing:
@@ -71,6 +90,13 @@ async def search_recap_documents(
     """
     try:
         logger.info(f"Searching RECAP Archive: query={query}, court={court}, case_name={case_name}")
+        
+        # Get API token from parameter or environment variable
+        if api_token is None:
+            import os
+            api_token = os.environ.get('COURTLISTENER_API_TOKEN')
+            if api_token:
+                logger.info("Using CourtListener API token from environment variable")
         
         # Import required libraries
         try:
@@ -99,44 +125,70 @@ async def search_recap_documents(
         # Documentation: https://www.courtlistener.com/api/rest-info/
         
         try:
-            # Build API query parameters
+            # Build API query parameters for CourtListener's unified search endpoint
+            # Documentation: https://www.courtlistener.com/api/rest-info/
             api_params = {}
             
-            # Add search query if provided
+            # CourtListener uses different endpoints for different content types
+            # For RECAP documents (dockets, opinions from PACER):
+            # - Use /api/rest/v3/search/ for general search across all types
+            # - Use /api/rest/v3/dockets/ for docket-specific searches
+            # - Use /api/rest/v3/opinions/ for opinion-specific searches
+            
+            # Add search query if provided (searches across all fields)
             if query:
                 api_params['q'] = query
             elif case_name:
                 api_params['case_name'] = case_name
+            else:
+                # If no query provided, use a wildcard to get all results
+                api_params['q'] = '*'
                 
-            # Add court filter
+            # Add court filter (uses court abbreviation like 'ca9', 'nysd', etc.)
             if court:
                 api_params['court'] = court
                 
-            # Add date filters
+            # Add date filters (ISO 8601 format: YYYY-MM-DD)
             if filed_after:
                 api_params['filed_after'] = filed_after
             if filed_before:
                 api_params['filed_before'] = filed_before
                 
-            # Add document type filter (map to CourtListener types)
-            if document_type:
-                if document_type == 'opinion':
-                    api_params['type'] = 'o'  # Opinion
-                elif document_type == 'docket':
-                    api_params['type'] = 'r'  # RECAP document
-                    
             # Set result limit
             api_params['page_size'] = min(limit, 100)  # API max is typically 100
             
-            # Make API request
-            api_url = "https://www.courtlistener.com/api/rest/v3/search/"
+            # Choose the appropriate API endpoint based on document type
+            if document_type == 'opinion':
+                # Use opinions endpoint for better results
+                api_url = "https://www.courtlistener.com/api/rest/v3/opinions/"
+            elif document_type == 'docket':
+                # Use dockets endpoint for docket information
+                api_url = "https://www.courtlistener.com/api/rest/v3/dockets/"
+            else:
+                # Use unified search for other types or unspecified
+                api_url = "https://www.courtlistener.com/api/rest/v3/search/"
+                # Add document type filter for unified search
+                if document_type:
+                    if document_type == 'opinion':
+                        api_params['type'] = 'o'  # Opinion
+                    elif document_type == 'docket':
+                        api_params['type'] = 'r'  # RECAP document
+            
             logger.info(f"Querying CourtListener API: {api_url} with params {api_params}")
             
-            response = requests.get(api_url, params=api_params, timeout=30)
+            # Set up headers with optional API token
+            headers = {}
+            if api_token:
+                headers['Authorization'] = f'Token {api_token}'
+            
+            response = requests.get(api_url, params=api_params, headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
                 results = data.get('results', [])
+                
+                # Log API response info for debugging
+                logger.info(f"API returned {len(results)} results (total available: {data.get('count', 'unknown')})")
                 
                 # Transform results to our standardized format
                 documents = []
@@ -162,7 +214,7 @@ async def search_recap_documents(
                     }
                     documents.append(doc)
                 
-                return {
+                result_dict = {
                     "status": "success",
                     "documents": documents,
                     "count": len(documents),
@@ -171,6 +223,20 @@ async def search_recap_documents(
                     "api_endpoint": api_url,
                     "note": "Results from CourtListener RECAP Archive API"
                 }
+                
+                # Add warning if no documents found
+                if len(documents) == 0:
+                    result_dict["warning"] = (
+                        "No documents found matching the search criteria. "
+                        "This could mean: (1) No documents match your filters, "
+                        "(2) The court/date range has no RECAP documents available, "
+                        "(3) An API token may be required for this query. "
+                        "Try broadening your search criteria or visit https://www.courtlistener.com "
+                        "to verify documents exist for your query."
+                    )
+                    logger.warning(result_dict["warning"])
+                
+                return result_dict
             else:
                 # API request failed, return error with details
                 logger.warning(f"CourtListener API returned status {response.status_code}")
