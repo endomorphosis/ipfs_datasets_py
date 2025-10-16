@@ -86,9 +86,9 @@ class BaseStateScraper(ABC):
 
 ### Base Scraper Generic Methods
 - **`_generic_scrape()`**: Intelligent link filtering for statute-related content
-  - Filters for statute keywords: title, chapter, section, code, statute, article, etc.
+  - Filters for statute keywords: title, chapter, section, sec., part, code, statute, article, division, vol, volume, act, law, revised, annotated, general
   - Accepts links with numbers (e.g., "Title 1", "1-2-3")
-  - Rejects navigation/utility links: home, contact, search, help, privacy, etc.
+  - Rejects navigation/utility links: home, about, contact, search, help, login, logout, privacy, terms, site map, sitemap, accessibility, disclaimer, copyright, back to, return to, print, email, download, subscribe, rss, feedback
   - Used by many state scrapers as a robust fallback
 - **`_playwright_scrape()`**: JavaScript-rendered content scraping with same filtering
   - For modern websites that require JavaScript execution
@@ -256,8 +256,8 @@ asyncio.run(test_california())
 **Root Cause**: The `_generic_scrape()` method was too permissive, accepting ALL links on a page (navigation, headers, footers) without filtering for statute-related content.
 
 **Solution**: Added intelligent link filtering to both `_generic_scrape()` and `_playwright_scrape()`:
-- **Accepts**: Links with statute keywords (title, chapter, section, code, statute, article, etc.) OR containing numbers
-- **Rejects**: Navigation/utility links (home, about, contact, search, help, login, privacy, sitemap, etc.)
+- **Accepts**: Links with statute keywords (title, chapter, section, sec., part, code, statute, article, division, vol, volume, act, law, revised, annotated, general) OR containing numbers
+- **Rejects**: Navigation/utility links (home, about, contact, search, help, login, logout, privacy, terms, site map, sitemap, accessibility, disclaimer, copyright, back to, return to, print, email, download, subscribe, rss, feedback)
 
 **Impact**: 
 - Fixed 9 failing state scrapers
