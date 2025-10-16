@@ -26,7 +26,8 @@ class HawaiiScraper(BaseStateScraper):
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code from Hawaii's legislative website.
         
-        Hawaii uses JavaScript for statute navigation, so we use Playwright.
+        Hawaii uses JavaScript for statute navigation, so we try Playwright first.
+        Falls back to HTTP scraping if Playwright is unavailable.
         
         Args:
             code_name: Name of the code to scrape
@@ -35,13 +36,22 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._playwright_scrape(
-            code_name, 
-            code_url, 
-            "Haw. Rev. Stat.",
-            wait_for_selector="a[href*='Vol'], .statute-link",
-            timeout=45000
-        )
+        # Try Playwright first
+        if self.has_playwright():
+            try:
+                return await self._playwright_scrape(
+                    code_name, 
+                    code_url, 
+                    "Haw. Rev. Stat.",
+                    wait_for_selector="a[href*='Vol'], .statute-link, a[href*='hrs']",
+                    timeout=45000
+                )
+            except Exception as e:
+                self.logger.warning(f"Hawaii Playwright scraping failed: {e}, falling back to HTTP")
+        
+        # Fallback to generic scraper
+        self.logger.info("Hawaii: Using fallback HTTP scraper")
+        return await self._generic_scrape(code_name, code_url, "Haw. Rev. Stat.")
 
 
 # Register this scraper with the registry

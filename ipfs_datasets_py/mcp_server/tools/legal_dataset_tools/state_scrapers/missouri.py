@@ -72,7 +72,9 @@ class MissouriScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                if not any(keyword in link_text for keyword in ['Chapter', 'RSMo', '§', 'Section']):
+                # Missouri RSMo patterns - relaxed matching
+                keywords_mo = ['chapter', 'rsmo', '§', 'section', 'title', 'part', 'code', 'statute', 'mo.']
+                if not any(keyword in link_text.lower() for keyword in keywords_mo):
                     continue
                 
                 full_url = urljoin(code_url, link_href)
@@ -97,6 +99,11 @@ class MissouriScraper(BaseStateScraper):
                 section_count += 1
             
             self.logger.info(f"Missouri custom scraper: Scraped {len(statutes)} sections")
+            
+            # Fallback to generic scraper if no data found
+            if not statutes:
+                self.logger.info("Missouri custom scraper found no data, falling back to generic scraper")
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
             
         except Exception as e:
             self.logger.error(f"Missouri custom scraper failed: {e}")

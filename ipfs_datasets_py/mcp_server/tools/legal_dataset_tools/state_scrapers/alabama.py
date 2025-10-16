@@ -83,8 +83,9 @@ class AlabamaScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                # Look for title or section patterns
-                if not any(keyword in link_text.lower() for keyword in ['title', 'section', 'chapter', '§']):
+                # Look for title or section patterns - relaxed to catch more links
+                keywords = ['title', 'section', 'chapter', '§', 'article', 'code', 'statute', 'part', 'division']
+                if not any(keyword in link_text.lower() for keyword in keywords):
                     continue
                 
                 # Make URL absolute
@@ -116,6 +117,13 @@ class AlabamaScraper(BaseStateScraper):
                 section_count += 1
             
             self.logger.info(f"Alabama custom scraper: Scraped {len(statutes)} sections")
+            
+            if not statutes:
+                # If custom scraper found nothing, try generic scraper as fallback
+                self.logger.info("Alabama custom scraper found no data, falling back to generic scraper")
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+            
+            return statutes
             
         except Exception as e:
             self.logger.error(f"Alabama custom scraper failed: {e}")

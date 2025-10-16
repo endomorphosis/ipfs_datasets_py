@@ -72,7 +72,9 @@ class RhodeIslandScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                if not any(keyword in link_text for keyword in ['Title', 'Chapter', '§', 'RIGL']):
+                # Rhode Island General Laws patterns - relaxed matching
+                keywords_ri = ['title', 'chapter', '§', 'rigl', 'section', 'part', 'code', 'statute', 'r.i.']
+                if not any(keyword in link_text.lower() for keyword in keywords_ri):
                     continue
                 
                 full_url = urljoin(code_url, link_href)
@@ -97,6 +99,11 @@ class RhodeIslandScraper(BaseStateScraper):
                 section_count += 1
             
             self.logger.info(f"Rhode Island custom scraper: Scraped {len(statutes)} sections")
+            
+            # Fallback to generic scraper if no data found
+            if not statutes:
+                self.logger.info("Rhode Island custom scraper found no data, falling back to generic scraper")
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
             
         except Exception as e:
             self.logger.error(f"Rhode Island custom scraper failed: {e}")

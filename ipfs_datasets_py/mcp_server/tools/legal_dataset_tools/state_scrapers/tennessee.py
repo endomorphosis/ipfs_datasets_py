@@ -26,7 +26,8 @@ class TennesseeScraper(BaseStateScraper):
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code from Tennessee's legislative website.
         
-        Tennessee uses JavaScript for statute rendering, so we use Playwright.
+        Tennessee uses JavaScript for statute rendering, so we try Playwright first.
+        Falls back to HTTP scraping if Playwright is unavailable.
         
         Args:
             code_name: Name of the code to scrape
@@ -35,13 +36,22 @@ class TennesseeScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._playwright_scrape(
-            code_name, 
-            code_url, 
-            "Tenn. Code Ann.",
-            wait_for_selector="a[href*='title'], .code-link",
-            timeout=45000
-        )
+        # Try Playwright first
+        if self.has_playwright():
+            try:
+                return await self._playwright_scrape(
+                    code_name, 
+                    code_url, 
+                    "Tenn. Code Ann.",
+                    wait_for_selector="a[href*='title'], .code-link, a[href*='tca']",
+                    timeout=45000
+                )
+            except Exception as e:
+                self.logger.warning(f"Tennessee Playwright scraping failed: {e}, falling back to HTTP")
+        
+        # Fallback to generic scraper
+        self.logger.info("Tennessee: Using fallback HTTP scraper")
+        return await self._generic_scrape(code_name, code_url, "Tenn. Code Ann.")
 
 
 # Register this scraper with the registry

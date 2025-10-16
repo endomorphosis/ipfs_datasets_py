@@ -72,7 +72,9 @@ class IndianaScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                if not any(keyword in link_text for keyword in ['Title', 'Article', 'Chapter', 'IC']):
+                # Indiana Code patterns - relaxed matching
+                keywords_in = ['title', 'article', 'chapter', 'ic', '§', 'section', 'part', 'code', 'ind.']
+                if not any(keyword in link_text.lower() for keyword in keywords_in):
                     continue
                 
                 full_url = urljoin(code_url, link_href)
@@ -97,6 +99,11 @@ class IndianaScraper(BaseStateScraper):
                 section_count += 1
             
             self.logger.info(f"Indiana custom scraper: Scraped {len(statutes)} sections")
+            
+            # Fallback to generic scraper if no data found
+            if not statutes:
+                self.logger.info("Indiana custom scraper found no data, falling back to generic scraper")
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
             
         except Exception as e:
             self.logger.error(f"Indiana custom scraper failed: {e}")

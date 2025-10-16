@@ -81,8 +81,9 @@ class ConnecticutScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5:
                     continue
                 
-                # Connecticut titles often contain "Title" or chapter numbers
-                if not any(keyword in link_text for keyword in ['Title', 'Chapter', 'Sec.']):
+                # Connecticut titles often contain "Title" or chapter numbers - relaxed matching
+                keywords_ct = ['title', 'chapter', 'sec', '§', 'part', 'article', 'statute', 'cgs']
+                if not any(keyword in link_text.lower() for keyword in keywords_ct):
                     continue
                 
                 full_url = urljoin(code_url, link_href)
@@ -111,6 +112,11 @@ class ConnecticutScraper(BaseStateScraper):
                 section_count += 1
             
             self.logger.info(f"Connecticut custom scraper: Scraped {len(statutes)} sections")
+            
+            # Fallback to generic scraper if no data found
+            if not statutes:
+                self.logger.info("Connecticut custom scraper found no data, falling back to generic scraper")
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
             
         except Exception as e:
             self.logger.error(f"Connecticut custom scraper failed: {e}")
