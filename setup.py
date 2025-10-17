@@ -61,6 +61,9 @@ setup(
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
         ],
+        'legal': [
+            'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
+        ],
         'all': [
             'ipld-car>=0.1.0',
             'ipld-dag-pb>=0.1.0',
@@ -76,6 +79,7 @@ setup(
             'dash-cytoscape>=0.2.0',
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
+            'scrape_the_law_mk3 @ file:./ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
     },
     python_requires='>=3.10',
