@@ -737,31 +737,31 @@ class AdvancedWebArchiver:
         try:
             if not model_name:
                 return False
-                
+
             # Import AutoScraper tool using absolute import
             from ipfs_datasets_py.mcp_server.tools.web_archive_tools.autoscraper_integration import scrape_with_autoscraper
-            
+
             # Get model path
             model_path = f"/tmp/autoscraper_models/{model_name}.pkl"
             if not os.path.exists(model_path):
                 self.logger.warning(f"AutoScraper model {model_name} not found")
                 return False
-            
+
             # Scrape data
             result = await scrape_with_autoscraper(model_path, [resource.url])
-            
+
             if result['status'] == 'success' and resource.url in result['results']:
                 url_result = result['results'][resource.url]
                 if url_result['status'] == 'success':
                     resource.metadata["autoscraper_data"] = url_result['data']
                     resource.metadata["autoscraper_model"] = model_name
                     return True
-                    
+
         except Exception as e:
             self.logger.error(f"AutoScraper extraction failed for {resource.url}: {e}")
-            
+
         return False
-    
+
     async def _verify_archives(self, collection: ArchiveCollection):
         """Verify that archived resources are accessible"""
         

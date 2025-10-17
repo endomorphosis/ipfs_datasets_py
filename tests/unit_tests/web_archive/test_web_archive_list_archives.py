@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pytest
 
 from ipfs_datasets_py.web_archive import WebArchive
@@ -11,401 +12,217 @@ class TestWebArchiveListArchives:
         """Set up test fixtures."""
         return WebArchive()
 
-    def test_list_archives_empty_archive_returns_empty_list(self, archive):
+    def test_when_calling_list_archives_on_empty_archive_then_returns_empty_list(self, archive):
         """
-        GIVEN empty archive with no archived items
-        WHEN list_archives is called
-        THEN expect:
-            - Return empty list []
+        Given an empty archive with no archived items.
+        When list_archives is called.
+        Then an empty list is returned.
         """
-        # GIVEN - empty archive (already from fixture)
-        
-        # WHEN - list_archives is called
         result = archive.list_archives()
-        
-        # THEN - return empty list
-        assert isinstance(result, list)
-        assert result == []
+        assert result == [], f"Expected empty list but got {result}"
 
-    def test_list_archives_empty_archive_returns_list_type(self, archive):
+    def test_when_calling_list_archives_on_empty_archive_then_returns_list_type(self, archive):
         """
-        GIVEN empty archive with no archived items
-        WHEN list_archives is called
-        THEN expect:
-            - List is of type list
+        Given an empty archive with no archived items.
+        When list_archives is called.
+        Then the result is of type list.
         """
-        # GIVEN - empty archive (already from fixture)
-        
-        # WHEN - list_archives is called
         result = archive.list_archives()
-        
-        # THEN - list is of type list
-        assert isinstance(result, list)
+        assert isinstance(result, list), f"Expected list type but got {type(result)}"
 
-    def test_list_archives_with_single_item_returns_list_with_one_dict(self, archive):
+    def test_when_calling_list_archives_with_single_item_then_returns_one_dict(self, archive):
         """
-        GIVEN archive with one archived item
-        WHEN list_archives is called
-        THEN expect:
-            - Return list with one dict
+        Given an archive with one archived item.
+        When list_archives is called.
+        Then a list with one dictionary is returned.
         """
-        # GIVEN - archive with one item
-        url = "https://example.com"
-        archive.archive_url(url)
-        
-        # WHEN - list_archives is called
+        archive.archive_url("https://example.com")
         result = archive.list_archives()
-        
-        # THEN - return list with one dict
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], dict)
+        assert len(result) == 1, f"Expected 1 item but got {len(result)}"
 
-    def test_list_archives_with_single_item_dict_contains_required_fields(self, archive):
+    def test_when_calling_list_archives_with_single_item_then_dict_has_url_field(self, archive):
         """
-        GIVEN archive with one archived item
-        WHEN list_archives is called
-        THEN expect:
-            - Dict contains id, url, timestamp, metadata, status fields
+        Given an archive with one archived item.
+        When list_archives is called.
+        Then the dictionary contains a url field.
         """
-        # GIVEN - archive with one item
-        archive.archive_url("https://example.com", metadata={"type": "test"})
-        
-        # WHEN - list_archives is called
+        archive.archive_url("https://example.com")
         result = archive.list_archives()
-        
-        # THEN - dict contains required fields
-        assert len(result) == 1
-        item = result[0]
-        assert isinstance(item, dict)
-        
-        # Check for expected fields based on WebArchive implementation
-        expected_fields = ["id", "url", "timestamp", "metadata", "status"]
-        for field in expected_fields:
-            if field in item:  # Field exists
-                continue
-            elif field == "id" and "archive_id" in item:  # Alternative field name
-                continue
-            else:
-                # Some fields might not be included - verify core fields exist
-                assert "url" in item or "archive_id" in item
+        assert "url" in result[0], f"Expected 'url' field but got {list(result[0].keys())}"
 
-    def test_list_archives_with_single_item_fields_match_archived_item(self, archive):
+    def test_when_calling_list_archives_with_single_item_then_url_matches(self, archive):
         """
-        GIVEN archive with one archived item
-        WHEN list_archives is called
-        THEN expect:
-            - All fields match the archived item
+        Given an archive with one archived item.
+        When list_archives is called.
+        Then the url field matches the archived URL.
         """
-        # GIVEN - archive with one item and specific metadata
         test_url = "https://example.com"
-        test_metadata = {"type": "test", "priority": "high"}
-        archive_result = archive.archive_url(test_url, metadata=test_metadata)
-        
-        # WHEN - list_archives is called
+        archive.archive_url(test_url)
         result = archive.list_archives()
-        
-        # THEN - fields match archived item
-        assert len(result) == 1
-        item = result[0]
-        
-        # Check URL matches
-        assert item.get("url") == test_url or item.get("original_url") == test_url
-        
-        # Check that some identifiable information matches
-        if "archive_id" in archive_result:
-            # Check if archive_id appears in listed item
-            found_matching_id = False
-            for key, value in item.items():
-                if value == archive_result["archive_id"]:
-                    found_matching_id = True
-                    break
-            assert found_matching_id, "Archive ID not found in list result"
+        assert result[0]["url"] == test_url, f"Expected {test_url} but got {result[0].get('url')}"
 
-    def test_list_archives_with_multiple_items_returns_list_with_multiple_dicts(self, archive):
+    def test_when_calling_list_archives_with_multiple_items_then_returns_multiple_dicts(self, archive):
         """
-        GIVEN archive with multiple archived items
-        WHEN list_archives is called
-        THEN expect:
-            - Return list with multiple dicts
+        Given an archive with multiple archived items.
+        When list_archives is called.
+        Then a list with multiple dictionaries is returned.
         """
-        # GIVEN - archive with multiple items
-        archive.archive_url("https://example.com", metadata={"type": "test1"})
-        archive.archive_url("https://test.org", metadata={"type": "test2"})
-        archive.archive_url("https://demo.net", metadata={"type": "test3"})
-        
-        # WHEN - list_archives is called
+        archive.archive_url("https://example.com")
+        archive.archive_url("https://test.org")
+        archive.archive_url("https://demo.net")
         result = archive.list_archives()
-        
-        # THEN - return list with multiple dicts
-        assert isinstance(result, list)
-        assert len(result) == 3
-        for item in result:
-            assert isinstance(item, dict)
+        assert len(result) == 3, f"Expected 3 items but got {len(result)}"
 
-    def test_list_archives_with_multiple_items_each_dict_contains_required_fields(self, archive):
+    def test_when_calling_list_archives_with_multiple_items_then_each_has_url(self, archive):
         """
-        GIVEN archive with multiple archived items
-        WHEN list_archives is called
-        THEN expect:
-            - Each dict contains id, url, timestamp, metadata, status fields
+        Given an archive with multiple archived items.
+        When list_archives is called.
+        Then each dictionary contains a url field.
         """
-    def test_list_archives_with_multiple_items_each_dict_contains_required_fields(self, archive):
+        archive.archive_url("https://example.com")
+        archive.archive_url("https://test.org")
+        result = archive.list_archives()
+        assert all("url" in item for item in result), f"Not all items have 'url' field: {result}"
+
+    def test_when_calling_list_archives_with_multiple_items_then_preserves_order(self, archive):
         """
-        GIVEN archive with multiple archived items
-        WHEN list_archives is called
-        THEN expect:
-            - Each dict contains id, url, timestamp, metadata, status fields
+        Given an archive with multiple items added in sequence.
+        When list_archives is called.
+        Then items appear in insertion order.
         """
-        # GIVEN archive with multiple archived items
-        try:
-            # Add multiple test archives
-            archive.archive_url("https://example.com/page1", {"category": "test1"})
-            archive.archive_url("https://example.com/page2", {"category": "test2"}) 
-            archive.archive_url("https://example.com/page3", {"category": "test3"})
-            
-            # WHEN list_archives is called
-            result = archive.list_archives()
-            
-            # THEN expect each dict contains required fields
-            assert isinstance(result, list)
-            assert len(result) == 3
-            
-            required_fields = ['id', 'url', 'timestamp', 'metadata', 'status']
-            for item in result:
-                assert isinstance(item, dict)
-                for field in required_fields:
-                    # Check if field exists (some implementations may use alternative names)
-                    has_field = (field in item or 
-                               (field == 'id' and 'archive_id' in item) or
-                               (field == 'status' and 'archive_status' in item))
-                    if not has_field and field in ['metadata']:
-                        # metadata may be optional in some implementations
-                        continue
-                    # Core fields should be present
-                    if field in ['url', 'timestamp']:
-                        assert field in item, f"Missing required field: {field}"
-                        
-        except Exception as e:
-            # If archive_url method has issues, skip the test
-            pytest.skip(f"archive_url method dependencies not available: {e}")
+        first = "https://first.example.com"
+        second = "https://second.example.com"
+        archive.archive_url(first)
+        archive.archive_url(second)
+        result = archive.list_archives()
+        urls = [item["url"] for item in result]
+        assert urls == [first, second], f"Expected {[first, second]} but got {urls}"
 
-    def test_list_archives_with_multiple_items_appear_in_insertion_order(self, archive):
+    def test_when_calling_list_archives_with_four_items_then_order_matches_insertion(self, archive):
         """
-        GIVEN archive with multiple archived items
-        WHEN list_archives is called
-        THEN expect:
-            - Items appear in insertion order
+        Given an archive with four items added in sequence.
+        When list_archives is called.
+        Then items are returned in insertion order.
         """
-    def test_list_archives_with_multiple_items_appear_in_insertion_order(self, archive):
+        urls = [
+            "https://alpha.example.com",
+            "https://beta.example.com",
+            "https://gamma.example.com",
+            "https://delta.example.com"
+        ]
+        for url in urls:
+            archive.archive_url(url)
+        result = archive.list_archives()
+        returned = [item["url"] for item in result]
+        assert returned == urls, f"Expected {urls} but got {returned}"
+
+    def test_when_calling_list_archives_then_first_archived_appears_first(self, archive):
         """
-        GIVEN archive with multiple archived items
-        WHEN list_archives is called
-        THEN expect:
-            - Items appear in insertion order
+        Given an archive with items added in sequence.
+        When list_archives is called.
+        Then the first archived item appears first.
         """
-        # GIVEN archive with multiple items added in specific order
-        try:
-            # Add archives in specific sequence
-            first_url = "https://first.example.com"
-            second_url = "https://second.example.com"
-            third_url = "https://third.example.com"
-            
-            archive.archive_url(first_url)
-            archive.archive_url(second_url)
-            archive.archive_url(third_url)
-            
-            # WHEN list_archives is called
-            result = archive.list_archives()
-            
-            # THEN expect items appear in insertion order
-            assert isinstance(result, list)
-            assert len(result) == 3
-            
-            # Check URLs appear in insertion order
-            returned_urls = [item['url'] for item in result]
-            expected_order = [first_url, second_url, third_url]
-            assert returned_urls == expected_order
-            
-        except Exception as e:
-            # If archive_url method has issues, skip the test
-            pytest.skip(f"archive_url method dependencies not available: {e}")
+        first = "https://first.example.com"
+        archive.archive_url(first)
+        archive.archive_url("https://second.example.com")
+        result = archive.list_archives()
+        assert result[0]["url"] == first, f"Expected {first} first but got {result[0]['url']}"
 
-    def test_list_archives_insertion_order_same_as_insertion(self, archive):
+    def test_when_calling_list_archives_then_last_archived_appears_last(self, archive):
         """
-        GIVEN archive with items added in specific sequence
-        WHEN list_archives is called
-        THEN expect:
-            - Items returned in same order as insertion
+        Given an archive with items added in sequence.
+        When list_archives is called.
+        Then the last archived item appears last.
         """
-    def test_list_archives_insertion_order_same_as_insertion(self, archive):
+        last = "https://last.example.com"
+        archive.archive_url("https://first.example.com")
+        archive.archive_url(last)
+        result = archive.list_archives()
+        assert result[-1]["url"] == last, f"Expected {last} last but got {result[-1]['url']}"
+
+    def test_when_calling_list_archives_then_item_contains_id(self, archive):
         """
-        GIVEN archive with items added in specific sequence
-        WHEN list_archives is called
-        THEN expect:
-            - Items returned in same order as insertion
+        Given an archive with an archived item.
+        When list_archives is called.
+        Then the item contains an id field.
         """
-        # GIVEN archive with items added in specific sequence
-        try:
-            urls_in_order = [
-                "https://alpha.example.com",
-                "https://beta.example.com", 
-                "https://gamma.example.com",
-                "https://delta.example.com"
-            ]
-            
-            # Add archives in the defined sequence
-            for url in urls_in_order:
-                archive.archive_url(url)
-            
-            # WHEN list_archives is called
-            result = archive.list_archives()
-            
-            # THEN expect items returned in same order as insertion
-            assert isinstance(result, list)
-            assert len(result) == len(urls_in_order)
-            
-            returned_urls = [item['url'] for item in result]
-            assert returned_urls == urls_in_order
-            
-            # Additional validation: first item should be first inserted
-            assert result[0]['url'] == urls_in_order[0]
-            # Last item should be last inserted  
-            assert result[-1]['url'] == urls_in_order[-1]
-            
-        except Exception as e:
-            # If archive_url method has issues, skip the test
-            pytest.skip(f"archive_url method dependencies not available: {e}")
+        archive.archive_url("https://example.com")
+        result = archive.list_archives()
+        assert "id" in result[0] or "archive_id" in result[0], f"No id field in {list(result[0].keys())}"
 
-    def test_list_archives_insertion_order_first_archived_appears_first(self, archive):
+    def test_when_calling_list_archives_then_item_contains_url(self, archive):
         """
-        GIVEN archive with items added in specific sequence
-        WHEN list_archives is called
-        THEN expect:
-            - First archived item appears first in list
+        Given an archive with an archived item.
+        When list_archives is called.
+        Then the item contains a url field.
         """
-        # Test implementation placeholder replaced with basic validation
+        archive.archive_url("https://example.com")
+        result = archive.list_archives()
+        assert "url" in result[0], f"No url field in {list(result[0].keys())}"
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_insertion_order_last_archived_appears_last(self, archive):
+    def test_when_calling_list_archives_then_item_contains_timestamp(self, archive):
         """
-        GIVEN archive with items added in specific sequence
-        WHEN list_archives is called
-        THEN expect:
-            - Last archived item appears last in list
+        Given an archive with an archived item.
+        When list_archives is called.
+        Then the item contains a timestamp field.
         """
-        # Test implementation placeholder replaced with basic validation
+        archive.archive_url("https://example.com")
+        result = archive.list_archives()
+        assert "timestamp" in result[0], f"No timestamp field in {list(result[0].keys())}"
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_item_structure_contains_id(self, archive):
+    def test_when_calling_list_archives_then_item_contains_metadata(self, archive):
         """
-        GIVEN archive with archived items
-        WHEN list_archives is called
-        THEN expect:
-            - id: string formatted as "archive_{n}"
+        Given an archive with an archived item.
+        When list_archives is called.
+        Then the item contains a metadata field.
         """
-        # Test implementation placeholder replaced with basic validation
+        archive.archive_url("https://example.com", metadata={"test": "data"})
+        result = archive.list_archives()
+        assert "metadata" in result[0], f"No metadata field in {list(result[0].keys())}"
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_item_structure_contains_url(self, archive):
+    def test_when_calling_list_archives_then_item_contains_status(self, archive):
         """
-        GIVEN archive with archived items
-        WHEN list_archives is called
-        THEN expect:
-            - url: string with original URL
+        Given an archive with an archived item.
+        When list_archives is called.
+        Then the item contains a status field.
         """
-        # Test implementation placeholder replaced with basic validation
+        archive.archive_url("https://example.com")
+        result = archive.list_archives()
+        assert "status" in result[0], f"No status field in {list(result[0].keys())}"
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_item_structure_contains_timestamp(self, archive):
+    def test_when_calling_list_archives_multiple_times_then_state_unchanged(self, archive):
         """
-        GIVEN archive with archived items
-        WHEN list_archives is called
-        THEN expect:
-            - timestamp: ISO 8601 formatted datetime string
+        Given an archive with archived items.
+        When list_archives is called multiple times.
+        Then the internal state remains unchanged.
         """
-        # Test implementation placeholder replaced with basic validation
+        archive.archive_url("https://example.com")
+        first_call = archive.list_archives()
+        second_call = archive.list_archives()
+        assert first_call == second_call, f"State changed: {first_call} != {second_call}"
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_item_structure_contains_metadata(self, archive):
+    def test_when_calling_list_archives_multiple_times_then_returns_independent_copies(self, archive):
         """
-        GIVEN archive with archived items
-        WHEN list_archives is called
-        THEN expect:
-            - metadata: dict with user-provided metadata
+        Given an archive with archived items.
+        When list_archives is called multiple times.
+        Then independent list copies are returned.
         """
-        # Test implementation placeholder replaced with basic validation
+        archive.archive_url("https://example.com")
+        first = archive.list_archives()
+        second = archive.list_archives()
+        assert first is not second, f"Lists are not independent copies"
 
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_item_structure_contains_status(self, archive):
+    def test_when_modifying_returned_list_then_archive_unaffected(self, archive):
         """
-        GIVEN archive with archived items
-        WHEN list_archives is called
-        THEN expect:
-            - status: string with value "archived"
+        Given an archive with archived items.
+        When the returned list is modified.
+        Then the archive internal state is unaffected.
         """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_does_not_modify_internal_state_unchanged(self, archive):
-        """
-        GIVEN archive with archived items
-        WHEN list_archives is called multiple times
-        THEN expect:
-            - Internal archived_items dict unchanged
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_does_not_modify_internal_state_independent_copies(self, archive):
-        """
-        GIVEN archive with archived items
-        WHEN list_archives is called multiple times
-        THEN expect:
-            - Returned lists are independent copies
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
-
-    def test_list_archives_does_not_modify_internal_state_modifying_returned_list(self, archive):
-        """
-        GIVEN archive with archived items
-        WHEN list_archives is called multiple times
-        THEN expect:
-            - Modifying returned list does not affect archive
-        """
-        # Test implementation placeholder replaced with basic validation
-
-        assert True  # Basic test structure - method exists and can be called
-
-        # TODO: Add specific test logic based on actual method functionality
+        archive.archive_url("https://example.com")
+        result = archive.list_archives()
+        result.clear()
+        new_result = archive.list_archives()
+        assert len(new_result) == 1, f"Archive affected: expected 1 item but got {len(new_result)}"
 
 
 if __name__ == "__main__":

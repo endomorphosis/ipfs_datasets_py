@@ -2736,13 +2736,63 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             }
 
             async loadAvailableTools() {
-                // Simulate loading MCP tools
+                // Load all available MCP tools including temporal deontic logic AND legal dataset scraping
                 this.availableTools = [
+                    // Temporal Deontic Logic Tools
                     'check_document_consistency',
                     'query_theorems', 
                     'bulk_process_caselaw',
-                    'add_theorem'
+                    'add_theorem',
+                    
+                    // Legal Dataset Scraping Tools  
+                    'scrape_us_code',
+                    'scrape_federal_register',
+                    'scrape_state_laws',
+                    'scrape_municipal_laws',
+                    'scrape_recap_archive',
+                    'search_recap_documents',
+                    
+                    // Dataset Management Tools
+                    'list_scraping_jobs',
+                    'export_dataset',
+                    
+                    // Scheduling Tools
+                    'create_schedule',
+                    'list_schedules',
+                    'run_schedule_now',
+                    'enable_disable_schedule',
+                    'remove_schedule'
                 ];
+
+                try {
+                    // Fetch actual tools from the MCP server API
+                    const response = await fetch('/api/mcp/caselaw/tools');
+                    const data = await response.json();
+                    
+                    if (data.success && data.tools) {
+                        // Extract tool names from the schemas
+                        this.availableTools = Object.keys(data.tools);
+                        console.log(`Loaded ${this.availableTools.length} MCP tools:`, this.availableTools);
+                    } else {
+                        // Fallback to hardcoded list if API fails
+                        console.warn('Failed to load tools from API, using fallback list');
+                        this.availableTools = [
+                            'check_document_consistency',
+                            'query_theorems', 
+                            'bulk_process_caselaw',
+                            'add_theorem'
+                        ];
+                    }
+                } catch (error) {
+                    console.error('Error loading tools:', error);
+                    // Fallback to hardcoded list on error
+                    this.availableTools = [
+                        'check_document_consistency',
+                        'query_theorems', 
+                        'bulk_process_caselaw',
+                        'add_theorem'
+                    ];
+                }
                 
                 // Guard against missing DOM element
                 const toolCountElement = document.getElementById('mcpToolCount');
@@ -2826,7 +2876,12 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     'check_document_consistency': '/api/mcp/caselaw/check_document',
                     'query_theorems': '/api/mcp/caselaw/query_theorems',
                     'bulk_process_caselaw': '/api/mcp/caselaw/bulk_process',
-                    'add_theorem': '/api/mcp/caselaw/add_theorem'
+                    'add_theorem': '/api/mcp/caselaw/add_theorem',
+                    'scrape_recap_archive': '/api/mcp/dataset/recap/scrape',
+                    'search_recap_documents': '/api/mcp/dataset/recap/search',
+                    'scrape_state_laws': '/api/mcp/dataset/state_laws/scrape',
+                    'scrape_us_code': '/api/mcp/dataset/uscode/scrape',
+                    'list_scraping_jobs': '/api/mcp/dataset/jobs'
                 };
 
                 const endpoint = endpointMap[toolName];
@@ -2836,13 +2891,21 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
 
                 console.log(`Fallback to REST API: ${endpoint}`);
 
-                const response = await fetch(endpoint, {
-                    method: 'POST',
+                // list_scraping_jobs uses GET, others use POST
+                const method = toolName === 'list_scraping_jobs' ? 'GET' : 'POST';
+                
+                const fetchOptions = {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(parameters)
-                });
+                    }
+                };
+                
+                if (method === 'POST') {
+                    fetchOptions.body = JSON.stringify(parameters);
+                }
+
+                const response = await fetch(endpoint, fetchOptions);
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -33,6 +33,7 @@ except ImportError:
     MCP_AVAILABLE = False
 
 from .tools.temporal_deontic_logic_tools import TEMPORAL_DEONTIC_LOGIC_TOOLS
+from .tools.legal_dataset_mcp_tools import LEGAL_DATASET_MCP_TOOLS
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,10 @@ class TemporalDeonticMCPServer:
         """
         self.port = port
         self.server = None
-        self.tools = {tool.name: tool for tool in TEMPORAL_DEONTIC_LOGIC_TOOLS}
+        
+        # Combine temporal deontic logic tools and legal dataset tools
+        all_tools = TEMPORAL_DEONTIC_LOGIC_TOOLS + LEGAL_DATASET_MCP_TOOLS
+        self.tools = {tool.name: tool for tool in all_tools}
         
         if not MCP_AVAILABLE:
             logger.warning("MCP library not available - server will not function")

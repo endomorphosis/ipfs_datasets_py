@@ -1,557 +1,94 @@
-import pytest
+#!/usr/bin/env python3
+import os
 
+
+import pytest
 from ipfs_datasets_py.web_archive import WebArchiveProcessor
 
 
+IDX_EXTENSION = ".idx"
+TEST_WARC = "test.warc"
+TEST_OUTPUT = "test.idx"
+ENCRYPTION_KEY = "secret_key_123"
+
+
+@pytest.fixture
+def processor():
+    return WebArchiveProcessor()
+
+
+@pytest.fixture
+def temp_warc(tmp_path):
+    warc = tmp_path / TEST_WARC
+    warc.write_text("WARC/1.0\r\n")
+    return str(warc)
+
+
 class TestWebArchiveProcessorIndexWarc:
-    """Test WebArchiveProcessor.index_warc method functionality."""
+    """Tests for WebArchiveProcessor.index_warc."""
 
-    @pytest.fixture
-    def processor(self):
-        """Set up test fixtures."""
-        return WebArchiveProcessor()
-
-    def test_index_warc_with_default_output_path_returns_string_path_ending_with_idx(self, processor):
+    def test_when_default_output_then_creates_idx_file(self, processor, temp_warc):
         """
-        GIVEN valid WARC file path "/data/archives/large_crawl.warc"
-        AND output_path=None (default)
-        WHEN index_warc is called
-        THEN expect:
-            - Return string path ending with ".idx"
+        Given a valid WARC file with default output path.
+        When index_warc is called.
+        Then index file is created at warc path plus idx.
         """
-        # GIVEN: Valid WARC file path and default output path
-        warc_path = "/data/archives/large_crawl.warc"
-        
-        # WHEN: index_warc is called with default output_path=None
-        try:
-            with patch('os.path.exists', return_value=True):
-                result = processor.index_warc(warc_path, output_path=None)
-            
-            # THEN: Should return string path ending with ".idx"
-            assert isinstance(result, str)
-            assert result.endswith(".idx")
-            assert result == warc_path + ".idx"
-            
-        except Exception as e:
-            # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"index_warc method dependencies not available: {e}")
+        result = processor.index_warc(temp_warc)
+        assert result == f"{temp_warc}{IDX_EXTENSION}", f"Expected {temp_warc}{IDX_EXTENSION}, got {result}"
 
-    def test_index_warc_with_default_output_path_creates_index_file_at_warc_path_plus_idx(self, processor):
+    @pytest.mark.parametrize(
+        "kwargs, description",
+        [
+            ({}, "default output"),
+            ({"output_path": TEST_OUTPUT}, "custom output path"),
+            ({"encryption_key": ENCRYPTION_KEY}, "encryption enabled"),
+        ],
+    )
+    def test_when_various_options_then_returns_string(self, processor, temp_warc, kwargs, description):
         """
-        GIVEN valid WARC file path "/data/archives/large_crawl.warc"
-        AND output_path=None (default)
-        WHEN index_warc is called
-        THEN expect:
-            - Index file created at warc_path + ".idx"
+        Given a valid WARC file.
+        When index_warc is called with various options.
+        Then the result is a string.
         """
-        # GIVEN: Valid WARC file path and default output path
-        warc_path = "/data/archives/large_crawl.warc"
-        expected_index_path = warc_path + ".idx"
-        
-        # WHEN: index_warc is called with default output_path=None  
-        try:
-            with patch('os.path.exists', return_value=True), \
-                 patch('builtins.open', create=True) as mock_open:
-                result = processor.index_warc(warc_path, output_path=None)
-                
-            # THEN: Should create index file at warc_path + ".idx"
-            assert result == expected_index_path
-            # Verify that file creation was attempted
-            mock_open.assert_called()
-            
-        except Exception as e:
-            # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"index_warc file creation dependencies not available: {e}")
+        result = processor.index_warc(temp_warc, **kwargs)
+        assert isinstance(result, str), f"For {description}, expected str type, got {type(result)}"
 
-    def test_index_warc_with_default_output_path_index_contains_byte_offsets_and_metadata(self, processor):
+    def test_when_creating_file_then_exists_at_path(self, processor, temp_warc):
         """
-        GIVEN valid WARC file path "/data/archives/large_crawl.warc"
-        AND output_path=None (default)
-        WHEN index_warc is called
-        THEN expect:
-            - Index contains byte offsets and metadata
+        Given a valid WARC file.
+        When index_warc is called.
+        Then index file is created at returned path.
         """
-        # GIVEN: Valid WARC file path and default output path
-        warc_path = "/data/archives/large_crawl.warc"
-        
-        # WHEN: index_warc is called with default output_path=None
-        try:
-            with patch('os.path.exists', return_value=True):
-                result = processor.index_warc(warc_path, output_path=None)
-                
-            # THEN: Index should contain byte offsets and metadata
-            # The method should return path and create index with structured data
-            assert isinstance(result, str)
-            assert result.endswith(".idx")
-            
-            # Method implementation creates structured index data with offsets and metadata
-            # This validates the method signature and basic functionality
-            
-        except Exception as e:
-            # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"index_warc method dependencies not available: {e}")
+        result = processor.index_warc(temp_warc)
+        path = result['path']
+        assert os.path.exists(path), f"Expected '{path}' to exist, but it does not."
 
-    def test_index_warc_with_custom_output_path_returns_string_path_matching_output_path(self, processor):
+    def test_when_custom_output_then_returns_custom_path(self, processor, temp_warc):
         """
-        GIVEN valid WARC file path "/data/archives/large_crawl.warc"
-        AND output_path="/data/indexes/large_crawl.idx"
-        WHEN index_warc is called
-        THEN expect:
-            - Return string path matching output_path
+        Given a valid WARC file with custom output path.
+        When index_warc is called.
+        Then return path matches custom output path.
         """
-        # GIVEN: Valid WARC file path and custom output path
-        warc_path = "/data/archives/large_crawl.warc" 
-        custom_output_path = "/data/indexes/large_crawl.idx"
-        
-        # WHEN: index_warc is called with custom output_path
-        try:
-            with patch('os.path.exists', return_value=True):
-                result = processor.index_warc(warc_path, output_path=custom_output_path)
-                
-            # THEN: Should return string path matching output_path
-            assert isinstance(result, str)
-            assert result == custom_output_path
-            
-        except Exception as e:
-            # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"index_warc method dependencies not available: {e}")
+        result = processor.index_warc(temp_warc, output_path=TEST_OUTPUT)
+        assert result == TEST_OUTPUT, f"Expected {TEST_OUTPUT}, got {result}"
 
-    def test_index_warc_with_custom_output_path_creates_index_file_at_specified_output_path(self, processor):
+    def test_when_nonexistent_file_then_raises_error(self, processor):
         """
-        GIVEN valid WARC file path "/data/archives/large_crawl.warc"
-        AND output_path="/data/indexes/large_crawl.idx"
-        WHEN index_warc is called
-        THEN expect:
-            - Index file created at specified output_path
+        Given a nonexistent WARC file path.
+        When index_warc is called.
+        Then FileNotFoundError is raised.
         """
-        # GIVEN: Valid WARC file path and custom output path
-        warc_path = "/data/archives/large_crawl.warc"
-        custom_output_path = "/data/indexes/large_crawl.idx"
-        
-        # WHEN: index_warc is called with custom output_path
-        try:
-            with patch('os.path.exists', return_value=True), \
-                 patch('builtins.open', create=True) as mock_open:
-                result = processor.index_warc(warc_path, output_path=custom_output_path)
-                
-            # THEN: Should create index file at specified output path
-            assert result == custom_output_path
-            # Verify that file creation was attempted at custom path
-            mock_open.assert_called()
-            
-        except Exception as e:
-            # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"index_warc file creation dependencies not available: {e}")
+        with pytest.raises(FileNotFoundError, match=r'nonexistent.warc') as exc_info:
+            processor.index_warc("nonexistent.warc")
 
-    def test_index_warc_with_custom_output_path_index_contains_record_information(self, processor):
+    def test_when_valid_file_then_contains_filesystem_path(self, processor, temp_warc):
         """
-        GIVEN valid WARC file path "/data/archives/large_crawl.warc"
-        AND output_path="/data/indexes/large_crawl.idx"
-        WHEN index_warc is called
-        THEN expect:
-            - Index contains record information
+        Given a valid WARC file.
+        When index_warc is called.
+        Then string contains valid filesystem path.
         """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_with_encryption_key_returns_string_path_to_encrypted_index_file(self, processor):
-        """
-        GIVEN valid WARC file and encryption_key="secret_key_123"
-        WHEN index_warc is called
-        THEN expect:
-            - Return string path to encrypted index file
-        """
-        # GIVEN: Valid WARC file path with encryption key
-        warc_path = "/data/archives/large_crawl.warc"
-        encryption_key = "secret_key_123"
-        
-        # WHEN: index_warc is called with encryption_key
-        try:
-            with patch('os.path.exists', return_value=True):
-                result = processor.index_warc(warc_path, encryption_key=encryption_key)
-                
-            # THEN: Should return string path to encrypted index file
-            assert isinstance(result, str)
-            assert result.endswith(".idx")
-            
-        except Exception as e:
-            # If method has dependencies that fail, validate expected behavior
-            pytest.skip(f"index_warc encryption dependencies not available: {e}")
-
-    def test_index_warc_with_encryption_key_creates_index_file_with_encryption_applied(self, processor):
-        """
-        GIVEN valid WARC file and encryption_key="secret_key_123"
-        WHEN index_warc is called
-        THEN expect:
-            - Index file created with encryption applied
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_with_encryption_key_uses_encryption_key_for_securing_index(self, processor):
-        """
-        GIVEN valid WARC file and encryption_key="secret_key_123"
-        WHEN index_warc is called
-        THEN expect:
-            - Encryption key used for securing index
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_nonexistent_file_raises_file_not_found_error(self, processor):
-        """
-        GIVEN nonexistent WARC file path "/nonexistent/file.warc"
-        WHEN index_warc is called
-        THEN expect:
-            - FileNotFoundError raised as documented
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_nonexistent_file_exception_message_indicates_warc_file_not_found(self, processor):
-        """
-        GIVEN nonexistent WARC file path "/nonexistent/file.warc"
-        WHEN index_warc is called
-        THEN expect:
-            - Exception message indicates WARC file not found
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_return_type_is_string_type(self, processor):
-        """
-        GIVEN valid WARC file
-        WHEN index_warc is called
-        THEN expect:
-            - Return value is string type
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_return_type_contains_valid_filesystem_path(self, processor):
-        """
-        GIVEN valid WARC file
-        WHEN index_warc is called
-        THEN expect:
-            - String contains valid filesystem path
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_return_type_points_to_created_index_file(self, processor):
-        """
-        GIVEN valid WARC file
-        WHEN index_warc is called
-        THEN expect:
-            - Path points to created index file
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_file_creation_creates_index_file_at_returned_path(self, processor):
-        """
-        GIVEN valid WARC file
-        WHEN index_warc is called
-        THEN expect:
-            - Index file created at returned path
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_file_creation_index_file_exists_and_readable(self, processor):
-        """
-        GIVEN valid WARC file
-        WHEN index_warc is called
-        THEN expect:
-            - Index file exists and is readable
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
-
-    def test_index_warc_file_creation_index_file_contains_record_metadata(self, processor):
-        """
-        GIVEN valid WARC file
-        WHEN index_warc is called
-        THEN expect:
-            - Index file contains record metadata
-        """
-        # Test WebArchive functionality with actual method calls
-
-        try:
-
-            # Attempt to call the method being tested
-
-            if hasattr(processor, 'extract_text_from_warc'):
-
-                result = processor.extract_text_from_warc("/nonexistent/test.warc")
-
-                assert isinstance(result, list) or isinstance(result, dict)
-
-            else:
-
-                pytest.skip("Method not available")
-
-        except FileNotFoundError:
-
-            # Expected for nonexistent test files
-
-            assert True
-
-        except Exception:
-
-            # Other exceptions acceptable for test files
-
-            assert True
+        result = processor.index_warc(temp_warc)
+        assert len(result) > 0, f"Expected non-empty path, got {result}"
 
 
 if __name__ == "__main__":
