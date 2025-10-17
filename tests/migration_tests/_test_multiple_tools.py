@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
-def test_web_archive_tools():
+async def test_web_archive_tools():
     """Test all web archive tools."""
     tools_tested = 0
     tools_passed = 0
@@ -28,7 +28,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = extract_text_from_warc(warc_path)
+        result = await extract_text_from_warc(warc_path)
         tools_tested += 1
 
         if result.get("status") == "success":
@@ -50,7 +50,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = extract_metadata_from_warc(warc_path)
+        result = await extract_metadata_from_warc(warc_path)
         tools_tested += 1
 
         if result.get("status") == "success":
@@ -72,7 +72,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = extract_links_from_warc(warc_path)
+        result = await extract_links_from_warc(warc_path)
         tools_tested += 1
 
         if result.get("status") == "success":
@@ -94,7 +94,7 @@ def test_web_archive_tools():
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
-        result = index_warc(warc_path)
+        result = await index_warc(warc_path)
         tools_tested += 1
 
         if result.get("status") == "success":

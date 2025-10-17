@@ -1,0 +1,64 @@
+# Simplified MCP Server Docker Image
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy minimal requirements and install 
+COPY ipfs_datasets_py/mcp_server/requirements-docker.txt requirements.txt
+RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+
+# Copy only the necessary source files for MCP server
+COPY ipfs_datasets_py/mcp_server/ ./ipfs_datasets_py/mcp_server/
+COPY ipfs_datasets_py/__init__.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/auto_installer.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/_dependencies.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/mcp_dashboard.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/admin_dashboard.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/config.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/monitoring.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/utils/ ./ipfs_datasets_py/utils/
+
+# Create init files as needed
+RUN touch ./ipfs_datasets_py/mcp_server/__init__.py
+
+# Add the app directory to Python path
+ENV PYTHONPATH="/app:$PYTHONPATH"
+
+# Expose port
+EXPOSE 8000
+EXPOSE 8080
+
+# Create health check script
+RUN echo '#!/bin/bash\ncurl -f http://localhost:8000/health || python -c "import requests; requests.get(\"http://localhost:8000\")" || exit 1' > /health_check.sh \
+    && chmod +x /health_check.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD /health_check.sh
+
+# Start both MCP server and dashboard
+COPY ipfs_datasets_py/mcp_server/start_services.sh /start_services.sh
+RUN chmod +x /start_services.sh
+
+CMD ["/start_services.sh"]
+
+# Usage (build from repository root):
+# 1. Build the image: docker build -f ipfs_datasets_py/mcp_server/Dockerfile.simple -t ipfs-datasets-mcp .
+# 2. Run the container: docker run -p 8000:8000 -p 8080:8080 ipfs-datasets-mcp

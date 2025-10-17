@@ -1,0 +1,42 @@
+{
+  "formula_id": "440e534b5eed",
+  "deontic_formula": {
+    "formula_id": "440e534b5eed",
+    "operator": "P",
+    "proposition": "inspect_work",
+    "agent": {
+      "identifier": "agent_9292",
+      "name": "Client",
+      "agent_type": "person",
+      "properties": {},
+      "hash": "06695f5f"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Client may inspect the work at any time with 24 hours advance notice",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "P[agent_9292](inspect_work)",
+    "creation_timestamp": "2025-08-31T19:15:17.138785"
+  },
+  "source_document_cid": null,
+  "source_text_excerpt": "The Client may inspect the work at any time with 24 hours advance notice",
+  "extraction_metadata": {
+    "source_method": "graphrag_conversion"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:15:17.141946",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

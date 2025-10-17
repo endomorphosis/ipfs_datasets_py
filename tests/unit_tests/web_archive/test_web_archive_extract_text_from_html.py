@@ -1,219 +1,147 @@
-import pytest
+#!/usr/bin/env python3
+"""Test suite for WebArchiveProcessor.extract_text_from_html method."""
 
+import pytest
 from ipfs_datasets_py.web_archive import WebArchiveProcessor
+
+STATUS_SUCCESS = "success"
+STATUS_ERROR = "error"
+KEY_STATUS = "status"
+KEY_TEXT = "text"
+KEY_LENGTH = "length"
+KEY_MESSAGE = "message"
+EMPTY_STRING = ""
+ZERO = 0
+
+
+@pytest.fixture
+def unwanted_content_test_cases():
+    """Provides test cases for unwanted content removal."""
+    return {
+        "markup_tags_removed": {
+            "html_input": '<html><body><h1>Hello</h1><p><b>bold</b></p></body></html>',
+            "unwanted_substring": "<b>",
+        },
+        "script_content_removed": {
+            "html_input": "<html><body><script>alert('x');</script><p>Visible</p></body></html>",
+            "unwanted_substring": "alert",
+        },
+        "script_variables_removed": {
+            "html_input": "<html><body><script>var x='test';</script><p>Text</p></body></html>",
+            "unwanted_substring": "var x",
+        },
+        "script_functions_removed": {
+            "html_input": "<html><body><script>function f(){}</script><p>Content</p></body></html>",
+            "unwanted_substring": "function",
+        },
+        "excess_spaces_collapsed": {
+            "html_input": "<html><body><p>Multiple    spaces</p></body></html>",
+            "unwanted_substring": "    ",
+        },
+        "excess_newlines_normalized": {
+            "html_input": "<html><body><p>Text\n\n\nwith\tlines</p></body></html>",
+            "unwanted_substring": "\n\n\n",
+        },
+    }
+
+
+@pytest.fixture
+def processor():
+    """Set up test fixtures."""
+    return WebArchiveProcessor()
 
 
 class TestWebArchiveProcessorExtractTextFromHtml:
     """Test WebArchiveProcessor.extract_text_from_html method functionality."""
 
-    @pytest.fixture
-    def processor(self):
-        """Set up test fixtures."""
-        return WebArchiveProcessor()
+    def test_when_extracting_from_valid_html_then_status_is_success(self, processor):
+        """Given valid HTML, when extracting text, then status is success."""
+        html = "<html><head><title>Test</title></head><body><h1>Hello</h1></body></html>"
+        result = processor.extract_text_from_html(html)
+        
+        assert result[KEY_STATUS] == STATUS_SUCCESS, f"Expected status {STATUS_SUCCESS}, got {result.get(KEY_STATUS)}"
 
-    def test_extract_text_from_html_success_returns_success_status(self, processor):
+    @pytest.mark.parametrize(
+        "test_id",
+        ["markup_tags_removed", "script_content_removed", "script_variables_removed",
+         "script_functions_removed", "excess_spaces_collapsed", "excess_newlines_normalized"],
+    )
+    def test_when_extracting_from_html_then_unwanted_content_is_removed(
+        self, processor, unwanted_content_test_cases, test_id
+    ):
         """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict with status="success"
+        Given various HTML inputs, when extracting text, then unwanted content is removed.
         """
-        raise NotImplementedError("test_extract_text_from_html_success_returns_success_status test needs to be implemented")
+        html_input, unwanted_substring = unwanted_content_test_cases[test_id].values()
 
-    def test_extract_text_from_html_success_contains_text_without_markup(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains text with HTML markup removed
-        WHERE script tag removal means:
-            - All JavaScript content within <script> tags undergoes total elimination with zero remnants
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        raise NotImplementedError("test_extract_text_from_html_success_contains_text_without_markup test needs to be implemented")
+        result = processor.extract_text_from_html(html_input)
 
-    def test_extract_text_from_html_success_contains_length(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains length with character count
-        """
-        raise NotImplementedError("test_extract_text_from_html_success_contains_length test needs to be implemented")
+        assert unwanted_substring not in result[KEY_TEXT], \
+            f"Test '{test_id}': Unwanted content '{unwanted_substring}' found in: {result[KEY_TEXT]}"
 
-    def test_extract_text_from_html_success_removes_scripts(self, processor):
-        """
-        GIVEN valid HTML content with title, headings, and paragraphs
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Script and style tags are removed
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        raise NotImplementedError("test_extract_text_from_html_success_removes_scripts test needs to be implemented")
 
-    def test_extract_text_from_html_removes_scripts_no_script_content(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Script tag content is not included in extracted text
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        raise NotImplementedError("test_extract_text_from_html_removes_scripts_no_script_content test needs to be implemented")
+    def test_when_extracting_from_html_with_scripts_then_only_visible_text_remains(
+        self, processor
+    ):
+        """Given HTML with scripts, when extracting, then only visible text remains."""
+        html = "<html><body><script>hidden</script><p>visible</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        assert "visible" in result[KEY_TEXT], f"Expected visible text, got: {result[KEY_TEXT]}"
 
-    def test_extract_text_from_html_removes_scripts_total_elimination(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - JavaScript code undergoes total elimination with zero remnants
-        WHERE total elimination means:
-            - All JavaScript content within <script> tags removed
-            - No script tag opening/closing markers remain
-            - No JavaScript syntax appears in extracted text
-            - No executable code fragments present
-            - String length of script content in output = 0
-        """
-        raise NotImplementedError("test_extract_text_from_html_removes_scripts_total_elimination test needs to be implemented")
 
-    def test_extract_text_from_html_removes_scripts_only_visible_text(self, processor):
-        """
-        GIVEN HTML content with script tags
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Only visible text content remains
-        """
-        raise NotImplementedError("test_extract_text_from_html_removes_scripts_only_visible_text test needs to be implemented")
+    def test_when_extracting_from_valid_html_then_length_is_provided(self, processor):
+        """Given valid HTML, when extracting text, then length is provided."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
+        assert KEY_LENGTH in result, f"Expected {KEY_LENGTH} key in result: {result.keys()}"
 
-    def test_extract_text_from_html_normalizes_whitespace_collapses_spaces(self, processor):
-        """
-        GIVEN HTML content with excessive whitespace and newlines
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Multiple spaces collapsed to single spaces
-        """
-        raise NotImplementedError("test_extract_text_from_html_normalizes_whitespace_collapses_spaces test needs to be implemented")
+    def test_when_extracting_from_html_with_messy_whitespace_then_output_is_clean(
+        self, processor
+    ):
+        """Given HTML with messy whitespace, when extracting, then output is clean."""
+        html = "<html><body><p>  Leading and trailing  </p></body></html>"
+        result = processor.extract_text_from_html(html)
+        assert result[KEY_TEXT].strip() == result[KEY_TEXT], f"Expected trimmed text: '{result[KEY_TEXT]}'"
 
-    def test_extract_text_from_html_normalizes_whitespace_normalized_output(self, processor):
-        """
-        GIVEN HTML content with excessive whitespace and newlines
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Normalized whitespace in extracted text
-        """
-        raise NotImplementedError("test_extract_text_from_html_normalizes_whitespace_normalized_output test needs to be implemented")
+    @pytest.mark.parametrize(
+        "key,expected_value", [(KEY_STATUS, STATUS_SUCCESS),(KEY_TEXT, EMPTY_STRING),(KEY_LENGTH, ZERO),],
+    )
+    def test_when_extracting_from_empty_string_then_result_is_correct(
+        self, processor, key, expected_value
+    ):
+        """Given an empty string, when extracting, then the result has the correct properties."""
+        result = processor.extract_text_from_html(EMPTY_STRING)
+        
+        assert result[key] == expected_value, f"For key '{key}', expected '{expected_value}', got '{result.get(key)}'"
 
-    def test_extract_text_from_html_normalizes_whitespace_clean_output(self, processor):
-        """
-        GIVEN HTML content with excessive whitespace and newlines
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Clean, readable text output
-        """
-        raise NotImplementedError("test_extract_text_from_html_normalizes_whitespace_clean_output test needs to be implemented")
+    @pytest.mark.parametrize("expected_key", [KEY_STATUS, KEY_TEXT, KEY_LENGTH, KEY_MESSAGE],)
+    def test_when_extraction_succeeds_then_result_contains_expected_keys(self, processor, expected_key):
+        """Given valid HTML, when extraction succeeds, then result contains expected keys."""
+        html = "<html><body><p>Test</p></body></html>"
+        result = processor.extract_text_from_html(html)
 
-    def test_extract_text_from_html_empty_content_returns_success_status(self, processor):
-        """
-        GIVEN empty string ""
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict with status="success"
-        """
-        raise NotImplementedError("test_extract_text_from_html_empty_content_returns_success_status test needs to be implemented")
+        assert expected_key in result, f"Expected {expected_key} key in result: {result.keys()}"
 
-    def test_extract_text_from_html_empty_content_contains_empty_text(self, processor):
-        """
-        GIVEN empty string ""
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains empty text ""
-        """
-        raise NotImplementedError("test_extract_text_from_html_empty_content_contains_empty_text test needs to be implemented")
+    def test_when_extraction_fails_then_message_is_provided(self, processor):
+        """Given malformed HTML, when extraction fails, then message is provided."""
+        result = processor.extract_text_from_html(None)
 
-    def test_extract_text_from_html_empty_content_contains_zero_length(self, processor):
-        """
-        GIVEN empty string ""
-        WHEN extract_text_from_html is called
-        THEN expect:
-            - Return dict contains length=0
-        """
-        raise NotImplementedError("test_extract_text_from_html_empty_content_contains_zero_length test needs to be implemented")
+        assert KEY_MESSAGE in result, f"Expected {KEY_MESSAGE} key in error result: {result.keys()}"
 
-    def test_extract_text_from_html_return_structure_success_contains_status(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - status: "success"
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_success_contains_status test needs to be implemented")
+    def test_when_extraction_fails_then_no_text_or_length_keys(self, processor):
+        """Given malformed HTML, when extraction fails, then no text or length keys."""
+        result = processor.extract_text_from_html(None)
 
-    def test_extract_text_from_html_return_structure_success_contains_text(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - text: string with extracted text
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_success_contains_text test needs to be implemented")
+        assert KEY_TEXT not in result, f"Expected no {KEY_TEXT} in error result: {result.keys()}"
 
-    def test_extract_text_from_html_return_structure_success_contains_length(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - length: integer character count
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_success_contains_length test needs to be implemented")
+    def test_when_extraction_fails_then_status_is_error(self, processor):
+        """Given malformed HTML, when extraction fails, then status is error."""
+        result = processor.extract_text_from_html(None)
 
-    def test_extract_text_from_html_return_structure_success_no_message_key(self, processor):
-        """
-        GIVEN valid HTML content
-        WHEN extract_text_from_html succeeds
-        THEN expect:
-            - does not contain message key
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_success_no_message_key test needs to be implemented")
+        assert result[KEY_STATUS] == STATUS_ERROR, f"Expected error status, got: {result.get(KEY_STATUS)}"
 
-    def test_extract_text_from_html_return_structure_error_contains_status(self, processor):
-        """
-        GIVEN malformed HTML that causes extraction to fail
-        WHEN extract_text_from_html fails
-        THEN expect:
-            - status: "error"
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_error_contains_status test needs to be implemented")
 
-    def test_extract_text_from_html_return_structure_error_contains_message(self, processor):
-        """
-        GIVEN malformed HTML that causes extraction to fail
-        WHEN extract_text_from_html fails
-        THEN expect:
-            - message: string describing error
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_error_contains_message test needs to be implemented")
 
-    def test_extract_text_from_html_return_structure_error_no_text_or_length_keys(self, processor):
-        """
-        GIVEN malformed HTML that causes extraction to fail
-        WHEN extract_text_from_html fails
-        THEN expect:
-            - does not contain text or length keys
-        """
-        raise NotImplementedError("test_extract_text_from_html_return_structure_error_no_text_or_length_keys test needs to be implemented")
 
 
 if __name__ == "__main__":

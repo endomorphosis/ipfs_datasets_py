@@ -1,191 +1,204 @@
+#!/usr/bin/env python3
 import pytest
 
 from ipfs_datasets_py.web_archive import retrieve_web_content
 
 
+SUCCESS_STATUS = "success"
+ERROR_STATUS = "error"
+ARCHIVE_ID = "archive_123"
+NONEXISTENT_ID = "archive_999"
+EXAMPLE_URL = "https://example.com"
+EXAMPLE_HTML = "<html>...</html>"
+EXAMPLE_TIMESTAMP = "2025-01-01T00:00:00Z"
+EXAMPLE_TITLE = "Example Page"
+NOT_FOUND_MSG = "not found"
+STATUS_ARCHIVED = "archived"
+
+
+@pytest.fixture
+def success_mock_data():
+    """Mock data for successful web content retrieval."""
+    return {
+        "status": SUCCESS_STATUS,
+        "data": {
+            "id": ARCHIVE_ID,
+            "url": EXAMPLE_URL,
+            "content": EXAMPLE_HTML,
+            "timestamp": EXAMPLE_TIMESTAMP,
+            "metadata": {"title": EXAMPLE_TITLE}
+        }
+    }
+
+
+@pytest.fixture
+def success_mock_data_minimal():
+    """Mock data for successful web content retrieval with minimal data."""
+    return {"status": SUCCESS_STATUS, "data": {}}
+
+
+@pytest.fixture
+def success_mock_data_with_id():
+    """Mock data for successful web content retrieval with ID."""
+    return {"status": SUCCESS_STATUS, "data": {"id": ARCHIVE_ID}}
+
+
+@pytest.fixture
+def success_mock_data_with_url():
+    """Mock data for successful web content retrieval with URL."""
+    return {"status": SUCCESS_STATUS, "data": {"url": EXAMPLE_URL}}
+
+
+@pytest.fixture
+def success_mock_data_with_timestamp():
+    """Mock data for successful web content retrieval with timestamp."""
+    return {"status": SUCCESS_STATUS, "data": {"timestamp": EXAMPLE_TIMESTAMP}}
+
+
+@pytest.fixture
+def success_mock_data_with_metadata():
+    """Mock data for successful web content retrieval with metadata."""
+    return {"status": SUCCESS_STATUS, "data": {"metadata": {"title": EXAMPLE_TITLE}}}
+
+
+@pytest.fixture
+def success_mock_data_archived():
+    """Mock data for successful web content retrieval with archived status."""
+    return {"status": SUCCESS_STATUS, "data": {"status": "archived"}}
+
+
+@pytest.fixture
+def success_mock_data_complete():
+    """Mock data for successful web content retrieval with all fields."""
+    return {
+        "status": SUCCESS_STATUS,
+        "data": {
+            "id": ARCHIVE_ID,
+            "url": EXAMPLE_URL,
+            "timestamp": EXAMPLE_TIMESTAMP,
+            "metadata": {},
+            "status": "archived"
+        }
+    }
+
+
 class TestRetrieveWebContent:
     """Test retrieve_web_content function functionality."""
 
-    def test_retrieve_web_content_success_returns_success_status(self):
-        """
-        GIVEN valid archive_id from previously archived content
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - Return dict with status="success"
-        """
-        raise NotImplementedError("test_retrieve_web_content_success_returns_success_status test needs to be implemented")
-
-    def test_retrieve_web_content_success_contains_data_key(self):
-        """
-        GIVEN valid archive_id from previously archived content
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - Return dict contains data key
-        """
-        raise NotImplementedError("test_retrieve_web_content_success_contains_data_key test needs to be implemented")
-
-    def test_retrieve_web_content_success_data_contains_required_fields(self):
-        """
-        GIVEN valid archive_id from previously archived content
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - data contains id, url, timestamp, metadata, status fields
-        """
-        raise NotImplementedError("test_retrieve_web_content_success_data_contains_required_fields test needs to be implemented")
-
-    def test_retrieve_web_content_error_not_found_returns_error_status(self):
-        """
-        GIVEN nonexistent archive_id "archive_999"
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - Return dict with status="error"
-        """
-        raise NotImplementedError("test_retrieve_web_content_error_not_found_returns_error_status test needs to be implemented")
-
-    def test_retrieve_web_content_error_not_found_contains_message(self):
-        """
-        GIVEN nonexistent archive_id "archive_999"
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - Return dict contains message="Archive not found"
-        """
-        raise NotImplementedError("test_retrieve_web_content_error_not_found_contains_message test needs to be implemented")
-
-    def test_retrieve_web_content_error_not_found_no_data_key(self):
-        """
-        GIVEN nonexistent archive_id "archive_999"
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - No data key in return dict
-        """
-        raise NotImplementedError("test_retrieve_web_content_error_not_found_no_data_key test needs to be implemented")
-
-    def test_retrieve_web_content_return_structure_success_contains_status(self):
-        """
-        GIVEN existing archived content
-        WHEN retrieve_web_content succeeds
-        THEN expect:
-            - status: "success"
-        """
-        raise NotImplementedError("test_retrieve_web_content_return_structure_success_contains_status test needs to be implemented")
-
-    def test_retrieve_web_content_return_structure_success_contains_data(self):
-        """
-        GIVEN existing archived content
-        WHEN retrieve_web_content succeeds
-        THEN expect:
-            - data: dict containing id, url, timestamp, metadata, status
-        """
-        raise NotImplementedError("test_retrieve_web_content_return_structure_success_contains_data test needs to be implemented")
-
-    def test_retrieve_web_content_return_structure_success_no_message_key(self):
-        """
-        GIVEN existing archived content
-        WHEN retrieve_web_content succeeds
-        THEN expect:
-            - does not contain message key
-        """
-        raise NotImplementedError("test_retrieve_web_content_return_structure_success_no_message_key test needs to be implemented")
-
-    def test_retrieve_web_content_return_structure_error_contains_status(self):
-        """
-        GIVEN nonexistent archive_id
-        WHEN retrieve_web_content fails
-        THEN expect:
-            - status: "error"
-        """
-        raise NotImplementedError("test_retrieve_web_content_return_structure_error_contains_status test needs to be implemented")
-
-    def test_retrieve_web_content_return_structure_error_contains_message(self):
-        """
-        GIVEN nonexistent archive_id
-        WHEN retrieve_web_content fails
-        THEN expect:
-            - message: string describing error
-        """
-        raise NotImplementedError("test_retrieve_web_content_return_structure_error_contains_message test needs to be implemented")
-
-    def test_retrieve_web_content_return_structure_error_no_data_key(self):
-        """
-        GIVEN nonexistent archive_id
-        WHEN retrieve_web_content fails
-        THEN expect:
-            - does not contain data key
-        """
-        raise NotImplementedError("test_retrieve_web_content_return_structure_error_no_data_key test needs to be implemented")
-
-    def test_retrieve_web_content_no_instance_management_no_requirement(self):
+    def test_when_called_then_returns_dict(self):
         """
         GIVEN any archive_id
         WHEN retrieve_web_content is called
-        THEN expect:
-            - Function operates without requiring WebArchive instance management
+        THEN returns dict result
         """
-        raise NotImplementedError("test_retrieve_web_content_no_instance_management_no_requirement test needs to be implemented")
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert isinstance(result, dict), f"Expected dict result, got {type(result)}"
 
-    def test_retrieve_web_content_no_instance_management_handles_creation_internally(self):
+    def test_when_valid_archive_then_success_status(self):
         """
-        GIVEN any archive_id
+        GIVEN valid archive_id from previously archived content
         WHEN retrieve_web_content is called
-        THEN expect:
-            - Function handles WebArchive creation internally
+        THEN return dict with status="success"
         """
-        raise NotImplementedError("test_retrieve_web_content_no_instance_management_handles_creation_internally test needs to be implemented")
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert result["status"] == SUCCESS_STATUS, f"Expected status {SUCCESS_STATUS}, got {result['status']}"
 
-    def test_retrieve_web_content_no_instance_management_independent_calls(self):
+    def test_when_nonexistent_id_then_error_status(self):
         """
-        GIVEN any archive_id
+        GIVEN nonexistent archive_id
         WHEN retrieve_web_content is called
-        THEN expect:
-            - Each call is independent
+        THEN return dict with status="error"
         """
-        raise NotImplementedError("test_retrieve_web_content_no_instance_management_independent_calls test needs to be implemented")
+        result = retrieve_web_content(NONEXISTENT_ID)
+        assert result["status"] == ERROR_STATUS, f"Expected status {ERROR_STATUS}, got {result['status']}"
 
-    def test_retrieve_web_content_data_completeness_contains_id(self):
+    @pytest.mark.parametrize("field", ["status", "data"])
+    def test_when_success_then_contains_data(self, field):
+        """
+        GIVEN existing archived content
+        WHEN retrieve_web_content succeeds
+        THEN data dict contains required fields
+        """
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert field in result, f"Expected 'data' key in result, got keys: {result.keys()}"
+
+    @pytest.mark.parametrize("field", ["id", "url", "timestamp", "content", "metadata", "status"])
+    def test_when_valid_archive_then_data_contains_required_fields(self, field):
+        """
+        GIVEN valid archive_id from previously archived content
+        WHEN retrieve_web_content is called
+        THEN dict contains status, data keys
+        """
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert field in result["data"], f"Expected '{field}' key in result['data'], got keys: {result['data'].keys()}"
+
+    def test_when_nonexistent_id_then_contains_message(self):
+        """
+        GIVEN nonexistent archive_id
+        WHEN retrieve_web_content is called
+        THEN return dict contains message about not found
+        """
+        result = retrieve_web_content(NONEXISTENT_ID)
+        assert NOT_FOUND_MSG in result["message"].lower(), f"Expected '{NOT_FOUND_MSG}' in message, got {result['message']}"
+
+    def test_when_nonexistent_id_then_no_data(self):
+        """
+        GIVEN nonexistent archive_id
+        WHEN retrieve_web_content is called
+        THEN no data key in return dict
+        """
+        result = retrieve_web_content(NONEXISTENT_ID)
+        assert "data" not in result, f"Expected no 'data' key in error result, got keys: {result.keys()}"
+
+    def test_when_success_then_no_message(self):
+        """
+        GIVEN existing archived content
+        WHEN retrieve_web_content succeeds
+        THEN does not contain message key
+        """
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert "message" not in result, f"Expected no 'message' key in success result, got keys: {result.keys()}"
+
+
+    def test_when_error_then_contains_message(self):
+        """
+        GIVEN nonexistent archive_id
+        WHEN retrieve_web_content fails
+        THEN message string describes error
+        """
+        result = retrieve_web_content(NONEXISTENT_ID)
+        assert "message" in result, f"Expected 'message' key in error result, got keys: {result.keys()}"
+
+
+    @pytest.mark.parametrize(
+        "field, expected_value",
+        [
+            ("id", ARCHIVE_ID),
+            ("url", EXAMPLE_URL),
+            ("timestamp", EXAMPLE_TIMESTAMP),
+            ("status", STATUS_ARCHIVED),
+        ],
+    )
+    def test_when_success_then_data_contains_correct_values(self, field, expected_value):
+        """
+        GIVEN existing archived content
+        WHEN retrieve_web_content is called
+        THEN the data dict contains the correct values for id, url, timestamp, and status.
+        """
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert result["data"][field] == expected_value, \
+            f"Expected data field '{field}' to be {expected_value}, got {result['data'][field]}"
+
+    def test_when_success_then_contains_metadata(self, success_mock_data_with_metadata):
         """
         GIVEN existing archived content with metadata
         WHEN retrieve_web_content is called
-        THEN expect:
-            - id: matching the requested archive_id
+        THEN metadata is original metadata dict
         """
-        raise NotImplementedError("test_retrieve_web_content_data_completeness_contains_id test needs to be implemented")
-
-    def test_retrieve_web_content_data_completeness_contains_url(self):
-        """
-        GIVEN existing archived content with metadata
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - url: original URL as archived
-        """
-        raise NotImplementedError("test_retrieve_web_content_data_completeness_contains_url test needs to be implemented")
-
-    def test_retrieve_web_content_data_completeness_contains_timestamp(self):
-        """
-        GIVEN existing archived content with metadata
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - timestamp: ISO 8601 formatted original archive time
-        """
-        raise NotImplementedError("test_retrieve_web_content_data_completeness_contains_timestamp test needs to be implemented")
-
-    def test_retrieve_web_content_data_completeness_contains_metadata(self):
-        """
-        GIVEN existing archived content with metadata
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - metadata: original metadata dict
-        """
-        raise NotImplementedError("test_retrieve_web_content_data_completeness_contains_metadata test needs to be implemented")
-
-    def test_retrieve_web_content_data_completeness_contains_status(self):
-        """
-        GIVEN existing archived content with metadata
-        WHEN retrieve_web_content is called
-        THEN expect:
-            - status: "archived"
-        """
-        raise NotImplementedError("test_retrieve_web_content_data_completeness_contains_status test needs to be implemented")
+        expected_metadata = {"title": EXAMPLE_TITLE}
+        result = retrieve_web_content(ARCHIVE_ID)
+        assert result["data"]["metadata"] == expected_metadata, f"Expected metadata {expected_metadata}, got {result['data']['metadata']}"
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__])

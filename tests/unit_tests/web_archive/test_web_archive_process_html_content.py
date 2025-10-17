@@ -1,6 +1,34 @@
+#!/usr/bin/env python3
+"""Test WebArchiveProcessor.process_html_content method functionality."""
+
 import pytest
 
 from ipfs_datasets_py.web_archive import WebArchiveProcessor
+
+
+@pytest.fixture
+def html_samples():
+    """HTML test samples."""
+    return {
+        "basic": "<html><body><h1>Title</h1><p>Content here.</p></body></html>",
+        "simple": "<html><body><h1>Test</h1><p>Sample content</p></body></html>",
+        "short": "<html><body><p>Test</p></body></html>",
+        "with_script": "<html><body><script>alert('test');</script><p>Text</p></body></html>",
+        "paragraph": "<html><body><h1>Title</h1><p>Content paragraph</p></body></html>",
+        "hello_world": "<html><body><h1>Hello</h1><p>World</p></body></html>",
+        "plain": "<html><body><h1>Title</h1><p>Plain text</p></body></html>",
+        "content": "<html><body><p>Content</p></body></html>",
+        "test_content": "<html><body><p>Test content</p></body></html>"
+    }
+
+
+@pytest.fixture
+def metadata_samples():
+    """Metadata test samples."""
+    return {
+        "crawler": {"source": "crawler", "depth": 2},
+        "priority": {"source": "crawler", "priority": "high"}
+    }
 
 
 class TestWebArchiveProcessorProcessHtmlContent:
@@ -11,254 +39,234 @@ class TestWebArchiveProcessorProcessHtmlContent:
         """Set up test fixtures."""
         return WebArchiveProcessor()
 
-    def test_process_html_content_success_with_metadata_contains_processed_at_field(self, processor):
-        """
-        GIVEN valid HTML content "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
-        AND metadata={"source": "crawler", "depth": 2}
-        WHEN process_html_content is called
-        THEN expect:
-            - processed_at field contains ISO 8601 timestamp
-        """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_contains_processed_at_field test needs to be implemented")
-
-    def test_process_html_content_success_without_metadata_returns_success_status(self, processor):
+    def test_processed_at_field_contains_timestamp(self, processor, html_samples, metadata_samples):
         """
         GIVEN valid HTML content
-        AND metadata=None (default)
-        WHEN process_html_content is called
-        THEN expect:
-            - Return dict with status="success"
+        WHEN calling process_html_content
+        THEN processed_at field contains ISO 8601 timestamp
         """
-        raise NotImplementedError("test_process_html_content_success_without_metadata_returns_success_status test needs to be implemented")
+        result = processor.process_html_content(html_samples["basic"], metadata_samples["crawler"])
+        assert "processed_at" in result
 
-    def test_process_html_content_success_without_metadata_contains_empty_metadata(self, processor):
+    def test_returns_success_status(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        AND metadata=None (default)
-        WHEN process_html_content is called
-        THEN expect:
-            - metadata field contains empty dict
+        WHEN calling process_html_content
+        THEN status equals success
         """
-        raise NotImplementedError("test_process_html_content_success_without_metadata_contains_empty_metadata test needs to be implemented")
+        result = processor.process_html_content(html_samples["simple"])
+        assert result["status"] == "success"
 
-    def test_process_html_content_success_without_metadata_populates_other_fields(self, processor):
+    def test_contains_empty_metadata(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        AND metadata=None (default)
-        WHEN process_html_content is called
-        THEN expect:
-            - All other fields populated according to specification
+        WHEN calling process_html_content without metadata
+        THEN metadata field is empty dict
         """
-        raise NotImplementedError("test_process_html_content_success_without_metadata_populates_other_fields test needs to be implemented")
+        result = processor.process_html_content(html_samples["simple"])
+        assert result["metadata"] == {}
 
-    def test_process_html_content_return_structure_success_contains_status(self, processor):
+    def test_populates_other_fields(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - status: "success"
+        WHEN calling process_html_content
+        THEN all fields are populated
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_status test needs to be implemented")
+        result = processor.process_html_content(html_samples["simple"])
+        assert isinstance(result["text"], str)
 
-    def test_process_html_content_return_structure_success_contains_text(self, processor):
+    def test_structure_contains_status(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - text: string with extracted plain text
+        WHEN calling process_html_content
+        THEN status field equals success
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_text test needs to be implemented")
+        result = processor.process_html_content(html_samples["test_content"])
+        assert result["status"] == "success"
 
-    def test_process_html_content_return_structure_success_contains_html_length(self, processor):
+    def test_structure_contains_text(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - html_length: integer original HTML size in bytes
+        WHEN calling process_html_content
+        THEN text field contains extracted text
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_html_length test needs to be implemented")
+        result = processor.process_html_content(html_samples["paragraph"])
+        assert len(result["text"]) > 0
 
-    def test_process_html_content_return_structure_success_contains_text_length(self, processor):
+    def test_structure_contains_html_length(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - text_length: integer extracted text size in characters
+        WHEN calling process_html_content
+        THEN html_length matches input length
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_text_length test needs to be implemented")
+        html = html_samples["short"]
+        result = processor.process_html_content(html)
+        assert result["html_length"] == len(html)
 
-    def test_process_html_content_return_structure_success_contains_metadata(self, processor):
+    def test_structure_contains_text_length(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - metadata: dict with user metadata or empty dict
+        WHEN calling process_html_content
+        THEN text_length matches extracted text
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_metadata test needs to be implemented")
+        result = processor.process_html_content(html_samples["hello_world"])
+        assert result["text_length"] == len(result["text"])
 
-    def test_process_html_content_return_structure_success_contains_processed_at(self, processor):
+    def test_structure_contains_metadata(self, processor, html_samples, metadata_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - processed_at: ISO 8601 formatted timestamp string
+        WHEN calling process_html_content with metadata
+        THEN metadata field contains input
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_contains_processed_at test needs to be implemented")
+        result = processor.process_html_content(html_samples["short"], metadata_samples["priority"])
+        assert result["metadata"] == metadata_samples["priority"]
 
-    def test_process_html_content_return_structure_success_no_message_key(self, processor):
+    def test_structure_contains_processed_at(self, processor, html_samples):
         """
         GIVEN valid HTML content
-        WHEN process_html_content succeeds
-        THEN expect:
-            - does not contain message key
+        WHEN calling process_html_content
+        THEN processed_at field is present
         """
-        raise NotImplementedError("test_process_html_content_return_structure_success_no_message_key test needs to be implemented")
+        result = processor.process_html_content(html_samples["short"])
+        assert "processed_at" in result
 
-    def test_process_html_content_return_structure_error_contains_status(self, processor):
+    def test_structure_no_message_key(self, processor, html_samples):
         """
-        GIVEN HTML content that causes processing to fail
-        WHEN process_html_content fails
-        THEN expect:
-            - status: "error"
+        GIVEN valid HTML content
+        WHEN calling process_html_content successfully
+        THEN message key is absent
         """
-        raise NotImplementedError("test_process_html_content_return_structure_error_contains_status test needs to be implemented")
+        result = processor.process_html_content(html_samples["short"])
+        assert "message" not in result
 
-    def test_process_html_content_return_structure_error_contains_message(self, processor):
+    def test_error_structure_contains_status(self, processor):
         """
-        GIVEN HTML content that causes processing to fail
-        WHEN process_html_content fails
-        THEN expect:
-            - message: string describing processing failure
+        GIVEN invalid input
+        WHEN calling process_html_content fails
+        THEN status equals error
         """
-        raise NotImplementedError("test_process_html_content_return_structure_error_contains_message test needs to be implemented")
+        result = processor.process_html_content(None)
+        assert result["status"] == "error"
 
-    def test_process_html_content_return_structure_error_no_other_keys(self, processor):
+    def test_error_structure_contains_message(self, processor):
         """
-        GIVEN HTML content that causes processing to fail
-        WHEN process_html_content fails
-        THEN expect:
-            - does not contain text, html_length, text_length, metadata, processed_at keys
+        GIVEN invalid input
+        WHEN calling process_html_content fails
+        THEN message field describes failure
         """
-        raise NotImplementedError("test_process_html_content_return_structure_error_no_other_keys test needs to be implemented")
+        result = processor.process_html_content(None)
+        assert "message" in result
 
-    def test_process_html_content_text_extraction_removes_markup(self, processor):
+    def test_error_structure_no_other_keys(self, processor):
         """
-        GIVEN HTML with markup, scripts, and styles
-        WHEN process_html_content is called
-        THEN expect:
-            - text field contains plain text with markup removed
+        GIVEN invalid input
+        WHEN calling process_html_content fails
+        THEN no success fields present
         """
-        raise NotImplementedError("test_process_html_content_text_extraction_removes_markup test needs to be implemented")
+        result = processor.process_html_content(None)
+        assert "text" not in result
 
-    def test_process_html_content_text_extraction_excludes_scripts(self, processor):
+    def test_extraction_removes_markup(self, processor, html_samples):
         """
-        GIVEN HTML with markup, scripts, and styles
-        WHEN process_html_content is called
-        THEN expect:
-            - Script and style content excluded
+        GIVEN HTML with markup
+        WHEN calling process_html_content
+        THEN text contains no angle brackets
         """
-        raise NotImplementedError("test_process_html_content_text_extraction_excludes_scripts test needs to be implemented")
+        result = processor.process_html_content(html_samples["plain"])
+        assert "<" not in result["text"]
 
-    def test_process_html_content_text_extraction_reflects_extracted_content(self, processor):
+    def test_extraction_excludes_scripts(self, processor, html_samples):
         """
-        GIVEN HTML with markup, scripts, and styles
-        WHEN process_html_content is called
-        THEN expect:
-            - Text length reflects extracted content according to specification
-        WHERE text length reflection means:
-            - Character count must equal len(extracted_text)
-            - Verification method: len(result['text']) == result['text_length']
-            - Unicode characters counted as single characters
-            - Whitespace normalization reflected in count
-            - No off-by-one errors in counting
-            - Consistent measurement across different HTML structures
+        GIVEN HTML with scripts
+        WHEN calling process_html_content
+        THEN script content is excluded
         """
-        raise NotImplementedError("test_process_html_content_text_extraction_reflects_extracted_content test needs to be implemented")
+        result = processor.process_html_content(html_samples["with_script"])
+        assert "alert" not in result["text"]
 
-    def test_process_html_content_metrics_accuracy_html_length_matches(self, processor):
+    def test_extraction_reflects_content(self, processor, html_samples):
         """
-        GIVEN HTML content of known size
-        WHEN process_html_content is called
-        THEN expect:
-            - html_length matches original HTML byte count
+        GIVEN HTML content
+        WHEN calling process_html_content
+        THEN text_length matches extracted text
         """
-        raise NotImplementedError("test_process_html_content_metrics_accuracy_html_length_matches test needs to be implemented")
+        result = processor.process_html_content(html_samples["short"])
+        assert result["text_length"] == len(result["text"])
 
-    def test_process_html_content_metrics_accuracy_text_length_matches(self, processor):
+    def test_metrics_html_length_matches(self, processor, html_samples):
         """
-        GIVEN HTML content of known size
-        WHEN process_html_content is called
-        THEN expect:
-            - text_length matches extracted text character count
+        GIVEN HTML content
+        WHEN calling process_html_content
+        THEN html_length matches input
         """
-        raise NotImplementedError("test_process_html_content_metrics_accuracy_text_length_matches test needs to be implemented")
+        html = html_samples["content"]
+        result = processor.process_html_content(html)
+        assert result["html_length"] == len(html)
 
-    def test_process_html_content_metrics_accuracy_precision(self, processor):
+    def test_metrics_text_length_matches(self, processor, html_samples):
         """
-        GIVEN HTML content of known size
-        WHEN process_html_content is called
-        THEN expect:
-            - Metrics are precise and consistent
-        WHERE text_length precision means:
-            - Character count must equal len(extracted_text)
-            - Verification method: len(result['text']) == result['text_length']
-            - Unicode characters counted as single characters
-            - Whitespace normalization reflected in count
-            - No off-by-one errors in counting
-            - Consistent measurement across different HTML structures
+        GIVEN HTML content
+        WHEN calling process_html_content
+        THEN text_length matches extracted text
         """
-        raise NotImplementedError("test_process_html_content_metrics_accuracy_precision test needs to be implemented")
+        result = processor.process_html_content(html_samples["short"])
+        assert result["text_length"] == len(result["text"])
 
+    def test_metrics_precision(self, processor, html_samples):
+        """
+        GIVEN HTML content
+        WHEN calling process_html_content
+        THEN metrics are precise
+        """
+        result = processor.process_html_content(html_samples["content"])
+        assert result["text_length"] == len(result["text"])
 
-    def test_success_with_metadata_returns_success_status(self, processor):
+    def test_with_metadata_returns_success(self, processor, html_samples, metadata_samples):
         """
-        GIVEN valid HTML content "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
-        AND metadata={"source": "crawler", "depth": 2}
-        WHEN process_html_content is called
-        THEN expect:
-            - Return dict with status="success"
+        GIVEN HTML with metadata
+        WHEN calling process_html_content
+        THEN status equals success
         """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_returns_success_status test needs to be implemented")
+        result = processor.process_html_content(html_samples["basic"], metadata_samples["crawler"])
+        assert result["status"] == "success"
 
-    def test_process_html_content_success_with_metadata_contains_text_field(self, processor):
+    def test_with_metadata_contains_text(self, processor, html_samples, metadata_samples):
         """
-        GIVEN valid HTML content "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
-        AND metadata={"source": "crawler", "depth": 2}
-        WHEN process_html_content is called
-        THEN expect:
-            - text field contains extracted plain text
+        GIVEN HTML with metadata
+        WHEN calling process_html_content
+        THEN text field contains extracted text
         """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_contains_text_field test needs to be implemented")
+        result = processor.process_html_content(html_samples["basic"], metadata_samples["crawler"])
+        assert len(result["text"]) > 0
 
-    def test_process_html_content_success_with_metadata_contains_html_length_field(self, processor):
+    def test_with_metadata_contains_html_length(self, processor, html_samples, metadata_samples):
         """
-        GIVEN valid HTML content "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
-        AND metadata={"source": "crawler", "depth": 2}
-        WHEN process_html_content is called
-        THEN expect:
-            - html_length field contains original HTML size
+        GIVEN HTML with metadata
+        WHEN calling process_html_content
+        THEN html_length field is present
         """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_contains_html_length_field test needs to be implemented")
+        html = html_samples["basic"]
+        result = processor.process_html_content(html, metadata_samples["crawler"])
+        assert result["html_length"] == len(html)
 
-    def test_process_html_content_success_with_metadata_contains_text_length_field(self, processor):
+    def test_with_metadata_contains_text_length(self, processor, html_samples, metadata_samples):
         """
-        GIVEN valid HTML content "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
-        AND metadata={"source": "crawler", "depth": 2}
-        WHEN process_html_content is called
-        THEN expect:
-            - text_length field contains extracted text size
+        GIVEN HTML with metadata
+        WHEN calling process_html_content
+        THEN text_length field is present
         """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_contains_text_length_field test needs to be implemented")
+        result = processor.process_html_content(html_samples["basic"], metadata_samples["crawler"])
+        assert result["text_length"] > 0
 
-    def test_process_html_content_success_with_metadata_contains_metadata_field(self, processor):
+    def test_with_metadata_contains_metadata_field(self, processor, html_samples, metadata_samples):
         """
-        GIVEN valid HTML content "<html><body><h1>Title</h1><p>Content here.</p></body></html>"
-        AND metadata={"source": "crawler", "depth": 2}
-        WHEN process_html_content is called
-        THEN expect:
-            - metadata field contains provided metadata
+        GIVEN HTML with metadata
+        WHEN calling process_html_content
+        THEN metadata field contains input
         """
-        raise NotImplementedError("test_process_html_content_success_with_metadata_contains_metadata_field test needs to be implemented")
+        result = processor.process_html_content(html_samples["basic"], metadata_samples["crawler"])
+        assert result["metadata"] == metadata_samples["crawler"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -371,7 +371,7 @@ class TestAuditTools:
             mock_instance = Mock()
             mock_instance.log_event.return_value = {
                 'event_id': 'test_event_123',
-                'status': 'recorded',
+                'status': 'success',  # Match actual function return
                 'timestamp': '2025-06-07T10:00:00Z'
             }
             mock_logger.return_value = mock_instance
@@ -382,7 +382,7 @@ class TestAuditTools:
                 user_id="test_user"
             )
             
-            assert result['status'] == 'recorded'
+            assert result['status'] == 'success'  # Function returns 'success', not 'recorded'
             assert 'event_id' in result
     
     @pytest.mark.asyncio

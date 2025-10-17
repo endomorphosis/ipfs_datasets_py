@@ -108,17 +108,26 @@ class EnhancedMetricsCollector:
         self.cleanup_task: Optional[asyncio.Task] = None
         self._lock = threading.Lock()
         
-        if self.enabled:
-            self._start_monitoring()
+        # Don't start monitoring automatically during import
+        # It will be started when needed via start_monitoring() method
     
     def _start_monitoring(self):
         """Start background monitoring tasks."""
-        loop = asyncio.get_event_loop()
-        if self.monitoring_task is None or self.monitoring_task.done():
-            self.monitoring_task = asyncio.create_task(self._monitoring_loop())
-        
-        if self.cleanup_task is None or self.cleanup_task.done():
-            self.cleanup_task = asyncio.create_task(self._cleanup_loop())
+        try:
+            loop = asyncio.get_running_loop()
+            if self.monitoring_task is None or self.monitoring_task.done():
+                self.monitoring_task = asyncio.create_task(self._monitoring_loop())
+            
+            if self.cleanup_task is None or self.cleanup_task.done():
+                self.cleanup_task = asyncio.create_task(self._cleanup_loop())
+        except RuntimeError:
+            # No event loop running - monitoring will start when needed
+            pass
+    
+    def start_monitoring(self):
+        """Public method to start monitoring when an event loop is available."""
+        if self.enabled:
+            self._start_monitoring()
     
     async def _monitoring_loop(self):
         """Main monitoring loop that collects system metrics."""

@@ -1,22 +1,33 @@
 """
 IPFS Datasets Python
 
-A unified interface for data processing and distribution across decentralized networks.
+A unified interface for data processing and distribution across decentralized networks
+with automated dependency installation for full functionality.
 """
 
-# Main entry points
+__version__ = "0.2.0"
+
+# Import automated dependency installer
+from .auto_installer import get_installer, ensure_module
+
+# Initialize installer with environment configuration
+installer = get_installer()
+
+# Main entry points with automated installation
 try:
     from .ipfs_datasets import ipfs_datasets_py
     HAVE_IPFS_DATASETS = True
 except ImportError:
     HAVE_IPFS_DATASETS = False
 
-# Re-export key functions
-try:
+# Re-export key functions with automated installation
+datasets_module = ensure_module('datasets', 'datasets', required=False)
+if datasets_module:
     from datasets import load_dataset
     HAVE_LOAD_DATASET = True
-except ImportError:
+else:
     HAVE_LOAD_DATASET = False
+    load_dataset = None
 
 
 # Use conditional imports to handle missing modules gracefully
@@ -70,6 +81,12 @@ except ImportError:
     HAVE_VECTOR_TOOLS = False
 
 try:
+    from . import search
+    HAVE_SEARCH = True
+except ImportError:
+    HAVE_SEARCH = False
+
+try:
     # Import new embeddings and vector store capabilities
     from .embeddings.core import IPFSEmbeddings, PerformanceMetrics
     # FIXME All the embeddings models in schema are hallucinated
@@ -119,11 +136,19 @@ except ImportError:
 # RAG optimizer components
 from .rag.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
 
-from .rag.rag_query_optimizer import (
-    QueryRewriter,
-    QueryBudgetManager,
-    UnifiedGraphRAGQueryOptimizer
-)
+try:
+    from .rag.rag_query_optimizer import (
+        QueryRewriter,
+        QueryBudgetManager,
+        UnifiedGraphRAGQueryOptimizer
+    )
+except ImportError as e:
+    import warnings
+    warnings.warn(f"Advanced RAG query optimizer unavailable due to missing dependencies: {e}")
+    # Provide minimal fallbacks
+    QueryRewriter = None
+    QueryBudgetManager = None
+    UnifiedGraphRAGQueryOptimizer = None
 
 
 try:
@@ -133,12 +158,33 @@ except ImportError:
     HAVE_KG_EXTRACTION = False
 
 # LLM Integration Components
-from .llm.llm_interface import (
-    LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
-    LLMInterfaceFactory, GraphRAGPromptTemplates
-)
+try:
+    from .llm.llm_interface import (
+        LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
+        LLMInterfaceFactory, GraphRAGPromptTemplates
+    )
+    HAVE_LLM_INTERFACE = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"LLM interface unavailable due to missing dependencies: {e}")
+    HAVE_LLM_INTERFACE = False
+    # Provide minimal fallbacks
+    LLMInterface = None
+    MockLLMInterface = None
+    LLMConfig = None
+    PromptTemplate = None
+    LLMInterfaceFactory = None
+    GraphRAGPromptTemplates = None
 
-from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+try:
+    from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+    HAVE_LLM_GRAPHRAG = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"GraphRAG LLM processor unavailable due to missing dependencies: {e}")
+    HAVE_LLM_GRAPHRAG = False
+    GraphRAGLLMProcessor = None
+    ReasoningEnhancer = None
 
 try:
     from ipfs_datasets_py.graphrag_integration import enhance_dataset_with_llm
@@ -200,14 +246,83 @@ try:
 except ImportError:
     HAVE_IPWB = False
 
+# PDF Processing Components with conditional automated dependency installation
+import os
+if installer.auto_install and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true':
+    print("🔧 Installing PDF processing dependencies...")
+    from .auto_installer import install_for_component
+    install_for_component('pdf')
+    install_for_component('ocr')
+
 try:
-    from .pdf_processing import (
-        PDFProcessor, MultiEngineOCR, LLMOptimizer, 
-        GraphRAGIntegrator, QueryEngine, BatchProcessor
-    )
-    HAVE_PDF_PROCESSING = True
-except ImportError:
-    HAVE_PDF_PROCESSING = False
+    from .pdf_processing import PDFProcessor
+    HAVE_PDF_PROCESSOR = True
+    if installer.verbose:
+        print("✅ PDFProcessor successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ PDFProcessor installation failed: {e}")
+    PDFProcessor = None
+    HAVE_PDF_PROCESSOR = False
+
+try:
+    from .pdf_processing import MultiEngineOCR
+    HAVE_MULTI_ENGINE_OCR = True
+    if installer.verbose:
+        print("✅ MultiEngineOCR successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ MultiEngineOCR installation failed: {e}")
+    MultiEngineOCR = None
+    HAVE_MULTI_ENGINE_OCR = False
+
+try:
+    from .pdf_processing import LLMOptimizer
+    HAVE_LLM_OPTIMIZER = True
+    if installer.verbose:
+        print("✅ LLMOptimizer successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ LLMOptimizer installation failed: {e}")
+    LLMOptimizer = None
+    HAVE_LLM_OPTIMIZER = False
+
+try:
+    from .pdf_processing import GraphRAGIntegrator
+    HAVE_GRAPHRAG_INTEGRATOR = True
+    if installer.verbose:
+        print("✅ GraphRAGIntegrator successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ GraphRAGIntegrator installation failed: {e}")
+    GraphRAGIntegrator = None
+    HAVE_GRAPHRAG_INTEGRATOR = False
+
+try:
+    from .pdf_processing import QueryEngine
+    HAVE_QUERY_ENGINE = True
+    if installer.verbose:
+        print("✅ QueryEngine successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ QueryEngine installation failed: {e}")
+    QueryEngine = None
+    HAVE_QUERY_ENGINE = False
+
+try:
+    from .pdf_processing import BatchProcessor
+    HAVE_BATCH_PROCESSOR = True
+    if installer.verbose:
+        print("✅ BatchProcessor successfully installed and available")
+except ImportError as e:
+    if installer.verbose:
+        print(f"⚠️ BatchProcessor installation failed: {e}")
+    BatchProcessor = None
+    HAVE_BATCH_PROCESSOR = False
+
+HAVE_PDF_PROCESSING = (HAVE_PDF_PROCESSOR or HAVE_MULTI_ENGINE_OCR or 
+                       HAVE_LLM_OPTIMIZER or HAVE_GRAPHRAG_INTEGRATOR or 
+                       HAVE_QUERY_ENGINE or HAVE_BATCH_PROCESSOR)
 
 # Define base exports that should always be available
 __all__ = [
@@ -255,6 +370,9 @@ if HAVE_WEB_ARCHIVE:
 
 if HAVE_VECTOR_TOOLS:
     __all__.extend(['VectorSimilarityCalculator'])
+
+if HAVE_SEARCH:
+    __all__.extend(['search'])
 
 if HAVE_EMBEDDINGS:
     __all__.extend([
@@ -336,11 +454,45 @@ if HAVE_PDF_PROCESSING:
         'BatchProcessor'
     ])
 
+# Web Text Extraction
+try:
+    from .web_text_extractor import (
+        WebTextExtractor,
+        WebTextExtractionResult,
+        extract_website_text,
+        extract_multiple_websites,
+        save_website_text
+    )
+    HAVE_WEB_TEXT_EXTRACTOR = True
+    __all__.extend([
+        'WebTextExtractor',
+        'WebTextExtractionResult', 
+        'extract_website_text',
+        'extract_multiple_websites',
+        'save_website_text'
+    ])
+except ImportError as e:
+    HAVE_WEB_TEXT_EXTRACTOR = False
+    WebTextExtractor = None
+    if installer.verbose:
+        warnings.warn(f"Web text extractor unavailable due to missing dependencies: {e}")
+
 # Proper module aliasing for backward compatibility
 from . import llm
 from . import rag
 
 # Direct aliases without polluting sys.modules
-llm_interface = llm.llm_interface
-llm_graphrag = llm.llm_graphrag  
-rag_query_optimizer = rag.rag_query_optimizer
+try:
+    llm_interface = llm.llm_interface
+except AttributeError:
+    llm_interface = None
+
+try:
+    llm_graphrag = llm.llm_graphrag
+except AttributeError:
+    llm_graphrag = None
+
+try:
+    rag_query_optimizer = rag.rag_query_optimizer
+except AttributeError:
+    rag_query_optimizer = None

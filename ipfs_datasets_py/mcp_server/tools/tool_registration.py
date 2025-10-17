@@ -425,6 +425,103 @@ TOOL_MAPPINGS = {
                 "tags": ["index", "configuration", "optimization"]
             }
         }
+    },
+    
+    # Legal Dataset Tools
+    "legal_dataset_tools": {
+        "module_path": "ipfs_datasets_py.mcp_server.tools.legal_dataset_tools",
+        "functions": {
+            "scrape_recap_archive": {
+                "name": "scrape_recap_archive",
+                "category": "legal_datasets",
+                "description": "Scrape federal court documents from RECAP Archive with resume and incremental update support",
+                "tags": ["legal", "courts", "recap", "scraping", "resume", "incremental"]
+            },
+            "search_recap_documents": {
+                "name": "search_recap_documents",
+                "category": "legal_datasets",
+                "description": "Search RECAP Archive for specific court documents",
+                "tags": ["legal", "courts", "recap", "search"]
+            },
+            "get_recap_document": {
+                "name": "get_recap_document",
+                "category": "legal_datasets",
+                "description": "Get detailed information for a specific RECAP document",
+                "tags": ["legal", "courts", "recap", "details"]
+            },
+            "scrape_recap_incremental": {
+                "name": "scrape_recap_incremental",
+                "category": "legal_datasets",
+                "description": "Incrementally update RECAP Archive dataset with only new documents",
+                "tags": ["legal", "courts", "recap", "incremental", "update"]
+            },
+            "scrape_us_code": {
+                "name": "scrape_us_code",
+                "category": "legal_datasets",
+                "description": "Scrape United States Code titles",
+                "tags": ["legal", "uscode", "federal", "scraping"]
+            },
+            "get_us_code_titles": {
+                "name": "get_us_code_titles",
+                "category": "legal_datasets",
+                "description": "Get list of available US Code titles",
+                "tags": ["legal", "uscode", "federal", "metadata"]
+            },
+            "scrape_federal_register": {
+                "name": "scrape_federal_register",
+                "category": "legal_datasets",
+                "description": "Scrape Federal Register documents from federal agencies",
+                "tags": ["legal", "federal_register", "regulations", "scraping"]
+            },
+            "search_federal_register": {
+                "name": "search_federal_register",
+                "category": "legal_datasets",
+                "description": "Search Federal Register for specific documents",
+                "tags": ["legal", "federal_register", "search"]
+            },
+            "scrape_state_laws": {
+                "name": "scrape_state_laws",
+                "category": "legal_datasets",
+                "description": "Scrape state statutes and regulations",
+                "tags": ["legal", "state_laws", "statutes", "scraping"]
+            },
+            "list_state_jurisdictions": {
+                "name": "list_state_jurisdictions",
+                "category": "legal_datasets",
+                "description": "List available state jurisdictions for scraping",
+                "tags": ["legal", "state_laws", "metadata"]
+            },
+            "scrape_municipal_laws": {
+                "name": "scrape_municipal_laws",
+                "category": "legal_datasets",
+                "description": "Scrape municipal codes and ordinances",
+                "tags": ["legal", "municipal", "ordinances", "scraping"]
+            },
+            "search_municipal_codes": {
+                "name": "search_municipal_codes",
+                "category": "legal_datasets",
+                "description": "Search municipal codes by city",
+                "tags": ["legal", "municipal", "search"]
+            },
+            "export_dataset": {
+                "name": "export_legal_dataset",
+                "category": "legal_datasets",
+                "description": "Export scraped legal dataset in JSON, Parquet, or CSV format",
+                "tags": ["legal", "export", "data", "formats"]
+            },
+            "list_scraping_jobs": {
+                "name": "list_scraping_jobs",
+                "category": "legal_datasets",
+                "description": "List all saved scraping jobs with resume capability",
+                "tags": ["legal", "jobs", "state", "management"]
+            },
+            "delete_scraping_job": {
+                "name": "delete_scraping_job",
+                "category": "legal_datasets",
+                "description": "Delete a saved scraping job state",
+                "tags": ["legal", "jobs", "state", "cleanup"]
+            }
+        }
     }
 }
 

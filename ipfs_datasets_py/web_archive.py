@@ -86,6 +86,7 @@ class WebArchive:
         """
         self.storage_path = storage_path
         self.archived_items = {}
+        self.persistence_mode = "persistent" if storage_path else "memory_only"
 
     def archive_url(self, url: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Archive a URL with optional metadata.

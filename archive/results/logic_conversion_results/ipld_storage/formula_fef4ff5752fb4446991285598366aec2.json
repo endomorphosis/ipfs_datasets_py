@@ -1,0 +1,42 @@
+{
+  "formula_id": "2e087c7d5c36",
+  "deontic_formula": {
+    "formula_id": "2e087c7d5c36",
+    "operator": "O",
+    "proposition": "maintain_insurance_coverage",
+    "agent": {
+      "identifier": "agent_2969",
+      "name": "Contractor",
+      "agent_type": "organization",
+      "properties": {},
+      "hash": "a905e155"
+    },
+    "beneficiary": null,
+    "conditions": [],
+    "temporal_conditions": [],
+    "legal_context": {
+      "jurisdiction": "Illinois, USA",
+      "legal_domain": "contract",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "confidence": 0.95,
+    "source_text": "The Contractor is required to maintain comprehensive insurance coverage",
+    "variables": {},
+    "quantifiers": [],
+    "fol_string": "O[agent_2969](maintain_insurance_coverage)",
+    "creation_timestamp": "2025-08-31T19:15:31.058867"
+  },
+  "source_document_cid": null,
+  "source_text_excerpt": "The Contractor is required to maintain comprehensive insurance coverage",
+  "extraction_metadata": {
+    "source_method": "graphrag_conversion"
+  },
+  "translations": {},
+  "translation_cids": {},
+  "provenance_chain": null,
+  "creation_timestamp": "2025-08-31T19:15:31.062580",
+  "confidence_score": 0.95,
+  "validation_results": {}
+}

@@ -1,0 +1,418 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Analysis Dashboard - Mock Preview</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: #f5f7fa; 
+            color: #333;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; min-height: 100vh; }
+        .header { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 1rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        .header h1 { font-size: 1.5rem; }
+        .status { display: flex; align-items: center; gap: 0.5rem; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; }
+        .nav-tabs { 
+            display: flex; 
+            background: #34495e; 
+            padding: 0 2rem;
+        }
+        .nav-tab { 
+            padding: 1rem 1.5rem; 
+            background: none; 
+            border: none; 
+            color: #bdc3c7; 
+            cursor: pointer; 
+            transition: all 0.3s;
+        }
+        .nav-tab.active, .nav-tab:hover { 
+            background: #3498db; 
+            color: white; 
+        }
+        .main { padding: 2rem; }
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 1rem; 
+            margin-bottom: 2rem;
+        }
+        .stat-card { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        .stat-card h3 { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #2c3e50; }
+        .stat-change { font-size: 0.8rem; margin-top: 0.5rem; }
+        .positive { color: #27ae60; }
+        .dashboard-section { 
+            background: white; 
+            margin-bottom: 2rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-header { 
+            padding: 1rem 1.5rem; 
+            border-bottom: 1px solid #ecf0f1; 
+            font-weight: 600;
+        }
+        .section-content { padding: 1.5rem; }
+        .activity-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0.75rem 0; 
+            border-bottom: 1px solid #f8f9fa;
+        }
+        .activity-time { color: #7f8c8d; font-size: 0.8rem; }
+        .activity-status.success { color: #27ae60; font-weight: bold; }
+        .activity-status.warning { color: #f39c12; font-weight: bold; }
+        .btn { 
+            padding: 0.75rem 1.5rem; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            margin: 0.25rem;
+        }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-input, .form-select { 
+            width: 100%; 
+            padding: 0.75rem; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            font-size: 1rem;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .visualization-placeholder {
+            height: 300px;
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <h1>News Analysis Dashboard</h1>
+            </div>
+            <div class="status">
+                <span class="status-dot"></span>
+                <span>Connected to IPFS</span>
+            </div>
+        </header>
+        
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">Overview</button>
+            <button class="nav-tab" onclick="showTab('ingest')">Ingest</button>
+            <button class="nav-tab" onclick="showTab('timeline')">Timeline</button>
+            <button class="nav-tab" onclick="showTab('analyze')">Analyze</button>
+            <button class="nav-tab" onclick="showTab('entities')">Entities</button>
+            <button class="nav-tab" onclick="showTab('search')">Search</button>
+            <button class="nav-tab" onclick="showTab('export')">Export</button>
+            <button class="nav-tab" onclick="showTab('workflows')">Workflows</button>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>ARTICLES PROCESSED</h3>
+                        <div class="stat-value">1,247</div>
+                        <div class="stat-change positive">+15.3% this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>ENTITIES EXTRACTED</h3>
+                        <div class="stat-value">3,891</div>
+                        <div class="stat-change positive">+8.7% this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>ACTIVE WORKFLOWS</h3>
+                        <div class="stat-value">23</div>
+                        <div class="stat-change">3 running now</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>AVG PROCESSING TIME</h3>
+                        <div class="stat-value">2.3s</div>
+                        <div class="stat-change positive">-12% improvement</div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-section">
+                    <div class="section-header">Recent Activity</div>
+                    <div class="section-content">
+                        <div class="activity-item">
+                            <div>
+                                <div>Processed batch of 15 Reuters articles</div>
+                                <div class="activity-time">2 minutes ago</div>
+                            </div>
+                            <span class="activity-status success">✓</span>
+                        </div>
+                        <div class="activity-item">
+                            <div>
+                                <div>Entity extraction completed for BBC Tech</div>
+                                <div class="activity-time">5 minutes ago</div>
+                            </div>
+                            <span class="activity-status success">✓</span>
+                        </div>
+                        <div class="activity-item">
+                            <div>
+                                <div>Timeline analysis: "AI Safety" topic</div>
+                                <div class="activity-time">8 minutes ago</div>
+                            </div>
+                            <span class="activity-status success">✓</span>
+                        </div>
+                        <div class="activity-item">
+                            <div>
+                                <div>Cross-document conflict detected</div>
+                                <div class="activity-time">12 minutes ago</div>
+                            </div>
+                            <span class="activity-status warning">!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-section">
+                    <div class="section-header">Processing Trends</div>
+                    <div class="section-content">
+                        <div class="visualization-placeholder">
+                            Interactive Chart: Article Processing Over Time
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ingest Tab -->
+            <div id="ingest" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Article Ingestion</div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Source Type:</label>
+                            <select class="form-select">
+                                <option>Single Article URL</option>
+                                <option>RSS Feed</option>
+                                <option>Batch File Upload</option>
+                                <option>PDF Document</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>URL or Feed:</label>
+                            <input type="url" class="form-input" placeholder="https://example.com/article-or-feed">
+                        </div>
+                        <div class="form-group">
+                            <label>Processing Options:</label>
+                            <div style="margin-top: 0.5rem;">
+                                <label><input type="checkbox" checked> Extract named entities</label><br>
+                                <label><input type="checkbox" checked> Generate embeddings</label><br>
+                                <label><input type="checkbox"> Sentiment analysis</label><br>
+                                <label><input type="checkbox"> Timeline integration</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">Start Ingestion Process</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline Tab -->
+            <div id="timeline" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Timeline Analysis</div>
+                    <div class="section-content">
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <input type="text" class="form-input" placeholder="Search topic or keywords..." style="flex: 1;">
+                            <select class="form-select" style="width: 200px;">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                                <option>Custom range</option>
+                            </select>
+                            <button class="btn btn-primary">Generate Timeline</button>
+                        </div>
+                        <div class="visualization-placeholder">
+                            Interactive Timeline: Event Distribution Over Time
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analyze Tab -->
+            <div id="analyze" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Cross-Document Analysis</div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Analysis Type:</label>
+                            <select class="form-select">
+                                <option>Conflict Detection</option>
+                                <option>Information Flow Tracing</option>
+                                <option>Source Credibility Analysis</option>
+                                <option>Consensus Identification</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Topic or Claim:</label>
+                            <input type="text" class="form-input" placeholder="Enter topic, claim, or search query">
+                        </div>
+                        <button class="btn btn-primary">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Entities Tab -->
+            <div id="entities" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Entity Relationship Graph</div>
+                    <div class="section-content">
+                        <div class="visualization-placeholder">
+                            Interactive Network Graph: Entity Relationships
+                        </div>
+                        <div style="display: flex; gap: 2rem; margin-top: 1rem;">
+                            <div>Organizations: <strong>142</strong></div>
+                            <div>People: <strong>89</strong></div>
+                            <div>Locations: <strong>76</strong></div>
+                            <div>Technologies: <strong>34</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Tab -->
+            <div id="search" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Semantic Search</div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Search Mode:</label>
+                            <select class="form-select">
+                                <option>Semantic Search</option>
+                                <option>Professional Mode (Data Scientist)</option>
+                                <option>Professional Mode (Historian)</option>
+                                <option>Professional Mode (Lawyer)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Query:</label>
+                            <input type="text" class="form-input" placeholder="Enter your search query or question">
+                        </div>
+                        <button class="btn btn-primary">Search Articles</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Export Tab -->
+            <div id="export" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Professional Export Tools</div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Export Format:</label>
+                            <select class="form-select">
+                                <option>CSV Dataset (Data Science)</option>
+                                <option>Academic Report with Citations</option>
+                                <option>Legal Evidence Package</option>
+                                <option>JSON with Embeddings</option>
+                                <option>Parquet for ML Training</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Data Range:</label>
+                            <select class="form-select">
+                                <option>All processed articles</option>
+                                <option>Current search results</option>
+                                <option>Selected articles only</option>
+                                <option>Date range filter</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary">Generate Export</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workflows Tab -->
+            <div id="workflows" class="tab-content">
+                <div class="dashboard-section">
+                    <div class="section-header">Active Workflows</div>
+                    <div class="section-content">
+                        <div class="activity-item">
+                            <div>
+                                <div><strong>Reuters Tech Feed Analysis</strong></div>
+                                <div class="activity-time">Started 1 hour ago • Processing</div>
+                            </div>
+                            <span class="activity-status">⏳</span>
+                        </div>
+                        <div class="activity-item">
+                            <div>
+                                <div><strong>BBC News Timeline Generation</strong></div>
+                                <div class="activity-time">Started 30 min ago • Entity extraction</div>
+                            </div>
+                            <span class="activity-status">⏳</span>
+                        </div>
+                        <div class="activity-item">
+                            <div>
+                                <div><strong>AI Safety Conflict Analysis</strong></div>
+                                <div class="activity-time">Completed 5 min ago</div>
+                            </div>
+                            <span class="activity-status success">✓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Activate corresponding nav tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
+        

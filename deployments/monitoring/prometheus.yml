@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'website-graphrag-processor'
+    static_configs:
+      - targets: ['website-graphrag-processor:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'job-worker'
+    static_configs:
+      - targets: ['job-worker:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+
+  - job_name: 'ipfs'
+    static_configs:
+      - targets: ['ipfs:5001']

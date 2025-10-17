@@ -1,0 +1,199 @@
+{
+  "us_code": {
+    "status": "error",
+    "error": "Required library not available: No module named 'bs4'. Install with: pip install requests beautifulsoup4",
+    "data": [],
+    "metadata": {}
+  },
+  "federal_register": {
+    "status": "success",
+    "data": [
+      {
+        "document_number": "2024-00001",
+        "title": "Sample Environmental Protection Agency Regulation Document",
+        "agency": "Environmental Protection Agency",
+        "agency_abbreviation": "EPA",
+        "type": "RULE",
+        "publication_date": "2025-10-12",
+        "effective_date": "2025-10-12",
+        "abstract": "This is a placeholder Federal Register document from Environmental Protection Agency. Production version would fetch actual documents from federalregister.gov API.",
+        "action": "Final rule",
+        "citation": "89 FR 10000",
+        "url": "https://www.federalregister.gov/documents/2024/01/01/2024-00001",
+        "cfr_references": [
+          "10 CFR Part 100"
+        ],
+        "full_text": null,
+        "scraped_at": "2025-10-12T05:47:57.869109"
+      },
+      {
+        "document_number": "2024-00002",
+        "title": "Sample Food and Drug Administration Regulation Document",
+        "agency": "Food and Drug Administration",
+        "agency_abbreviation": "FDA",
+        "type": "RULE",
+        "publication_date": "2025-10-12",
+        "effective_date": "2025-10-12",
+        "abstract": "This is a placeholder Federal Register document from Food and Drug Administration. Production version would fetch actual documents from federalregister.gov API.",
+        "action": "Final rule",
+        "citation": "89 FR 10001",
+        "url": "https://www.federalregister.gov/documents/2024/01/01/2024-00002",
+        "cfr_references": [
+          "11 CFR Part 101"
+        ],
+        "full_text": null,
+        "scraped_at": "2025-10-12T05:47:58.869231"
+      }
+    ],
+    "metadata": {
+      "agencies_scraped": [
+        "EPA",
+        "FDA"
+      ],
+      "agencies_count": 2,
+      "documents_count": 2,
+      "date_range": {
+        "start_date": "2025-09-12",
+        "end_date": "2025-10-12"
+      },
+      "elapsed_time_seconds": 2.000237226486206,
+      "scraped_at": "2025-10-12T05:47:59.869345",
+      "source": "federalregister.gov",
+      "api_endpoint": "https://www.federalregister.gov/api/v1/documents.json",
+      "rate_limit_delay": 1.0,
+      "include_full_text": false
+    },
+    "output_format": "json",
+    "note": "This is a placeholder implementation. Production version would fetch actual data from federalregister.gov API."
+  },
+  "state_laws": {
+    "status": "error",
+    "error": "Required library not available: No module named 'bs4'. Install with: pip install requests beautifulsoup4",
+    "data": [],
+    "metadata": {}
+  },
+  "municipal_laws": {
+    "status": "error",
+    "error": "Required library not available: No module named 'bs4'. Install with: pip install requests beautifulsoup4",
+    "data": [],
+    "metadata": {}
+  },
+  "recap_archive": {
+    "status": "success",
+    "data": [
+      {
+        "id": "recap-ca9-opinion-00001",
+        "docket_id": "10000",
+        "case_name": "Sample Case 1 v. Example 1",
+        "court": "ca9",
+        "document_type": "opinion",
+        "date_filed": "2025-09-12",
+        "page_count": 10,
+        "pacer_doc_id": "1234567890",
+        "recap_url": "https://www.courtlistener.com/recap/gov.uscourts.ca9.10000.1.0.pdf",
+        "docket_url": "https://www.courtlistener.com/docket/10000/",
+        "text": "This is placeholder document text for a opinion from ca9. Production version would fetch actual document text and metadata from CourtListener/RECAP API.",
+        "metadata": {
+          "plain_text_available": true,
+          "pdf_available": true,
+          "ocr_status": "complete",
+          "pacer_case_id": "100000",
+          "nature_of_suit": "Sample litigation",
+          "cause": "28:1331 Federal Question"
+        },
+        "scraped_at": "2025-10-12T05:47:59.869953"
+      },
+      {
+        "id": "recap-ca9-complaint-00002",
+        "docket_id": "10001",
+        "case_name": "Sample Case 2 v. Example 2",
+        "court": "ca9",
+        "document_type": "complaint",
+        "date_filed": "2025-09-12",
+        "page_count": 11,
+        "pacer_doc_id": "1234567891",
+        "recap_url": "https://www.courtlistener.com/recap/gov.uscourts.ca9.10001.1.0.pdf",
+        "docket_url": "https://www.courtlistener.com/docket/10001/",
+        "text": "This is placeholder document text for a complaint from ca9. Production version would fetch actual document text and metadata from CourtListener/RECAP API.",
+        "metadata": {
+          "plain_text_available": true,
+          "pdf_available": true,
+          "ocr_status": "complete",
+          "pacer_case_id": "100001",
+          "nature_of_suit": "Sample litigation",
+          "cause": "28:1331 Federal Question"
+        },
+        "scraped_at": "2025-10-12T05:48:00.870074"
+      },
+      {
+        "id": "recap-nysd-opinion-00003",
+        "docket_id": "10002",
+        "case_name": "Sample Case 3 v. Example 3",
+        "court": "nysd",
+        "document_type": "opinion",
+        "date_filed": "2025-09-12",
+        "page_count": 12,
+        "pacer_doc_id": "1234567892",
+        "recap_url": "https://www.courtlistener.com/recap/gov.uscourts.nysd.10002.1.0.pdf",
+        "docket_url": "https://www.courtlistener.com/docket/10002/",
+        "text": "This is placeholder document text for a opinion from nysd. Production version would fetch actual document text and metadata from CourtListener/RECAP API.",
+        "metadata": {
+          "plain_text_available": true,
+          "pdf_available": true,
+          "ocr_status": "complete",
+          "pacer_case_id": "100002",
+          "nature_of_suit": "Sample litigation",
+          "cause": "28:1331 Federal Question"
+        },
+        "scraped_at": "2025-10-12T05:48:01.870199"
+      },
+      {
+        "id": "recap-nysd-complaint-00004",
+        "docket_id": "10003",
+        "case_name": "Sample Case 4 v. Example 4",
+        "court": "nysd",
+        "document_type": "complaint",
+        "date_filed": "2025-09-12",
+        "page_count": 13,
+        "pacer_doc_id": "1234567893",
+        "recap_url": "https://www.courtlistener.com/recap/gov.uscourts.nysd.10003.1.0.pdf",
+        "docket_url": "https://www.courtlistener.com/docket/10003/",
+        "text": "This is placeholder document text for a complaint from nysd. Production version would fetch actual document text and metadata from CourtListener/RECAP API.",
+        "metadata": {
+          "plain_text_available": true,
+          "pdf_available": true,
+          "ocr_status": "complete",
+          "pacer_case_id": "100003",
+          "nature_of_suit": "Sample litigation",
+          "cause": "28:1331 Federal Question"
+        },
+        "scraped_at": "2025-10-12T05:48:02.870320"
+      }
+    ],
+    "metadata": {
+      "courts_scraped": [
+        "ca9",
+        "nysd"
+      ],
+      "courts_count": 2,
+      "documents_count": 4,
+      "document_types": [
+        "opinion",
+        "complaint"
+      ],
+      "date_range": {
+        "filed_after": "2025-09-12",
+        "filed_before": "2025-10-12"
+      },
+      "elapsed_time_seconds": 4.000486373901367,
+      "scraped_at": "2025-10-12T05:48:03.870435",
+      "source": "CourtListener RECAP Archive",
+      "api_endpoint": "https://www.courtlistener.com/api/rest/v3/",
+      "rate_limit_delay": 1.0,
+      "include_text": true,
+      "include_metadata": true
+    },
+    "output_format": "json",
+    "note": "This is a placeholder implementation. Production version would fetch actual data from CourtListener/RECAP API at courtlistener.com"
+  }
+}

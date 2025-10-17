@@ -1,0 +1,69 @@
+{
+  "test_suite": "VSCode CLI MCP Dashboard Integration",
+  "timestamp": "2025-10-17T04:18:15.110206",
+  "tools_tested": [
+    {
+      "name": "vscode_cli_status",
+      "category": "development",
+      "tested": true,
+      "gui_accessible": true,
+      "description": "Get VSCode CLI installation status"
+    },
+    {
+      "name": "vscode_cli_install",
+      "category": "development",
+      "tested": true,
+      "gui_accessible": true,
+      "description": "Install or update VSCode CLI"
+    },
+    {
+      "name": "vscode_cli_execute",
+      "category": "development",
+      "tested": true,
+      "gui_accessible": true,
+      "description": "Execute VSCode CLI commands"
+    },
+    {
+      "name": "vscode_cli_extensions",
+      "category": "development",
+      "tested": true,
+      "gui_accessible": true,
+      "description": "Manage VSCode extensions"
+    },
+    {
+      "name": "vscode_cli_tunnel",
+      "category": "development",
+      "tested": true,
+      "gui_accessible": true,
+      "github_auth": true,
+      "description": "Manage VSCode tunnel with GitHub authentication"
+    }
+  ],
+  "features_demonstrated": [
+    "Tool discovery in dashboard",
+    "Tool execution through GUI",
+    "GitHub authentication setup",
+    "Extension management",
+    "Tunnel configuration",
+    "Platform auto-detection",
+    "Error handling",
+    "Status monitoring"
+  ],
+  "access_methods_verified": [
+    "Web Dashboard GUI",
+    "REST API Endpoints",
+    "JavaScript MCP SDK",
+    "Python Module API"
+  ],
+  "authentication": {
+    "github_oauth": "supported",
+    "microsoft_oauth": "supported",
+    "setup_via_dashboard": "enabled"
+  },
+  "summary": {
+    "total_tools": 5,
+    "all_accessible": true,
+    "github_auth_functional": true,
+    "full_scope_exposed": true
+  }
+}
