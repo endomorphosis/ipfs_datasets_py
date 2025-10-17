@@ -1008,6 +1008,9 @@
             <a href="#" class="nav-link" data-target="caselaw-analysis">
                 <i class="fas fa-gavel"></i>Caselaw Analysis
             </a>
+            <a href="#" class="nav-link" data-target="municipal-codes-scraper">
+                <i class="fas fa-city"></i>Municipal Codes Scraper
+            </a>
             <a href="#" class="nav-link" data-target="text-to-fol">
                 <i class="fas fa-brain"></i>Text to First-Order Logic
             </a>
@@ -2385,6 +2388,118 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Municipal Codes Scraper Section -->
+            <div id="municipal-codes-scraper" class="content-section">
+                <div class="tool-section">
+                    <h2><i class="fas fa-city"></i> Municipal Codes Scraper</h2>
+                    <p class="text-muted">Scrape municipal legal codes from US cities and counties using the scrape_the_law_mk3 system. Build comprehensive datasets of local ordinances and regulations.</p>
+                    
+                    <div class="tool-grid">
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-map-marker-alt"></i> Jurisdiction Selection</h3>
+                            <div class="form-group">
+                                <label for="municipal-jurisdictions">Jurisdictions</label>
+                                <input type="text" class="form-control" id="municipal-jurisdictions" placeholder="e.g., Seattle, WA; Portland, OR; Austin, TX" />
+                                <small class="form-text text-muted">Enter one or more jurisdictions (comma-separated)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="municipal-provider">Provider</label>
+                                <select class="form-select" id="municipal-provider">
+                                    <option value="auto">Auto-detect</option>
+                                    <option value="municode">Municode</option>
+                                    <option value="american_legal">American Legal</option>
+                                    <option value="general_code">General Code</option>
+                                    <option value="lexisnexis">LexisNexis</option>
+                                </select>
+                                <small class="form-text text-muted">Legal code provider (auto-detect recommended)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="municipal-output-format">Output Format</label>
+                                <select class="form-select" id="municipal-output-format">
+                                    <option value="json">JSON</option>
+                                    <option value="parquet">Parquet</option>
+                                    <option value="sql">SQL</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-cog"></i> Scraping Options</h3>
+                            <div class="form-group">
+                                <label for="municipal-rate-limit">Rate Limit (seconds)</label>
+                                <input type="number" class="form-control" id="municipal-rate-limit" value="2.0" step="0.5" min="0.5" />
+                                <small class="form-text text-muted">Delay between requests to avoid overloading servers</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="municipal-max-sections">Max Sections</label>
+                                <input type="number" class="form-control" id="municipal-max-sections" placeholder="Leave empty for all sections" />
+                                <small class="form-text text-muted">Limit number of code sections per jurisdiction (optional)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="municipal-scraper-type">Scraper Backend</label>
+                                <select class="form-select" id="municipal-scraper-type">
+                                    <option value="playwright">Playwright (Async)</option>
+                                    <option value="selenium">Selenium (Sync)</option>
+                                </select>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="municipal-include-metadata" checked />
+                                <label class="form-check-label" for="municipal-include-metadata">
+                                    Include Metadata
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="municipal-include-text" checked />
+                                <label class="form-check-label" for="municipal-include-text">
+                                    Include Full Text
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-play-circle"></i> Execute Scraping</h3>
+                            <div class="form-group">
+                                <label for="municipal-job-id">Custom Job ID (Optional)</label>
+                                <input type="text" class="form-control" id="municipal-job-id" placeholder="Auto-generated if empty" />
+                                <small class="form-text text-muted">Provide custom job ID for resume capability</small>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="municipal-resume" />
+                                <label class="form-check-label" for="municipal-resume">
+                                    Resume from Previous Job
+                                </label>
+                            </div>
+                            <button class="btn btn-primary btn-lg w-100 mb-2" onclick="scrapeMunicipalCodes()">
+                                <i class="fas fa-download me-2"></i>Start Scraping
+                            </button>
+                            <button class="btn btn-outline-secondary w-100" onclick="clearMunicipalForm()">
+                                <i class="fas fa-undo me-2"></i>Clear Form
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-info-circle"></i> About Municipal Codes Scraping</h6>
+                        <p class="mb-2 small">This tool integrates with the scrape_the_law_mk3 system to collect municipal legal codes from US cities and counties. Per the US Library of Congress, there currently does not exist a single repository for all US municipal codes - this tool helps address that gap.</p>
+                        <ul class="mb-0 small">
+                            <li><strong>Coverage</strong>: ~22,899+ US municipalities</li>
+                            <li><strong>Providers</strong>: Municode (~3,528), American Legal (~2,180), General Code (~1,601), LexisNexis (~3,200)</li>
+                            <li><strong>Job Management</strong>: Auto-generated job IDs with resume capability for long-running operations</li>
+                            <li><strong>Output</strong>: Structured data with full metadata and citation information</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2>Scraping Results</h2>
+                    <div id="municipal-results" class="results-panel">
+                        <div class="result-header">Ready to scrape</div>
+                        <div class="result-item">Configure your scraping parameters above and click 'Start Scraping' to begin.</div>
                     </div>
                 </div>
             </div>
@@ -4510,6 +4625,122 @@ Example: Citizens must pay taxes by April 15th. Corporations are prohibited from
             } catch (error) {
                 console.error('Failed to load theorem stats:', error);
             }
+        }
+
+        // Municipal Codes Scraper Functions
+        async function scrapeMunicipalCodes() {
+            const resultsDiv = document.getElementById('municipal-results');
+            const jurisdictionsInput = document.getElementById('municipal-jurisdictions').value.trim();
+            
+            // Show loading state
+            resultsDiv.innerHTML = `
+                <div class="result-header"><i class="fas fa-spinner fa-spin"></i> Scraping in progress...</div>
+                <div class="result-item">Initializing scraping job...</div>
+            `;
+            
+            if (!jurisdictionsInput) {
+                resultsDiv.innerHTML = `
+                    <div class="result-header" style="color: var(--danger-red);">Error</div>
+                    <div class="result-item">Please specify at least one jurisdiction to scrape.</div>
+                `;
+                return;
+            }
+            
+            try {
+                // Parse jurisdictions (comma-separated)
+                const jurisdictions = jurisdictionsInput.split(',').map(j => j.trim()).filter(j => j);
+                
+                // Gather parameters
+                const params = {
+                    jurisdictions: jurisdictions,
+                    provider: document.getElementById('municipal-provider').value,
+                    output_format: document.getElementById('municipal-output-format').value,
+                    rate_limit_delay: parseFloat(document.getElementById('municipal-rate-limit').value),
+                    max_sections: document.getElementById('municipal-max-sections').value ? parseInt(document.getElementById('municipal-max-sections').value) : null,
+                    scraper_type: document.getElementById('municipal-scraper-type').value,
+                    include_metadata: document.getElementById('municipal-include-metadata').checked,
+                    include_text: document.getElementById('municipal-include-text').checked,
+                    job_id: document.getElementById('municipal-job-id').value || null,
+                    resume: document.getElementById('municipal-resume').checked
+                };
+                
+                // Call MCP API
+                const response = await fetch('/api/mcp/tools/call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tool_name: 'scrape_municipal_codes',
+                        parameters: params
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Display results
+                let html = '';
+                if (data.status === 'success' || (data.result && data.result.status === 'success')) {
+                    const result = data.result || data;
+                    html += `<div class="result-header" style="color: var(--accent-green);">✓ Scraping Job Initialized</div>`;
+                    html += `<div class="result-item"><strong>Job ID:</strong> ${result.job_id}</div>`;
+                    html += `<div class="result-item"><strong>Status:</strong> ${result.status}</div>`;
+                    html += `<div class="result-item"><strong>Jurisdictions:</strong> ${result.jurisdictions.length}</div>`;
+                    html += `<div class="result-item"><strong>Provider:</strong> ${result.provider}</div>`;
+                    html += `<div class="result-item"><strong>Output Format:</strong> ${result.output_format}</div>`;
+                    html += `<div class="result-item"><strong>Scraper:</strong> ${result.scraper_type}</div>`;
+                    
+                    if (result.message) {
+                        html += `<div class="result-item mt-2">${result.message}</div>`;
+                    }
+                    
+                    if (result.note) {
+                        html += `<div class="result-item mt-2"><em>${result.note}</em></div>`;
+                    }
+                    
+                    html += '<div class="result-item mt-3"><strong>Jurisdictions to scrape:</strong></div>';
+                    result.jurisdictions.forEach((j, idx) => {
+                        html += `<div class="result-item">  ${idx + 1}. ${j}</div>`;
+                    });
+                    
+                    if (result.metadata) {
+                        html += '<div class="result-item mt-3"><strong>Metadata:</strong></div>';
+                        html += `<div class="result-item">  Jurisdictions Count: ${result.metadata.jurisdictions_count}</div>`;
+                    }
+                } else {
+                    const error = data.error || (data.result && data.result.error) || 'Unknown error occurred';
+                    html += `<div class="result-header" style="color: var(--danger-red);">✗ Error</div>`;
+                    html += `<div class="result-item">${error}</div>`;
+                }
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Municipal codes scraping error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="result-header" style="color: var(--danger-red);">✗ Request Failed</div>
+                    <div class="result-item">Error: ${error.message}</div>
+                    <div class="result-item">Please check the console for details.</div>
+                `;
+            }
+        }
+
+        function clearMunicipalForm() {
+            document.getElementById('municipal-jurisdictions').value = '';
+            document.getElementById('municipal-provider').value = 'auto';
+            document.getElementById('municipal-output-format').value = 'json';
+            document.getElementById('municipal-rate-limit').value = '2.0';
+            document.getElementById('municipal-max-sections').value = '';
+            document.getElementById('municipal-scraper-type').value = 'playwright';
+            document.getElementById('municipal-include-metadata').checked = true;
+            document.getElementById('municipal-include-text').checked = true;
+            document.getElementById('municipal-job-id').value = '';
+            document.getElementById('municipal-resume').checked = false;
+            
+            document.getElementById('municipal-results').innerHTML = `
+                <div class="result-header">Form cleared</div>
+                <div class="result-item">Ready to configure a new scraping job.</div>
+            `;
         }
 
         // Initialize tool categories on page load
