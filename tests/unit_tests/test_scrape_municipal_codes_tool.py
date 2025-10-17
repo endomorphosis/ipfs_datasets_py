@@ -175,6 +175,8 @@ class TestScrapeMunicipalCodesTool:
             "rate_limit_delay": 3.0,
             "max_sections": 1000,
             "scraper_type": "selenium",
+            "enable_fallbacks": True,
+            "fallback_methods": ["wayback_machine", "common_crawl", "playwright"],
             "job_id": "full_test_job",
             "resume": False
         }
@@ -186,6 +188,8 @@ class TestScrapeMunicipalCodesTool:
         assert result["provider"] == "general_code"
         assert result["scraper_type"] == "selenium"
         assert result["output_format"] == "sql"
+        assert result["enable_fallbacks"] == True
+        assert len(result["fallback_methods"]) == 3
     
     @pytest.mark.asyncio
     async def test_execute_auto_job_id_generation(self, tool_instance):
@@ -244,6 +248,48 @@ class TestScrapeMunicipalCodesTool:
         server = TemporalDeonticMCPServer()
         assert "scrape_municipal_codes" in server.tools
         assert server.tools["scrape_municipal_codes"].name == "scrape_municipal_codes"
+    
+    @pytest.mark.asyncio
+    async def test_execute_with_fallback_methods(self, tool_instance):
+        """
+        GIVEN a ScrapeMunicipalCodesTool instance
+        WHEN I execute it with fallback methods enabled
+        THEN it should include fallback configuration in results
+        """
+        parameters = {
+            "jurisdiction": "Portland, OR",
+            "enable_fallbacks": True,
+            "fallback_methods": ["wayback_machine", "archive_is", "common_crawl"]
+        }
+        
+        result = await tool_instance.execute(parameters)
+        
+        assert result["status"] == "success"
+        assert result["enable_fallbacks"] == True
+        assert "fallback_methods" in result
+        assert len(result["fallback_methods"]) == 3
+        assert "wayback_machine" in result["fallback_methods"]
+        assert "archive_is" in result["fallback_methods"]
+        assert "common_crawl" in result["fallback_methods"]
+        assert "fallback_strategy" in result["metadata"]
+    
+    @pytest.mark.asyncio
+    async def test_execute_without_fallbacks(self, tool_instance):
+        """
+        GIVEN a ScrapeMunicipalCodesTool instance
+        WHEN I execute it with fallbacks disabled
+        THEN it should not include fallback methods
+        """
+        parameters = {
+            "jurisdiction": "Denver, CO",
+            "enable_fallbacks": False
+        }
+        
+        result = await tool_instance.execute(parameters)
+        
+        assert result["status"] == "success"
+        assert result["enable_fallbacks"] == False
+        assert result["fallback_methods"] == []
 
 
 if __name__ == "__main__":

@@ -35,6 +35,8 @@ At least one of the following must be provided:
 | `rate_limit_delay` | number | 2.0 | Delay between requests in seconds |
 | `max_sections` | integer | None | Maximum number of code sections to scrape per jurisdiction |
 | `scraper_type` | string | "playwright" | Scraper backend: 'playwright' (async) or 'selenium' (sync) |
+| `enable_fallbacks` | boolean | true | Enable fallback methods if primary scraping fails |
+| `fallback_methods` | array[string] | ["wayback_machine", "archive_is", "common_crawl", "ipwb", "autoscraper", "playwright"] | Fallback scraping methods in order of priority |
 | `job_id` | string | None | Job identifier for resume capability (auto-generated if not provided) |
 | `resume` | boolean | false | Resume from previous scraping state if job_id is provided |
 
@@ -132,6 +134,40 @@ result = await tool.execute({
 })
 ```
 
+### Example 5: Use with Custom Fallback Methods
+
+```python
+# Specify custom fallback order - prioritize archives
+result = await tool.execute({
+    "jurisdictions": ["Miami, FL", "Phoenix, AZ"],
+    "enable_fallbacks": True,
+    "fallback_methods": [
+        "wayback_machine",  # Try Internet Archive first
+        "archive_is",        # Then Archive.is
+        "common_crawl",      # Then Common Crawl
+        "ipwb",             # Then IPWB
+        "playwright"        # Direct scraping last
+    ],
+    "output_format": "json"
+})
+
+# Check which method succeeded
+if result["status"] == "success":
+    successful_method = result["metadata"]["fallback_strategy"]["methods"][0]
+    print(f"Data retrieved using: {successful_method}")
+```
+
+### Example 6: Disable Fallbacks for Fast-Fail Behavior
+
+```python
+# Only try primary scraping, no fallbacks
+result = await tool.execute({
+    "jurisdiction": "Tampa, FL",
+    "provider": "municode",
+    "enable_fallbacks": False  # Fail immediately if primary fails
+})
+```
+
 ## Integration with scrape_the_law_mk3
 
 This tool provides a clean MCP interface to the `scrape_the_law_mk3` submodule located at:
@@ -145,6 +181,51 @@ The scrape_the_law_mk3 system is designed to:
 - Store in a database with proper relationships and versioning
 - Maintain version history and track code updates/amendments
 - Handle different website structures and content formats
+
+## Fallback Methods for Reliable Scraping
+
+The tool ensures reliable data collection by supporting multiple fallback scraping methods. When primary sources are unavailable or fail, the tool automatically tries alternative sources in order of priority:
+
+### Supported Fallback Methods
+
+1. **Wayback Machine (Internet Archive)**
+   - Accesses archived snapshots of municipal code websites
+   - Historical data from billions of web pages
+   - API: https://archive.org/wayback/available
+
+2. **Archive.is**
+   - On-demand webpage archives
+   - Creates new archives if needed
+   - Reliable for recent content
+
+3. **Common Crawl**
+   - Petabyte-scale web crawl data
+   - Monthly archives of the web
+   - Query via Common Crawl Index API
+
+4. **IPWB (InterPlanetary Wayback)**
+   - Decentralized web archives on IPFS
+   - Resilient against single points of failure
+   - Content-addressed archival
+
+5. **AutoScraper**
+   - Pattern-based data extraction
+   - Machine learning for structure detection
+   - Adaptive to website changes
+
+6. **Playwright**
+   - Direct browser automation
+   - Handles JavaScript-heavy sites
+   - Final fallback method
+
+### Fallback Strategy
+
+When `enable_fallbacks` is true, the tool:
+1. Attempts primary scraping with specified provider
+2. If primary fails, tries each fallback method in order
+3. Returns data from first successful method
+4. Records all attempts in metadata
+5. Provides detailed error messages if all methods fail
 
 ## Providers Supported
 

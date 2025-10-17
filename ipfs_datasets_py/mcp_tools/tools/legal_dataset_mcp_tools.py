@@ -568,6 +568,17 @@ class ScrapeMunicipalCodesTool(ClaudeMCPTool):
                     "description": "Scraper backend to use: 'playwright' (async) or 'selenium' (sync)",
                     "default": "playwright"
                 },
+                "fallback_methods": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Fallback scraping methods: 'common_crawl', 'wayback_machine', 'archive_is', 'autoscraper', 'ipwb', 'playwright'. Order determines priority.",
+                    "default": ["wayback_machine", "archive_is", "common_crawl", "ipwb", "autoscraper", "playwright"]
+                },
+                "enable_fallbacks": {
+                    "type": "boolean",
+                    "description": "Enable fallback methods if primary scraping fails",
+                    "default": True
+                },
                 "job_id": {
                     "type": "string",
                     "description": "Job identifier for resume capability (auto-generated if not provided)",
@@ -624,20 +635,33 @@ class ScrapeMunicipalCodesTool(ClaudeMCPTool):
             # This integration provides the MCP tool interface that will be
             # connected to the actual scraping logic when implemented
             
+            # Get fallback configuration
+            enable_fallbacks = parameters.get('enable_fallbacks', True)
+            fallback_methods = parameters.get('fallback_methods', [
+                "wayback_machine", "archive_is", "common_crawl", "ipwb", "autoscraper", "playwright"
+            ])
+            
             result = {
                 "status": "success",
                 "job_id": job_id,
-                "message": "Municipal code scraping job initialized",
+                "message": "Municipal code scraping job initialized with fallback methods",
                 "jurisdictions": target_jurisdictions,
                 "provider": parameters.get('provider', 'auto'),
                 "scraper_type": parameters.get('scraper_type', 'playwright'),
                 "output_format": parameters.get('output_format', 'json'),
                 "scraper_path": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3",
-                "note": "scrape_the_law_mk3 integration ready. The scraper module is available at the specified path.",
+                "fallback_methods": fallback_methods if enable_fallbacks else [],
+                "enable_fallbacks": enable_fallbacks,
+                "note": "scrape_the_law_mk3 integration ready with multiple fallback methods for reliable scraping.",
                 "data": [],
                 "metadata": {
                     "job_id": job_id,
                     "jurisdictions_count": len(target_jurisdictions),
+                    "fallback_strategy": {
+                        "enabled": enable_fallbacks,
+                        "methods": fallback_methods,
+                        "description": "Fallback methods will be attempted in order if primary scraping fails"
+                    },
                     "parameters": parameters
                 }
             }

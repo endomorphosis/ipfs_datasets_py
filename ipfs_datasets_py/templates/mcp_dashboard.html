@@ -2458,6 +2458,54 @@
                                     Include Full Text
                                 </label>
                             </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="municipal-enable-fallbacks" checked />
+                                <label class="form-check-label" for="municipal-enable-fallbacks">
+                                    <strong>Enable Fallback Methods</strong>
+                                </label>
+                                <small class="form-text text-muted d-block">Use multiple sources if primary fails</small>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-panel">
+                            <h3><i class="fas fa-shield-alt"></i> Fallback Methods</h3>
+                            <small class="form-text text-muted mb-2 d-block">Fallback scraping methods (in order of priority):</small>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input fallback-method" type="checkbox" id="fallback-wayback" value="wayback_machine" checked />
+                                <label class="form-check-label" for="fallback-wayback">
+                                    <i class="fas fa-archive"></i> Wayback Machine
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input fallback-method" type="checkbox" id="fallback-archive-is" value="archive_is" checked />
+                                <label class="form-check-label" for="fallback-archive-is">
+                                    <i class="fas fa-save"></i> Archive.is
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input fallback-method" type="checkbox" id="fallback-common-crawl" value="common_crawl" checked />
+                                <label class="form-check-label" for="fallback-common-crawl">
+                                    <i class="fas fa-globe"></i> Common Crawl
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input fallback-method" type="checkbox" id="fallback-ipwb" value="ipwb" checked />
+                                <label class="form-check-label" for="fallback-ipwb">
+                                    <i class="fas fa-network-wired"></i> IPWB (IPFS Archive)
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input fallback-method" type="checkbox" id="fallback-autoscraper" value="autoscraper" checked />
+                                <label class="form-check-label" for="fallback-autoscraper">
+                                    <i class="fas fa-robot"></i> AutoScraper
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input fallback-method" type="checkbox" id="fallback-playwright" value="playwright" checked />
+                                <label class="form-check-label" for="fallback-playwright">
+                                    <i class="fas fa-browser"></i> Playwright
+                                </label>
+                            </div>
                         </div>
 
                         <div class="tool-panel">
@@ -2485,11 +2533,21 @@
                     <div class="alert alert-info mt-3">
                         <h6><i class="fas fa-info-circle"></i> About Municipal Codes Scraping</h6>
                         <p class="mb-2 small">This tool integrates with the scrape_the_law_mk3 system to collect municipal legal codes from US cities and counties. Per the US Library of Congress, there currently does not exist a single repository for all US municipal codes - this tool helps address that gap.</p>
-                        <ul class="mb-0 small">
+                        <ul class="mb-2 small">
                             <li><strong>Coverage</strong>: ~22,899+ US municipalities</li>
                             <li><strong>Providers</strong>: Municode (~3,528), American Legal (~2,180), General Code (~1,601), LexisNexis (~3,200)</li>
                             <li><strong>Job Management</strong>: Auto-generated job IDs with resume capability for long-running operations</li>
                             <li><strong>Output</strong>: Structured data with full metadata and citation information</li>
+                        </ul>
+                        <h6><i class="fas fa-shield-alt"></i> Reliable Scraping with Multiple Fallbacks</h6>
+                        <p class="mb-0 small">This tool ensures reliable data collection by using multiple fallback methods when primary sources are unavailable:</p>
+                        <ul class="mb-0 small">
+                            <li><strong>Wayback Machine</strong>: Internet Archive's historical snapshots</li>
+                            <li><strong>Archive.is</strong>: On-demand webpage archives</li>
+                            <li><strong>Common Crawl</strong>: Petabyte-scale web crawl data</li>
+                            <li><strong>IPWB</strong>: InterPlanetary Wayback (decentralized archives)</li>
+                            <li><strong>AutoScraper</strong>: Pattern-based extraction</li>
+                            <li><strong>Playwright</strong>: Direct browser automation fallback</li>
                         </ul>
                     </div>
                 </div>
@@ -4650,6 +4708,15 @@ Example: Citizens must pay taxes by April 15th. Corporations are prohibited from
                 // Parse jurisdictions (comma-separated)
                 const jurisdictions = jurisdictionsInput.split(',').map(j => j.trim()).filter(j => j);
                 
+                // Gather fallback methods
+                const enableFallbacks = document.getElementById('municipal-enable-fallbacks').checked;
+                const fallbackMethods = [];
+                if (enableFallbacks) {
+                    document.querySelectorAll('.fallback-method:checked').forEach(checkbox => {
+                        fallbackMethods.push(checkbox.value);
+                    });
+                }
+                
                 // Gather parameters
                 const params = {
                     jurisdictions: jurisdictions,
@@ -4660,6 +4727,8 @@ Example: Citizens must pay taxes by April 15th. Corporations are prohibited from
                     scraper_type: document.getElementById('municipal-scraper-type').value,
                     include_metadata: document.getElementById('municipal-include-metadata').checked,
                     include_text: document.getElementById('municipal-include-text').checked,
+                    enable_fallbacks: enableFallbacks,
+                    fallback_methods: fallbackMethods,
                     job_id: document.getElementById('municipal-job-id').value || null,
                     resume: document.getElementById('municipal-resume').checked
                 };
@@ -4689,6 +4758,21 @@ Example: Citizens must pay taxes by April 15th. Corporations are prohibited from
                     html += `<div class="result-item"><strong>Provider:</strong> ${result.provider}</div>`;
                     html += `<div class="result-item"><strong>Output Format:</strong> ${result.output_format}</div>`;
                     html += `<div class="result-item"><strong>Scraper:</strong> ${result.scraper_type}</div>`;
+                    
+                    if (result.enable_fallbacks && result.fallback_methods && result.fallback_methods.length > 0) {
+                        html += `<div class="result-item mt-2"><strong>Fallback Methods Enabled:</strong> ${result.fallback_methods.length}</div>`;
+                        result.fallback_methods.forEach((method, idx) => {
+                            const methodNames = {
+                                'wayback_machine': 'Wayback Machine',
+                                'archive_is': 'Archive.is',
+                                'common_crawl': 'Common Crawl',
+                                'ipwb': 'IPWB',
+                                'autoscraper': 'AutoScraper',
+                                'playwright': 'Playwright'
+                            };
+                            html += `<div class="result-item">  ${idx + 1}. ${methodNames[method] || method}</div>`;
+                        });
+                    }
                     
                     if (result.message) {
                         html += `<div class="result-item mt-2">${result.message}</div>`;
@@ -4734,12 +4818,19 @@ Example: Citizens must pay taxes by April 15th. Corporations are prohibited from
             document.getElementById('municipal-scraper-type').value = 'playwright';
             document.getElementById('municipal-include-metadata').checked = true;
             document.getElementById('municipal-include-text').checked = true;
+            document.getElementById('municipal-enable-fallbacks').checked = true;
+            
+            // Reset all fallback method checkboxes
+            document.querySelectorAll('.fallback-method').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
             document.getElementById('municipal-job-id').value = '';
             document.getElementById('municipal-resume').checked = false;
             
             document.getElementById('municipal-results').innerHTML = `
                 <div class="result-header">Form cleared</div>
-                <div class="result-item">Ready to configure a new scraping job.</div>
+                <div class="result-item">Ready to configure a new scraping job with fallback methods.</div>
             `;
         }
 
