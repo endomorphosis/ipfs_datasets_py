@@ -7,6 +7,12 @@ from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
+try:
+    from playwright.async_api import async_playwright
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
+
 
 class WyomingScraper(BaseStateScraper):
     """Scraper for Wyoming state laws from https://www.wyoleg.gov"""
@@ -33,8 +39,86 @@ class WyomingScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        # Use custom scraper with Wyoming-specific patterns
+        if PLAYWRIGHT_AVAILABLE:
+            self.logger.info("Wyoming: Using Playwright for JavaScript rendering")
+            try:
+                result = await self._scrape_with_playwright(code_name, code_url, "Wyo. Stat.")
+                if result:
+                    return result
+            except Exception as e:
+                self.logger.warning(f"Wyoming Playwright failed: {e}, falling back")
+        
         return await self._custom_scrape_wyoming(code_name, code_url, "Wyo. Stat.")
+    
+    async def _scrape_with_playwright(
+        self,
+        code_name: str,
+        code_url: str,
+        citation_format: str,
+        max_sections: int = 30
+    ) -> List[NormalizedStatute]:
+        """Scrape Wyoming using Playwright for JavaScript rendering."""
+        try:
+            from bs4 import BeautifulSoup
+            from urllib.parse import urljoin
+        except ImportError:
+            return []
+        
+        statutes = []
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            
+            try:
+                await page.goto(code_url, wait_until='networkidle', timeout=60000)
+                await page.wait_for_selector('a', timeout=10000)
+                
+                content = await page.content()
+                soup = BeautifulSoup(content, 'html.parser')
+                links = soup.find_all('a', href=True)
+                
+                section_count = 0
+                for link in links:
+                    if section_count >= max_sections:
+                        break
+                    
+                    link_text = link.get_text(strip=True)
+                    link_href = link.get('href', '')
+                    
+                    if len(link_text) < 5:
+                        continue
+                    
+                    keywords = ['title', 'chapter', 'statute', 'code']
+                    if not any(k in link_text.lower() for k in keywords):
+                        continue
+                    
+                    full_url = urljoin(code_url, link_href)
+                    section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                    
+                    statute = NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § {section_number}",
+                        code_name=code_name,
+                        section_number=section_number,
+                        section_name=link_text[:200],
+                        full_text=f"Section {section_number}: {link_text}",
+                        legal_area=self._identify_legal_area(link_text),
+                        source_url=full_url,
+                        official_cite=f"{citation_format} § {section_number}",
+                        metadata=StatuteMetadata()
+                    )
+                    
+                    statutes.append(statute)
+                    section_count += 1
+                
+                self.logger.info(f"Wyoming Playwright: Scraped {len(statutes)} sections")
+                
+            finally:
+                await browser.close()
+        
+        return statutes
     
     async def _custom_scrape_wyoming(
         self,
@@ -43,7 +127,14 @@ class WyomingScraper(BaseStateScraper):
         citation_format: str,
         max_sections: int = 100
     ) -> List[NormalizedStatute]:
-        """Custom scraper for Wyoming's legislative website."""
+        """Custom scraper for Wyoming's legislative website.
+        
+        Wyoming's website is a JavaScript SPA (Single Page Application).
+        For better results, consider:
+        1. Using Playwright to render JavaScript
+        2. Accessing alternative static pages
+        3. Using Internet Archive snapshots
+        """
         try:
             import requests
             from bs4 import BeautifulSoup
@@ -103,11 +194,16 @@ class WyomingScraper(BaseStateScraper):
             
             # Fallback to generic scraper if no data found
             if not statutes:
-                self.logger.info("Wyoming custom scraper found no data, falling back to generic scraper")
+                self.logger.warning("Wyoming custom scraper found no data - site uses JavaScript")
+                self.logger.info("For Wyoming, consider using:")
+                self.logger.info("  1. Playwright for JavaScript rendering")
+                self.logger.info("  2. Alternative URL: https://wyoleg.gov/statutes/compress/")
+                self.logger.info("  3. Internet Archive snapshots")
                 return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
             
         except Exception as e:
             self.logger.error(f"Wyoming custom scraper failed: {e}")
+            self.logger.info("Note: Wyoming's site requires JavaScript. Consider using Playwright.")
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
         
         return statutes

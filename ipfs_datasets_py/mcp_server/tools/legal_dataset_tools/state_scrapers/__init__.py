@@ -63,6 +63,59 @@ from . import west_virginia
 from . import wisconsin
 from . import wyoming
 
+# Export scraper classes for direct import
+from .alabama import AlabamaScraper
+from .alaska import AlaskaScraper
+from .arizona import ArizonaScraper
+from .arkansas import ArkansasScraper
+from .california import CaliforniaScraper
+from .colorado import ColoradoScraper
+from .connecticut import ConnecticutScraper
+from .delaware import DelawareScraper
+from .district_of_columbia import DistrictOfColumbiaScraper
+from .florida import FloridaScraper
+from .georgia import GeorgiaScraper
+from .hawaii import HawaiiScraper
+from .idaho import IdahoScraper
+from .illinois import IllinoisScraper
+from .indiana import IndianaScraper
+from .iowa import IowaScraper
+from .kansas import KansasScraper
+from .kentucky import KentuckyScraper
+from .louisiana import LouisianaScraper
+from .maine import MaineScraper
+from .maryland import MarylandScraper
+from .massachusetts import MassachusettsScraper
+from .michigan import MichiganScraper
+from .minnesota import MinnesotaScraper
+from .mississippi import MississippiScraper
+from .missouri import MissouriScraper
+from .montana import MontanaScraper
+from .nebraska import NebraskaScraper
+from .nevada import NevadaScraper
+from .new_hampshire import NewHampshireScraper
+from .new_jersey import NewJerseyScraper
+from .new_mexico import NewMexicoScraper
+from .new_york import NewYorkScraper
+from .north_carolina import NorthCarolinaScraper
+from .north_dakota import NorthDakotaScraper
+from .ohio import OhioScraper
+from .oklahoma import OklahomaScraper
+from .oregon import OregonScraper
+from .pennsylvania import PennsylvaniaScraper
+from .rhode_island import RhodeIslandScraper
+from .south_carolina import SouthCarolinaScraper
+from .south_dakota import SouthDakotaScraper
+from .tennessee import TennesseeScraper
+from .texas import TexasScraper
+from .utah import UtahScraper
+from .vermont import VermontScraper
+from .virginia import VirginiaScraper
+from .washington import WashingtonScraper
+from .west_virginia import WestVirginiaScraper
+from .wisconsin import WisconsinScraper
+from .wyoming import WyomingScraper
+
 __all__ = [
     'BaseStateScraper',
     'NormalizedStatute',
@@ -70,4 +123,56 @@ __all__ = [
     'StateScraperRegistry',
     'get_scraper_for_state',
     'GenericStateScraper',
+    # State scrapers
+    'AlabamaScraper',
+    'AlaskaScraper',
+    'ArizonaScraper',
+    'ArkansasScraper',
+    'CaliforniaScraper',
+    'ColoradoScraper',
+    'ConnecticutScraper',
+    'DelawareScraper',
+    'DistrictOfColumbiaScraper',
+    'FloridaScraper',
+    'GeorgiaScraper',
+    'HawaiiScraper',
+    'IdahoScraper',
+    'IllinoisScraper',
+    'IndianaScraper',
+    'IowaScraper',
+    'KansasScraper',
+    'KentuckyScraper',
+    'LouisianaScraper',
+    'MaineScraper',
+    'MarylandScraper',
+    'MassachusettsScraper',
+    'MichiganScraper',
+    'MinnesotaScraper',
+    'MississippiScraper',
+    'MissouriScraper',
+    'MontanaScraper',
+    'NebraskaScraper',
+    'NevadaScraper',
+    'NewHampshireScraper',
+    'NewJerseyScraper',
+    'NewMexicoScraper',
+    'NewYorkScraper',
+    'NorthCarolinaScraper',
+    'NorthDakotaScraper',
+    'OhioScraper',
+    'OklahomaScraper',
+    'OregonScraper',
+    'PennsylvaniaScraper',
+    'RhodeIslandScraper',
+    'SouthCarolinaScraper',
+    'SouthDakotaScraper',
+    'TennesseeScraper',
+    'TexasScraper',
+    'UtahScraper',
+    'VermontScraper',
+    'VirginiaScraper',
+    'WashingtonScraper',
+    'WestVirginiaScraper',
+    'WisconsinScraper',
+    'WyomingScraper',
 ]
