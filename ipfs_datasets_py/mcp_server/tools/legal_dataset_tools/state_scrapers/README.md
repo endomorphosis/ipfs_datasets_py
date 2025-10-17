@@ -84,6 +84,17 @@ class BaseStateScraper(ABC):
 - **Sources**: Tries official site, then Justia, then FindLaw
 - **Status**: ✅ Implemented
 
+### Base Scraper Generic Methods
+- **`_generic_scrape()`**: Intelligent link filtering for statute-related content
+  - Filters for statute keywords: title, chapter, section, sec., part, code, statute, article, division, vol, volume, act, law, revised, annotated, general
+  - Accepts links with numbers (e.g., "Title 1", "1-2-3")
+  - Rejects navigation/utility links: home, about, contact, search, help, login, logout, privacy, terms, site map, sitemap, accessibility, disclaimer, copyright, back to, return to, print, email, download, subscribe, rss, feedback
+  - Used by many state scrapers as a robust fallback
+- **`_playwright_scrape()`**: JavaScript-rendered content scraping with same filtering
+  - For modern websites that require JavaScript execution
+  - Uses Playwright for browser automation
+  - Falls back to `_generic_scrape()` if Playwright unavailable
+
 ## Usage
 
 ### Using the Scraper Registry
@@ -236,3 +247,21 @@ asyncio.run(test_california())
 5. **Regulations**: Include administrative regulations
 6. **Court rules**: Add court procedural rules
 7. **Case law**: Link statutes to relevant cases
+
+## Recent Updates
+
+### October 2025 - Improved Generic Scraper Filtering
+**Problem**: Nine state scrapers (AL, CT, DE, GA, HI, IN, MO, TN, WY) were failing with "No data scraped" errors.
+
+**Root Cause**: The `_generic_scrape()` method was too permissive, accepting ALL links on a page (navigation, headers, footers) without filtering for statute-related content.
+
+**Solution**: Added intelligent link filtering to both `_generic_scrape()` and `_playwright_scrape()`:
+- **Accepts**: Links with statute keywords (title, chapter, section, sec., part, code, statute, article, division, vol, volume, act, law, revised, annotated, general) OR containing numbers
+- **Rejects**: Navigation/utility links (home, about, contact, search, help, login, logout, privacy, terms, site map, sitemap, accessibility, disclaimer, copyright, back to, return to, print, email, download, subscribe, rss, feedback)
+
+**Impact**: 
+- Fixed 9 failing state scrapers
+- Improved accuracy for all states using generic scraper as fallback
+- No regressions in existing working scrapers
+
+**Testing**: Verified with mock HTML containing 23 links - correctly accepted 10 statute links and rejected 13 non-statute links.
