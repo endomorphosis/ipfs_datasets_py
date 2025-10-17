@@ -18,7 +18,9 @@ Per the US Library of Congress, there currently does not exist a single reposito
 ## Parameters
 
 ### Required Parameters
-None - but you must provide at least one of `jurisdiction` or `jurisdictions`.
+At least one of the following must be provided:
+- `jurisdiction` - Single jurisdiction to scrape
+- `jurisdictions` - List of jurisdictions to scrape
 
 ### Optional Parameters
 
