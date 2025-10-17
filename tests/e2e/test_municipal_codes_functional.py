@@ -180,15 +180,18 @@ async def test_municipal_codes_integration():
             await page.screenshot(path=screenshot_dir / "06_form_cleared.png")
             print("✓ Screenshot: Form cleared")
             
-            # Check info panel
+            # Check info panel - be specific to Municipal Codes tab
             print("\n📖 Checking information panel...")
-            info_panel = page.locator('.alert-info')
+            # Use more specific selector to target only the Municipal Codes info panel
+            info_panel = page.locator('#municipal-codes-scraper .alert-info.mt-3')
             if await info_panel.count() > 0:
                 info_text = await info_panel.inner_text()
                 if '22,899+' in info_text and 'Municode' in info_text:
                     print("✓ Information panel contains expected content")
                 else:
                     print("⚠️  Information panel content incomplete")
+            else:
+                print("⚠️  Information panel not found")
             
             print("\n" + "=" * 70)
             print("✅ ALL TESTS COMPLETED SUCCESSFULLY")
