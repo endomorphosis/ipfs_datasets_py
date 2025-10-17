@@ -92,6 +92,27 @@ if success:
     print("Python extension uninstalled")
 ```
 
+### Authentication Setup
+
+VSCode CLI provides convenient methods for authentication:
+
+```python
+from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
+
+cli = VSCodeCLI()
+
+# Method 1: Configure authentication (requires prior installation)
+result = cli.configure_auth(provider='github')
+if result['success']:
+    print("Authentication successful!")
+    print(result['stdout'])  # Contains OAuth instructions
+
+# Method 2: Install and authenticate in one step
+result = cli.install_with_auth(provider='github')
+if result['install_success'] and result['auth_success']:
+    print("VSCode CLI ready for remote development!")
+```
+
 ### Tunnel Management
 
 ```python
@@ -191,12 +212,33 @@ ipfs-datasets vscode extensions uninstall ms-python.python
 ipfs-datasets vscode extensions list --json
 ```
 
+### Authentication Commands
+
+Configure authentication for VSCode tunnel:
+
+```bash
+# Configure authentication (interactive)
+ipfs-datasets vscode auth --provider github
+
+# Configure authentication (JSON output)
+ipfs-datasets vscode auth --provider github --json
+
+# Use Microsoft provider
+ipfs-datasets vscode auth --provider microsoft
+
+# Install and authenticate in one step
+ipfs-datasets vscode install-with-auth --provider github
+
+# Custom installation directory
+ipfs-datasets vscode auth --provider github --install-dir /custom/path
+```
+
 ### Tunnel Command
 
 Manage VSCode tunnel functionality:
 
 ```bash
-# Login with GitHub
+# Login with GitHub (traditional method)
 ipfs-datasets vscode tunnel login --provider github
 
 # Login with Microsoft
@@ -316,9 +358,23 @@ class VSCodeCLI:
     def list_extensions(self) -> List[str]
     def install_extension(self, extension_id: str) -> bool
     def uninstall_extension(self, extension_id: str) -> bool
+    def configure_auth(self, provider: str = 'github') -> Dict[str, Any]
+    def install_with_auth(self, provider: str = 'github', force: bool = False) -> Dict[str, Any]
     def tunnel_user_login(self, provider: str = 'github') -> subprocess.CompletedProcess
     def tunnel_service_install(self, name: Optional[str] = None) -> subprocess.CompletedProcess
 ```
+
+#### New Authentication Methods
+
+**`configure_auth(provider='github')`**
+- Configures authentication for VSCode tunnel
+- Returns dict with success status and OAuth instructions
+- Use after installation to set up tunnel access
+
+**`install_with_auth(provider='github', force=False)`**
+- Convenience method that installs and authenticates in one step
+- Returns dict with both installation and authentication status
+- Ideal for first-time setup
 
 ## Examples
 

@@ -337,6 +337,142 @@ class VSCodeCLI:
             'architecture': self.arch,
             'extensions': self.list_extensions() if self.is_installed() else []
         }
+    
+    def configure_auth(self, provider: str = 'github') -> Dict[str, Any]:
+        """
+        Configure authentication for VSCode tunnel.
+        
+        This method sets up authentication by logging in with the specified provider.
+        Can be called directly from Python code to authenticate.
+        
+        Args:
+            provider: Auth provider ('github' or 'microsoft')
+        
+        Returns:
+            Dictionary with authentication result:
+            - success (bool): Whether authentication succeeded
+            - provider (str): Provider used
+            - stdout (str): Command output
+            - stderr (str): Error output
+            - message (str): User-friendly message
+        
+        Example:
+            >>> cli = VSCodeCLI()
+            >>> cli.download_and_install()
+            >>> result = cli.configure_auth(provider='github')
+            >>> if result['success']:
+            ...     print("Authentication successful!")
+        """
+        if not self.is_installed():
+            return {
+                'success': False,
+                'provider': provider,
+                'error': 'VSCode CLI is not installed. Call download_and_install() first.',
+                'message': 'Installation required before authentication'
+            }
+        
+        try:
+            logger.info(f"Configuring authentication with provider: {provider}")
+            result = self.tunnel_user_login(provider=provider)
+            
+            return {
+                'success': result.returncode == 0,
+                'provider': provider,
+                'stdout': result.stdout,
+                'stderr': result.stderr,
+                'returncode': result.returncode,
+                'message': 'Authentication successful' if result.returncode == 0 else 'Authentication failed'
+            }
+        except Exception as e:
+            logger.error(f"Failed to configure authentication: {e}")
+            return {
+                'success': False,
+                'provider': provider,
+                'error': str(e),
+                'message': f'Authentication error: {str(e)}'
+            }
+    
+    def install_with_auth(self, provider: str = 'github', force: bool = False) -> Dict[str, Any]:
+        """
+        Install VSCode CLI and configure authentication in one step.
+        
+        This convenience method combines installation and authentication setup,
+        making it easy to get started with VSCode tunnel from Python code.
+        
+        Args:
+            provider: Auth provider ('github' or 'microsoft')
+            force: Force reinstallation even if already installed
+        
+        Returns:
+            Dictionary with installation and authentication results:
+            - install_success (bool): Whether installation succeeded
+            - auth_success (bool): Whether authentication succeeded
+            - provider (str): Provider used for authentication
+            - status (dict): VSCode CLI status information
+            - auth_details (dict): Authentication result details
+            - message (str): Overall status message
+        
+        Example:
+            >>> cli = VSCodeCLI()
+            >>> result = cli.install_with_auth(provider='github')
+            >>> if result['install_success'] and result['auth_success']:
+            ...     print("VSCode CLI ready for remote development!")
+        """
+        result = {
+            'install_success': False,
+            'auth_success': False,
+            'provider': provider,
+            'messages': []
+        }
+        
+        # Step 1: Install VSCode CLI
+        try:
+            logger.info("Installing VSCode CLI...")
+            install_success = self.download_and_install(force=force)
+            result['install_success'] = install_success
+            
+            if install_success:
+                result['messages'].append("VSCode CLI installed successfully")
+            else:
+                result['messages'].append("VSCode CLI installation failed")
+                result['message'] = "Installation failed"
+                return result
+        except Exception as e:
+            logger.error(f"Installation failed: {e}")
+            result['messages'].append(f"Installation error: {str(e)}")
+            result['message'] = "Installation failed"
+            return result
+        
+        # Step 2: Configure authentication
+        try:
+            logger.info(f"Configuring authentication with {provider}...")
+            auth_result = self.configure_auth(provider=provider)
+            result['auth_success'] = auth_result['success']
+            result['auth_details'] = auth_result
+            
+            if auth_result['success']:
+                result['messages'].append(f"Authentication with {provider} successful")
+            else:
+                result['messages'].append(f"Authentication with {provider} failed")
+        except Exception as e:
+            logger.error(f"Authentication failed: {e}")
+            result['messages'].append(f"Authentication error: {str(e)}")
+        
+        # Step 3: Get final status
+        try:
+            result['status'] = self.get_status()
+        except Exception as e:
+            logger.error(f"Failed to get status: {e}")
+        
+        # Set overall message
+        if result['install_success'] and result['auth_success']:
+            result['message'] = "VSCode CLI installed and authenticated successfully"
+        elif result['install_success']:
+            result['message'] = "VSCode CLI installed but authentication failed"
+        else:
+            result['message'] = "Installation failed"
+        
+        return result
 
 
 def create_vscode_cli(install_dir: Optional[str] = None) -> VSCodeCLI:

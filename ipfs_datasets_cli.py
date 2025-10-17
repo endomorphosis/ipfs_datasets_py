@@ -45,6 +45,8 @@ Commands:
     vscode       VSCode CLI management
       status     Show VSCode CLI installation status
       install    Install or update VSCode CLI
+      auth       Configure authentication (GitHub/Microsoft)
+      install-with-auth  Install and authenticate in one step
       execute    Execute VSCode CLI command
       extensions List, install, or uninstall extensions
       tunnel     Manage VSCode tunnel functionality
@@ -766,6 +768,96 @@ def execute_heavy_command(args):
                             print(f"Extension {extension_id} {'uninstalled' if success else 'failed to uninstall'}")
                     return
                 
+                elif subcommand == "auth" or subcommand == "configure-auth":
+                    # Configure authentication (convenience command)
+                    extra = args[2:]
+                    install_dir = None
+                    provider = "github"
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--provider", "-p") and i + 1 < len(extra):
+                            provider = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    
+                    # Check if installed, offer to install if not
+                    if not cli.is_installed():
+                        print("VSCode CLI is not installed.")
+                        if not json_output:
+                            response = input("Would you like to install it now? (y/n): ").lower()
+                            if response == 'y':
+                                print("Installing VSCode CLI...")
+                                success = cli.download_and_install()
+                                if not success:
+                                    print("Installation failed. Cannot proceed with authentication.")
+                                    return
+                            else:
+                                print("Authentication requires VSCode CLI to be installed.")
+                                print("Run 'ipfs-datasets vscode install' first.")
+                                return
+                        else:
+                            print(json.dumps({"success": False, "error": "VSCode CLI not installed"}))
+                            return
+                    
+                    # Configure authentication
+                    print(f"Configuring authentication with {provider}...")
+                    result = cli.configure_auth(provider=provider)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        print(result['message'])
+                        if result['success'] and result.get('stdout'):
+                            print(result['stdout'])
+                        if result.get('stderr'):
+                            print(result['stderr'], file=sys.stderr)
+                    return
+                
+                elif subcommand == "install-with-auth":
+                    # Install and configure authentication in one step
+                    extra = args[2:]
+                    install_dir = None
+                    provider = "github"
+                    force = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--provider", "-p") and i + 1 < len(extra):
+                            provider = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    
+                    print(f"Installing VSCode CLI and configuring authentication with {provider}...")
+                    result = cli.install_with_auth(provider=provider, force=force)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        print(result['message'])
+                        for msg in result.get('messages', []):
+                            print(f"  • {msg}")
+                        
+                        if result.get('auth_details', {}).get('stdout'):
+                            print("\nAuthentication details:")
+                            print(result['auth_details']['stdout'])
+                    return
+                
                 elif subcommand == "tunnel":
                     # Manage tunnel
                     extra = args[2:]
@@ -835,7 +927,7 @@ def execute_heavy_command(args):
                 
                 else:
                     print(f"Unknown vscode subcommand: {subcommand}")
-                    print("Available subcommands: status, install, execute, extensions, tunnel")
+                    print("Available subcommands: status, install, auth, install-with-auth, execute, extensions, tunnel")
                     return
                     
             except ImportError as e:

@@ -181,5 +181,48 @@ def test_mcp_server_tool_status():
         pytest.skip(f"MCP server dependencies not available: {e}")
 
 
+def test_configure_auth():
+    """
+    GIVEN a VSCodeCLI instance
+    WHEN calling configure_auth without installation
+    THEN it should return error indicating installation required
+    """
+    from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cli = VSCodeCLI(install_dir=tmpdir)
+        result = cli.configure_auth(provider='github')
+        
+        assert isinstance(result, dict)
+        assert 'success' in result
+        assert result['success'] is False
+        assert 'error' in result or 'message' in result
+
+
+def test_install_with_auth_not_installed():
+    """
+    GIVEN a VSCodeCLI instance
+    WHEN calling install_with_auth
+    THEN it should return dict with install and auth status
+    """
+    from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cli = VSCodeCLI(install_dir=tmpdir)
+        
+        # This will attempt to install, but without network it will fail
+        # We're just testing the return structure
+        result = cli.install_with_auth(provider='github')
+        
+        assert isinstance(result, dict)
+        assert 'install_success' in result
+        assert 'auth_success' in result
+        assert 'provider' in result
+        assert result['provider'] == 'github'
+        assert 'message' in result
+        assert 'messages' in result
+        assert isinstance(result['messages'], list)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
