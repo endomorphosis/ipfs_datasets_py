@@ -4,6 +4,7 @@
 VSCode CLI Example Usage
 
 This script demonstrates various ways to use the VSCode CLI integration.
+Run this from the repository root or install the package first.
 """
 
 import json
@@ -12,14 +13,32 @@ import os
 import tempfile
 from pathlib import Path
 
-# Add the parent directory to the path so we can import the module
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Try to import the package normally first
+try:
+    from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
+    from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+    PACKAGE_AVAILABLE = True
+except ImportError:
+    # If not installed, add parent directory to path
+    repo_root = Path(__file__).parent.parent
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    try:
+        from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
+        from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+        PACKAGE_AVAILABLE = True
+    except ImportError:
+        PACKAGE_AVAILABLE = False
+        print("Error: Could not import ipfs_datasets_py. Please install the package or run from repository root.")
 
 
 def example_status():
     """Example: Check VSCode CLI status"""
+    if not PACKAGE_AVAILABLE:
+        print("Skipping: Package not available")
+        return
+        
     print("\n=== Example: Check Status ===")
-    from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
     
     cli = VSCodeCLI()
     status = cli.get_status()
@@ -33,8 +52,11 @@ def example_status():
 
 def example_custom_install_dir():
     """Example: Use custom installation directory"""
+    if not PACKAGE_AVAILABLE:
+        print("Skipping: Package not available")
+        return
+        
     print("\n=== Example: Custom Install Directory ===")
-    from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
     
     with tempfile.TemporaryDirectory() as tmpdir:
         cli = VSCodeCLI(install_dir=tmpdir)
@@ -46,8 +68,11 @@ def example_custom_install_dir():
 
 def example_get_download_url():
     """Example: Get download URL"""
+    if not PACKAGE_AVAILABLE:
+        print("Skipping: Package not available")
+        return
+        
     print("\n=== Example: Get Download URL ===")
-    from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
     
     cli = VSCodeCLI()
     url = cli.get_download_url()
@@ -57,8 +82,11 @@ def example_get_download_url():
 
 def example_mcp_tool():
     """Example: Use MCP tool"""
+    if not PACKAGE_AVAILABLE:
+        print("Skipping: Package not available")
+        return
+        
     print("\n=== Example: MCP Tool ===")
-    from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
     import asyncio
     
     async def run():
@@ -70,28 +98,14 @@ def example_mcp_tool():
     asyncio.run(run())
 
 
-def example_mcp_server_function():
-    """Example: Use MCP server function"""
-    print("\n=== Example: MCP Server Function ===")
-    
-    # Import the function directly from the module file
-    import importlib.util
-    
-    spec = importlib.util.spec_from_file_location(
-        'vscode_cli_tools',
-        str(Path(__file__).parent.parent / 'ipfs_datasets_py' / 'mcp_server' / 'tools' / 'development_tools' / 'vscode_cli_tools.py')
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    
-    result = module.vscode_cli_status()
-    print(f"Result: {json.dumps(result, indent=2)}")
-
-
 def main():
     """Run all examples"""
     print("VSCode CLI Integration Examples")
     print("=" * 50)
+    
+    if not PACKAGE_AVAILABLE:
+        print("\nError: Package not available. Install with 'pip install -e .' or run from repository root.")
+        return 1
     
     try:
         example_status()
@@ -113,14 +127,10 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
     
-    try:
-        example_mcp_server_function()
-    except Exception as e:
-        print(f"Error: {e}")
-    
     print("\n" + "=" * 50)
     print("Examples completed!")
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
