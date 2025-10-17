@@ -47,6 +47,7 @@ Collection of specialized MCP tools organized by category:
 - **Embedding Tools** - Advanced embedding generation
 - **Monitoring Tools** - System monitoring and diagnostics
 - **Workflow Tools** - Complex workflow orchestration
+- **Legal Dataset Tools** - Legal code and document scraping (RECAP, State Laws, Municipal Codes)
 
 ## Usage Examples
 
@@ -155,6 +156,14 @@ mcp_config = {
 - `manage_resources` - Resource allocation and management
 - `configure_settings` - System configuration management
 - `backup_data` - Data backup and recovery operations
+
+### Legal Dataset Tools
+- `scrape_recap_archive` - Scrape federal court documents from RECAP Archive
+- `search_recap_documents` - Search RECAP Archive for specific documents
+- `scrape_state_laws` - Scrape state legislation and statutes
+- `scrape_us_code` - Scrape United States Code federal statutes
+- `scrape_municipal_codes` - Scrape municipal codes using scrape_the_law_mk3
+- `list_scraping_jobs` - List all scraping jobs with resume capability
 
 ## Security and Validation
 
