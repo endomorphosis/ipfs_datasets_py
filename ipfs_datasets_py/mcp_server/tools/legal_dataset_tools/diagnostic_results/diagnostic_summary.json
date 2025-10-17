@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-10-16T21:52:51.252930",
+  "total_states": 11,
+  "successful": 5,
+  "failed": 6,
+  "states": {
+    "AL": {
+      "success": true,
+      "statutes": 46,
+      "errors": 0,
+      "recommendations": 8
+    },
+    "CT": {
+      "success": true,
+      "statutes": 91,
+      "errors": 0,
+      "recommendations": 5
+    },
+    "DE": {
+      "success": false,
+      "statutes": 0,
+      "errors": 1,
+      "recommendations": 0
+    },
+    "GA": {
+      "success": false,
+      "statutes": 0,
+      "errors": 1,
+      "recommendations": 5
+    },
+    "HI": {
+      "success": true,
+      "statutes": 16,
+      "errors": 0,
+      "recommendations": 5
+    },
+    "IN": {
+      "success": false,
+      "statutes": 0,
+      "errors": 1,
+      "recommendations": 5
+    },
+    "LA": {
+      "success": true,
+      "statutes": 2,
+      "errors": 0,
+      "recommendations": 2
+    },
+    "MO": {
+      "success": false,
+      "statutes": 0,
+      "errors": 1,
+      "recommendations": 1
+    },
+    "SD": {
+      "success": true,
+      "statutes": 3,
+      "errors": 0,
+      "recommendations": 5
+    },
+    "TN": {
+      "success": false,
+      "statutes": 0,
+      "errors": 1,
+      "recommendations": 1
+    },
+    "WY": {
+      "success": false,
+      "statutes": 0,
+      "errors": 1,
+      "recommendations": 0
+    }
+  }
+}
