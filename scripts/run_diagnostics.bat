@@ -1,6 +1,6 @@
 @echo off
 REM Quick test script for diagnosing failing state scrapers (Windows)
-REM Run this from the legal_dataset_tools directory
+REM Run this from the scripts directory or repository root
 
 echo ========================================================================
 echo DIAGNOSTIC TEST FOR FAILING STATE LAW SCRAPERS
@@ -19,7 +19,8 @@ echo.
 echo Running diagnostic tests...
 echo.
 
-REM Run the diagnostic script
+REM Run the diagnostic script from scripts directory
+cd /d %~dp0
 python diagnostic_test_states.py
 
 echo.
@@ -37,6 +38,6 @@ echo   - ^<STATE^>_sample.html        (HTML samples from each site)
 echo.
 echo Share these files to help diagnose and fix scraper issues.
 echo.
-echo See README_DIAGNOSTICS.md for detailed instructions.
+echo See docs/README_DIAGNOSTICS.md for detailed instructions.
 echo.
 pause

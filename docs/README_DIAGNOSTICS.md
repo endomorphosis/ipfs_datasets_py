@@ -9,8 +9,12 @@ This directory contains diagnostic tools to test and fix failing state law scrap
 From your VSCode desktop with network access:
 
 ```bash
-cd ipfs_datasets_py/mcp_server/tools/legal_dataset_tools
-python diagnostic_test_states.py
+cd ipfs_datasets_py
+./scripts/run_diagnostics.sh  # Linux/Mac
+# or
+scripts\run_diagnostics.bat   # Windows
+# or directly
+python scripts/diagnostic_test_states.py
 ```
 
 This will:
@@ -267,10 +271,10 @@ The diagnostic script tries these fallback methods automatically:
 
 ## File Descriptions
 
-- `diagnostic_test_states.py` - Main diagnostic script
-- `test_state_scrapers.py` - Unit tests with mock data
-- `SCRAPER_DOCUMENTATION.md` - Detailed scraper documentation
-- `README_DIAGNOSTICS.md` - This file
+- `scripts/diagnostic_test_states.py` - Main diagnostic script
+- `tests/test_state_scrapers.py` - Unit tests with mock data
+- `docs/SCRAPER_DOCUMENTATION.md` - Detailed scraper documentation
+- `docs/README_DIAGNOSTICS.md` - This file
 
 ## Support
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Quick test script for diagnosing failing state scrapers
-# Run this from the legal_dataset_tools directory
+# Run this from the scripts directory or repository root
 
 echo "========================================================================"
 echo "DIAGNOSTIC TEST FOR FAILING STATE LAW SCRAPERS"
@@ -19,7 +19,11 @@ echo ""
 echo "Running diagnostic tests..."
 echo ""
 
-# Run the diagnostic script
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Run the diagnostic script from the scripts directory
+cd "$SCRIPT_DIR"
 python diagnostic_test_states.py
 
 echo ""
@@ -37,5 +41,5 @@ echo "  - <STATE>_sample.html        (HTML samples from each site)"
 echo ""
 echo "Share these files to help diagnose and fix scraper issues."
 echo ""
-echo "See README_DIAGNOSTICS.md for detailed instructions."
+echo "See docs/README_DIAGNOSTICS.md for detailed instructions."
 echo ""

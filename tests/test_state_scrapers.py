@@ -8,13 +8,13 @@ import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 from bs4 import BeautifulSoup
-
-# Import scrapers
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
 
-from state_scrapers import (
+# Add parent directory to path to import from ipfs_datasets_py
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import (
     AlabamaScraper,
     ConnecticutScraper,
     DelawareScraper,

@@ -25,8 +25,8 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 import traceback
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add parent directory to path to import from ipfs_datasets_py
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     import requests
@@ -36,7 +36,7 @@ except ImportError:
     print("Install with: pip install requests beautifulsoup4")
     sys.exit(1)
 
-from state_scrapers import (
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import (
     AlabamaScraper,
     ConnecticutScraper,
     DelawareScraper,
