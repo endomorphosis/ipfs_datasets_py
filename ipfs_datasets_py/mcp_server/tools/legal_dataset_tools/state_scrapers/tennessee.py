@@ -3,9 +3,13 @@
 This module contains the scraper for Tennessee statutes from the official state legislative website.
 """
 
+import warnings
 from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
+
+# Suppress SSL warnings for tn.gov
+warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
 
 class TennesseeScraper(BaseStateScraper):
@@ -19,7 +23,7 @@ class TennesseeScraper(BaseStateScraper):
         """Return list of available codes/statutes for Tennessee."""
         return [{
             "name": "Tennessee Code Annotated",
-            "url": f"{self.get_base_url()}/statutes.html",
+            "url": "https://www.capitol.tn.gov/legislation/archives.html",
             "type": "Code"
         }]
     
@@ -41,11 +45,12 @@ class TennesseeScraper(BaseStateScraper):
         """
         # Try alternative URLs if main URL fails
         # Note: Tennessee's SSL certificate often has issues, use verify=False in requests
+        # Tennessee URLs with extended timeout and SSL verification disabled
         alternative_urls = [
-            "https://publications.tnsosfiles.com/acts/",  # More reliable
+            "https://www.capitol.tn.gov/legislation/archives.html",
+            "https://publications.tnsosfiles.com/acts/",
             code_url,
-            "https://advance.lexis.com/container?config=0152JAA5ZGVhZjA3NS02MzIzLTRjZDAtYjA0ZSAxIDA5MmEwMjBiLTExIGRkLTQ2OTAsbYc1Ow",
-            f"http://web.archive.org/web/*/{code_url.replace('https://', '')}"
+            "http://web.archive.org/web/20230101000000*/tn.gov/*/statutes*"
         ]
         
         # Try custom scraper with SSL bypass first
@@ -121,11 +126,17 @@ class TennesseeScraper(BaseStateScraper):
                 link_text = link.get_text(strip=True)
                 link_href = link.get('href', '')
                 
-                if not link_text or len(link_text) < 5:
+                if not link_text or len(link_text) < 3:
                     continue
                 
-                keywords_tn = ['title', 'chapter', 'tca', '§', 'section', 'part', 'code', 'statute', 'tenn.']
-                if not any(keyword in link_text.lower() for keyword in keywords_tn):
+                # Tennessee patterns - very permissive to catch Bills, Resolutions, Acts, etc.
+                keywords_tn = ['bill', 'resolution', 'act', 'session', 'code', 'statute', 'title', 'chapter', 'tenn.', 'ga']
+                # Accept anything with numbers AND keywords, or links to archive/wapp
+                has_keyword = any(keyword in link_text.lower() or keyword in link_href.lower() for keyword in keywords_tn)
+                has_number = any(char.isdigit() for char in link_text)
+                is_legislative = 'wapp.capitol' in link_href or 'archive' in link_href.lower()
+                
+                if not (has_keyword or (has_number and is_legislative)):
                     continue
                 
                 full_url = urljoin(code_url, link_href)

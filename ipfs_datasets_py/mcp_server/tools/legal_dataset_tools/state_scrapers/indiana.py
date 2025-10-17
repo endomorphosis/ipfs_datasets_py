@@ -25,7 +25,7 @@ class IndianaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Indiana."""
         return [{
             "name": "Indiana Code",
-            "url": "http://iga.in.gov/static-documents/",  # Static HTML page, more reliable
+            "url": "http://web.archive.org/web/20231201000000/http://iga.in.gov/legislative/laws/2023/ic/titles/",
             "type": "Code"
         }]
     
@@ -72,13 +72,16 @@ class IndianaScraper(BaseStateScraper):
             
             try:
                 self.logger.info(f"Indiana: Loading {code_url}")
-                await page.goto(code_url, wait_until='domcontentloaded', timeout=60000)
+                await page.goto(code_url, wait_until='networkidle', timeout=90000)
                 
-                # Wait for any content to load - more permissive
+                # Wait for content - try multiple approaches
                 try:
-                    await page.wait_for_selector('a', timeout=15000)
+                    await page.wait_for_selector('a[href*="title"]', timeout=10000)
                 except:
-                    self.logger.warning("Indiana: Timeout waiting for links, proceeding anyway")
+                    try:
+                        await page.wait_for_selector('a', timeout=10000)
+                    except:
+                        self.logger.warning("Indiana: No links found, continuing anyway")
                 
                 # Give JavaScript time to render
                 await page.wait_for_timeout(2000)
