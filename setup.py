@@ -23,7 +23,8 @@ setup(
         "datasets>=2.10.0",
 
         # IPFS integration
-        "ipfshttpclient>=0.8.0",
+        # Note: 0.8.0 stable not available yet, using 0.8.0a2 or fallback to 0.7.0
+        "ipfshttpclient>=0.7.0",
 
         # IPLD components
         "multiformats>=0.2.1",
