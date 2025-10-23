@@ -250,6 +250,189 @@ class DatasetSerializer:
         else:
             self.storage = storage
 
+    def export_to_jsonnet(self, data: List[Dict[str, Any]], output_path: str, pretty: bool = True) -> str:
+        """
+        Export data to a Jsonnet file.
+
+        Args:
+            data (List[Dict]): List of JSON-serializable records
+            output_path (str): Path to the output Jsonnet file
+            pretty (bool): Whether to pretty-print the output
+
+        Returns:
+            str: Path to the created Jsonnet file
+        """
+        if pretty:
+            jsonnet_str = json.dumps(data, indent=2)
+        else:
+            jsonnet_str = json.dumps(data)
+        
+        with open(output_path, 'w') as f:
+            f.write(jsonnet_str)
+        return output_path
+
+    def import_from_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None,
+                           tla_vars: Optional[Dict[str, str]] = None) -> Optional['pa.Table']:
+        """
+        Import data from a Jsonnet file to an Arrow table.
+
+        Args:
+            jsonnet_path (str): Path to the Jsonnet file
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+
+        Returns:
+            pa.Table: Arrow table containing the data
+
+        Raises:
+            ImportError: If PyArrow or Jsonnet is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet import")
+        
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet file
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Ensure it's a list for table conversion
+        if not isinstance(data, list):
+            # If it's a single object, wrap it in a list
+            data = [data]
+        
+        # Convert to Arrow table
+        return pa.Table.from_pylist(data)
+
+    def convert_jsonnet_to_arrow(self, jsonnet_str: str, ext_vars: Optional[Dict[str, str]] = None,
+                                tla_vars: Optional[Dict[str, str]] = None) -> Optional['pa.Table']:
+        """
+        Convert a Jsonnet string to an Arrow table.
+
+        Args:
+            jsonnet_str (str): Jsonnet template string
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+
+        Returns:
+            pa.Table: Arrow table containing the data
+
+        Raises:
+            ImportError: If PyArrow or Jsonnet is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet to Arrow conversion")
+        
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet string
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_snippet(
+            "snippet",
+            jsonnet_str,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Ensure it's a list for table conversion
+        if not isinstance(data, list):
+            # If it's a single object, wrap it in a list
+            data = [data]
+        
+        # Convert to Arrow table
+        return pa.Table.from_pylist(data)
+
+    def serialize_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None,
+                         tla_vars: Optional[Dict[str, str]] = None) -> str:
+        """
+        Serialize a Jsonnet file to IPLD for storage on IPFS.
+
+        Args:
+            jsonnet_path (str): Path to the Jsonnet file
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+
+        Returns:
+            str: CID of the serialized data
+        """
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet file
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Structure for storage
+        dataset = {
+            "type": "jsonnet_dataset",
+            "source_file": os.path.basename(jsonnet_path),
+            "data": data,
+            "metadata": {
+                "created_at": datetime.datetime.now().isoformat(),
+                "ext_vars": ext_vars,
+                "tla_vars": tla_vars
+            }
+        }
+
+        # Store in IPLD
+        return self.storage.store_json(dataset)
+
+    def deserialize_jsonnet(self, cid: str, output_path: Optional[str] = None) -> Union[Dict[str, Any], List[Any], str]:
+        """
+        Deserialize Jsonnet data from IPLD/IPFS.
+
+        Args:
+            cid (str): CID of the serialized Jsonnet data
+            output_path (str, optional): If provided, write the data as Jsonnet to this path
+
+        Returns:
+            Union[Dict, List, str]: Data or path to output file if output_path is provided
+        """
+        # Get the data from IPFS
+        dataset = self.storage.get_json(cid)
+
+        # Verify it's a Jsonnet dataset
+        if dataset.get("type") != "jsonnet_dataset":
+            raise ValueError(f"CID {cid} does not contain a Jsonnet dataset")
+
+        # Extract data
+        data = dataset.get("data")
+
+        # If output path provided, write to file as Jsonnet
+        if output_path:
+            jsonnet_str = json.dumps(data, indent=2)
+            with open(output_path, 'w') as f:
+                f.write(jsonnet_str)
+            return output_path
+
+        # Otherwise return data
+        return data
+
     def export_to_jsonl(self, data: List[Dict[str, Any]], output_path: str) -> str:
         """
         Export data to a JSONL (JSON Lines) file.
@@ -426,6 +609,12 @@ try:
     HAVE_HUGGINGFACE = True
 except ImportError:
     HAVE_HUGGINGFACE = False
+
+try:
+    import _jsonnet
+    HAVE_JSONNET = True
+except ImportError:
+    HAVE_JSONNET = False
 
 
 T = TypeVar('T')
