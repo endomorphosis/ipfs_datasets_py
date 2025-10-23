@@ -31,6 +31,7 @@ jobs:
     # Skip if runner not available
     if: ${{ !cancelled() }}
     continue-on-error: false
+    timeout-minutes: 60
     
     steps:
       - name: Checkout repository
@@ -77,18 +78,69 @@ jobs:
                   print(f'  Memory: {torch.cuda.get_device_properties(i).total_memory / 1024**3:.2f} GB')
           "
       
+      - name: Test MCP GPU Tools
+        run: |
+          echo "🔧 Testing MCP GPU-enabled tools..."
+          python -c "
+          import torch
+          from ipfs_datasets_py.mcp_server.tools import get_all_tools
+          
+          print(f'CUDA Available: {torch.cuda.is_available()}')
+          if torch.cuda.is_available():
+              print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB')
+          
+          # Test GPU-specific MCP tools
+          tools = get_all_tools()
+          gpu_tools = [name for name in tools.keys() if 'gpu' in name.lower() or 'cuda' in name.lower()]
+          print(f'GPU-enabled MCP tools: {gpu_tools}')
+          "
+      
       - name: Run GPU Tests
         run: |
+          # Create GPU test results directory
+          mkdir -p gpu_test_results
+          
+          # Run comprehensive GPU tests
           pytest tests/ -v \
             -m "gpu" \
             --cov=ipfs_datasets_py \
-            --cov-report=xml \
+            --cov-report=xml:gpu_test_results/coverage.xml \
             --cov-report=term \
-            --junit-xml=gpu-test-results.xml \
+            --junit-xml=gpu_test_results/gpu-test-results.xml \
+            --tb=short \
+            --maxfail=5 \
             || echo "Some GPU tests failed, but continuing..."
+          
+          # Test specific GPU functionalities
+          python -c "
+          import sys
+          import torch
+          import numpy as np
+          from pathlib import Path
+          
+          # Test GPU memory allocation
+          try:
+              if torch.cuda.is_available():
+                  # Test memory allocation
+                  x = torch.randn(1000, 1000, device='cuda')
+                  y = torch.randn(1000, 1000, device='cuda')
+                  z = torch.matmul(x, y)
+                  print('✅ GPU matrix operations successful')
+                  
+                  # Test memory cleanup
+                  del x, y, z
+                  torch.cuda.empty_cache()
+                  print('✅ GPU memory cleanup successful')
+              else:
+                  print('⚠️ CUDA not available, skipping GPU-specific tests')
+          except Exception as e:
+              print(f'❌ GPU test failed: {e}')
+              sys.exit(1)
+          "
         env:
           CUDA_VISIBLE_DEVICES: "0,1"
           PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
+          CUDA_LAUNCH_BLOCKING: "1"
       
       - name: Upload GPU Test Results
         uses: actions/upload-artifact@v4

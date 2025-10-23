@@ -8,7 +8,8 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        'ipfs_kit_py',
+        # Using local submodule for ipfs_kit_py from known_good branch
+        'ipfs_kit_py @ file:./ipfs_kit_py',
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
@@ -23,7 +24,8 @@ setup(
         "datasets>=2.10.0",
 
         # IPFS integration
-        "ipfshttpclient>=0.8.0",
+        # Note: 0.8.0 stable not available yet, using 0.8.0a2 or fallback to 0.7.0
+        "ipfshttpclient>=0.7.0",
 
         # IPLD components
         "multiformats>=0.2.1",
