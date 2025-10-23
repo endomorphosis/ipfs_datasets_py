@@ -97,7 +97,7 @@ POST /api/mcp/patents/search
 {
   "keywords": ["AI"],
   "inventor_name": "Smith",
-  "assignee_name": "Google",
+  "assignee_name": "TechCorp",
   "date_from": "2020-01-01",
   "date_to": "2024-12-31",
   "limit": 100
@@ -242,5 +242,5 @@ Same as parent project (see main LICENSE file)
 
 ## Credits
 
-- USPTO PatentsView API: https://patentsview.org/
+- USPTO PatentsView API: https://patentsview.org/apis/purpose
 - Implementation: Part of IPFS Datasets Python library
