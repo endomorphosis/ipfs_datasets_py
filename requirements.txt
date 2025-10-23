@@ -1,6 +1,9 @@
 # Core dependencies only - for initial testing
 # Use this to test if basic setup works, then add more dependencies gradually
 
+# Local submodule dependencies
+-e ./ipfs_kit_py
+
 # Core Python packages
 numpy>=1.21.0,<2.0.0
 pandas>=1.5.0,<3.0.0
