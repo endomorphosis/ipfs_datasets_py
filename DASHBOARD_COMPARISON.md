@@ -29,6 +29,8 @@
 
 ## API Endpoints
 
+**Note**: All APIs use the same parameter names (`jurisdiction`, `legal_domain`) for consistency, regardless of the dashboard's UI terminology. The UI labels are customized (e.g., "Market" in Finance, "Specialty" in Medicine), but the API parameters remain standard across all domains.
+
 ### Caselaw
 ```
 GET  /mcp/caselaw

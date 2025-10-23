@@ -55,7 +55,12 @@ The only differences between dashboards are:
 3. UI labels and icons
 
 ### API Compatibility
-The API endpoints follow the same interface pattern as caselaw:
+The API endpoints follow the same interface pattern as caselaw.
+
+**Important**: While the UI labels differ between dashboards (e.g., "Market" in Finance, "Specialty" in Medicine), the API parameter names remain consistent across all domains (`jurisdiction`, `legal_domain`). This design ensures:
+- API consistency and backward compatibility
+- Easy integration with existing tools
+- Clear separation between UI presentation and backend logic
 
 **Check Document Request:**
 ```json
