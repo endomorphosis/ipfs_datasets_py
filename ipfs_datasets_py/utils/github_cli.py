@@ -252,7 +252,7 @@ class GitHubCLI:
     def execute(self, args: List[str], capture_output: bool = True, 
                 timeout: Optional[int] = None) -> subprocess.CompletedProcess:
         """
-        Execute a GitHub CLI command.
+        Execute a GitHub CLI command with sanitized inputs.
         
         Args:
             args: Command arguments to pass to GitHub CLI
@@ -264,6 +264,8 @@ class GitHubCLI:
         
         Raises:
             RuntimeError: If GitHub CLI is not installed
+            TypeError: If args is not a list or contains non-strings
+            ValueError: If args contains invalid characters
             subprocess.TimeoutExpired: If command times out
         """
         if not self.is_installed():
@@ -271,7 +273,24 @@ class GitHubCLI:
                 "GitHub CLI is not installed. Call download_and_install() first."
             )
         
-        cmd = [str(self.cli_executable)] + args
+        # Input sanitization: ensure args is a list
+        if not isinstance(args, list):
+            raise TypeError(f"args must be a list, got {type(args).__name__}")
+        
+        # Input sanitization: ensure all args are strings and safe
+        sanitized_args = []
+        for arg in args:
+            if not isinstance(arg, str):
+                raise TypeError(f"All args must be strings, got {type(arg).__name__}")
+            # Prevent command injection by checking for shell metacharacters
+            # Allow common GitHub CLI characters but block potentially dangerous ones
+            if any(char in arg for char in [';', '|', '&', '`', '$', '(', ')', '<', '>', '\n', '\r']):
+                # Allow these in specific contexts (like in JSON strings)
+                if not (arg.startswith('{') or arg.startswith('[') or '--' in arg):
+                    raise ValueError(f"Argument contains potentially unsafe characters: {arg}")
+            sanitized_args.append(arg)
+        
+        cmd = [str(self.cli_executable)] + sanitized_args
         logger.debug(f"Executing GitHub CLI command: {' '.join(cmd)}")
         
         try:

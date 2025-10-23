@@ -162,7 +162,7 @@ class ClaudeCLI:
     def execute(self, args: List[str], capture_output: bool = True, 
                 timeout: Optional[int] = None, api_key: Optional[str] = None) -> subprocess.CompletedProcess:
         """
-        Execute a Claude CLI command via Python.
+        Execute a Claude CLI command via Python with sanitized inputs.
         
         This creates a Python script to interact with the Claude API.
         
@@ -177,11 +177,21 @@ class ClaudeCLI:
         
         Raises:
             RuntimeError: If Claude CLI is not installed
+            TypeError: If args is not a list or contains non-strings
         """
         if not self.is_installed():
             raise RuntimeError(
                 "Anthropic Claude CLI is not installed. Call install() first."
             )
+        
+        # Input sanitization: ensure args is a list
+        if not isinstance(args, list):
+            raise TypeError(f"args must be a list, got {type(args).__name__}")
+        
+        # Input sanitization: ensure all args are strings
+        for arg in args:
+            if not isinstance(arg, str):
+                raise TypeError(f"All args must be strings, got {type(arg).__name__}")
         
         # Get API key
         used_api_key = api_key or self.get_api_key()
@@ -190,20 +200,37 @@ class ClaudeCLI:
                 "No API key configured. Call configure_api_key() first or set ANTHROPIC_API_KEY environment variable."
             )
         
+        # Sanitize API key - ensure it's a string and not empty
+        if not isinstance(used_api_key, str) or not used_api_key.strip():
+            raise ValueError("Invalid API key format")
+        
         # Create a temporary Python script to execute the command
+        # Pass sensitive data via environment variables for security
         import tempfile
         import json
         
-        script_content = f"""
+        script_content = """
 import os
 import sys
+import json
 from anthropic import Anthropic
 
-# Configure API key
-client = Anthropic(api_key='{used_api_key}')
+# Get API key from environment (set by parent process)
+api_key = os.environ.get('CLAUDE_TEMP_API_KEY')
+if not api_key:
+    print("Error: API key not provided", file=sys.stderr)
+    sys.exit(1)
 
-# Parse command
-args = {args}
+# Configure API key
+client = Anthropic(api_key=api_key)
+
+# Parse command from environment (set by parent process)
+args_json = os.environ.get('CLAUDE_TEMP_ARGS', '[]')
+try:
+    args = json.loads(args_json)
+except json.JSONDecodeError:
+    print("Error: Invalid command arguments", file=sys.stderr)
+    sys.exit(1)
 if len(args) == 0:
     print("No command specified")
     sys.exit(1)
@@ -257,12 +284,19 @@ else:
             cmd = [sys.executable, script_path]
             logger.debug(f"Executing Claude CLI command via Python script")
             
+            # Pass sensitive data via environment variables for security
+            import json
+            env = os.environ.copy()
+            env['CLAUDE_TEMP_API_KEY'] = used_api_key
+            env['CLAUDE_TEMP_ARGS'] = json.dumps(args)
+            
             result = subprocess.run(
                 cmd,
                 capture_output=capture_output,
                 text=True,
                 timeout=timeout,
-                check=False
+                check=False,
+                env=env
             )
             return result
         except subprocess.TimeoutExpired as e:
