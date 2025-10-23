@@ -384,6 +384,12 @@ class MCPDashboard(AdminDashboard):
         # Set up caselaw/legal text to deontic logic routes (always enabled)
         self._setup_caselaw_routes()
         
+        # Set up finance dashboard routes (based on caselaw template)
+        self._setup_finance_routes()
+        
+        # Set up medicine dashboard routes (based on caselaw template)
+        self._setup_medicine_routes()
+        
         # Set up legal dataset scraping routes
         self._setup_legal_dataset_routes()
     
@@ -1227,6 +1233,408 @@ class MCPDashboard(AdminDashboard):
                     "success": False,
                     "error": str(e)
                 }), 500
+
+    def _setup_finance_routes(self) -> None:
+        """Set up finance dashboard routes (based on caselaw template)."""
+        
+        @self.app.route('/mcp/finance')
+        def finance_dashboard():
+            """Render the finance analysis dashboard using temporal deontic logic."""
+            # Import temporal deontic logic components (same backend as caselaw)
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic_integration.deontic_logic_core import DeonticOperator
+                
+                # Initialize RAG store and get statistics
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": len(rag_store.theorems),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
+                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
+                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "available_operators": [op.name for op in DeonticOperator],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": True
+                    },
+                    "mcp_enabled": True
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize finance dashboard: {e}")
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": 0,
+                        "jurisdictions": [],
+                        "legal_domains": [],
+                        "temporal_periods": 0,
+                        "available_operators": [],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": False,
+                        "error_message": str(e)
+                    },
+                    "mcp_enabled": True
+                }
+            
+            return render_template('finance_dashboard_mcp.html', **dashboard_data)
+        
+        # Finance API endpoints (reuse caselaw backend with finance prefix)
+        @self.app.route('/api/mcp/finance/check_document', methods=['POST'])
+        def api_check_finance_document():
+            """Check financial document consistency."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from datetime import datetime
+                
+                data = request.json or {}
+                document_text = data.get('document_text', '')
+                document_id = data.get('document_id', f'doc_{int(time.time())}')
+                jurisdiction = data.get('jurisdiction', 'Federal')
+                legal_domain = data.get('legal_domain', 'finance')
+                
+                if not document_text:
+                    return jsonify({"success": False, "error": "Document text is required"}), 400
+                
+                # Initialize checker (reuses same logic engine)
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                # Parse temporal context
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                # Check document consistency
+                analysis = checker.check_document(
+                    document_text=document_text,
+                    document_id=document_id,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain
+                )
+                
+                # Generate debug report
+                debug_report = checker.generate_debug_report(analysis)
+                
+                # Format response
+                result = {
+                    "success": True,
+                    "document_id": analysis.document_id,
+                    "consistency_analysis": {
+                        "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                        "confidence_score": analysis.confidence_score,
+                        "formulas_extracted": len(analysis.extracted_formulas),
+                        "issues_found": len(analysis.issues_found),
+                        "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
+                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
+                        "processing_time": analysis.processing_time
+                    },
+                    "debug_report": {
+                        "total_issues": debug_report.total_issues,
+                        "critical_errors": debug_report.critical_errors,
+                        "warnings": debug_report.warnings,
+                        "suggestions": debug_report.suggestions,
+                        "issues": debug_report.issues[:10],
+                        "summary": debug_report.summary,
+                        "fix_suggestions": debug_report.fix_suggestions
+                    },
+                    "extracted_formulas": [
+                        {
+                            "operator": f.operator.name,
+                            "proposition": f.proposition,
+                            "agent": f.agent.name if f.agent else "Unspecified",
+                            "confidence": f.confidence
+                        } for f in analysis.extracted_formulas[:10]
+                    ]
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Finance document consistency check failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/finance/query_theorems', methods=['POST'])
+        def api_query_finance_rules():
+            """Query relevant financial rules using RAG retrieval."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from datetime import datetime
+                
+                data = request.json or {}
+                query_text = data.get('query_text', '')
+                operator_str = data.get('operator', 'OBLIGATION')
+                jurisdiction = data.get('jurisdiction')
+                legal_domain = data.get('legal_domain', 'finance')
+                top_k = min(int(data.get('top_k', 10)), 50)
+                
+                if not query_text:
+                    return jsonify({"success": False, "error": "Query text is required"}), 400
+                
+                # Create query formula
+                operator = DeonticOperator[operator_str]
+                agent = LegalAgent("query_agent", "Query Agent", "person")
+                
+                query_formula = DeonticFormula(
+                    operator=operator,
+                    proposition=query_text,
+                    agent=agent
+                )
+                
+                # Query RAG store
+                rag_store = TemporalDeonticRAGStore()
+                
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                relevant_theorems = rag_store.retrieve_relevant_theorems(
+                    query_formula=query_formula,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain,
+                    top_k=top_k
+                )
+                
+                # Format response
+                result = {
+                    "success": True,
+                    "query": query_text,
+                    "total_results": len(relevant_theorems),
+                    "theorems": [
+                        {
+                            "theorem_id": t.theorem_id,
+                            "formula": {
+                                "operator": t.formula.operator.name,
+                                "proposition": t.formula.proposition,
+                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified"
+                            },
+                            "metadata": {
+                                "jurisdiction": t.jurisdiction,
+                                "legal_domain": t.legal_domain,
+                                "source_case": t.source_case,
+                                "precedent_strength": t.precedent_strength
+                            },
+                            "relevance_score": t.confidence,
+                            "temporal_scope": {
+                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
+                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
+                            }
+                        } for t in relevant_theorems
+                    ]
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Finance rules query failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+
+    def _setup_medicine_routes(self) -> None:
+        """Set up medicine dashboard routes (based on caselaw template)."""
+        
+        @self.app.route('/mcp/medicine')
+        def medicine_dashboard():
+            """Render the medicine analysis dashboard using temporal deontic logic."""
+            # Import temporal deontic logic components (same backend as caselaw)
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic_integration.deontic_logic_core import DeonticOperator
+                
+                # Initialize RAG store and get statistics
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": len(rag_store.theorems),
+                        "jurisdictions": list(rag_store.jurisdiction_index.keys()) if hasattr(rag_store, 'jurisdiction_index') else [],
+                        "legal_domains": list(rag_store.domain_index.keys()) if hasattr(rag_store, 'domain_index') else [],
+                        "temporal_periods": len(getattr(rag_store, 'temporal_index', {})),
+                        "available_operators": [op.name for op in DeonticOperator],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": True
+                    },
+                    "mcp_enabled": True
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize medicine dashboard: {e}")
+                dashboard_data = {
+                    "system_status": {
+                        "theorem_count": 0,
+                        "jurisdictions": [],
+                        "legal_domains": [],
+                        "temporal_periods": 0,
+                        "available_operators": [],
+                        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "system_ready": False,
+                        "error_message": str(e)
+                    },
+                    "mcp_enabled": True
+                }
+            
+            return render_template('medicine_dashboard_mcp.html', **dashboard_data)
+        
+        # Medicine API endpoints (reuse caselaw backend with medicine prefix)
+        @self.app.route('/api/mcp/medicine/check_document', methods=['POST'])
+        def api_check_medicine_document():
+            """Check medical document consistency."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from datetime import datetime
+                
+                data = request.json or {}
+                document_text = data.get('document_text', '')
+                document_id = data.get('document_id', f'doc_{int(time.time())}')
+                jurisdiction = data.get('jurisdiction', 'Federal')
+                legal_domain = data.get('legal_domain', 'medicine')
+                
+                if not document_text:
+                    return jsonify({"success": False, "error": "Document text is required"}), 400
+                
+                # Initialize checker (reuses same logic engine)
+                rag_store = TemporalDeonticRAGStore()
+                checker = DocumentConsistencyChecker(rag_store=rag_store)
+                
+                # Parse temporal context
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                # Check document consistency
+                analysis = checker.check_document(
+                    document_text=document_text,
+                    document_id=document_id,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain
+                )
+                
+                # Generate debug report
+                debug_report = checker.generate_debug_report(analysis)
+                
+                # Format response
+                result = {
+                    "success": True,
+                    "document_id": analysis.document_id,
+                    "consistency_analysis": {
+                        "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                        "confidence_score": analysis.confidence_score,
+                        "formulas_extracted": len(analysis.extracted_formulas),
+                        "issues_found": len(analysis.issues_found),
+                        "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
+                        "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
+                        "processing_time": analysis.processing_time
+                    },
+                    "debug_report": {
+                        "total_issues": debug_report.total_issues,
+                        "critical_errors": debug_report.critical_errors,
+                        "warnings": debug_report.warnings,
+                        "suggestions": debug_report.suggestions,
+                        "issues": debug_report.issues[:10],
+                        "summary": debug_report.summary,
+                        "fix_suggestions": debug_report.fix_suggestions
+                    },
+                    "extracted_formulas": [
+                        {
+                            "operator": f.operator.name,
+                            "proposition": f.proposition,
+                            "agent": f.agent.name if f.agent else "Unspecified",
+                            "confidence": f.confidence
+                        } for f in analysis.extracted_formulas[:10]
+                    ]
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Medicine document consistency check failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/query_theorems', methods=['POST'])
+        def api_query_medicine_guidelines():
+            """Query relevant medical guidelines using RAG retrieval."""
+            try:
+                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from datetime import datetime
+                
+                data = request.json or {}
+                query_text = data.get('query_text', '')
+                operator_str = data.get('operator', 'OBLIGATION')
+                jurisdiction = data.get('jurisdiction')
+                legal_domain = data.get('legal_domain', 'medicine')
+                top_k = min(int(data.get('top_k', 10)), 50)
+                
+                if not query_text:
+                    return jsonify({"success": False, "error": "Query text is required"}), 400
+                
+                # Create query formula
+                operator = DeonticOperator[operator_str]
+                agent = LegalAgent("query_agent", "Query Agent", "person")
+                
+                query_formula = DeonticFormula(
+                    operator=operator,
+                    proposition=query_text,
+                    agent=agent
+                )
+                
+                # Query RAG store
+                rag_store = TemporalDeonticRAGStore()
+                
+                temporal_context = datetime.now()
+                if data.get('temporal_context'):
+                    temporal_context = datetime.fromisoformat(data['temporal_context'])
+                
+                relevant_theorems = rag_store.retrieve_relevant_theorems(
+                    query_formula=query_formula,
+                    temporal_context=temporal_context,
+                    jurisdiction=jurisdiction,
+                    legal_domain=legal_domain,
+                    top_k=top_k
+                )
+                
+                # Format response
+                result = {
+                    "success": True,
+                    "query": query_text,
+                    "total_results": len(relevant_theorems),
+                    "theorems": [
+                        {
+                            "theorem_id": t.theorem_id,
+                            "formula": {
+                                "operator": t.formula.operator.name,
+                                "proposition": t.formula.proposition,
+                                "agent": t.formula.agent.name if t.formula.agent else "Unspecified"
+                            },
+                            "metadata": {
+                                "jurisdiction": t.jurisdiction,
+                                "legal_domain": t.legal_domain,
+                                "source_case": t.source_case,
+                                "precedent_strength": t.precedent_strength
+                            },
+                            "relevance_score": t.confidence,
+                            "temporal_scope": {
+                                "start": t.temporal_scope[0].isoformat() if t.temporal_scope[0] else None,
+                                "end": t.temporal_scope[1].isoformat() if t.temporal_scope[1] else None
+                            }
+                        } for t in relevant_theorems
+                    ]
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Medicine guidelines query failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_legal_dataset_routes(self) -> None:
         """Set up legal dataset scraping routes."""

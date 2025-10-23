@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temporal Deontic Logic RAG - Caselaw Dashboard (MCP)</title>
+    <title>Temporal Deontic Logic RAG - Medicine Dashboard (MCP)</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
@@ -93,7 +93,7 @@
         }
         
         /* Enhanced header */
-        .caselaw-header { 
+        .medicine-header { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
             padding: 30px;
@@ -102,13 +102,13 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         
-        .caselaw-header h1 {
+        .medicine-header h1 {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 10px;
         }
         
-        .caselaw-header .lead {
+        .medicine-header .lead {
             font-size: 1.1rem;
             opacity: 0.95;
         }
@@ -332,8 +332,8 @@
             font-weight: 600;
         }
         
-        /* Theorem cards */
-        .theorem-card {
+        /* Guideline cards */
+        .guideline-card {
             border-left: 4px solid #667eea;
             margin-bottom: 15px;
             padding: 15px;
@@ -342,7 +342,7 @@
             transition: all 0.2s ease;
         }
         
-        .theorem-card:hover {
+        .guideline-card:hover {
             background-color: #e9ecef;
             border-left-color: #764ba2;
         }
@@ -650,18 +650,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="{{ url_for('caselaw_dashboard') }}">
+                            <a class="nav-link active" href="{{ url_for('medicine_dashboard') }}">
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('caselaw_dashboard') }}">
                                 <i class="fas fa-gavel"></i> Caselaw Analysis (MCP)
+                            </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('finance_dashboard') }}">
                                 <i class="fas fa-chart-line"></i> Finance Analysis (MCP)
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('medicine_dashboard') }}">
                                 <i class="fas fa-heartbeat"></i> Medicine Analysis (MCP)
-                            </a>
                             </a>
                         </li>
                     </ul>
@@ -676,13 +676,13 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#query-theorems" role="tab">
-                                    <i class="fas fa-search"></i> Query Theorems
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#query-guidelines" role="tab">
+                                    <i class="fas fa-search"></i> Query Guidelines
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#bulk-process" role="tab">
-                                    <i class="fas fa-tasks"></i> Bulk Process Caselaw
+                                    <i class="fas fa-tasks"></i> Bulk Process Medicine
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -707,12 +707,12 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#brief-generator" role="tab">
-                                    <i class="fas fa-file-contract"></i> Legal Brief Generator
+                                    <i class="fas fa-file-medical"></i> Medical Brief Generator
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#jurisdiction-compare" role="tab">
-                                    <i class="fas fa-exchange-alt"></i> Jurisdiction Comparison
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#specialty-compare" role="tab">
+                                    <i class="fas fa-exchange-alt"></i> Specialty Comparison
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -729,7 +729,7 @@
                         <ul class="nav flex-column">
                             <li class="nav-item">
                                 <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-cap" role="tab">
-                                    <i class="fas fa-database"></i> Case Law Access Project
+                                    <i class="fas fa-database"></i> Medicine Access Project
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -749,7 +749,7 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#dataset-recap" role="tab">
-                                    <i class="fas fa-gavel"></i> RECAP Archive
+                                    <i class="fas fa-heartbeat"></i> RECAP Archive
                                 </a>
                             </li>
                         </ul>
@@ -759,9 +759,9 @@
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
                 <!-- Header -->
-                <div class="caselaw-header">
-                    <h1><i class="fas fa-gavel"></i> Temporal Deontic Logic RAG System</h1>
-                    <p class="lead mb-0">Legal document consistency checker using MCP JSON-RPC tools</p>
+                <div class="medicine-header">
+                    <h1><i class="fas fa-heartbeat"></i> Temporal Deontic Logic RAG System</h1>
+                    <p class="lead mb-0">Medical document consistency checker using MCP JSON-RPC tools</p>
                 </div>
 
                 <!-- MCP Status Indicator -->
@@ -777,26 +777,26 @@
                 </div>
 
                 <!-- Navigation Tabs -->
-                <div class="tab-content" id="caselawTabContent">
+                <div class="tab-content" id="medicineTabContent">
                     <!-- Document Analysis Tab -->
                     <div class="tab-pane fade show active" id="document-analysis" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
                                 <h5><i class="fas fa-file-text"></i> Document Consistency Analysis</h5>
-                                <small class="text-muted">Check legal documents against temporal deontic logic theorems</small>
+                                <small class="text-muted">Check medical documents against temporal deontic logic guidelines</small>
                             </div>
                             <div class="card-body">
                                 <form id="documentAnalysisForm">
                                     <div class="mb-3">
                                         <label for="documentText" class="form-label">Document Text</label>
                                         <textarea class="form-control" id="documentText" rows="6" 
-                                                  placeholder="Paste legal document text here for consistency analysis..."></textarea>
+                                                  placeholder="Paste medical document text here for consistency analysis..."></textarea>
                                     </div>
                                     
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <label for="jurisdiction" class="form-label">Jurisdiction</label>
-                                            <select class="form-select" id="jurisdiction">
+                                            <label for="specialty" class="form-label">Specialty</label>
+                                            <select class="form-select" id="specialty">
                                                 <option value="Federal">Federal</option>
                                                 <option value="State">State</option>
                                                 <option value="Supreme Court">Supreme Court</option>
@@ -805,8 +805,8 @@
                                             </select>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="legalDomain" class="form-label">Legal Domain</label>
-                                            <select class="form-select" id="legalDomain">
+                                            <label for="medicalDomain" class="form-label">Medical Domain</label>
+                                            <select class="form-select" id="medicalDomain">
                                                 <option value="general">General</option>
                                                 <option value="Contract">Contract</option>
                                                 <option value="Employment">Employment</option>
@@ -843,15 +843,15 @@
                         </div>
                     </div>
 
-                    <!-- Query Theorems Tab -->
-                    <div class="tab-pane fade" id="query-theorems" role="tabpanel">
+                    <!-- Query Guidelines Tab -->
+                    <div class="tab-pane fade" id="query-guidelines" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-search"></i> RAG-Based Theorem Query</h5>
-                                <small class="text-muted">Semantic search of temporal deontic logic theorems</small>
+                                <h5><i class="fas fa-search"></i> RAG-Based Guideline Query</h5>
+                                <small class="text-muted">Semantic search of temporal deontic logic guidelines</small>
                             </div>
                             <div class="card-body">
-                                <form id="queryTheoremForm">
+                                <form id="queryGuidelineForm">
                                     <div class="mb-3">
                                         <label for="queryText" class="form-label">Query</label>
                                         <input type="text" class="form-control" id="queryText" 
@@ -869,17 +869,17 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3">
-                                            <label for="queryJurisdiction" class="form-label">Jurisdiction</label>
-                                            <select class="form-select" id="queryJurisdiction">
-                                                <option value="all">All Jurisdictions</option>
+                                            <label for="querySpecialty" class="form-label">Specialty</label>
+                                            <select class="form-select" id="querySpecialty">
+                                                <option value="all">All Specialtys</option>
                                                 <option value="Federal">Federal</option>
                                                 <option value="State">State</option>
                                                 <option value="Supreme Court">Supreme Court</option>
                                             </select>
                                         </div>
                                         <div class="col-md-3">
-                                            <label for="queryLegalDomain" class="form-label">Legal Domain</label>
-                                            <select class="form-select" id="queryLegalDomain">
+                                            <label for="queryMedicalDomain" class="form-label">Medical Domain</label>
+                                            <select class="form-select" id="queryMedicalDomain">
                                                 <option value="all">All Domains</option>
                                                 <option value="Contract">Contract</option>
                                                 <option value="Employment">Employment</option>
@@ -894,7 +894,7 @@
                                     
                                     <div class="mt-3">
                                         <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-search"></i> Query Theorems
+                                            <i class="fas fa-search"></i> Query Guidelines
                                         </button>
                                     </div>
                                 </form>
@@ -903,7 +903,7 @@
                                     <div class="spinner-border text-success" role="status">
                                         <span class="visually-hidden">Querying...</span>
                                     </div>
-                                    <p class="mt-2">Searching theorem corpus...</p>
+                                    <p class="mt-2">Searching guideline corpus...</p>
                                 </div>
                                 
                                 <div id="queryResults" class="mt-4" style="display: none;">
@@ -917,14 +917,14 @@
                     <div class="tab-pane fade" id="bulk-process" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-tasks"></i> Bulk Caselaw Processing</h5>
-                                <small class="text-muted">Process entire caselaw databases to build unified deontic logic systems</small>
+                                <h5><i class="fas fa-tasks"></i> Bulk Medicine Processing</h5>
+                                <small class="text-muted">Process entire medicine databases to build unified deontic logic systems</small>
                             </div>
                             <div class="card-body">
                                 <form id="bulkProcessForm">
                                     <div class="mb-3">
-                                        <label for="caselawDirectories" class="form-label">Caselaw Directories</label>
-                                        <textarea class="form-control" id="caselawDirectories" rows="3" 
+                                        <label for="medicineDirectories" class="form-label">Medicine Directories</label>
+                                        <textarea class="form-control" id="medicineDirectories" rows="3" 
                                                   placeholder="Enter directory paths (one per line):&#10;/data/federal_cases&#10;/data/state_cases&#10;/data/supreme_court"></textarea>
                                     </div>
                                     
@@ -977,7 +977,7 @@
                                     <div class="spinner-border text-warning" role="status">
                                         <span class="visually-hidden">Processing...</span>
                                     </div>
-                                    <p class="mt-2">Processing caselaw corpus...</p>
+                                    <p class="mt-2">Processing medicine corpus...</p>
                                 </div>
                                 
                                 <div id="bulkResults" class="mt-4" style="display: none;">
@@ -998,20 +998,20 @@
                                 <form id="precedentSearchForm">
                                     <div class="mb-3">
                                         <label for="precedentQuery" class="form-label">
-                                            Legal Issue or Fact Pattern
+                                            Medical Issue or Fact Pattern
                                             <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                                               title="Describe the legal situation in natural language. Include key facts, parties involved, and the main legal question."></i>
+                                               title="Describe the medical situation in natural language. Include key facts, parties involved, and the main medical question."></i>
                                         </label>
                                         <textarea class="form-control" id="precedentQuery" rows="4" 
-                                                  placeholder="Describe the legal issue, facts, or cite a case you want to find similar precedents for...
+                                                  placeholder="Describe the medical issue, facts, or cite a case you want to find similar precedents for...
 Example: 'Employee terminated without notice after reporting safety violations'"></textarea>
                                     </div>
                                     
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <label for="precedentJurisdiction" class="form-label">Jurisdiction</label>
-                                            <select class="form-select" id="precedentJurisdiction">
-                                                <option value="all">All Jurisdictions</option>
+                                            <label for="precedentSpecialty" class="form-label">Specialty</label>
+                                            <select class="form-select" id="precedentSpecialty">
+                                                <option value="all">All Specialtys</option>
                                                 <option value="Federal">Federal</option>
                                                 <option value="State">State</option>
                                                 <option value="Supreme Court">Supreme Court</option>
@@ -1019,7 +1019,7 @@ Example: 'Employee terminated without notice after reporting safety violations'"
                                             </select>
                                         </div>
                                         <div class="col-md-3">
-                                            <label for="precedentDomain" class="form-label">Legal Area</label>
+                                            <label for="precedentDomain" class="form-label">Medical Area</label>
                                             <select class="form-select" id="precedentDomain">
                                                 <option value="all">All Areas</option>
                                                 <option value="Employment">Employment Law</option>
@@ -1061,7 +1061,7 @@ Example: 'Employee terminated without notice after reporting safety violations'"
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Searching precedents...</span>
                                     </div>
-                                    <p class="mt-2">Analyzing case law database...</p>
+                                    <p class="mt-2">Analyzing medicine database...</p>
                                 </div>
                                 
                                 <div id="precedentResults" class="mt-4" style="display: none;">
@@ -1149,7 +1149,7 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                                             <select class="form-select" id="municipalSearchProvider">
                                                 <option value="all">All Sources</option>
                                                 <option value="municode">Municode</option>
-                                                <option value="american_legal">American Legal</option>
+                                                <option value="american_medical">American Medical</option>
                                                 <option value="general_code">General Code</option>
                                                 <option value="lexisnexis">LexisNexis</option>
                                             </select>
@@ -1217,21 +1217,21 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                     <div class="tab-pane fade" id="conflict-analyzer" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-exclamation-triangle"></i> Legal Conflict Analyzer</h5>
-                                <small class="text-muted">Identify conflicting laws, precedents, and legal principles</small>
+                                <h5><i class="fas fa-exclamation-triangle"></i> Medical Conflict Analyzer</h5>
+                                <small class="text-muted">Identify conflicting laws, precedents, and medical principles</small>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-info">
                                     <h6><i class="fas fa-info-circle"></i> How It Works</h6>
-                                    <p class="mb-0">This tool uses temporal deontic logic to identify conflicts between obligations, permissions, and prohibitions across different jurisdictions and time periods.</p>
+                                    <p class="mb-0">This tool uses temporal deontic logic to identify conflicts between obligations, permissions, and prohibitions across different specialtys and time periods.</p>
                                 </div>
                                 
                                 <form id="conflictAnalyzerForm">
                                     <div class="mb-3">
                                         <label for="conflictArea" class="form-label">
-                                            Legal Area to Analyze
+                                            Medical Area to Analyze
                                             <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                                               title="Select the area of law where you want to identify conflicts between different jurisdictions."></i>
+                                               title="Select the area of law where you want to identify conflicts between different specialtys."></i>
                                         </label>
                                         <select class="form-select" id="conflictArea">
                                             <option value="Employment">Employment Law</option>
@@ -1244,8 +1244,8 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                                     
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <label class="form-label">Jurisdiction 1</label>
-                                            <select class="form-select" id="conflict Jurisdiction1">
+                                            <label class="form-label">Specialty 1</label>
+                                            <select class="form-select" id="conflict Specialty1">
                                                 <option value="Federal">Federal</option>
                                                 <option value="California">California</option>
                                                 <option value="New York">New York</option>
@@ -1253,8 +1253,8 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label">Jurisdiction 2</label>
-                                            <select class="form-select" id="conflictJurisdiction2">
+                                            <label class="form-label">Specialty 2</label>
+                                            <select class="form-select" id="conflictSpecialty2">
                                                 <option value="State">State (General)</option>
                                                 <option value="California">California</option>
                                                 <option value="New York">New York</option>
@@ -1307,7 +1307,7 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                                     <div class="spinner-border text-danger" role="status">
                                         <span class="visually-hidden">Analyzing conflicts...</span>
                                     </div>
-                                    <p class="mt-2">Checking for legal conflicts...</p>
+                                    <p class="mt-2">Checking for medical conflicts...</p>
                                 </div>
                                 
                                 <div id="conflictResults" class="mt-4" style="display: none;">
@@ -1322,14 +1322,14 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                         <div class="card mt-3">
                             <div class="card-header">
                                 <h5><i class="fas fa-project-diagram"></i> Citation Network Analysis</h5>
-                                <small class="text-muted">Visualize how cases cite each other and trace legal evolution</small>
+                                <small class="text-muted">Visualize how cases cite each other and trace medical evolution</small>
                             </div>
                             <div class="card-body">
                                 <form id="citationNetworkForm">
                                     <div class="mb-3">
-                                        <label for="rootCase" class="form-label">Root Case or Legal Principle</label>
+                                        <label for="rootCase" class="form-label">Root Case or Medical Principle</label>
                                         <input type="text" class="form-control" id="rootCase" 
-                                               placeholder="Enter case name or legal principle (e.g., 'Miranda v. Arizona' or 'Due Process')">
+                                               placeholder="Enter case name or medical principle (e.g., 'Miranda v. Arizona' or 'Due Process')">
                                     </div>
                                     
                                     <div class="row">
@@ -1400,12 +1400,12 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                         </div>
                     </div>
                     
-                    <!-- Legal Brief Generator Tab -->
+                    <!-- Medical Brief Generator Tab -->
                     <div class="tab-pane fade" id="brief-generator" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-file-contract"></i> AI-Assisted Legal Brief Generator</h5>
-                                <small class="text-muted">Generate legal arguments backed by relevant caselaw and precedents</small>
+                                <h5><i class="fas fa-file-medical"></i> AI-Assisted Medical Brief Generator</h5>
+                                <small class="text-muted">Generate medical arguments backed by relevant medicine and precedents</small>
                             </div>
                             <div class="card-body">
                                 <form id="briefGeneratorForm">
@@ -1414,7 +1414,7 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                                         <label for="briefTemplate" class="form-label">
                                             Brief Template
                                             <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                                               title="Choose a pre-configured template for different types of legal briefs."></i>
+                                               title="Choose a pre-configured template for different types of medical briefs."></i>
                                         </label>
                                         <select class="form-select" id="briefTemplate">
                                             <option value="custom">Custom Brief</option>
@@ -1423,18 +1423,18 @@ Example: 'zoning requirements for commercial buildings' or 'parking regulations 
                                             <option value="summary_judgment">Summary Judgment</option>
                                             <option value="complaint">Complaint</option>
                                             <option value="response">Response Brief</option>
-                                            <option value="memo">Legal Memorandum</option>
+                                            <option value="memo">Medical Memorandum</option>
                                         </select>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label for="briefIssue" class="form-label">
-                                            Legal Issue
+                                            Medical Issue
                                             <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                                               title="State the central legal question your brief will address."></i>
+                                               title="State the central medical question your brief will address."></i>
                                         </label>
                                         <textarea class="form-control" id="briefIssue" rows="3" 
-                                                  placeholder="Describe the legal issue you need to argue...
+                                                  placeholder="Describe the medical issue you need to argue...
 Example: 'Whether an employment contract requiring 30 days notice is enforceable when employee was constructively discharged'"></textarea>
                                     </div>
                                     
@@ -1448,8 +1448,8 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="briefJurisdiction" class="form-label">Jurisdiction</label>
-                                            <select class="form-select" id="briefJurisdiction">
+                                            <label for="briefSpecialty" class="form-label">Specialty</label>
+                                            <select class="form-select" id="briefSpecialty">
                                                 <option value="Federal">Federal</option>
                                                 <option value="State">State</option>
                                                 <option value="Supreme Court">Supreme Court</option>
@@ -1531,74 +1531,74 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                         </div>
                     </div>
                     
-                    <!-- Jurisdiction Comparison Tab -->
-                    <div class="tab-pane fade" id="jurisdiction-compare" role="tabpanel">
+                    <!-- Specialty Comparison Tab -->
+                    <div class="tab-pane fade" id="specialty-compare" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-exchange-alt"></i> Multi-Jurisdiction Comparison</h5>
-                                <small class="text-muted">Compare how different jurisdictions handle the same legal issue</small>
+                                <h5><i class="fas fa-exchange-alt"></i> Multi-Specialty Comparison</h5>
+                                <small class="text-muted">Compare how different specialtys handle the same medical issue</small>
                             </div>
                             <div class="card-body">
-                                <form id="jurisdictionCompareForm">
+                                <form id="specialtyCompareForm">
                                     <div class="mb-3">
-                                        <label for="compareIssue" class="form-label">Legal Issue to Compare</label>
+                                        <label for="compareIssue" class="form-label">Medical Issue to Compare</label>
                                         <input type="text" class="form-control" id="compareIssue" 
                                                placeholder="E.g., 'Non-compete agreements', 'Right to work laws', 'Data breach notification'">
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label class="form-label">Select Jurisdictions to Compare (2-5)</label>
+                                        <label class="form-label">Select Specialtys to Compare (2-5)</label>
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionFederal" checked>
-                                                    <label class="form-check-label" for="jurisdictionFederal">Federal</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyFederal" checked>
+                                                    <label class="form-check-label" for="specialtyFederal">Federal</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionCA">
-                                                    <label class="form-check-label" for="jurisdictionCA">California</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyCA">
+                                                    <label class="form-check-label" for="specialtyCA">California</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionNY">
-                                                    <label class="form-check-label" for="jurisdictionNY">New York</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionTX">
-                                                    <label class="form-check-label" for="jurisdictionTX">Texas</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionFL">
-                                                    <label class="form-check-label" for="jurisdictionFL">Florida</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionIL">
-                                                    <label class="form-check-label" for="jurisdictionIL">Illinois</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyNY">
+                                                    <label class="form-check-label" for="specialtyNY">New York</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionMA">
-                                                    <label class="form-check-label" for="jurisdictionMA">Massachusetts</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyTX">
+                                                    <label class="form-check-label" for="specialtyTX">Texas</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionWA">
-                                                    <label class="form-check-label" for="jurisdictionWA">Washington</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyFL">
+                                                    <label class="form-check-label" for="specialtyFL">Florida</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionCO">
-                                                    <label class="form-check-label" for="jurisdictionCO">Colorado</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyIL">
+                                                    <label class="form-check-label" for="specialtyIL">Illinois</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdictionSupreme">
-                                                    <label class="form-check-label" for="jurisdictionSupreme">US Supreme Court</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyMA">
+                                                    <label class="form-check-label" for="specialtyMA">Massachusetts</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="jurisdiction9th">
-                                                    <label class="form-check-label" for="jurisdiction9th">9th Circuit</label>
+                                                    <input class="form-check-input" type="checkbox" id="specialtyWA">
+                                                    <label class="form-check-label" for="specialtyWA">Washington</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="specialtyCO">
+                                                    <label class="form-check-label" for="specialtyCO">Colorado</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="specialtySupreme">
+                                                    <label class="form-check-label" for="specialtySupreme">US Supreme Court</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="specialty9th">
+                                                    <label class="form-check-label" for="specialty9th">9th Circuit</label>
                                                 </div>
                                             </div>
                                         </div>
@@ -1606,7 +1606,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                     
                                     <div class="mt-3">
                                         <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-exchange-alt"></i> Compare Jurisdictions
+                                            <i class="fas fa-exchange-alt"></i> Compare Specialtys
                                         </button>
                                         <button type="button" class="btn btn-success" id="tryCompareExample">
                                             <i class="fas fa-magic"></i> Try Example
@@ -1619,9 +1619,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 
                                 <div class="loading-spinner" id="compareSpinner">
                                     <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Comparing jurisdictions...</span>
+                                        <span class="visually-hidden">Comparing specialtys...</span>
                                     </div>
-                                    <p class="mt-2">Analyzing laws across jurisdictions...</p>
+                                    <p class="mt-2">Analyzing laws across specialtys...</p>
                                 </div>
                                 
                                 <div id="compareResults" class="mt-4" style="display: none;">
@@ -1635,13 +1635,13 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     <div class="tab-pane fade" id="timeline" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-history"></i> Legal Evolution Timeline</h5>
+                                <h5><i class="fas fa-history"></i> Medical Evolution Timeline</h5>
                                 <small class="text-muted">Track how laws and interpretations have evolved over time</small>
                             </div>
                             <div class="card-body">
                                 <form id="timelineForm">
                                     <div class="mb-3">
-                                        <label for="timelineIssue" class="form-label">Legal Issue or Doctrine</label>
+                                        <label for="timelineIssue" class="form-label">Medical Issue or Doctrine</label>
                                         <input type="text" class="form-control" id="timelineIssue" 
                                                placeholder="E.g., 'Employment at-will doctrine', 'Fourth Amendment privacy'">
                                     </div>
@@ -1720,7 +1720,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Building timeline...</span>
                                     </div>
-                                    <p class="mt-2">Analyzing legal evolution...</p>
+                                    <p class="mt-2">Analyzing medical evolution...</p>
                                 </div>
                                 
                                 <div id="timelineResults" class="mt-4" style="display: none;">
@@ -1736,35 +1736,35 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                         </div>
                     </div>
                     
-                    <!-- Theorem Visualization Tab -->
+                    <!-- Guideline Visualization Tab -->
                     <div class="tab-pane fade" id="visualization" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-chart-line"></i> Theorem Distribution & Analytics</h5>
+                                <h5><i class="fas fa-chart-line"></i> Guideline Distribution & Analytics</h5>
                                 <small class="text-muted">Visualize temporal deontic logic corpus</small>
                             </div>
                             <div class="card-body">
                                 <div class="row mb-4">
                                     <div class="col-md-6">
-                                        <h6>Theorems by Jurisdiction</h6>
-                                        <div class="theorem-stats">
+                                        <h6>Guidelines by Specialty</h6>
+                                        <div class="guideline-stats">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <span>Federal</span>
-                                                <span class="badge bg-primary">{{ system_status.jurisdictions|length if system_status.jurisdictions else 0 }}</span>
+                                                <span class="badge bg-primary">{{ system_status.specialtys|length if system_status.specialtys else 0 }}</span>
                                             </div>
                                             <div class="progress mb-3" style="height: 20px;">
                                                 <div class="progress-bar" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <span>State</span>
-                                                <span class="badge bg-primary">{{ (system_status.jurisdictions|length * 0.3)|int if system_status.jurisdictions else 0 }}</span>
+                                                <span class="badge bg-primary">{{ (system_status.specialtys|length * 0.3)|int if system_status.specialtys else 0 }}</span>
                                             </div>
                                             <div class="progress mb-3" style="height: 20px;">
                                                 <div class="progress-bar bg-success" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <span>Supreme Court</span>
-                                                <span class="badge bg-primary">{{ (system_status.jurisdictions|length * 0.1)|int if system_status.jurisdictions else 0 }}</span>
+                                                <span class="badge bg-primary">{{ (system_status.specialtys|length * 0.1)|int if system_status.specialtys else 0 }}</span>
                                             </div>
                                             <div class="progress mb-3" style="height: 20px;">
                                                 <div class="progress-bar bg-warning" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">10%</div>
@@ -1773,7 +1773,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                     </div>
                                     <div class="col-md-6">
                                         <h6>Deontic Operators Distribution</h6>
-                                        <div class="theorem-stats">
+                                        <div class="guideline-stats">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <span><span class="deontic-operator obligation">OBLIGATION</span></span>
                                                 <span class="badge bg-danger">45%</span>
@@ -1801,12 +1801,12 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <h6>Legal Domains Coverage</h6>
+                                        <h6>Medical Domains Coverage</h6>
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
                                                 <div class="card">
                                                     <div class="card-body text-center">
-                                                        <h3 class="text-primary">{{ (system_status.theorem_count * 0.25)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <h3 class="text-primary">{{ (system_status.guideline_count * 0.25)|int if system_status.guideline_count else 0 }}</h3>
                                                         <p class="mb-0"><strong>Employment Law</strong></p>
                                                         <small class="text-muted">25% of corpus</small>
                                                     </div>
@@ -1815,7 +1815,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                             <div class="col-md-4 mb-3">
                                                 <div class="card">
                                                     <div class="card-body text-center">
-                                                        <h3 class="text-success">{{ (system_status.theorem_count * 0.30)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <h3 class="text-success">{{ (system_status.guideline_count * 0.30)|int if system_status.guideline_count else 0 }}</h3>
                                                         <p class="mb-0"><strong>Contract Law</strong></p>
                                                         <small class="text-muted">30% of corpus</small>
                                                     </div>
@@ -1824,7 +1824,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                             <div class="col-md-4 mb-3">
                                                 <div class="card">
                                                     <div class="card-body text-center">
-                                                        <h3 class="text-warning">{{ (system_status.theorem_count * 0.20)|int if system_status.theorem_count else 0 }}</h3>
+                                                        <h3 class="text-warning">{{ (system_status.guideline_count * 0.20)|int if system_status.guideline_count else 0 }}</h3>
                                                         <p class="mb-0"><strong>IP Law</strong></p>
                                                         <small class="text-muted">20% of corpus</small>
                                                     </div>
@@ -1847,9 +1847,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             <div class="card-body">
                                 <div class="alert alert-info mb-4">
                                     <h6><i class="fas fa-lightbulb"></i> System Overview</h6>
-                                    <p class="mb-0">This dashboard implements a temporal deontological first-order logic system for legal reasoning, 
+                                    <p class="mb-0">This dashboard implements a temporal deontological first-order logic system for medical reasoning, 
                                     designed to contribute to the development of a grand unified theory of law. The system uses GraphRAG 
-                                    for semantic retrieval and deontic logic for formal representation of legal obligations, permissions, and prohibitions.</p>
+                                    for semantic retrieval and deontic logic for formal representation of medical obligations, permissions, and prohibitions.</p>
                                 </div>
                                 
                                 <h6>Deontic Logic Operators</h6>
@@ -1897,13 +1897,13 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 <div class="card border-primary mb-4">
                                     <div class="card-body">
                                         <ol class="mb-0">
-                                            <li><strong>Document Ingestion:</strong> Legal documents parsed and converted to deontic formulas</li>
-                                            <li><strong>Theorem Extraction:</strong> Deontic operators, agents, and propositions identified</li>
+                                            <li><strong>Document Ingestion:</strong> Medical documents parsed and converted to deontic formulas</li>
+                                            <li><strong>Guideline Extraction:</strong> Deontic operators, agents, and propositions identified</li>
                                             <li><strong>Vector Encoding:</strong> Semantic embeddings generated for RAG retrieval</li>
-                                            <li><strong>GraphRAG Storage:</strong> Theorems stored with temporal/jurisdictional metadata</li>
+                                            <li><strong>GraphRAG Storage:</strong> Guidelines stored with temporal/specialtyal metadata</li>
                                             <li><strong>Consistency Checking:</strong> New documents validated against corpus using modal logic</li>
                                             <li><strong>Conflict Resolution:</strong> Logical contradictions identified and reported</li>
-                                            <li><strong>System Evolution:</strong> Corpus grows toward unified first-order legal system</li>
+                                            <li><strong>System Evolution:</strong> Corpus grows toward unified first-order medical system</li>
                                         </ol>
                                     </div>
                                 </div>
@@ -1916,13 +1916,13 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                                 <strong>JSON-RPC 2.0 Protocol</strong>
                                             </div>
                                             <div class="card-body">
-                                                <p class="mb-2"><strong>Endpoint:</strong> /api/mcp/caselaw/jsonrpc</p>
+                                                <p class="mb-2"><strong>Endpoint:</strong> /api/mcp/medicine/jsonrpc</p>
                                                 <p class="mb-2"><strong>Methods:</strong></p>
                                                 <ul class="mb-0">
                                                     <li>check_document_consistency</li>
-                                                    <li>query_theorems</li>
-                                                    <li>bulk_process_caselaw</li>
-                                                    <li>add_theorem</li>
+                                                    <li>query_guidelines</li>
+                                                    <li>bulk_process_medicine</li>
+                                                    <li>add_guideline</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -1948,17 +1948,17 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                         </div>
                     </div>
 
-                    <!-- Case Law Access Project Dataset Tab -->
+                    <!-- Medicine Access Project Dataset Tab -->
                     <div class="tab-pane fade" id="dataset-cap" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h5><i class="fas fa-database"></i> Case Law Access Project Dataset Builder</h5>
-                                <small class="text-muted">Scrape, filter, and transform case law from the Case Law Access Project</small>
+                                <h5><i class="fas fa-database"></i> Medicine Access Project Dataset Builder</h5>
+                                <small class="text-muted">Scrape, filter, and transform medicine from the Medicine Access Project</small>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-info">
-                                    <h6><i class="fas fa-info-circle"></i> About Case Law Access Project</h6>
-                                    <p class="mb-0">The Case Law Access Project provides access to millions of US court decisions. Configure the scraping parameters below to build your custom dataset.</p>
+                                    <h6><i class="fas fa-info-circle"></i> About Medicine Access Project</h6>
+                                    <p class="mb-0">The Medicine Access Project provides access to millions of US court decisions. Configure the scraping parameters below to build your custom dataset.</p>
                                 </div>
 
                                 <!-- Configuration Section -->
@@ -1970,14 +1970,14 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                             <input type="password" class="form-control" id="capApiKey" placeholder="Enter CAP API key">
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="capJurisdiction" class="form-label">Jurisdiction</label>
-                                            <select class="form-select" id="capJurisdiction" multiple>
+                                            <label for="capSpecialty" class="form-label">Specialty</label>
+                                            <select class="form-select" id="capSpecialty" multiple>
                                                 <option value="us">Federal (all)</option>
                                                 <option value="us-ca">California</option>
                                                 <option value="us-ny">New York</option>
                                                 <option value="us-tx">Texas</option>
                                                 <option value="us-fl">Florida</option>
-                                                <option value="all">All jurisdictions</option>
+                                                <option value="all">All specialtys</option>
                                             </select>
                                             <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                                         </div>
@@ -2068,7 +2068,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="capExtractEntities" checked>
                                             <label class="form-check-label" for="capExtractEntities">
-                                                Extract legal entities (parties, judges, etc.)
+                                                Extract medical entities (parties, judges, etc.)
                                             </label>
                                         </div>
                                         <div class="form-check">
@@ -2265,7 +2265,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="uscodeExtractDefinitions" checked>
                                             <label class="form-check-label" for="uscodeExtractDefinitions">
-                                                Extract legal definitions
+                                                Extract medical definitions
                                             </label>
                                         </div>
                                         <div class="form-check">
@@ -2362,10 +2362,10 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label for="stateLegalAreas" class="form-label">Legal Areas (Optional Filter)</label>
-                                            <input type="text" class="form-control" id="stateLegalAreas" 
+                                            <label for="stateMedicalAreas" class="form-label">Medical Areas (Optional Filter)</label>
+                                            <input type="text" class="form-control" id="stateMedicalAreas" 
                                                    placeholder="e.g., criminal law, employment law, environmental law">
-                                            <small class="text-muted">Comma-separated list of legal areas to focus on</small>
+                                            <small class="text-muted">Comma-separated list of medical areas to focus on</small>
                                         </div>
                                     </div>
                                 </form>
@@ -2685,7 +2685,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     <div class="tab-pane fade" id="dataset-recap" role="tabpanel">
                         <div class="card mt-3">
                             <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <h5 class="text-white"><i class="fas fa-gavel"></i> RECAP Archive Dataset Builder</h5>
+                                <h5 class="text-white"><i class="fas fa-heartbeat"></i> RECAP Archive Dataset Builder</h5>
                                 <small class="text-white">Scrape federal court documents from the RECAP Archive (courtlistener.com)</small>
                             </div>
                             <div class="card-body">
@@ -2893,15 +2893,15 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             }
 
             async loadAvailableTools() {
-                // Load all available MCP tools including temporal deontic logic AND legal dataset scraping
+                // Load all available MCP tools including temporal deontic logic AND medical dataset scraping
                 this.availableTools = [
                     // Temporal Deontic Logic Tools
                     'check_document_consistency',
-                    'query_theorems', 
-                    'bulk_process_caselaw',
-                    'add_theorem',
+                    'query_guidelines', 
+                    'bulk_process_medicine',
+                    'add_guideline',
                     
-                    // Legal Dataset Scraping Tools  
+                    // Medical Dataset Scraping Tools  
                     'scrape_us_code',
                     'scrape_federal_register',
                     'scrape_state_laws',
@@ -2923,7 +2923,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
 
                 try {
                     // Fetch actual tools from the MCP server API
-                    const response = await fetch('/api/mcp/caselaw/tools');
+                    const response = await fetch('/api/mcp/medicine/tools');
                     const data = await response.json();
                     
                     if (data.success && data.tools) {
@@ -2935,9 +2935,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                         console.warn('Failed to load tools from API, using fallback list');
                         this.availableTools = [
                             'check_document_consistency',
-                            'query_theorems', 
-                            'bulk_process_caselaw',
-                            'add_theorem'
+                            'query_guidelines', 
+                            'bulk_process_medicine',
+                            'add_guideline'
                         ];
                     }
                 } catch (error) {
@@ -2945,9 +2945,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     // Fallback to hardcoded list on error
                     this.availableTools = [
                         'check_document_consistency',
-                        'query_theorems', 
-                        'bulk_process_caselaw',
-                        'add_theorem'
+                        'query_guidelines', 
+                        'bulk_process_medicine',
+                        'add_guideline'
                     ];
                 }
                 
@@ -3006,7 +3006,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     id: this.requestId++
                 };
 
-                const response = await fetch('/api/mcp/caselaw/jsonrpc', {
+                const response = await fetch('/api/mcp/medicine/jsonrpc', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -3030,10 +3030,10 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             async callRestFallback(toolName, parameters) {
                 // Map MCP tool names to REST endpoints for fallback
                 const endpointMap = {
-                    'check_document_consistency': '/api/mcp/caselaw/check_document',
-                    'query_theorems': '/api/mcp/caselaw/query_theorems',
-                    'bulk_process_caselaw': '/api/mcp/caselaw/bulk_process',
-                    'add_theorem': '/api/mcp/caselaw/add_theorem',
+                    'check_document_consistency': '/api/mcp/medicine/check_document',
+                    'query_guidelines': '/api/mcp/medicine/query_guidelines',
+                    'bulk_process_medicine': '/api/mcp/medicine/bulk_process',
+                    'add_guideline': '/api/mcp/medicine/add_guideline',
                     'scrape_recap_archive': '/api/mcp/dataset/recap/scrape',
                     'search_recap_documents': '/api/mcp/dataset/recap/search',
                     'scrape_state_laws': '/api/mcp/dataset/state_laws/scrape',
@@ -3082,7 +3082,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             
             // Set up form handlers
             setupDocumentAnalysisForm();
-            setupQueryTheoremForm();
+            setupQueryGuidelineForm();
             setupBulkProcessForm();
         });
 
@@ -3101,8 +3101,8 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 const parameters = {
                     document_text: documentText,
                     document_id: document.getElementById('documentId').value || undefined,
-                    jurisdiction: document.getElementById('jurisdiction').value,
-                    legal_domain: document.getElementById('legalDomain').value
+                    specialty: document.getElementById('specialty').value,
+                    medical_domain: document.getElementById('medicalDomain').value
                 };
 
                 const spinner = document.getElementById('analysisSpinner');
@@ -3127,9 +3127,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             });
         }
 
-        // Query Theorem Form Handler  
-        function setupQueryTheoremForm() {
-            const form = document.getElementById('queryTheoremForm');
+        // Query Guideline Form Handler  
+        function setupQueryGuidelineForm() {
+            const form = document.getElementById('queryGuidelineForm');
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -3142,8 +3142,8 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 const parameters = {
                     query: queryText,
                     operator_filter: document.getElementById('operatorFilter').value,
-                    jurisdiction: document.getElementById('queryJurisdiction').value,
-                    legal_domain: document.getElementById('queryLegalDomain').value,
+                    specialty: document.getElementById('querySpecialty').value,
+                    medical_domain: document.getElementById('queryMedicalDomain').value,
                     limit: parseInt(document.getElementById('queryLimit').value)
                 };
 
@@ -3154,14 +3154,14 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     spinner.style.display = 'block';
                     results.style.display = 'none';
                     
-                    const response = await mcpClient.callTool('query_theorems', parameters);
+                    const response = await mcpClient.callTool('query_guidelines', parameters);
                     
                     displayQueryResults(response);
                     results.style.display = 'block';
                     
                 } catch (error) {
                     console.error('Query failed:', error);
-                    displayError(results, 'Theorem query failed: ' + error.message);
+                    displayError(results, 'Guideline query failed: ' + error.message);
                     results.style.display = 'block';
                 } finally {
                     spinner.style.display = 'none';
@@ -3175,16 +3175,16 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const directoriesText = document.getElementById('caselawDirectories').value.trim();
+                const directoriesText = document.getElementById('medicineDirectories').value.trim();
                 if (!directoriesText) {
-                    alert('Please enter at least one caselaw directory');
+                    alert('Please enter at least one medicine directory');
                     return;
                 }
 
                 const directories = directoriesText.split('\n').map(d => d.trim()).filter(d => d);
                 
                 const parameters = {
-                    caselaw_directories: directories,
+                    medicine_directories: directories,
                     output_directory: document.getElementById('outputDirectory').value,
                     max_concurrent_documents: parseInt(document.getElementById('concurrentLimit').value),
                     enable_parallel_processing: document.getElementById('enableParallel').checked,
@@ -3199,7 +3199,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     spinner.style.display = 'block';
                     results.style.display = 'none';
                     
-                    const response = await mcpClient.callTool('bulk_process_caselaw', parameters);
+                    const response = await mcpClient.callTool('bulk_process_medicine', parameters);
                     
                     displayBulkResults(response);
                     results.style.display = 'block';
@@ -3298,32 +3298,32 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     <h6><i class="fas fa-search"></i> Query Results</h6>
                     <p class="mb-0">
                         Query: "${response.query}" | 
-                        Results: ${response.total_results} theorems found
+                        Results: ${response.total_results} guidelines found
                     </p>
                 </div>
             `;
 
-            if (response.theorems && response.theorems.length > 0) {
-                response.theorems.forEach(theorem => {
-                    const operatorClass = theorem.formula.operator.toLowerCase();
+            if (response.guidelines && response.guidelines.length > 0) {
+                response.guidelines.forEach(guideline => {
+                    const operatorClass = guideline.formula.operator.toLowerCase();
                     html += `
-                        <div class="theorem-card card mb-2">
+                        <div class="guideline-card card mb-2">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
-                                        <span class="deontic-operator ${operatorClass}">${theorem.formula.operator}</span>
-                                        <strong class="ms-2">${theorem.formula.agent}</strong>: ${theorem.formula.proposition}
+                                        <span class="deontic-operator ${operatorClass}">${guideline.formula.operator}</span>
+                                        <strong class="ms-2">${guideline.formula.agent}</strong>: ${guideline.formula.proposition}
                                     </div>
                                     <div class="text-end">
-                                        <small class="text-muted">Relevance: ${(theorem.relevance_score * 100).toFixed(1)}%</small>
+                                        <small class="text-muted">Relevance: ${(guideline.relevance_score * 100).toFixed(1)}%</small>
                                     </div>
                                 </div>
                                 <div class="mt-2">
                                     <small class="text-muted">
-                                        Source: ${theorem.metadata.source_case} | 
-                                        ${theorem.metadata.jurisdiction} | 
-                                        ${theorem.metadata.legal_domain} | 
-                                        Precedent: ${(theorem.metadata.precedent_strength * 100).toFixed(0)}%
+                                        Source: ${guideline.metadata.source_case} | 
+                                        ${guideline.metadata.specialty} | 
+                                        ${guideline.metadata.medical_domain} | 
+                                        Precedent: ${(guideline.metadata.precedent_strength * 100).toFixed(0)}%
                                     </small>
                                 </div>
                             </div>
@@ -3331,7 +3331,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     `;
                 });
             } else {
-                html += '<p class="text-muted">No theorems found matching the query.</p>';
+                html += '<p class="text-muted">No guidelines found matching the query.</p>';
             }
 
             container.innerHTML = html;
@@ -3366,12 +3366,12 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 html += `
                     <p class="mb-0">
                         Processed: ${results.documents_processed} documents | 
-                        Extracted: ${results.theorems_extracted} theorems | 
+                        Extracted: ${results.guidelines_extracted} guidelines | 
                         Time: ${results.processing_time}s
                     </p>
                     <p class="mt-2 mb-0">
-                        Jurisdictions: ${results.jurisdictions_covered.join(', ')} | 
-                        Domains: ${results.legal_domains_covered.join(', ')}
+                        Specialtys: ${results.specialtys_covered.join(', ')} | 
+                        Domains: ${results.medical_domains_covered.join(', ')}
                     </p>
                 `;
             }
@@ -3399,14 +3399,14 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 
                 const query = document.getElementById('precedentQuery').value.trim();
                 if (!query) {
-                    alert('Please describe the legal issue or fact pattern');
+                    alert('Please describe the medical issue or fact pattern');
                     return;
                 }
 
                 const parameters = {
                     query: query,
-                    jurisdiction: document.getElementById('precedentJurisdiction').value,
-                    legal_domain: document.getElementById('precedentDomain').value,
+                    specialty: document.getElementById('precedentSpecialty').value,
+                    medical_domain: document.getElementById('precedentDomain').value,
                     date_range: document.getElementById('dateRange').value,
                     limit: parseInt(document.getElementById('precedentLimit').value)
                 };
@@ -3428,7 +3428,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 case_name: "Smith v. ABC Corp",
                                 citation: "456 F.3d 789 (9th Cir. 2020)",
                                 relevance_score: 0.92,
-                                jurisdiction: "Federal - 9th Circuit",
+                                specialty: "Federal - 9th Circuit",
                                 year: 2020,
                                 authority_type: "Binding",
                                 summary: "Employee terminated without notice after reporting safety violations. Court held termination violated public policy exception to at-will employment.",
@@ -3439,7 +3439,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 case_name: "Jones v. Manufacturing Inc",
                                 citation: "234 F.2d 567 (Fed. 2019)",
                                 relevance_score: 0.87,
-                                jurisdiction: "Federal",
+                                specialty: "Federal",
                                 year: 2019,
                                 authority_type: "Binding",
                                 summary: "Court found constructive discharge when employer made working conditions intolerable after employee complained.",
@@ -3450,7 +3450,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 case_name: "Wilson v. Tech Solutions",
                                 citation: "789 Cal.App.4th 123 (Cal. App. 2021)",
                                 relevance_score: 0.81,
-                                jurisdiction: "California",
+                                specialty: "California",
                                 year: 2021,
                                 authority_type: "Persuasive",
                                 summary: "California court applied broader protection for whistleblowers under state law.",
@@ -3503,7 +3503,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                     <span class="badge bg-primary ms-2">${(precedent.relevance_score * 100).toFixed(0)}% Match</span>
                                 </div>
                             </div>
-                            <p class="text-muted mb-2"><strong>${precedent.citation}</strong> | ${precedent.jurisdiction} (${precedent.year})</p>
+                            <p class="text-muted mb-2"><strong>${precedent.citation}</strong> | ${precedent.specialty} (${precedent.year})</p>
                             <p class="mb-2">${precedent.summary}</p>
                             <div class="mb-2">
                                 <strong>Key Holdings:</strong>
@@ -3579,7 +3579,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 effective_date: "2023-03-15",
                                 status: "Active",
                                 summary: "Parking requirements for commercial buildings in downtown districts.",
-                                provider: "American Legal"
+                                provider: "American Medical"
                             },
                             {
                                 municipality: "San Francisco, CA",
@@ -3686,9 +3686,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const legalArea = document.getElementById('conflictArea').value;
-                const jurisdiction1 = document.getElementById('conflictJurisdiction1').value;
-                const jurisdiction2 = document.getElementById('conflictJurisdiction2').value;
+                const medicalArea = document.getElementById('conflictArea').value;
+                const specialty1 = document.getElementById('conflictSpecialty1').value;
+                const specialty2 = document.getElementById('conflictSpecialty2').value;
 
                 const spinner = document.getElementById('conflictSpinner');
                 const results = document.getElementById('conflictResults');
@@ -3700,33 +3700,33 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     // Simulate conflict analysis results
                     const response = {
                         success: true,
-                        legal_area: legalArea,
-                        jurisdictions: [jurisdiction1, jurisdiction2],
+                        medical_area: medicalArea,
+                        specialtys: [specialty1, specialty2],
                         conflicts_found: 3,
                         conflicts: [
                             {
                                 type: "Contradictory Obligations",
                                 severity: "High",
-                                description: `${jurisdiction1} requires 30 days notice for termination, while ${jurisdiction2} requires 60 days notice for similar circumstances.`,
-                                law1: `${jurisdiction1}: Employment Law § 2345(a)`,
-                                law2: `${jurisdiction2}: Labor Code § 789.1`,
+                                description: `${specialty1} requires 30 days notice for termination, while ${specialty2} requires 60 days notice for similar circumstances.`,
+                                law1: `${specialty1}: Employment Law § 2345(a)`,
+                                law2: `${specialty2}: Labor Code § 789.1`,
                                 resolution_suggestion: `For multi-state operations, follow the more restrictive requirement (60 days) or establish state-specific policies.`
                             },
                             {
                                 type: "Permission vs Prohibition",
                                 severity: "Critical",
-                                description: `${jurisdiction1} permits non-compete agreements up to 2 years, while ${jurisdiction2} prohibits non-compete agreements entirely.`,
-                                law1: `${jurisdiction1}: Business Code § 16600`,
-                                law2: `${jurisdiction2}: Employment Act § 45-201`,
-                                resolution_suggestion: `Cannot enforce non-compete in ${jurisdiction2}. Use alternative protections like NDAs and trade secret agreements.`
+                                description: `${specialty1} permits non-compete agreements up to 2 years, while ${specialty2} prohibits non-compete agreements entirely.`,
+                                law1: `${specialty1}: Business Code § 16600`,
+                                law2: `${specialty2}: Employment Act § 45-201`,
+                                resolution_suggestion: `Cannot enforce non-compete in ${specialty2}. Use alternative protections like NDAs and trade secret agreements.`
                             },
                             {
                                 type: "Temporal Conflict",
                                 severity: "Medium",
-                                description: `Recent ${jurisdiction2} case (2023) contradicts earlier federal precedent (2019) on contractor classification.`,
+                                description: `Recent ${specialty2} case (2023) contradicts earlier federal precedent (2019) on contractor classification.`,
                                 law1: "Federal: ABC Test (2019)",
-                                law2: `${jurisdiction2}: Modified Test (2023)`,
-                                resolution_suggestion: `In ${jurisdiction2}, follow state law which takes precedence. In other states, follow federal standard.`
+                                law2: `${specialty2}: Modified Test (2023)`,
+                                resolution_suggestion: `In ${specialty2}, follow state law which takes precedence. In other states, follow federal standard.`
                             }
                         ]
                     };
@@ -3749,8 +3749,8 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             
             let html = `
                 <div class="alert ${response.conflicts_found > 0 ? 'alert-warning' : 'alert-success'}">
-                    <h6><i class="fas fa-exclamation-triangle"></i> Conflict Analysis: ${response.legal_area}</h6>
-                    <p class="mb-0">Found ${response.conflicts_found} conflicts between ${response.jurisdictions.join(' and ')}</p>
+                    <h6><i class="fas fa-exclamation-triangle"></i> Conflict Analysis: ${response.medical_area}</h6>
+                    <p class="mb-0">Found ${response.conflicts_found} conflicts between ${response.specialtys.join(' and ')}</p>
                 </div>
             `;
 
@@ -3797,7 +3797,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 
                 const rootCase = document.getElementById('rootCase').value.trim();
                 if (!rootCase) {
-                    alert('Please enter a case name or legal principle');
+                    alert('Please enter a case name or medical principle');
                     return;
                 }
 
@@ -3841,12 +3841,12 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 
                 const issue = document.getElementById('briefIssue').value.trim();
                 if (!issue) {
-                    alert('Please describe the legal issue');
+                    alert('Please describe the medical issue');
                     return;
                 }
 
                 const position = document.getElementById('briefPosition').value;
-                const jurisdiction = document.getElementById('briefJurisdiction').value;
+                const specialty = document.getElementById('briefSpecialty').value;
                 const facts = document.getElementById('briefFacts').value;
 
                 const spinner = document.getElementById('briefSpinner');
@@ -3862,12 +3862,12 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     const briefHTML = `
                         <div class="card">
                             <div class="card-header bg-primary text-white">
-                                <h5>Generated Legal Brief</h5>
+                                <h5>Generated Medical Brief</h5>
                             </div>
                             <div class="card-body">
                                 <h6>I. SUMMARY OF ARGUMENT</h6>
                                 <p>The ${position === 'plaintiff' ? 'Plaintiff' : 'Defendant'} respectfully submits this brief regarding: ${issue}</p>
-                                <p>Under ${jurisdiction} law, the applicable legal framework requires careful consideration of both statutory requirements and judicial precedent. The following analysis demonstrates that ${position === 'plaintiff' ? 'Plaintiff\'s position is supported by controlling authority' : 'Defendant\'s actions were lawful and appropriate'}.</p>
+                                <p>Under ${specialty} law, the applicable medical framework requires careful consideration of both statutory requirements and judicial precedent. The following analysis demonstrates that ${position === 'plaintiff' ? 'Plaintiff\'s position is supported by controlling authority' : 'Defendant\'s actions were lawful and appropriate'}.</p>
                                 
                                 <h6>II. RELEVANT PRECEDENTS</h6>
                                 <ol>
@@ -3911,9 +3911,9 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             });
         }
 
-        // Jurisdiction Comparison Form Handler
-        function setupJurisdictionCompareForm() {
-            const form = document.getElementById('jurisdictionCompareForm');
+        // Specialty Comparison Form Handler
+        function setupSpecialtyCompareForm() {
+            const form = document.getElementById('specialtyCompareForm');
             if (!form) return;
             
             form.addEventListener('submit', async function(e) {
@@ -3921,19 +3921,19 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 
                 const issue = document.getElementById('compareIssue').value.trim();
                 if (!issue) {
-                    alert('Please enter a legal issue to compare');
+                    alert('Please enter a medical issue to compare');
                     return;
                 }
 
-                // Get selected jurisdictions
-                const selectedJurisdictions = [];
+                // Get selected specialtys
+                const selectedSpecialtys = [];
                 const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
                 checkboxes.forEach(cb => {
-                    selectedJurisdictions.push(cb.nextElementSibling.textContent);
+                    selectedSpecialtys.push(cb.nextElementSibling.textContent);
                 });
 
-                if (selectedJurisdictions.length < 2) {
-                    alert('Please select at least 2 jurisdictions to compare');
+                if (selectedSpecialtys.length < 2) {
+                    alert('Please select at least 2 specialtys to compare');
                     return;
                 }
 
@@ -3950,13 +3950,13 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     let comparisonHTML = `
                         <div class="alert alert-info">
                             <h6>Comparing: ${issue}</h6>
-                            <p class="mb-0">Across ${selectedJurisdictions.length} jurisdictions: ${selectedJurisdictions.join(', ')}</p>
+                            <p class="mb-0">Across ${selectedSpecialtys.length} specialtys: ${selectedSpecialtys.join(', ')}</p>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover">
                                 <thead class="table-primary">
                                     <tr>
-                                        <th>Jurisdiction</th>
+                                        <th>Specialty</th>
                                         <th>Approach</th>
                                         <th>Key Requirements</th>
                                         <th>Statute/Case</th>
@@ -3965,10 +3965,10 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                                 <tbody>
                     `;
 
-                    selectedJurisdictions.forEach(jurisdiction => {
+                    selectedSpecialtys.forEach(specialty => {
                         comparisonHTML += `
                             <tr>
-                                <td><strong>${jurisdiction}</strong></td>
+                                <td><strong>${specialty}</strong></td>
                                 <td>Majority approach - permits with restrictions</td>
                                 <td>30-day notice, good faith requirement</td>
                                 <td>§ 16600 et seq.</td>
@@ -4010,7 +4010,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 
                 const issue = document.getElementById('timelineIssue').value.trim();
                 if (!issue) {
-                    alert('Please enter a legal issue or doctrine');
+                    alert('Please enter a medical issue or doctrine');
                     return;
                 }
 
@@ -4027,7 +4027,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     const timelineHTML = `
                         <div class="alert alert-success mb-3">
                             <h6>Timeline Generated: ${issue}</h6>
-                            <p class="mb-0">Showing legal evolution from ${document.getElementById('timelineStart').value} to ${document.getElementById('timelineEnd').value}</p>
+                            <p class="mb-0">Showing medical evolution from ${document.getElementById('timelineStart').value} to ${document.getElementById('timelineEnd').value}</p>
                         </div>
                         <div style="padding: 20px; background: white; border-radius: 8px;">
                             <div class="timeline-event mb-4 pb-4 border-bottom">
@@ -4076,7 +4076,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             // Precedent Search Example
             document.getElementById('tryPrecedentExample')?.addEventListener('click', function() {
                 document.getElementById('precedentQuery').value = 'Employee terminated without notice after reporting safety violations to OSHA. Company claims at-will employment permits termination for any reason.';
-                document.getElementById('precedentJurisdiction').value = 'Federal';
+                document.getElementById('precedentSpecialty').value = 'Federal';
                 document.getElementById('precedentDomain').value = 'Employment';
                 document.getElementById('dateRange').value = 'decade';
                 alert('Example loaded! Click "Search Precedents" to see results.');
@@ -4085,8 +4085,8 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             // Conflict Analyzer Example
             document.getElementById('tryConflictExample')?.addEventListener('click', function() {
                 document.getElementById('conflictArea').value = 'Non-compete agreements in employment contracts';
-                document.getElementById('conflictJurisdiction1').value = 'California';
-                document.getElementById('conflictJurisdiction2').value = 'Texas';
+                document.getElementById('conflictSpecialty1').value = 'California';
+                document.getElementById('conflictSpecialty2').value = 'Texas';
                 alert('Example loaded! Click "Analyze Conflicts" to see how California and Texas laws differ on non-compete agreements.');
             });
 
@@ -4102,19 +4102,19 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             document.getElementById('tryBriefExample')?.addEventListener('click', function() {
                 document.getElementById('briefIssue').value = 'Whether termination of employee who reported safety violations violates public policy exception to at-will employment';
                 document.getElementById('briefPosition').value = 'plaintiff';
-                document.getElementById('briefJurisdiction').value = 'Federal';
+                document.getElementById('briefSpecialty').value = 'Federal';
                 document.getElementById('briefFacts').value = 'Employee worked for 5 years, reported OSHA violations, terminated 2 days later. Employer claims performance issues but no prior warnings documented.';
-                alert('Example loaded! Click "Generate Brief" to create an AI-assisted legal brief with citations.');
+                alert('Example loaded! Click "Generate Brief" to create an AI-assisted medical brief with citations.');
             });
 
-            // Jurisdiction Comparison Example
+            // Specialty Comparison Example
             document.getElementById('tryCompareExample')?.addEventListener('click', function() {
                 document.getElementById('compareIssue').value = 'Notice requirements for employee termination';
                 // Check California, Texas, and New York checkboxes
-                document.getElementById('jurisdictionCA').checked = true;
-                document.getElementById('jurisdictionTX').checked = true;
-                document.getElementById('jurisdictionNY').checked = true;
-                alert('Example loaded! Click "Compare Jurisdictions" to see how CA, TX, and NY differ on termination notice requirements.');
+                document.getElementById('specialtyCA').checked = true;
+                document.getElementById('specialtyTX').checked = true;
+                document.getElementById('specialtyNY').checked = true;
+                alert('Example loaded! Click "Compare Specialtys" to see how CA, TX, and NY differ on termination notice requirements.');
             });
 
             // Timeline Analysis Example
@@ -4144,7 +4144,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             mcpClient = new MCPClient();
             mcpClient.connect().then(() => {
                 setupDocumentAnalysisForm();
-                setupQueryTheoremForm();
+                setupQueryGuidelineForm();
                 setupBulkProcessForm();
                 
                 // New practical tool handlers
@@ -4153,7 +4153,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 setupConflictAnalyzerForm();
                 setupCitationNetworkForm();
                 setupBriefGeneratorForm();
-                setupJurisdictionCompareForm();
+                setupSpecialtyCompareForm();
                 setupTimelineForm();
                 
                 // Dataset building tabs
@@ -4173,7 +4173,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
 
         // Dataset Builder Functions
         
-        // Case Law Access Project Dataset Builder
+        // Medicine Access Project Dataset Builder
         function setupCAPDatasetBuilder() {
             let scrapingActive = false;
             let startTime = null;
@@ -4459,10 +4459,10 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     const selectedOptions = Array.from(stateSelect.selectedOptions).map(opt => opt.value);
                     const states = selectedOptions.includes('all') ? null : selectedOptions;
                     
-                    // Get legal areas
-                    const legalAreasInput = document.getElementById('stateLegalAreas');
-                    const legalAreas = legalAreasInput.value 
-                        ? legalAreasInput.value.split(',').map(s => s.trim()).filter(s => s)
+                    // Get medical areas
+                    const medicalAreasInput = document.getElementById('stateMedicalAreas');
+                    const medicalAreas = medicalAreasInput.value 
+                        ? medicalAreasInput.value.split(',').map(s => s.trim()).filter(s => s)
                         : null;
                     
                     // Get law types
@@ -4483,7 +4483,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                         },
                         body: JSON.stringify({
                             states: states,
-                            legal_areas: legalAreas,
+                            medical_areas: medicalAreas,
                             output_format: 'json',
                             include_metadata: true,
                             rate_limit_delay: 2.0,
