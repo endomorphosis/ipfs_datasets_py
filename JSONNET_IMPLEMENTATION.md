@@ -18,7 +18,7 @@ Jsonnet is a data templating language that:
 ### Files Created/Modified
 
 #### New Files
-1. **`ipfs_datasets_py/jsonnet_utils.py`** (600+ lines)
+1. **`ipfs_datasets_py/jsonnet_utils.py`** (526 lines)
    - Core Jsonnet conversion utilities
    - `JsonnetConverter` class with comprehensive methods
    - Convenience functions for common operations
@@ -165,7 +165,7 @@ jsonnet_str = '''
   name: "Dataset",
   items: [
     { id: 1, value: "first" },
-    { id: 2, value: "second" },
+    { id: 2, value: "second" }  // Note: trailing comma is valid in Jsonnet
   ]
 }
 '''
@@ -252,7 +252,7 @@ Jsonnet ←→ JSON ←→ JSONL ←→ Parquet ←→ Arrow ←→ CAR ←→ I
 
 ### Future Enhancements (Optional)
 
-1. Add CLI tools for Jsonnet conversion (`ipfs-datasets jsonnet-to-parquet`)
+1. Add CLI tools for Jsonnet conversion (e.g., `ipfs-datasets convert --from jsonnet --to parquet`)
 2. Support Jsonnet libraries and imports
 3. Add schema validation for Jsonnet templates
 4. Create Jsonnet template library for common use cases
