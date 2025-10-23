@@ -350,6 +350,56 @@ else:
                 'success': False,
                 'error': str(e)
             }
+    
+    def _install(self, force: bool = False, **kwargs) -> bool:
+        """
+        Standardized installation method (internal).
+        
+        This is a standardized method name for installation across all CLI tools.
+        Delegates to install().
+        
+        Args:
+            force: Force reinstallation even if already installed
+            **kwargs: Additional installation arguments
+        
+        Returns:
+            True if installation successful
+        """
+        return self.install(force=force)
+    
+    def _config(self, **kwargs) -> Dict[str, Any]:
+        """
+        Standardized configuration method (internal).
+        
+        This is a standardized method name for configuration across all CLI tools.
+        Handles API key configuration.
+        
+        Args:
+            **kwargs: Configuration arguments (api_key)
+        
+        Returns:
+            Dictionary with configuration result
+        """
+        api_key = kwargs.get('api_key')
+        if not api_key:
+            return {
+                'success': False,
+                'error': 'API key is required for configuration',
+                'message': 'Please provide api_key parameter'
+            }
+        
+        try:
+            success = self.configure_api_key(api_key)
+            return {
+                'success': success,
+                'message': 'API key configured successfully' if success else 'Failed to configure API key'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'message': f'Configuration error: {str(e)}'
+            }
 
 
 def create_claude_cli(install_dir: Optional[str] = None) -> ClaudeCLI:

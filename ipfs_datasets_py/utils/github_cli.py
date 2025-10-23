@@ -426,6 +426,39 @@ class GitHubCLI:
                 'error': str(e),
                 'message': f'Authentication error: {str(e)}'
             }
+    
+    def _install(self, force: bool = False, **kwargs) -> bool:
+        """
+        Standardized installation method (internal).
+        
+        This is a standardized method name for installation across all CLI tools.
+        Delegates to download_and_install().
+        
+        Args:
+            force: Force reinstallation even if already installed
+            **kwargs: Additional installation arguments
+        
+        Returns:
+            True if installation successful
+        """
+        return self.download_and_install(force=force)
+    
+    def _config(self, **kwargs) -> Dict[str, Any]:
+        """
+        Standardized configuration method (internal).
+        
+        This is a standardized method name for configuration across all CLI tools.
+        Delegates to configure_auth().
+        
+        Args:
+            **kwargs: Configuration arguments (hostname, web)
+        
+        Returns:
+            Dictionary with configuration result
+        """
+        hostname = kwargs.get('hostname', 'github.com')
+        web = kwargs.get('web', True)
+        return self.configure_auth(hostname=hostname, web=web)
 
 
 def create_github_cli(install_dir: Optional[str] = None) -> GitHubCLI:

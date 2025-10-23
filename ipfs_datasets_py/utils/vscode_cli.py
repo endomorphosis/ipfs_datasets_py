@@ -473,6 +473,38 @@ class VSCodeCLI:
             result['message'] = "Installation failed"
         
         return result
+    
+    def _install(self, force: bool = False, **kwargs) -> bool:
+        """
+        Standardized installation method (internal).
+        
+        This is a standardized method name for installation across all CLI tools.
+        Delegates to download_and_install().
+        
+        Args:
+            force: Force reinstallation even if already installed
+            **kwargs: Additional installation arguments
+        
+        Returns:
+            True if installation successful
+        """
+        return self.download_and_install(force=force)
+    
+    def _config(self, **kwargs) -> Dict[str, Any]:
+        """
+        Standardized configuration method (internal).
+        
+        This is a standardized method name for configuration across all CLI tools.
+        Handles authentication configuration.
+        
+        Args:
+            **kwargs: Configuration arguments (provider)
+        
+        Returns:
+            Dictionary with configuration result
+        """
+        provider = kwargs.get('provider', 'github')
+        return self.configure_auth(provider=provider)
 
 
 def create_vscode_cli(install_dir: Optional[str] = None) -> VSCodeCLI:
