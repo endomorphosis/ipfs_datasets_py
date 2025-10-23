@@ -4,57 +4,42 @@ Test imports with fixed __init__.py
 """
 import sys
 import os
+import pytest
+
 sys.path.insert(0, '.')
 
-print("Starting import tests with fixed __init__.py...")
 
-# Test 1: Config import using direct path
-print("\n=== Test 1: Direct Config Import ===")
-try:
+def test_config_import():
+    """Test that config can be imported and instantiated."""
     from ipfs_datasets_py.config import config as Config
-    print("✅ Config import successful")
     config_instance = Config()
-    print("✅ Config instantiation successful")
-except Exception as e:
-    print(f"❌ Config import/instantiation failed: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    assert config_instance is not None
 
-# Test 2: Base tool import
-print("\n=== Test 2: BaseTool Import ===")
-try:
+
+def test_base_tool_import():
+    """Test that BaseDevelopmentTool can be imported."""
     from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseDevelopmentTool
-    print("✅ BaseDevelopmentTool import successful")
-except Exception as e:
-    print(f"❌ BaseDevelopmentTool import failed: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    assert BaseDevelopmentTool is not None
 
-# Test 3: Individual tool imports
-tools_to_test = [
-    ("TestGenerator", "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator", "TestGenerator"),
-    ("DocumentationGenerator", "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator", "DocumentationGenerator"),
-    ("CodebaseSearch", "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search", "CodebaseSearch"),
+
+@pytest.mark.parametrize("tool_name,module_path,function_or_class_name", [
+    ("test_generator", "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator", "test_generator"),
+    ("documentation_generator", "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator", "documentation_generator"),
+    ("codebase_search", "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search", "codebase_search"),
     ("LintingTools", "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools", "LintingTools"),
     ("TestRunner", "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner", "TestRunner"),
-]
-
-for tool_name, module_path, class_name in tools_to_test:
-    print(f"\n=== Test: {tool_name} Import ===")
-    try:
-        module = __import__(module_path, fromlist=[class_name])
-        tool_class = getattr(module, class_name)
-        print(f"✅ {tool_name} import successful")
-        
-        # Try to instantiate
-        tool_instance = tool_class()
-        print(f"✅ {tool_name} instantiation successful")
-    except Exception as e:
-        print(f"❌ {tool_name} import/instantiation failed: {e}")
-        import traceback
-        traceback.print_exc()
-        # Continue with other tools instead of exiting
-
-print("\n🎉 All import tests completed successfully!")
+])
+def test_individual_tool_imports(tool_name, module_path, function_or_class_name):
+    """Test that individual tools can be imported and instantiated."""
+    module = __import__(module_path, fromlist=[function_or_class_name])
+    tool_func_or_class = getattr(module, function_or_class_name)
+    assert tool_func_or_class is not None
+    
+    # For functions, just check callable; for classes, try to instantiate
+    if callable(tool_func_or_class) and not hasattr(tool_func_or_class, '__bases__'):
+        # It's a function
+        assert callable(tool_func_or_class)
+    else:
+        # It's a class, try to instantiate
+        tool_instance = tool_func_or_class()
+        assert tool_instance is not None

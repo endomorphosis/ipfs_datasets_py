@@ -332,7 +332,7 @@ class IPFSDatasetsMCPServer:
 
         # Register tools from subdirectories
         tool_subdirs = [
-            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools", "media_tools"
+            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools", "media_tools", "investigation_tools", "legal_dataset_tools"
         ]
         
         for subdir in tool_subdirs:

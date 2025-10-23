@@ -1,0 +1,629 @@
+{
+  "deontic_formulas": [
+    {
+      "formula_id": "6c4a5125b4ca",
+      "operator": "O",
+      "proposition": "exercise_oversight_of_the_corporations_operations",
+      "agent": {
+        "identifier": "board_of_directors",
+        "name": "Board of Directors",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "296c2979"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The board of directors shall exercise oversight of the corporation's operations",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[board_of_directors](exercise_oversight_of_the_corporations_operations)",
+      "creation_timestamp": "2025-08-31T22:41:51.845446"
+    },
+    {
+      "formula_id": "6d3542ddd431",
+      "operator": "O",
+      "proposition": "act_in_good_faith_and_in_the_best_interests_of_the_corporation",
+      "agent": {
+        "identifier": "directors",
+        "name": "Directors",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "2302f2d9"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "Directors must act in good faith and in the best interests of the corporation",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[directors](act_in_good_faith_and_in_the_best_interests_of_the_corporation)",
+      "creation_timestamp": "2025-08-31T22:41:51.845619"
+    },
+    {
+      "formula_id": "3226fa1ad1de",
+      "operator": "O",
+      "proposition": "establish_an_audit_committee_comprised_of_independent_directors",
+      "agent": {
+        "identifier": "audit_committee",
+        "name": "Audit Committee",
+        "agent_type": "unknown",
+        "properties": {},
+        "hash": "2ca12b4a"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The board shall establish an audit committee comprised of independent directors",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[audit_committee](establish_an_audit_committee_comprised_of_independent_directors)",
+      "creation_timestamp": "2025-08-31T22:41:51.845776"
+    },
+    {
+      "formula_id": "41e8af9ba71c",
+      "operator": "O",
+      "proposition": "exercise_oversight",
+      "agent": {
+        "identifier": "agent_9133",
+        "name": "corporation",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "2a8ab221"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The board of directors shall exercise oversight of the corporation's operations",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_9133](exercise_oversight)",
+      "creation_timestamp": "2025-08-31T22:41:51.845940"
+    },
+    {
+      "formula_id": "b50a9470920a",
+      "operator": "O",
+      "proposition": "act_in_good_faith",
+      "agent": {
+        "identifier": "agent_9133",
+        "name": "corporation",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "2a8ab221"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "Directors must act in good faith and in the best interests of the corporation",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_9133](act_in_good_faith)",
+      "creation_timestamp": "2025-08-31T22:41:51.846102"
+    },
+    {
+      "formula_id": "f8127760fb60",
+      "operator": "O",
+      "proposition": "establish_audit_committee",
+      "agent": null,
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The board shall establish an audit committee comprised of independent directors",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O(establish_audit_committee)",
+      "creation_timestamp": "2025-08-31T22:41:51.846242"
+    },
+    {
+      "formula_id": "eabe75af4f53",
+      "operator": "O",
+      "proposition": "review_and_approve_transactions",
+      "agent": {
+        "identifier": "agent_6091",
+        "name": "parties",
+        "agent_type": "party",
+        "properties": {},
+        "hash": "a6aabd9c"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The audit committee must review and approve all material transactions between the corporation and related parties",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_6091](review_and_approve_transactions)",
+      "creation_timestamp": "2025-08-31T22:41:51.846419"
+    },
+    {
+      "formula_id": "b43c967b0a8b",
+      "operator": "F",
+      "proposition": "engage_in_conflict_transactions",
+      "agent": null,
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.9,
+      "source_text": "Directors are prohibited from engaging in transactions that create conflicts of interest",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "F(engage_in_conflict_transactions)",
+      "creation_timestamp": "2025-08-31T22:41:51.846566"
+    },
+    {
+      "formula_id": "e0f3682ef228",
+      "operator": "O",
+      "proposition": "disclose_material_information",
+      "agent": {
+        "identifier": "agent_9133",
+        "name": "corporation",
+        "agent_type": "organization",
+        "properties": {},
+        "hash": "2a8ab221"
+      },
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.95,
+      "source_text": "The corporation must promptly disclose all material information that could affect the stock price",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "O[agent_9133](disclose_material_information)",
+      "creation_timestamp": "2025-08-31T22:41:51.846743"
+    },
+    {
+      "formula_id": "37de2b94cebc",
+      "operator": "F",
+      "proposition": "insider_trading",
+      "agent": null,
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.9,
+      "source_text": "Insider trading is strictly prohibited",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "F(insider_trading)",
+      "creation_timestamp": "2025-08-31T22:41:51.846866"
+    },
+    {
+      "formula_id": "5b8d2a894cb4",
+      "operator": "P",
+      "proposition": "vote_on_corporate_matters",
+      "agent": null,
+      "beneficiary": null,
+      "conditions": [],
+      "temporal_conditions": [],
+      "legal_context": {
+        "jurisdiction": "Federal Securities Law, USA",
+        "legal_domain": "corporate",
+        "applicable_law": null,
+        "precedents": [],
+        "exceptions": []
+      },
+      "confidence": 0.85,
+      "source_text": "Shareholders have the right to vote on fundamental corporate matters",
+      "variables": {},
+      "quantifiers": [],
+      "fol_string": "P(vote_on_corporate_matters)",
+      "creation_timestamp": "2025-08-31T22:41:51.846998"
+    }
+  ],
+  "rule_set": {
+    "rule_set_id": "f3a6b76649",
+    "name": "Corporate Governance Legal Requirements",
+    "description": "Deontic logic rules extracted from https://example-law.edu/corporate-governance",
+    "version": "1.0",
+    "source_document": "https://example-law.edu/corporate-governance",
+    "legal_context": {
+      "jurisdiction": "Federal Securities Law, USA",
+      "legal_domain": "corporate",
+      "applicable_law": null,
+      "precedents": [],
+      "exceptions": []
+    },
+    "formulas": [
+      {
+        "formula_id": "6c4a5125b4ca",
+        "operator": "O",
+        "proposition": "exercise_oversight_of_the_corporations_operations",
+        "agent": {
+          "identifier": "board_of_directors",
+          "name": "Board of Directors",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "296c2979"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The board of directors shall exercise oversight of the corporation's operations",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[board_of_directors](exercise_oversight_of_the_corporations_operations)",
+        "creation_timestamp": "2025-08-31T22:41:51.845446"
+      },
+      {
+        "formula_id": "6d3542ddd431",
+        "operator": "O",
+        "proposition": "act_in_good_faith_and_in_the_best_interests_of_the_corporation",
+        "agent": {
+          "identifier": "directors",
+          "name": "Directors",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "2302f2d9"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "Directors must act in good faith and in the best interests of the corporation",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[directors](act_in_good_faith_and_in_the_best_interests_of_the_corporation)",
+        "creation_timestamp": "2025-08-31T22:41:51.845619"
+      },
+      {
+        "formula_id": "3226fa1ad1de",
+        "operator": "O",
+        "proposition": "establish_an_audit_committee_comprised_of_independent_directors",
+        "agent": {
+          "identifier": "audit_committee",
+          "name": "Audit Committee",
+          "agent_type": "unknown",
+          "properties": {},
+          "hash": "2ca12b4a"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The board shall establish an audit committee comprised of independent directors",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[audit_committee](establish_an_audit_committee_comprised_of_independent_directors)",
+        "creation_timestamp": "2025-08-31T22:41:51.845776"
+      },
+      {
+        "formula_id": "41e8af9ba71c",
+        "operator": "O",
+        "proposition": "exercise_oversight",
+        "agent": {
+          "identifier": "agent_9133",
+          "name": "corporation",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "2a8ab221"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The board of directors shall exercise oversight of the corporation's operations",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_9133](exercise_oversight)",
+        "creation_timestamp": "2025-08-31T22:41:51.845940"
+      },
+      {
+        "formula_id": "b50a9470920a",
+        "operator": "O",
+        "proposition": "act_in_good_faith",
+        "agent": {
+          "identifier": "agent_9133",
+          "name": "corporation",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "2a8ab221"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "Directors must act in good faith and in the best interests of the corporation",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_9133](act_in_good_faith)",
+        "creation_timestamp": "2025-08-31T22:41:51.846102"
+      },
+      {
+        "formula_id": "f8127760fb60",
+        "operator": "O",
+        "proposition": "establish_audit_committee",
+        "agent": null,
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The board shall establish an audit committee comprised of independent directors",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O(establish_audit_committee)",
+        "creation_timestamp": "2025-08-31T22:41:51.846242"
+      },
+      {
+        "formula_id": "eabe75af4f53",
+        "operator": "O",
+        "proposition": "review_and_approve_transactions",
+        "agent": {
+          "identifier": "agent_6091",
+          "name": "parties",
+          "agent_type": "party",
+          "properties": {},
+          "hash": "a6aabd9c"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The audit committee must review and approve all material transactions between the corporation and related parties",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_6091](review_and_approve_transactions)",
+        "creation_timestamp": "2025-08-31T22:41:51.846419"
+      },
+      {
+        "formula_id": "b43c967b0a8b",
+        "operator": "F",
+        "proposition": "engage_in_conflict_transactions",
+        "agent": null,
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.9,
+        "source_text": "Directors are prohibited from engaging in transactions that create conflicts of interest",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "F(engage_in_conflict_transactions)",
+        "creation_timestamp": "2025-08-31T22:41:51.846566"
+      },
+      {
+        "formula_id": "e0f3682ef228",
+        "operator": "O",
+        "proposition": "disclose_material_information",
+        "agent": {
+          "identifier": "agent_9133",
+          "name": "corporation",
+          "agent_type": "organization",
+          "properties": {},
+          "hash": "2a8ab221"
+        },
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.95,
+        "source_text": "The corporation must promptly disclose all material information that could affect the stock price",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "O[agent_9133](disclose_material_information)",
+        "creation_timestamp": "2025-08-31T22:41:51.846743"
+      },
+      {
+        "formula_id": "37de2b94cebc",
+        "operator": "F",
+        "proposition": "insider_trading",
+        "agent": null,
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.9,
+        "source_text": "Insider trading is strictly prohibited",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "F(insider_trading)",
+        "creation_timestamp": "2025-08-31T22:41:51.846866"
+      },
+      {
+        "formula_id": "5b8d2a894cb4",
+        "operator": "P",
+        "proposition": "vote_on_corporate_matters",
+        "agent": null,
+        "beneficiary": null,
+        "conditions": [],
+        "temporal_conditions": [],
+        "legal_context": {
+          "jurisdiction": "Federal Securities Law, USA",
+          "legal_domain": "corporate",
+          "applicable_law": null,
+          "precedents": [],
+          "exceptions": []
+        },
+        "confidence": 0.85,
+        "source_text": "Shareholders have the right to vote on fundamental corporate matters",
+        "variables": {},
+        "quantifiers": [],
+        "fol_string": "P(vote_on_corporate_matters)",
+        "creation_timestamp": "2025-08-31T22:41:51.846998"
+      }
+    ],
+    "creation_timestamp": "2025-08-31T22:41:51.847194",
+    "formula_count": 11
+  },
+  "conversion_metadata": {
+    "conversion_timestamp": "2025-08-31T22:41:51.847215",
+    "context": {
+      "source_document_path": "https://example-law.edu/corporate-governance",
+      "document_title": "Corporate Governance Legal Requirements",
+      "legal_domain": "corporate",
+      "jurisdiction": "Federal Securities Law, USA",
+      "confidence_threshold": 0.6,
+      "enable_temporal_analysis": true,
+      "enable_agent_inference": true,
+      "enable_condition_extraction": true
+    },
+    "input_statistics": {
+      "entity_count": 11,
+      "relationship_count": 5
+    },
+    "conversion_statistics": {
+      "total_entities_processed": 11,
+      "total_relationships_processed": 5,
+      "obligations_extracted": 8,
+      "permissions_extracted": 1,
+      "prohibitions_extracted": 2,
+      "agents_identified": 0,
+      "temporal_conditions_extracted": 0
+    },
+    "symbolic_ai_enabled": true,
+    "domain_knowledge_version": "1.0"
+  },
+  "errors": [],
+  "warnings": [],
+  "statistics": {
+    "total_entities_processed": 11,
+    "total_relationships_processed": 5,
+    "obligations_extracted": 8,
+    "permissions_extracted": 1,
+    "prohibitions_extracted": 2,
+    "agents_identified": 0,
+    "temporal_conditions_extracted": 0
+  }
+}

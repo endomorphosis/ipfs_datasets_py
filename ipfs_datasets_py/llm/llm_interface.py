@@ -24,8 +24,30 @@ import uuid
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-
-import numpy as np
+# Optional numpy with graceful fallback
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    HAVE_NUMPY = False
+    # Provide minimal numpy-like functionality
+    class MockNumpy:
+        @staticmethod
+        def array(x):
+            return list(x) if hasattr(x, '__iter__') else [x]
+        @staticmethod  
+        def mean(x):
+            return sum(x) / len(x) if x else 0
+        @staticmethod
+        def std(x):
+            if not x:
+                return 0
+            mean_val = sum(x) / len(x)
+            variance = sum((val - mean_val) ** 2 for val in x) / len(x)
+            return variance ** 0.5
+        # Mock ndarray type for type hints
+        ndarray = list
+    np = MockNumpy()
 
 
 class LLMConfig:

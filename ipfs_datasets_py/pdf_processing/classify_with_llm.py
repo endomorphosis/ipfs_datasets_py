@@ -8,9 +8,22 @@ from itertools import islice, batched
 
 try:
     from pydantic import BaseModel, Field, NonNegativeFloat
+    HAVE_PYDANTIC = True
+except ImportError:
+    BaseModel = object
+    Field = lambda **kwargs: None
+    NonNegativeFloat = float
+    HAVE_PYDANTIC = False
+
+try:
     import openai
-except ImportError as e:
-    raise ImportError(f"Failed to import necessary modules: {e}")
+    HAVE_OPENAI = True
+except ImportError:
+    openai = None
+    HAVE_OPENAI = False
+
+if not HAVE_PYDANTIC or not HAVE_OPENAI:
+    print(f"Info: LLM classification using mock implementation (missing: {'pydantic ' if not HAVE_PYDANTIC else ''}{'openai' if not HAVE_OPENAI else ''})")
 
 
 logger = logging.getLogger(__name__)
@@ -68,12 +81,12 @@ class ClassificationResult(BaseModel):
 async def _classify_with_openai_llm(
         prompt: str, 
         system_prompt: str, 
-        client: openai.AsyncOpenAI, 
+        client, # openai.AsyncOpenAI when available
         num_categories: int, 
         model: str = "gpt-4.1-2025-04-14",
         log_threshold: float = 0.05,
         timeout: float = 30.0,
-    ) -> list[tuple[str, float]] | list:
+    ):
 
     temperature = 0.0 
     logprobs = True
@@ -89,13 +102,16 @@ async def _classify_with_openai_llm(
             temperature=temperature,
             timeout=timeout
         )
-    except openai.RateLimitError as e:
-        raise RuntimeError(f"Rate limit exceeded: {e}") from e
-    except openai.APITimeoutError as e:
-        raise asyncio.TimeoutError(f"Timeout while waiting for OpenAI response: {e}") from e
-    except openai.OpenAIError as e:
-        raise ConnectionError(f"OpenAI API error during classification: {e}") from e
     except Exception as e:
+        # Handle OpenAI-specific exceptions if available
+        if HAVE_OPENAI:
+            if isinstance(e, openai.RateLimitError):
+                raise RuntimeError(f"Rate limit exceeded: {e}") from e
+            elif isinstance(e, openai.APITimeoutError):
+                raise asyncio.TimeoutError(f"Timeout while waiting for OpenAI response: {e}") from e
+            elif isinstance(e, openai.OpenAIError):
+                raise ConnectionError(f"OpenAI API error during classification: {e}") from e
+        # Generic handling for when openai is not available or other exceptions
         raise e
 
     # Filter out probabilities that are below the threshold.
@@ -117,7 +133,7 @@ async def _run_task_with_limit(task: Callable):
 async def _classify_with_transformers_llm(
     prompt: str, 
     system_prompt: str, 
-    client: openai.AsyncOpenAI, 
+    client, # OpenAI client when available 
     num_categories: int, 
     model: str = "gpt-4.1-2025-04-14",
     log_threshold: float = 0.05,

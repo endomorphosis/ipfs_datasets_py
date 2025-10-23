@@ -8,6 +8,7 @@ import pytest
 
 
 from ipfs_datasets_py.pdf_processing import (
+import asyncio
     PDFProcessor,
     
     # OCR engines

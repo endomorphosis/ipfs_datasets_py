@@ -18,19 +18,87 @@ from types import ModuleType
 import math
 from itertools import batched
 
+# Import dependencies with automated installation
+from ipfs_datasets_py.auto_installer import ensure_module
 
-import tiktoken as tiktoken_module
-from transformers import AutoTokenizer
-import numpy as np
-from sentence_transformers import SentenceTransformer
-import nltk
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.tag import pos_tag
-from nltk.chunk import ne_chunk
-from nltk.tree import Tree
-import pydantic
+# Install required dependencies
+tiktoken_module = ensure_module('tiktoken', 'tiktoken')
+HAVE_TIKTOKEN = tiktoken_module is not None
 
-import openai
+transformers_module = ensure_module('transformers', 'transformers')
+if transformers_module:
+    from transformers import AutoTokenizer
+    HAVE_TRANSFORMERS = True
+else:
+    AutoTokenizer = None
+    HAVE_TRANSFORMERS = False
+
+numpy = ensure_module('numpy', 'numpy')
+if numpy:
+    np = numpy
+    HAVE_NUMPY = True
+else:
+    # Mock numpy for basic functionality
+    class MockNumpy:
+        @staticmethod
+        def array(data):
+            return list(data)
+        @staticmethod
+        def zeros(shape):
+            return [0] * (shape if isinstance(shape, int) else shape[0])
+    np = MockNumpy()
+    HAVE_NUMPY = False
+
+sentence_transformers_module = ensure_module('sentence_transformers', 'sentence-transformers')
+if sentence_transformers_module:
+    from sentence_transformers import SentenceTransformer
+    HAVE_SENTENCE_TRANSFORMERS = True
+else:
+    SentenceTransformer = None
+    HAVE_SENTENCE_TRANSFORMERS = False
+
+nltk_module = ensure_module('nltk', 'nltk')
+if nltk_module:
+    import nltk
+    from nltk.tokenize import sent_tokenize, word_tokenize
+    from nltk.tag import pos_tag
+    from nltk.chunk import ne_chunk
+    from nltk.tree import Tree
+    HAVE_NLTK = True
+else:
+    nltk = None
+    # Mock NLTK functions
+    def sent_tokenize(text):
+        return text.split('. ')
+    def word_tokenize(text):
+        return text.split()
+    def pos_tag(tokens):
+        return [(token, 'NN') for token in tokens]
+    def ne_chunk(tagged):
+        return tagged
+    Tree = None
+    HAVE_NLTK = False
+
+pydantic = ensure_module('pydantic', 'pydantic')
+HAVE_PYDANTIC = pydantic is not None
+
+openai = ensure_module('openai', 'openai')
+HAVE_OPENAI = openai is not None
+
+logger = logging.getLogger(__name__)
+missing_deps = []
+if not HAVE_TIKTOKEN: missing_deps.append('tiktoken')
+if not HAVE_TRANSFORMERS: missing_deps.append('transformers')
+if not HAVE_NUMPY: missing_deps.append('numpy')
+if not HAVE_SENTENCE_TRANSFORMERS: missing_deps.append('sentence-transformers')
+if not HAVE_NLTK: missing_deps.append('nltk')
+if not HAVE_PYDANTIC: missing_deps.append('pydantic')
+if not HAVE_OPENAI: missing_deps.append('openai')
+
+if missing_deps:
+    logger.warning(f"LLM optimizer dependencies partially available. Missing: {', '.join(missing_deps)}")
+else:
+    logger.info("✅ All LLM optimizer dependencies successfully installed and available")
 
 
 from ipfs_datasets_py.pdf_processing.classify_with_llm import classify_with_llm, ClassificationResult
@@ -1109,7 +1177,7 @@ class LLMOptimizer:
                  min_chunk_size: int = 100,
                  entity_classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
                  api_key: Optional[str] = os.environ.get("OPENAI_API_KEY"),
-                 async_openai: openai.AsyncOpenAI = openai.AsyncOpenAI,
+                 async_openai: Any = None,
                  sentence_transformer: SentenceTransformer = SentenceTransformer,
                  text_processor: TextProcessor = TextProcessor,
                  auto_tokenizer: AutoTokenizer = AutoTokenizer,
@@ -1199,7 +1267,11 @@ class LLMOptimizer:
         self.tokenizer: Callable = None  # Will be set during model initialization
 
         self.logger: logging.Logger = logger or module_logger
-        self.openai_async_client: openai.AsyncOpenAI = async_openai
+        # Initialize OpenAI client if available
+        if async_openai is None and HAVE_OPENAI:
+            async_openai = openai.AsyncOpenAI
+        
+        self.openai_async_client = async_openai  # OpenAI AsyncOpenAI client when available
         self.SentenceTransformer: SentenceTransformer = sentence_transformer
         self.text_processor: TextProcessor = text_processor
         self.chunk_optimizer: ChunkOptimizer = chunk_optimizer
@@ -1262,26 +1334,35 @@ class LLMOptimizer:
 
             # Initialize tokenizer for token counting
         try:
-            if "gpt" in self.tokenizer_name.lower():
+            if "gpt" in self.tokenizer_name.lower() and self.tiktoken is not None:
                 self.tokenizer = self.tiktoken.encoding_for_model(self.tokenizer_name)
-            else:
+            elif self.AutoTokenizer is not None:
                 self.tokenizer = self.AutoTokenizer.from_pretrained(self.tokenizer_name)
+            else:
+                # Fallback to basic tokenizer
+                self.tokenizer = None
+                self.logger.warning("No tokenizer available, using basic token counting")
 
-            self.logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
+            if self.tokenizer:
+                self.logger.info(f"Loaded tokenizer: {self.tokenizer_name}")
+            else:
+                self.logger.info("Using mock tokenizer for basic functionality")
 
         except Exception as e:
-            raise RuntimeError(
-                f"Could not load tokenizer for LLMOptimizer: {self.model_name}, {self.tokenizer_name}: {e}"
-            ) from e
+            self.logger.warning(f"Failed to load tokenizer {self.tokenizer_name}: {e}")
+            self.tokenizer = None
 
         try:
-            # Only initialize OpenAI client if we have an API key
-            if self.api_key:
+            # Only initialize OpenAI client if we have the module and API key
+            if self.api_key and self.openai_async_client and HAVE_OPENAI:
                 self.openai_async_client = self.openai_async_client(api_key=self.api_key)
             else:
-                # For testing or when API key is not available
+                # For testing or when OpenAI is not available
                 self.openai_async_client = None
-                self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
+                if not HAVE_OPENAI:
+                    self.logger.warning("OpenAI not available - using mock implementation")
+                elif not self.api_key:
+                    self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
         except Exception as e:
             self.logger.warning(f"Could not initialize OpenAI client: {e}")
             self.openai_async_client = None

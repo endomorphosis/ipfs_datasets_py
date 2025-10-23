@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 
 import logging
 import io
-import numpy as np
 from typing import Dict, List, Any
 from cachetools import cached
 
@@ -300,7 +299,7 @@ class OCREngine(ABC):
             - All implementations should provide consistent return format
             - Processing time varies based on image size and complexity
         """
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement extract_text")
     
     def is_available(self) -> bool:
         """
