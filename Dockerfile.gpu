@@ -1,0 +1,59 @@
+FROM nvidia/cuda:12.0.0-devel-ubuntu22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python and dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    python3-dev \
+    git \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.10 as default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
+RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+WORKDIR /app
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install PyTorch with CUDA support
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu118
+
+# Install core dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt || echo "Some requirements failed"
+
+# Copy project files
+COPY setup.py README.md ./
+COPY ipfs_datasets_py/ ./ipfs_datasets_py/
+COPY ipfs_datasets_cli.py ./
+
+# Install the package
+RUN pip install --no-cache-dir -e . --no-deps || echo "Package installed with warnings"
+
+# Install test dependencies
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-cov \
+    pytest-xdist \
+    pytest-timeout
+
+# Verify GPU setup
+RUN python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import torch; assert torch.cuda.is_available()" || exit 1
+
+EXPOSE 8000
+
+# Default command shows GPU info
+CMD ["python", "-c", "import torch; print('🎮 GPU Container Ready'); print(f'CUDA: {torch.cuda.is_available()}'); print(f'GPUs: {torch.cuda.device_count()}'); [print(f'  GPU {i}: {torch.cuda.get_device_name(i)}') for i in range(torch.cuda.device_count())]"]

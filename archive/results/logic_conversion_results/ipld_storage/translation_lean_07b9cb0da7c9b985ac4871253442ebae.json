@@ -1,0 +1,19 @@
+{
+  "target": "lean",
+  "translated_formula": "Obligatory pay_contractor (agent := agent_2400) (conditions := [id_30_days_of_completion])",
+  "success": true,
+  "confidence": 0.85,
+  "errors": [],
+  "warnings": [],
+  "metadata": {
+    "syntax_version": "lean4",
+    "deontic_operator": "O",
+    "has_agent": true,
+    "has_conditions": true
+  },
+  "dependencies": [
+    "Mathlib.Logic.Basic",
+    "Mathlib.Data.Set.Basic",
+    "Mathlib.Logic.Relation"
+  ]
+}

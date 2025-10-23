@@ -1,0 +1,24 @@
+# Minimal requirements for MCP server Docker container
+# Core dependencies
+numpy>=1.21.0,<2.0.0
+pandas>=1.5.0,<3.0.0
+requests>=2.25.0,<3.0.0
+pyyaml>=6.0.0,<7.0.0
+pydantic>=2.0.0,<3.0.0
+jsonschema>=4.0.0,<5.0.0
+
+# MCP server
+mcp>=1.2.0
+Flask>=3.1.1
+
+# Basic utilities
+tqdm>=4.60.0,<5.0.0
+toml>=0.10.2
+psutil>=5.9.0
+
+# Testing (minimal)
+pytest>=7.3.1,<9.0.0
+
+# Optional for better functionality
+tiktoken>=0.6.0
+openai>=1.97.1

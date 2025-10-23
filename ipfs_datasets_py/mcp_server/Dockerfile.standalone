@@ -1,0 +1,43 @@
+# Minimal MCP Server Docker Image - Standalone Version
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install minimal Python dependencies
+RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
+    flask>=3.0.0 \
+    requests>=2.25.0 \
+    mcp>=1.2.0
+
+# Copy standalone server
+COPY ipfs_datasets_py/mcp_server/standalone_server.py /app/
+
+# Expose ports
+EXPOSE 8000
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health && curl -f http://localhost:8080/health || exit 1
+
+# Start the standalone server (both MCP server and dashboard)
+CMD ["python", "standalone_server.py"]
+
+# Usage (build from repository root):
+# 1. Build the image: docker build -f ipfs_datasets_py/mcp_server/Dockerfile.standalone -t ipfs-datasets-mcp-standalone .
+# 2. Run the container: docker run -p 8000:8000 -p 8080:8080 ipfs-datasets-mcp-standalone

@@ -65,12 +65,12 @@ class TestWebArchiveTools(unittest.TestCase):
         except Exception as e:
             print(f"✗ extract_text_from_warc failed: {e}")
 
-    def test_extract_metadata_from_warc(self):
+    async def test_extract_metadata_from_warc(self):
         """Test extracting metadata from WARC files."""
         try:
             from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import extract_metadata_from_warc
 
-            result = extract_metadata_from_warc(self.test_warc_path)
+            result = await extract_metadata_from_warc(self.test_warc_path)
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -83,12 +83,12 @@ class TestWebArchiveTools(unittest.TestCase):
         except Exception as e:
             print(f"✗ extract_metadata_from_warc failed: {e}")
 
-    def test_extract_links_from_warc(self):
+    async def test_extract_links_from_warc(self):
         """Test extracting links from WARC files."""
         try:
             from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import extract_links_from_warc
 
-            result = extract_links_from_warc(self.test_warc_path)
+            result = await extract_links_from_warc(self.test_warc_path)
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -102,12 +102,12 @@ class TestWebArchiveTools(unittest.TestCase):
         except Exception as e:
             print(f"✗ extract_links_from_warc failed: {e}")
 
-    def test_index_warc(self):
+    async def test_index_warc(self):
         """Test indexing WARC files."""
         try:
             from ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc import index_warc
 
-            result = index_warc(self.test_warc_path)
+            result = await index_warc(self.test_warc_path)
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)

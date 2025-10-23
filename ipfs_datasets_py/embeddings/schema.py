@@ -301,6 +301,58 @@ class VectorStoreConfig:
         return cls(**data)
 
 
+# FastAPI Request/Response models for embedding API endpoints
+class EmbeddingRequest(BaseModel):
+    """Request model for embedding generation API."""
+    
+    texts: Union[str, List[str]] = Field(..., description="Text(s) to generate embeddings for")
+    model_name: Optional[str] = Field(default=None, description="Model to use for embeddings")
+    chunk_size: Optional[int] = Field(default=512, description="Chunk size for text processing")
+    normalize: Optional[bool] = Field(default=True, description="Whether to normalize embeddings")
+    batch_size: Optional[int] = Field(default=32, description="Batch size for processing")
+    
+    class Config:
+        json_encoders = {
+            # Handle any custom encoding if needed
+        }
+
+
+class EmbeddingResponse(BaseModel):
+    """Response model for embedding generation API."""
+    
+    embeddings: List[List[float]] = Field(..., description="Generated embeddings")
+    model_name: str = Field(..., description="Model used for generation")
+    dimensions: int = Field(..., description="Embedding dimensions")
+    texts_processed: int = Field(..., description="Number of texts processed")
+    processing_time: Optional[float] = Field(default=None, description="Processing time in seconds")
+    
+    class Config:
+        json_encoders = {
+            # Handle any custom encoding if needed
+        }
+
+
+class EmbeddingModel:
+    """Model information for available embedding models."""
+    
+    def __init__(self, name: str, dimensions: int, description: str = "", 
+                 max_tokens: int = 8192, available: bool = True):
+        self.name = name
+        self.dimensions = dimensions
+        self.description = description
+        self.max_tokens = max_tokens
+        self.available = available
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'name': self.name,
+            'dimensions': self.dimensions,
+            'description': self.description,
+            'max_tokens': self.max_tokens,
+            'available': self.available
+        }
+
+
 # Compatibility aliases for integration with existing ipfs_embeddings_py code
 Document = DocumentChunk  # Alias for backward compatibility
 
@@ -315,6 +367,9 @@ __all__ = [
     'VectorStoreType',
     'EmbeddingConfig',
     'VectorStoreConfig',
+    'EmbeddingRequest',
+    'EmbeddingResponse', 
+    'EmbeddingModel',
     'ImageType',
     'DEFAULT_TEXT_NODE_TMPL',
     'DEFAULT_METADATA_TMPL',

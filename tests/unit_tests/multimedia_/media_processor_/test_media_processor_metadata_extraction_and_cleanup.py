@@ -10,6 +10,7 @@ from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_med
 from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
+import asyncio
 from tests._test_utils import (
     has_good_callable_metadata,
     raise_on_bad_callable_code_quality,

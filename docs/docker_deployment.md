@@ -1,16 +1,77 @@
 # Docker Deployment Guide
 
-This guide explains how to use Docker to containerize IPFS Datasets Python applications. Using Docker provides several benefits, including easy deployment, consistent environments, and isolation from the host system.
+This guide explains how to use Docker to deploy the IPFS Datasets Python MCP Server and Dashboard. Using Docker provides easy deployment, consistent environments, and isolation from the host system.
 
 ## Table of Contents
 
-1. [Basic Docker Setup](#basic-docker-setup)
-2. [Multi-Container Setup with Docker Compose](#multi-container-setup-with-docker-compose)
-3. [IPFS Node Integration](#ipfs-node-integration)
-4. [Production Deployment Considerations](#production-deployment-considerations)
-5. [Example Configurations](#example-configurations)
+1. [MCP Server Docker Setup](#mcp-server-docker-setup)
+2. [Dashboard Docker Setup](#dashboard-docker-setup)
+3. [Multi-Container Setup with Docker Compose](#multi-container-setup-with-docker-compose)
+4. [IPFS Node Integration](#ipfs-node-integration)
+5. [Production Deployment](#production-deployment)
+6. [VS Code Integration](#vs-code-integration)
 
-## Basic Docker Setup
+## MCP Server Docker Setup
+
+### Build MCP Server Image
+
+```bash
+# Build from repository root
+docker build -f ipfs_datasets_py/mcp_server/Dockerfile -t ipfs-datasets-mcp .
+```
+
+### Run MCP Server Container
+
+```bash
+# Run MCP server on port 8000
+docker run -d \
+  --name mcp-server \
+  -p 8000:8000 \
+  ipfs-datasets-mcp
+
+# Check server health
+curl http://localhost:8000/health
+```
+
+### Run with Custom Configuration
+
+```bash
+# Run with custom config
+docker run -d \
+  --name mcp-server \
+  -p 8000:8000 \
+  -v $(pwd)/config.yaml:/app/config.yaml \
+  ipfs-datasets-mcp \
+  python -m ipfs_datasets_py.mcp_server --config /app/config.yaml
+```
+
+## Dashboard Docker Setup
+
+### Run MCP Dashboard
+
+```bash
+# Run dashboard on port 8899
+docker run -d \
+  --name mcp-dashboard \
+  -p 8899:8899 \
+  -e MCP_DASHBOARD_HOST=0.0.0.0 \
+  -e MCP_DASHBOARD_PORT=8899 \
+  -e MCP_DASHBOARD_BLOCKING=1 \
+  ipfs-datasets-mcp \
+  python -m ipfs_datasets_py.mcp_dashboard
+
+# Access dashboard
+open http://localhost:8899/mcp
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_DASHBOARD_HOST` | Dashboard bind host | 0.0.0.0 |
+| `MCP_DASHBOARD_PORT` | Dashboard port | 8080 |
+| `MCP_DASHBOARD_BLOCKING` | Run in blocking mode | 0 |
+| `MCP_SERVER_PORT` | MCP server port | 8001 |
 
 ### Dockerfile
 

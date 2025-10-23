@@ -813,7 +813,8 @@ class GraphRAGLLMProcessor:
             Analysis of the evidence chain
         """
         # Create cache key
-        cache_key = f"evidence_chain:{hash(f'{doc1['id']}:{doc2['id']}:{entity['id']}')}"
+        key_str = f"{doc1['id']}:{doc2['id']}:{entity['id']}"
+        cache_key = f"evidence_chain:{hash(key_str)}"
 
         # Check cache
         if cache_key in self._response_cache:
@@ -984,7 +985,8 @@ class GraphRAGLLMProcessor:
             Identified knowledge gaps
         """
         # Create cache key
-        cache_key = f"knowledge_gaps:{hash(f'{entity['id']}:{doc1_info[:50]}:{doc2_info[:50]}')}"
+        entity_info = f'{entity["id"]}:{doc1_info[:50]}:{doc2_info[:50]}'
+        cache_key = f"knowledge_gaps:{hash(entity_info)}"
 
         # Check cache
         if cache_key in self._response_cache:
@@ -1047,7 +1049,8 @@ class GraphRAGLLMProcessor:
             Generated inferences
         """
         # Create cache key
-        cache_key = f"deep_inference:{hash(f'{entity['id']}:{doc1['id']}:{doc2['id']}:{relation_type}')}"
+        entity_info = f'{entity["id"]}:{doc1["id"]}:{doc2["id"]}:{relation_type}'
+        cache_key = f"deep_inference:{hash(entity_info)}"
 
         # Check cache
         if cache_key in self._response_cache:

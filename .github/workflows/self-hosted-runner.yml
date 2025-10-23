@@ -1,0 +1,124 @@
+name: Self-Hosted Runner Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/self-hosted-runner.yml'
+
+jobs:
+  test-self-hosted-x86:
+    runs-on: [self-hosted, x86_64]
+    if: ${{ contains(github.event.head_commit.message, '[test-runner]') || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: System Information
+        run: |
+          echo "## 🖥️ Self-Hosted Runner Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: $(uname -m)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"')" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU Cores**: $(nproc)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory**: $(free -h | grep Mem | awk '{print $2}')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Disk**: $(df -h / | tail -1 | awk '{print $4}') available" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check Docker
+        run: |
+          docker --version
+          docker info
+          echo "✅ Docker is available" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build Docker image on self-hosted runner
+        run: |
+          echo "🔨 Building Docker image on self-hosted x86_64 runner..."
+          docker build -t ipfs-datasets-py:self-hosted -f Dockerfile.test .
+          echo "✅ Docker image built successfully" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Test Docker image
+        run: |
+          echo "🧪 Testing Docker image..."
+          docker run --rm ipfs-datasets-py:self-hosted python -c "
+          import sys, platform
+          print(f'Python: {sys.version}')
+          print(f'Platform: {platform.platform()}')
+          print(f'Machine: {platform.machine()}')
+          
+          import ipfs_datasets_py
+          print('✅ Package imported successfully')
+          "
+          echo "✅ Docker container test passed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rmi ipfs-datasets-py:self-hosted || true
+          docker system prune -f || true
+
+  test-github-hosted:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: System Information
+        run: |
+          echo "## 🐙 GitHub-Hosted Runner Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: $(uname -m)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"')" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU Cores**: $(nproc)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory**: $(free -h | grep Mem | awk '{print $2}')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build Docker image on GitHub runner
+        run: |
+          echo "🔨 Building Docker image on GitHub-hosted runner..."
+          docker build -t ipfs-datasets-py:github-hosted -f Dockerfile.test .
+          echo "✅ Docker image built successfully" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Test Docker image
+        run: |
+          echo "🧪 Testing Docker image..."
+          docker run --rm ipfs-datasets-py:github-hosted python -c "
+          import sys, platform
+          print(f'Python: {sys.version}')
+          print(f'Platform: {platform.platform()}')
+          print(f'Machine: {platform.machine()}')
+          
+          import ipfs_datasets_py
+          print('✅ Package imported successfully')
+          "
+          echo "✅ Docker container test passed" >> $GITHUB_STEP_SUMMARY
+
+  compare-runners:
+    runs-on: ubuntu-latest
+    needs: [test-self-hosted-x86, test-github-hosted]
+    if: always()
+    
+    steps:
+      - name: Runner Comparison Summary
+        run: |
+          echo "## 📊 Runner Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Runner Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Self-Hosted x86_64 | ${{ needs.test-self-hosted-x86.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub-Hosted | ${{ needs.test-github-hosted.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.test-self-hosted-x86.result }}" = "success" ]; then
+            echo "✅ Self-hosted runner is configured and working!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Self-hosted runner test was skipped or failed." >> $GITHUB_STEP_SUMMARY
+            echo "To set up a self-hosted runner:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to Settings > Actions > Runners" >> $GITHUB_STEP_SUMMARY
+            echo "2. Click 'New self-hosted runner'" >> $GITHUB_STEP_SUMMARY
+            echo "3. Follow the setup instructions" >> $GITHUB_STEP_SUMMARY
+            echo "4. Add labels: \`self-hosted\`, \`x86_64\`" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -2,8 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="ipfs_datasets_py",
-    version='0.1.0',
+    version='0.2.0',
     packages=find_packages(),
+    py_modules=["ipfs_datasets_cli"],
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
@@ -60,6 +61,9 @@ setup(
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
         ],
+        'legal': [
+            # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
+        ],
         'all': [
             'ipld-car>=0.1.0',
             'ipld-dag-pb>=0.1.0',
@@ -75,6 +79,7 @@ setup(
             'dash-cytoscape>=0.2.0',
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
+            # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
     },
     python_requires='>=3.10',
@@ -82,6 +87,12 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="IPFS Datasets Contributors",
+    entry_points={
+        'console_scripts': [
+            'ipfs-datasets=ipfs_datasets_cli:cli_main',
+            'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

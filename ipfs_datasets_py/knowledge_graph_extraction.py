@@ -27,7 +27,7 @@ import uuid
 import json
 import requests
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Set, Optional, Tuple
+from typing import Dict, List, Any, Set, Optional, Tuple, Union
 from collections import defaultdict
 
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
@@ -132,6 +132,31 @@ class Relationship:
     confidence: float = 1.0
     source_text: Optional[str] = None
     bidirectional: bool = False
+
+    def __post_init__(self):
+        """Handle flexible constructor patterns"""
+        # If relationship_id is actually an Entity (wrong calling pattern), fix it
+        if isinstance(self.relationship_id, Entity):
+            # This means the call was Relationship(source, target, type)
+            source_entity = self.relationship_id
+            target_entity = self.relationship_type
+            relationship_type = self.source_entity
+            
+            # Fix the fields
+            self.relationship_id = str(uuid.uuid4())
+            self.source_entity = source_entity
+            self.target_entity = target_entity
+            self.relationship_type = relationship_type
+
+    @classmethod
+    def create(cls, source: Entity, target: Entity, relationship_type: str, **kwargs) -> 'Relationship':
+        """Create relationship with intuitive parameter order"""
+        return cls(
+            source_entity=source,
+            target_entity=target,
+            relationship_type=relationship_type,
+            **kwargs
+        )
 
     @property
     def source_id(self) -> Optional[str]:
@@ -246,8 +271,8 @@ class KnowledgeGraph:
 
     def add_entity(
         self,
-        entity_type: str,
-        name: str,
+        entity_type_or_entity: Union[str, Entity],
+        name: Optional[str] = None,
         properties: Optional[Dict[str, Any]] = None,
         entity_id: str = None,
         confidence: float = 1.0,
@@ -256,8 +281,8 @@ class KnowledgeGraph:
         """Add an entity to the knowledge graph.
 
         Args:
-            entity_type (str): Type of the entity
-            name (str): Name of the entity
+            entity_type_or_entity: Either entity type string OR Entity object
+            name (str): Name of the entity (required if first arg is string)
             properties (Dict, optional): Additional properties
             entity_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
@@ -266,42 +291,50 @@ class KnowledgeGraph:
         Returns:
             Entity: The added entity
         """
-        # Create entity
-        entity = Entity(
-            entity_id=entity_id,
-            entity_type=entity_type,
-            name=name,
-            properties=properties,
-            confidence=confidence,
-            source_text=source_text
-        )
+        # Handle both calling patterns
+        if isinstance(entity_type_or_entity, Entity):
+            # Called with Entity object: add_entity(entity)
+            entity = entity_type_or_entity
+        else:
+            # Called with parameters: add_entity(entity_type, name, ...)
+            if name is None:
+                raise ValueError("name parameter is required when first argument is entity_type string")
+            
+            entity = Entity(
+                entity_id=entity_id,
+                entity_type=entity_type_or_entity,
+                name=name,
+                properties=properties,
+                confidence=confidence,
+                source_text=source_text
+            )
 
         # Add to graph
         self.entities[entity.entity_id] = entity
 
         # Update indexes
-        self.entity_types[entity_type].add(entity.entity_id)
-        self.entity_names[name].add(entity.entity_id)
+        self.entity_types[entity.entity_type].add(entity.entity_id)
+        self.entity_names[entity.name].add(entity.entity_id)
 
         return entity
 
     def add_relationship(
         self,
-        relationship_type: str,
-        source: Entity,
-        target: Entity,
+        relationship_type_or_relationship: Union[str, 'Relationship'],
+        source: Optional[Entity] = None,
+        target: Optional[Entity] = None,
         properties: Optional[Dict[str, Any]] = None,
         relationship_id: str = None,
         confidence: float = 1.0,
         source_text: str = None,
         bidirectional: bool = False
-    ) -> Relationship:
+    ) -> 'Relationship':
         """Add a relationship to the knowledge graph.
 
         Args:
-            relationship_type (str): Type of the relationship
-            source (Entity): Source entity
-            target (Entity): Target entity
+            relationship_type_or_relationship: Either relationship type string OR Relationship object
+            source (Entity): Source entity (required if first arg is string)
+            target (Entity): Target entity (required if first arg is string)
             properties (Dict, optional): Additional properties
             relationship_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
@@ -311,25 +344,50 @@ class KnowledgeGraph:
         Returns:
             Relationship: The added relationship
         """
-        # Create relationship
-        relationship = Relationship(
-            relationship_id=relationship_id,
-            relationship_type=relationship_type,
-            source=source,
-            target=target,
-            properties=properties,
-            confidence=confidence,
-            source_text=source_text,
-            bidirectional=bidirectional
-        )
+        # Handle both calling patterns
+        if isinstance(relationship_type_or_relationship, Relationship):
+            # Called with Relationship object: add_relationship(relationship)
+            relationship = relationship_type_or_relationship
+        else:
+            # Called with parameters: add_relationship(relationship_type, source, target, ...)
+            if source is None or target is None:
+                raise ValueError("source and target parameters are required when first argument is relationship_type string")
+            
+            relationship = Relationship(
+                relationship_id=relationship_id,
+                relationship_type=relationship_type_or_relationship,
+                source_entity=source,
+                target_entity=target,
+                properties=properties,
+                confidence=confidence,
+                source_text=source_text,
+                bidirectional=bidirectional
+            )
 
         # Add to graph
         self.relationships[relationship.relationship_id] = relationship
 
-        # Update indexes
-        self.relationship_types[relationship_type].add(relationship.relationship_id)
-        self.entity_relationships[source.entity_id].add(relationship.relationship_id)
-        self.entity_relationships[target.entity_id].add(relationship.relationship_id)
+        # Update indexes - handle both Entity objects and string IDs
+        self.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
+        
+        # Handle source entity
+        if hasattr(relationship.source_entity, 'entity_id'):
+            source_id = relationship.source_entity.entity_id
+        elif isinstance(relationship.source_entity, str):
+            source_id = relationship.source_entity
+        else:
+            source_id = str(relationship.source_entity)
+        
+        # Handle target entity
+        if hasattr(relationship.target_entity, 'entity_id'):
+            target_id = relationship.target_entity.entity_id
+        elif isinstance(relationship.target_entity, str):
+            target_id = relationship.target_entity
+        else:
+            target_id = str(relationship.target_entity)
+        
+        self.entity_relationships[source_id].add(relationship.relationship_id)
+        self.entity_relationships[target_id].add(relationship.relationship_id)
 
         return relationship
 
@@ -965,26 +1023,35 @@ class KnowledgeGraphExtractor:
             bidirectional = pattern_info.get("bidirectional", False)
 
             # Find matches
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                source_text = match.group(1).strip()
-                target_text = match.group(2).strip()
+            try:
+                for match in re.finditer(pattern, text, re.IGNORECASE):
+                    # Check if the pattern has exactly 2 groups
+                    if len(match.groups()) < 2:
+                        continue
+                        
+                    source_text = match.group(1).strip()
+                    target_text = match.group(2).strip()
 
-                # Look for entities that match or contain the matched text
-                source_entity = self._find_best_entity_match(source_text, entity_map)
-                target_entity = self._find_best_entity_match(target_text, entity_map)
+                    # Look for entities that match or contain the matched text
+                    source_entity = self._find_best_entity_match(source_text, entity_map)
+                    target_entity = self._find_best_entity_match(target_text, entity_map)
 
-                if source_entity and target_entity:
-                    # Create relationship
-                    rel = Relationship(
-                        relationship_type=relation_type,
-                        source=source_entity,
-                        target=target_entity,
-                        confidence=confidence,
-                        source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
-                        bidirectional=bidirectional
-                    )
+                    if source_entity and target_entity and source_entity != target_entity:
+                        # Create relationship
+                        rel = Relationship(
+                            relationship_type=relation_type,
+                            source_entity=source_entity,
+                            target_entity=target_entity,
+                            confidence=confidence,
+                            source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
+                            bidirectional=bidirectional
+                        )
 
-                    relationships.append(rel)
+                        relationships.append(rel)
+            
+            except Exception as e:
+                # Skip problematic patterns and continue
+                continue
 
         return relationships
 
@@ -2420,6 +2487,36 @@ def _default_relation_patterns() -> List[Dict[str, Any]]:
         List[Dict]: List of relation patterns
     """
     return [
+        # Enhanced patterns for AI research content
+        {
+            "name": "expert_in",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+is\s+(?:a\s+)?(?:leading\s+)?expert\s+in\s+([a-z][a-z\s]+)",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.9
+        },
+        {
+            "name": "focuses_on",
+            "pattern": r"(Project\s+[A-Z][a-z]+)\s+focus(?:es)?\s+on\s+([a-z][a-z\s]+)",
+            "source_type": "project",
+            "target_type": "field",
+            "confidence": 0.8
+        },
+        {
+            "name": "contributed_to",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+contributed\s+to\s+([a-z][a-z\s]+)",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.85
+        },
+        {
+            "name": "works_at_org",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:works?\s+at|is\s+at|joined)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        # Original comprehensive patterns
         {
             "name": "founded_by",
             "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+founded\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
@@ -2694,7 +2791,7 @@ def _map_spacy_entity_type(spacy_type: str) -> str:
     }
     return mapping.get(spacy_type, "entity")
 
-def _map_transformers_entity_type(self, transformers_type: str) -> str:
+def _map_transformers_entity_type(transformers_type: str) -> str:
     """Map Transformers entity types to our entity types.
 
     Args:
@@ -2756,36 +2853,81 @@ def _rule_based_entity_extraction(text: str) -> List[Entity]:
         List[Entity]: List of extracted entities
     """
     entities = []
+    entity_names_seen = set()  # Track unique entities
 
-    # Simple rules for common entity types
+    # Enhanced patterns for better AI research content extraction
     patterns = [
-        # Person: titles + names
-        (r"(?:Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s+(\w+(?:\s+\w+){0,2})", "person", 0.8),
-        # Organization: company suffixes
-        (r"(\w+(?:\s+\w+){0,3}?)\s+(?:Inc\.?|Corp\.?|Ltd\.?|LLC|Group)", "organization", 0.8),
-        # Location: prepositions + capitalized words
-        (r"(?:in|at|from|to)\s+([A-Z]\w+(?:\s+[A-Z]\w+){0,2})", "location", 0.7),
-        # Date: month day year
-        (r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4})", "date", 0.9),
-        # Technology: tech keywords
-        (r"(\w+(?:\s+\w+){0,2}?)\s+(?:algorithm|framework|library|language|platform|system|technology|tool)", "technology", 0.7),
-        # AI/ML fields
-        (r"((?:Deep|Machine|Reinforcement)\s+Learning|Neural\s+Networks?|(?:Large\s+Language|Generative|Transformer)\s+Models?)", "field", 0.9),
-        # AI model names
-        (r"((?:GPT|BERT|T5|LLaMA|Stable\s+Diffusion|DALL-E|PaLM|Gemini|Claude)(?:-\d+)?(?:\s+\w+)?)", "model", 0.9)
+        # Person names: Dr./Prof. + proper names (improved)
+        (r"(?:Dr\.|Prof\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})(?=\s|$|[.,;:])", "person", 0.9),
+        
+        # Person names: common academic patterns
+        (r"Principal\s+Investigator:\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})", "person", 0.95),
+        
+        # Organizations: specific patterns for AI companies/institutes
+        (r"(Google\s+DeepMind|OpenAI|Anthropic|Microsoft\s+Research|Meta\s+AI|IBM\s+Research)", "organization", 0.95),
+        (r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:Institute|Research|Lab|Laboratory|Center|University)", "organization", 0.85),
+        
+        # AI/ML fields and techniques (enhanced)
+        (r"\b((?:artificial\s+intelligence|machine\s+learning|deep\s+learning|neural\s+networks?|computer\s+vision|natural\s+language\s+processing|reinforcement\s+learning))\b", "field", 0.95),
+        (r"\b((?:transformer\s+architectures?|attention\s+mechanisms?|self-supervised\s+learning|few-shot\s+learning|cross-modal\s+reasoning))\b", "field", 0.9),
+        (r"\b((?:physics-informed\s+neural\s+networks?|graph\s+neural\s+networks?|generative\s+models?))\b", "field", 0.9),
+        
+        # Technology and tools
+        (r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:framework|platform|system|technology|tool|algorithm)s?\b", "technology", 0.8),
+        
+        # Projects and research areas
+        (r"Project\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?):?\s+", "project", 0.9),
+        
+        # Medical/Healthcare terms
+        (r"\b((?:medical\s+)?(?:image\s+analysis|radiology|pathology|healthcare|diagnosis|medical\s+AI))\b", "field", 0.9),
+        
+        # Conferences and venues (common in AI)
+        (r"\b(NeurIPS|ICML|ICLR|AAAI|IJCAI|NIPS)\b", "conference", 0.95),
+        
+        # Years and timeframes
+        (r"\b(20[0-9]{2}(?:-20[0-9]{2})?)\b", "date", 0.8),
+        
+        # Locations (improved)
+        (r"\b(?:in|at|from|to|headquartered\s+in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:,\s*[A-Z][A-Z])?)\b", "location", 0.8),
     ]
+    
     for pattern, entity_type, confidence in patterns:
-        flags = re.IGNORECASE if entity_type in ["field"] else 0
+        flags = re.IGNORECASE if entity_type in ["field", "technology"] else 0
+        
         for match in re.finditer(pattern, text, flags):
             name = match.group(1).strip()
-            if name:
-                entity = Entity(
-                    entity_type=entity_type,
-                    name=name,
-                    confidence=confidence,
-                    source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-                )
-                entities.append(entity)
+            
+            # Clean up the extracted name
+            name = re.sub(r'\s+', ' ', name)  # Normalize whitespace
+            name = name.strip('.,;:')  # Remove trailing punctuation
+            
+            # Skip if empty or too short
+            if not name or len(name) < 2:
+                continue
+                
+            # Skip if already seen (for deduplication)
+            name_key = (name.lower(), entity_type)
+            if name_key in entity_names_seen:
+                continue
+            entity_names_seen.add(name_key)
+            
+            # Skip common false positives
+            if name.lower() in ['timeline', 'the', 'and', 'our', 'this', 'that', 'with', 'from']:
+                continue
+                
+            # Create entity with better source text extraction
+            start_pos = max(0, match.start() - 20)
+            end_pos = min(len(text), match.end() + 20)
+            source_snippet = text[start_pos:end_pos].replace('\n', ' ').strip()
+            
+            entity = Entity(
+                entity_type=entity_type,
+                name=name,
+                confidence=confidence,
+                source_text=source_snippet
+            )
+            entities.append(entity)
+    
     return entities
 
 

@@ -1,0 +1,220 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for metadata and analytics
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: graphrag_db
+      POSTGRES_USER: graphrag_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-graphrag_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deployments/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graphrag_user -d graphrag_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for job queuing and caching
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # IPFS Node for distributed storage
+  ipfs:
+    image: ipfs/go-ipfs:v0.17.0
+    environment:
+      IPFS_PROFILE: server
+    volumes:
+      - ipfs_data:/data/ipfs
+    ports:
+      - "${IPFS_SWARM_PORT:-4001}:4001"     # libp2p swarm
+      - "${IPFS_API_PORT:-5001}:5001"       # API
+      - "${IPFS_GATEWAY_PORT:-8080}:8080"   # Gateway
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Elasticsearch for advanced search capabilities
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Main GraphRAG Website Processor
+  website-graphrag-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FEATURES: all
+    environment:
+      # Database connections
+      POSTGRES_URL: postgresql://graphrag_user:${POSTGRES_PASSWORD:-graphrag_password}@postgres:5432/graphrag_db
+      REDIS_URL: redis://redis:6379/0
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      
+      # IPFS configuration
+      IPFS_API_URL: http://ipfs:5001
+      IPFS_GATEWAY_URL: http://ipfs:8080
+      
+      # Processing configuration
+      MAX_PARALLEL_JOBS: 5
+      MAX_CONTENT_SIZE_MB: 500
+      PROCESSING_TIMEOUT: 3600
+      
+      # API configuration
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your-secret-key-change-in-production}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      
+      # External services
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN}
+      ARCHIVE_SERVICES: ia,is,warc
+      
+      # Performance settings
+      PERFORMANCE_PROFILE: balanced
+      ENABLE_MONITORING: true
+      MONITORING_INTERVAL: 5
+      
+      # Logging
+      LOG_LEVEL: INFO
+      ENABLE_STRUCTURED_LOGGING: true
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ipfs:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Background Job Worker
+  job-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FEATURES: all
+    environment:
+      # Same environment as main app
+      POSTGRES_URL: postgresql://graphrag_user:${POSTGRES_PASSWORD:-graphrag_password}@postgres:5432/graphrag_db
+      REDIS_URL: redis://redis:6379/0
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      IPFS_API_URL: http://ipfs:5001
+      IPFS_GATEWAY_URL: http://ipfs:8080
+      MAX_PARALLEL_JOBS: 3
+      WORKER_MODE: true
+      LOG_LEVEL: INFO
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ipfs:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    command: ["python", "-m", "ipfs_datasets_py.enterprise_api", "--worker-only"]
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Monitoring and Metrics (Prometheus + Grafana)
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./deployments/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployments/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./deployments/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+
+  # Nginx Reverse Proxy with Load Balancing
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./deployments/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./deployments/nginx/ssl:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - website-graphrag-processor
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  ipfs_data:
+  es_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

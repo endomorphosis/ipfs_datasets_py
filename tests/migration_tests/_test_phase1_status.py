@@ -3,11 +3,12 @@
 Phase 1 Status Test - Simple validation
 """
 
+import asyncio
 import sys
 import traceback
 from pathlib import Path
 
-def test_phase1_status():
+async def async_test_phase1_status():
     """Test Phase 1 completion status"""
     print("Phase 1 Status Check")
     print("=" * 20)
@@ -40,7 +41,7 @@ def test_phase1_status():
     try:
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
         server = IPFSDatasetsMCPServer()
-        server.register_tools()
+        await server.register_tools()
 
         # Check for development tools
         dev_tool_names = [
@@ -76,14 +77,14 @@ def test_phase1_status():
             pattern="def",
             path=".",
             max_depth=1,
-            format="text"
+            format="json"
         )
 
-        if result and 'success' in result and result['success']:
+        if result and isinstance(result, dict) and 'success' in result and result['success']:
             print("✓ Codebase search executed successfully")
             results['execution'] = True
         else:
-            print(f"✗ Codebase search returned unexpected result: {result}")
+            print(f"✗ Codebase search returned unexpected result: {type(result)} - {result}")
             results['execution'] = False
     except Exception as e:
         print(f"✗ Tool execution failed: {e}")
@@ -113,11 +114,17 @@ def test_phase1_status():
 
     return all_passed
 
+import pytest
+
+def test_phase1_status_pytest():
+    """Pytest wrapper for phase1 status test."""
+    success = asyncio.run(async_test_phase1_status())
+    assert success, "Phase 1 status test failed"
+
 if __name__ == "__main__":
     try:
-        success = test_phase1_status()
-        sys.exit(0 if success else 1)
+        success = asyncio.run(async_test_phase1_status())
+        print(f"Test {'PASSED' if success else 'FAILED'}")
     except Exception as e:
         print(f"Test failed with exception: {e}")
         traceback.print_exc()
-        sys.exit(1)

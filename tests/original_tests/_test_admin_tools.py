@@ -25,8 +25,9 @@ class TestAdminTools:
         result = await manage_endpoints(action="list")
         
         assert result is not None
-        assert "status" in result
-        assert "endpoints" in result or "status" in result
+        assert "success" in result
+        assert "endpoints" in result
+        assert result["success"] is True
     
     @pytest.mark.asyncio
     async def test_manage_endpoints_add(self):
@@ -42,7 +43,8 @@ class TestAdminTools:
         )
         
         assert result is not None
-        assert "status" in result
+        assert "success" in result
+        assert result["success"] is True
     
     @pytest.mark.asyncio
     async def test_manage_system_config(self):
@@ -55,7 +57,7 @@ class TestAdminTools:
         )
         
         assert result is not None
-        assert "status" in result
+        assert "success" in result
     
     @pytest.mark.asyncio
     async def test_system_health_check(self):
@@ -68,7 +70,7 @@ class TestAdminTools:
         )
         
         assert result is not None
-        assert "status" in result
+        assert "success" in result
         assert "health" in result or "components" in result
     
     @pytest.mark.asyncio
@@ -82,7 +84,7 @@ class TestAdminTools:
         )
         
         assert result is not None
-        assert "status" in result
+        assert "success" in result
     
     @pytest.mark.asyncio
     async def test_database_operations(self):
@@ -95,7 +97,7 @@ class TestAdminTools:
         )
         
         assert result is not None
-        assert "status" in result
+        assert "success" in result
 
 
 class TestEnhancedAdminTools:
@@ -126,7 +128,7 @@ class TestEnhancedAdminTools:
             )
             
             assert result is not None
-            assert "status" in result
+            assert "success" in result
         except ImportError:
             raise ImportError("Enhanced admin tools not available")
     
@@ -142,7 +144,7 @@ class TestEnhancedAdminTools:
             )
             
             assert result is not None
-            assert "status" in result
+            assert "success" in result
         except ImportError:
             raise ImportError("Enhanced admin tools not available")
 
@@ -169,7 +171,7 @@ class TestAdminToolsIntegration:
         result = await manage_endpoints(action="invalid_action")
         
         assert result is not None
-        assert "status" in result
+        assert "success" in result
         # Should handle error gracefully
         assert result["status"] in ["error", "success"]
 

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Dashboard - IPFS Datasets Management Console</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <h1><i class="fas fa-database me-2"></i>MCP Server Dashboard</h1>
+            <div class="status-indicator">
+                <i class="fas fa-circle text-success me-1"></i>
+                Connected to MCP Server
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="nav-section">
+            <div class="nav-section-title">Dataset Operations</div>
+            <a href="#" class="nav-link active" data-section="dataset-creation">
+                <i class="fas fa-plus-circle"></i>Dataset Creation
+            </a>
+            <a href="#" class="nav-link" data-section="data-transformation">
+                <i class="fas fa-cogs"></i>Data Transformation
+            </a>
+            <a href="#" class="nav-link" data-section="data-search">
+                <i class="fas fa-search"></i>Data Search & Discovery
+            </a>
+            <a href="#" class="nav-link" data-section="data-visualization">
+                <i class="fas fa-chart-bar"></i>Data Visualization
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System Management</div>
+            <a href="#" class="nav-link" data-section="system-monitoring">
+                <i class="fas fa-heartbeat"></i>System Monitoring
+            </a>
+            <a href="#" class="nav-link" data-section="workflow-management">
+                <i class="fas fa-project-diagram"></i>Workflow Management
+            </a>
+            <a href="#" class="nav-link" data-section="testing-suite">
+                <i class="fas fa-vial"></i>Testing Suite
+            </a>
+            <a href="#" class="nav-link" data-section="performance-optimization">
+                <i class="fas fa-tachometer-alt"></i>Performance Optimization
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Tools & Integration</div>
+            <a href="#" class="nav-link" data-section="mcp-tools">
+                <i class="fas fa-toolbox"></i>MCP Tools
+            </a>
+            <a href="#" class="nav-link" data-section="api-endpoints">
+                <i class="fas fa-plug"></i>API Endpoints
+            </a>
+            <a href="#" class="nav-link" data-section="system-logs">
+                <i class="fas fa-list-alt"></i>System Logs
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Status Overview -->
+        <section class="status-overview">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="status-card">
+                        <h3 id="tools-count">130+</h3>
+                        <p>Available Tools</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="status-card">
+                        <h3 id="active-tasks">0</h3>
+                        <p>Active Tasks</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="status-card">
+                        <h3 id="datasets-processed">0</h3>
+                        <p>Datasets Processed</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="status-card">
+                        <h3 id="system-health">Healthy</h3>
+                        <p>System Status</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dataset Creation Section -->
+        <section id="dataset-creation" class="content-section active">
+            <div class="tool-panel">
+                <h2><i class="fas fa-plus-circle me-2"></i>Dataset Creation</h2>
+                
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label for="huggingface-dataset">HuggingFace Dataset Name</label>
+                        <input type="text" id="huggingface-dataset" placeholder="e.g., squad, imdb">
+                        <button class="btn btn-primary mt-2" id="load-huggingface-btn">Load from HuggingFace</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ipfs-cid">IPFS CID</label>
+                        <input type="text" id="ipfs-cid" placeholder="QmXxx...">
+                        <button class="btn btn-primary mt-2" id="load-ipfs-btn">Load from IPFS</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="file-upload">Upload File</label>
+                        <input type="file" id="file-upload" accept=".parquet,.csv,.json,.car">
+                        <button class="btn btn-primary mt-2" id="upload-file-btn">Upload File</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Create New Dataset</label>
+                        <button class="btn btn-success" id="create-dataset-btn">Create Dataset</button>
+                    </div>
+                </div>
+                
+                <div class="results-panel" id="dataset-creation-results">
+                    <pre>Ready to create or load datasets...</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Transformation Section -->
+        <section id="data-transformation" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-cogs me-2"></i>Data Transformation</h2>
+                
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label>Data Processing</label>
+                        <button class="btn btn-primary" id="process-data-btn">Process Data</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>AI Processing</label>
+                        <button class="btn btn-primary" id="generate-embeddings-btn">Generate Embeddings</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Content Classification</label>
+                        <button class="btn btn-primary" id="classify-content-btn">Classify Content</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data Clustering</label>
+                        <button class="btn btn-primary" id="cluster-data-btn">Cluster Data</button>
+                    </div>
+                </div>
+                
+                <div class="results-panel" id="transformation-results">
+                    <pre>Ready to transform data...</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Search Section -->
+        <section id="data-search" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-search me-2"></i>Data Search & Discovery</h2>
+                
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label for="search-query">Search Query</label>
+                        <input type="text" id="search-query" placeholder="Enter search query">
+                        <button class="btn btn-primary mt-2" id="search-vector-btn">Vector Search</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="graph-query">Knowledge Graph Query</label>
+                        <input type="text" id="graph-query" placeholder="Enter graph query">
+                        <button class="btn btn-primary mt-2" id="query-graph-btn">Query Graph</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="archive-url">Archive URL</label>
+                        <input type="url" id="archive-url" placeholder="https://example.com">
+                        <button class="btn btn-primary mt-2" id="search-archive-btn">Search Archive</button>
+                    </div>
+                </div>
+                
+                <div class="results-panel" id="search-results">
+                    <pre>Ready to search data...</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Visualization Section -->
+        <section id="data-visualization" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-chart-bar me-2"></i>Data Visualization</h2>
+                
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label>Chart Generation</label>
+                        <button class="btn btn-primary" id="generate-charts-btn">Generate Charts</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Analytics Dashboard</label>
+                        <button class="btn btn-primary" id="run-analytics-btn">Run Analytics</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Quality Assessment</label>
+                        <button class="btn btn-primary" id="assess-quality-btn">Assess Quality</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="export-format">Export Format</label>
+                        <select id="export-format">
+                            <option value="parquet">Parquet</option>
+                            <option value="csv">CSV</option>
+                            <option value="json">JSON</option>
+                            <option value="excel">Excel</option>
+                        </select>
+                        <button class="btn btn-success mt-2" id="export-data-btn">Export Data</button>
+                    </div>
+                </div>
+                
+                <div class="results-panel" id="visualization-results">
+                    <pre>Ready to visualize data...</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Management Sections -->
+        <section id="system-monitoring" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-heartbeat me-2"></i>System Monitoring</h2>
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label>Health Monitoring</label>
+                        <button class="btn btn-primary" id="monitor-health-btn">Monitor Health</button>
+                    </div>
+                </div>
+                <div class="results-panel" id="monitoring-results">
+                    <pre>System monitoring ready...</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="workflow-management" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-project-diagram me-2"></i>Workflow Management</h2>
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label>Manage Workflows</label>
+                        <button class="btn btn-primary" id="manage-workflows-btn">Manage Workflows</button>
+                    </div>
+                </div>
+                <div class="results-panel" id="workflow-results">
+                    <pre>Workflow management ready...</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="testing-suite" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-vial me-2"></i>Testing Suite</h2>
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label for="test-type">Test Type</label>
+                        <select id="test-type">
+                            <option value="unit">Unit Tests</option>
+                            <option value="integration">Integration Tests</option>
+                            <option value="full">Full Test Suite</option>
+                        </select>
+                        <button class="btn btn-primary mt-2" id="run-tests-btn">Run Tests</button>
+                    </div>
+                </div>
+                <div class="results-panel" id="management-results">
+                    <pre>Testing suite ready...</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance-optimization" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-tachometer-alt me-2"></i>Performance Optimization</h2>
+                <div class="tool-form">
+                    <div class="form-group">
+                        <label>System Optimization</label>
+                        <button class="btn btn-warning" id="optimize-system-btn">Optimize System</button>
+                    </div>
+                </div>
+                <div class="results-panel" id="optimization-results">
+                    <pre>Performance optimization ready...</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools & Integration Sections -->
+        <section id="mcp-tools" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-toolbox me-2"></i>MCP Tools</h2>
+                <p>Access to 130+ MCP tools across 31+ categories for comprehensive data processing.</p>
+                <div class="results-panel">
+                    <pre>MCP tools library ready...</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="api-endpoints" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-plug me-2"></i>API Endpoints</h2>
+                <p>RESTful API endpoints for all dashboard operations.</p>
+                <div class="results-panel">
+                    <pre>API endpoints documentation ready...</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="system-logs" class="content-section">
+            <div class="tool-panel">
+                <h2><i class="fas fa-list-alt me-2"></i>System Logs</h2>
+                <p>Comprehensive logging and debugging information.</p>
+                <div class="results-panel">
+                    <pre>System logs ready...</pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- External JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dashboard JavaScript -->
+    <script src="{{ url_for('static', filename='js/mcp-api-client.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mcp-dashboard.js') }}"></script>
+</body>
+</html>

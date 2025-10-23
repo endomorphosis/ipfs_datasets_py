@@ -5,6 +5,16 @@ All notable changes to the IPLD module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Knowledge Graph Large Block Handling**: Fixed issue where large knowledge graphs would exceed IPFS's 1MiB block limit
+  - Added automatic chunking when root node data exceeds 800KB threshold
+  - Entity IDs, entity CIDs, relationship IDs, and relationship CIDs are now stored in separate blocks when necessary
+  - Maintains backward compatibility with existing non-chunked graphs
+  - Root block now stays well under 1MB even with 30,000+ entities
+  - Resolves error: "big blocks can't be exchanged with other peers"
+
 ## [1.0.0] - 2025-07-04
 
 ### Added - Initial Implementation

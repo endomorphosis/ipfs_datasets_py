@@ -563,14 +563,6 @@ class ProcessStep:
     """
     Individual Data Transformation Step in Processing Pipeline
 
-    The ProcessStep dataclass represents a single, atomic operation within a data
-    transformation pipeline, providing comprehensive tracking of data processing
-    activities for governance, reproducibility, and audit purposes. Each step
-    captures detailed information about the operation performed, execution context,
-    performance metrics, and relationships to input and output data items.
-    This granular tracking enables complete reconstruction of data lineage and
-    supports compliance with data governance requirements.
-
     Pipeline Integration Features:
     - Atomic operation tracking with unique step identification
     - Input/output data relationship mapping for lineage construction
@@ -707,22 +699,6 @@ class ProcessStep:
             },
             operator="automated_pipeline"
         )
-
-    Governance Integration:
-        - Steps are automatically linked into data provenance records
-        - Execution details support compliance audit requirements
-        - Parameter tracking enables operation reproducibility
-        - Error tracking supports quality assurance processes
-        - Metrics collection enables performance optimization
-        - Operator attribution supports accountability requirements
-
-    Notes:
-        - Step IDs should be unique within the processing context
-        - Parameters should include all settings needed for reproduction
-        - Status transitions should be atomic and properly tracked
-        - Metrics collection should not significantly impact performance
-        - Environment capture supports containerized execution contexts
-        - Input/output relationships form the basis of lineage graphs
     """
     step_id: str
     operation: str  # Type of operation (e.g., "filter", "transform", "join")
@@ -742,22 +718,7 @@ class ProcessStep:
 @dataclass
 class DataLineage:
     """
-    Comprehensive Data Lineage Tracking Through Complete Lifecycle
-
-    The DataLineage dataclass captures detailed information about a data item's
-    complete lifecycle journey, from its original source through all transformations,
-    derivations, and relationships with other data items. This comprehensive lineage
-    tracking enables data governance, impact analysis, regulatory compliance, and
-    quality assurance by maintaining a complete audit trail of data evolution
-    and relationships within the distributed data ecosystem.
-
-    Lineage Tracking Capabilities:
-    - Source system identification and extraction methodology documentation
-    - Complete transformation history with step-by-step processing records
-    - Bidirectional relationship mapping between related data items
-    - Graph-based lineage representation for complex dependency analysis
-    - Version control integration for change tracking and rollback capabilities
-    - Quality metrics tracking throughout the data lifecycle
+    Data Lineage Tracking Through Complete Lifecycle
 
     Attributes:
         source_system (str): Identifier of the original system or location where
@@ -919,7 +880,78 @@ class DataLineage:
 
 @dataclass
 class DataProvenance:
-    """Comprehensive provenance information for a piece of data."""
+    """
+    Data Provenance Record for Governance and Audit
+
+    Attributes:
+        data_id (str): Unique identifier for the data item. This ID is used
+                      for all provenance lookups and relationship mapping.
+        source (str): Identifier for the source system or process from which
+                     the data was obtained. Examples: "production_db",
+                     "external_api", "manual_upload".
+        creator (str): Username or system identifier of the principal that
+                      created this data item. Used for accountability.
+        creation_time (str): ISO 8601 timestamp when the data item was created
+                            within the managed system.
+        process_steps (List[Dict[str, Any]]): Legacy field for simple list of
+                                             processing steps. For detailed
+                                             tracking, use `transformation_history`.
+        parent_ids (List[str]): List of data item IDs from which this data
+                               was directly derived. Forms the basis of the
+                               lineage graph.
+        version (str): Version identifier for this specific state of the data.
+                      Supports data evolution tracking and rollback.
+        checksum (str): Cryptographic hash (e.g., SHA-256) of the data content
+                       for integrity verification.
+        metadata (Dict[str, Any]): Flexible key-value store for additional
+                                  application-specific metadata.
+        data_type (str): Classification of the data item. Examples: "dataset",
+                        "model", "index", "embedding". Defaults to "unknown".
+        schema (Optional[Dict[str, Any]]): Structural schema of the data, if
+                                          applicable (e.g., for tabular data).
+        size_bytes (Optional[int]): Size of the data item in bytes.
+        record_count (Optional[int]): Number of records or rows, if applicable.
+        content_type (Optional[str]): MIME type or format identifier for the
+                                     data content (e.g., "application/json").
+        retention_policy (Optional[str]): Identifier for the data retention
+                                         policy that applies to this item.
+        lineage (Optional[DataLineage]): Detailed lineage information, including
+                                        source system details, derived datasets,
+                                        and versioning history.
+        access_history (List[Dict[str, Any]]): Chronological log of all access
+                                              events for this data item, including
+                                              who, when, and what operation.
+        transformation_history (List[ProcessStep]): Detailed, ordered list of
+                                                   all transformation steps
+                                                   applied to this data item.
+        data_flow (Dict[str, List[str]]): Graph representation of direct data
+                                         flows related to this item.
+        tags (List[str]): List of tags for categorization, search, and discovery.
+        external_references (Dict[str, str]): Mapping of this data item's ID
+                                             to identifiers in external systems.
+        compliance (Dict[str, Any]): Information related to regulatory compliance
+                                    (e.g., GDPR, HIPAA status).
+        verification_status (str): Current integrity verification status.
+                                  Values: "unverified", "verified", "failed".
+                                  Defaults to "unverified".
+
+    Example:
+        provenance = DataProvenance(
+            data_id="dataset_xyz_v2",
+            source="etl_pipeline_alpha",
+            creator="data_engineer_1",
+            creation_time="2025-10-01T10:00:00Z",
+            parent_ids=["raw_data_abc_v1"],
+            version="2.0",
+            checksum="sha256:abc...",
+            data_type="dataset",
+            schema={"columns": ["id", "value"]},
+            size_bytes=1024000,
+            record_count=10000,
+            tags=["customer_data", "processed"],
+            compliance={"gdpr": "true", "pii": "false"}
+        )
+    """
     data_id: str  # Unique identifier for the data
     source: str  # Source of the data
     creator: str  # User or system that created the data
@@ -949,7 +981,55 @@ class DataProvenance:
 
 @dataclass
 class AuditLogEntry:
-    """Audit log entry for security-related events."""
+    """
+    Audit Log Entry for Security and Governance Events
+
+    Audit Event Categories:
+    - Authentication and Authorization: Login attempts, access denials, policy changes
+    - Data Operations: Encryption, decryption, access, modification, deletion
+    - Key Management: Key generation, delegation, revocation
+    - Provenance Tracking: Provenance record creation, updates, searches
+    - System Administration: User creation, configuration changes
+
+    Attributes:
+        event_id (str): A unique identifier (UUID) for this specific audit log entry.
+                       Ensures each event can be uniquely referenced and tracked.
+        timestamp (str): ISO 8601 timestamp indicating when the event occurred.
+                        Provides a precise timeline for event correlation and analysis.
+        event_type (str): A high-level classification of the event type.
+                         Examples: "authentication_success", "data_encrypted",
+                         "policy_created", "provenance_recorded", "capability_delegated".
+                         Used for filtering and categorizing events.
+        user (str): The username or system identifier of the principal that initiated
+                   the event. For system-level actions, this may be "system".
+                   Critical for accountability and user activity tracking.
+        resource_id (Optional[str]): The unique identifier of the resource that was
+                                    the target of the action. Examples: data ID,
+                                    key ID, user ID, policy ID. None if the event
+                                    is not resource-specific.
+        resource_type (Optional[str]): The type of the resource involved in the event.
+                                      Examples: "dataset", "encryption_key", "user",
+                                      "policy", "provenance". Provides context for
+                                      the resource_id.
+        action (str): The specific action that was performed.
+                     Examples: "create_user", "encrypt_data", "check_access",
+                     "delegate_capability", "record_provenance".
+                     Provides granular detail about the operation.
+        status (str): The outcome of the action.
+                     Common values: "success", "failure".
+                     Used to quickly identify failed operations and potential
+                     security issues.
+        details (Dict[str, Any]): A dictionary containing additional, context-specific
+                                 details about the event. This flexible field can
+                                 store any relevant information, such as parameters
+                                 used, reasons for failure, or resulting state changes.
+        source_ip (Optional[str]): The IP address from which the event originated.
+                                  Useful for tracking the location of actions and
+                                  detecting suspicious access patterns. Defaults to None.
+        success (bool): A boolean flag indicating whether the action was successful.
+                       Provides a simple way to filter for successful or failed
+                       events. Defaults to True.
+    """
     event_id: str
     timestamp: str
     event_type: str
@@ -2411,7 +2491,7 @@ class SecurityManager:
 
         Args:
             criteria: Dictionary of search criteria
-                Supported criteria include:
+                Supported criteria are:
                 - creator: Search for data created by specific user
                 - source: Search for data from a specific source
                 - data_type: Search by data type

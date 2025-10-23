@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Investigation Dashboard - Maps Preview</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .investigation-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-investigation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-investigation:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .event-marker {
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #investigationMap {
+            border-radius: 0.5rem;
+        }
+        
+        .leaflet-popup-content h6 {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status -->
+    <div class="connection-status">
+        <i class="fas fa-circle"></i> Connected to MCP Server
+    </div>
+
+    <!-- Header -->
+    <header class="investigation-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">Investigation Dashboard</h1>
+                    <p class="mb-0">Enhanced with Geospatial Analysis & Maps</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                        <span class="badge bg-success px-3 py-2">
+                            <i class="fas fa-map-marked-alt"></i> Maps Enabled
+                        </span>
+                        <span class="badge bg-info px-3 py-2">
+                            <i class="fas fa-globe"></i> GraphRAG Ready
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <!-- Navigation Tabs -->
+        <div class="investigation-nav">
+            <ul class="nav nav-tabs" id="investigationTabs">
+                <li class="nav-item">
+                    <a class="nav-link" href="#overview"><i class="fas fa-chart-line"></i> Overview</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#ingestion"><i class="fas fa-download"></i> Data Ingestion</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#entities"><i class="fas fa-users"></i> Entity Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#relationships"><i class="fas fa-project-diagram"></i> Relationships</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#timeline"><i class="fas fa-clock"></i> Timeline</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#patterns"><i class="fas fa-chart-line"></i> Patterns</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#legal"><i class="fas fa-balance-scale"></i> Legal Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active bg-primary text-white" href="#maps"><i class="fas fa-map-marked-alt"></i> Maps</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#workflows"><i class="fas fa-cogs"></i> Workflows</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Maps Tab Content -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sliders-h"></i> Map Controls</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Query Input -->
+                        <div class="mb-3">
+                            <label class="form-label">Query Location/Events</label>
+                            <input type="text" class="form-control" value="financial events in New York" placeholder="Enter location, entity, or event...">
+                        </div>
+                        
+                        <!-- Geographic Filters -->
+                        <div class="mb-3">
+                            <label class="form-label">Center Location</label>
+                            <input type="text" class="form-control" value="New York" placeholder="e.g., New York, Washington DC">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Radius (km)</label>
+                                    <input type="number" class="form-control" value="500" min="1" max="5000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Cluster Distance</label>
+                                    <input type="number" class="form-control" value="100" min="1" max="500">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Temporal Filters -->
+                        <div class="mb-3">
+                            <label class="form-label">Time Range</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="date" class="form-control" value="2024-01-01">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="date" class="form-control" value="2024-12-31">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Entity Type Filters -->
+                        <div class="mb-3">
+                            <label class="form-label">Entity Types</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked>
+                                <label class="form-check-label">Persons</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked>
+                                <label class="form-check-label">Organizations</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked>
+                                <label class="form-check-label">Events</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked>
+                                <label class="form-check-label">Locations</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Map View Options -->
+                        <div class="mb-3">
+                            <label class="form-label">Map View</label>
+                            <select class="form-select">
+                                <option value="street" selected>Street View</option>
+                                <option value="satellite">Satellite</option>
+                                <option value="terrain">Terrain</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-investigation">
+                                <i class="fas fa-search"></i> Search Map
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-map-marker"></i> Extract Locations
+                            </button>
+                            <button class="btn btn-outline-info">
+                                <i class="fas fa-clock"></i> Temporal Analysis
+                            </button>
+                            <button class="btn btn-outline-success">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map Statistics -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-bar"></i> Map Statistics</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-6">
+                                <h5 class="text-primary">47</h5>
+                                <small class="text-muted">Entities</small>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-success">23</h5>
+                                <small class="text-muted">Events</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-md-6">
+                                <h6 class="text-info">8</h6>
+                                <small class="text-muted">Clusters</small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">45d</h6>
+                                <small class="text-muted">Time Span</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <!-- Map Container -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-globe-americas"></i> Geospatial Investigation Map</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary">
+                                <i class="fas fa-play"></i> Timeline
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary active">
+                                <i class="fas fa-layer-group"></i> Clusters
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary">
+                                <i class="fas fa-home"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Map placeholder with sample data -->
+                        <div id="investigationMap" style="height: 500px; width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; border-radius: 0.5rem;">
+                            <div class="text-white text-center">
+                                <i class="fas fa-map-marked-alt fa-5x mb-3"></i>
+                                <h4>Interactive Geospatial Map</h4>
+                                <p>Powered by Leaflet • GraphRAG Integration • Real-time Analysis</p>
+                                <div class="d-flex justify-content-center gap-3 mt-4">
+                                    <div class="badge bg-light text-dark px-3 py-2">
+                                        <i class="fas fa-map-marker text-danger"></i> NYC Financial District
+                                    </div>
+                                    <div class="badge bg-light text-dark px-3 py-2">
+                                        <i class="fas fa-map-marker text-warning"></i> Washington DC
+                                    </div>
+                                    <div class="badge bg-light text-dark px-3 py-2">
+                                        <i class="fas fa-map-marker text-success"></i> San Francisco
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline Slider -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-clock"></i> Temporal Filter</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <small class="text-muted">Jan 2024</small>
+                            </div>
+                            <div class="col-md-8">
+                                <input type="range" class="form-range" min="0" max="100" value="75">
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <small class="text-muted">Dec 2024</small>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-primary">Current: Sep 2024</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map Results -->
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list-alt"></i> Map Analysis Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Entity</th>
+                                        <th>Location</th>
+                                        <th>Event Type</th>
+                                        <th>Confidence</th>
+                                        <th>Temporal Context</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Wall Street</strong></td>
+                                        <td>40.7074, -74.0113</td>
+                                        <td><span class="badge bg-danger">Financial Crisis</span></td>
+                                        <td><span class="badge bg-primary">94%</span></td>
+                                        <td>Jan 15, 2024</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-crosshairs"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>White House</strong></td>
+                                        <td>38.8977, -77.0365</td>
+                                        <td><span class="badge bg-info">Policy Announcement</span></td>
+                                        <td><span class="badge bg-primary">89%</span></td>
+                                        <td>Jan 20, 2024</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-crosshairs"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tokyo Stock Exchange</strong></td>
+                                        <td>35.6762, 139.6503</td>
+                                        <td><span class="badge bg-warning">Natural Disaster</span></td>
+                                        <td><span class="badge bg-primary">96%</span></td>
+                                        <td>Jan 25, 2024</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-crosshairs"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Silicon Valley</strong></td>
+                                        <td>37.3875, -122.0575</td>
+                                        <td><span class="badge bg-success">Tech Conference</span></td>
+                                        <td><span class="badge bg-primary">92%</span></td>
+                                        <td>Feb 01, 2024</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-crosshairs"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6><i class="fas fa-globe"></i> Geographic Coverage</h6>
+                                        <p class="mb-1"><strong>4 Continents</strong></p>
+                                        <small class="text-muted">North America, Europe, Asia, Oceania</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6><i class="fas fa-network-wired"></i> Relationship Density</h6>
+                                        <p class="mb-1"><strong>78% Connected</strong></p>
+                                        <small class="text-muted">Cross-entity relationships</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6><i class="fas fa-chart-line"></i> Analysis Confidence</h6>
+                                        <p class="mb-1"><strong>92.8% Average</strong></p>
+                                        <small class="text-muted">Overall entity accuracy</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>

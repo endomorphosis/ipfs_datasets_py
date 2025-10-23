@@ -17,6 +17,7 @@ pytest-timeout >=2.0.2 # To prevent test suites from hanging indefinitely
 # Basic utilities
 tqdm>=4.60.0,<5.0.0
 pyyaml>=6.0.0,<7.0.0
+nltk>=3.8.1
 
 # Development tools
 coverage>=7.0.0,<8.0.0
@@ -45,6 +46,13 @@ ffmpeg-python>=0.2.0
 openai>=1.97.1
 toml>=0.10.2
 
+# Model Context Protocol (MCP)
+# Provides `mcp.server.FastMCP` and `mcp.types` used by the MCP server
+mcp>=1.2.0
+
+# System monitoring utilities
+psutil>=5.9.0
+
 # For testing only
 Faker>=37.4.2
 reportlab>=4.4.3
@@ -70,7 +78,21 @@ passlib
 uvicorn
 psutil
 
+# Web scraping and archiving tools
+cdx-toolkit>=0.9.37  # Common Crawl CDX access
+wayback>=0.4.5  # Wayback Machine API
+internetarchive>=5.5.0  # Internet Archive access
+autoscraper>=1.1.14  # Intelligent web scraping
+ipwb>=0.2024.10.24  # InterPlanetary Wayback Machine
+warcio>=1.7.4  # WARC file processing
+beautifulsoup4>=4.12.0  # HTML parsing for scraping
+selenium>=4.15.0  # Browser automation for dynamic content
+scrapy>=2.11.0  # Advanced web scraping framework
+aiohttp>=3.8.0  # Async HTTP client for web archiving
+
 # Add these one by one after basic setup works:
-# datasets>=2.10.0,<3.0.0
+datasets>=2.10.0,<3.0.0
+# Vector store backend
+faiss-cpu>=1.8.0
 # transformers>=4.0.0,<5.0.0
 # torch>=1.9.0,<3.0.0

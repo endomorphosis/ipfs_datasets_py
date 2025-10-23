@@ -82,7 +82,7 @@ def test_mcp_web_archive_tools():
             # Test extract_metadata_from_warc tool
             try:
                 from extract_metadata_from_warc import extract_metadata_from_warc
-                result = extract_metadata_from_warc(warc_path)
+                result = await extract_metadata_from_warc(warc_path)
                 print(f"✓ extract_metadata_from_warc tool: {result['status']}")
             except Exception as e:
                 print(f"✗ extract_metadata_from_warc tool: {e}")

@@ -1,0 +1,63 @@
+{
+  "test_start": "2025-10-16T09:11:58.177457",
+  "test_end": "2025-10-16T09:11:58.285385",
+  "duration_seconds": 0.107928,
+  "total_states": 5,
+  "successful": 0,
+  "failed": 5,
+  "total_statutes_scraped": 0,
+  "parquet_files": 0,
+  "json_files": 0,
+  "results": {
+    "CA": {
+      "state_code": "CA",
+      "state_name": "California",
+      "success": false,
+      "scraped_count": 0,
+      "error": "No data scraped",
+      "base_url": "https://leginfo.legislature.ca.gov",
+      "codes_available": 29,
+      "sample_data": []
+    },
+    "NY": {
+      "state_code": "NY",
+      "state_name": "New York",
+      "success": false,
+      "scraped_count": 0,
+      "error": "No data scraped",
+      "base_url": "https://www.nysenate.gov",
+      "codes_available": 23,
+      "sample_data": []
+    },
+    "TX": {
+      "state_code": "TX",
+      "state_name": "Texas",
+      "success": false,
+      "scraped_count": 0,
+      "error": "No data scraped",
+      "base_url": "https://statutes.capitol.texas.gov",
+      "codes_available": 24,
+      "sample_data": []
+    },
+    "IL": {
+      "state_code": "IL",
+      "state_name": "Illinois",
+      "success": false,
+      "scraped_count": 0,
+      "error": "No data scraped",
+      "base_url": "https://www.ilga.gov",
+      "codes_available": 1,
+      "sample_data": []
+    },
+    "WY": {
+      "state_code": "WY",
+      "state_name": "Wyoming",
+      "success": false,
+      "scraped_count": 0,
+      "error": "No data scraped",
+      "base_url": "https://www.wyoleg.gov",
+      "codes_available": 1,
+      "sample_data": []
+    }
+  }
+}

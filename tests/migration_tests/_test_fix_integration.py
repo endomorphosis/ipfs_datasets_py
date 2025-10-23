@@ -38,9 +38,7 @@ class GraphRAGQueryStats:
         """Calculate the cache hit rate."""
         if self.query_count == 0:
             return 0.0
-        # Calculate hit rate as hits / (hits + misses)
-        total_operations = self.query_count + self.cache_hits
-        return self.cache_hits / total_operations
+        return self.cache_hits / self.query_count
 
     def record_query_time(self, execution_time: float) -> None:
         """
@@ -57,6 +55,8 @@ class GraphRAGQueryStats:
     def record_cache_hit(self) -> None:
         """Record a cache hit."""
         self.cache_hits += 1
+        self.query_count += 1  # Cache hits are also queries
+        self.query_timestamps.append(time.time())
 
     def record_query_pattern(self, pattern: dict) -> None:
         """
@@ -167,8 +167,8 @@ class TestCaching(unittest.TestCase):
 
         # Record a cache hit
         stats.record_cache_hit()
-        # The query count should not change
-        self.assertEqual(stats.query_count, 1)
+        # The query count should increase because a cache hit is still a query
+        self.assertEqual(stats.query_count, 2)
         self.assertEqual(stats.cache_hits, 1)
 
         # Cache hit rate should be 1/2 = 0.5
@@ -197,8 +197,8 @@ class TestCaching(unittest.TestCase):
         result2 = self.optimizer.execute_query_with_caching(query_key, query_func)
         self.assertEqual(result2, "test_result")
 
-        # Check stats after second execution - should increment cache_hits but not query_count
-        self.assertEqual(self.optimizer.query_stats.query_count, 1)  # Should still be 1
+        # Check stats after second execution - should increment both cache_hits and query_count
+        self.assertEqual(self.optimizer.query_stats.query_count, 2)  # Cache hits are queries too
         self.assertEqual(self.optimizer.query_stats.cache_hits, 1)   # Should be 1
 
         # Cache hit rate should be 1/2 = 0.5

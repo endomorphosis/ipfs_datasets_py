@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mcp-dashboard.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>MCP Server Dashboard</h1>
+        <div class="header-status">
+            <span>Server: {{ server_status.status if server_status else 'Active' }}</span>
+            <span>Tools: {{ tools_info|length if tools_info else '130+' }}</span>
+        </div>
+    </header>
+
+    <nav class="dashboard-sidebar">
+        <div class="sidebar-section">
+            <h3>Dataset Operations</h3>
+            <div class="sidebar-nav">
+                <a href="#dataset-creation" class="nav-link active">Dataset Creation</a>
+                <a href="#data-transformation" class="nav-link">Data Transformation</a>
+                <a href="#data-search" class="nav-link">Data Search & Discovery</a>
+                <a href="#data-visualization" class="nav-link">Data Visualization</a>
+            </div>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>System Management</h3>
+            <div class="sidebar-nav">
+                <a href="#system-monitoring" class="nav-link">System Monitoring</a>
+                <a href="#workflow-management" class="nav-link">Workflow Management</a>
+                <a href="#testing-suite" class="nav-link">Testing Suite</a>
+                <a href="#performance-optimization" class="nav-link">Performance Optimization</a>
+            </div>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>Tools & Integration</h3>
+            <div class="sidebar-nav">
+                <a href="#mcp-tools" class="nav-link">MCP Tools</a>
+                <a href="#api-endpoints" class="nav-link">API Endpoints</a>
+                <a href="#system-logs" class="nav-link">System Logs</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <div class="status-overview">
+            <div class="status-card">
+                <h3>Available Tools</h3>
+                <div class="status-value">{{ tools_info|length if tools_info else '130+' }}</div>
+                <div class="status-label">MCP Tools Ready</div>
+            </div>
+            <div class="status-card">
+                <h3>Active Tasks</h3>
+                <div class="status-value">{{ active_executions if active_executions else '0' }}</div>
+                <div class="status-label">Running Operations</div>
+            </div>
+            <div class="status-card">
+                <h3>Server Status</h3>
+                <div class="status-value">{{ server_status.status if server_status else 'Online' }}</div>
+                <div class="status-label">Connection Active</div>
+            </div>
+            <div class="status-card">
+                <h3>Data Processed</h3>
+                <div class="status-value">{{ execution_history|length if execution_history else '0' }}</div>
+                <div class="status-label">Total Operations</div>
+            </div>
+        </div>
+
+        <section id="dataset-creation" class="content-section">
+            <div class="section-header">
+                <h2>Dataset Creation</h2>
+                <p class="section-description">Load datasets from multiple sources including HuggingFace, IPFS, file uploads, and CAR archives.</p>
+            </div>
+            
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <h3>HuggingFace Datasets</h3>
+                    <p>Load datasets directly from the HuggingFace hub with automatic metadata extraction.</p>
+                    <div class="form-group">
+                        <label class="form-label">Dataset Name</label>
+                        <input type="text" class="form-input" id="hf-dataset-name" placeholder="e.g., squad, imdb, wikitext">
+                    </div>
+                    <button class="btn btn-primary" onclick="loadHuggingFaceDataset()">Load Dataset</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>IPFS Network</h3>
+                    <p>Fetch datasets from the IPFS network using Content Identifier (CID).</p>
+                    <div class="form-group">
+                        <label class="form-label">IPFS CID</label>
+                        <input type="text" class="form-input" id="ipfs-cid" placeholder="QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco">
+                    </div>
+                    <button class="btn btn-primary" onclick="loadIPFSDataset()">Fetch from IPFS</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>File Upload</h3>
+                    <p>Upload and process Parquet, CSV, JSON files from your local system.</p>
+                    <div class="form-group">
+                        <label class="form-label">Select File</label>
+                        <input type="file" class="form-input" id="file-upload" accept=".parquet,.csv,.json">
+                    </div>
+                    <button class="btn btn-primary" onclick="uploadFile()">Upload & Process</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>CAR Archives</h3>
+                    <p>Import and process Content Addressed Archive files for distributed storage.</p>
+                    <div class="form-group">
+                        <label class="form-label">CAR File Path</label>
+                        <input type="text" class="form-input" id="car-path" placeholder="/path/to/archive.car">
+                    </div>
+                    <button class="btn btn-primary" onclick="processCARFile()">Import CAR Archive</button>
+                </div>
+            </div>
+            
+            <div id="creation-results" class="results-panel" style="display: none;">
+                <div>Dataset creation results will appear here...</div>
+            </div>
+        </section>
+
+        <section id="data-transformation" class="content-section" style="display: none;">
+            <div class="section-header">
+                <h2>Data Transformation</h2>
+                <p class="section-description">Apply AI processing, filtering, and transformation operations to your datasets.</p>
+            </div>
+            
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <h3>Data Processing</h3>
+                    <p>Filter, transform, merge, and split operations with progress tracking.</p>
+                    <div class="form-group">
+                        <label class="form-label">Operation Type</label>
+                        <select class="form-input" id="process-operation">
+                            <option value="filter">Filter Data</option>
+                            <option value="transform">Transform Fields</option>
+                            <option value="merge">Merge Datasets</option>
+                            <option value="split">Split Dataset</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="processData()">Process Data</button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3>AI Processing</h3>
+                    <p>Generate embeddings, classify content, and perform clustering with AI models.</p>
+                    <div class="form-group">
+                        <label class="form-label">AI Operation</label>
+                        <select class="form-input" id="ai-operation">
+                            <option value="embeddings">Generate Embeddings</option>
+                            <option value="classification">Content Classification</option>
+                            <option value="clustering">Data Clustering</option>
+                            <option value="summarization">Text Summarization</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="runAIProcessing()">Run AI Processing</button>
+                </div>
+            </div>
+            
+            <div id="transformation-results" class="results-panel" style="display: none;">
+                <div>Transformation results will appear here...</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/mcp-dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mcp-api-client.js') }}"></script>
+</body>
+</html>
