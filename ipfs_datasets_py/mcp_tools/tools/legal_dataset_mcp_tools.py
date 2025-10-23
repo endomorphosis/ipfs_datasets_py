@@ -679,6 +679,14 @@ class ScrapeMunicipalCodesTool(ClaudeMCPTool):
             }
 
 
+# Import patent tools
+try:
+    from .patent_dataset_mcp_tools import PATENT_DATASET_MCP_TOOLS
+    _patent_tools_available = True
+except ImportError:
+    _patent_tools_available = False
+    PATENT_DATASET_MCP_TOOLS = []
+
 # List of all legal dataset MCP tools
 LEGAL_DATASET_MCP_TOOLS = [
     ScrapeRECAPArchiveTool(),
@@ -688,3 +696,7 @@ LEGAL_DATASET_MCP_TOOLS = [
     ScrapeUSCodeTool(),
     ScrapeMunicipalCodesTool()
 ]
+
+# Add patent tools if available
+if _patent_tools_available:
+    LEGAL_DATASET_MCP_TOOLS.extend(PATENT_DATASET_MCP_TOOLS)
