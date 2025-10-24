@@ -6,11 +6,21 @@ and cross-document analysis capabilities in isolation.
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-import networkx as nx
 from dataclasses import asdict
+
+# Try to import networkx, skip tests if not available
+try:
+    import networkx as nx
+    NETWORKX_AVAILABLE = True
+except ImportError:
+    NETWORKX_AVAILABLE = False
+    nx = None
 
 # Test fixtures and utilities
 from tests.conftest import *
+
+# Skip all tests in this module if networkx is not available
+pytestmark = pytest.mark.skipif(not NETWORKX_AVAILABLE, reason="networkx not available")
 
 
 class TestGraphRAGIntegratorInitialization:
