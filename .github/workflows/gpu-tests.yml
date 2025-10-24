@@ -161,36 +161,28 @@ jobs:
           nvidia-smi --query-gpu=index,name,memory.used,memory.total --format=csv >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  # CPU-only tests on GitHub-hosted runner
+  # CPU-only tests on GitHub-hosted runner (containerized)
   cpu-tests:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          submodules: false
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test]
-          pip install pytest pytest-cov
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Run CPU Tests
+      - name: Build CPU Test Docker Image
         run: |
-          pytest tests/ -v \
-            -m "not gpu" \
-            --cov=ipfs_datasets_py \
-            --cov-report=xml \
-            --cov-report=term \
-            --junit-xml=cpu-test-results.xml
+          docker build -f Dockerfile.cpu-tests -t ipfs-datasets-cpu-tests:latest .
+      
+      - name: Run CPU Tests in Docker
+        run: |
+          docker run --rm \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-cpu-tests:latest
       
       - name: Upload CPU Test Results
         uses: actions/upload-artifact@v4
@@ -198,8 +190,8 @@ jobs:
         with:
           name: cpu-test-results
           path: |
-            cpu-test-results.xml
-            coverage.xml
+            test-results/cpu-test-results.xml
+            test-results/coverage.xml
 
   # Docker tests with GPU support
   gpu-docker-tests:

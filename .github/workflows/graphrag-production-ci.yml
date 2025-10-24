@@ -44,56 +44,32 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    with:
-      submodules: false
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        submodules: false
     
-    - name: Install system dependencies
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build GraphRAG Test Docker Image
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg build-essential
+        docker build -f Dockerfile.graphrag-tests -t ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} \
+          --build-arg PYTHON_VERSION=${{ matrix.python-version }} .
     
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
+    - name: Run Tests in Docker
       run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[all,test]"
-    
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        flake8 ipfs_datasets_py --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 ipfs_datasets_py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Type check with mypy
-      run: |
-        pip install mypy
-        mypy ipfs_datasets_py --ignore-missing-imports
-    
-    - name: Test with pytest
-      env:
-        POSTGRES_URL: postgresql://postgres:test_password@localhost:5432/test_db
-        REDIS_URL: redis://localhost:6379/0
-        TESTING: true
-      run: |
-        pip install pytest pytest-asyncio pytest-cov
-        pytest tests/ -v --cov=ipfs_datasets_py --cov-report=xml --cov-report=term-missing
+        mkdir -p test-results
+        docker run --rm \
+          -v $(pwd)/test-results:/app/test-results \
+          -e POSTGRES_URL=postgresql://postgres:test_password@postgres:5432/test_db \
+          -e REDIS_URL=redis://redis:6379/0 \
+          -e TESTING=true \
+          --network host \
+          ipfs-datasets-graphrag-tests:py${{ matrix.python-version }}
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage.xml
+        file: ./test-results/coverage.xml
         flags: unittests
         name: codecov-umbrella
 

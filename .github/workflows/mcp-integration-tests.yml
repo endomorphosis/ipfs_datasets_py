@@ -30,61 +30,59 @@ env:
   MCP_DASHBOARD_PORT: 8899
 
 jobs:
-  # Basic integration tests
+  # Basic integration tests (containerized)
   basic-integration-tests:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          submodules: false
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test,all]
-          pip install pytest pytest-asyncio pytest-cov requests
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Start MCP Dashboard
+      - name: Build MCP Test Docker Image
         run: |
-          echo "🚀 Starting MCP Dashboard for integration tests..."
-          python -m ipfs_datasets_py.mcp_dashboard &
-          MCP_PID=$!
-          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Run Basic Integration Tests in Docker
+        run: |
+          mkdir -p test-results
+          # Run the container with dashboard service
+          docker run --rm -d \
+            --name mcp-integration-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
           
           # Wait for dashboard to be ready
           for i in {1..60}; do
-            if curl -f http://127.0.0.1:8899/api/mcp/status; then
+            if curl -f http://127.0.0.1:8899/api/mcp/status 2>/dev/null; then
               echo "✅ Dashboard is ready!"
               break
             fi
             echo "⏳ Waiting for dashboard... ($i/60)"
             sleep 2
           done
+          
+          # Run basic integration tests
+          docker exec mcp-integration-test pytest tests/integration/test_mcp_endpoints.py -v \
+            --junit-xml=/app/test-results/basic-integration-results.xml || true
+          
+          # Stop the container
+          docker stop mcp-integration-test
       
-      - name: Run Basic Integration Tests
-        run: |
-          echo "🧪 Running basic MCP integration tests..."
-          cd tests/integration
-          python -m pytest test_mcp_endpoints.py::TestMCPIntegration::test_basic_endpoints_only -v
-          python -m pytest test_mcp_endpoints.py::TestMCPIntegration::test_mcp_tools_availability -v
-      
-      - name: Stop Dashboard
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
         if: always()
-        run: |
-          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
-            kill $MCP_DASHBOARD_PID || true
-          fi
-          pkill -f "mcp_dashboard" || true
+        with:
+          name: basic-integration-test-results
+          path: test-results/
 
-  # Comprehensive integration tests
+  # Comprehensive integration tests (containerized)
   comprehensive-integration-tests:
     runs-on: ubuntu-latest
     needs: basic-integration-tests
@@ -93,70 +91,53 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          submodules: false
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test,all]
-          pip install pytest pytest-asyncio pytest-cov requests numpy
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Start MCP Dashboard
+      - name: Build MCP Test Docker Image
         run: |
-          echo "🚀 Starting MCP Dashboard for comprehensive tests..."
-          python -m ipfs_datasets_py.mcp_dashboard &
-          MCP_PID=$!
-          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Run Comprehensive Integration Tests in Docker
+        run: |
+          mkdir -p test-results
+          # Run the container with dashboard service
+          docker run --rm -d \
+            --name mcp-comprehensive-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
           
           # Wait for dashboard to be ready
           for i in {1..60}; do
-            if curl -f http://127.0.0.1:8899/api/mcp/status; then
+            if curl -f http://127.0.0.1:8899/api/mcp/status 2>/dev/null; then
               echo "✅ Dashboard is ready!"
               break
             fi
             echo "⏳ Waiting for dashboard... ($i/60)"
             sleep 2
           done
-      
-      - name: Run Comprehensive Integration Tests
-        run: |
-          echo "🔍 Running comprehensive MCP integration tests..."
-          cd tests/integration
-          python -m pytest test_mcp_endpoints.py::TestMCPIntegration::test_comprehensive_integration -v --tb=short
+          
+          # Run comprehensive integration tests
+          docker exec mcp-comprehensive-test pytest tests/integration/ -v \
+            --cov=ipfs_datasets_py \
+            --cov-report=xml:/app/test-results/coverage.xml \
+            --junit-xml=/app/test-results/comprehensive-integration-results.xml || true
+          
+          # Stop the container
+          docker stop mcp-comprehensive-test
         timeout-minutes: 30
       
-      - name: Run Standalone Integration Test Suite
-        run: |
-          echo "🏃 Running standalone integration test suite..."
-          cd tests/integration
-          python test_mcp_endpoints.py --verbose --output ../../comprehensive_integration_results.json --report ../../comprehensive_integration_report.md
-        timeout-minutes: 20
-      
       - name: Upload Comprehensive Test Results
-        uses: actions/upload-artifact@v4
+        uses: upload-artifact@v4
         if: always()
         with:
           name: comprehensive-integration-results
-          path: |
-            comprehensive_integration_results.json
-            comprehensive_integration_report.md
-            mcp_integration_test_results.json
-            mcp_integration_test_report.md
-      
-      - name: Stop Dashboard
-        if: always()
-        run: |
-          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
-            kill $MCP_DASHBOARD_PID || true
-          fi
-          pkill -f "mcp_dashboard" || true
+          path: test-results/
 
   # Tools-specific tests
   tools-integration-tests:
