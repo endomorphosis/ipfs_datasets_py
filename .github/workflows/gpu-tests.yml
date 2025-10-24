@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      with:
+        submodules: false
       
       - name: System Information
         run: |
@@ -166,6 +168,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      with:
+        submodules: false
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -206,6 +210,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      with:
+        submodules: false
       
       - name: Build GPU Docker Image
         run: |
