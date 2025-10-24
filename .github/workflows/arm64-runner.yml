@@ -152,7 +152,8 @@ jobs:
           # Test dataset loading
           print('Testing dataset operations...')
           from ipfs_datasets_py import IPFSDatasets
-          if IPFSDatasets is not None:
+          import inspect
+          if IPFSDatasets is not None and inspect.isclass(IPFSDatasets):
               print('✅ IPFSDatasets class is available')
           else:
               print('⚠️ IPFSDatasets class not available (missing dependencies)')
@@ -207,6 +208,7 @@ jobs:
           # Test package import
           try:
               import ipfs_datasets_py
+              import inspect
               print('✅ Package imported successfully')
               
               # Test IPFSDatasets class is available
@@ -214,7 +216,7 @@ jobs:
               print(f'✅ IPFSDatasets class available: {IPFSDatasets}')
               
               # Verify it's a class (not None when dependencies are available)
-              if IPFSDatasets is not None:
+              if IPFSDatasets is not None and inspect.isclass(IPFSDatasets):
                   print('✅ IPFSDatasets class loaded successfully')
               else:
                   print('⚠️ IPFSDatasets is None (dependencies may be missing, but import succeeded)')
