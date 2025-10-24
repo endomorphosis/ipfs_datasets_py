@@ -272,7 +272,7 @@ jobs:
   arm64-integration-tests:
     runs-on: [self-hosted, linux, arm64]
     needs: [arm64-mcp-dashboard, arm64-docker-build]
-    if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'integration') }}
+    if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'integration' || github.event_name != 'workflow_dispatch') }}
     
     steps:
       - name: Clean up submodules before checkout
