@@ -8,8 +8,8 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        # Using local submodule for ipfs_kit_py from known_good branch
-        'ipfs_kit_py @ file:./ipfs_kit_py',
+        # Install ipfs_kit_py from PyPI instead of local submodule for Docker builds
+        'ipfs_kit_py',
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
