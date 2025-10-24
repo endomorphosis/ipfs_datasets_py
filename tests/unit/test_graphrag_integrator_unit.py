@@ -14,7 +14,6 @@ try:
     NETWORKX_AVAILABLE = True
 except ImportError:
     NETWORKX_AVAILABLE = False
-    nx = None
 
 # Test fixtures and utilities
 from tests.conftest import *
