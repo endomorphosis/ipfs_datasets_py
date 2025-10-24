@@ -8,8 +8,8 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        # Using local submodule for ipfs_kit_py from known_good branch
-        'ipfs_kit_py @ file:./ipfs_kit_py',
+        # Install ipfs_kit_py from known_good branch (PyPI package is broken)
+        'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good',
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
@@ -37,7 +37,7 @@ setup(
     extras_require={
         # Optional but recommended dependencies
         'ipld': [
-            'ipld-car>=0.1.0',
+            'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
             'ipld-dag-pb>=0.1.0',
         ],
         'web_archive': [
@@ -67,7 +67,7 @@ setup(
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
         'all': [
-            'ipld-car>=0.1.0',
+            'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
             'ipld-dag-pb>=0.1.0',
             'archivenow==2020.7.18.12.19.44',
             'ipwb>=0.2021.12.16',

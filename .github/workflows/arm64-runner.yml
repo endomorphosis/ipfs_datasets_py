@@ -75,8 +75,20 @@ jobs:
     if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'mcp-dashboard' || github.event_name != 'workflow_dispatch') }}
     
     steps:
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Set up Python
         run: |
@@ -152,8 +164,20 @@ jobs:
     if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'docker-build' || github.event_name != 'workflow_dispatch') }}
     
     steps:
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -243,8 +267,20 @@ jobs:
     if: ${{ !cancelled() && (github.event.inputs.test_suite == 'comprehensive' || github.event.inputs.test_suite == 'integration') }}
     
     steps:
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Set up test environment
         run: |
