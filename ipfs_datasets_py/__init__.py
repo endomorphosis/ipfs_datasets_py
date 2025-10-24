@@ -16,9 +16,13 @@ installer = get_installer()
 # Main entry points with automated installation
 try:
     from .ipfs_datasets import ipfs_datasets_py
+    # Provide alias for backward compatibility and clearer naming
+    IPFSDatasets = ipfs_datasets_py
     HAVE_IPFS_DATASETS = True
 except ImportError:
     HAVE_IPFS_DATASETS = False
+    ipfs_datasets_py = None
+    IPFSDatasets = None
 
 # Re-export key functions with automated installation
 datasets_module = ensure_module('datasets', 'datasets', required=False)
@@ -331,6 +335,13 @@ __all__ = [
     'test_fio', 
     'config',
 ]
+
+# Add core ipfs_datasets class if available
+if HAVE_IPFS_DATASETS:
+    __all__.extend([
+        'ipfs_datasets_py',
+        'IPFSDatasets',  # Alias for backward compatibility
+    ])
 
 # Conditionally add exports based on available components
 if HAVE_IPLD:
