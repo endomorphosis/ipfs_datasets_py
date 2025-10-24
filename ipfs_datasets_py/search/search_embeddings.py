@@ -1,13 +1,6 @@
 import datasets
 import sys
-try:
-    from ipfs_kit_py.ipfs_kit import ipfs_kit
-    IPFS_KIT_AVAILABLE = True
-except (ImportError, IndentationError, SyntaxError) as e:
-    # ipfs_kit_py not available or has syntax errors (broken PyPI package)
-    # Install from git if needed: pip install git+https://github.com/endomorphosis/ipfs_kit_py.git
-    IPFS_KIT_AVAILABLE = False
-    ipfs_kit = None
+from ipfs_kit_py.ipfs_kit import ipfs_kit
 # from ipfs_embeddings_py import ipfs_embeddings_py, qdrant_kit_py, faiss_kit_py # Commented out for now
 import numpy as np
 import os

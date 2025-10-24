@@ -8,8 +8,8 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        # ipfs_kit_py removed from required dependencies due to broken PyPI package
-        # Install manually from git if needed: pip install git+https://github.com/endomorphosis/ipfs_kit_py.git
+        # Install ipfs_kit_py from known_good branch (PyPI package is broken)
+        'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good',
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
