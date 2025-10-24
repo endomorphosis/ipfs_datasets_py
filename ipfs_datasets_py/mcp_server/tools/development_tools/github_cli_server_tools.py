@@ -244,3 +244,334 @@ def github_cli_repo_list(
             "success": False,
             "error": str(e)
         }
+
+
+def github_get_repo_info(
+    owner: str,
+    repo: str,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get detailed information about a GitHub repository.
+    
+    Fetches repository metadata including description, stars, forks, issues, etc.
+    Useful for analyzing repositories before storing in IPFS or generating embeddings.
+    
+    Args:
+        owner: Repository owner (username or organization)
+        repo: Repository name
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with repository information
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        result = cli.execute(['repo', 'view', f'{owner}/{repo}', '--json', 
+                             'name,description,url,stars,forks,issues,pullRequests,createdAt,updatedAt,languages'])
+        
+        if result.returncode == 0:
+            import json
+            repo_data = json.loads(result.stdout)
+            return {
+                "success": True,
+                "repository": repo_data
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to get repository info: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def github_get_repo_issues(
+    owner: str,
+    repo: str,
+    state: str = "open",
+    limit: int = 30,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get issues from a GitHub repository.
+    
+    Fetches issue data that can be stored in IPFS, used for RAG systems,
+    or analyzed for project insights.
+    
+    Args:
+        owner: Repository owner (username or organization)
+        repo: Repository name
+        state: Issue state - "open", "closed", or "all" (default: "open")
+        limit: Maximum number of issues to fetch (default: 30)
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with issue list and metadata
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        result = cli.execute(['issue', 'list', '--repo', f'{owner}/{repo}', 
+                             '--state', state, '--limit', str(limit), '--json',
+                             'number,title,body,state,createdAt,updatedAt,author,labels'])
+        
+        if result.returncode == 0:
+            import json
+            issues = json.loads(result.stdout)
+            return {
+                "success": True,
+                "issues": issues,
+                "count": len(issues),
+                "repository": f"{owner}/{repo}",
+                "state_filter": state
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to get repository issues: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def github_get_pull_requests(
+    owner: str,
+    repo: str,
+    state: str = "open",
+    limit: int = 30,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get pull requests from a GitHub repository.
+    
+    Fetches PR data including code changes that can be analyzed,
+    stored in IPFS, or used for code review automation.
+    
+    Args:
+        owner: Repository owner (username or organization)
+        repo: Repository name
+        state: PR state - "open", "closed", "merged", or "all" (default: "open")
+        limit: Maximum number of PRs to fetch (default: 30)
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with PR list and metadata
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        result = cli.execute(['pr', 'list', '--repo', f'{owner}/{repo}', 
+                             '--state', state, '--limit', str(limit), '--json',
+                             'number,title,body,state,createdAt,updatedAt,author,labels,reviews'])
+        
+        if result.returncode == 0:
+            import json
+            prs = json.loads(result.stdout)
+            return {
+                "success": True,
+                "pull_requests": prs,
+                "count": len(prs),
+                "repository": f"{owner}/{repo}",
+                "state_filter": state
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to get pull requests: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def github_search_repos(
+    query: str,
+    limit: int = 30,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Search GitHub repositories.
+    
+    Search for repositories matching criteria. Useful for discovering
+    datasets, finding similar projects, or building knowledge graphs.
+    
+    Args:
+        query: Search query (e.g., "machine learning python", "topic:nlp", "language:rust")
+        limit: Maximum number of results (default: 30)
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with search results
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        result = cli.execute(['search', 'repos', query, '--limit', str(limit), '--json',
+                             'name,fullName,description,url,stars,language,createdAt,updatedAt'])
+        
+        if result.returncode == 0:
+            import json
+            repos = json.loads(result.stdout)
+            return {
+                "success": True,
+                "repositories": repos,
+                "count": len(repos),
+                "query": query
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to search repositories: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def github_get_user_info(
+    username: str,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get information about a GitHub user.
+    
+    Fetches user profile data useful for building developer knowledge graphs
+    or analyzing open source contributions.
+    
+    Args:
+        username: GitHub username
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with user information
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        result = cli.execute(['api', f'users/{username}'])
+        
+        if result.returncode == 0:
+            import json
+            user_data = json.loads(result.stdout)
+            return {
+                "success": True,
+                "user": user_data
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to get user info: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def github_create_issue(
+    owner: str,
+    repo: str,
+    title: str,
+    body: str,
+    labels: Optional[List[str]] = None,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Create an issue in a GitHub repository.
+    
+    Useful for automated issue creation, bug reporting from analysis results,
+    or tracking tasks discovered during data processing.
+    
+    Args:
+        owner: Repository owner (username or organization)
+        repo: Repository name
+        title: Issue title
+        body: Issue description/body
+        labels: Optional list of label names to apply
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with created issue information
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        cmd = ['issue', 'create', '--repo', f'{owner}/{repo}', 
+               '--title', title, '--body', body]
+        
+        if labels:
+            cmd.extend(['--label', ','.join(labels)])
+        
+        result = cli.execute(cmd)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "message": "Issue created successfully",
+                "output": result.stdout
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to create issue: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }

@@ -230,3 +230,402 @@ def claude_cli_list_models(install_dir: Optional[str] = None) -> Dict[str, Any]:
             "success": False,
             "error": str(e)
         }
+
+
+def claude_analyze_code_quality(
+    code: str,
+    language: Optional[str] = None,
+    focus_areas: Optional[List[str]] = None,
+    install_dir: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Analyze code quality using Claude.
+    
+    Perform in-depth code analysis focusing on readability, maintainability,
+    best practices, and potential issues. Useful for code review automation.
+    
+    Args:
+        code: Code to analyze
+        language: Programming language (optional)
+        focus_areas: Specific areas to focus on (e.g., ["security", "performance", "style"])
+        install_dir: Optional custom installation directory path
+        api_key: Optional API key to use
+    
+    Returns:
+        Dictionary with detailed code quality analysis
+    """
+    try:
+        cli = ClaudeCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "Claude CLI is not installed. Use claude_cli_install first."
+            }
+        
+        lang_info = f" ({language})" if language else ""
+        focus_info = f" Focus particularly on: {', '.join(focus_areas)}." if focus_areas else ""
+        
+        prompt = f"""Analyze the following{lang_info} code for quality, identifying:
+1. Potential bugs or errors
+2. Code smells and anti-patterns
+3. Security vulnerabilities
+4. Performance issues
+5. Readability and maintainability concerns
+6. Best practice violations
+{focus_info}
+
+Code:
+{code}
+
+Provide a detailed analysis with specific recommendations."""
+        
+        result = cli.execute(['chat', prompt], timeout=120, api_key=api_key)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "analysis": result.stdout,
+                "language": language,
+                "focus_areas": focus_areas,
+                "code_length": len(code)
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to analyze code quality with Claude: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def claude_generate_documentation(
+    code: str,
+    language: Optional[str] = None,
+    doc_type: str = "comprehensive",
+    install_dir: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Generate documentation for code using Claude.
+    
+    Create comprehensive documentation including function descriptions,
+    parameter explanations, usage examples, and more.
+    
+    Args:
+        code: Code to document
+        language: Programming language (optional)
+        doc_type: Documentation type - "comprehensive", "docstrings", "readme", "api" (default: "comprehensive")
+        install_dir: Optional custom installation directory path
+        api_key: Optional API key to use
+    
+    Returns:
+        Dictionary with generated documentation
+    """
+    try:
+        cli = ClaudeCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "Claude CLI is not installed. Use claude_cli_install first."
+            }
+        
+        lang_info = f" ({language})" if language else ""
+        
+        if doc_type == "docstrings":
+            prompt = f"Generate comprehensive docstrings for the following{lang_info} code:\n\n{code}"
+        elif doc_type == "readme":
+            prompt = f"Generate a README.md file for the following{lang_info} code:\n\n{code}"
+        elif doc_type == "api":
+            prompt = f"Generate API documentation for the following{lang_info} code:\n\n{code}"
+        else:  # comprehensive
+            prompt = f"Generate comprehensive documentation for the following{lang_info} code, including:\n1. Overview\n2. Function/class descriptions\n3. Parameters and return values\n4. Usage examples\n5. Notes and warnings\n\nCode:\n{code}"
+        
+        result = cli.execute(['chat', prompt], timeout=120, api_key=api_key)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "documentation": result.stdout,
+                "doc_type": doc_type,
+                "language": language
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to generate documentation with Claude: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def claude_explain_code(
+    code: str,
+    language: Optional[str] = None,
+    detail_level: str = "medium",
+    install_dir: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get a detailed explanation of code using Claude.
+    
+    Explain complex code in natural language, useful for understanding
+    unfamiliar codebases or generating training materials.
+    
+    Args:
+        code: Code to explain
+        language: Programming language (optional)
+        detail_level: Explanation detail - "basic", "medium", "detailed" (default: "medium")
+        install_dir: Optional custom installation directory path
+        api_key: Optional API key to use
+    
+    Returns:
+        Dictionary with code explanation
+    """
+    try:
+        cli = ClaudeCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "Claude CLI is not installed. Use claude_cli_install first."
+            }
+        
+        lang_info = f" ({language})" if language else ""
+        
+        if detail_level == "basic":
+            prompt = f"Provide a simple, high-level explanation of what this{lang_info} code does:\n\n{code}"
+        elif detail_level == "detailed":
+            prompt = f"Provide a detailed, line-by-line explanation of this{lang_info} code:\n\n{code}"
+        else:  # medium
+            prompt = f"Explain what this{lang_info} code does, including the main logic and key operations:\n\n{code}"
+        
+        result = cli.execute(['chat', prompt], timeout=120, api_key=api_key)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "explanation": result.stdout,
+                "detail_level": detail_level,
+                "language": language
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to explain code with Claude: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def claude_review_pull_request(
+    diff: str,
+    context: Optional[str] = None,
+    install_dir: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Review a pull request using Claude.
+    
+    Analyze code changes in a PR for quality, potential issues, and improvements.
+    Useful for automated code review in CI/CD pipelines.
+    
+    Args:
+        diff: Git diff or code changes to review
+        context: Optional context about the PR (description, related issues, etc.)
+        install_dir: Optional custom installation directory path
+        api_key: Optional API key to use
+    
+    Returns:
+        Dictionary with PR review
+    """
+    try:
+        cli = ClaudeCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "Claude CLI is not installed. Use claude_cli_install first."
+            }
+        
+        context_info = f"\n\nContext: {context}" if context else ""
+        
+        prompt = f"""Review the following code changes and provide:
+1. Overall assessment (approve, request changes, comment)
+2. Specific issues or concerns
+3. Suggestions for improvements
+4. Security considerations
+5. Testing recommendations
+{context_info}
+
+Changes:
+{diff}"""
+        
+        result = cli.execute(['chat', prompt], timeout=120, api_key=api_key)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "review": result.stdout,
+                "diff_size": len(diff)
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to review PR with Claude: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def claude_generate_tests(
+    code: str,
+    language: Optional[str] = None,
+    test_framework: Optional[str] = None,
+    install_dir: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Generate unit tests for code using Claude.
+    
+    Create comprehensive test cases including edge cases and error conditions.
+    Useful for improving test coverage automatically.
+    
+    Args:
+        code: Code to generate tests for
+        language: Programming language (optional)
+        test_framework: Test framework to use (e.g., "pytest", "jest", "junit")
+        install_dir: Optional custom installation directory path
+        api_key: Optional API key to use
+    
+    Returns:
+        Dictionary with generated test code
+    """
+    try:
+        cli = ClaudeCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "Claude CLI is not installed. Use claude_cli_install first."
+            }
+        
+        lang_info = f" ({language})" if language else ""
+        framework_info = f" using {test_framework}" if test_framework else ""
+        
+        prompt = f"""Generate comprehensive unit tests{framework_info} for the following{lang_info} code.
+Include:
+1. Tests for normal operation
+2. Edge case tests
+3. Error condition tests
+4. Tests for boundary values
+
+Code to test:
+{code}"""
+        
+        result = cli.execute(['chat', prompt], timeout=120, api_key=api_key)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "test_code": result.stdout,
+                "language": language,
+                "test_framework": test_framework
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to generate tests with Claude: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def claude_refactor_suggestions(
+    code: str,
+    language: Optional[str] = None,
+    goals: Optional[List[str]] = None,
+    install_dir: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get refactoring suggestions for code using Claude.
+    
+    Suggest improvements to code structure, design patterns, and implementation.
+    Useful for code modernization and technical debt reduction.
+    
+    Args:
+        code: Code to refactor
+        language: Programming language (optional)
+        goals: Refactoring goals (e.g., ["improve performance", "reduce complexity", "enhance readability"])
+        install_dir: Optional custom installation directory path
+        api_key: Optional API key to use
+    
+    Returns:
+        Dictionary with refactoring suggestions
+    """
+    try:
+        cli = ClaudeCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "Claude CLI is not installed. Use claude_cli_install first."
+            }
+        
+        lang_info = f" ({language})" if language else ""
+        goals_info = f"\n\nRefactoring goals: {', '.join(goals)}" if goals else ""
+        
+        prompt = f"""Analyze the following{lang_info} code and suggest refactoring improvements.
+For each suggestion, explain:
+1. What to change
+2. Why to change it
+3. How to implement the change
+4. Expected benefits
+{goals_info}
+
+Code:
+{code}"""
+        
+        result = cli.execute(['chat', prompt], timeout=120, api_key=api_key)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "suggestions": result.stdout,
+                "language": language,
+                "goals": goals
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to get refactoring suggestions from Claude: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
