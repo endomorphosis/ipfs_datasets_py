@@ -8,8 +8,8 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        # Install ipfs_kit_py from PyPI instead of local submodule for Docker builds
-        'ipfs_kit_py',
+        # ipfs_kit_py removed from required dependencies due to broken PyPI package
+        # Install manually from git if needed: pip install git+https://github.com/endomorphosis/ipfs_kit_py.git
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',

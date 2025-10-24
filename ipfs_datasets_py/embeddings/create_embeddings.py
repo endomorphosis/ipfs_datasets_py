@@ -11,8 +11,8 @@ from datasets import load_dataset, Dataset
 try:
     from ipfs_kit_py.ipfs_kit import ipfs_kit
     print("✓ Successfully imported ipfs_kit from ipfs_kit_py")
-except ImportError:
-    print("⚠ Warning: Could not import ipfs_kit_py. Some functionality may be limited.")
+except (ImportError, IndentationError, SyntaxError) as e:
+    print(f"⚠ Warning: Could not import ipfs_kit_py ({type(e).__name__}). Some functionality may be limited.")
     ipfs_kit = None
 
 
