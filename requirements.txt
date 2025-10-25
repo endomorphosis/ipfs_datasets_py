@@ -2,7 +2,7 @@
 # Use this to test if basic setup works, then add more dependencies gradually
 
 # Local submodule dependencies
--e ./ipfs_kit_py
+# -e ./ipfs_kit_py  # Commented out - directory is empty and not properly configured
 
 # Core Python packages
 numpy>=1.21.0,<2.0.0

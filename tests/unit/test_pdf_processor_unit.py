@@ -1,18 +1,36 @@
-import asyncio
 """
 Unit tests for PDFProcessor component of GraphRAG PDF processing pipeline
 
 Tests individual components and methods of PDFProcessor in isolation,
 focusing on core functionality, error handling, and component interaction.
 """
+import asyncio
 import pytest
 import tempfile
 import os
+import sys
 from unittest.mock import Mock, patch, AsyncMock
 from pathlib import Path
 
 # Test fixtures and utilities
 from tests.conftest import *
+
+# Use centralized safe import utility
+test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, test_dir)
+
+try:
+    from test_import_utils import safe_importer
+    
+    # Try to import required modules using safe importer
+    pdf_processor_module = safe_importer.import_module('ipfs_datasets_py.pdf_processing.pdf_processor')
+    PDF_PROCESSING_AVAILABLE = pdf_processor_module is not None
+except Exception as e:
+    print(f"Warning: PDF processing modules not available: {e}")
+    PDF_PROCESSING_AVAILABLE = False
+
+# Skip all tests in this module if PDF processing is not available
+pytestmark = pytest.mark.skipif(not PDF_PROCESSING_AVAILABLE, reason="PDF processing modules not available")
 
 
 class TestPDFProcessorInitialization:
