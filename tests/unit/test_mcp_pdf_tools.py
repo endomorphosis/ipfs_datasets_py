@@ -31,7 +31,13 @@ def safe_import_module(module_path):
     except ImportError:
         return None
     except Exception as e:
-        # Re-raise non-import errors
+        # Handle PyArrow extension type registration errors
+        # This occurs when the datasets library is imported multiple times in test contexts
+        error_msg = str(e)
+        if 'ArrowKeyError' in str(type(e).__name__) or 'already defined' in error_msg:
+            # Return None to allow tests to skip gracefully
+            return None
+        # Re-raise other unexpected errors
         raise
 
 
