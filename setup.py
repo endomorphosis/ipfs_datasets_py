@@ -38,7 +38,7 @@ setup(
         # Optional but recommended dependencies
         'ipld': [
             'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
-            'ipld-dag-pb>=0.1.0',
+            'ipld-dag-pb>=0.0.1',  # Only 0.0.1 available on PyPI
         ],
         'web_archive': [
             'archivenow==2020.7.18.12.19.44',
@@ -68,7 +68,7 @@ setup(
         ],
         'all': [
             'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
-            'ipld-dag-pb>=0.1.0',
+            'ipld-dag-pb>=0.0.1',  # Only 0.0.1 available on PyPI
             'archivenow==2020.7.18.12.19.44',
             'ipwb>=0.2021.12.16',
             'beautifulsoup4>=4.11.1',
