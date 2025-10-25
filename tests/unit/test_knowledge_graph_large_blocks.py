@@ -28,6 +28,15 @@ try:
 except ImportError as e:
     print(f"Warning: IPLD modules not available: {e}")
     IPLD_AVAILABLE = False
+except Exception as e:
+    # Handle PyArrow extension type registration errors and other import issues
+    error_msg = str(e)
+    if 'ArrowKeyError' in str(type(e).__name__) or 'already defined' in error_msg:
+        print(f"Warning: PyArrow extension type conflict: {e}")
+        IPLD_AVAILABLE = False
+    else:
+        # Re-raise unexpected errors
+        raise
 
 
 class TestKnowledgeGraphLargeBlocks(unittest.TestCase):
