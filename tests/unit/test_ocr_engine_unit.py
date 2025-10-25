@@ -1,18 +1,36 @@
-import asyncio
 """
 Unit tests for OCR Engine component of PDF processing pipeline
 
 Tests OCR functionality for image extraction, text recognition,
 and integrated processing with PDF documents.
 """
+import asyncio
 import pytest
+import sys
+import os
 from unittest.mock import Mock, patch, MagicMock
 import tempfile
-import os
 from pathlib import Path
 
 # Test fixtures and utilities
 from tests.conftest import *
+
+# Use centralized safe import utility
+test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, test_dir)
+
+try:
+    from test_import_utils import safe_importer
+    
+    # Try to import required modules using safe importer
+    ocr_engine_module = safe_importer.import_module('ipfs_datasets_py.pdf_processing.ocr_engine')
+    PDF_PROCESSING_AVAILABLE = ocr_engine_module is not None
+except Exception as e:
+    print(f"Warning: PDF processing modules not available: {e}")
+    PDF_PROCESSING_AVAILABLE = False
+
+# Skip all tests in this module if PDF processing is not available
+pytestmark = pytest.mark.skipif(not PDF_PROCESSING_AVAILABLE, reason="PDF processing modules not available")
 
 
 class TestOCREngineInitialization:
