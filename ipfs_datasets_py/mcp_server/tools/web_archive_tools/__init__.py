@@ -29,6 +29,15 @@ from .github_search import search_github_repositories, search_github_code, searc
 # HuggingFace Search tools
 from .huggingface_search import search_huggingface_models, search_huggingface_datasets, search_huggingface_spaces, get_huggingface_model_info, batch_search_huggingface
 
+# OpenVerse Search tools
+from .openverse_search import search_openverse_images, search_openverse_audio, batch_search_openverse, OpenVerseSearchAPI
+
+# SerpStack Search tools
+from .serpstack_search import search_serpstack, search_serpstack_images, batch_search_serpstack, SerpStackSearchAPI
+
+# Search API classes
+from .brave_search import BraveSearchAPI
+
 __all__ = [
     # Original tools
     "create_warc",
@@ -92,5 +101,20 @@ __all__ = [
     "search_huggingface_datasets",
     "search_huggingface_spaces",
     "get_huggingface_model_info",
-    "batch_search_huggingface"
+    "batch_search_huggingface",
+    
+    # OpenVerse Search tools
+    "search_openverse_images",
+    "search_openverse_audio",
+    "batch_search_openverse",
+    "OpenVerseSearchAPI",
+    
+    # SerpStack Search tools
+    "search_serpstack",
+    "search_serpstack_images",
+    "batch_search_serpstack",
+    "SerpStackSearchAPI",
+    
+    # Search API Classes
+    "BraveSearchAPI"
 ]
