@@ -2,43 +2,16 @@
 Unit tests for MCP PDF Tools
 
 This module tests the MCP server tools related to PDF processing.
-Uses conditional imports to avoid PyArrow extension type conflicts.
+Uses centralized safe import utility to avoid PyArrow extension type conflicts.
 """
 
 import pytest
 import sys
 from pathlib import Path
-from importlib import import_module
 
-
-def safe_import_module(module_path):
-    """
-    Safely import a module, checking if it's already loaded to avoid
-    PyArrow extension type re-registration issues.
-    
-    Args:
-        module_path: Dotted path to the module (e.g., 'ipfs_datasets_py.mcp_server.tools.pdf_tools')
-    
-    Returns:
-        The imported module or None if import fails
-    """
-    # Check if module is already loaded
-    if module_path in sys.modules:
-        return sys.modules[module_path]
-    
-    try:
-        return import_module(module_path)
-    except ImportError:
-        return None
-    except Exception as e:
-        # Handle PyArrow extension type registration errors
-        # This occurs when the datasets library is imported multiple times in test contexts
-        error_msg = str(e)
-        if 'ArrowKeyError' in str(type(e).__name__) or 'already defined' in error_msg:
-            # Return None to allow tests to skip gracefully
-            return None
-        # Re-raise other unexpected errors
-        raise
+# Use centralized safe import utility
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from test_import_utils import safe_importer
 
 
 class TestMCPPDFToolsImport:
@@ -47,10 +20,10 @@ class TestMCPPDFToolsImport:
     def test_given_mcp_pdf_tools_module_when_importing_then_succeeds(self):
         """
         GIVEN the MCP PDF tools module exists
-        WHEN attempting to import it using conditional import
+        WHEN attempting to import it using safe importer
         THEN the import should succeed without errors
         """
-        pdf_tools = safe_import_module('ipfs_datasets_py.mcp_server.tools.pdf_tools')
+        pdf_tools = safe_importer.import_module('ipfs_datasets_py.mcp_server.tools.pdf_tools')
         
         if pdf_tools is None:
             pytest.skip("MCP PDF tools module not available")
@@ -75,7 +48,7 @@ class TestMCPPDFToolsImport:
     def test_given_mcp_pdf_tools_when_importing_individual_tools_then_no_import_errors(self):
         """
         GIVEN individual PDF tool modules
-        WHEN attempting to import them using conditional import
+        WHEN attempting to import them using safe importer
         THEN no import errors should occur
         """
         tool_modules = [
@@ -91,18 +64,12 @@ class TestMCPPDFToolsImport:
         
         for module_name in tool_modules:
             full_path = f"ipfs_datasets_py.mcp_server.tools.pdf_tools.{module_name}"
-            module = safe_import_module(full_path)
+            module = safe_importer.import_module(full_path)
             
             if module is not None:
                 imported_count += 1
             else:
-                # Try to get more detail on why import failed
-                try:
-                    import_module(full_path)
-                except ImportError as e:
-                    errors.append(f"{module_name}: {str(e)}")
-                except Exception as e:
-                    errors.append(f"{module_name}: {str(e)}")
+                errors.append(f"{module_name}: module not available or import conflict")
         
         # At least some tools should be importable
         if imported_count == 0 and errors:
@@ -117,10 +84,10 @@ class TestMCPPDFToolsStructure:
     def test_given_pdf_tools_when_checking_module_structure_then_has_expected_exports(self):
         """
         GIVEN the PDF tools module
-        WHEN checking its exports using conditional import
+        WHEN checking its exports using safe importer
         THEN it should expose the expected functions
         """
-        pdf_tools = safe_import_module('ipfs_datasets_py.mcp_server.tools.pdf_tools')
+        pdf_tools = safe_importer.import_module('ipfs_datasets_py.mcp_server.tools.pdf_tools')
         
         if pdf_tools is None:
             pytest.skip("MCP PDF tools module not available")
@@ -134,11 +101,11 @@ class TestMCPPDFToolsStructure:
     def test_given_pdf_processor_when_importing_then_available_in_pdf_processing(self):
         """
         GIVEN the PDFProcessor class
-        WHEN importing from pdf_processing module using conditional import
+        WHEN importing from pdf_processing module using safe importer
         THEN it should be available for MCP tools to use
         """
-        # Use conditional import to avoid re-importing if already loaded
-        pdf_processing = safe_import_module('ipfs_datasets_py.pdf_processing')
+        # Use safe importer to avoid re-importing if already loaded
+        pdf_processing = safe_importer.import_module('ipfs_datasets_py.pdf_processing')
         
         if pdf_processing is None:
             pytest.skip("pdf_processing module not available")
