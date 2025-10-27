@@ -250,7 +250,7 @@ jobs:
           python -m pytest tests/integration/test_pdf_mcp_integration.py::TestPerformanceIntegration \
             --benchmark-only \
             --benchmark-json=benchmark_results.json \
-            -v || echo "Performance tests not yet implemented"
+            -v || echo "⚠️  Performance tests failed or not available"
         else
           echo "Performance test file not found, skipping benchmarks"
           echo "Note: Create tests/integration/test_pdf_mcp_integration.py for performance testing"
@@ -351,10 +351,7 @@ jobs:
         python -m pip install --upgrade pip
         # First test base package installation
         pip install -e .
-        python -c "
-        import ipfs_datasets_py
-        print('✅ Base package imports correctly')
-        "
+        python -c "import ipfs_datasets_py; print('✅ Base package imports correctly')"
         
         # Try importing PDF processing with proper error handling
         python -c "
@@ -369,6 +366,8 @@ jobs:
             else:
                 print('ℹ️  PDFProcessor not available - optional dependencies needed')
                 print('   Install with: pip install -e .[all]')
+        
+        # Always print this regardless of PDF processor availability
         print('✅ Package structure is valid')
         " || echo "⚠️  Some optional components require additional dependencies"
     
