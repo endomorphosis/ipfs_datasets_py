@@ -22,7 +22,15 @@ logger = logging.getLogger(__name__)
 
 
 class DeonticModality(Enum):
-    """Types of deontic modalities in legal/ethical reasoning."""
+    """Types of deontic modalities in legal/ethical reasoning.
+    
+    Attributes:
+        OBLIGATION: Mandatory requirements (must, shall, required to)
+        PERMISSION: Allowed actions (may, can, allowed to)
+        PROHIBITION: Forbidden actions (must not, cannot, forbidden to)
+        CONDITIONAL: Context-dependent obligations (if/then statements)
+        EXCEPTION: Rules with exceptions (unless, except when)
+    """
     OBLIGATION = "obligation"      # must, shall, required to
     PERMISSION = "permission"      # may, can, allowed to
     PROHIBITION = "prohibition"    # must not, cannot, forbidden to
@@ -31,7 +39,17 @@ class DeonticModality(Enum):
 
 
 class ConflictType(Enum):
-    """Types of deontic conflicts that can be detected."""
+    """Types of deontic conflicts that can be detected.
+    
+    Attributes:
+        DIRECT_CONTRADICTION: Direct logical contradictions (X must do A, X must not do A)
+        PERMISSION_PROHIBITION: Permission conflicts (X can do A, X cannot do A)
+        OBLIGATION_PROHIBITION: Obligation vs prohibition conflicts (X must do A, X must not do A)
+        CONDITIONAL_CONFLICT: Conflicting conditional rules (If P then X must A, If P then X must not A)
+        JURISDICTIONAL: Conflicts between different legal jurisdictions
+        TEMPORAL: Conflicts arising from rules changing over time
+        HIERARCHICAL: Conflicts between different levels of authority
+    """
     DIRECT_CONTRADICTION = "direct_contradiction"      # X must do A, X must not do A
     PERMISSION_PROHIBITION = "permission_prohibition"  # X can do A, X cannot do A
     OBLIGATION_PROHIBITION = "obligation_prohibition"  # X must do A, X must not do A
@@ -43,7 +61,20 @@ class ConflictType(Enum):
 
 @dataclass
 class DeonticStatement:
-    """Represents a deontic statement with modality, entity, and action."""
+    """Represents a deontic statement with modality, entity, and action.
+    
+    Attributes:
+        id: Unique identifier for the statement
+        entity: The entity/subject the statement applies to
+        action: The action being regulated by the statement
+        modality: Type of deontic modality (obligation, permission, etc.)
+        source_document: Document identifier where statement was found
+        source_text: Original text of the extracted statement
+        confidence: Confidence score for extraction accuracy (0.0-1.0)
+        context: Additional contextual information (jurisdiction, date, etc.)
+        conditions: List of conditions that apply to the statement
+        exceptions: List of exceptions to the statement
+    """
     id: str
     entity: str                    # Who the statement applies to
     action: str                    # What action is being regulated
@@ -63,7 +94,18 @@ class DeonticStatement:
 
 @dataclass
 class DeonticConflict:
-    """Represents a detected conflict between deontic statements."""
+    """Represents a detected conflict between deontic statements.
+    
+    Attributes:
+        id: Unique identifier for the conflict
+        conflict_type: Type of conflict detected
+        statement1: First conflicting statement
+        statement2: Second conflicting statement
+        severity: Severity level of the conflict (high, medium, low)
+        explanation: Human-readable explanation of the conflict
+        resolution_suggestions: List of suggested ways to resolve the conflict
+        metadata: Additional metadata about the conflict
+    """
     id: str
     conflict_type: ConflictType
     statement1: DeonticStatement
@@ -118,11 +160,34 @@ class DeonticExtractor:
     """Extracts deontic statements from text using pattern matching and NLP."""
     
     def __init__(self):
+        """Initialize the deontic statement extractor.
+        
+        Attributes set:
+            patterns
+            statement_counter
+        
+        """
         self.patterns = DeonticPatterns()
         self.statement_counter = 0
     
     def extract_statements(self, text: str, document_id: str) -> List[DeonticStatement]:
-        """Extract all deontic statements from text."""
+        """Extract all deontic statements from text.
+        
+        Args:
+            text: The text to analyze for deontic statements
+            document_id: Unique identifier for the source document
+            
+        Returns:
+            List of extracted deontic statements
+            
+        Example:
+            >>> extractor = DeonticExtractor()
+            >>> statements = extractor.extract_statements(
+            ...     "Citizens must pay taxes. Citizens may vote.", "doc1"
+            ... )
+            >>> len(statements)
+            2
+        """
         statements = []
         
         # Extract obligations
@@ -319,7 +384,20 @@ class ConflictDetector:
     """Detects conflicts between deontic statements."""
     
     def detect_conflicts(self, statements: List[DeonticStatement]) -> List[DeonticConflict]:
-        """Detect all types of conflicts between statements."""
+        """Detect all types of conflicts between statements.
+        
+        Args:
+            statements: List of deontic statements to analyze for conflicts
+            
+        Returns:
+            List of detected conflicts between statements
+            
+        Example:
+            >>> detector = ConflictDetector()
+            >>> conflicts = detector.detect_conflicts(statements)
+            >>> len(conflicts)
+            3
+        """
         conflicts = []
         
         # Group statements by entity for more efficient comparison
@@ -493,6 +571,16 @@ class DeontologicalReasoningEngine:
     """Main engine for legal/deontological reasoning over text corpora."""
     
     def __init__(self, mcp_dashboard=None):
+        """Initialize the deontological reasoning engine.
+        
+        Args:
+            mcp_dashboard: Optional MCP dashboard instance for integration
+            
+        Example:
+            >>> engine = DeontologicalReasoningEngine()
+            >>> engine.extractor is not None
+            True
+        """
         self.dashboard = mcp_dashboard
         self.extractor = DeonticExtractor()
         self.conflict_detector = ConflictDetector()
@@ -503,7 +591,30 @@ class DeontologicalReasoningEngine:
         self, 
         documents: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        """Analyze a corpus for deontic conflicts."""
+        """Analyze a corpus of documents for deontic conflicts.
+        
+        Args:
+            documents: List of documents to analyze, each with 'id' and 'content'/'text'
+            
+        Returns:
+            Dictionary containing analysis results including:
+            - processing_stats: Statistics about document processing
+            - statements_summary: Summary of extracted statements
+            - conflicts_summary: Summary of detected conflicts
+            - entity_reports: Per-entity conflict reports
+            - high_priority_conflicts: Most critical conflicts found
+            - recommendations: Suggested actions based on analysis
+            
+        Raises:
+            Exception: If analysis fails due to processing errors
+            
+        Example:
+            >>> engine = DeontologicalReasoningEngine()
+            >>> docs = [{'id': 'doc1', 'content': 'Citizens must vote. Citizens cannot vote.'}]
+            >>> result = await engine.analyze_corpus_for_deontic_conflicts(docs)
+            >>> result['conflicts_summary']['total_conflicts']
+            1
+        """
         try:
             logger.info(f"Starting deontological analysis of {len(documents)} documents")
             
@@ -711,7 +822,24 @@ class DeontologicalReasoningEngine:
         modality: Optional[DeonticModality] = None,
         action_keywords: Optional[List[str]] = None
     ) -> List[DeonticStatement]:
-        """Query extracted deontic statements by various criteria."""
+        """Query extracted deontic statements by various criteria.
+        
+        Args:
+            entity: Filter by entity name (case-insensitive partial match)
+            modality: Filter by specific deontic modality
+            action_keywords: Filter by keywords in the action text
+            
+        Returns:
+            List of deontic statements matching the specified criteria
+            
+        Example:
+            >>> statements = await engine.query_deontic_statements(
+            ...     entity="citizen", 
+            ...     modality=DeonticModality.OBLIGATION
+            ... )
+            >>> len(statements)
+            5
+        """
         results = list(self.statement_database.values())
         
         if entity:
@@ -734,7 +862,24 @@ class DeontologicalReasoningEngine:
         conflict_type: Optional[ConflictType] = None,
         min_severity: Optional[str] = None
     ) -> List[DeonticConflict]:
-        """Query detected conflicts by various criteria."""
+        """Query detected conflicts by various criteria.
+        
+        Args:
+            entity: Filter by entity name (case-insensitive partial match)
+            conflict_type: Filter by specific type of conflict
+            min_severity: Filter by minimum severity level (low, medium, high)
+            
+        Returns:
+            List of conflicts matching the specified criteria
+            
+        Example:
+            >>> conflicts = await engine.query_conflicts(
+            ...     entity="citizen",
+            ...     min_severity="high"
+            ... )
+            >>> all(c.severity == "high" for c in conflicts)
+            True
+        """
         results = list(self.conflict_database.values())
         
         if entity:
