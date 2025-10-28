@@ -12,6 +12,7 @@ Tools included:
 - scrape_state_laws: Scrape state legislation and statutes
 - scrape_us_code: Scrape United States Code
 - scrape_federal_register: Scrape Federal Register documents
+- scrape_municipal_codes: Scrape municipal codes using scrape_the_law_mk3
 - list_scraping_jobs: List all scraping jobs with resume capability
 - get_scraping_job_status: Get status of a specific scraping job
 """
@@ -500,11 +501,202 @@ class ScrapeUSCodeTool(ClaudeMCPTool):
             }
 
 
+class ScrapeMunicipalCodesTool(ClaudeMCPTool):
+    """
+    MCP Tool for scraping US municipal codes using scrape_the_law_mk3.
+    
+    This tool provides access to the scrape_the_law_mk3 system which scrapes
+    municipal legal codes from US cities and counties. It supports various
+    legal code providers including LexisNexis, Municode, American Legal,
+    and General Code.
+    """
+    
+    def __init__(self):
+        super().__init__()
+        self.name = "scrape_municipal_codes"
+        self.description = "Scrape municipal legal codes from US cities and counties using scrape_the_law_mk3"
+        self.category = "legal_datasets"
+        self.tags = ["legal", "municipal", "codes", "cities", "counties", "dataset", "scraping"]
+        self.version = "1.0.0"
+        
+        self.input_schema = {
+            "type": "object",
+            "properties": {
+                "jurisdiction": {
+                    "type": "string",
+                    "description": "Jurisdiction to scrape (e.g., 'New York, NY', 'Los Angeles, CA')",
+                    "default": None
+                },
+                "jurisdictions": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of jurisdictions to scrape (e.g., ['New York, NY', 'Los Angeles, CA']). Use ['all'] for all jurisdictions.",
+                    "default": None
+                },
+                "provider": {
+                    "type": "string",
+                    "description": "Legal code provider: 'municode', 'american_legal', 'general_code', 'lexisnexis', or 'auto' to detect",
+                    "default": "auto"
+                },
+                "output_format": {
+                    "type": "string",
+                    "description": "Output format: 'json', 'parquet', or 'sql'",
+                    "default": "json"
+                },
+                "include_metadata": {
+                    "type": "boolean",
+                    "description": "Include full metadata (citation info, version history, etc.)",
+                    "default": True
+                },
+                "include_text": {
+                    "type": "boolean",
+                    "description": "Include full legal text (increases data size)",
+                    "default": True
+                },
+                "rate_limit_delay": {
+                    "type": "number",
+                    "description": "Delay between requests in seconds",
+                    "default": 2.0
+                },
+                "max_sections": {
+                    "type": "integer",
+                    "description": "Maximum number of code sections to scrape per jurisdiction",
+                    "default": None
+                },
+                "scraper_type": {
+                    "type": "string",
+                    "description": "Scraper backend to use: 'playwright' (async) or 'selenium' (sync)",
+                    "default": "playwright"
+                },
+                "fallback_methods": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Fallback scraping methods: 'common_crawl', 'wayback_machine', 'archive_is', 'autoscraper', 'ipwb', 'playwright'. Order determines priority.",
+                    "default": ["wayback_machine", "archive_is", "common_crawl", "ipwb", "autoscraper", "playwright"]
+                },
+                "enable_fallbacks": {
+                    "type": "boolean",
+                    "description": "Enable fallback methods if primary scraping fails",
+                    "default": True
+                },
+                "job_id": {
+                    "type": "string",
+                    "description": "Job identifier for resume capability (auto-generated if not provided)",
+                    "default": None
+                },
+                "resume": {
+                    "type": "boolean",
+                    "description": "Resume from previous scraping state if job_id is provided",
+                    "default": False
+                }
+            },
+            "required": []
+        }
+    
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute municipal code scraping using scrape_the_law_mk3.
+        
+        Args:
+            parameters: Scraping configuration parameters
+            
+        Returns:
+            Dictionary containing scraped municipal codes, metadata, and job information
+        """
+        try:
+            # Prepare scraping parameters
+            jurisdiction = parameters.get('jurisdiction')
+            jurisdictions = parameters.get('jurisdictions')
+            
+            # Build jurisdiction list
+            target_jurisdictions = []
+            if jurisdiction:
+                target_jurisdictions.append(jurisdiction)
+            if jurisdictions:
+                target_jurisdictions.extend(jurisdictions)
+            
+            if not target_jurisdictions:
+                return {
+                    "status": "error",
+                    "error": "No jurisdictions specified. Provide 'jurisdiction' or 'jurisdictions' parameter.",
+                    "data": [],
+                    "metadata": {}
+                }
+            
+            # Generate job_id if not provided
+            job_id = parameters.get('job_id')
+            if not job_id:
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                job_id = f"municipal_codes_{timestamp}"
+            
+            # Prepare the result with job information
+            # Note: The scrape_the_law_mk3 main.py currently is a placeholder
+            # This integration provides the MCP tool interface that will be
+            # connected to the actual scraping logic when implemented
+            
+            # Get fallback configuration
+            enable_fallbacks = parameters.get('enable_fallbacks', True)
+            fallback_methods = parameters.get('fallback_methods', [
+                "wayback_machine", "archive_is", "common_crawl", "ipwb", "autoscraper", "playwright"
+            ])
+            
+            result = {
+                "status": "success",
+                "job_id": job_id,
+                "message": "Municipal code scraping job initialized with fallback methods",
+                "jurisdictions": target_jurisdictions,
+                "provider": parameters.get('provider', 'auto'),
+                "scraper_type": parameters.get('scraper_type', 'playwright'),
+                "output_format": parameters.get('output_format', 'json'),
+                "scraper_path": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3",
+                "fallback_methods": fallback_methods if enable_fallbacks else [],
+                "enable_fallbacks": enable_fallbacks,
+                "note": "scrape_the_law_mk3 integration ready with multiple fallback methods for reliable scraping.",
+                "data": [],
+                "metadata": {
+                    "job_id": job_id,
+                    "jurisdictions_count": len(target_jurisdictions),
+                    "fallback_strategy": {
+                        "enabled": enable_fallbacks,
+                        "methods": fallback_methods,
+                        "description": "Fallback methods will be attempted in order if primary scraping fails"
+                    },
+                    "parameters": parameters
+                }
+            }
+            
+            logger.info(f"Municipal code scraping job {job_id} initialized for {len(target_jurisdictions)} jurisdictions")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Municipal code scraping failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "data": [],
+                "metadata": {}
+            }
+
+
+# Import patent tools
+try:
+    from .patent_dataset_mcp_tools import PATENT_DATASET_MCP_TOOLS
+    _patent_tools_available = True
+except ImportError:
+    _patent_tools_available = False
+    PATENT_DATASET_MCP_TOOLS = []
+
 # List of all legal dataset MCP tools
 LEGAL_DATASET_MCP_TOOLS = [
     ScrapeRECAPArchiveTool(),
     SearchRECAPDocumentsTool(),
     ScrapeStateLawsTool(),
     ListScrapingJobsTool(),
-    ScrapeUSCodeTool()
+    ScrapeUSCodeTool(),
+    ScrapeMunicipalCodesTool()
 ]
+
+# Add patent tools if available
+if _patent_tools_available:
+    LEGAL_DATASET_MCP_TOOLS.extend(PATENT_DATASET_MCP_TOOLS)

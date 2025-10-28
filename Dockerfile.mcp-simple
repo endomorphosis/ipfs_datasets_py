@@ -1,0 +1,64 @@
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install minimal Python dependencies first
+COPY ipfs_datasets_py/mcp_server/requirements-docker.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy only the essential files
+COPY ipfs_datasets_py/ /app/ipfs_datasets_py/
+COPY README.md /app/
+COPY LICENSE /app/
+
+# Create a minimal setup.py for the container
+RUN echo 'from setuptools import setup, find_packages\n\
+setup(\n\
+    name="ipfs_datasets_py",\n\
+    version="0.2.0",\n\
+    packages=find_packages(),\n\
+    install_requires=[\n\
+        "numpy>=1.21.0",\n\
+        "pandas>=1.5.0",\n\
+        "requests>=2.25.0",\n\
+        "pyyaml>=6.0.0",\n\
+        "pydantic>=2.0.0",\n\
+        "jsonschema>=4.0.0",\n\
+        "mcp>=1.2.0",\n\
+        "Flask>=3.1.1",\n\
+        "tqdm>=4.60.0",\n\
+        "toml>=0.10.2",\n\
+        "psutil>=5.9.0",\n\
+    ],\n\
+    python_requires=">=3.10",\n\
+    description="IPFS Datasets MCP Server",\n\
+)' > setup.py
+
+# Install the package
+RUN pip install -e .
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Start the MCP server
+CMD ["python", "-m", "ipfs_datasets_py.mcp_server", "--host", "0.0.0.0", "--port", "8000"]

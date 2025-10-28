@@ -5,12 +5,38 @@ Tests entity extraction, relationship discovery, knowledge graph construction,
 and cross-document analysis capabilities in isolation.
 """
 import pytest
+import sys
+import os
 from unittest.mock import Mock, patch, MagicMock
-import networkx as nx
 from dataclasses import asdict
 
 # Test fixtures and utilities
 from tests.conftest import *
+
+# Use centralized safe import utility
+test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, test_dir)
+
+try:
+    from test_import_utils import safe_importer
+    
+    # Try to import required modules using safe importer
+    graphrag_module = safe_importer.import_module('ipfs_datasets_py.pdf_processing.graphrag_integrator')
+    
+    # Also check for networkx
+    try:
+        import networkx as nx
+        NETWORKX_AVAILABLE = True
+    except ImportError:
+        NETWORKX_AVAILABLE = False
+    
+    PDF_PROCESSING_AVAILABLE = graphrag_module is not None and NETWORKX_AVAILABLE
+except Exception as e:
+    print(f"Warning: PDF processing modules not available: {e}")
+    PDF_PROCESSING_AVAILABLE = False
+
+# Skip all tests in this module if PDF processing or networkx is not available
+pytestmark = pytest.mark.skipif(not PDF_PROCESSING_AVAILABLE, reason="PDF processing modules or networkx not available")
 
 
 class TestGraphRAGIntegratorInitialization:

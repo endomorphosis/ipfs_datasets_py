@@ -652,6 +652,16 @@
                         <li class="nav-item">
                             <a class="nav-link active" href="{{ url_for('caselaw_dashboard') }}">
                                 <i class="fas fa-gavel"></i> Caselaw Analysis (MCP)
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('finance_dashboard') }}">
+                                <i class="fas fa-chart-line"></i> Finance Analysis (MCP)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('medicine_dashboard') }}">
+                                <i class="fas fa-heartbeat"></i> Medicine Analysis (MCP)
+                            </a>
                             </a>
                         </li>
                     </ul>
@@ -678,6 +688,11 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#precedent-search" role="tab">
                                     <i class="fas fa-balance-scale"></i> Case Precedent Search
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#municipal-search" role="tab">
+                                    <i class="fas fa-city"></i> Municipal Laws Search
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -1051,6 +1066,148 @@ Example: 'Employee terminated without notice after reporting safety violations'"
                                 
                                 <div id="precedentResults" class="mt-4" style="display: none;">
                                     <!-- Results populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Municipal Laws Search Tab -->
+                    <div class="tab-pane fade" id="municipal-search" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-city"></i> Municipal Laws Search</h5>
+                                <small class="text-muted">Search and query municipal ordinances, city codes, and local regulations</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="municipalSearchForm">
+                                    <div class="mb-3">
+                                        <label for="municipalSearchQuery" class="form-label">
+                                            Search Municipal Ordinances
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                                               title="Enter keywords, ordinance numbers, or describe the regulation you're looking for."></i>
+                                        </label>
+                                        <textarea class="form-control" id="municipalSearchQuery" rows="4" 
+                                                  placeholder="Search for municipal ordinances, city codes, or local regulations...
+Example: 'zoning requirements for commercial buildings' or 'parking regulations downtown Seattle'"></textarea>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="municipalSearchState" class="form-label">State</label>
+                                            <select class="form-select" id="municipalSearchState">
+                                                <option value="all">All States</option>
+                                                <option value="CA">California</option>
+                                                <option value="NY">New York</option>
+                                                <option value="TX">Texas</option>
+                                                <option value="FL">Florida</option>
+                                                <option value="IL">Illinois</option>
+                                                <option value="PA">Pennsylvania</option>
+                                                <option value="OH">Ohio</option>
+                                                <option value="WA">Washington</option>
+                                                <option value="OR">Oregon</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="municipalSearchCity" class="form-label">City/Municipality</label>
+                                            <input type="text" class="form-control" id="municipalSearchCity" 
+                                                   placeholder="e.g., Seattle, Los Angeles">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="municipalSearchTopic" class="form-label">Topic</label>
+                                            <select class="form-select" id="municipalSearchTopic">
+                                                <option value="all">All Topics</option>
+                                                <option value="zoning">Zoning</option>
+                                                <option value="business">Business Licenses</option>
+                                                <option value="safety">Public Safety</option>
+                                                <option value="parking">Parking & Traffic</option>
+                                                <option value="building">Building Codes</option>
+                                                <option value="noise">Noise Ordinances</option>
+                                                <option value="health">Health & Sanitation</option>
+                                                <option value="environment">Environmental</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="municipalSearchLimit" class="form-label">Results</label>
+                                            <input type="number" class="form-control" id="municipalSearchLimit" value="20" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Date Range</label>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <input type="date" class="form-control" id="municipalSearchDateFrom" placeholder="From">
+                                                </div>
+                                                <div class="col-6">
+                                                    <input type="date" class="form-control" id="municipalSearchDateTo" placeholder="To">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="municipalSearchProvider" class="form-label">Source</label>
+                                            <select class="form-select" id="municipalSearchProvider">
+                                                <option value="all">All Sources</option>
+                                                <option value="municode">Municode</option>
+                                                <option value="american_legal">American Legal</option>
+                                                <option value="general_code">General Code</option>
+                                                <option value="lexisnexis">LexisNexis</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="municipalSearchStatus" class="form-label">Status</label>
+                                            <select class="form-select" id="municipalSearchStatus">
+                                                <option value="all">All</option>
+                                                <option value="active">Active Only</option>
+                                                <option value="repealed">Repealed</option>
+                                                <option value="amended">Recently Amended</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Search Municipal Laws
+                                        </button>
+                                        <button type="button" class="btn btn-success" id="tryMunicipalExample">
+                                            <i class="fas fa-magic"></i> Try Example
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="exportMunicipalResults">
+                                            <i class="fas fa-download"></i> Export Results
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="clearMunicipalSearch">
+                                            <i class="fas fa-eraser"></i> Clear
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="loading-spinner" id="municipalSearchSpinner" style="display: none; text-align: center; padding: 2rem;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Searching municipal laws...</span>
+                                    </div>
+                                    <p class="mt-2">Searching municipal ordinances database...</p>
+                                </div>
+                                
+                                <div id="municipalSearchResults" class="mt-4" style="display: none;">
+                                    <h6>Search Results</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Municipality</th>
+                                                    <th>Ordinance</th>
+                                                    <th>Title</th>
+                                                    <th>Topic</th>
+                                                    <th>Effective Date</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="municipalSearchResultsBody">
+                                                <!-- Results populated by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3365,6 +3522,162 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
             container.innerHTML = html;
         }
 
+        // Municipal Laws Search Form Handler
+        function setupMunicipalSearchForm() {
+            const form = document.getElementById('municipalSearchForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const query = document.getElementById('municipalSearchQuery').value.trim();
+                if (!query) {
+                    alert('Please enter a search query');
+                    return;
+                }
+
+                const parameters = {
+                    query: query,
+                    state: document.getElementById('municipalSearchState').value,
+                    city: document.getElementById('municipalSearchCity').value,
+                    topic: document.getElementById('municipalSearchTopic').value,
+                    limit: parseInt(document.getElementById('municipalSearchLimit').value),
+                    date_from: document.getElementById('municipalSearchDateFrom').value,
+                    date_to: document.getElementById('municipalSearchDateTo').value,
+                    provider: document.getElementById('municipalSearchProvider').value,
+                    status: document.getElementById('municipalSearchStatus').value
+                };
+
+                const spinner = document.getElementById('municipalSearchSpinner');
+                const results = document.getElementById('municipalSearchResults');
+                
+                try {
+                    spinner.style.display = 'block';
+                    results.style.display = 'none';
+                    
+                    // Simulate municipal search results
+                    const response = {
+                        success: true,
+                        query: query,
+                        total_results: 15,
+                        ordinances: [
+                            {
+                                municipality: "Seattle, WA",
+                                ordinance_number: "SMC 23.44.014",
+                                title: "Single-family Residential Zoning",
+                                topic: "Zoning",
+                                effective_date: "2023-07-01",
+                                status: "Active",
+                                summary: "Regulations for single-family residential zones including lot size, building height, and setback requirements.",
+                                provider: "Municode"
+                            },
+                            {
+                                municipality: "Portland, OR",
+                                ordinance_number: "Title 33.110",
+                                title: "Commercial Parking Standards",
+                                topic: "Parking & Traffic",
+                                effective_date: "2023-03-15",
+                                status: "Active",
+                                summary: "Parking requirements for commercial buildings in downtown districts.",
+                                provider: "American Legal"
+                            },
+                            {
+                                municipality: "San Francisco, CA",
+                                ordinance_number: "Planning Code § 303",
+                                title: "Conditional Use Authorization",
+                                topic: "Zoning",
+                                effective_date: "2022-11-20",
+                                status: "Active",
+                                summary: "Procedures and requirements for conditional use permits in various zoning districts.",
+                                provider: "Municode"
+                            },
+                            {
+                                municipality: "Austin, TX",
+                                ordinance_number: "City Code 25-2-797",
+                                title: "Noise Ordinance - Commercial Districts",
+                                topic: "Noise Ordinances",
+                                effective_date: "2023-01-10",
+                                status: "Active",
+                                summary: "Noise level restrictions for commercial establishments during different hours.",
+                                provider: "General Code"
+                            },
+                            {
+                                municipality: "Denver, CO",
+                                ordinance_number: "DRMC 27-97",
+                                title: "Building Code - Fire Safety Requirements",
+                                topic: "Building Codes",
+                                effective_date: "2023-05-01",
+                                status: "Active",
+                                summary: "Fire safety and prevention requirements for commercial buildings.",
+                                provider: "Municode"
+                            }
+                        ]
+                    };
+
+                    setTimeout(() => {
+                        spinner.style.display = 'none';
+                        results.style.display = 'block';
+                        displayMunicipalSearchResults(response);
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('Municipal search error:', error);
+                    spinner.style.display = 'none';
+                    alert('Error performing municipal search. Please try again.');
+                }
+            });
+
+            // Try Example button
+            const exampleBtn = document.getElementById('tryMunicipalExample');
+            if (exampleBtn) {
+                exampleBtn.addEventListener('click', function() {
+                    document.getElementById('municipalSearchQuery').value = 'parking regulations downtown commercial district';
+                    document.getElementById('municipalSearchState').value = 'WA';
+                    document.getElementById('municipalSearchCity').value = 'Seattle';
+                    document.getElementById('municipalSearchTopic').value = 'parking';
+                });
+            }
+
+            // Clear button
+            const clearBtn = document.getElementById('clearMunicipalSearch');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    document.getElementById('municipalSearchForm').reset();
+                    document.getElementById('municipalSearchResults').style.display = 'none';
+                });
+            }
+        }
+
+        function displayMunicipalSearchResults(response) {
+            const tbody = document.getElementById('municipalSearchResultsBody');
+            if (!tbody) return;
+
+            let html = '';
+            response.ordinances.forEach((ord, index) => {
+                html += `
+                    <tr>
+                        <td><strong>${ord.municipality}</strong></td>
+                        <td><code>${ord.ordinance_number}</code></td>
+                        <td>${ord.title}</td>
+                        <td><span class="badge bg-info">${ord.topic}</span></td>
+                        <td>${ord.effective_date}</td>
+                        <td><span class="badge bg-success">${ord.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewOrdinanceDetail(${index})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function viewOrdinanceDetail(index) {
+            alert('View ordinance detail functionality - to be implemented');
+        }
+
         // Conflict Analyzer Form Handler
         function setupConflictAnalyzerForm() {
             const form = document.getElementById('conflictAnalyzerForm');
@@ -3836,6 +4149,7 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 
                 // New practical tool handlers
                 setupPrecedentSearchForm();
+                setupMunicipalSearchForm();
                 setupConflictAnalyzerForm();
                 setupCitationNetworkForm();
                 setupBriefGeneratorForm();

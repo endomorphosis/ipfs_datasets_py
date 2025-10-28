@@ -1,0 +1,196 @@
+name: Self-Hosted Runner Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      validation_level:
+        description: 'Validation level'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - extended
+  schedule:
+    # Run daily at 6 AM UTC to validate runner health
+    - cron: '0 6 * * *'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '.github/workflows/**'
+      - 'comprehensive_runner_validation.py'
+
+jobs:
+  validate-runner:
+    name: Validate Self-Hosted Runner
+    runs-on: [self-hosted, linux, ARM64]
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Set up Python Environment
+        run: |
+          echo "🐍 Setting up Python environment"
+          python3 --version
+          
+          # Check if virtual environment exists and activate it
+          if [ -d ".venv" ]; then
+            echo "✅ Virtual environment found"
+            source .venv/bin/activate
+            python --version
+          else
+            echo "⚠️ No virtual environment found, using system Python"
+          fi
+      
+      - name: System Information
+        run: |
+          echo "🖥️ System Information"
+          echo "===================="
+          uname -a
+          echo ""
+          echo "Architecture: $(uname -m)"
+          echo "CPU Info:"
+          lscpu | grep -E "Architecture|CPU\\(s\\)|Model name"
+          echo ""
+          echo "Memory Info:"
+          free -h
+          echo ""
+          echo "Disk Info:"
+          df -h /
+      
+      - name: Run Comprehensive Validation
+        run: |
+          echo "🚀 Running Comprehensive Validation"
+          echo "==================================="
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          # Run the comprehensive validation
+          $PYTHON_CMD comprehensive_runner_validation.py \
+            --output "runner_validation_results.json" \
+            --report "runner_validation_report.md" \
+            --verbose
+          
+          echo "📊 Validation completed"
+      
+      - name: Display Validation Report
+        if: always()
+        run: |
+          echo "📝 Validation Report"
+          echo "==================="
+          if [ -f "runner_validation_report.md" ]; then
+            cat runner_validation_report.md
+          else
+            echo "❌ Validation report not generated"
+          fi
+      
+      - name: Test MCP Dashboard
+        run: |
+          echo "🎛️ Testing MCP Dashboard"
+          echo "======================="
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          # Try to start MCP dashboard in background
+          echo "Starting MCP dashboard..."
+          timeout 30 $PYTHON_CMD -m ipfs_datasets_py.mcp_dashboard &
+          DASHBOARD_PID=$!
+          
+          # Wait for startup
+          sleep 5
+          
+          # Test dashboard endpoint
+          if curl -sf http://127.0.0.1:8899/api/mcp/status >/dev/null 2>&1; then
+            echo "✅ MCP dashboard is responding"
+          else
+            echo "⚠️ MCP dashboard not responding"
+          fi
+          
+          # Clean up
+          kill $DASHBOARD_PID 2>/dev/null || true
+      
+      - name: Upload Validation Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runner-validation-results-${{ github.run_id }}
+          path: |
+            runner_validation_results.json
+            runner_validation_report.md
+          retention-days: 30
+      
+      - name: Check Validation Result
+        if: always()
+        run: |
+          echo "🎯 Final Validation Check"
+          echo "========================="
+          
+          if [ -f "runner_validation_results.json" ]; then
+            # Use appropriate Python based on environment
+            if [ -d ".venv" ]; then
+              source .venv/bin/activate
+              PYTHON_CMD="python"
+            else
+              PYTHON_CMD="python3"
+            fi
+            
+            OVERALL_SUCCESS=$($PYTHON_CMD -c "import json; results = json.load(open('runner_validation_results.json')); print(results.get('overall_success', False))")
+            
+            if [ "$OVERALL_SUCCESS" = "True" ]; then
+              echo "🎉 All validations PASSED!"
+              echo "✅ Self-hosted runner is ready for production workflows"
+              exit 0
+            else
+              echo "❌ Some validations FAILED!"
+              echo "⚠️ Review the validation report above"
+              exit 1
+            fi
+          else
+            echo "❌ Validation results file not found"
+            exit 1
+          fi
+
+  runner-health-check:
+    name: Runner Health Check
+    runs-on: [self-hosted, linux, ARM64]
+    if: github.event_name == 'schedule'
+    timeout-minutes: 10
+    
+    steps:
+      - name: Basic Health Check
+        run: |
+          echo "🏥 Runner Health Check"
+          echo "====================="
+          
+          echo "Timestamp: $(date)"
+          echo "Uptime: $(uptime)"
+          echo "Load Average: $(cat /proc/loadavg)"
+          echo "Memory Usage: $(free -h | grep Mem)"
+          echo "Disk Usage: $(df -h / | tail -1)"
+          
+          # Check if runner service is healthy
+          if pgrep -f "Runner.Listener" >/dev/null; then
+            echo "✅ Runner process is running"
+          else
+            echo "❌ Runner process not found"
+            exit 1
+          fi
+          
+          echo "🎯 Health check completed successfully"

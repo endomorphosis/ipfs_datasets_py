@@ -1,0 +1,226 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+      - '.github/workflows/docker-ci.yml'
+      - 'ipfs_datasets_py/**'
+      - 'setup.py'
+      - 'requirements.txt'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - minimal
+          - full
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dockerfile: [Dockerfile.test, Dockerfile.mcp-minimal]
+        platform: [linux/amd64]
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: false
+          load: true
+          tags: ipfs-datasets-py:test-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            FEATURES=minimal
+      
+      - name: Test Docker image
+        run: |
+          echo "🧪 Testing Docker image..."
+          docker run --rm ipfs-datasets-py:test-${{ github.sha }} python -c "
+          import sys
+          print(f'✅ Python {sys.version}')
+          print(f'✅ Platform: {sys.platform}')
+          
+          try:
+              import ipfs_datasets_py
+              print('✅ ipfs_datasets_py imported successfully')
+          except ImportError as e:
+              print(f'❌ Failed to import: {e}')
+              sys.exit(1)
+          "
+      
+      - name: Test container health
+        run: |
+          echo "🏥 Testing container health check..."
+          docker run --rm --name test-health ipfs-datasets-py:test-${{ github.sha }} python -c "
+          import ipfs_datasets_py
+          print('✅ Health check passed')
+          "
+      
+      - name: Security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ipfs-datasets-py:test-${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+      
+      - name: Push to registry (on main branch)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  test-docker-compose:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Create .env file
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET_KEY=$(openssl rand -hex 32)" >> .env
+      
+      - name: Validate docker-compose files
+        run: |
+          echo "🔍 Validating docker-compose.yml..."
+          docker compose -f docker-compose.yml config > /dev/null
+          echo "✅ docker-compose.yml is valid"
+          
+          echo "🔍 Validating docker-compose.mcp.yml..."
+          docker compose -f docker-compose.mcp.yml config > /dev/null
+          echo "✅ docker-compose.mcp.yml is valid"
+      
+      - name: Test MCP services (quick start)
+        run: |
+          echo "🚀 Starting MCP services..."
+          docker compose -f docker-compose.mcp.yml up -d
+          
+          echo "⏳ Waiting for services to be healthy..."
+          sleep 30
+          
+          echo "🔍 Checking service status..."
+          docker compose -f docker-compose.mcp.yml ps
+          
+          echo "🧹 Cleaning up..."
+          docker compose -f docker-compose.mcp.yml down -v
+        timeout-minutes: 10
+        continue-on-error: true
+
+  build-multi-arch:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build multi-architecture image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.test
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            FEATURES=minimal
+
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, test-docker-compose]
+    if: always()
+    
+    steps:
+      - name: Check test results
+        run: |
+          echo "## Docker CI Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Build and Test: ${{ needs.build-and-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Docker Compose: ${{ needs.test-docker-compose.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Architecture: x86_64 (linux/amd64)" >> $GITHUB_STEP_SUMMARY
+          echo "Docker Engine: ${{ runner.os }}" >> $GITHUB_STEP_SUMMARY

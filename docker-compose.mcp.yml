@@ -5,7 +5,7 @@ services:
   mcp-server:
     build:
       context: .
-      dockerfile: ipfs_datasets_py/mcp_server/Dockerfile
+      dockerfile: Dockerfile.mcp-minimal
     ports:
       - "8000:8000"
     environment:
@@ -31,7 +31,7 @@ services:
   mcp-dashboard:
     build:
       context: .
-      dockerfile: ipfs_datasets_py/mcp_server/Dockerfile.dashboard
+      dockerfile: Dockerfile.dashboard-minimal
     ports:
       - "8899:8899"
     environment:

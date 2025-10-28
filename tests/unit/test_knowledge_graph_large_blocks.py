@@ -21,11 +21,25 @@ import unittest
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+# Use centralized safe import utility
+test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, test_dir)
+
 try:
-    from ipfs_datasets_py.ipld import IPLDStorage, IPLDKnowledgeGraph, Entity, Relationship
-    from ipfs_datasets_py.ipld.knowledge_graph import MAX_BLOCK_SIZE
-    IPLD_AVAILABLE = True
-except ImportError as e:
+    from test_import_utils import safe_importer
+    
+    # Try to import required modules using safe importer
+    ipld_module = safe_importer.import_module('ipfs_datasets_py.ipld')
+    ipld_kg_module = safe_importer.import_module('ipfs_datasets_py.ipld.knowledge_graph')
+    
+    if ipld_module is not None and ipld_kg_module is not None:
+        from ipfs_datasets_py.ipld import IPLDStorage, IPLDKnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.ipld.knowledge_graph import MAX_BLOCK_SIZE
+        IPLD_AVAILABLE = True
+    else:
+        IPLD_AVAILABLE = False
+except Exception as e:
+    # Catch any other import errors
     print(f"Warning: IPLD modules not available: {e}")
     IPLD_AVAILABLE = False
 

@@ -1,6 +1,9 @@
 # Core dependencies only - for initial testing
 # Use this to test if basic setup works, then add more dependencies gradually
 
+# Local submodule dependencies
+# -e ./ipfs_kit_py  # Commented out - directory is empty and not properly configured
+
 # Core Python packages
 numpy>=1.21.0,<2.0.0
 pandas>=1.5.0,<3.0.0
@@ -28,6 +31,7 @@ flake8>=6.0.0,<8.0.0
 pyarrow>=15.0.0,<21.0.0
 jsonschema>=4.0.0,<5.0.0
 pydantic>=2.0.0,<3.0.0
+jsonnet>=0.20.0  # Jsonnet data templating language support
 
 # PDF processing
 networkx>=3.1

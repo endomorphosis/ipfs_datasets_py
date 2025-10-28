@@ -42,6 +42,33 @@ Commands:
       list       List tools in a category
       execute    Execute a specific tool
       
+    vscode       VSCode CLI management
+      status     Show VSCode CLI installation status
+      install    Install or update VSCode CLI
+      auth       Configure authentication (GitHub/Microsoft)
+      install-with-auth  Install and authenticate in one step
+      execute    Execute VSCode CLI command
+      extensions List, install, or uninstall extensions
+      tunnel     Manage VSCode tunnel functionality
+      
+    github       GitHub CLI management
+      status     Show GitHub CLI installation status
+      install    Install or update GitHub CLI
+      auth       Manage GitHub authentication
+      execute    Execute GitHub CLI command
+      
+    gemini       Google Gemini CLI management
+      status     Show Gemini CLI installation status
+      install    Install Gemini CLI
+      config     Configure API key and settings
+      execute    Execute Gemini CLI command
+      
+    claude       Anthropic Claude CLI management
+      status     Show Claude CLI installation status
+      install    Install Claude CLI
+      config     Configure API key and settings
+      execute    Execute Claude CLI command
+      
     dataset      Dataset operations
       load       Load a dataset
       convert    Convert dataset format
@@ -573,6 +600,934 @@ def execute_heavy_command(args):
                     print(f"Error reading logs: {e}")
                 return
         
+        if command == "vscode":
+            # VSCode CLI management commands
+            subcommand = args[1] if len(args) > 1 else None
+            
+            try:
+                from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
+                
+                if subcommand == "status":
+                    # Show VSCode CLI status
+                    extra = args[2:]
+                    install_dir = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    status = cli.get_status()
+                    
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("VSCode CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  Version: {status['version'] or 'N/A'}")
+                        print(f"  Install Dir: {status['install_dir']}")
+                        print(f"  Executable: {status['executable']}")
+                        print(f"  Platform: {status['platform']}")
+                        print(f"  Architecture: {status['architecture']}")
+                        if status['extensions']:
+                            print(f"  Extensions: {len(status['extensions'])}")
+                    return
+                
+                elif subcommand == "install":
+                    # Install VSCode CLI
+                    extra = args[2:]
+                    install_dir = None
+                    force = False
+                    commit = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        elif token in ("--commit", "-c") and i + 1 < len(extra):
+                            commit = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir, commit=commit)
+                    print("Installing VSCode CLI...")
+                    success = cli.download_and_install(force=force)
+                    
+                    if success:
+                        status = cli.get_status()
+                        if json_output:
+                            print(json.dumps({"success": True, "status": status}, indent=2))
+                        else:
+                            print(f"VSCode CLI installed successfully at {status['executable']}")
+                            print(f"Version: {status['version']}")
+                    else:
+                        if json_output:
+                            print(json.dumps({"success": False, "error": "Installation failed"}))
+                        else:
+                            print("VSCode CLI installation failed")
+                    return
+                
+                elif subcommand == "execute":
+                    # Execute VSCode CLI command
+                    extra = args[2:]
+                    install_dir = None
+                    timeout = 60
+                    cmd_args = []
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--timeout", "-t") and i + 1 < len(extra):
+                            try:
+                                timeout = int(extra[i + 1])
+                            except:
+                                pass
+                            i += 2
+                        else:
+                            cmd_args.append(token)
+                            i += 1
+                    
+                    if not cmd_args:
+                        print("Usage: ipfs-datasets vscode execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        return
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first.")
+                        return
+                    
+                    result = cli.execute(cmd_args, timeout=timeout)
+                    
+                    if json_output:
+                        print(json.dumps({
+                            "success": result.returncode == 0,
+                            "returncode": result.returncode,
+                            "stdout": result.stdout,
+                            "stderr": result.stderr
+                        }, indent=2))
+                    else:
+                        if result.stdout:
+                            print(result.stdout)
+                        if result.stderr:
+                            print(result.stderr, file=sys.stderr)
+                        if result.returncode != 0:
+                            print(f"Command failed with exit code {result.returncode}")
+                    return
+                
+                elif subcommand == "extensions":
+                    # Manage extensions
+                    extra = args[2:]
+                    install_dir = None
+                    action = "list"
+                    extension_id = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token == "list":
+                            action = "list"
+                            i += 1
+                        elif token == "install" and i + 1 < len(extra):
+                            action = "install"
+                            extension_id = extra[i + 1]
+                            i += 2
+                        elif token == "uninstall" and i + 1 < len(extra):
+                            action = "uninstall"
+                            extension_id = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first.")
+                        return
+                    
+                    if action == "list":
+                        extensions = cli.list_extensions()
+                        if json_output:
+                            print(json.dumps({"extensions": extensions, "count": len(extensions)}, indent=2))
+                        else:
+                            print(f"Installed extensions ({len(extensions)}):")
+                            for ext in extensions:
+                                print(f"  - {ext}")
+                    elif action == "install":
+                        if not extension_id:
+                            print("Usage: ipfs-datasets vscode extensions install <extension-id>")
+                            return
+                        print(f"Installing extension {extension_id}...")
+                        success = cli.install_extension(extension_id)
+                        if json_output:
+                            print(json.dumps({"success": success, "extension_id": extension_id}))
+                        else:
+                            print(f"Extension {extension_id} {'installed' if success else 'failed to install'}")
+                    elif action == "uninstall":
+                        if not extension_id:
+                            print("Usage: ipfs-datasets vscode extensions uninstall <extension-id>")
+                            return
+                        print(f"Uninstalling extension {extension_id}...")
+                        success = cli.uninstall_extension(extension_id)
+                        if json_output:
+                            print(json.dumps({"success": success, "extension_id": extension_id}))
+                        else:
+                            print(f"Extension {extension_id} {'uninstalled' if success else 'failed to uninstall'}")
+                    return
+                
+                elif subcommand == "auth" or subcommand == "configure-auth":
+                    # Configure authentication (convenience command)
+                    extra = args[2:]
+                    install_dir = None
+                    provider = "github"
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--provider", "-p") and i + 1 < len(extra):
+                            provider = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    
+                    # Check if installed, offer to install if not
+                    if not cli.is_installed():
+                        print("VSCode CLI is not installed.")
+                        if not json_output:
+                            response = input("Would you like to install it now? (y/n): ").lower()
+                            if response == 'y':
+                                print("Installing VSCode CLI...")
+                                success = cli.download_and_install()
+                                if not success:
+                                    print("Installation failed. Cannot proceed with authentication.")
+                                    return
+                            else:
+                                print("Authentication requires VSCode CLI to be installed.")
+                                print("Run 'ipfs-datasets vscode install' first.")
+                                return
+                        else:
+                            print(json.dumps({"success": False, "error": "VSCode CLI not installed"}))
+                            return
+                    
+                    # Configure authentication
+                    print(f"Configuring authentication with {provider}...")
+                    result = cli.configure_auth(provider=provider)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        print(result['message'])
+                        if result['success'] and result.get('stdout'):
+                            print(result['stdout'])
+                        if result.get('stderr'):
+                            print(result['stderr'], file=sys.stderr)
+                    return
+                
+                elif subcommand == "install-with-auth":
+                    # Install and configure authentication in one step
+                    extra = args[2:]
+                    install_dir = None
+                    provider = "github"
+                    force = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--provider", "-p") and i + 1 < len(extra):
+                            provider = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    
+                    print(f"Installing VSCode CLI and configuring authentication with {provider}...")
+                    result = cli.install_with_auth(provider=provider, force=force)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        print(result['message'])
+                        for msg in result.get('messages', []):
+                            print(f"  • {msg}")
+                        
+                        if result.get('auth_details', {}).get('stdout'):
+                            print("\nAuthentication details:")
+                            print(result['auth_details']['stdout'])
+                    return
+                
+                elif subcommand == "tunnel":
+                    # Manage tunnel
+                    extra = args[2:]
+                    install_dir = None
+                    action = None
+                    provider = "github"
+                    tunnel_name = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token == "login":
+                            action = "login"
+                            i += 1
+                        elif token == "install-service":
+                            action = "install-service"
+                            i += 1
+                        elif token in ("--provider", "-p") and i + 1 < len(extra):
+                            provider = extra[i + 1]
+                            i += 2
+                        elif token in ("--name", "-n") and i + 1 < len(extra):
+                            tunnel_name = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    if not action:
+                        print("Usage: ipfs-datasets vscode tunnel <login|install-service> [options]")
+                        return
+                    
+                    cli = VSCodeCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first.")
+                        return
+                    
+                    if action == "login":
+                        print(f"Logging in to tunnel with {provider}...")
+                        result = cli.tunnel_user_login(provider=provider)
+                        if json_output:
+                            print(json.dumps({
+                                "success": result.returncode == 0,
+                                "stdout": result.stdout,
+                                "stderr": result.stderr
+                            }))
+                        else:
+                            if result.stdout:
+                                print(result.stdout)
+                            if result.stderr:
+                                print(result.stderr, file=sys.stderr)
+                    elif action == "install-service":
+                        print(f"Installing tunnel service{' with name ' + tunnel_name if tunnel_name else ''}...")
+                        result = cli.tunnel_service_install(name=tunnel_name)
+                        if json_output:
+                            print(json.dumps({
+                                "success": result.returncode == 0,
+                                "stdout": result.stdout,
+                                "stderr": result.stderr
+                            }))
+                        else:
+                            if result.stdout:
+                                print(result.stdout)
+                            if result.stderr:
+                                print(result.stderr, file=sys.stderr)
+                    return
+                
+                else:
+                    print(f"Unknown vscode subcommand: {subcommand}")
+                    print("Available subcommands: status, install, auth, install-with-auth, execute, extensions, tunnel")
+                    return
+                    
+            except ImportError as e:
+                print(f"Error: VSCode CLI module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing vscode command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        if command == "github":
+            # GitHub CLI management commands
+            subcommand = args[1] if len(args) > 1 else None
+            
+            try:
+                from ipfs_datasets_py.utils.github_cli import GitHubCLI
+                
+                if subcommand == "status":
+                    # Show GitHub CLI status
+                    extra = args[2:]
+                    install_dir = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = GitHubCLI(install_dir=install_dir)
+                    status = cli.get_status()
+                    
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("GitHub CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  Version: {status['version'] or 'N/A'}")
+                        print(f"  Install Dir: {status['install_dir']}")
+                        print(f"  Executable: {status['executable']}")
+                        print(f"  Platform: {status['platform']}")
+                        print(f"  Architecture: {status['architecture']}")
+                        print(f"  Auth Status: {status.get('auth_status', 'Unknown')}")
+                    return
+                
+                elif subcommand == "install":
+                    # Install GitHub CLI
+                    extra = args[2:]
+                    install_dir = None
+                    force = False
+                    version = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        elif token in ("--version", "-v") and i + 1 < len(extra):
+                            version = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = GitHubCLI(install_dir=install_dir, version=version)
+                    print("Installing GitHub CLI...")
+                    success = cli.download_and_install(force=force)
+                    
+                    if success:
+                        status = cli.get_status()
+                        if json_output:
+                            print(json.dumps({"success": True, "status": status}, indent=2))
+                        else:
+                            print(f"GitHub CLI installed successfully at {status['executable']}")
+                            print(f"Version: {status['version']}")
+                    else:
+                        if json_output:
+                            print(json.dumps({"success": False, "error": "Installation failed"}))
+                        else:
+                            print("GitHub CLI installation failed")
+                    return
+                
+                elif subcommand == "execute":
+                    # Execute GitHub CLI command
+                    extra = args[2:]
+                    install_dir = None
+                    timeout = 60
+                    cmd_args = []
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--timeout", "-t") and i + 1 < len(extra):
+                            try:
+                                timeout = int(extra[i + 1])
+                            except:
+                                pass
+                            i += 2
+                        else:
+                            cmd_args.append(token)
+                            i += 1
+                    
+                    if not cmd_args:
+                        print("Usage: ipfs-datasets github execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        return
+                    
+                    cli = GitHubCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("GitHub CLI is not installed. Run 'ipfs-datasets github install' first.")
+                        return
+                    
+                    result = cli.execute(cmd_args, timeout=timeout)
+                    
+                    if json_output:
+                        print(json.dumps({
+                            "success": result.returncode == 0,
+                            "returncode": result.returncode,
+                            "stdout": result.stdout,
+                            "stderr": result.stderr
+                        }, indent=2))
+                    else:
+                        if result.stdout:
+                            print(result.stdout)
+                        if result.stderr:
+                            print(result.stderr, file=sys.stderr)
+                        if result.returncode != 0:
+                            print(f"Command failed with exit code {result.returncode}")
+                    return
+                
+                elif subcommand == "auth":
+                    # Manage authentication
+                    extra = args[2:]
+                    install_dir = None
+                    action = "status"
+                    hostname = "github.com"
+                    web = True
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token == "login":
+                            action = "login"
+                            i += 1
+                        elif token == "status":
+                            action = "status"
+                            i += 1
+                        elif token in ("--hostname", "-h") and i + 1 < len(extra):
+                            hostname = extra[i + 1]
+                            i += 2
+                        elif token == "--no-web":
+                            web = False
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = GitHubCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("GitHub CLI is not installed. Run 'ipfs-datasets github install' first.")
+                        return
+                    
+                    if action == "login":
+                        result = cli.auth_login(hostname=hostname, web=web)
+                        if json_output:
+                            print(json.dumps({
+                                "success": result.returncode == 0,
+                                "stdout": result.stdout,
+                                "stderr": result.stderr
+                            }, indent=2))
+                        else:
+                            if result.stdout:
+                                print(result.stdout)
+                            if result.stderr:
+                                print(result.stderr, file=sys.stderr)
+                    else:  # status
+                        result = cli.auth_status()
+                        if json_output:
+                            print(json.dumps({
+                                "success": result.returncode == 0,
+                                "stdout": result.stdout,
+                                "stderr": result.stderr
+                            }, indent=2))
+                        else:
+                            if result.stdout:
+                                print(result.stdout)
+                            if result.stderr:
+                                print(result.stderr, file=sys.stderr)
+                    return
+                
+                else:
+                    print(f"Unknown github subcommand: {subcommand}")
+                    print("Available subcommands: status, install, execute, auth")
+                    return
+                    
+            except ImportError as e:
+                print(f"Error: GitHub CLI module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing github command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        if command == "gemini":
+            # Google Gemini CLI management commands
+            subcommand = args[1] if len(args) > 1 else None
+            
+            try:
+                from ipfs_datasets_py.utils.gemini_cli import GeminiCLI
+                
+                if subcommand == "status":
+                    # Show Gemini CLI status
+                    extra = args[2:]
+                    install_dir = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = GeminiCLI(install_dir=install_dir)
+                    status = cli.get_status()
+                    
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("Google Gemini CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  Version: {status['version'] or 'N/A'}")
+                        print(f"  Config Dir: {status['install_dir']}")
+                        print(f"  API Key Configured: {status['api_key_configured']}")
+                        print(f"  Package: {status['package']}")
+                    return
+                
+                elif subcommand == "install":
+                    # Install Gemini CLI
+                    extra = args[2:]
+                    install_dir = None
+                    force = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = GeminiCLI(install_dir=install_dir)
+                    print("Installing Google Gemini CLI...")
+                    success = cli.install(force=force)
+                    
+                    if success:
+                        status = cli.get_status()
+                        if json_output:
+                            print(json.dumps({"success": True, "status": status}, indent=2))
+                        else:
+                            print(f"Google Gemini CLI installed successfully")
+                            print(f"Version: {status['version']}")
+                    else:
+                        if json_output:
+                            print(json.dumps({"success": False, "error": "Installation failed"}))
+                        else:
+                            print("Google Gemini CLI installation failed")
+                    return
+                
+                elif subcommand == "config":
+                    # Configure API key
+                    extra = args[2:]
+                    install_dir = None
+                    api_key = None
+                    action = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token == "set-api-key" and i + 1 < len(extra):
+                            action = "set-api-key"
+                            api_key = extra[i + 1]
+                            i += 2
+                        elif token == "test":
+                            action = "test"
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = GeminiCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("Google Gemini CLI is not installed. Run 'ipfs-datasets gemini install' first.")
+                        return
+                    
+                    if action == "set-api-key":
+                        if not api_key:
+                            print("Usage: ipfs-datasets gemini config set-api-key <API_KEY>")
+                            return
+                        success = cli.configure_api_key(api_key)
+                        if json_output:
+                            print(json.dumps({"success": success}, indent=2))
+                        else:
+                            if success:
+                                print("API key configured successfully")
+                            else:
+                                print("Failed to configure API key")
+                    elif action == "test":
+                        result = cli.test_connection()
+                        if json_output:
+                            print(json.dumps(result, indent=2))
+                        else:
+                            if result['success']:
+                                print("Connection successful!")
+                                if result.get('response'):
+                                    print(f"Response: {result['response']}")
+                            else:
+                                print(f"Connection failed: {result.get('error')}")
+                    else:
+                        print("Usage: ipfs-datasets gemini config <set-api-key|test>")
+                    return
+                
+                elif subcommand == "execute":
+                    # Execute Gemini CLI command
+                    extra = args[2:]
+                    install_dir = None
+                    timeout = 60
+                    cmd_args = []
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--timeout", "-t") and i + 1 < len(extra):
+                            try:
+                                timeout = int(extra[i + 1])
+                            except:
+                                pass
+                            i += 2
+                        else:
+                            cmd_args.append(token)
+                            i += 1
+                    
+                    if not cmd_args:
+                        print("Usage: ipfs-datasets gemini execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        return
+                    
+                    cli = GeminiCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("Google Gemini CLI is not installed. Run 'ipfs-datasets gemini install' first.")
+                        return
+                    
+                    result = cli.execute(cmd_args, timeout=timeout)
+                    
+                    if json_output:
+                        print(json.dumps({
+                            "success": result.returncode == 0,
+                            "returncode": result.returncode,
+                            "stdout": result.stdout,
+                            "stderr": result.stderr
+                        }, indent=2))
+                    else:
+                        if result.stdout:
+                            print(result.stdout)
+                        if result.stderr:
+                            print(result.stderr, file=sys.stderr)
+                        if result.returncode != 0:
+                            print(f"Command failed with exit code {result.returncode}")
+                    return
+                
+                else:
+                    print(f"Unknown gemini subcommand: {subcommand}")
+                    print("Available subcommands: status, install, config, execute")
+                    return
+                    
+            except ImportError as e:
+                print(f"Error: Google Gemini CLI module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing gemini command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        if command == "claude":
+            # Anthropic Claude CLI management commands
+            subcommand = args[1] if len(args) > 1 else None
+            
+            try:
+                from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
+                
+                if subcommand == "status":
+                    # Show Claude CLI status
+                    extra = args[2:]
+                    install_dir = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    cli = ClaudeCLI(install_dir=install_dir)
+                    status = cli.get_status()
+                    
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("Anthropic Claude CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  Version: {status['version'] or 'N/A'}")
+                        print(f"  Config Dir: {status['install_dir']}")
+                        print(f"  API Key Configured: {status['api_key_configured']}")
+                        print(f"  Package: {status['package']}")
+                    return
+                
+                elif subcommand == "install":
+                    # Install Claude CLI
+                    extra = args[2:]
+                    install_dir = None
+                    force = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = ClaudeCLI(install_dir=install_dir)
+                    print("Installing Anthropic Claude CLI...")
+                    success = cli.install(force=force)
+                    
+                    if success:
+                        status = cli.get_status()
+                        if json_output:
+                            print(json.dumps({"success": True, "status": status}, indent=2))
+                        else:
+                            print(f"Anthropic Claude CLI installed successfully")
+                            print(f"Version: {status['version']}")
+                    else:
+                        if json_output:
+                            print(json.dumps({"success": False, "error": "Installation failed"}))
+                        else:
+                            print("Anthropic Claude CLI installation failed")
+                    return
+                
+                elif subcommand == "config":
+                    # Configure API key
+                    extra = args[2:]
+                    install_dir = None
+                    api_key = None
+                    action = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token == "set-api-key" and i + 1 < len(extra):
+                            action = "set-api-key"
+                            api_key = extra[i + 1]
+                            i += 2
+                        elif token == "test":
+                            action = "test"
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    cli = ClaudeCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("Anthropic Claude CLI is not installed. Run 'ipfs-datasets claude install' first.")
+                        return
+                    
+                    if action == "set-api-key":
+                        if not api_key:
+                            print("Usage: ipfs-datasets claude config set-api-key <API_KEY>")
+                            return
+                        success = cli.configure_api_key(api_key)
+                        if json_output:
+                            print(json.dumps({"success": success}, indent=2))
+                        else:
+                            if success:
+                                print("API key configured successfully")
+                            else:
+                                print("Failed to configure API key")
+                    elif action == "test":
+                        result = cli.test_connection()
+                        if json_output:
+                            print(json.dumps(result, indent=2))
+                        else:
+                            if result['success']:
+                                print("Connection successful!")
+                                if result.get('response'):
+                                    print(f"Response: {result['response']}")
+                            else:
+                                print(f"Connection failed: {result.get('error')}")
+                    else:
+                        print("Usage: ipfs-datasets claude config <set-api-key|test>")
+                    return
+                
+                elif subcommand == "execute":
+                    # Execute Claude CLI command
+                    extra = args[2:]
+                    install_dir = None
+                    timeout = 60
+                    cmd_args = []
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--install-dir", "-d") and i + 1 < len(extra):
+                            install_dir = extra[i + 1]
+                            i += 2
+                        elif token in ("--timeout", "-t") and i + 1 < len(extra):
+                            try:
+                                timeout = int(extra[i + 1])
+                            except:
+                                pass
+                            i += 2
+                        else:
+                            cmd_args.append(token)
+                            i += 1
+                    
+                    if not cmd_args:
+                        print("Usage: ipfs-datasets claude execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        return
+                    
+                    cli = ClaudeCLI(install_dir=install_dir)
+                    if not cli.is_installed():
+                        print("Anthropic Claude CLI is not installed. Run 'ipfs-datasets claude install' first.")
+                        return
+                    
+                    result = cli.execute(cmd_args, timeout=timeout)
+                    
+                    if json_output:
+                        print(json.dumps({
+                            "success": result.returncode == 0,
+                            "returncode": result.returncode,
+                            "stdout": result.stdout,
+                            "stderr": result.stderr
+                        }, indent=2))
+                    else:
+                        if result.stdout:
+                            print(result.stdout)
+                        if result.stderr:
+                            print(result.stderr, file=sys.stderr)
+                        if result.returncode != 0:
+                            print(f"Command failed with exit code {result.returncode}")
+                    return
+                
+                else:
+                    print(f"Unknown claude subcommand: {subcommand}")
+                    print("Available subcommands: status, install, config, execute")
+                    return
+                    
+            except ImportError as e:
+                print(f"Error: Anthropic Claude CLI module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing claude command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
@@ -795,7 +1750,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude']:
         execute_heavy_command(args)
         return
 

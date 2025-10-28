@@ -27,6 +27,12 @@ try:
 except ImportError:
     HAVE_IPLD_CAR = False
 
+try:
+    import _jsonnet
+    HAVE_JSONNET = True
+except ImportError:
+    HAVE_JSONNET = False
+
 
 class DataInterchangeUtils:
     """
@@ -440,3 +446,93 @@ class DataInterchangeUtils:
             pass
 
         raise ValueError(f"No valid HuggingFace dataset found in CAR file {car_path}")
+
+    def jsonnet_to_car(self, jsonnet_path: str, car_path: str, 
+                      ext_vars: Optional[Dict[str, str]] = None,
+                      tla_vars: Optional[Dict[str, str]] = None,
+                      hash_columns: Optional[List[str]] = None) -> str:
+        """
+        Convert a Jsonnet file to a CAR file.
+
+        Args:
+            jsonnet_path (str): Path to the input Jsonnet file
+            car_path (str): Path for the output CAR file
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+            hash_columns (List[str], optional): Columns to use for content addressing
+
+        Returns:
+            str: CID of the root block in the CAR file
+
+        Raises:
+            ImportError: If dependencies are not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet to CAR conversion")
+        
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet file
+        import json
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Ensure it's a list for table conversion
+        if not isinstance(data, list):
+            # If it's a single object, wrap it in a list
+            data = [data]
+        
+        # Convert to Arrow table
+        table = pa.Table.from_pylist(data)
+
+        # Export to CAR
+        return self.export_table_to_car(table, car_path, hash_columns=hash_columns)
+
+    def car_to_jsonnet(self, car_path: str, jsonnet_path: str) -> str:
+        """
+        Convert a CAR file to a Jsonnet file.
+
+        Args:
+            car_path (str): Path to the input CAR file
+            jsonnet_path (str): Path for the output Jsonnet file
+
+        Returns:
+            str: Path to the created Jsonnet file
+
+        Raises:
+            ImportError: If dependencies are not available
+            ValueError: If the CAR file does not contain a valid table
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for CAR to Jsonnet conversion")
+
+        # Import table from CAR
+        table = self.import_table_from_car(car_path)
+
+        # Check if we got a mock table
+        if not hasattr(table, 'schema'):
+            # Create a real table from the mock data
+            data = table.to_pydict()
+            table = pa.Table.from_pydict(data)
+
+        # Convert to Python list
+        records = table.to_pylist()
+
+        # Write to Jsonnet (which is essentially JSON)
+        import json
+        jsonnet_str = json.dumps(records, indent=2)
+        
+        with open(jsonnet_path, 'w') as f:
+            f.write(jsonnet_str)
+
+        return jsonnet_path

@@ -1,7 +1,7 @@
 # IPFS Datasets Python
 # A unified interface for data processing and distribution across decentralized networks
 
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,14 +14,16 @@ RUN apt-get update && apt-get install -y \
 # Set up working directory
 WORKDIR /app
 
-# Install IPFS
+# Install IPFS (support both ARM64 and AMD64)
 RUN cd /tmp \
-    && wget https://dist.ipfs.io/go-ipfs/v0.12.0/go-ipfs_v0.12.0_linux-amd64.tar.gz \
-    && tar -xvzf go-ipfs_v0.12.0_linux-amd64.tar.gz \
-    && cd go-ipfs \
+    && ARCH=$(uname -m) \
+    && if [ "$ARCH" = "aarch64" ]; then IPFS_ARCH="arm64"; else IPFS_ARCH="amd64"; fi \
+    && wget https://dist.ipfs.io/kubo/v0.23.0/kubo_v0.23.0_linux-${IPFS_ARCH}.tar.gz \
+    && tar -xvzf kubo_v0.23.0_linux-${IPFS_ARCH}.tar.gz \
+    && cd kubo \
     && bash install.sh \
     && cd .. \
-    && rm -rf go-ipfs go-ipfs_v0.12.0_linux-amd64.tar.gz
+    && rm -rf kubo kubo_v0.23.0_linux-${IPFS_ARCH}.tar.gz
 
 # Copy project files
 COPY . /app/
