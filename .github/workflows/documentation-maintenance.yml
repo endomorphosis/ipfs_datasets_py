@@ -93,7 +93,7 @@ jobs:
           EOF
           
           # Find directories missing README.md, TODO.md, or CHANGELOG.md
-          find ipfs_datasets_py -type d -not -path "*/\.*" -not -path "*/__pycache__*" | while read dir; do
+          find ipfs_datasets_py -type d -not -path "*/\.*" -not -path "*/__pycache__*" | while IFS= read -r dir; do
             missing=""
             if [ ! -f "$dir/README.md" ]; then
               missing="${missing}README.md "
@@ -105,7 +105,7 @@ jobs:
               missing="${missing}CHANGELOG.md "
             fi
             
-            if [ ! -z "$missing" ]; then
+            if [ -n "$missing" ]; then
               echo "- \`$dir\`: Missing $missing" >> /tmp/missing_docs_report.md
             fi
           done
@@ -134,7 +134,7 @@ jobs:
           find . -type f \( -name "README.md" -o -name "TODO.md" -o -name "CHANGELOG.md" \) \
             -not -path "./.git/*" \
             -mtime +90 \
-            -exec ls -lh {} \; | while read line; do
+            -exec ls -lh {} \; | while IFS= read -r line; do
             echo "- $line" >> /tmp/stale_docs_report.md
           done
           
@@ -160,7 +160,7 @@ jobs:
           echo "### Main README Coverage" >> /tmp/consistency_report.md
           echo "" >> /tmp/consistency_report.md
           
-          find ipfs_datasets_py -maxdepth 2 -type f -name "README.md" | while read readme; do
+          find ipfs_datasets_py -maxdepth 2 -type f -name "README.md" | while IFS= read -r readme; do
             dir=$(dirname "$readme")
             basename=$(basename "$dir")
             if ! grep -q "$basename" README.md 2>/dev/null; then
@@ -179,21 +179,22 @@ jobs:
         run: |
           echo "📊 Generating comprehensive documentation report..."
           
-          cat > /tmp/documentation_health_report.md << 'EOF'
-          # Documentation Health Report
-          
-          **Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")  
-          **Repository:** ${{ github.repository }}  
-          **Branch:** ${{ github.ref_name }}
-          
-          ## Summary
-          
-          This automated report analyzes the health and completeness of documentation
-          across the repository for both human users and AI programming agents.
-          
-          ---
-          
-          EOF
+          # Generate report header with proper date substitution
+          {
+            echo "# Documentation Health Report"
+            echo ""
+            echo "**Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            echo "**Repository:** ${{ github.repository }}"
+            echo "**Branch:** ${{ github.ref_name }}"
+            echo ""
+            echo "## Summary"
+            echo ""
+            echo "This automated report analyzes the health and completeness of documentation"
+            echo "across the repository for both human users and AI programming agents."
+            echo ""
+            echo "---"
+            echo ""
+          } > /tmp/documentation_health_report.md
           
           # Append all reports
           if [ -f /tmp/missing_docs_report.md ]; then
