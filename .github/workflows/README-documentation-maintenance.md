@@ -2,16 +2,16 @@
 
 ## Overview
 
-This GitHub Actions workflow provides automated, weekly maintenance of documentation across the `ipfs_datasets_py` repository to ensure that both human users and AI programming agents have access to current, complete, and consistent documentation.
+This GitHub Actions workflow provides **automated, weekly maintenance** of documentation across the `ipfs_datasets_py` repository. Unlike passive monitoring tools, this workflow **actively maintains** documentation by creating missing files, generating templates, and opening pull requests with fixes.
 
 ## Schedule
 
-- **Frequency**: Every Monday at 9:00 AM UTC
+- **Frequency**: Every Monday at 9:00 AM UTC (with auto-fix enabled by default)
 - **Manual Trigger**: Can be triggered manually via GitHub Actions UI with optional parameters
 
 ## What It Does
 
-The workflow performs comprehensive documentation health checks including:
+The workflow performs comprehensive documentation health checks **and automatically fixes issues**:
 
 ### 1. Documentation Discovery
 - Scans the entire repository for documentation files (README.md, TODO.md, CHANGELOG.md)
@@ -27,7 +27,7 @@ The workflow performs comprehensive documentation health checks including:
 ### 3. Missing Documentation Detection
 - Identifies subdirectories lacking standard documentation files
 - Reports which directories need README.md, TODO.md, or CHANGELOG.md
-- Helps maintain consistent documentation structure across the project
+- **🔧 AUTO-FIX**: Creates missing documentation files with templates
 
 ### 4. Documentation Freshness Analysis
 - Finds documentation files not updated in the last 90 days
@@ -39,13 +39,49 @@ The workflow performs comprehensive documentation health checks including:
 - Ensures documentation hierarchy is properly maintained
 - Identifies documentation gaps and inconsistencies
 
-### 6. Automated Reporting
+### 6. Automated Fixes & Reporting
+- **🤖 AUTO-FIX**: Creates missing README.md, TODO.md, and CHANGELOG.md files
+- **📝 PULL REQUESTS**: Opens PRs with auto-generated documentation files
 - Creates comprehensive health reports combining all audit results
 - Generates actionable recommendations for improvements
 - Creates or updates GitHub issues with findings
 - Uploads detailed reports as workflow artifacts (retained for 30 days)
 
+## Auto-Fix Capabilities
+
+When auto-fix is enabled (default for scheduled runs), the workflow will:
+
+### Missing README.md Files
+Creates basic README files with:
+- Module/directory name as title
+- Overview section
+- Contents section (to be filled in)
+- Usage section (to be filled in)
+- Links to related documentation
+
+### Missing TODO.md Files
+Creates task tracking files with:
+- Pending tasks section with common documentation tasks
+- Completed tasks section
+- Last updated timestamp
+
+### Missing CHANGELOG.md Files
+Creates version history files with:
+- Standard changelog format
+- Unreleased section
+- Initial structure with timestamps
+
+**Note**: All auto-generated files include placeholder text marked for customization.
+
 ## Outputs
+
+### Pull Requests (Auto-Fix Enabled)
+When missing documentation is detected and auto-fix is enabled, the workflow creates a PR:
+- **Branch**: `docs/auto-maintenance-{run_number}`
+- **Title**: "docs: Auto-generate missing documentation files"
+- **Labels**: `documentation`, `automated`, `maintenance`
+- **Assignee**: Repository owner
+- **Content**: All newly created documentation files with templates
 
 ### GitHub Issues
 The workflow automatically creates or updates a GitHub issue titled:
@@ -85,14 +121,39 @@ You can manually trigger this workflow from the Actions tab with optional parame
 
 ### Parameters:
 - **full_scan** (boolean, default: true) - Perform a complete documentation scan
-- **auto_fix** (boolean, default: false) - Automatically fix simple documentation issues (future enhancement)
+- **auto_fix** (boolean, default: true) - Automatically create missing documentation files and open a PR
 
 ### To Run Manually:
 1. Go to the repository's Actions tab
 2. Select "Documentation Maintenance" workflow
 3. Click "Run workflow"
-4. Choose branch and set parameters
+4. Choose branch and set parameters:
+   - Enable/disable `auto_fix` to control whether PRs are created
+   - Enable/disable `full_scan` to control scan depth
 5. Click "Run workflow" button
+
+## Workflow Behavior
+
+### Scheduled Runs (Weekly)
+- **Auto-fix**: Enabled by default
+- **Action**: Creates PR with missing documentation files
+- **Notifications**: Creates/updates GitHub issue with report
+
+### Manual Runs
+- **Auto-fix**: Configurable (default: true)
+- **Action**: Behavior depends on auto_fix parameter
+- **Use Case**: Test changes or generate reports without creating PRs (set auto_fix=false)
+
+### What Gets Fixed Automatically
+✅ Missing README.md files  
+✅ Missing TODO.md files  
+✅ Missing CHANGELOG.md files  
+
+### What Requires Manual Action
+⚠️ Docstring improvements (identified in reports)  
+⚠️ Stale documentation updates (flagged in reports)  
+⚠️ Content quality improvements (templates need customization)  
+⚠️ Consistency fixes (cross-references need manual validation)
 
 ## Integration with Existing Tools
 
@@ -112,34 +173,39 @@ python adhoc_tools/docstring_audit.py --directory ipfs_datasets_py --output repo
 
 ## For AI Programming Agents
 
-This workflow is specifically designed to help AI agents (like Claude, GPT, etc.) maintain documentation awareness:
+This workflow is specifically designed to help AI agents (like Claude, GPT, etc.) **actively maintain** documentation:
 
 ### Key Features for AI Agents:
+- **Automated Fixes**: Missing documentation files are created automatically
+- **Pull Request Integration**: Changes are submitted via PR for review
 - **Structured JSON Reports**: Machine-readable output for automated processing
 - **Comprehensive Metadata**: Timestamps, paths, and quality metrics for decision-making
 - **Issue Tracking**: Automated GitHub issues provide a queue of documentation tasks
-- **Consistency Validation**: Ensures documentation structure matches code structure
+- **Template-Based Generation**: Consistent structure across all auto-generated files
 
-### Using Reports as an AI Agent:
-1. Check the most recent workflow run artifacts
-2. Download and parse JSON reports for structured data
-3. Review the GitHub issue for human-readable summary
-4. Prioritize documentation tasks based on:
-   - Missing critical documentation (README.md)
-   - Low docstring quality scores
-   - Stale documentation (not updated in 90+ days)
-   - Consistency issues with main documentation
+### Using the Workflow as an AI Agent:
+1. **Monitor PRs**: Check for auto-generated documentation PRs
+2. **Review Templates**: Examine auto-generated files and customize them
+3. **Parse Reports**: Download and analyze JSON artifacts for insights
+4. **Prioritize Tasks**: Use quality scores from reports to focus efforts
+5. **Coordinate Work**: Reference PRs and issues for documentation improvements
 
 ## Maintenance and Evolution
 
+### Completed Features:
+- [x] ✅ Automatic creation of missing documentation file stubs
+- [x] ✅ Automated PR creation for simple fixes
+- [x] ✅ Template-based file generation with consistent structure
+- [x] ✅ Weekly scheduled automated maintenance
+
 ### Future Enhancements:
-- [ ] Automatic creation of missing documentation file stubs
 - [ ] Link validation (checking for broken internal links)
 - [ ] Code-to-documentation synchronization checks
-- [ ] Documentation coverage metrics and trends
-- [ ] Automated PR creation for simple fixes
+- [ ] Documentation coverage metrics and trends over time
 - [ ] Integration with code quality metrics
 - [ ] Documentation diff analysis between versions
+- [ ] Automated docstring generation for undocumented functions
+- [ ] Smart content suggestions based on code analysis
 
 ### Contributing:
 To improve this workflow:
