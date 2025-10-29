@@ -723,6 +723,48 @@
                         </ul>
                     </div>
                     
+                    <!-- Medical Research Scraping Section -->
+                    <div class="nav-section mt-4">
+                        <div class="nav-section-title px-3 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Medical Research Data</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#scrape-pubmed" role="tab">
+                                    <i class="fas fa-book-medical"></i> PubMed Research
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#scrape-clinical-trials" role="tab">
+                                    <i class="fas fa-vial"></i> Clinical Trials
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#scrape-biochemical" role="tab">
+                                    <i class="fas fa-atom"></i> Biochemical Data
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#medical-theorems" role="tab">
+                                    <i class="fas fa-lightbulb"></i> Medical Theorems
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#population-data" role="tab">
+                                    <i class="fas fa-users"></i> Population Data
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#biomolecule-discovery" role="tab">
+                                    <i class="fas fa-dna"></i> Biomolecule Discovery
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#ai-dataset-builder" role="tab">
+                                    <i class="fas fa-robot"></i> AI Dataset Builder
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
                     <!-- Dataset Workflows Section -->
                     <div class="nav-section mt-4">
                         <div class="nav-section-title px-3 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Dataset Workflows</div>
@@ -2839,6 +2881,575 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- PubMed Research Scraping Tab -->
+                    <div class="tab-pane fade" id="scrape-pubmed" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-book-medical"></i> PubMed Medical Research</h5>
+                                <small class="text-white">Scrape medical literature from PubMed for knowledge graph generation</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="pubmedScrapingForm">
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label for="pubmedQuery" class="form-label">Search Query</label>
+                                            <input type="text" class="form-control" id="pubmedQuery" placeholder="e.g., COVID-19 treatment, diabetes therapy">
+                                            <small class="text-muted">Use MeSH terms for better results</small>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="pubmedMaxResults" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="pubmedMaxResults" value="100" min="1" max="200">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="pubmedEmail" class="form-label">Email (Recommended)</label>
+                                            <input type="email" class="form-control" id="pubmedEmail" placeholder="your@email.com">
+                                            <small class="text-muted">Required by NCBI for API access</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="pubmedResearchType" class="form-label">Research Type</label>
+                                            <select class="form-select" id="pubmedResearchType">
+                                                <option value="">All Types</option>
+                                                <option value="clinical_trial">Clinical Trial</option>
+                                                <option value="meta_analysis">Meta-Analysis</option>
+                                                <option value="review">Review</option>
+                                                <option value="research_article">Research Article</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Start Scraping
+                                    </button>
+                                </form>
+                                
+                                <div id="pubmedResults" class="mt-4" style="display:none;">
+                                    <h6>Results</h6>
+                                    <div id="pubmedResultsContent" class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>PMID</th>
+                                                    <th>Title</th>
+                                                    <th>Authors</th>
+                                                    <th>Date</th>
+                                                    <th>Journal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="pubmedResultsTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Clinical Trials Scraping Tab -->
+                    <div class="tab-pane fade" id="scrape-clinical-trials" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-vial"></i> Clinical Trials Data</h5>
+                                <small class="text-white">Scrape clinical trial data for temporal theorem generation</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="clinicalTrialsScrapingForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsCondition" class="form-label">Condition</label>
+                                            <input type="text" class="form-control" id="trialsCondition" placeholder="e.g., diabetes, hypertension">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsIntervention" class="form-label">Intervention (Optional)</label>
+                                            <input type="text" class="form-control" id="trialsIntervention" placeholder="e.g., metformin, lifestyle">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsPhase" class="form-label">Phase</label>
+                                            <select class="form-select" id="trialsPhase">
+                                                <option value="">All Phases</option>
+                                                <option value="Phase 1">Phase 1</option>
+                                                <option value="Phase 2">Phase 2</option>
+                                                <option value="Phase 3">Phase 3</option>
+                                                <option value="Phase 4">Phase 4</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsMaxResults" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="trialsMaxResults" value="50" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Search Trials
+                                    </button>
+                                </form>
+                                
+                                <div id="trialsResults" class="mt-4" style="display:none;">
+                                    <h6>Trial Results</h6>
+                                    <div id="trialsResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Biochemical Research Tab -->
+                    <div class="tab-pane fade" id="scrape-biochemical" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-atom"></i> Biochemical Research Data</h5>
+                                <small class="text-white">Scrape biochemical and molecular biology research</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="biochemicalScrapingForm">
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label for="biochemTopic" class="form-label">Research Topic</label>
+                                            <input type="text" class="form-control" id="biochemTopic" placeholder="e.g., protein folding, enzyme kinetics">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="biochemMaxResults" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="biochemMaxResults" value="50" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="biochemTimeRange" class="form-label">Time Range (Days)</label>
+                                            <input type="number" class="form-control" id="biochemTimeRange" placeholder="e.g., 365 for last year">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Start Scraping
+                                    </button>
+                                </form>
+                                
+                                <div id="biochemResults" class="mt-4" style="display:none;">
+                                    <h6>Biochemical Research Results</h6>
+                                    <div id="biochemResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Medical Theorems Tab -->
+                    <div class="tab-pane fade" id="medical-theorems" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-lightbulb"></i> Medical Theorem Generation & Validation</h5>
+                                <small class="text-white">Generate and validate temporal deontic logic theorems from medical data</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About Medical Theorems</h6>
+                                    <p class="mb-0">Medical theorems capture causal relationships in temporal deontic logic (e.g., "If person eats tide pods → they get sick"). These can be validated using fuzzy logic and time-series data.</p>
+                                </div>
+                                
+                                <h6>Generate Theorems from Clinical Trial</h6>
+                                <form id="theoremGenerationForm">
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="theoremNCTID" class="form-label">NCT ID</label>
+                                            <input type="text" class="form-control" id="theoremNCTID" placeholder="e.g., NCT12345678">
+                                            <small class="text-muted">First search for trials in the Clinical Trials tab to get NCT IDs</small>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-magic"></i> Generate Theorems
+                                    </button>
+                                </form>
+                                
+                                <div id="theoremResults" class="mt-4" style="display:none;">
+                                    <h6>Generated Theorems</h6>
+                                    <div id="theoremResultsContent"></div>
+                                </div>
+                                
+                                <hr class="my-4">
+                                
+                                <h6>Validate Theorem with Fuzzy Logic</h6>
+                                <form id="theoremValidationForm">
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="theoremToValidate" class="form-label">Select Theorem</label>
+                                            <select class="form-select" id="theoremToValidate">
+                                                <option value="">Select a generated theorem</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-check-circle"></i> Validate Theorem
+                                    </button>
+                                </form>
+                                
+                                <div id="validationResults" class="mt-4" style="display:none;">
+                                    <h6>Validation Results</h6>
+                                    <div id="validationResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Population Data Tab -->
+                    <div class="tab-pane fade" id="population-data" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-users"></i> Population Health Data</h5>
+                                <small class="text-white">Collect population-level data for theorem validation</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="populationDataForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="popCondition" class="form-label">Condition</label>
+                                            <input type="text" class="form-control" id="popCondition" placeholder="e.g., diabetes, obesity">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="popIntervention" class="form-label">Intervention (Optional)</label>
+                                            <input type="text" class="form-control" id="popIntervention" placeholder="e.g., diet, medication">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Collect Population Data
+                                    </button>
+                                </form>
+                                
+                                <div id="populationResults" class="mt-4" style="display:none;">
+                                    <h6>Population Data Results</h6>
+                                    <div id="populationResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Biomolecule Discovery Tab -->
+                    <div class="tab-pane fade" id="biomolecule-discovery" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-dna"></i> Biomolecule Discovery with RAG</h5>
+                                <small class="text-white">Find candidate biomolecules for protein binder design and drug discovery</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About Biomolecule Discovery</h6>
+                                    <p class="mb-0">Use Retrieval Augmented Generation (RAG) to discover protein binders, enzyme inhibitors, and pathway biomolecules from medical research. Candidates can be used for generative protein binder design workflows.</p>
+                                </div>
+                                
+                                <!-- Discovery Type Tabs -->
+                                <ul class="nav nav-tabs mb-3" id="discoveryTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="binders-tab" data-bs-toggle="tab" data-bs-target="#binders-panel" type="button" role="tab">
+                                            <i class="fas fa-magnet"></i> Protein Binders
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="inhibitors-tab" data-bs-toggle="tab" data-bs-target="#inhibitors-panel" type="button" role="tab">
+                                            <i class="fas fa-ban"></i> Enzyme Inhibitors
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pathway-tab" data-bs-toggle="tab" data-bs-target="#pathway-panel" type="button" role="tab">
+                                            <i class="fas fa-project-diagram"></i> Pathway Biomolecules
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="discoveryTabContent">
+                                    <!-- Protein Binders Panel -->
+                                    <div class="tab-pane fade show active" id="binders-panel" role="tabpanel">
+                                        <form id="proteinBindersForm">
+                                            <div class="row">
+                                                <div class="col-md-8 mb-3">
+                                                    <label for="binderTargetProtein" class="form-label">Target Protein</label>
+                                                    <input type="text" class="form-control" id="binderTargetProtein" placeholder="e.g., SARS-CoV-2 spike, PD-L1, ACE2">
+                                                    <small class="text-muted">Enter the name of the target protein for binder discovery</small>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="binderInteraction" class="form-label">Interaction Type</label>
+                                                    <select class="form-select" id="binderInteraction">
+                                                        <option value="">All Types</option>
+                                                        <option value="binding">Binding</option>
+                                                        <option value="inhibition">Inhibition</option>
+                                                        <option value="activation">Activation</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="binderMinConfidence" class="form-label">Min Confidence</label>
+                                                    <input type="range" class="form-range" id="binderMinConfidence" min="0" max="1" step="0.1" value="0.5">
+                                                    <small class="text-muted">Confidence: <span id="binderConfidenceValue">0.5</span></small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="binderMaxResults" class="form-label">Max Results</label>
+                                                    <input type="number" class="form-control" id="binderMaxResults" value="50" min="1" max="100">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-search"></i> Discover Binders
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="bindersResults" class="mt-4" style="display:none;">
+                                            <h6>Discovered Protein Binders</h6>
+                                            <div id="bindersResultsContent"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Enzyme Inhibitors Panel -->
+                                    <div class="tab-pane fade" id="inhibitors-panel" role="tabpanel">
+                                        <form id="enzymeInhibitorsForm">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorTargetEnzyme" class="form-label">Target Enzyme</label>
+                                                    <input type="text" class="form-control" id="inhibitorTargetEnzyme" placeholder="e.g., ACE2, TMPRSS2, protease">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorEnzymeClass" class="form-label">Enzyme Class (Optional)</label>
+                                                    <input type="text" class="form-control" id="inhibitorEnzymeClass" placeholder="e.g., kinase, protease, polymerase">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorMinConfidence" class="form-label">Min Confidence</label>
+                                                    <input type="range" class="form-range" id="inhibitorMinConfidence" min="0" max="1" step="0.1" value="0.5">
+                                                    <small class="text-muted">Confidence: <span id="inhibitorConfidenceValue">0.5</span></small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorMaxResults" class="form-label">Max Results</label>
+                                                    <input type="number" class="form-control" id="inhibitorMaxResults" value="50" min="1" max="100">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-search"></i> Discover Inhibitors
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="inhibitorsResults" class="mt-4" style="display:none;">
+                                            <h6>Discovered Enzyme Inhibitors</h6>
+                                            <div id="inhibitorsResultsContent"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Pathway Biomolecules Panel -->
+                                    <div class="tab-pane fade" id="pathway-panel" role="tabpanel">
+                                        <form id="pathwayBiomoleculesForm">
+                                            <div class="row">
+                                                <div class="col-md-12 mb-3">
+                                                    <label for="pathwayName" class="form-label">Pathway Name</label>
+                                                    <input type="text" class="form-control" id="pathwayName" placeholder="e.g., mTOR signaling, glycolysis, MAPK pathway">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="pathwayMinConfidence" class="form-label">Min Confidence</label>
+                                                    <input type="range" class="form-range" id="pathwayMinConfidence" min="0" max="1" step="0.1" value="0.5">
+                                                    <small class="text-muted">Confidence: <span id="pathwayConfidenceValue">0.5</span></small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="pathwayMaxResults" class="form-label">Max Results</label>
+                                                    <input type="number" class="form-control" id="pathwayMaxResults" value="100" min="1" max="200">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-search"></i> Discover Pathway Components
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="pathwayResults" class="mt-4" style="display:none;">
+                                            <h6>Discovered Pathway Biomolecules</h6>
+                                            <div id="pathwayResultsContent"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Dataset Builder Tab -->
+                    <div class="tab-pane fade" id="ai-dataset-builder" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-gradient-primary text-white">
+                                <h5 class="text-white"><i class="fas fa-robot"></i> AI-Powered Dataset Builder</h5>
+                                <p class="mb-0 small">Build, filter, analyze, and generate synthetic data using AI models from ipfs_accelerate_py</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>AI Dataset Pipeline:</strong> This tool demonstrates how the scraped medical research data can be processed using AI models from the <code>ipfs_accelerate_py</code> library to build, filter, analyze, and generate synthetic datasets for evaluation and testing.
+                                </div>
+
+                                <!-- Step 1: Build Dataset -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-1"></i> Step 1: Build Dataset from Scraped Data</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">First, scrape data using PubMed or Clinical Trials tools, then build a structured dataset with AI-powered filtering.</p>
+                                        <form id="buildDatasetForm">
+                                            <div class="mb-3">
+                                                <label for="buildSourceData" class="form-label">Source (scrape first from other tabs)</label>
+                                                <textarea class="form-control" id="buildSourceData" rows="3" placeholder='Paste scraped data here (JSON array) or scrape from PubMed/Clinical Trials tabs first...'></textarea>
+                                                <small class="text-muted">Example: Use PubMed Research tab to scrape articles, then paste the results here</small>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="buildFilterKeywords" class="form-label">Filter Keywords (optional)</label>
+                                                    <input type="text" class="form-control" id="buildFilterKeywords" placeholder="e.g., vaccine, efficacy">
+                                                    <small class="text-muted">Comma-separated keywords for AI filtering</small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="buildModelName" class="form-label">AI Model</label>
+                                                    <select class="form-select" id="buildModelName">
+                                                        <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                        <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better quality)</option>
+                                                        <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                        <option value="mock">Mock (no ipfs_accelerate_py)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-database"></i> Build Dataset
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="buildDatasetResults" class="mt-4" style="display:none;">
+                                            <h6>Dataset Metrics</h6>
+                                            <div id="buildDatasetMetrics"></div>
+                                            <div id="buildDatasetOutput" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Analyze Dataset -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-2"></i> Step 2: Analyze Dataset with AI</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Analyze patterns, themes, and insights in your dataset using AI models.</p>
+                                        <form id="analyzeDatasetForm">
+                                            <div class="mb-3">
+                                                <label for="analyzeDataset" class="form-label">Dataset to Analyze</label>
+                                                <textarea class="form-control" id="analyzeDataset" rows="3" placeholder='Paste built dataset here or use dataset from Step 1...'></textarea>
+                                                <small class="text-muted">Use the dataset output from Step 1</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="analyzeModelName" class="form-label">AI Model</label>
+                                                <select class="form-select" id="analyzeModelName">
+                                                    <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                    <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better quality)</option>
+                                                    <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                    <option value="mock">Mock (no ipfs_accelerate_py)</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-chart-line"></i> Analyze Dataset
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="analyzeDatasetResults" class="mt-4" style="display:none;">
+                                            <h6>Analysis Results</h6>
+                                            <div id="analyzeDatasetInsights"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Transform Dataset -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-3"></i> Step 3: Transform Dataset</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Apply AI transformations: summarize, extract entities, normalize, or extrapolate data.</p>
+                                        <form id="transformDatasetForm">
+                                            <div class="mb-3">
+                                                <label for="transformDataset" class="form-label">Dataset to Transform</label>
+                                                <textarea class="form-control" id="transformDataset" rows="3" placeholder='Paste dataset here...'></textarea>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="transformationType" class="form-label">Transformation Type</label>
+                                                    <select class="form-select" id="transformationType">
+                                                        <option value="summarize">Summarize Articles</option>
+                                                        <option value="extract_entities">Extract Medical Entities</option>
+                                                        <option value="normalize">Normalize Format</option>
+                                                        <option value="extrapolate">Extrapolate Patterns</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="transformModelName" class="form-label">AI Model</label>
+                                                    <select class="form-select" id="transformModelName">
+                                                        <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                        <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better quality)</option>
+                                                        <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                        <option value="mock">Mock (no ipfs_accelerate_py)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fas fa-magic"></i> Transform Dataset
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="transformDatasetResults" class="mt-4" style="display:none;">
+                                            <h6>Transformed Data</h6>
+                                            <div id="transformDatasetOutput"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: Generate Synthetic Data -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-4"></i> Step 4: Generate Synthetic Data</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Generate synthetic variations of your data for testing, evaluation, and augmentation.</p>
+                                        <form id="generateSyntheticForm">
+                                            <div class="mb-3">
+                                                <label for="syntheticTemplateData" class="form-label">Template Data</label>
+                                                <textarea class="form-control" id="syntheticTemplateData" rows="3" placeholder='Paste template data (at least 1 sample)...'></textarea>
+                                                <small class="text-muted">Use a few samples from your dataset as templates</small>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="syntheticNumSamples" class="form-label">Number of Samples</label>
+                                                    <input type="number" class="form-control" id="syntheticNumSamples" value="10" min="1" max="50">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="syntheticTemperature" class="form-label">Temperature</label>
+                                                    <input type="number" class="form-control" id="syntheticTemperature" value="0.7" min="0" max="1" step="0.1">
+                                                    <small class="text-muted">Higher = more creative</small>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="syntheticModelName" class="form-label">AI Model</label>
+                                                    <select class="form-select" id="syntheticModelName">
+                                                        <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                        <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better)</option>
+                                                        <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                        <option value="mock">Mock</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-flask"></i> Generate Synthetic Data
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="generateSyntheticResults" class="mt-4" style="display:none;">
+                                            <h6>Generated Synthetic Data</h6>
+                                            <div id="generateSyntheticOutput"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Workflow Summary -->
+                                <div class="alert alert-success" role="alert">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <strong>Complete Workflow:</strong> Scrape → Build → Analyze → Transform → Generate Synthetic → Evaluate/Test
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -4875,6 +5486,742 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 alert('IPFS save functionality will be available in a future update.');
             });
         }
+        
+        // Medical Research Scraping Event Handlers
+        
+        // PubMed Scraping
+        document.getElementById('pubmedScrapingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const query = document.getElementById('pubmedQuery').value;
+            const maxResults = parseInt(document.getElementById('pubmedMaxResults').value);
+            const email = document.getElementById('pubmedEmail').value;
+            const researchType = document.getElementById('pubmedResearchType').value;
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/pubmed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        max_results: maxResults,
+                        email: email || null,
+                        research_type: researchType || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('pubmedResults').style.display = 'block';
+                    const tbody = document.getElementById('pubmedResultsTable');
+                    tbody.innerHTML = '';
+                    
+                    result.articles.forEach(article => {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${article.pmid}</td>
+                            <td>${article.title.substring(0, 100)}...</td>
+                            <td>${article.authors.slice(0, 3).join(', ')}</td>
+                            <td>${article.publication_date}</td>
+                            <td>${article.journal}</td>
+                        `;
+                    });
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Clinical Trials Scraping
+        document.getElementById('clinicalTrialsScrapingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const condition = document.getElementById('trialsCondition').value;
+            const intervention = document.getElementById('trialsIntervention').value;
+            const phase = document.getElementById('trialsPhase').value;
+            const maxResults = parseInt(document.getElementById('trialsMaxResults').value);
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/clinical_trials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: condition,
+                        condition: condition || null,
+                        intervention: intervention || null,
+                        phase: phase || null,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('trialsResults').style.display = 'block';
+                    const content = document.getElementById('trialsResultsContent');
+                    
+                    let html = '<div class="list-group">';
+                    result.trials.forEach(trial => {
+                        html += `
+                            <div class="list-group-item">
+                                <h6>${trial.title}</h6>
+                                <p class="mb-1"><strong>NCT ID:</strong> ${trial.nct_id}</p>
+                                <p class="mb-1"><strong>Phase:</strong> ${trial.phase} | <strong>Status:</strong> ${trial.status}</p>
+                                <p class="mb-1"><strong>Conditions:</strong> ${trial.conditions.join(', ')}</p>
+                                <p class="mb-1"><strong>Interventions:</strong> ${trial.interventions.join(', ')}</p>
+                                <p class="mb-0"><small class="text-muted">Enrollment: ${trial.enrollment}</small></p>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Biochemical Research Scraping
+        document.getElementById('biochemicalScrapingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const topic = document.getElementById('biochemTopic').value;
+            const maxResults = parseInt(document.getElementById('biochemMaxResults').value);
+            const timeRange = document.getElementById('biochemTimeRange').value;
+            
+            if (!topic) {
+                alert('Please enter a research topic');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/biochemical', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        max_results: maxResults,
+                        time_range_days: timeRange ? parseInt(timeRange) : null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('biochemResults').style.display = 'block';
+                    const content = document.getElementById('biochemResultsContent');
+                    
+                    let html = '<div class="list-group">';
+                    result.articles.forEach(article => {
+                        html += `
+                            <div class="list-group-item">
+                                <h6>${article.title}</h6>
+                                <p class="mb-1"><strong>PMID:</strong> ${article.pmid}</p>
+                                <p class="mb-1"><strong>Authors:</strong> ${article.authors.slice(0, 5).join(', ')}</p>
+                                <p class="mb-1"><strong>Journal:</strong> ${article.journal}</p>
+                                <p class="mb-0"><small class="text-muted">Date: ${article.publication_date}</small></p>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Population Data Collection
+        document.getElementById('populationDataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const condition = document.getElementById('popCondition').value;
+            const intervention = document.getElementById('popIntervention').value;
+            
+            if (!condition) {
+                alert('Please enter a condition');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/population', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        condition: condition,
+                        intervention: intervention || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('populationResults').style.display = 'block';
+                    const content = document.getElementById('populationResultsContent');
+                    
+                    let html = `<p><strong>Condition:</strong> ${result.condition}</p>`;
+                    html += `<p><strong>Trials Analyzed:</strong> ${result.trial_count}</p>`;
+                    html += '<div class="list-group">';
+                    
+                    result.population_data.forEach(data => {
+                        html += `
+                            <div class="list-group-item">
+                                <h6>${data.trial_title}</h6>
+                                <p class="mb-1"><strong>NCT ID:</strong> ${data.nct_id}</p>
+                                <p class="mb-0"><small class="text-muted">Demographics available</small></p>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Biomolecule Discovery Event Handlers
+        
+        // Update confidence value displays
+        document.getElementById('binderMinConfidence').addEventListener('input', function() {
+            document.getElementById('binderConfidenceValue').textContent = this.value;
+        });
+        document.getElementById('inhibitorMinConfidence').addEventListener('input', function() {
+            document.getElementById('inhibitorConfidenceValue').textContent = this.value;
+        });
+        document.getElementById('pathwayMinConfidence').addEventListener('input', function() {
+            document.getElementById('pathwayConfidenceValue').textContent = this.value;
+        });
+        
+        // Protein Binders Discovery
+        document.getElementById('proteinBindersForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const targetProtein = document.getElementById('binderTargetProtein').value;
+            const interactionType = document.getElementById('binderInteraction').value;
+            const minConfidence = parseFloat(document.getElementById('binderMinConfidence').value);
+            const maxResults = parseInt(document.getElementById('binderMaxResults').value);
+            
+            if (!targetProtein) {
+                alert('Please enter a target protein');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/discover/protein_binders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_protein: targetProtein,
+                        interaction_type: interactionType || null,
+                        min_confidence: minConfidence,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('bindersResults').style.display = 'block';
+                    const content = document.getElementById('bindersResultsContent');
+                    
+                    let html = `<p><strong>Target:</strong> ${result.target}</p>`;
+                    html += `<p><strong>Candidates Found:</strong> ${result.total_count}</p>`;
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                        html += '<thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Function</th><th>Evidence</th></tr></thead><tbody>';
+                        
+                        result.candidates.forEach(candidate => {
+                            html += `
+                                <tr>
+                                    <td><strong>${candidate.name}</strong></td>
+                                    <td>${candidate.biomolecule_type}</td>
+                                    <td><span class="badge bg-primary">${(candidate.confidence_score * 100).toFixed(0)}%</span></td>
+                                    <td>${candidate.function ? candidate.function.substring(0, 100) : 'N/A'}</td>
+                                    <td>${candidate.evidence_sources ? candidate.evidence_sources.length : 0} sources</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="text-muted">No candidates found. Try adjusting the confidence threshold or search terms.</p>';
+                    }
+                    
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Enzyme Inhibitors Discovery
+        document.getElementById('enzymeInhibitorsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const targetEnzyme = document.getElementById('inhibitorTargetEnzyme').value;
+            const enzymeClass = document.getElementById('inhibitorEnzymeClass').value;
+            const minConfidence = parseFloat(document.getElementById('inhibitorMinConfidence').value);
+            const maxResults = parseInt(document.getElementById('inhibitorMaxResults').value);
+            
+            if (!targetEnzyme) {
+                alert('Please enter a target enzyme');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/discover/enzyme_inhibitors', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_enzyme: targetEnzyme,
+                        enzyme_class: enzymeClass || null,
+                        min_confidence: minConfidence,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('inhibitorsResults').style.display = 'block';
+                    const content = document.getElementById('inhibitorsResultsContent');
+                    
+                    let html = `<p><strong>Target Enzyme:</strong> ${result.target_enzyme}</p>`;
+                    html += `<p><strong>Inhibitors Found:</strong> ${result.total_count}</p>`;
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                        html += '<thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Function</th><th>Evidence</th></tr></thead><tbody>';
+                        
+                        result.candidates.forEach(candidate => {
+                            html += `
+                                <tr>
+                                    <td><strong>${candidate.name}</strong></td>
+                                    <td>${candidate.biomolecule_type}</td>
+                                    <td><span class="badge bg-warning">${(candidate.confidence_score * 100).toFixed(0)}%</span></td>
+                                    <td>${candidate.function || 'N/A'}</td>
+                                    <td>${candidate.evidence_sources ? candidate.evidence_sources.length : 0} sources</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="text-muted">No inhibitors found. Try adjusting the confidence threshold or search terms.</p>';
+                    }
+                    
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Pathway Biomolecules Discovery
+        document.getElementById('pathwayBiomoleculesForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const pathwayName = document.getElementById('pathwayName').value;
+            const minConfidence = parseFloat(document.getElementById('pathwayMinConfidence').value);
+            const maxResults = parseInt(document.getElementById('pathwayMaxResults').value);
+            
+            if (!pathwayName) {
+                alert('Please enter a pathway name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/discover/pathway_biomolecules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pathway_name: pathwayName,
+                        min_confidence: minConfidence,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('pathwayResults').style.display = 'block';
+                    const content = document.getElementById('pathwayResultsContent');
+                    
+                    let html = `<p><strong>Pathway:</strong> ${result.pathway_name}</p>`;
+                    html += `<p><strong>Components Found:</strong> ${result.total_count}</p>`;
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                        html += '<thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Function</th><th>Evidence</th></tr></thead><tbody>';
+                        
+                        result.candidates.forEach(candidate => {
+                            html += `
+                                <tr>
+                                    <td><strong>${candidate.name}</strong></td>
+                                    <td>${candidate.biomolecule_type}</td>
+                                    <td><span class="badge bg-success">${(candidate.confidence_score * 100).toFixed(0)}%</span></td>
+                                    <td>${candidate.function ? candidate.function.substring(0, 100) : 'N/A'}</td>
+                                    <td>${candidate.evidence_sources ? candidate.evidence_sources.length : 0} sources</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="text-muted">No pathway components found. Try adjusting the confidence threshold or search terms.</p>';
+                    }
+                    
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // AI Dataset Builder Form Handlers
+        
+        // Step 1: Build Dataset
+        document.getElementById('buildDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const sourceData = document.getElementById('buildSourceData').value;
+            const filterKeywords = document.getElementById('buildFilterKeywords').value;
+            const modelName = document.getElementById('buildModelName').value;
+            
+            if (!sourceData) {
+                alert('Please provide source data');
+                return;
+            }
+            
+            try {
+                const scrapedData = JSON.parse(sourceData);
+                const filterCriteria = filterKeywords ? {keywords: filterKeywords.split(',').map(k => k.trim())} : null;
+                
+                const response = await fetch('/api/mcp/medicine/dataset/build', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        scraped_data: scrapedData,
+                        filter_criteria: filterCriteria,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('buildDatasetResults').style.display = 'block';
+                    const metrics = result.metrics;
+                    const metricsHtml = `
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${result.filtered_count}</h5>
+                                        <p class="mb-0 small">Total Records</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${(metrics.completeness_score * 100).toFixed(1)}%</h5>
+                                        <p class="mb-0 small">Completeness</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${(metrics.quality_score * 100).toFixed(1)}%</h5>
+                                        <p class="mb-0 small">Quality Score</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${(metrics.diversity_score * 100).toFixed(1)}%</h5>
+                                        <p class="mb-0 small">Diversity</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('buildDatasetMetrics').innerHTML = metricsHtml;
+                    
+                    // Store dataset for next steps
+                    window.builtDataset = result.dataset;
+                    
+                    document.getElementById('buildDatasetOutput').innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Dataset built successfully!</strong> 
+                            Filtered from ${result.original_count} to ${result.filtered_count} records.
+                            <br><small>Model used: ${result.model_used}</small>
+                        </div>
+                        <details>
+                            <summary>View dataset sample (first 3 records)</summary>
+                            <pre class="bg-light p-3 mt-2" style="max-height:300px;overflow:auto;">${JSON.stringify(result.dataset.slice(0, 3), null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Step 2: Analyze Dataset
+        document.getElementById('analyzeDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let dataset = document.getElementById('analyzeDataset').value;
+            const modelName = document.getElementById('analyzeModelName').value;
+            
+            // Use built dataset if available and no input provided
+            if (!dataset && window.builtDataset) {
+                dataset = JSON.stringify(window.builtDataset);
+            }
+            
+            if (!dataset) {
+                alert('Please provide a dataset to analyze');
+                return;
+            }
+            
+            try {
+                const datasetArray = JSON.parse(dataset);
+                
+                const response = await fetch('/api/mcp/medicine/dataset/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        dataset: datasetArray,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('analyzeDatasetResults').style.display = 'block';
+                    const insights = result.insights;
+                    const metrics = result.metrics;
+                    
+                    let insightsHtml = `
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <strong>Dataset Metrics</strong>
+                            </div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Total Records: ${metrics.total_records}</li>
+                                    <li>Unique Records: ${metrics.unique_records}</li>
+                                    <li>Quality Score: ${(metrics.quality_score * 100).toFixed(1)}%</li>
+                                    <li>Relevance Score: ${(metrics.relevance_score * 100).toFixed(1)}%</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (insights.ai_analysis) {
+                        insightsHtml += `
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <strong>AI Analysis</strong>
+                                </div>
+                                <div class="card-body">
+                                    <pre style="white-space: pre-wrap;">${insights.ai_analysis}</pre>
+                                    <small class="text-muted">Model: ${insights.model_used}</small>
+                                </div>
+                            </div>
+                        `;
+                    } else if (insights.common_terms) {
+                        insightsHtml += `
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <strong>Common Terms (Basic Analysis)</strong>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <thead><tr><th>Term</th><th>Count</th></tr></thead>
+                                        <tbody>
+                                            ${insights.common_terms.slice(0, 10).map(t => 
+                                                `<tr><td>${t.term}</td><td>${t.count}</td></tr>`
+                                            ).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('analyzeDatasetInsights').innerHTML = insightsHtml;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Step 3: Transform Dataset
+        document.getElementById('transformDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let dataset = document.getElementById('transformDataset').value;
+            const transformationType = document.getElementById('transformationType').value;
+            const modelName = document.getElementById('transformModelName').value;
+            
+            // Use built dataset if available and no input provided
+            if (!dataset && window.builtDataset) {
+                dataset = JSON.stringify(window.builtDataset);
+            }
+            
+            if (!dataset) {
+                alert('Please provide a dataset to transform');
+                return;
+            }
+            
+            try {
+                const datasetArray = JSON.parse(dataset);
+                
+                const response = await fetch('/api/mcp/medicine/dataset/transform', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        dataset: datasetArray,
+                        transformation_type: transformationType,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('transformDatasetResults').style.display = 'block';
+                    
+                    let outputHtml = '<div class="alert alert-success">Transformation completed successfully!</div>';
+                    
+                    if (result.summaries) {
+                        outputHtml += `<h6>Summaries (${result.count} records)</h6><div class="list-group">`;
+                        result.summaries.forEach(s => {
+                            outputHtml += `
+                                <div class="list-group-item">
+                                    <strong>ID: ${s.original_id}</strong>
+                                    <p class="mb-0">${s.summary}</p>
+                                </div>
+                            `;
+                        });
+                        outputHtml += '</div>';
+                    } else if (result.extracted_entities) {
+                        outputHtml += `<h6>Extracted Entities (${result.count} records)</h6><div class="list-group">`;
+                        result.extracted_entities.forEach(e => {
+                            outputHtml += `
+                                <div class="list-group-item">
+                                    <strong>ID: ${e.record_id}</strong>
+                                    <pre class="mb-0 mt-2 bg-light p-2">${JSON.stringify(e.entities, null, 2)}</pre>
+                                </div>
+                            `;
+                        });
+                        outputHtml += '</div>';
+                    } else if (result.normalized_dataset) {
+                        outputHtml += `<h6>Normalized Dataset (${result.count} records)</h6>`;
+                        outputHtml += `<pre class="bg-light p-3" style="max-height:400px;overflow:auto;">${JSON.stringify(result.normalized_dataset.slice(0, 5), null, 2)}</pre>`;
+                    }
+                    
+                    document.getElementById('transformDatasetOutput').innerHTML = outputHtml;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Step 4: Generate Synthetic Data
+        document.getElementById('generateSyntheticForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const templateData = document.getElementById('syntheticTemplateData').value;
+            const numSamples = parseInt(document.getElementById('syntheticNumSamples').value);
+            const temperature = parseFloat(document.getElementById('syntheticTemperature').value);
+            const modelName = document.getElementById('syntheticModelName').value;
+            
+            if (!templateData) {
+                alert('Please provide template data');
+                return;
+            }
+            
+            try {
+                const templateArray = JSON.parse(templateData);
+                
+                const response = await fetch('/api/mcp/medicine/dataset/generate_synthetic', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        template_data: templateArray,
+                        num_samples: numSamples,
+                        temperature: temperature,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('generateSyntheticResults').style.display = 'block';
+                    
+                    let outputHtml = `
+                        <div class="alert alert-success">
+                            Generated ${result.count} synthetic samples!
+                            ${result.mock ? '<br><small class="text-warning">Note: Using mock data (ipfs_accelerate_py not available)</small>' : ''}
+                        </div>
+                        <h6>Generated Samples:</h6>
+                        <div class="list-group">
+                    `;
+                    
+                    result.synthetic_data.forEach(sample => {
+                        outputHtml += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>${sample.id}</strong>
+                                    <small class="text-muted">Template: ${sample.template_id}</small>
+                                </div>
+                                <p class="mb-0 mt-2">${sample.content}</p>
+                                <small class="text-muted">${sample.generated_at}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    outputHtml += '</div>';
+                    document.getElementById('generateSyntheticOutput').innerHTML = outputHtml;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
     </script>
 </body>
 </html>

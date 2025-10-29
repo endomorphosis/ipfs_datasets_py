@@ -1635,6 +1635,417 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Medicine guidelines query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
+        
+        # Generic MCP Tool Router - ensures all tools go through same code path
+        @self.app.route('/api/mcp/<category>/<tool_name>', methods=['POST'])
+        def api_call_mcp_tool(category, tool_name):
+            """
+            Generic MCP tool router - ensures consistent code path for all tool calls.
+            
+            This route provides a unified interface for calling any MCP tool, ensuring that
+            CLI, dashboard, and Python API all use the same underlying tool functions.
+            """
+            try:
+                # Import the tool dynamically based on category and name
+                module_path = f".mcp_server.tools.{category}.{category.rstrip('s')}_mcp_tools"
+                try:
+                    module = __import__(module_path, fromlist=[tool_name], level=1)
+                    tool_function = getattr(module, tool_name)
+                except (ImportError, AttributeError):
+                    # Try alternate import patterns
+                    try:
+                        module_path = f".mcp_server.tools.{category}.medical_research_mcp_tools"
+                        module = __import__(module_path, fromlist=[tool_name], level=1)
+                        tool_function = getattr(module, tool_name)
+                    except:
+                        return jsonify({
+                            "success": False,
+                            "error": f"Tool '{tool_name}' not found in category '{category}'"
+                        }), 404
+                
+                # Get parameters from request
+                data = request.json or {}
+                params = data.get('params', data)  # Support both formats
+                
+                # Call the tool function (same code path as CLI and Python API)
+                result = tool_function(**params)
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"MCP tool call failed ({category}/{tool_name}): {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        # Medical Research Scraping Routes (specific endpoints for convenience)
+        # Note: These all call the same MCP tool functions as the generic router above
+        @self.app.route('/api/mcp/medicine/scrape/pubmed', methods=['POST'])
+        def api_scrape_pubmed():
+            """Scrape medical research from PubMed (calls MCP tool function)."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_pubmed_medical_research
+                
+                data = request.json or {}
+                query = data.get('query', '')
+                max_results = min(int(data.get('max_results', 100)), 200)
+                email = data.get('email')
+                research_type = data.get('research_type')
+                
+                if not query:
+                    return jsonify({"success": False, "error": "Query is required"}), 400
+                
+                # Call MCP tool function (same code path as CLI and generic router)
+                result = scrape_pubmed_medical_research(
+                    query=query,
+                    max_results=max_results,
+                    email=email,
+                    research_type=research_type
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"PubMed scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/scrape/clinical_trials', methods=['POST'])
+        def api_scrape_clinical_trials():
+            """Scrape clinical trial data from ClinicalTrials.gov."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_clinical_trials
+                
+                data = request.json or {}
+                query = data.get('query', '')
+                condition = data.get('condition')
+                intervention = data.get('intervention')
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                result = scrape_clinical_trials(
+                    query=query,
+                    condition=condition,
+                    intervention=intervention,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Clinical trials scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/scrape/biochemical', methods=['POST'])
+        def api_scrape_biochemical():
+            """Scrape biochemical research data."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_biochemical_research
+                
+                data = request.json or {}
+                topic = data.get('topic', '')
+                max_results = min(int(data.get('max_results', 50)), 100)
+                time_range_days = data.get('time_range_days')
+                
+                if not topic:
+                    return jsonify({"success": False, "error": "Topic is required"}), 400
+                
+                result = scrape_biochemical_research(
+                    topic=topic,
+                    max_results=max_results,
+                    time_range_days=time_range_days
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Biochemical research scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/theorems/generate', methods=['POST'])
+        def api_generate_medical_theorems():
+            """Generate medical theorems from clinical trial data."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import generate_medical_theorems_from_trials
+                
+                data = request.json or {}
+                trial_data = data.get('trial_data', {})
+                outcomes_data = data.get('outcomes_data', {})
+                
+                if not trial_data or not outcomes_data:
+                    return jsonify({"success": False, "error": "Both trial_data and outcomes_data are required"}), 400
+                
+                result = generate_medical_theorems_from_trials(trial_data, outcomes_data)
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Theorem generation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/theorems/validate', methods=['POST'])
+        def api_validate_medical_theorem():
+            """Validate a medical theorem using fuzzy logic."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import validate_medical_theorem_fuzzy
+                
+                data = request.json or {}
+                theorem_data = data.get('theorem_data', {})
+                empirical_data = data.get('empirical_data', {})
+                
+                if not theorem_data:
+                    return jsonify({"success": False, "error": "Theorem data is required"}), 400
+                
+                result = validate_medical_theorem_fuzzy(theorem_data, empirical_data)
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Theorem validation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/scrape/population', methods=['POST'])
+        def api_scrape_population_data():
+            """Scrape population health data for theorem validation."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_population_health_data
+                
+                data = request.json or {}
+                condition = data.get('condition', '')
+                intervention = data.get('intervention')
+                
+                if not condition:
+                    return jsonify({"success": False, "error": "Condition is required"}), 400
+                
+                result = scrape_population_health_data(
+                    condition=condition,
+                    intervention=intervention
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Population data scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        # Biomolecule Discovery Routes
+        @self.app.route('/api/mcp/medicine/discover/protein_binders', methods=['POST'])
+        def api_discover_protein_binders():
+            """Discover protein binders using RAG."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_protein_binders
+                
+                data = request.json or {}
+                target_protein = data.get('target_protein', '')
+                interaction_type = data.get('interaction_type')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                if not target_protein:
+                    return jsonify({"success": False, "error": "Target protein is required"}), 400
+                
+                result = discover_protein_binders(
+                    target_protein=target_protein,
+                    interaction_type=interaction_type,
+                    min_confidence=min_confidence,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Protein binder discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/discover/enzyme_inhibitors', methods=['POST'])
+        def api_discover_enzyme_inhibitors():
+            """Discover enzyme inhibitors using RAG."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_enzyme_inhibitors
+                
+                data = request.json or {}
+                target_enzyme = data.get('target_enzyme', '')
+                enzyme_class = data.get('enzyme_class')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                if not target_enzyme:
+                    return jsonify({"success": False, "error": "Target enzyme is required"}), 400
+                
+                result = discover_enzyme_inhibitors(
+                    target_enzyme=target_enzyme,
+                    enzyme_class=enzyme_class,
+                    min_confidence=min_confidence,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Enzyme inhibitor discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/discover/pathway_biomolecules', methods=['POST'])
+        def api_discover_pathway_biomolecules():
+            """Discover pathway biomolecules using RAG."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_pathway_biomolecules
+                
+                data = request.json or {}
+                pathway_name = data.get('pathway_name', '')
+                biomolecule_types = data.get('biomolecule_types')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 100)), 200)
+                
+                if not pathway_name:
+                    return jsonify({"success": False, "error": "Pathway name is required"}), 400
+                
+                result = discover_pathway_biomolecules(
+                    pathway_name=pathway_name,
+                    biomolecule_types=biomolecule_types,
+                    min_confidence=min_confidence,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Pathway biomolecule discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/discover/biomolecules_rag', methods=['POST'])
+        def api_discover_biomolecules_rag():
+            """High-level RAG-based biomolecule discovery."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_biomolecules_rag
+                
+                data = request.json or {}
+                target = data.get('target', '')
+                discovery_type = data.get('discovery_type', 'binders')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                if not target:
+                    return jsonify({"success": False, "error": "Target is required"}), 400
+                
+                result = discover_biomolecules_rag(
+                    target=target,
+                    discovery_type=discovery_type,
+                    max_results=max_results,
+                    min_confidence=min_confidence
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"RAG biomolecule discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        # AI-Powered Dataset Builder Routes
+        @self.app.route('/api/mcp/medicine/dataset/build', methods=['POST'])
+        def api_build_medical_dataset():
+            """Build structured dataset from scraped data using AI."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import build_dataset_from_scraped_data
+                
+                data = request.json or {}
+                scraped_data = data.get('scraped_data', [])
+                filter_criteria = data.get('filter_criteria')
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                
+                if not scraped_data:
+                    return jsonify({"success": False, "error": "Scraped data is required"}), 400
+                
+                result = build_dataset_from_scraped_data(
+                    scraped_data=scraped_data,
+                    filter_criteria=filter_criteria,
+                    model_name=model_name
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset building failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/dataset/analyze', methods=['POST'])
+        def api_analyze_medical_dataset():
+            """Analyze medical dataset using AI models."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import analyze_dataset_with_ai
+                
+                data = request.json or {}
+                dataset = data.get('dataset', [])
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                
+                if not dataset:
+                    return jsonify({"success": False, "error": "Dataset is required"}), 400
+                
+                result = analyze_dataset_with_ai(
+                    dataset=dataset,
+                    model_name=model_name
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset analysis failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/dataset/transform', methods=['POST'])
+        def api_transform_medical_dataset():
+            """Transform medical dataset using AI (summarize, extract entities, normalize)."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import transform_dataset_with_ai
+                
+                data = request.json or {}
+                dataset = data.get('dataset', [])
+                transformation_type = data.get('transformation_type', 'normalize')
+                parameters = data.get('parameters')
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                
+                if not dataset:
+                    return jsonify({"success": False, "error": "Dataset is required"}), 400
+                
+                if transformation_type not in ['summarize', 'extract_entities', 'normalize', 'extrapolate']:
+                    return jsonify({"success": False, "error": f"Invalid transformation type: {transformation_type}"}), 400
+                
+                result = transform_dataset_with_ai(
+                    dataset=dataset,
+                    transformation_type=transformation_type,
+                    parameters=parameters,
+                    model_name=model_name
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset transformation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/dataset/generate_synthetic', methods=['POST'])
+        def api_generate_synthetic_data():
+            """Generate synthetic medical research data for testing and evaluation."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import generate_synthetic_dataset
+                
+                data = request.json or {}
+                template_data = data.get('template_data', [])
+                num_samples = min(int(data.get('num_samples', 10)), 50)  # Limit to 50 for performance
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                temperature = float(data.get('temperature', 0.7))
+                
+                if not template_data:
+                    return jsonify({"success": False, "error": "Template data is required"}), 400
+                
+                result = generate_synthetic_dataset(
+                    template_data=template_data,
+                    num_samples=num_samples,
+                    model_name=model_name,
+                    temperature=temperature
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Synthetic data generation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_legal_dataset_routes(self) -> None:
         """Set up legal dataset scraping routes."""
