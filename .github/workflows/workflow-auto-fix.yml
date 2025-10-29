@@ -1,0 +1,317 @@
+name: Workflow Auto-Fix System
+
+on:
+  workflow_run:
+    workflows: ["*"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      workflow_name:
+        description: 'Name of the failed workflow to analyze'
+        required: false
+        type: string
+      run_id:
+        description: 'Specific workflow run ID to analyze'
+        required: false
+        type: string
+      create_pr:
+        description: 'Create PR for the fix'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  detect-and-fix:
+    runs-on: ubuntu-latest
+    # Only run if the triggering workflow failed
+    if: >
+      github.event_name == 'workflow_dispatch' || 
+      (github.event.workflow_run.conclusion == 'failure' && 
+       github.event.workflow_run.event != 'workflow_run')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML requests
+      
+      - name: Get workflow run details
+        id: get_run_details
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.run_id }}" ]; then
+              RUN_ID="${{ github.event.inputs.run_id }}"
+            else
+              # Get the latest failed run for the specified workflow
+              WORKFLOW_NAME="${{ github.event.inputs.workflow_name }}"
+              echo "Getting latest failed run for workflow: $WORKFLOW_NAME"
+              RUN_ID=$(gh run list --workflow="$WORKFLOW_NAME" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' || echo "")
+            fi
+          else
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          fi
+          
+          if [ -z "$RUN_ID" ]; then
+            echo "No workflow run ID found"
+            exit 0
+          fi
+          
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          
+          # Get workflow details
+          WORKFLOW_NAME=$(gh run view $RUN_ID --json workflowName --jq '.workflowName')
+          WORKFLOW_FILE=$(gh run view $RUN_ID --json workflowDatabaseId --jq '.workflowDatabaseId')
+          HEAD_BRANCH=$(gh run view $RUN_ID --json headBranch --jq '.headBranch')
+          HEAD_SHA=$(gh run view $RUN_ID --json headSha --jq '.headSha')
+          
+          echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
+          echo "head_branch=$HEAD_BRANCH" >> $GITHUB_OUTPUT
+          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+          
+          echo "## Workflow Failure Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: $WORKFLOW_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID**: $RUN_ID" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: $HEAD_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA**: $HEAD_SHA" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Download workflow logs
+        id: download_logs
+        if: steps.get_run_details.outputs.run_id != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
+          
+          echo "📥 Downloading logs for run $RUN_ID..."
+          mkdir -p /tmp/workflow_logs
+          
+          # Get failed jobs
+          gh run view $RUN_ID --json jobs --jq '.jobs[] | select(.conclusion == "failure") | .databaseId' > /tmp/failed_jobs.txt
+          
+          if [ ! -s /tmp/failed_jobs.txt ]; then
+            echo "No failed jobs found"
+            echo "has_failures=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "has_failures=true" >> $GITHUB_OUTPUT
+          
+          # Download logs for each failed job
+          while IFS= read -r job_id; do
+            if [ -n "$job_id" ]; then
+              echo "Downloading logs for job $job_id..."
+              gh run view $RUN_ID --log --job $job_id > "/tmp/workflow_logs/job_${job_id}.log" 2>&1 || true
+            fi
+          done < /tmp/failed_jobs.txt
+          
+          # Create a summary of failures
+          echo "## Failed Jobs Summary" > /tmp/workflow_logs/summary.txt
+          gh run view $RUN_ID --json jobs --jq '.jobs[] | select(.conclusion == "failure") | "### \(.name)\n- Status: \(.conclusion)\n- Steps: \(.steps[] | select(.conclusion == "failure") | .name)\n"' >> /tmp/workflow_logs/summary.txt
+          
+          cat /tmp/workflow_logs/summary.txt
+      
+      - name: Analyze workflow failure
+        id: analyze_failure
+        if: steps.download_logs.outputs.has_failures == 'true'
+        run: |
+          python .github/scripts/analyze_workflow_failure.py \
+            --run-id "${{ steps.get_run_details.outputs.run_id }}" \
+            --workflow-name "${{ steps.get_run_details.outputs.workflow_name }}" \
+            --logs-dir /tmp/workflow_logs \
+            --output /tmp/failure_analysis.json
+          
+          if [ -f /tmp/failure_analysis.json ]; then
+            echo "analysis_available=true" >> $GITHUB_OUTPUT
+            
+            # Extract key findings for summary
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Failure Analysis" >> $GITHUB_STEP_SUMMARY
+            python -c "
+          import json
+          with open('/tmp/failure_analysis.json') as f:
+              data = json.load(f)
+              print('- **Error Type**: ' + data.get('error_type', 'Unknown'))
+              print('- **Root Cause**: ' + data.get('root_cause', 'Not identified'))
+              print('- **Fix Confidence**: ' + str(data.get('fix_confidence', 0)) + '%')
+          " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "analysis_available=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate fix proposal
+        id: generate_fix
+        if: steps.analyze_failure.outputs.analysis_available == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python .github/scripts/generate_workflow_fix.py \
+            --analysis /tmp/failure_analysis.json \
+            --workflow-name "${{ steps.get_run_details.outputs.workflow_name }}" \
+            --output /tmp/fix_proposal.json
+          
+          if [ -f /tmp/fix_proposal.json ]; then
+            echo "fix_available=true" >> $GITHUB_OUTPUT
+            
+            # Extract fix details
+            FIX_BRANCH=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['branch_name'])")
+            FIX_TITLE=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['pr_title'])")
+            
+            echo "fix_branch=$FIX_BRANCH" >> $GITHUB_OUTPUT
+            echo "fix_title=$FIX_TITLE" >> $GITHUB_OUTPUT
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Fix Proposal" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branch**: \`$FIX_BRANCH\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Title**: $FIX_TITLE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "fix_available=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create fix branch and apply changes
+        id: apply_fix
+        if: steps.generate_fix.outputs.fix_available == 'true'
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Create and checkout fix branch
+          BRANCH_NAME="${{ steps.generate_fix.outputs.fix_branch }}"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Apply the fix from the proposal
+          python .github/scripts/apply_workflow_fix.py \
+            --proposal /tmp/fix_proposal.json \
+            --repo-path .
+          
+          # Check if there are changes
+          if git diff --quiet; then
+            echo "No changes to commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            
+            # Commit changes
+            git add -A
+            git commit -m "fix: ${{ steps.generate_fix.outputs.fix_title }}
+
+          This is an automated fix generated by the workflow auto-fix system.
+          
+          Related workflow run: ${{ steps.get_run_details.outputs.run_id }}
+          Failed workflow: ${{ steps.get_run_details.outputs.workflow_name }}
+          
+          Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+            
+            # Push branch
+            git push origin "$BRANCH_NAME"
+          fi
+      
+      - name: Create Pull Request
+        id: create_pr
+        if: steps.apply_fix.outputs.has_changes == 'true' && (github.event.inputs.create_pr != 'false')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.generate_fix.outputs.fix_branch }}"
+          PR_TITLE="${{ steps.generate_fix.outputs.fix_title }}"
+          
+          # Read PR description from fix proposal
+          PR_BODY=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['pr_description'])")
+          
+          # Create PR using GitHub CLI
+          PR_URL=$(gh pr create \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --label "automated-fix,workflow-fix,copilot-ready")
+          
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Pull Request Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **PR URL**: $PR_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. GitHub Copilot will automatically review the PR" >> $GITHUB_STEP_SUMMARY
+          echo "2. The fix will be validated against the original failure" >> $GITHUB_STEP_SUMMARY
+          echo "3. If tests pass, the PR can be merged" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Comment on original issue
+        if: steps.create_pr.outputs.pr_url != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find or create an issue for the failed workflow
+          ISSUE_TITLE="Workflow Failure: ${{ steps.get_run_details.outputs.workflow_name }}"
+          
+          # Check if issue already exists
+          ISSUE_NUMBER=$(gh issue list --search "$ISSUE_TITLE" --state open --json number --jq '.[0].number' || echo "")
+          
+          if [ -z "$ISSUE_NUMBER" ]; then
+            # Create new issue
+            ISSUE_NUMBER=$(gh issue create \
+              --title "$ISSUE_TITLE" \
+              --body "Automated tracking issue for workflow failures in ${{ steps.get_run_details.outputs.workflow_name }}" \
+              --label "automated,workflow-failure" | grep -oP '\d+$')
+          fi
+          
+          # Add comment about the fix PR
+          gh issue comment "$ISSUE_NUMBER" --body "🤖 **Automated Fix Available**
+
+          A pull request has been created to fix this workflow failure:
+          
+          - **PR**: ${{ steps.create_pr.outputs.pr_url }}
+          - **Failed Run**: https://github.com/${{ github.repository }}/actions/runs/${{ steps.get_run_details.outputs.run_id }}
+          - **Branch**: \`${{ steps.generate_fix.outputs.fix_branch }}\`
+          
+          The fix has been automatically generated and is ready for GitHub Copilot review."
+      
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-autofix-${{ steps.get_run_details.outputs.run_id }}
+          path: |
+            /tmp/workflow_logs/
+            /tmp/failure_analysis.json
+            /tmp/fix_proposal.json
+          retention-days: 30
+      
+      - name: Report status
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow Auto-Fix Status" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ Run ID: ${{ steps.get_run_details.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Analysis: ${{ steps.analyze_failure.outputs.analysis_available }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 💾 Changes Applied: ${{ steps.apply_fix.outputs.has_changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔀 PR Created: ${{ steps.create_pr.outputs.pr_url != '' }}" >> $GITHUB_STEP_SUMMARY
