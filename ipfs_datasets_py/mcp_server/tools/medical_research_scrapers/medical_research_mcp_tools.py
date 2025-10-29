@@ -29,6 +29,19 @@ except ImportError:
     FuzzyLogicValidator = None
     TimeSeriesTheoremValidator = None
 
+try:
+    from ..medical_research_scrapers.biomolecule_discovery import (
+        BiomoleculeDiscoveryEngine,
+        discover_biomolecules_for_target,
+        BiomoleculeType,
+        InteractionType
+    )
+except ImportError:
+    BiomoleculeDiscoveryEngine = None
+    discover_biomolecules_for_target = None
+    BiomoleculeType = None
+    InteractionType = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +430,302 @@ def scrape_population_health_data(
         }
     except Exception as e:
         logger.error(f"Population health data scraping failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def discover_protein_binders(
+    target_protein: str,
+    interaction_type: Optional[str] = None,
+    min_confidence: float = 0.5,
+    max_results: int = 50
+) -> Dict[str, Any]:
+    """
+    Discover protein binders for a target protein using RAG.
+    
+    This tool searches medical research to find proteins, antibodies, or peptides
+    that bind to the specified target protein. Useful for finding candidates for
+    generative protein binder design.
+    
+    Args:
+        target_protein: Name of the target protein (e.g., "SARS-CoV-2 spike", "PD-L1")
+        interaction_type: Type of interaction ("binding", "inhibition", "activation")
+        min_confidence: Minimum confidence score (0-1) for candidates
+        max_results: Maximum number of candidates to return
+        
+    Returns:
+        Dictionary containing:
+        - candidates: List of biomolecule candidates with metadata
+        - total_count: Total number of candidates found
+        - target: Original target protein query
+        
+    Example:
+        >>> result = discover_protein_binders(
+        ...     "PD-L1",
+        ...     interaction_type="binding",
+        ...     min_confidence=0.7,
+        ...     max_results=20
+        ... )
+        >>> for candidate in result['candidates']:
+        ...     print(f"{candidate['name']}: {candidate['confidence_score']:.2f}")
+    """
+    if BiomoleculeDiscoveryEngine is None:
+        return {
+            "success": False,
+            "error": "BiomoleculeDiscoveryEngine not available"
+        }
+    
+    try:
+        engine = BiomoleculeDiscoveryEngine(use_rag=True)
+        
+        # Convert interaction_type string to enum
+        interaction = None
+        if interaction_type:
+            try:
+                interaction = InteractionType[interaction_type.upper()]
+            except (KeyError, AttributeError):
+                logger.warning(f"Unknown interaction type: {interaction_type}")
+        
+        # Discover binders
+        candidates = engine.discover_protein_binders(
+            target_protein=target_protein,
+            interaction_type=interaction,
+            min_confidence=min_confidence,
+            max_results=max_results
+        )
+        
+        # Convert to dictionaries
+        candidate_dicts = [
+            {
+                'name': c.name,
+                'biomolecule_type': c.biomolecule_type.value,
+                'uniprot_id': c.uniprot_id,
+                'function': c.function,
+                'confidence_score': c.confidence_score,
+                'evidence_sources': c.evidence_sources,
+                'interactions': c.interactions,
+                'therapeutic_relevance': c.therapeutic_relevance,
+                'metadata': c.metadata
+            }
+            for c in candidates
+        ]
+        
+        return {
+            "success": True,
+            "target": target_protein,
+            "interaction_type": interaction_type,
+            "candidates": candidate_dicts,
+            "total_count": len(candidate_dicts)
+        }
+    except Exception as e:
+        logger.error(f"Protein binder discovery failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def discover_enzyme_inhibitors(
+    target_enzyme: str,
+    enzyme_class: Optional[str] = None,
+    min_confidence: float = 0.5,
+    max_results: int = 50
+) -> Dict[str, Any]:
+    """
+    Discover enzyme inhibitors using RAG.
+    
+    Searches medical research for small molecules, peptides, or proteins
+    that inhibit the specified enzyme.
+    
+    Args:
+        target_enzyme: Name of the target enzyme (e.g., "ACE2", "TMPRSS2", "protease")
+        enzyme_class: Enzyme classification (e.g., "kinase", "protease", "polymerase")
+        min_confidence: Minimum confidence score
+        max_results: Maximum number of candidates
+        
+    Returns:
+        Dictionary containing enzyme inhibitor candidates
+    """
+    if BiomoleculeDiscoveryEngine is None:
+        return {
+            "success": False,
+            "error": "BiomoleculeDiscoveryEngine not available"
+        }
+    
+    try:
+        engine = BiomoleculeDiscoveryEngine(use_rag=True)
+        
+        candidates = engine.discover_enzyme_inhibitors(
+            target_enzyme=target_enzyme,
+            enzyme_class=enzyme_class,
+            min_confidence=min_confidence,
+            max_results=max_results
+        )
+        
+        # Convert to dictionaries
+        candidate_dicts = [
+            {
+                'name': c.name,
+                'biomolecule_type': c.biomolecule_type.value,
+                'pubchem_id': c.pubchem_id,
+                'function': c.function,
+                'confidence_score': c.confidence_score,
+                'evidence_sources': c.evidence_sources,
+                'interactions': c.interactions,
+                'metadata': c.metadata
+            }
+            for c in candidates
+        ]
+        
+        return {
+            "success": True,
+            "target_enzyme": target_enzyme,
+            "enzyme_class": enzyme_class,
+            "candidates": candidate_dicts,
+            "total_count": len(candidate_dicts)
+        }
+    except Exception as e:
+        logger.error(f"Enzyme inhibitor discovery failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def discover_pathway_biomolecules(
+    pathway_name: str,
+    biomolecule_types: Optional[List[str]] = None,
+    min_confidence: float = 0.5,
+    max_results: int = 100
+) -> Dict[str, Any]:
+    """
+    Discover biomolecules involved in a biological pathway using RAG.
+    
+    Useful for understanding pathway components and finding intervention targets.
+    
+    Args:
+        pathway_name: Name of the pathway (e.g., "mTOR signaling", "glycolysis")
+        biomolecule_types: List of biomolecule types to search for
+        min_confidence: Minimum confidence score
+        max_results: Maximum number of candidates
+        
+    Returns:
+        Dictionary containing pathway biomolecule candidates
+    """
+    if BiomoleculeDiscoveryEngine is None:
+        return {
+            "success": False,
+            "error": "BiomoleculeDiscoveryEngine not available"
+        }
+    
+    try:
+        engine = BiomoleculeDiscoveryEngine(use_rag=True)
+        
+        # Convert biomolecule_types strings to enums
+        types = None
+        if biomolecule_types:
+            types = []
+            for t in biomolecule_types:
+                try:
+                    types.append(BiomoleculeType[t.upper()])
+                except (KeyError, AttributeError):
+                    logger.warning(f"Unknown biomolecule type: {t}")
+        
+        candidates = engine.discover_pathway_biomolecules(
+            pathway_name=pathway_name,
+            biomolecule_types=types,
+            min_confidence=min_confidence,
+            max_results=max_results
+        )
+        
+        # Convert to dictionaries
+        candidate_dicts = [
+            {
+                'name': c.name,
+                'biomolecule_type': c.biomolecule_type.value,
+                'function': c.function,
+                'confidence_score': c.confidence_score,
+                'evidence_sources': c.evidence_sources,
+                'metadata': c.metadata
+            }
+            for c in candidates
+        ]
+        
+        return {
+            "success": True,
+            "pathway_name": pathway_name,
+            "candidates": candidate_dicts,
+            "total_count": len(candidate_dicts)
+        }
+    except Exception as e:
+        logger.error(f"Pathway biomolecule discovery failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def discover_biomolecules_rag(
+    target: str,
+    discovery_type: str = "binders",
+    max_results: int = 50,
+    min_confidence: float = 0.5
+) -> Dict[str, Any]:
+    """
+    High-level RAG-based biomolecule discovery for generative protein design.
+    
+    This is a simplified interface that wraps the biomolecule discovery engine
+    for easy integration with generative protein binder design workflows.
+    
+    Args:
+        target: Target protein, enzyme, or pathway name
+        discovery_type: Type of discovery ("binders", "inhibitors", "pathway")
+        max_results: Maximum number of candidates
+        min_confidence: Minimum confidence threshold
+        
+    Returns:
+        Dictionary containing biomolecule candidates ready for downstream processing
+        
+    Example:
+        >>> # Find binders for SARS-CoV-2 spike protein
+        >>> result = discover_biomolecules_rag(
+        ...     "SARS-CoV-2 spike protein",
+        ...     discovery_type="binders",
+        ...     max_results=20
+        ... )
+        >>> 
+        >>> # Find inhibitors for a protease
+        >>> result = discover_biomolecules_rag(
+        ...     "TMPRSS2",
+        ...     discovery_type="inhibitors"
+        ... )
+    """
+    if discover_biomolecules_for_target is None:
+        return {
+            "success": False,
+            "error": "Biomolecule discovery not available"
+        }
+    
+    try:
+        candidates = discover_biomolecules_for_target(
+            target=target,
+            discovery_type=discovery_type,
+            max_results=max_results,
+            min_confidence=min_confidence
+        )
+        
+        return {
+            "success": True,
+            "target": target,
+            "discovery_type": discovery_type,
+            "candidates": candidates,
+            "total_count": len(candidates),
+            "message": f"Found {len(candidates)} candidate biomolecules for {target}"
+        }
+    except Exception as e:
+        logger.error(f"RAG biomolecule discovery failed: {e}")
         return {
             "success": False,
             "error": str(e)

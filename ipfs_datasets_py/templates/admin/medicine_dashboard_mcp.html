@@ -752,6 +752,11 @@
                                     <i class="fas fa-users"></i> Population Data
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#biomolecule-discovery" role="tab">
+                                    <i class="fas fa-dna"></i> Biomolecule Discovery
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -3109,6 +3114,150 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Biomolecule Discovery Tab -->
+                    <div class="tab-pane fade" id="biomolecule-discovery" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-dna"></i> Biomolecule Discovery with RAG</h5>
+                                <small class="text-white">Find candidate biomolecules for protein binder design and drug discovery</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About Biomolecule Discovery</h6>
+                                    <p class="mb-0">Use Retrieval Augmented Generation (RAG) to discover protein binders, enzyme inhibitors, and pathway biomolecules from medical research. Candidates can be used for generative protein binder design workflows.</p>
+                                </div>
+                                
+                                <!-- Discovery Type Tabs -->
+                                <ul class="nav nav-tabs mb-3" id="discoveryTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="binders-tab" data-bs-toggle="tab" data-bs-target="#binders-panel" type="button" role="tab">
+                                            <i class="fas fa-magnet"></i> Protein Binders
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="inhibitors-tab" data-bs-toggle="tab" data-bs-target="#inhibitors-panel" type="button" role="tab">
+                                            <i class="fas fa-ban"></i> Enzyme Inhibitors
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pathway-tab" data-bs-toggle="tab" data-bs-target="#pathway-panel" type="button" role="tab">
+                                            <i class="fas fa-project-diagram"></i> Pathway Biomolecules
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="discoveryTabContent">
+                                    <!-- Protein Binders Panel -->
+                                    <div class="tab-pane fade show active" id="binders-panel" role="tabpanel">
+                                        <form id="proteinBindersForm">
+                                            <div class="row">
+                                                <div class="col-md-8 mb-3">
+                                                    <label for="binderTargetProtein" class="form-label">Target Protein</label>
+                                                    <input type="text" class="form-control" id="binderTargetProtein" placeholder="e.g., SARS-CoV-2 spike, PD-L1, ACE2">
+                                                    <small class="text-muted">Enter the name of the target protein for binder discovery</small>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="binderInteraction" class="form-label">Interaction Type</label>
+                                                    <select class="form-select" id="binderInteraction">
+                                                        <option value="">All Types</option>
+                                                        <option value="binding">Binding</option>
+                                                        <option value="inhibition">Inhibition</option>
+                                                        <option value="activation">Activation</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="binderMinConfidence" class="form-label">Min Confidence</label>
+                                                    <input type="range" class="form-range" id="binderMinConfidence" min="0" max="1" step="0.1" value="0.5">
+                                                    <small class="text-muted">Confidence: <span id="binderConfidenceValue">0.5</span></small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="binderMaxResults" class="form-label">Max Results</label>
+                                                    <input type="number" class="form-control" id="binderMaxResults" value="50" min="1" max="100">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-search"></i> Discover Binders
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="bindersResults" class="mt-4" style="display:none;">
+                                            <h6>Discovered Protein Binders</h6>
+                                            <div id="bindersResultsContent"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Enzyme Inhibitors Panel -->
+                                    <div class="tab-pane fade" id="inhibitors-panel" role="tabpanel">
+                                        <form id="enzymeInhibitorsForm">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorTargetEnzyme" class="form-label">Target Enzyme</label>
+                                                    <input type="text" class="form-control" id="inhibitorTargetEnzyme" placeholder="e.g., ACE2, TMPRSS2, protease">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorEnzymeClass" class="form-label">Enzyme Class (Optional)</label>
+                                                    <input type="text" class="form-control" id="inhibitorEnzymeClass" placeholder="e.g., kinase, protease, polymerase">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorMinConfidence" class="form-label">Min Confidence</label>
+                                                    <input type="range" class="form-range" id="inhibitorMinConfidence" min="0" max="1" step="0.1" value="0.5">
+                                                    <small class="text-muted">Confidence: <span id="inhibitorConfidenceValue">0.5</span></small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="inhibitorMaxResults" class="form-label">Max Results</label>
+                                                    <input type="number" class="form-control" id="inhibitorMaxResults" value="50" min="1" max="100">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-search"></i> Discover Inhibitors
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="inhibitorsResults" class="mt-4" style="display:none;">
+                                            <h6>Discovered Enzyme Inhibitors</h6>
+                                            <div id="inhibitorsResultsContent"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Pathway Biomolecules Panel -->
+                                    <div class="tab-pane fade" id="pathway-panel" role="tabpanel">
+                                        <form id="pathwayBiomoleculesForm">
+                                            <div class="row">
+                                                <div class="col-md-12 mb-3">
+                                                    <label for="pathwayName" class="form-label">Pathway Name</label>
+                                                    <input type="text" class="form-control" id="pathwayName" placeholder="e.g., mTOR signaling, glycolysis, MAPK pathway">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="pathwayMinConfidence" class="form-label">Min Confidence</label>
+                                                    <input type="range" class="form-range" id="pathwayMinConfidence" min="0" max="1" step="0.1" value="0.5">
+                                                    <small class="text-muted">Confidence: <span id="pathwayConfidenceValue">0.5</span></small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="pathwayMaxResults" class="form-label">Max Results</label>
+                                                    <input type="number" class="form-control" id="pathwayMaxResults" value="100" min="1" max="200">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-search"></i> Discover Pathway Components
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="pathwayResults" class="mt-4" style="display:none;">
+                                            <h6>Discovered Pathway Biomolecules</h6>
+                                            <div id="pathwayResultsContent"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -5344,6 +5493,209 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                         `;
                     });
                     html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Biomolecule Discovery Event Handlers
+        
+        // Update confidence value displays
+        document.getElementById('binderMinConfidence').addEventListener('input', function() {
+            document.getElementById('binderConfidenceValue').textContent = this.value;
+        });
+        document.getElementById('inhibitorMinConfidence').addEventListener('input', function() {
+            document.getElementById('inhibitorConfidenceValue').textContent = this.value;
+        });
+        document.getElementById('pathwayMinConfidence').addEventListener('input', function() {
+            document.getElementById('pathwayConfidenceValue').textContent = this.value;
+        });
+        
+        // Protein Binders Discovery
+        document.getElementById('proteinBindersForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const targetProtein = document.getElementById('binderTargetProtein').value;
+            const interactionType = document.getElementById('binderInteraction').value;
+            const minConfidence = parseFloat(document.getElementById('binderMinConfidence').value);
+            const maxResults = parseInt(document.getElementById('binderMaxResults').value);
+            
+            if (!targetProtein) {
+                alert('Please enter a target protein');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/discover/protein_binders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_protein: targetProtein,
+                        interaction_type: interactionType || null,
+                        min_confidence: minConfidence,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('bindersResults').style.display = 'block';
+                    const content = document.getElementById('bindersResultsContent');
+                    
+                    let html = `<p><strong>Target:</strong> ${result.target}</p>`;
+                    html += `<p><strong>Candidates Found:</strong> ${result.total_count}</p>`;
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                        html += '<thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Function</th><th>Evidence</th></tr></thead><tbody>';
+                        
+                        result.candidates.forEach(candidate => {
+                            html += `
+                                <tr>
+                                    <td><strong>${candidate.name}</strong></td>
+                                    <td>${candidate.biomolecule_type}</td>
+                                    <td><span class="badge bg-primary">${(candidate.confidence_score * 100).toFixed(0)}%</span></td>
+                                    <td>${candidate.function ? candidate.function.substring(0, 100) : 'N/A'}</td>
+                                    <td>${candidate.evidence_sources ? candidate.evidence_sources.length : 0} sources</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="text-muted">No candidates found. Try adjusting the confidence threshold or search terms.</p>';
+                    }
+                    
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Enzyme Inhibitors Discovery
+        document.getElementById('enzymeInhibitorsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const targetEnzyme = document.getElementById('inhibitorTargetEnzyme').value;
+            const enzymeClass = document.getElementById('inhibitorEnzymeClass').value;
+            const minConfidence = parseFloat(document.getElementById('inhibitorMinConfidence').value);
+            const maxResults = parseInt(document.getElementById('inhibitorMaxResults').value);
+            
+            if (!targetEnzyme) {
+                alert('Please enter a target enzyme');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/discover/enzyme_inhibitors', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_enzyme: targetEnzyme,
+                        enzyme_class: enzymeClass || null,
+                        min_confidence: minConfidence,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('inhibitorsResults').style.display = 'block';
+                    const content = document.getElementById('inhibitorsResultsContent');
+                    
+                    let html = `<p><strong>Target Enzyme:</strong> ${result.target_enzyme}</p>`;
+                    html += `<p><strong>Inhibitors Found:</strong> ${result.total_count}</p>`;
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                        html += '<thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Function</th><th>Evidence</th></tr></thead><tbody>';
+                        
+                        result.candidates.forEach(candidate => {
+                            html += `
+                                <tr>
+                                    <td><strong>${candidate.name}</strong></td>
+                                    <td>${candidate.biomolecule_type}</td>
+                                    <td><span class="badge bg-warning">${(candidate.confidence_score * 100).toFixed(0)}%</span></td>
+                                    <td>${candidate.function || 'N/A'}</td>
+                                    <td>${candidate.evidence_sources ? candidate.evidence_sources.length : 0} sources</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="text-muted">No inhibitors found. Try adjusting the confidence threshold or search terms.</p>';
+                    }
+                    
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Pathway Biomolecules Discovery
+        document.getElementById('pathwayBiomoleculesForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const pathwayName = document.getElementById('pathwayName').value;
+            const minConfidence = parseFloat(document.getElementById('pathwayMinConfidence').value);
+            const maxResults = parseInt(document.getElementById('pathwayMaxResults').value);
+            
+            if (!pathwayName) {
+                alert('Please enter a pathway name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/discover/pathway_biomolecules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pathway_name: pathwayName,
+                        min_confidence: minConfidence,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('pathwayResults').style.display = 'block';
+                    const content = document.getElementById('pathwayResultsContent');
+                    
+                    let html = `<p><strong>Pathway:</strong> ${result.pathway_name}</p>`;
+                    html += `<p><strong>Components Found:</strong> ${result.total_count}</p>`;
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                        html += '<thead><tr><th>Name</th><th>Type</th><th>Confidence</th><th>Function</th><th>Evidence</th></tr></thead><tbody>';
+                        
+                        result.candidates.forEach(candidate => {
+                            html += `
+                                <tr>
+                                    <td><strong>${candidate.name}</strong></td>
+                                    <td>${candidate.biomolecule_type}</td>
+                                    <td><span class="badge bg-success">${(candidate.confidence_score * 100).toFixed(0)}%</span></td>
+                                    <td>${candidate.function ? candidate.function.substring(0, 100) : 'N/A'}</td>
+                                    <td>${candidate.evidence_sources ? candidate.evidence_sources.length : 0} sources</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="text-muted">No pathway components found. Try adjusting the confidence threshold or search terms.</p>';
+                    }
+                    
                     content.innerHTML = html;
                 } else {
                     alert('Error: ' + result.error);

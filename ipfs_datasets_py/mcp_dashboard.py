@@ -1781,6 +1781,119 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Population data scraping failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
+        
+        # Biomolecule Discovery Routes
+        @self.app.route('/api/mcp/medicine/discover/protein_binders', methods=['POST'])
+        def api_discover_protein_binders():
+            """Discover protein binders using RAG."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_protein_binders
+                
+                data = request.json or {}
+                target_protein = data.get('target_protein', '')
+                interaction_type = data.get('interaction_type')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                if not target_protein:
+                    return jsonify({"success": False, "error": "Target protein is required"}), 400
+                
+                result = discover_protein_binders(
+                    target_protein=target_protein,
+                    interaction_type=interaction_type,
+                    min_confidence=min_confidence,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Protein binder discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/discover/enzyme_inhibitors', methods=['POST'])
+        def api_discover_enzyme_inhibitors():
+            """Discover enzyme inhibitors using RAG."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_enzyme_inhibitors
+                
+                data = request.json or {}
+                target_enzyme = data.get('target_enzyme', '')
+                enzyme_class = data.get('enzyme_class')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                if not target_enzyme:
+                    return jsonify({"success": False, "error": "Target enzyme is required"}), 400
+                
+                result = discover_enzyme_inhibitors(
+                    target_enzyme=target_enzyme,
+                    enzyme_class=enzyme_class,
+                    min_confidence=min_confidence,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Enzyme inhibitor discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/discover/pathway_biomolecules', methods=['POST'])
+        def api_discover_pathway_biomolecules():
+            """Discover pathway biomolecules using RAG."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_pathway_biomolecules
+                
+                data = request.json or {}
+                pathway_name = data.get('pathway_name', '')
+                biomolecule_types = data.get('biomolecule_types')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 100)), 200)
+                
+                if not pathway_name:
+                    return jsonify({"success": False, "error": "Pathway name is required"}), 400
+                
+                result = discover_pathway_biomolecules(
+                    pathway_name=pathway_name,
+                    biomolecule_types=biomolecule_types,
+                    min_confidence=min_confidence,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Pathway biomolecule discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/discover/biomolecules_rag', methods=['POST'])
+        def api_discover_biomolecules_rag():
+            """High-level RAG-based biomolecule discovery."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import discover_biomolecules_rag
+                
+                data = request.json or {}
+                target = data.get('target', '')
+                discovery_type = data.get('discovery_type', 'binders')
+                min_confidence = float(data.get('min_confidence', 0.5))
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                if not target:
+                    return jsonify({"success": False, "error": "Target is required"}), 400
+                
+                result = discover_biomolecules_rag(
+                    target=target,
+                    discovery_type=discovery_type,
+                    max_results=max_results,
+                    min_confidence=min_confidence
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"RAG biomolecule discovery failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_legal_dataset_routes(self) -> None:
         """Set up legal dataset scraping routes."""
