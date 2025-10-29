@@ -80,6 +80,14 @@ Commands:
     vector       Vector operations
       create     Create vector embeddings
       search     Search vectors
+      
+    finance      Financial analysis and data pipelines
+      stock      Fetch stock market data
+      news       Scrape financial news (AP, Reuters, Bloomberg)
+      executives Analyze executive performance (hypothesis testing)
+      embeddings Multimodal embedding analysis (text + images)
+      theorems   List or apply financial theorems
+      workflow   Execute end-to-end workflow pipelines
 
 Options:
     --help, -h   Show this help message
@@ -1528,6 +1536,355 @@ def execute_heavy_command(args):
                 traceback.print_exc()
                 return
         
+        if command == "finance":
+            """Handle finance dashboard commands."""
+            subcommand = args[1] if len(args) > 1 else None
+            
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets finance - Financial Analysis and Data Pipelines
+
+Usage: ipfs-datasets finance <subcommand> [options]
+
+Subcommands:
+  stock       Fetch stock market data
+  news        Scrape financial news from AP/Reuters/Bloomberg
+  executives  Analyze executive performance with hypothesis testing
+  embeddings  Multimodal embedding analysis (text + images)
+  theorems    List or apply financial theorems  
+  workflow    Execute end-to-end workflow pipelines
+
+Examples:
+  ipfs-datasets finance stock AAPL --start 2024-01-01 --end 2024-12-31
+  ipfs-datasets finance news "tech stocks" --sources reuters,bloomberg
+  ipfs-datasets finance executives --hypothesis "Female CEOs outperform male CEOs"
+  ipfs-datasets finance embeddings --multimodal --clusters 10
+  ipfs-datasets finance theorems --list
+  ipfs-datasets finance workflow pipeline --config workflow.json
+
+For detailed help: ipfs-datasets finance <subcommand> --help
+""")
+                return
+            
+            try:
+                # Parse common options
+                config_override = None
+                host_override = None
+                port_override = None
+                if "--config" in args:
+                    idx = args.index("--config")
+                    if idx + 1 < len(args):
+                        config_override = args[idx + 1]
+                
+                host, port = _default_host_port(config_override)
+                
+                # Parse host/port overrides
+                extra = args[2:]
+                i = 0
+                while i < len(extra):
+                    token = extra[i]
+                    if token in ("--host", "-H") and i + 1 < len(extra):
+                        host = str(extra[i + 1])
+                        i += 2
+                    elif token in ("--port", "-p") and i + 1 < len(extra):
+                        port = str(extra[i + 1])
+                        i += 2
+                    else:
+                        i += 1
+                
+                base_url = f"http://{host}:{port}/api/mcp"
+                import requests
+                
+                if subcommand == "stock":
+                    # Fetch stock data
+                    symbol = args[2] if len(args) > 2 else None
+                    if not symbol:
+                        print("Usage: ipfs-datasets finance stock <SYMBOL> [--start DATE] [--end DATE] [--interval INTERVAL]")
+                        return
+                    
+                    start_date = None
+                    end_date = None
+                    interval = "1d"
+                    
+                    i = 3
+                    while i < len(args):
+                        if args[i] == "--start" and i + 1 < len(args):
+                            start_date = args[i + 1]
+                            i += 2
+                        elif args[i] == "--end" and i + 1 < len(args):
+                            end_date = args[i + 1]
+                            i += 2
+                        elif args[i] == "--interval" and i + 1 < len(args):
+                            interval = args[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    params = {
+                        "symbol": symbol,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "interval": interval
+                    }
+                    
+                    print(f"Fetching stock data for {symbol}...")
+                    r = requests.post(f"{base_url}/tools/finance_data_tools/fetch_stock_data/execute", 
+                                     json=params, timeout=30)
+                    if r.ok:
+                        result = r.json()
+                        if json_output:
+                            print(json.dumps(result))
+                        else:
+                            print(f"✓ Retrieved {len(result.get('data', []))} data points for {symbol}")
+                            print(json.dumps(result, indent=2))
+                    else:
+                        print(f"Error: {r.status_code} - {r.text}")
+                    return
+                
+                elif subcommand == "news":
+                    # Scrape financial news
+                    query = args[2] if len(args) > 2 else "financial news"
+                    sources = ["reuters", "bloomberg", "ap"]
+                    max_results = 100
+                    
+                    i = 3
+                    while i < len(args):
+                        if args[i] == "--sources" and i + 1 < len(args):
+                            sources = args[i + 1].split(",")
+                            i += 2
+                        elif args[i] == "--max-results" and i + 1 < len(args):
+                            max_results = int(args[i + 1])
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    params = {
+                        "query": query,
+                        "sources": sources,
+                        "max_results": max_results
+                    }
+                    
+                    print(f"Scraping news for '{query}' from {', '.join(sources)}...")
+                    r = requests.post(f"{base_url}/tools/finance_data_tools/fetch_financial_news/execute",
+                                     json=params, timeout=60)
+                    if r.ok:
+                        result = r.json()
+                        if json_output:
+                            print(json.dumps(result))
+                        else:
+                            articles = result.get('articles', [])
+                            print(f"✓ Retrieved {len(articles)} articles")
+                            for art in articles[:5]:
+                                print(f"  - {art.get('title', 'Untitled')} ({art.get('source', 'Unknown')})")
+                    else:
+                        print(f"Error: {r.status_code} - {r.text}")
+                    return
+                
+                elif subcommand == "executives":
+                    # Analyze executive performance
+                    print("Executive performance analysis requires news and stock data files")
+                    print("Usage: ipfs-datasets finance executives --news news.json --stocks stocks.json")
+                    print("       --hypothesis 'Female CEOs outperform male CEOs'")
+                    print("       --attribute gender --group-a female --group-b male")
+                    
+                    news_file = None
+                    stocks_file = None
+                    hypothesis = None
+                    attribute = None
+                    group_a = None
+                    group_b = None
+                    
+                    i = 2
+                    while i < len(args):
+                        if args[i] == "--news" and i + 1 < len(args):
+                            news_file = args[i + 1]
+                            i += 2
+                        elif args[i] == "--stocks" and i + 1 < len(args):
+                            stocks_file = args[i + 1]
+                            i += 2
+                        elif args[i] == "--hypothesis" and i + 1 < len(args):
+                            hypothesis = args[i + 1]
+                            i += 2
+                        elif args[i] == "--attribute" and i + 1 < len(args):
+                            attribute = args[i + 1]
+                            i += 2
+                        elif args[i] == "--group-a" and i + 1 < len(args):
+                            group_a = args[i + 1]
+                            i += 2
+                        elif args[i] == "--group-b" and i + 1 < len(args):
+                            group_b = args[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    if news_file and stocks_file and hypothesis:
+                        with open(news_file) as f:
+                            news_data = json.load(f)
+                        with open(stocks_file) as f:
+                            stock_data = json.load(f)
+                        
+                        params = {
+                            "news_articles_json": json.dumps(news_data),
+                            "stock_data_json": json.dumps(stock_data),
+                            "hypothesis": hypothesis,
+                            "attribute": attribute,
+                            "group_a": group_a,
+                            "group_b": group_b
+                        }
+                        
+                        print(f"Testing hypothesis: {hypothesis}...")
+                        r = requests.post(f"{base_url}/tools/finance_data_tools/analyze_executive_performance/execute",
+                                         json=params, timeout=120)
+                        if r.ok:
+                            result = r.json()
+                            if json_output:
+                                print(json.dumps(result))
+                            else:
+                                print(f"✓ Analysis complete")
+                                print(json.dumps(result, indent=2))
+                        else:
+                            print(f"Error: {r.status_code} - {r.text}")
+                    return
+                
+                elif subcommand == "embeddings":
+                    # Multimodal embedding analysis
+                    print("Embedding analysis requires news data file")
+                    print("Usage: ipfs-datasets finance embeddings --news news.json")
+                    print("       [--multimodal] [--clusters N]")
+                    
+                    news_file = None
+                    multimodal = False
+                    clusters = 10
+                    
+                    i = 2
+                    while i < len(args):
+                        if args[i] == "--news" and i + 1 < len(args):
+                            news_file = args[i + 1]
+                            i += 2
+                        elif args[i] == "--multimodal":
+                            multimodal = True
+                            i += 1
+                        elif args[i] == "--clusters" and i + 1 < len(args):
+                            clusters = int(args[i + 1])
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    if news_file:
+                        with open(news_file) as f:
+                            news_data = json.load(f)
+                        
+                        params = {
+                            "news_articles_json": json.dumps(news_data),
+                            "enable_multimodal": multimodal,
+                            "n_clusters": clusters
+                        }
+                        
+                        print(f"Analyzing embeddings ({'multimodal' if multimodal else 'text-only'})...")
+                        r = requests.post(f"{base_url}/tools/finance_data_tools/analyze_embedding_market_correlation/execute",
+                                         json=params, timeout=120)
+                        if r.ok:
+                            result = r.json()
+                            if json_output:
+                                print(json.dumps(result))
+                            else:
+                                print(f"✓ Embedding analysis complete")
+                                print(json.dumps(result, indent=2))
+                        else:
+                            print(f"Error: {r.status_code} - {r.text}")
+                    return
+                
+                elif subcommand == "theorems":
+                    # List or apply financial theorems
+                    action = args[2] if len(args) > 2 else "list"
+                    
+                    if action == "--list" or action == "list":
+                        print("Fetching financial theorems...")
+                        r = requests.post(f"{base_url}/tools/finance_data_tools/list_financial_theorems/execute",
+                                         json={}, timeout=30)
+                        if r.ok:
+                            result = r.json()
+                            if json_output:
+                                print(json.dumps(result))
+                            else:
+                                theorems = result.get('theorems', [])
+                                print(f"✓ Found {len(theorems)} financial theorems:")
+                                for thm in theorems:
+                                    print(f"  - {thm.get('theorem_id', 'unknown')}: {thm.get('name', 'Unnamed')}")
+                                    print(f"    Confidence: {thm.get('confidence_level', 0):.0%}")
+                        else:
+                            print(f"Error: {r.status_code} - {r.text}")
+                    elif action == "--apply" or action == "apply":
+                        theorem_id = args[3] if len(args) > 3 else None
+                        data_file = None
+                        
+                        i = 4
+                        while i < len(args):
+                            if args[i] == "--data" and i + 1 < len(args):
+                                data_file = args[i + 1]
+                                i += 2
+                            else:
+                                i += 1
+                        
+                        if theorem_id and data_file:
+                            with open(data_file) as f:
+                                event_data = json.load(f)
+                            
+                            params = {
+                                "theorem_id": theorem_id,
+                                "event_data_json": json.dumps(event_data)
+                            }
+                            
+                            print(f"Applying theorem {theorem_id}...")
+                            r = requests.post(f"{base_url}/tools/finance_data_tools/apply_financial_theorem/execute",
+                                             json=params, timeout=30)
+                            if r.ok:
+                                result = r.json()
+                                if json_output:
+                                    print(json.dumps(result))
+                                else:
+                                    print(f"✓ Theorem applied")
+                                    print(json.dumps(result, indent=2))
+                            else:
+                                print(f"Error: {r.status_code} - {r.text}")
+                        else:
+                            print("Usage: ipfs-datasets finance theorems apply <THEOREM_ID> --data event.json")
+                    return
+                
+                elif subcommand == "workflow":
+                    # Execute workflow pipeline
+                    pipeline_type = args[2] if len(args) > 2 else None
+                    
+                    if pipeline_type == "pipeline":
+                        print("Workflow pipeline execution")
+                        print("This would orchestrate the complete pipeline:")
+                        print("  1. Scrape financial data (stocks + news)")
+                        print("  2. Filter and label data")
+                        print("  3. Analyze with embeddings and knowledge graphs")
+                        print("  4. Generate and test hypotheses")
+                        print("  5. Transform and augment data")
+                        print("  6. Export synthetic dataset")
+                        print()
+                        print("Visit http://{}:{}/mcp/finance/workflow for interactive pipeline".format(host, port))
+                    else:
+                        print("Usage: ipfs-datasets finance workflow pipeline [--config FILE]")
+                    return
+                
+                else:
+                    print(f"Unknown finance subcommand: {subcommand}")
+                    print("Run 'ipfs-datasets finance --help' for usage")
+                    return
+                
+            except ImportError as e:
+                print(f"Error: Missing dependencies for finance tools: {e}")
+                print("Install with: pip install requests")
+                return
+            except Exception as e:
+                print(f"Error executing finance command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
@@ -1750,7 +2107,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance']:
         execute_heavy_command(args)
         return
 
