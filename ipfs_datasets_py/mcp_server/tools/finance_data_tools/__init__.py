@@ -26,7 +26,8 @@ TOOL_CATEGORIES = [
     "market_data",
     "news_scraping",
     "knowledge_graph",
-    "temporal_reasoning"
+    "temporal_reasoning",
+    "graphrag_analysis"
 ]
 
 __all__ = [
