@@ -133,7 +133,7 @@ jobs:
         timeout-minutes: 30
       
       - name: Upload Comprehensive Test Results
-        uses: upload-artifact@v4
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: comprehensive-integration-results
@@ -148,8 +148,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
+        with:
+          submodules: false
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -321,8 +321,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
+        with:
+          submodules: false
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -487,8 +487,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
+        with:
+          submodules: false
       
       - name: Architecture Info
         run: |

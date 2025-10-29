@@ -77,8 +77,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    with:
-      submodules: false
+      with:
+        submodules: false
     
     - name: Run security analysis
       uses: github/super-linter@v4
@@ -109,8 +109,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    with:
-      submodules: false
+      with:
+        submodules: false
     
     - name: Log in to Container Registry
       uses: docker/login-action@v2
@@ -152,8 +152,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    with:
-      submodules: false
+      with:
+        submodules: false
     
     - name: Configure kubectl
       run: |
@@ -177,8 +177,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    with:
-      submodules: false
+      with:
+        submodules: false
     
     - name: Configure kubectl
       run: |
