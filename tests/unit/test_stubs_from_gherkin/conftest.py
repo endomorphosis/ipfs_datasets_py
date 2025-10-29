@@ -5,6 +5,11 @@ These are template files, not actual tests to run.
 They should be excluded from test collection.
 """
 import pytest
+import glob
+import os
+
+# Tell pytest to ignore all Python files in this directory during collection
+collect_ignore = glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))
 
 def pytest_collection_modifyitems(config, items):
     """
