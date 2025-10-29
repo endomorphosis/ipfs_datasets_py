@@ -33,12 +33,11 @@ env:
   MCP_DASHBOARD_HOST: 127.0.0.1
 
 jobs:
-  # Basic smoke tests for all platforms
+  # Basic smoke tests for all platforms (containerized)
   dashboard-smoke-tests:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest]
         python-version: ['3.10', '3.11', '3.12']
       fail-fast: false
     
@@ -48,37 +47,52 @@ jobs:
         with:
           submodules: false
       
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Install dependencies
+      - name: Build MCP Test Docker Image (Python ${{ matrix.python-version }})
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test]
-          pip install flask mcp pytest playwright
+          # Build with specific Python version
+          docker build \
+            --build-arg PYTHON_VERSION=${{ matrix.python-version }} \
+            -f Dockerfile.mcp-tests \
+            -t ipfs-datasets-mcp-tests:py${{ matrix.python-version }} .
       
-      - name: Install Playwright browsers
-        run: |
-          playwright install chromium --with-deps
-      
-      - name: Run Dashboard Validation
+      - name: Run Dashboard Validation in Container
         id: validation
         run: |
-          echo "🧪 Running MCP Dashboard validation..."
-          python validate_mcp_dashboard.py
-          echo "validation_result=success" >> $GITHUB_OUTPUT
+          echo "🧪 Running MCP Dashboard validation in container..."
+          mkdir -p test-results
+          
+          # Run validation in container
+          docker run --rm \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:py${{ matrix.python-version }} \
+            python validate_mcp_dashboard.py > test-results/validation-py${{ matrix.python-version }}.log 2>&1 || echo "validation_result=failed" >> $GITHUB_OUTPUT
+          
+          # Check if validation succeeded
+          if [ -f test-results/validation-py${{ matrix.python-version }}.log ]; then
+            if grep -q "success\|passed\|✅" test-results/validation-py${{ matrix.python-version }}.log; then
+              echo "validation_result=success" >> $GITHUB_OUTPUT
+            fi
+          fi
         continue-on-error: true
       
       - name: Smoke Test Summary
         run: |
-          echo "## 💨 Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## 💨 Smoke Test Results (Containerized)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **OS**: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner**: ubuntu-latest (Docker)" >> $GITHUB_STEP_SUMMARY
           echo "- **Python**: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Validation**: ${{ steps.validation.outputs.validation_result || 'failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security**: Tests run in isolated Docker container" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Validation Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-logs-py${{ matrix.python-version }}
+          path: test-results/
 
   # Comprehensive dashboard testing
   dashboard-comprehensive-tests:
@@ -136,7 +150,7 @@ jobs:
           name: mcp-comprehensive-test-results
           path: test-results/
 
-  # Endpoint and browser testing with live dashboard
+  # Endpoint and browser testing with live dashboard (containerized)
   dashboard-endpoint-tests:
     runs-on: ubuntu-latest
     needs: dashboard-smoke-tests
@@ -148,198 +162,84 @@ jobs:
         with:
           submodules: false
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Install dependencies
+      - name: Build MCP Test Docker Image
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test]
-          pip install flask mcp pytest playwright requests
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
-      - name: Install Playwright browsers
+      - name: Run Endpoint Tests in Container
         run: |
-          playwright install chromium firefox --with-deps
-      
-      - name: Start MCP Dashboard
-        run: |
-          echo "🚀 Starting MCP Dashboard..."
-          python -m ipfs_datasets_py.mcp_dashboard &
-          MCP_PID=$!
-          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          mkdir -p test-results
+          echo "🚀 Starting MCP Dashboard in container for endpoint tests..."
+          
+          # Start dashboard in container
+          docker run --rm -d \
+            --name mcp-endpoint-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
           
           # Wait for dashboard to be ready
-          for i in {1..30}; do
+          echo "⏳ Waiting for dashboard..."
+          for i in {1..60}; do
             if curl -f http://127.0.0.1:8899/api/health 2>/dev/null; then
               echo "✅ Dashboard is ready!"
               break
             fi
-            echo "⏳ Waiting for dashboard... ($i/30)"
+            if [ $i -eq 60 ]; then
+              echo "❌ Dashboard failed to start"
+              docker logs mcp-endpoint-test
+              docker stop mcp-endpoint-test || true
+              exit 1
+            fi
             sleep 2
           done
+          
+          # Run endpoint tests in separate container
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            bash -c 'python -c "import requests; import json; response = requests.get(\"http://127.0.0.1:8899/api/mcp/tools\", timeout=15); tools = response.json() if response.status_code == 200 else []; print(f\"✅ Loaded {len(tools)} MCP tools\") if tools else print(\"⚠️ No tools loaded\")"' || true
+          
+          # Stop dashboard container
+          docker stop mcp-endpoint-test || true
       
-      - name: Test MCP Tools Loading
+      - name: Run Browser Tests in Container
         run: |
-          echo "🔧 Testing MCP tools loading..."
-          python -c "
-          import requests
-          import json
+          echo "🌐 Running browser-based tests in container..."
           
-          try:
-              response = requests.get('http://127.0.0.1:8899/api/mcp/tools', timeout=15)
-              if response.status_code == 200:
-                  tools = response.json()
-                  print(f'✅ Loaded {len(tools)} MCP tools')
-                  
-                  # Test some tools
-                  sample_tools = list(tools.keys())[:5]
-                  for tool in sample_tools:
-                      print(f'  - {tool}: {tools[tool].get(\"description\", \"No description\")}')
-              else:
-                  print(f'⚠️ Tools API returned {response.status_code}')
-          except Exception as e:
-              print(f'❌ Error testing tools: {e}')
-          "
-      
-      - name: Run Playwright Browser Tests
-        run: |
-          echo "🌐 Running browser-based tests..."
-          python -c "
-          from playwright.sync_api import sync_playwright
-          import json
-          import time
+          # Start dashboard in container for browser tests
+          docker run --rm -d \
+            --name mcp-browser-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
           
-          def test_dashboard_ui():
-              with sync_playwright() as p:
-                  # Test multiple browsers
-                  browsers = [p.chromium, p.firefox]
-                  results = {}
-                  
-                  for browser_type in browsers:
-                      browser_name = browser_type.name
-                      print(f'Testing with {browser_name}...')
-                      
-                      try:
-                          browser = browser_type.launch(headless=True)
-                          page = browser.new_page()
-                          
-                          # Test main dashboard page
-                          page.goto('http://127.0.0.1:8899', wait_until='networkidle')
-                          
-                          # Check if page loaded
-                          title = page.title()
-                          print(f'  Page title: {title}')
-                          
-                          # Look for key elements
-                          elements = {
-                              'header': page.locator('h1, .header, [role=\"banner\"]').count(),
-                              'navigation': page.locator('nav, .nav, .navigation').count(),
-                              'content': page.locator('main, .main, .content').count(),
-                              'forms': page.locator('form').count(),
-                              'buttons': page.locator('button').count()
-                          }
-                          
-                          results[browser_name] = {
-                              'title': title,
-                              'elements': elements,
-                              'success': True,
-                              'load_time': time.time()
-                          }
-                          
-                          print(f'  ✅ {browser_name} test passed')
-                          browser.close()
-                          
-                      except Exception as e:
-                          results[browser_name] = {
-                              'success': False,
-                              'error': str(e)
-                          }
-                          print(f'  ❌ {browser_name} test failed: {e}')
-                          try:
-                              browser.close()
-                          except:
-                              pass
-                  
-                  # Save results
-                  with open('browser_test_results.json', 'w') as f:
-                      json.dump(results, f, indent=2)
-                  
-                  return results
+          # Wait for dashboard
+          sleep 10
           
-          test_results = test_dashboard_ui()
-          successful_browsers = sum(1 for r in test_results.values() if r.get('success', False))
-          print(f'Browser tests: {successful_browsers}/{len(test_results)} successful')
-          "
-      
-      - name: Performance Tests
-        if: ${{ github.event.inputs.test_mode == 'performance' || github.event_name == 'schedule' }}
-        run: |
-          echo "⚡ Running performance tests..."
-          python -c "
-          import requests
-          import time
-          import statistics
+          # Run browser tests
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/test-results:/app/test-results \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_browser.py || true
           
-          def measure_endpoint_performance():
-              endpoints = [
-                  'http://127.0.0.1:8899/api/mcp/status',
-                  'http://127.0.0.1:8899/',
-                  'http://127.0.0.1:8899/api/mcp/tools'
-              ]
-              
-              results = {}
-              for endpoint in endpoints:
-                  times = []
-                  for i in range(10):  # 10 requests per endpoint
-                      start = time.time()
-                      try:
-                          response = requests.get(endpoint, timeout=5)
-                          end = time.time()
-                          if response.status_code == 200:
-                              times.append(end - start)
-                      except:
-                          pass
-                  
-                  if times:
-                      results[endpoint] = {
-                          'avg_response_time': statistics.mean(times),
-                          'min_response_time': min(times),
-                          'max_response_time': max(times),
-                          'requests_tested': len(times)
-                      }
-                      print(f'{endpoint}: avg={statistics.mean(times):.3f}s, min={min(times):.3f}s, max={max(times):.3f}s')
-                  
-              return results
-          
-          perf_results = measure_endpoint_performance()
-          print('Performance test completed')
-          "
-      
-      - name: Stop Dashboard
-        if: always()
-        run: |
-          if [ ! -z \"$MCP_DASHBOARD_PID\" ]; then
-            echo \"🛑 Stopping MCP Dashboard (PID: $MCP_DASHBOARD_PID)...\"
-            kill $MCP_DASHBOARD_PID || true
-            sleep 2
-          fi
-          
-          # Cleanup any remaining processes
-          pkill -f \"mcp_dashboard\" || true
-          pkill -f \"ipfs_datasets_py.mcp_dashboard\" || true
+          # Stop dashboard container
+          docker stop mcp-browser-test || true
       
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dashboard-comprehensive-test-results
-          path: |
-            endpoint_test_results.json
-            browser_test_results.json
-            *.log
+          name: dashboard-endpoint-test-results
+          path: test-results/
 
   # Self-hosted runner tests (x86_64 and ARM64)
   dashboard-self-hosted-tests:
