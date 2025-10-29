@@ -575,3 +575,191 @@ def github_create_issue(
             "success": False,
             "error": str(e)
         }
+
+
+def github_create_pull_request(
+    owner: str,
+    repo: str,
+    title: str,
+    body: str,
+    head: str,
+    base: str = "main",
+    draft: bool = False,
+    labels: Optional[List[str]] = None,
+    reviewers: Optional[List[str]] = None,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Create a pull request in a GitHub repository.
+    
+    Creates a new pull request from a head branch to a base branch.
+    Useful for automated PR creation from code analysis, refactoring,
+    or feature development workflows with AI agents.
+    
+    Args:
+        owner: Repository owner (username or organization)
+        repo: Repository name
+        title: Pull request title
+        body: Pull request description/body
+        head: The name of the branch where your changes are implemented
+        base: The name of the branch you want to merge into (default: "main")
+        draft: Create as a draft PR (default: False)
+        labels: Optional list of label names to apply
+        reviewers: Optional list of GitHub usernames to request reviews from
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with created PR information including PR number and URL
+        
+    Example:
+        >>> result = github_create_pull_request(
+        ...     owner="myorg",
+        ...     repo="myrepo",
+        ...     title="Add new feature",
+        ...     body="This PR adds exciting new functionality",
+        ...     head="feature/new-feature",
+        ...     base="main",
+        ...     labels=["enhancement"],
+        ...     reviewers=["reviewer1", "reviewer2"]
+        ... )
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        # Build PR creation command
+        cmd = [
+            'pr', 'create',
+            '--repo', f'{owner}/{repo}',
+            '--title', title,
+            '--body', body,
+            '--head', head,
+            '--base', base
+        ]
+        
+        if draft:
+            cmd.append('--draft')
+        
+        if labels:
+            cmd.extend(['--label', ','.join(labels)])
+        
+        if reviewers:
+            cmd.extend(['--reviewer', ','.join(reviewers)])
+        
+        result = cli.execute(cmd)
+        
+        if result.returncode == 0:
+            # Parse PR URL from output
+            pr_url = result.stdout.strip().split('\n')[-1] if result.stdout else ""
+            
+            return {
+                "success": True,
+                "message": "Pull request created successfully",
+                "pr_url": pr_url,
+                "output": result.stdout
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to create pull request: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def github_update_pull_request(
+    owner: str,
+    repo: str,
+    pr_number: int,
+    title: Optional[str] = None,
+    body: Optional[str] = None,
+    add_labels: Optional[List[str]] = None,
+    remove_labels: Optional[List[str]] = None,
+    add_reviewers: Optional[List[str]] = None,
+    install_dir: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Update an existing pull request in a GitHub repository.
+    
+    Allows modification of PR metadata including title, body, labels, and reviewers.
+    Useful for AI agents to iteratively refine PRs based on feedback.
+    
+    Args:
+        owner: Repository owner (username or organization)
+        repo: Repository name
+        pr_number: Pull request number
+        title: New PR title (optional)
+        body: New PR description/body (optional)
+        add_labels: Labels to add (optional)
+        remove_labels: Labels to remove (optional)
+        add_reviewers: Reviewers to add (optional)
+        install_dir: Optional custom installation directory path
+    
+    Returns:
+        Dictionary with update result
+        
+    Example:
+        >>> result = github_update_pull_request(
+        ...     owner="myorg",
+        ...     repo="myrepo",
+        ...     pr_number=123,
+        ...     title="Updated: Add new feature",
+        ...     add_labels=["ready-for-review"],
+        ...     add_reviewers=["newreviewer"]
+        ... )
+    """
+    try:
+        cli = GitHubCLI(install_dir=install_dir)
+        
+        if not cli.is_installed():
+            return {
+                "success": False,
+                "error": "GitHub CLI is not installed. Use github_cli_install first."
+            }
+        
+        # Build PR edit command
+        cmd = ['pr', 'edit', str(pr_number), '--repo', f'{owner}/{repo}']
+        
+        if title:
+            cmd.extend(['--title', title])
+        
+        if body:
+            cmd.extend(['--body', body])
+        
+        if add_labels:
+            cmd.extend(['--add-label', ','.join(add_labels)])
+        
+        if remove_labels:
+            cmd.extend(['--remove-label', ','.join(remove_labels)])
+        
+        if add_reviewers:
+            cmd.extend(['--add-reviewer', ','.join(add_reviewers)])
+        
+        result = cli.execute(cmd)
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "message": "Pull request updated successfully",
+                "output": result.stdout
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr
+            }
+    except Exception as e:
+        logger.error(f"Failed to update pull request: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
