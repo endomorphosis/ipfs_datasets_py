@@ -1936,6 +1936,116 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"RAG biomolecule discovery failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
+        
+        # AI-Powered Dataset Builder Routes
+        @self.app.route('/api/mcp/medicine/dataset/build', methods=['POST'])
+        def api_build_medical_dataset():
+            """Build structured dataset from scraped data using AI."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import build_dataset_from_scraped_data
+                
+                data = request.json or {}
+                scraped_data = data.get('scraped_data', [])
+                filter_criteria = data.get('filter_criteria')
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                
+                if not scraped_data:
+                    return jsonify({"success": False, "error": "Scraped data is required"}), 400
+                
+                result = build_dataset_from_scraped_data(
+                    scraped_data=scraped_data,
+                    filter_criteria=filter_criteria,
+                    model_name=model_name
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset building failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/dataset/analyze', methods=['POST'])
+        def api_analyze_medical_dataset():
+            """Analyze medical dataset using AI models."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import analyze_dataset_with_ai
+                
+                data = request.json or {}
+                dataset = data.get('dataset', [])
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                
+                if not dataset:
+                    return jsonify({"success": False, "error": "Dataset is required"}), 400
+                
+                result = analyze_dataset_with_ai(
+                    dataset=dataset,
+                    model_name=model_name
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset analysis failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/dataset/transform', methods=['POST'])
+        def api_transform_medical_dataset():
+            """Transform medical dataset using AI (summarize, extract entities, normalize)."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import transform_dataset_with_ai
+                
+                data = request.json or {}
+                dataset = data.get('dataset', [])
+                transformation_type = data.get('transformation_type', 'normalize')
+                parameters = data.get('parameters')
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                
+                if not dataset:
+                    return jsonify({"success": False, "error": "Dataset is required"}), 400
+                
+                if transformation_type not in ['summarize', 'extract_entities', 'normalize', 'extrapolate']:
+                    return jsonify({"success": False, "error": f"Invalid transformation type: {transformation_type}"}), 400
+                
+                result = transform_dataset_with_ai(
+                    dataset=dataset,
+                    transformation_type=transformation_type,
+                    parameters=parameters,
+                    model_name=model_name
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Dataset transformation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/dataset/generate_synthetic', methods=['POST'])
+        def api_generate_synthetic_data():
+            """Generate synthetic medical research data for testing and evaluation."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import generate_synthetic_dataset
+                
+                data = request.json or {}
+                template_data = data.get('template_data', [])
+                num_samples = min(int(data.get('num_samples', 10)), 50)  # Limit to 50 for performance
+                model_name = data.get('model_name', 'meta-llama/Llama-2-7b-hf')
+                temperature = float(data.get('temperature', 0.7))
+                
+                if not template_data:
+                    return jsonify({"success": False, "error": "Template data is required"}), 400
+                
+                result = generate_synthetic_dataset(
+                    template_data=template_data,
+                    num_samples=num_samples,
+                    model_name=model_name,
+                    temperature=temperature
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Synthetic data generation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_legal_dataset_routes(self) -> None:
         """Set up legal dataset scraping routes."""

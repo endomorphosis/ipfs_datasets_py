@@ -730,3 +730,207 @@ def discover_biomolecules_rag(
             "success": False,
             "error": str(e)
         }
+
+
+# AI-Powered Dataset Builder Tools
+
+try:
+    from ..medical_research_scrapers.ai_dataset_builder import (
+        build_medical_dataset,
+        analyze_medical_dataset,
+        transform_medical_dataset,
+        generate_synthetic_medical_data
+    )
+except ImportError:
+    logger.warning("AI dataset builder tools not available")
+    build_medical_dataset = None
+    analyze_medical_dataset = None
+    transform_medical_dataset = None
+    generate_synthetic_medical_data = None
+
+
+def build_dataset_from_scraped_data(
+    scraped_data: List[Dict[str, Any]],
+    filter_criteria: Optional[Dict[str, Any]] = None,
+    model_name: str = "meta-llama/Llama-2-7b-hf"
+) -> Dict[str, Any]:
+    """
+    MCP Tool: Build structured dataset from scraped medical research using AI.
+    
+    This tool takes scraped data from PubMed or ClinicalTrials.gov and:
+    - Filters based on relevance and quality using AI models
+    - Structures the data into a consistent format
+    - Calculates quality metrics
+    - Provides insights on dataset composition
+    
+    Args:
+        scraped_data: List of scraped medical research records
+        filter_criteria: Optional filtering criteria (keywords, min_quality, etc.)
+        model_name: HuggingFace model for AI operations (from ipfs_accelerate_py)
+    
+    Returns:
+        Dictionary with built dataset, metrics, and statistics
+    
+    Example:
+        >>> articles = scrape_pubmed_medical_research("COVID-19", max_results=100)
+        >>> dataset = build_dataset_from_scraped_data(
+        ...     articles['articles'],
+        ...     filter_criteria={'keywords': ['vaccine', 'efficacy']}
+        ... )
+        >>> print(dataset['metrics']['quality_score'])
+    """
+    if not build_medical_dataset:
+        return {
+            "success": False,
+            "error": "AI dataset builder not available"
+        }
+    
+    try:
+        return build_medical_dataset(scraped_data, filter_criteria, model_name)
+    except Exception as e:
+        logger.error(f"Dataset building failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def analyze_dataset_with_ai(
+    dataset: List[Dict[str, Any]],
+    model_name: str = "meta-llama/Llama-2-7b-hf"
+) -> Dict[str, Any]:
+    """
+    MCP Tool: Analyze medical research dataset using AI models.
+    
+    This tool provides AI-powered analysis of datasets including:
+    - Pattern identification across records
+    - Theme extraction and categorization
+    - Quality and completeness metrics
+    - Research gap identification
+    - Trend analysis
+    
+    Args:
+        dataset: Dataset to analyze (from build_dataset_from_scraped_data)
+        model_name: HuggingFace model for analysis (from ipfs_accelerate_py)
+    
+    Returns:
+        Dictionary with analysis results, insights, and metrics
+    
+    Example:
+        >>> analysis = analyze_dataset_with_ai(dataset)
+        >>> print(analysis['insights']['ai_analysis'])
+        >>> print(f"Quality: {analysis['metrics']['quality_score']}")
+    """
+    if not analyze_medical_dataset:
+        return {
+            "success": False,
+            "error": "AI dataset analyzer not available"
+        }
+    
+    try:
+        return analyze_medical_dataset(dataset, model_name)
+    except Exception as e:
+        logger.error(f"Dataset analysis failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def transform_dataset_with_ai(
+    dataset: List[Dict[str, Any]],
+    transformation_type: str,
+    parameters: Optional[Dict[str, Any]] = None,
+    model_name: str = "meta-llama/Llama-2-7b-hf"
+) -> Dict[str, Any]:
+    """
+    MCP Tool: Transform medical dataset using AI models.
+    
+    Supported transformations:
+    - 'summarize': Generate concise summaries of research articles
+    - 'extract_entities': Extract medical entities (conditions, treatments, outcomes)
+    - 'normalize': Convert to standardized format
+    - 'extrapolate': Generate additional data points based on patterns
+    
+    Args:
+        dataset: Dataset to transform
+        transformation_type: Type of transformation to apply
+        parameters: Optional parameters for transformation
+        model_name: HuggingFace model for transformations (from ipfs_accelerate_py)
+    
+    Returns:
+        Dictionary with transformed dataset
+    
+    Example:
+        >>> summaries = transform_dataset_with_ai(
+        ...     dataset,
+        ...     transformation_type='summarize'
+        ... )
+        >>> entities = transform_dataset_with_ai(
+        ...     dataset,
+        ...     transformation_type='extract_entities'
+        ... )
+    """
+    if not transform_medical_dataset:
+        return {
+            "success": False,
+            "error": "AI dataset transformer not available"
+        }
+    
+    try:
+        return transform_medical_dataset(dataset, transformation_type, parameters, model_name)
+    except Exception as e:
+        logger.error(f"Dataset transformation failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def generate_synthetic_dataset(
+    template_data: List[Dict[str, Any]],
+    num_samples: int = 10,
+    model_name: str = "meta-llama/Llama-2-7b-hf",
+    temperature: float = 0.7
+) -> Dict[str, Any]:
+    """
+    MCP Tool: Generate synthetic medical research data for testing and evaluation.
+    
+    This tool uses AI models to generate synthetic variations of existing
+    medical research data. Useful for:
+    - Testing data processing pipelines
+    - Evaluating analysis algorithms
+    - Augmenting small datasets
+    - Creating privacy-preserving datasets
+    
+    Args:
+        template_data: Sample data to use as templates
+        num_samples: Number of synthetic samples to generate
+        model_name: HuggingFace model for generation (from ipfs_accelerate_py)
+        temperature: Generation temperature (0.0-1.0, higher = more creative)
+    
+    Returns:
+        Dictionary with generated synthetic data
+    
+    Example:
+        >>> synthetic = generate_synthetic_dataset(
+        ...     template_data=dataset[:5],
+        ...     num_samples=20,
+        ...     temperature=0.8
+        ... )
+        >>> print(f"Generated {len(synthetic['synthetic_data'])} samples")
+    """
+    if not generate_synthetic_medical_data:
+        return {
+            "success": False,
+            "error": "Synthetic data generator not available"
+        }
+    
+    try:
+        return generate_synthetic_medical_data(template_data, num_samples, model_name, temperature)
+    except Exception as e:
+        logger.error(f"Synthetic data generation failed: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }

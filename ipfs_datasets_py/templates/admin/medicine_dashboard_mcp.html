@@ -757,6 +757,11 @@
                                     <i class="fas fa-dna"></i> Biomolecule Discovery
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#ai-dataset-builder" role="tab">
+                                    <i class="fas fa-robot"></i> AI Dataset Builder
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -3258,6 +3263,193 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- AI Dataset Builder Tab -->
+                    <div class="tab-pane fade" id="ai-dataset-builder" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-gradient-primary text-white">
+                                <h5 class="text-white"><i class="fas fa-robot"></i> AI-Powered Dataset Builder</h5>
+                                <p class="mb-0 small">Build, filter, analyze, and generate synthetic data using AI models from ipfs_accelerate_py</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info" role="alert">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>AI Dataset Pipeline:</strong> This tool demonstrates how the scraped medical research data can be processed using AI models from the <code>ipfs_accelerate_py</code> library to build, filter, analyze, and generate synthetic datasets for evaluation and testing.
+                                </div>
+
+                                <!-- Step 1: Build Dataset -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-1"></i> Step 1: Build Dataset from Scraped Data</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">First, scrape data using PubMed or Clinical Trials tools, then build a structured dataset with AI-powered filtering.</p>
+                                        <form id="buildDatasetForm">
+                                            <div class="mb-3">
+                                                <label for="buildSourceData" class="form-label">Source (scrape first from other tabs)</label>
+                                                <textarea class="form-control" id="buildSourceData" rows="3" placeholder='Paste scraped data here (JSON array) or scrape from PubMed/Clinical Trials tabs first...'></textarea>
+                                                <small class="text-muted">Example: Use PubMed Research tab to scrape articles, then paste the results here</small>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="buildFilterKeywords" class="form-label">Filter Keywords (optional)</label>
+                                                    <input type="text" class="form-control" id="buildFilterKeywords" placeholder="e.g., vaccine, efficacy">
+                                                    <small class="text-muted">Comma-separated keywords for AI filtering</small>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="buildModelName" class="form-label">AI Model</label>
+                                                    <select class="form-select" id="buildModelName">
+                                                        <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                        <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better quality)</option>
+                                                        <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                        <option value="mock">Mock (no ipfs_accelerate_py)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-database"></i> Build Dataset
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="buildDatasetResults" class="mt-4" style="display:none;">
+                                            <h6>Dataset Metrics</h6>
+                                            <div id="buildDatasetMetrics"></div>
+                                            <div id="buildDatasetOutput" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Analyze Dataset -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-2"></i> Step 2: Analyze Dataset with AI</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Analyze patterns, themes, and insights in your dataset using AI models.</p>
+                                        <form id="analyzeDatasetForm">
+                                            <div class="mb-3">
+                                                <label for="analyzeDataset" class="form-label">Dataset to Analyze</label>
+                                                <textarea class="form-control" id="analyzeDataset" rows="3" placeholder='Paste built dataset here or use dataset from Step 1...'></textarea>
+                                                <small class="text-muted">Use the dataset output from Step 1</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="analyzeModelName" class="form-label">AI Model</label>
+                                                <select class="form-select" id="analyzeModelName">
+                                                    <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                    <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better quality)</option>
+                                                    <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                    <option value="mock">Mock (no ipfs_accelerate_py)</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-chart-line"></i> Analyze Dataset
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="analyzeDatasetResults" class="mt-4" style="display:none;">
+                                            <h6>Analysis Results</h6>
+                                            <div id="analyzeDatasetInsights"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Transform Dataset -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-3"></i> Step 3: Transform Dataset</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Apply AI transformations: summarize, extract entities, normalize, or extrapolate data.</p>
+                                        <form id="transformDatasetForm">
+                                            <div class="mb-3">
+                                                <label for="transformDataset" class="form-label">Dataset to Transform</label>
+                                                <textarea class="form-control" id="transformDataset" rows="3" placeholder='Paste dataset here...'></textarea>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="transformationType" class="form-label">Transformation Type</label>
+                                                    <select class="form-select" id="transformationType">
+                                                        <option value="summarize">Summarize Articles</option>
+                                                        <option value="extract_entities">Extract Medical Entities</option>
+                                                        <option value="normalize">Normalize Format</option>
+                                                        <option value="extrapolate">Extrapolate Patterns</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="transformModelName" class="form-label">AI Model</label>
+                                                    <select class="form-select" id="transformModelName">
+                                                        <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                        <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better quality)</option>
+                                                        <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                        <option value="mock">Mock (no ipfs_accelerate_py)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fas fa-magic"></i> Transform Dataset
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="transformDatasetResults" class="mt-4" style="display:none;">
+                                            <h6>Transformed Data</h6>
+                                            <div id="transformDatasetOutput"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: Generate Synthetic Data -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-4"></i> Step 4: Generate Synthetic Data</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Generate synthetic variations of your data for testing, evaluation, and augmentation.</p>
+                                        <form id="generateSyntheticForm">
+                                            <div class="mb-3">
+                                                <label for="syntheticTemplateData" class="form-label">Template Data</label>
+                                                <textarea class="form-control" id="syntheticTemplateData" rows="3" placeholder='Paste template data (at least 1 sample)...'></textarea>
+                                                <small class="text-muted">Use a few samples from your dataset as templates</small>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="syntheticNumSamples" class="form-label">Number of Samples</label>
+                                                    <input type="number" class="form-control" id="syntheticNumSamples" value="10" min="1" max="50">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="syntheticTemperature" class="form-label">Temperature</label>
+                                                    <input type="number" class="form-control" id="syntheticTemperature" value="0.7" min="0" max="1" step="0.1">
+                                                    <small class="text-muted">Higher = more creative</small>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="syntheticModelName" class="form-label">AI Model</label>
+                                                    <select class="form-select" id="syntheticModelName">
+                                                        <option value="meta-llama/Llama-2-7b-hf">Llama-2-7b (default)</option>
+                                                        <option value="meta-llama/Llama-2-13b-hf">Llama-2-13b (better)</option>
+                                                        <option value="mistralai/Mistral-7B-v0.1">Mistral-7B</option>
+                                                        <option value="mock">Mock</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-flask"></i> Generate Synthetic Data
+                                            </button>
+                                        </form>
+                                        
+                                        <div id="generateSyntheticResults" class="mt-4" style="display:none;">
+                                            <h6>Generated Synthetic Data</h6>
+                                            <div id="generateSyntheticOutput"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Workflow Summary -->
+                                <div class="alert alert-success" role="alert">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <strong>Complete Workflow:</strong> Scrape → Build → Analyze → Transform → Generate Synthetic → Evaluate/Test
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -5697,6 +5889,332 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                     }
                     
                     content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // AI Dataset Builder Form Handlers
+        
+        // Step 1: Build Dataset
+        document.getElementById('buildDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const sourceData = document.getElementById('buildSourceData').value;
+            const filterKeywords = document.getElementById('buildFilterKeywords').value;
+            const modelName = document.getElementById('buildModelName').value;
+            
+            if (!sourceData) {
+                alert('Please provide source data');
+                return;
+            }
+            
+            try {
+                const scrapedData = JSON.parse(sourceData);
+                const filterCriteria = filterKeywords ? {keywords: filterKeywords.split(',').map(k => k.trim())} : null;
+                
+                const response = await fetch('/api/mcp/medicine/dataset/build', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        scraped_data: scrapedData,
+                        filter_criteria: filterCriteria,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('buildDatasetResults').style.display = 'block';
+                    const metrics = result.metrics;
+                    const metricsHtml = `
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${result.filtered_count}</h5>
+                                        <p class="mb-0 small">Total Records</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${(metrics.completeness_score * 100).toFixed(1)}%</h5>
+                                        <p class="mb-0 small">Completeness</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${(metrics.quality_score * 100).toFixed(1)}%</h5>
+                                        <p class="mb-0 small">Quality Score</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-light">
+                                    <div class="card-body">
+                                        <h5>${(metrics.diversity_score * 100).toFixed(1)}%</h5>
+                                        <p class="mb-0 small">Diversity</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('buildDatasetMetrics').innerHTML = metricsHtml;
+                    
+                    // Store dataset for next steps
+                    window.builtDataset = result.dataset;
+                    
+                    document.getElementById('buildDatasetOutput').innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Dataset built successfully!</strong> 
+                            Filtered from ${result.original_count} to ${result.filtered_count} records.
+                            <br><small>Model used: ${result.model_used}</small>
+                        </div>
+                        <details>
+                            <summary>View dataset sample (first 3 records)</summary>
+                            <pre class="bg-light p-3 mt-2" style="max-height:300px;overflow:auto;">${JSON.stringify(result.dataset.slice(0, 3), null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Step 2: Analyze Dataset
+        document.getElementById('analyzeDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let dataset = document.getElementById('analyzeDataset').value;
+            const modelName = document.getElementById('analyzeModelName').value;
+            
+            // Use built dataset if available and no input provided
+            if (!dataset && window.builtDataset) {
+                dataset = JSON.stringify(window.builtDataset);
+            }
+            
+            if (!dataset) {
+                alert('Please provide a dataset to analyze');
+                return;
+            }
+            
+            try {
+                const datasetArray = JSON.parse(dataset);
+                
+                const response = await fetch('/api/mcp/medicine/dataset/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        dataset: datasetArray,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('analyzeDatasetResults').style.display = 'block';
+                    const insights = result.insights;
+                    const metrics = result.metrics;
+                    
+                    let insightsHtml = `
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <strong>Dataset Metrics</strong>
+                            </div>
+                            <div class="card-body">
+                                <ul>
+                                    <li>Total Records: ${metrics.total_records}</li>
+                                    <li>Unique Records: ${metrics.unique_records}</li>
+                                    <li>Quality Score: ${(metrics.quality_score * 100).toFixed(1)}%</li>
+                                    <li>Relevance Score: ${(metrics.relevance_score * 100).toFixed(1)}%</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (insights.ai_analysis) {
+                        insightsHtml += `
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <strong>AI Analysis</strong>
+                                </div>
+                                <div class="card-body">
+                                    <pre style="white-space: pre-wrap;">${insights.ai_analysis}</pre>
+                                    <small class="text-muted">Model: ${insights.model_used}</small>
+                                </div>
+                            </div>
+                        `;
+                    } else if (insights.common_terms) {
+                        insightsHtml += `
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <strong>Common Terms (Basic Analysis)</strong>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <thead><tr><th>Term</th><th>Count</th></tr></thead>
+                                        <tbody>
+                                            ${insights.common_terms.slice(0, 10).map(t => 
+                                                `<tr><td>${t.term}</td><td>${t.count}</td></tr>`
+                                            ).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('analyzeDatasetInsights').innerHTML = insightsHtml;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Step 3: Transform Dataset
+        document.getElementById('transformDatasetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let dataset = document.getElementById('transformDataset').value;
+            const transformationType = document.getElementById('transformationType').value;
+            const modelName = document.getElementById('transformModelName').value;
+            
+            // Use built dataset if available and no input provided
+            if (!dataset && window.builtDataset) {
+                dataset = JSON.stringify(window.builtDataset);
+            }
+            
+            if (!dataset) {
+                alert('Please provide a dataset to transform');
+                return;
+            }
+            
+            try {
+                const datasetArray = JSON.parse(dataset);
+                
+                const response = await fetch('/api/mcp/medicine/dataset/transform', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        dataset: datasetArray,
+                        transformation_type: transformationType,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('transformDatasetResults').style.display = 'block';
+                    
+                    let outputHtml = '<div class="alert alert-success">Transformation completed successfully!</div>';
+                    
+                    if (result.summaries) {
+                        outputHtml += `<h6>Summaries (${result.count} records)</h6><div class="list-group">`;
+                        result.summaries.forEach(s => {
+                            outputHtml += `
+                                <div class="list-group-item">
+                                    <strong>ID: ${s.original_id}</strong>
+                                    <p class="mb-0">${s.summary}</p>
+                                </div>
+                            `;
+                        });
+                        outputHtml += '</div>';
+                    } else if (result.extracted_entities) {
+                        outputHtml += `<h6>Extracted Entities (${result.count} records)</h6><div class="list-group">`;
+                        result.extracted_entities.forEach(e => {
+                            outputHtml += `
+                                <div class="list-group-item">
+                                    <strong>ID: ${e.record_id}</strong>
+                                    <pre class="mb-0 mt-2 bg-light p-2">${JSON.stringify(e.entities, null, 2)}</pre>
+                                </div>
+                            `;
+                        });
+                        outputHtml += '</div>';
+                    } else if (result.normalized_dataset) {
+                        outputHtml += `<h6>Normalized Dataset (${result.count} records)</h6>`;
+                        outputHtml += `<pre class="bg-light p-3" style="max-height:400px;overflow:auto;">${JSON.stringify(result.normalized_dataset.slice(0, 5), null, 2)}</pre>`;
+                    }
+                    
+                    document.getElementById('transformDatasetOutput').innerHTML = outputHtml;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Step 4: Generate Synthetic Data
+        document.getElementById('generateSyntheticForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const templateData = document.getElementById('syntheticTemplateData').value;
+            const numSamples = parseInt(document.getElementById('syntheticNumSamples').value);
+            const temperature = parseFloat(document.getElementById('syntheticTemperature').value);
+            const modelName = document.getElementById('syntheticModelName').value;
+            
+            if (!templateData) {
+                alert('Please provide template data');
+                return;
+            }
+            
+            try {
+                const templateArray = JSON.parse(templateData);
+                
+                const response = await fetch('/api/mcp/medicine/dataset/generate_synthetic', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        template_data: templateArray,
+                        num_samples: numSamples,
+                        temperature: temperature,
+                        model_name: modelName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('generateSyntheticResults').style.display = 'block';
+                    
+                    let outputHtml = `
+                        <div class="alert alert-success">
+                            Generated ${result.count} synthetic samples!
+                            ${result.mock ? '<br><small class="text-warning">Note: Using mock data (ipfs_accelerate_py not available)</small>' : ''}
+                        </div>
+                        <h6>Generated Samples:</h6>
+                        <div class="list-group">
+                    `;
+                    
+                    result.synthetic_data.forEach(sample => {
+                        outputHtml += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>${sample.id}</strong>
+                                    <small class="text-muted">Template: ${sample.template_id}</small>
+                                </div>
+                                <p class="mb-0 mt-2">${sample.content}</p>
+                                <small class="text-muted">${sample.generated_at}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    outputHtml += '</div>';
+                    document.getElementById('generateSyntheticOutput').innerHTML = outputHtml;
                 } else {
                     alert('Error: ' + result.error);
                 }
