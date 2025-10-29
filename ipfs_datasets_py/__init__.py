@@ -507,3 +507,47 @@ try:
     rag_query_optimizer = rag.rag_query_optimizer
 except AttributeError:
     rag_query_optimizer = None
+
+# Finance Dashboard Tools - Phase 7 Enhancement
+try:
+    from .mcp_server.tools.finance_data_tools import stock_scrapers
+    from .mcp_server.tools.finance_data_tools import news_scrapers
+    from .mcp_server.tools.finance_data_tools import finance_theorems
+    from .mcp_server.tools.finance_data_tools import graphrag_news_analyzer
+    from .mcp_server.tools.finance_data_tools import embedding_correlation
+    
+    # Expose key classes
+    StockDataScraper = stock_scrapers.StockDataScraper
+    NewsScraperBase = news_scrapers.NewsScraperBase
+    FinancialTheoremLibrary = finance_theorems.FinancialTheoremLibrary
+    GraphRAGNewsAnalyzer = graphrag_news_analyzer.GraphRAGNewsAnalyzer
+    VectorEmbeddingAnalyzer = embedding_correlation.VectorEmbeddingAnalyzer
+    
+    # Expose MCP tool functions
+    fetch_stock_data = stock_scrapers.fetch_stock_data
+    fetch_financial_news = news_scrapers.fetch_financial_news
+    list_financial_theorems = finance_theorems.list_financial_theorems
+    analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
+    analyze_embedding_market_correlation = embedding_correlation.analyze_embedding_market_correlation
+    
+    HAVE_FINANCE_TOOLS = True
+    if installer.verbose:
+        print("✅ Finance dashboard tools successfully loaded")
+except ImportError as e:
+    HAVE_FINANCE_TOOLS = False
+    StockDataScraper = None
+    NewsScraperBase = None
+    FinancialTheoremLibrary = None
+    GraphRAGNewsAnalyzer = None
+    VectorEmbeddingAnalyzer = None
+    fetch_stock_data = None
+    fetch_financial_news = None
+    list_financial_theorems = None
+    analyze_executive_performance = None
+    analyze_embedding_market_correlation = None
+    if installer.verbose:
+        import warnings
+        warnings.warn(f"Finance dashboard tools unavailable due to missing dependencies: {e}")
+
+except AttributeError:
+    rag_query_optimizer = None

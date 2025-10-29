@@ -1281,6 +1281,18 @@ class MCPDashboard(AdminDashboard):
             
             return render_template('finance_dashboard_mcp.html', **dashboard_data)
         
+        @self.app.route('/mcp/finance/workflow')
+        def finance_workflow_dashboard():
+            """Render the finance workflow pipeline dashboard."""
+            dashboard_data = {
+                "mcp_enabled": True,
+                "mcp_server_host": self.config.mcp_server_host if hasattr(self.config, 'mcp_server_host') else "127.0.0.1",
+                "mcp_server_port": self.config.mcp_server_port if hasattr(self.config, 'mcp_server_port') else 8001,
+                "dashboard_title": "Finance Workflow Pipeline Dashboard",
+                "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            return render_template('admin/finance_workflow_dashboard.html', **dashboard_data)
+        
         # Finance API endpoints (reuse caselaw backend with finance prefix)
         @self.app.route('/api/mcp/finance/check_document', methods=['POST'])
         def api_check_finance_document():
