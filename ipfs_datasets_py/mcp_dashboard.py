@@ -1636,10 +1636,51 @@ class MCPDashboard(AdminDashboard):
                 self.logger.error(f"Medicine guidelines query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
         
-        # Medical Research Scraping Routes
+        # Generic MCP Tool Router - ensures all tools go through same code path
+        @self.app.route('/api/mcp/<category>/<tool_name>', methods=['POST'])
+        def api_call_mcp_tool(category, tool_name):
+            """
+            Generic MCP tool router - ensures consistent code path for all tool calls.
+            
+            This route provides a unified interface for calling any MCP tool, ensuring that
+            CLI, dashboard, and Python API all use the same underlying tool functions.
+            """
+            try:
+                # Import the tool dynamically based on category and name
+                module_path = f".mcp_server.tools.{category}.{category.rstrip('s')}_mcp_tools"
+                try:
+                    module = __import__(module_path, fromlist=[tool_name], level=1)
+                    tool_function = getattr(module, tool_name)
+                except (ImportError, AttributeError):
+                    # Try alternate import patterns
+                    try:
+                        module_path = f".mcp_server.tools.{category}.medical_research_mcp_tools"
+                        module = __import__(module_path, fromlist=[tool_name], level=1)
+                        tool_function = getattr(module, tool_name)
+                    except:
+                        return jsonify({
+                            "success": False,
+                            "error": f"Tool '{tool_name}' not found in category '{category}'"
+                        }), 404
+                
+                # Get parameters from request
+                data = request.json or {}
+                params = data.get('params', data)  # Support both formats
+                
+                # Call the tool function (same code path as CLI and Python API)
+                result = tool_function(**params)
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"MCP tool call failed ({category}/{tool_name}): {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        # Medical Research Scraping Routes (specific endpoints for convenience)
+        # Note: These all call the same MCP tool functions as the generic router above
         @self.app.route('/api/mcp/medicine/scrape/pubmed', methods=['POST'])
         def api_scrape_pubmed():
-            """Scrape medical research from PubMed."""
+            """Scrape medical research from PubMed (calls MCP tool function)."""
             try:
                 from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_pubmed_medical_research
                 
@@ -1652,6 +1693,7 @@ class MCPDashboard(AdminDashboard):
                 if not query:
                     return jsonify({"success": False, "error": "Query is required"}), 400
                 
+                # Call MCP tool function (same code path as CLI and generic router)
                 result = scrape_pubmed_medical_research(
                     query=query,
                     max_results=max_results,
