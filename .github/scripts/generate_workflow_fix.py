@@ -211,18 +211,23 @@ This PR was automatically generated to fix a failure in the **{self.workflow_nam
         fixes = []
         
         # Extract package name from analysis
-        captured_values = self.analysis.get('captured_values', [])
-        if captured_values:
+        root_cause = self.analysis
+        captured_values = root_cause.get('captured_values', [])
+        
+        if captured_values and len(captured_values) > 0:
+            # Get the package name - it might have underscores or hyphens
             package = captured_values[0]
+            # Convert underscores to hyphens for pip package names
+            pip_package = package.replace('_', '-')
             
             # Fix for workflow
             workflow_fix = {
                 'file': f'.github/workflows/{self._get_workflow_filename()}',
                 'action': 'add_install_step',
-                'description': f'Add pip install step for {package}',
+                'description': f'Add pip install step for {pip_package}',
                 'changes': f"""- name: Install missing dependency
   run: |
-    pip install {package}""",
+    pip install {pip_package}""",
             }
             fixes.append(workflow_fix)
             
@@ -230,8 +235,8 @@ This PR was automatically generated to fix a failure in the **{self.workflow_nam
             requirements_fix = {
                 'file': 'requirements.txt',
                 'action': 'add_line',
-                'description': f'Add {package} to requirements.txt',
-                'changes': package,
+                'description': f'Add {pip_package} to requirements.txt',
+                'changes': pip_package,
             }
             fixes.append(requirements_fix)
         

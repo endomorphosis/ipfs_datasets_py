@@ -21,8 +21,9 @@ class WorkflowFailureAnalyzer:
     FAILURE_PATTERNS = {
         'dependency_error': {
             'patterns': [
-                r'ModuleNotFoundError: No module named [\'"](\w+)[\'"]',
+                r'ModuleNotFoundError: No module named [\'"]?([a-zA-Z0-9_-]+)[\'"]?',
                 r'ImportError: cannot import name [\'"](\w+)[\'"]',
+                r'import (\w+)\s*\n.*ModuleNotFoundError',
                 r'Could not find a version that satisfies.*\s+(\S+)',
                 r'ERROR: No matching distribution found for (\S+)',
                 r'pip.*failed.*package.*(\w+)',
@@ -158,6 +159,7 @@ class WorkflowFailureAnalyzer:
             'fix_type': root_cause.get('fix_type', 'manual'),
             'root_cause': root_cause.get('description', 'Could not determine root cause'),
             'fix_confidence': root_cause.get('confidence', 50),
+            'captured_values': root_cause.get('captured_values', []),
             'errors': errors,
             'patterns_found': [p['type'] for p in patterns],
             'recommendations': recommendations,
@@ -249,6 +251,7 @@ class WorkflowFailureAnalyzer:
                 'fix_type': 'manual',
                 'description': 'Could not identify specific failure pattern',
                 'confidence': 30,
+                'captured_values': [],
             }
         
         # Sort patterns by confidence
@@ -262,7 +265,7 @@ class WorkflowFailureAnalyzer:
             'fix_type': top_pattern['fix_type'],
             'description': top_pattern['matched_text'],
             'confidence': top_pattern['confidence'],
-            'captured_values': top_pattern['captured_values'],
+            'captured_values': list(top_pattern['captured_values']) if top_pattern['captured_values'] else [],
         }
     
     def _generate_recommendations(
