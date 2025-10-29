@@ -306,28 +306,28 @@ jobs:
           
           echo "CPU Performance:"
           time $PYTHON_CMD -c "
-import time
-start = time.time()
-def fib(n):
-    if n <= 1: 
-        return n
-    return fib(n-1) + fib(n-2)
-result = fib(25)
-end = time.time()
-print('Fibonacci(25) = {} in {:.3f}s'.format(result, end-start))
-"
+          import time
+          start = time.time()
+          def fib(n):
+              if n <= 1: 
+                  return n
+              return fib(n-1) + fib(n-2)
+          result = fib(25)
+          end = time.time()
+          print('Fibonacci(25) = {} in {:.3f}s'.format(result, end-start))
+          "
           
           echo ""
           echo "Memory Test:"
           $PYTHON_CMD -c "
-import sys
-baseline = sys.getsizeof([]) + sys.getsizeof({})
-print('Python memory usage: {} bytes baseline'.format(baseline))
-data = [i*i for i in range(10000)]
-print('Created list of 10k integers: {} items'.format(len(data)))
-del data
-print('Memory test completed')
-"
+          import sys
+          baseline = sys.getsizeof([]) + sys.getsizeof({})
+          print('Python memory usage: {} bytes baseline'.format(baseline))
+          data = [i*i for i in range(10000)]
+          print('Created list of 10k integers: {} items'.format(len(data)))
+          del data
+          print('Memory test completed')
+          "
           
           echo ""
           echo "Disk I/O Test:"
@@ -362,11 +362,11 @@ print('Memory test completed')
             fi
             
             OVERALL_SUCCESS=$($PYTHON_CMD -c "
-import json
-with open('runner_validation_results.json', 'r') as f:
-    results = json.load(f)
-print(results.get('overall_success', False))
-")
+            import json
+            with open('runner_validation_results.json', 'r') as f:
+                results = json.load(f)
+            print(results.get('overall_success', False))
+            ")
             
             if [ "$OVERALL_SUCCESS" = "True" ]; then
               echo "🎉 All validations PASSED!"

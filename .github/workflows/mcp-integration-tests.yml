@@ -133,13 +133,13 @@ jobs:
         timeout-minutes: 30
       
       - name: Upload Comprehensive Test Results
-        uses: upload-artifact@v4
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: comprehensive-integration-results
           path: test-results/
 
-  # Tools-specific tests
+  # Tools-specific tests (containerized)
   tools-integration-tests:
     runs-on: ubuntu-latest
     needs: basic-integration-tests
@@ -148,171 +148,52 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          submodules: false
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test,all]
-          pip install pytest pytest-asyncio requests numpy faiss-cpu
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Test MCP Tools Loading (Direct)
+      - name: Build MCP Test Docker Image
         run: |
-          echo "🔧 Testing direct MCP tools loading..."
-          python -c "
-          import sys
-          import traceback
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Test MCP Tools Loading in Container
+        run: |
+          mkdir -p test-results
+          echo "🔧 Testing MCP tools loading in container..."
           
-          try:
-              from ipfs_datasets_py.mcp_server.tools import get_all_tools
-              tools = get_all_tools()
-              
-              print(f'✅ Successfully loaded {len(tools)} MCP tools')
-              
-              # Test tools by category
-              categories = {}
-              for tool_name, tool_info in tools.items():
-                  category = tool_info.get('category', 'uncategorized')
-                  if category not in categories:
-                      categories[category] = []
-                  categories[category].append(tool_name)
-              
-              print('📊 Tools by category:')
-              for category, tool_list in categories.items():
-                  print(f'  {category}: {len(tool_list)} tools')
-              
-              # Test a few sample tools
-              sample_tools = list(tools.keys())[:5]
-              print(f'🔍 Sample tools: {sample_tools}')
-              
-          except Exception as e:
-              print(f'❌ Error loading MCP tools: {e}')
-              traceback.print_exc()
-              sys.exit(1)
-          "
+          docker run --rm \
+            -v $(pwd)/test-results:/app/test-results \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_tools_loading.py
       
-      - name: Start MCP Dashboard for Tools Tests
+      - name: Test MCP Tools via API in Container
         run: |
-          echo "🚀 Starting MCP Dashboard for tools tests..."
-          python -m ipfs_datasets_py.mcp_dashboard &
-          MCP_PID=$!
-          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          echo "🌐 Testing MCP tools via API in container..."
+          
+          # Start dashboard
+          docker run --rm -d \
+            --name mcp-tools-test \
+            -p 8899:8899 \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
           
           # Wait for dashboard
-          for i in {1..60}; do
-            if curl -f http://127.0.0.1:8899/api/mcp/status; then
-              echo "✅ Dashboard ready for tools tests!"
-              break
-            fi
-            sleep 2
-          done
-      
-      - name: Test MCP Tools via API
-        run: |
-          echo "🌐 Testing MCP tools via API..."
-          python -c "
-          import requests
-          import json
-          import sys
+          sleep 15
           
-          try:
-              # Get tools from API
-              response = requests.get('http://127.0.0.1:8899/api/mcp/tools', timeout=30)
-              if response.status_code != 200:
-                  print(f'❌ Tools API returned {response.status_code}')
-                  sys.exit(1)
-              
-              tools = response.json()
-              print(f'✅ API returned {len(tools)} tools')
-              
-              # Test tools structure
-              for tool_name, tool_info in list(tools.items())[:5]:
-                  print(f'🔧 {tool_name}:')
-                  print(f'  - Description: {tool_info.get(\"description\", \"N/A\")}')
-                  print(f'  - Category: {tool_info.get(\"category\", \"N/A\")}')
-                  print(f'  - Parameters: {len(tool_info.get(\"parameters\", {}))}')
-              
-              # Test status endpoint
-              status_response = requests.get('http://127.0.0.1:8899/api/mcp/status', timeout=10)
-              if status_response.status_code == 200:
-                  status_data = status_response.json()
-                  print(f'📊 Dashboard status: {status_data.get(\"status\", \"unknown\")}')
-                  print(f'📊 Tools available: {status_data.get(\"tools_available\", 0)}')
-              
-          except Exception as e:
-              print(f'❌ Error testing tools API: {e}')
-              import traceback
-              traceback.print_exc()
-              sys.exit(1)
-          "
-      
-      - name: Test Sample Tool Execution
-        run: |
-          echo "⚡ Testing sample tool execution..."
-          python -c "
-          import asyncio
-          import sys
-          import traceback
+          # Test API
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_tools_api.py || true
           
-          async def test_tools():
-              try:
-                  from ipfs_datasets_py.mcp_server.tools import get_all_tools
-                  tools = get_all_tools()
-                  
-                  # Find safe tools to test
-                  safe_tools = []
-                  for tool_name, tool_info in tools.items():
-                      # Look for tools that are likely safe to test
-                      if any(keyword in tool_name.lower() for keyword in ['list', 'info', 'status', 'get']):
-                          safe_tools.append((tool_name, tool_info))
-                  
-                  print(f'🧪 Found {len(safe_tools)} potentially safe tools to test')
-                  
-                  # Test up to 3 safe tools
-                  for tool_name, tool_info in safe_tools[:3]:
-                      try:
-                          print(f'🔍 Testing tool: {tool_name}')
-                          tool_func = tool_info.get('function')
-                          
-                          if tool_func:
-                              # Try with minimal or no arguments
-                              if asyncio.iscoroutinefunction(tool_func):
-                                  result = await tool_func()
-                              else:
-                                  result = tool_func()
-                              
-                              print(f'  ✅ {tool_name} executed successfully')
-                              print(f'  📊 Result type: {type(result).__name__}')
-                          
-                      except Exception as e:
-                          print(f'  ⚠️ {tool_name} failed (expected): {type(e).__name__}')
-                  
-                  print('✅ Tool execution tests completed')
-                  
-              except Exception as e:
-                  print(f'❌ Error in tool execution tests: {e}')
-                  traceback.print_exc()
-                  sys.exit(1)
-          
-          asyncio.run(test_tools())
-          "
-      
-      - name: Stop Dashboard
-        if: always()
-        run: |
-          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
-            kill $MCP_DASHBOARD_PID || true
-          fi
-          pkill -f "mcp_dashboard" || true
+          # Stop dashboard
+          docker stop mcp-tools-test || true
 
-  # Performance tests
+  # Performance tests (containerized)
   performance-integration-tests:
     runs-on: ubuntu-latest
     needs: basic-integration-tests
@@ -321,13 +202,49 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build MCP Test Docker Image
+        run: |
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Run Performance Tests in Container
+        run: |
+          mkdir -p test-results
+          echo "⚡ Running performance tests in container..."
+          
+          # Start dashboard
+          docker run --rm -d \
+            --name mcp-perf-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
+          
+          # Wait for dashboard
+          sleep 15
+          
+          # Run performance tests
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/test-results:/app/test-results \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_performance.py || true
+          
+          # Stop dashboard
+          docker stop mcp-perf-test || true
+      
+      - name: Upload Performance Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: test-results/
           cache: 'pip'
       
       - name: Install dependencies
@@ -487,8 +404,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
-        submodules: false
+        with:
+          submodules: false
       
       - name: Architecture Info
         run: |
