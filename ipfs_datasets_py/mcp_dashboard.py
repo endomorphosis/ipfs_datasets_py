@@ -1635,6 +1635,152 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Medicine guidelines query failed: {e}")
                 return jsonify({"success": False, "error": str(e)}), 500
+        
+        # Medical Research Scraping Routes
+        @self.app.route('/api/mcp/medicine/scrape/pubmed', methods=['POST'])
+        def api_scrape_pubmed():
+            """Scrape medical research from PubMed."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_pubmed_medical_research
+                
+                data = request.json or {}
+                query = data.get('query', '')
+                max_results = min(int(data.get('max_results', 100)), 200)
+                email = data.get('email')
+                research_type = data.get('research_type')
+                
+                if not query:
+                    return jsonify({"success": False, "error": "Query is required"}), 400
+                
+                result = scrape_pubmed_medical_research(
+                    query=query,
+                    max_results=max_results,
+                    email=email,
+                    research_type=research_type
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"PubMed scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/scrape/clinical_trials', methods=['POST'])
+        def api_scrape_clinical_trials():
+            """Scrape clinical trial data from ClinicalTrials.gov."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_clinical_trials
+                
+                data = request.json or {}
+                query = data.get('query', '')
+                condition = data.get('condition')
+                intervention = data.get('intervention')
+                max_results = min(int(data.get('max_results', 50)), 100)
+                
+                result = scrape_clinical_trials(
+                    query=query,
+                    condition=condition,
+                    intervention=intervention,
+                    max_results=max_results
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Clinical trials scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/scrape/biochemical', methods=['POST'])
+        def api_scrape_biochemical():
+            """Scrape biochemical research data."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_biochemical_research
+                
+                data = request.json or {}
+                topic = data.get('topic', '')
+                max_results = min(int(data.get('max_results', 50)), 100)
+                time_range_days = data.get('time_range_days')
+                
+                if not topic:
+                    return jsonify({"success": False, "error": "Topic is required"}), 400
+                
+                result = scrape_biochemical_research(
+                    topic=topic,
+                    max_results=max_results,
+                    time_range_days=time_range_days
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Biochemical research scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/theorems/generate', methods=['POST'])
+        def api_generate_medical_theorems():
+            """Generate medical theorems from clinical trial data."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import generate_medical_theorems_from_trials
+                
+                data = request.json or {}
+                trial_data = data.get('trial_data', {})
+                outcomes_data = data.get('outcomes_data', {})
+                
+                if not trial_data or not outcomes_data:
+                    return jsonify({"success": False, "error": "Both trial_data and outcomes_data are required"}), 400
+                
+                result = generate_medical_theorems_from_trials(trial_data, outcomes_data)
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Theorem generation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/theorems/validate', methods=['POST'])
+        def api_validate_medical_theorem():
+            """Validate a medical theorem using fuzzy logic."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import validate_medical_theorem_fuzzy
+                
+                data = request.json or {}
+                theorem_data = data.get('theorem_data', {})
+                empirical_data = data.get('empirical_data', {})
+                
+                if not theorem_data:
+                    return jsonify({"success": False, "error": "Theorem data is required"}), 400
+                
+                result = validate_medical_theorem_fuzzy(theorem_data, empirical_data)
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Theorem validation failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/medicine/scrape/population', methods=['POST'])
+        def api_scrape_population_data():
+            """Scrape population health data for theorem validation."""
+            try:
+                from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_population_health_data
+                
+                data = request.json or {}
+                condition = data.get('condition', '')
+                intervention = data.get('intervention')
+                
+                if not condition:
+                    return jsonify({"success": False, "error": "Condition is required"}), 400
+                
+                result = scrape_population_health_data(
+                    condition=condition,
+                    intervention=intervention
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                self.logger.error(f"Population data scraping failed: {e}")
+                return jsonify({"success": False, "error": str(e)}), 500
 
     def _setup_legal_dataset_routes(self) -> None:
         """Set up legal dataset scraping routes."""
