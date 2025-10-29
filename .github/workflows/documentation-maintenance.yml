@@ -1,0 +1,498 @@
+name: Documentation Maintenance
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        description: 'Perform full documentation scan'
+        required: false
+        default: 'true'
+        type: boolean
+      auto_fix:
+        description: 'Automatically fix simple issues'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  documentation-audit:
+    runs-on: ubuntu-latest
+    name: Maintain Documentation Health
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML pathlib
+      
+      - name: Run documentation finder
+        id: find_docs
+        run: |
+          echo "🔍 Finding documentation files..."
+          python adhoc_tools/find_documentation.py \
+            --directory . \
+            --format json \
+            --output /tmp/documentation_report.json \
+            --verbose
+          
+          if [ -f /tmp/documentation_report.json ]; then
+            echo "✅ Documentation report generated"
+            cat /tmp/documentation_report.json
+          else
+            echo "❌ Failed to generate documentation report"
+            exit 1
+          fi
+      
+      - name: Run docstring audit
+        id: docstring_audit
+        run: |
+          echo "📝 Auditing docstrings..."
+          python adhoc_tools/docstring_audit.py \
+            --directory ipfs_datasets_py \
+            --output /tmp/docstring_report.json
+          
+          if [ -f /tmp/docstring_report.json ]; then
+            echo "✅ Docstring audit completed"
+          else
+            echo "⚠️ Docstring audit encountered issues"
+          fi
+        continue-on-error: true
+      
+      - name: Check for missing documentation files
+        id: missing_docs
+        run: |
+          echo "🔍 Checking for missing documentation files..."
+          
+          # Create report
+          cat > /tmp/missing_docs_report.md << 'EOF'
+          # Missing Documentation Report
+          
+          ## Directories Missing Documentation
+          
+          EOF
+          
+          # Find directories missing README.md, TODO.md, or CHANGELOG.md
+          find ipfs_datasets_py -type d -not -path "*/\.*" -not -path "*/__pycache__*" | while IFS= read -r dir; do
+            missing=""
+            if [ ! -f "$dir/README.md" ]; then
+              missing="${missing}README.md "
+            fi
+            if [ ! -f "$dir/TODO.md" ]; then
+              missing="${missing}TODO.md "
+            fi
+            if [ ! -f "$dir/CHANGELOG.md" ]; then
+              missing="${missing}CHANGELOG.md "
+            fi
+            
+            if [ -n "$missing" ]; then
+              echo "- \`$dir\`: Missing $missing" >> /tmp/missing_docs_report.md
+            fi
+          done
+          
+          echo "" >> /tmp/missing_docs_report.md
+          echo "---" >> /tmp/missing_docs_report.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> /tmp/missing_docs_report.md
+          
+          cat /tmp/missing_docs_report.md
+      
+      - name: Auto-fix missing documentation files
+        id: auto_fix_docs
+        if: github.event.inputs.auto_fix == 'true' || github.event_name == 'schedule'
+        run: |
+          echo "🔧 Creating missing documentation files..."
+          
+          # Track if any changes were made
+          changes_made=false
+          
+          # Find directories missing documentation files and create them
+          find ipfs_datasets_py -type d -not -path "*/\.*" -not -path "*/__pycache__*" -not -path "*/node_modules/*" | while IFS= read -r dir; do
+            dir_name=$(basename "$dir")
+            parent_dir=$(dirname "$dir")
+            
+            # Skip if directory is empty or only contains __pycache__
+            if [ -z "$(ls -A "$dir" 2>/dev/null | grep -v __pycache__)" ]; then
+              continue
+            fi
+            
+            # Create README.md if missing
+            if [ ! -f "$dir/README.md" ]; then
+              echo "Creating README.md in $dir"
+              cat > "$dir/README.md" << EOFREADME
+          # ${dir_name}
+          
+          ## Overview
+          
+          This directory contains ${dir_name} components for the ipfs_datasets_py project.
+          
+          ## Contents
+          
+          <!-- Add description of key files and modules here -->
+          
+          ## Usage
+          
+          <!-- Add usage examples here -->
+          
+          ## Related Documentation
+          
+          - [Main README](../../README.md)
+          - [Project Documentation](../../docs/)
+          
+          ---
+          *This file was auto-generated by the documentation maintenance workflow. Please update with specific details.*
+          EOFREADME
+              changes_made=true
+            fi
+            
+            # Create TODO.md if missing
+            if [ ! -f "$dir/TODO.md" ]; then
+              echo "Creating TODO.md in $dir"
+              cat > "$dir/TODO.md" << EOFTODO
+          # TODO - ${dir_name}
+          
+          ## Pending Tasks
+          
+          - [ ] Add comprehensive documentation
+          - [ ] Add usage examples
+          - [ ] Add tests for all functions
+          - [ ] Update docstrings with complete descriptions
+          
+          ## Completed
+          
+          - [x] Directory structure created
+          
+          ---
+          *Last updated: $(date -u +"%Y-%m-%d")*
+          EOFTODO
+              changes_made=true
+            fi
+            
+            # Create CHANGELOG.md if missing
+            if [ ! -f "$dir/CHANGELOG.md" ]; then
+              echo "Creating CHANGELOG.md in $dir"
+              cat > "$dir/CHANGELOG.md" << EOFCHANGELOG
+          # Changelog - ${dir_name}
+          
+          All notable changes to this module will be documented in this file.
+          
+          ## [Unreleased]
+          
+          ### Added
+          - Initial structure created
+          
+          ---
+          *Last updated: $(date -u +"%Y-%m-%d")*
+          EOFCHANGELOG
+              changes_made=true
+            fi
+          done
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are any changes
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No documentation files needed to be created"
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+          else
+            echo "Documentation files created successfully"
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Analyze documentation freshness
+        id: doc_freshness
+        run: |
+          echo "📅 Analyzing documentation freshness..."
+          
+          cat > /tmp/stale_docs_report.md << 'EOF'
+          # Stale Documentation Report
+          
+          ## Documentation Files Not Updated Recently
+          
+          Files not modified in the last 90 days:
+          
+          EOF
+          
+          # Find documentation files older than 90 days
+          find . -type f \( -name "README.md" -o -name "TODO.md" -o -name "CHANGELOG.md" \) \
+            -not -path "./.git/*" \
+            -mtime +90 \
+            -exec ls -lh {} \; | while IFS= read -r line; do
+            echo "- $line" >> /tmp/stale_docs_report.md
+          done
+          
+          echo "" >> /tmp/stale_docs_report.md
+          echo "---" >> /tmp/stale_docs_report.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> /tmp/stale_docs_report.md
+          
+          cat /tmp/stale_docs_report.md
+      
+      - name: Check documentation consistency
+        id: doc_consistency
+        run: |
+          echo "🔄 Checking documentation consistency..."
+          
+          cat > /tmp/consistency_report.md << 'EOF'
+          # Documentation Consistency Report
+          
+          ## Issues Found
+          
+          EOF
+          
+          # Check if main README mentions all subdirectories with their own READMEs
+          echo "### Main README Coverage" >> /tmp/consistency_report.md
+          echo "" >> /tmp/consistency_report.md
+          
+          find ipfs_datasets_py -maxdepth 2 -type f -name "README.md" | while IFS= read -r readme; do
+            dir=$(dirname "$readme")
+            basename=$(basename "$dir")
+            if ! grep -q "$basename" README.md 2>/dev/null; then
+              echo "- Main README does not mention \`$dir\`" >> /tmp/consistency_report.md
+            fi
+          done
+          
+          echo "" >> /tmp/consistency_report.md
+          echo "---" >> /tmp/consistency_report.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> /tmp/consistency_report.md
+          
+          cat /tmp/consistency_report.md
+      
+      - name: Generate comprehensive report
+        id: generate_report
+        run: |
+          echo "📊 Generating comprehensive documentation report..."
+          
+          # Generate report header with proper date substitution
+          {
+            echo "# Documentation Health Report"
+            echo ""
+            echo "**Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            echo "**Repository:** ${{ github.repository }}"
+            echo "**Branch:** ${{ github.ref_name }}"
+            echo ""
+            echo "## Summary"
+            echo ""
+            echo "This automated report analyzes the health and completeness of documentation"
+            echo "across the repository for both human users and AI programming agents."
+            echo ""
+            echo "---"
+            echo ""
+          } > /tmp/documentation_health_report.md
+          
+          # Append all reports
+          if [ -f /tmp/missing_docs_report.md ]; then
+            cat /tmp/missing_docs_report.md >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          if [ -f /tmp/stale_docs_report.md ]; then
+            cat /tmp/stale_docs_report.md >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          if [ -f /tmp/consistency_report.md ]; then
+            cat /tmp/consistency_report.md >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          # Add docstring quality section
+          if [ -f /tmp/docstring_report.json ]; then
+            echo "## Docstring Quality Analysis" >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+            echo "See attached docstring_report.json for detailed analysis." >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          echo "## Recommendations" >> /tmp/documentation_health_report.md
+          echo "" >> /tmp/documentation_health_report.md
+          echo "1. **Missing Documentation**: ✅ Auto-generated template files created (check PR if auto-fix was enabled)" >> /tmp/documentation_health_report.md
+          echo "2. **Stale Documentation**: Review and update documentation files that haven't been modified recently" >> /tmp/documentation_health_report.md
+          echo "3. **Docstring Quality**: Enhance docstrings to include comprehensive descriptions, parameters, returns, and examples" >> /tmp/documentation_health_report.md
+          echo "4. **Consistency**: Ensure main README.md references all major subdirectories and their documentation" >> /tmp/documentation_health_report.md
+          echo "" >> /tmp/documentation_health_report.md
+          echo "## Actions Taken" >> /tmp/documentation_health_report.md
+          echo "" >> /tmp/documentation_health_report.md
+          if [ "${{ github.event.inputs.auto_fix }}" = "true" ] || [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "🤖 **Auto-fix enabled**: Missing documentation files were automatically created and a PR was opened." >> /tmp/documentation_health_report.md
+          else
+            echo "ℹ️ **Auto-fix disabled**: Run workflow manually with auto_fix=true to automatically create missing files." >> /tmp/documentation_health_report.md
+          fi
+          echo "" >> /tmp/documentation_health_report.md
+          echo "---" >> /tmp/documentation_health_report.md
+          echo "*This report is generated weekly by the Documentation Maintenance workflow*" >> /tmp/documentation_health_report.md
+          
+          cat /tmp/documentation_health_report.md
+      
+      - name: Upload documentation reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-reports
+          path: |
+            /tmp/documentation_health_report.md
+            /tmp/documentation_report.json
+            /tmp/docstring_report.json
+            /tmp/missing_docs_report.md
+            /tmp/stale_docs_report.md
+            /tmp/consistency_report.md
+          retention-days: 30
+      
+      - name: Create Pull Request with documentation fixes
+        if: steps.auto_fix_docs.outputs.changes_made == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            docs: Auto-generate missing documentation files
+            
+            This automated commit adds missing README.md, TODO.md, and CHANGELOG.md
+            files to directories that lacked them. Files were generated with basic
+            templates that should be updated with specific details.
+            
+            Generated by: Documentation Maintenance Workflow
+          branch: docs/auto-maintenance-${{ github.run_number }}
+          delete-branch: true
+          title: "docs: Auto-generate missing documentation files"
+          body: |
+            ## 🤖 Automated Documentation Maintenance
+            
+            This PR was automatically created by the [Documentation Maintenance workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            
+            ### Changes Made
+            
+            ✅ Created missing documentation files in directories that lacked them:
+            - README.md files with basic structure and overview
+            - TODO.md files with task tracking templates
+            - CHANGELOG.md files with version history structure
+            
+            ### Action Required
+            
+            Please review the auto-generated files and update them with:
+            1. Specific module/component descriptions
+            2. Usage examples and code snippets
+            3. API documentation where applicable
+            4. Relevant cross-references to related documentation
+            
+            ### Files Created
+            
+            The workflow scanned the repository and created documentation files in directories
+            that were missing them. All generated files include placeholder text that should
+            be customized for the specific module.
+            
+            ---
+            
+            **Note**: This is an automated PR. The generated content is intentionally generic
+            and serves as a starting point. Please enhance it with specific details before merging.
+            
+            **Related Issue**: See the [weekly documentation health report](${{ github.server_url }}/${{ github.repository }}/issues?q=is%3Aissue+label%3Adocumentation+label%3Aautomated) for more details.
+          labels: |
+            documentation
+            automated
+            maintenance
+          assignees: ${{ github.repository_owner }}
+          reviewers: ${{ github.repository_owner }}
+      
+      - name: Create or update documentation issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '/tmp/documentation_health_report.md';
+            
+            let reportContent = '';
+            try {
+              reportContent = fs.readFileSync(reportPath, 'utf8');
+            } catch (error) {
+              console.log('Could not read report file:', error);
+              reportContent = '# Documentation Health Report\n\nReport generation failed. Please check workflow logs.';
+            }
+            
+            // Check if there's already an open documentation issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Weekly Documentation Health Report')
+            );
+            
+            const issueTitle = `Weekly Documentation Health Report - ${new Date().toISOString().split('T')[0]}`;
+            const issueBody = `${reportContent}\n\n---\n\n**Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## Update: ${new Date().toISOString().split('T')[0]}\n\n${issueBody}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'automated', 'maintenance']
+              });
+              console.log(`Created new issue #${newIssue.data.number}`);
+            }
+      
+      - name: Add job summary
+        if: always()
+        run: |
+          echo "## 📊 Documentation Maintenance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f /tmp/documentation_health_report.md ]; then
+            cat /tmp/documentation_health_report.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Report generation incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation reports available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Retention: 30 days" >> $GITHUB_STEP_SUMMARY
+
+  notify-results:
+    runs-on: ubuntu-latest
+    needs: documentation-audit
+    if: always()
+    
+    steps:
+      - name: Workflow Status Summary
+        run: |
+          echo "## Documentation Maintenance Workflow Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ needs.documentation-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the [documentation-audit job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results." >> $GITHUB_STEP_SUMMARY
