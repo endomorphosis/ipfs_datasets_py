@@ -427,7 +427,11 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
     <script>
+        // Initialize MCP Client
+        const mcpClient = new MCPClient('/api/mcp');
+        
         function showSection(section) {
             // Hide all sections
             document.querySelectorAll('.content-section').forEach(el => {
@@ -444,7 +448,7 @@
             event.target.classList.add('active');
         }
 
-        function ingestRepository(event) {
+        async function ingestRepository(event) {
             event.preventDefault();
             const form = event.target;
             const data = {
@@ -457,26 +461,26 @@
             document.getElementById('repoLoading').style.display = 'block';
             document.getElementById('repoResults').style.display = 'none';
 
-            fetch('/api/mcp/software/ingest_repository', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
+            try {
+                // Use MCP SDK to execute tool
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'scrape_github_repository',
+                    data
+                );
+                
                 document.getElementById('repoLoading').style.display = 'none';
                 document.getElementById('repoResults').style.display = 'block';
                 document.getElementById('repoResultsContent').textContent = JSON.stringify(result, null, 2);
-            })
-            .catch(error => {
+            } catch (error) {
                 document.getElementById('repoLoading').style.display = 'none';
-                alert('Error: ' + error);
-            });
+                alert('Error: ' + error.message);
+            }
 
             return false;
         }
 
-        function analyzeCI(event) {
+        async function analyzeCI(event) {
             event.preventDefault();
             const data = {
                 repository_url: document.getElementById('cicdRepoUrl').value
@@ -485,33 +489,34 @@
             document.getElementById('cicdLoading').style.display = 'block';
             document.getElementById('cicdResults').style.display = 'none';
 
-            fetch('/api/mcp/software/workflow_actions', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
+            try {
+                // Use MCP SDK to execute tool
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'analyze_github_actions',
+                    data
+                );
+                
                 document.getElementById('cicdLoading').style.display = 'none';
                 document.getElementById('cicdResults').style.display = 'block';
                 document.getElementById('cicdResultsContent').textContent = JSON.stringify(result, null, 2);
-            })
-            .catch(error => {
+            } catch (error) {
                 document.getElementById('cicdLoading').style.display = 'none';
-                alert('Error: ' + error);
-            });
+                alert('Error: ' + error.message);
+            }
 
             return false;
         }
 
-        function loadTheorems() {
-            fetch('/api/mcp/software/query_theorems', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: 'list'})
-            })
-            .then(response => response.json())
-            .then(result => {
+        async function loadTheorems() {
+            try {
+                // Use MCP SDK to execute tool
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'list_software_theorems',
+                    {}
+                );
+                
                 document.getElementById('theoremsResults').style.display = 'block';
                 const content = document.getElementById('theoremsContent');
                 content.innerHTML = '';
@@ -532,10 +537,9 @@
                 } else {
                     content.innerHTML = '<p class="text-danger">Error loading theorems: ' + result.error + '</p>';
                 }
-            })
-            .catch(error => {
-                alert('Error loading theorems: ' + error);
-            });
+            } catch (error) {
+                alert('Error loading theorems: ' + error.message);
+            }
         }
     </script>
 </body>
