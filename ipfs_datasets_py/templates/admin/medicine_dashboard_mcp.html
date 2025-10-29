@@ -723,6 +723,38 @@
                         </ul>
                     </div>
                     
+                    <!-- Medical Research Scraping Section -->
+                    <div class="nav-section mt-4">
+                        <div class="nav-section-title px-3 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Medical Research Data</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#scrape-pubmed" role="tab">
+                                    <i class="fas fa-book-medical"></i> PubMed Research
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#scrape-clinical-trials" role="tab">
+                                    <i class="fas fa-vial"></i> Clinical Trials
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#scrape-biochemical" role="tab">
+                                    <i class="fas fa-atom"></i> Biochemical Data
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#medical-theorems" role="tab">
+                                    <i class="fas fa-lightbulb"></i> Medical Theorems
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#population-data" role="tab">
+                                    <i class="fas fa-users"></i> Population Data
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
                     <!-- Dataset Workflows Section -->
                     <div class="nav-section mt-4">
                         <div class="nav-section-title px-3 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Dataset Workflows</div>
@@ -2839,6 +2871,244 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- PubMed Research Scraping Tab -->
+                    <div class="tab-pane fade" id="scrape-pubmed" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-book-medical"></i> PubMed Medical Research</h5>
+                                <small class="text-white">Scrape medical literature from PubMed for knowledge graph generation</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="pubmedScrapingForm">
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label for="pubmedQuery" class="form-label">Search Query</label>
+                                            <input type="text" class="form-control" id="pubmedQuery" placeholder="e.g., COVID-19 treatment, diabetes therapy">
+                                            <small class="text-muted">Use MeSH terms for better results</small>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="pubmedMaxResults" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="pubmedMaxResults" value="100" min="1" max="200">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="pubmedEmail" class="form-label">Email (Recommended)</label>
+                                            <input type="email" class="form-control" id="pubmedEmail" placeholder="your@email.com">
+                                            <small class="text-muted">Required by NCBI for API access</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="pubmedResearchType" class="form-label">Research Type</label>
+                                            <select class="form-select" id="pubmedResearchType">
+                                                <option value="">All Types</option>
+                                                <option value="clinical_trial">Clinical Trial</option>
+                                                <option value="meta_analysis">Meta-Analysis</option>
+                                                <option value="review">Review</option>
+                                                <option value="research_article">Research Article</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Start Scraping
+                                    </button>
+                                </form>
+                                
+                                <div id="pubmedResults" class="mt-4" style="display:none;">
+                                    <h6>Results</h6>
+                                    <div id="pubmedResultsContent" class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>PMID</th>
+                                                    <th>Title</th>
+                                                    <th>Authors</th>
+                                                    <th>Date</th>
+                                                    <th>Journal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="pubmedResultsTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Clinical Trials Scraping Tab -->
+                    <div class="tab-pane fade" id="scrape-clinical-trials" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-vial"></i> Clinical Trials Data</h5>
+                                <small class="text-white">Scrape clinical trial data for temporal theorem generation</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="clinicalTrialsScrapingForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsCondition" class="form-label">Condition</label>
+                                            <input type="text" class="form-control" id="trialsCondition" placeholder="e.g., diabetes, hypertension">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsIntervention" class="form-label">Intervention (Optional)</label>
+                                            <input type="text" class="form-control" id="trialsIntervention" placeholder="e.g., metformin, lifestyle">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsPhase" class="form-label">Phase</label>
+                                            <select class="form-select" id="trialsPhase">
+                                                <option value="">All Phases</option>
+                                                <option value="Phase 1">Phase 1</option>
+                                                <option value="Phase 2">Phase 2</option>
+                                                <option value="Phase 3">Phase 3</option>
+                                                <option value="Phase 4">Phase 4</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="trialsMaxResults" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="trialsMaxResults" value="50" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Search Trials
+                                    </button>
+                                </form>
+                                
+                                <div id="trialsResults" class="mt-4" style="display:none;">
+                                    <h6>Trial Results</h6>
+                                    <div id="trialsResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Biochemical Research Tab -->
+                    <div class="tab-pane fade" id="scrape-biochemical" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-atom"></i> Biochemical Research Data</h5>
+                                <small class="text-white">Scrape biochemical and molecular biology research</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="biochemicalScrapingForm">
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label for="biochemTopic" class="form-label">Research Topic</label>
+                                            <input type="text" class="form-control" id="biochemTopic" placeholder="e.g., protein folding, enzyme kinetics">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="biochemMaxResults" class="form-label">Max Results</label>
+                                            <input type="number" class="form-control" id="biochemMaxResults" value="50" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="biochemTimeRange" class="form-label">Time Range (Days)</label>
+                                            <input type="number" class="form-control" id="biochemTimeRange" placeholder="e.g., 365 for last year">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Start Scraping
+                                    </button>
+                                </form>
+                                
+                                <div id="biochemResults" class="mt-4" style="display:none;">
+                                    <h6>Biochemical Research Results</h6>
+                                    <div id="biochemResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Medical Theorems Tab -->
+                    <div class="tab-pane fade" id="medical-theorems" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-lightbulb"></i> Medical Theorem Generation & Validation</h5>
+                                <small class="text-white">Generate and validate temporal deontic logic theorems from medical data</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> About Medical Theorems</h6>
+                                    <p class="mb-0">Medical theorems capture causal relationships in temporal deontic logic (e.g., "If person eats tide pods → they get sick"). These can be validated using fuzzy logic and time-series data.</p>
+                                </div>
+                                
+                                <h6>Generate Theorems from Clinical Trial</h6>
+                                <form id="theoremGenerationForm">
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="theoremNCTID" class="form-label">NCT ID</label>
+                                            <input type="text" class="form-control" id="theoremNCTID" placeholder="e.g., NCT12345678">
+                                            <small class="text-muted">First search for trials in the Clinical Trials tab to get NCT IDs</small>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-magic"></i> Generate Theorems
+                                    </button>
+                                </form>
+                                
+                                <div id="theoremResults" class="mt-4" style="display:none;">
+                                    <h6>Generated Theorems</h6>
+                                    <div id="theoremResultsContent"></div>
+                                </div>
+                                
+                                <hr class="my-4">
+                                
+                                <h6>Validate Theorem with Fuzzy Logic</h6>
+                                <form id="theoremValidationForm">
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="theoremToValidate" class="form-label">Select Theorem</label>
+                                            <select class="form-select" id="theoremToValidate">
+                                                <option value="">Select a generated theorem</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-check-circle"></i> Validate Theorem
+                                    </button>
+                                </form>
+                                
+                                <div id="validationResults" class="mt-4" style="display:none;">
+                                    <h6>Validation Results</h6>
+                                    <div id="validationResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Population Data Tab -->
+                    <div class="tab-pane fade" id="population-data" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="text-white"><i class="fas fa-users"></i> Population Health Data</h5>
+                                <small class="text-white">Collect population-level data for theorem validation</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="populationDataForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="popCondition" class="form-label">Condition</label>
+                                            <input type="text" class="form-control" id="popCondition" placeholder="e.g., diabetes, obesity">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="popIntervention" class="form-label">Intervention (Optional)</label>
+                                            <input type="text" class="form-control" id="popIntervention" placeholder="e.g., diet, medication">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-play"></i> Collect Population Data
+                                    </button>
+                                </form>
+                                
+                                <div id="populationResults" class="mt-4" style="display:none;">
+                                    <h6>Population Data Results</h6>
+                                    <div id="populationResultsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -4875,6 +5145,213 @@ Example: 'Whether an employment contract requiring 30 days notice is enforceable
                 alert('IPFS save functionality will be available in a future update.');
             });
         }
+        
+        // Medical Research Scraping Event Handlers
+        
+        // PubMed Scraping
+        document.getElementById('pubmedScrapingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const query = document.getElementById('pubmedQuery').value;
+            const maxResults = parseInt(document.getElementById('pubmedMaxResults').value);
+            const email = document.getElementById('pubmedEmail').value;
+            const researchType = document.getElementById('pubmedResearchType').value;
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/pubmed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        max_results: maxResults,
+                        email: email || null,
+                        research_type: researchType || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('pubmedResults').style.display = 'block';
+                    const tbody = document.getElementById('pubmedResultsTable');
+                    tbody.innerHTML = '';
+                    
+                    result.articles.forEach(article => {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${article.pmid}</td>
+                            <td>${article.title.substring(0, 100)}...</td>
+                            <td>${article.authors.slice(0, 3).join(', ')}</td>
+                            <td>${article.publication_date}</td>
+                            <td>${article.journal}</td>
+                        `;
+                    });
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Clinical Trials Scraping
+        document.getElementById('clinicalTrialsScrapingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const condition = document.getElementById('trialsCondition').value;
+            const intervention = document.getElementById('trialsIntervention').value;
+            const phase = document.getElementById('trialsPhase').value;
+            const maxResults = parseInt(document.getElementById('trialsMaxResults').value);
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/clinical_trials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: condition,
+                        condition: condition || null,
+                        intervention: intervention || null,
+                        phase: phase || null,
+                        max_results: maxResults
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('trialsResults').style.display = 'block';
+                    const content = document.getElementById('trialsResultsContent');
+                    
+                    let html = '<div class="list-group">';
+                    result.trials.forEach(trial => {
+                        html += `
+                            <div class="list-group-item">
+                                <h6>${trial.title}</h6>
+                                <p class="mb-1"><strong>NCT ID:</strong> ${trial.nct_id}</p>
+                                <p class="mb-1"><strong>Phase:</strong> ${trial.phase} | <strong>Status:</strong> ${trial.status}</p>
+                                <p class="mb-1"><strong>Conditions:</strong> ${trial.conditions.join(', ')}</p>
+                                <p class="mb-1"><strong>Interventions:</strong> ${trial.interventions.join(', ')}</p>
+                                <p class="mb-0"><small class="text-muted">Enrollment: ${trial.enrollment}</small></p>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Biochemical Research Scraping
+        document.getElementById('biochemicalScrapingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const topic = document.getElementById('biochemTopic').value;
+            const maxResults = parseInt(document.getElementById('biochemMaxResults').value);
+            const timeRange = document.getElementById('biochemTimeRange').value;
+            
+            if (!topic) {
+                alert('Please enter a research topic');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/biochemical', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        max_results: maxResults,
+                        time_range_days: timeRange ? parseInt(timeRange) : null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('biochemResults').style.display = 'block';
+                    const content = document.getElementById('biochemResultsContent');
+                    
+                    let html = '<div class="list-group">';
+                    result.articles.forEach(article => {
+                        html += `
+                            <div class="list-group-item">
+                                <h6>${article.title}</h6>
+                                <p class="mb-1"><strong>PMID:</strong> ${article.pmid}</p>
+                                <p class="mb-1"><strong>Authors:</strong> ${article.authors.slice(0, 5).join(', ')}</p>
+                                <p class="mb-1"><strong>Journal:</strong> ${article.journal}</p>
+                                <p class="mb-0"><small class="text-muted">Date: ${article.publication_date}</small></p>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
+        
+        // Population Data Collection
+        document.getElementById('populationDataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const condition = document.getElementById('popCondition').value;
+            const intervention = document.getElementById('popIntervention').value;
+            
+            if (!condition) {
+                alert('Please enter a condition');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/medicine/scrape/population', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        condition: condition,
+                        intervention: intervention || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('populationResults').style.display = 'block';
+                    const content = document.getElementById('populationResultsContent');
+                    
+                    let html = `<p><strong>Condition:</strong> ${result.condition}</p>`;
+                    html += `<p><strong>Trials Analyzed:</strong> ${result.trial_count}</p>`;
+                    html += '<div class="list-group">';
+                    
+                    result.population_data.forEach(data => {
+                        html += `
+                            <div class="list-group-item">
+                                <h6>${data.trial_title}</h6>
+                                <p class="mb-1"><strong>NCT ID:</strong> ${data.nct_id}</p>
+                                <p class="mb-0"><small class="text-muted">Demographics available</small></p>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        });
     </script>
 </body>
 </html>
