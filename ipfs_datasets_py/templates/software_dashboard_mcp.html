@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Engineering Dashboard (MCP)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container-fluid {
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            width: 250px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: #00d4ff;
+            color: #ffffff;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(0, 212, 255, 0.2);
+            border-left-color: #00d4ff;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        main[role="main"] {
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background-color: #f5f7fa;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+            main[role="main"] {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+        
+        .software-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tool-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .tool-icon {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-ready {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .status-error {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .theorem-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #764ba2;
+            border-bottom: 3px solid #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="sidebar-sticky">
+                    <h5 class="px-3 text-white mb-4">
+                        <i class="fas fa-code"></i> Software Engineering
+                    </h5>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#overview" onclick="showSection('overview')">
+                                <i class="fas fa-chart-line"></i> Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#repository" onclick="showSection('repository')">
+                                <i class="fab fa-github"></i> Repository
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#cicd" onclick="showSection('cicd')">
+                                <i class="fas fa-circle-notch"></i> CI/CD
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#logs" onclick="showSection('logs')">
+                                <i class="fas fa-file-alt"></i> Log Analysis
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#dependencies" onclick="showSection('dependencies')">
+                                <i class="fas fa-project-diagram"></i> Dependencies
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#workflows" onclick="showSection('workflows')">
+                                <i class="fas fa-sitemap"></i> Workflows
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#resources" onclick="showSection('resources')">
+                                <i class="fas fa-microchip"></i> Resources
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#healing" onclick="showSection('healing')">
+                                <i class="fas fa-wrench"></i> Auto-Healing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#theorems" onclick="showSection('theorems')">
+                                <i class="fas fa-book"></i> Theorems
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#testing" onclick="showSection('testing')">
+                                <i class="fas fa-vial"></i> Testing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#linting" onclick="showSection('linting')">
+                                <i class="fas fa-check-circle"></i> Linting
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#documentation" onclick="showSection('documentation')">
+                                <i class="fas fa-file-code"></i> Documentation
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#codebase" onclick="showSection('codebase')">
+                                <i class="fas fa-search"></i> Codebase Search
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#pr-creation" onclick="showSection('pr-creation')">
+                                <i class="fas fa-code-branch"></i> PR Creation
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#cli-tools" onclick="showSection('cli-tools')">
+                                <i class="fas fa-terminal"></i> CLI Tools
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="my-3" style="border-color: rgba(255,255,255,0.2);">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mcp">
+                                <i class="fas fa-arrow-left"></i> Back to Main Dashboard
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10">
+                <!-- Header -->
+                <div class="software-header">
+                    <h1><i class="fas fa-code"></i> Software Engineering Dashboard</h1>
+                    <p class="mb-0">DevOps, MLOps, and Software Engineering Tools</p>
+                    <div class="mt-3">
+                        <span class="status-badge {% if system_status.system_ready %}status-ready{% else %}status-error{% endif %}">
+                            {% if system_status.system_ready %}
+                                <i class="fas fa-check-circle"></i> System Ready
+                            {% else %}
+                                <i class="fas fa-exclamation-circle"></i> System Error
+                            {% endif %}
+                        </span>
+                        <span class="text-white ms-3">
+                            <i class="fas fa-clock"></i> Last Updated: {{ system_status.last_updated }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Overview Section -->
+                <div id="overview" class="content-section">
+                    <h3 class="mb-4">Dashboard Overview</h3>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="tool-card text-center">
+                                <i class="fas fa-tools tool-icon"></i>
+                                <h5>Available Tools</h5>
+                                <h2>{{ system_status.available_tools|length }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="tool-card text-center">
+                                <i class="fas fa-book tool-icon"></i>
+                                <h5>Theorems</h5>
+                                <h2>{{ system_status.theorem_count }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="tool-card text-center">
+                                <i class="fas fa-layer-group tool-icon"></i>
+                                <h5>Domains</h5>
+                                <h2>{{ system_status.domains|length }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="tool-card text-center">
+                                <i class="fas fa-check-circle tool-icon" style="color: #10b981;"></i>
+                                <h5>Status</h5>
+                                <h2>{% if system_status.system_ready %}Ready{% else %}Error{% endif %}</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <h5><i class="fas fa-info-circle"></i> Available Tools</h5>
+                        <div class="row mt-3">
+                            {% for tool in system_status.available_tools %}
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <span>{{ tool }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repository Section -->
+                <div id="repository" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fab fa-github"></i> Repository Analysis</h3>
+                    <div class="form-section">
+                        <h5>Ingest Repository</h5>
+                        <form id="repositoryForm" onsubmit="return ingestRepository(event)">
+                            <div class="mb-3">
+                                <label for="repoUrl" class="form-label">Repository URL</label>
+                                <input type="text" class="form-control" id="repoUrl" 
+                                       placeholder="https://github.com/owner/repo" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includePRs" checked>
+                                        <label class="form-check-label" for="includePRs">
+                                            Include Pull Requests
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeIssues" checked>
+                                        <label class="form-check-label" for="includeIssues">
+                                            Include Issues
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeWorkflows" checked>
+                                        <label class="form-check-label" for="includeWorkflows">
+                                            Include Workflows
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary-custom">
+                                    <i class="fas fa-download"></i> Ingest Repository
+                                </button>
+                            </div>
+                        </form>
+                        <div id="repoLoading" class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Scraping repository...</p>
+                        </div>
+                    </div>
+                    <div id="repoResults" class="results-section" style="display:none;">
+                        <h5>Results</h5>
+                        <pre id="repoResultsContent" class="bg-light p-3 rounded"></pre>
+                    </div>
+                </div>
+
+                <!-- CI/CD Section -->
+                <div id="cicd" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-circle-notch"></i> CI/CD Analysis</h3>
+                    <div class="form-section">
+                        <h5>Analyze GitHub Actions</h5>
+                        <form id="cicdForm" onsubmit="return analyzeCI(event)">
+                            <div class="mb-3">
+                                <label for="cicdRepoUrl" class="form-label">Repository URL</label>
+                                <input type="text" class="form-control" id="cicdRepoUrl" 
+                                       placeholder="https://github.com/owner/repo" required>
+                            </div>
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary-custom">
+                                    <i class="fas fa-play-circle"></i> Analyze Workflows
+                                </button>
+                            </div>
+                        </form>
+                        <div id="cicdLoading" class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Analyzing workflows...</p>
+                        </div>
+                    </div>
+                    <div id="cicdResults" class="results-section" style="display:none;">
+                        <h5>Workflow Analysis</h5>
+                        <pre id="cicdResultsContent" class="bg-light p-3 rounded"></pre>
+                    </div>
+                </div>
+
+                <!-- Theorems Section -->
+                <div id="theorems" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-book"></i> Software Engineering Theorems</h3>
+                    <div class="form-section">
+                        <button class="btn btn-primary-custom" onclick="loadTheorems()">
+                            <i class="fas fa-sync"></i> Load Theorems
+                        </button>
+                    </div>
+                    <div id="theoremsResults" class="results-section" style="display:none;">
+                        <h5>Available Theorems</h5>
+                        <div id="theoremsContent"></div>
+                    </div>
+                </div>
+
+                <!-- Testing Section -->
+                <div id="testing" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-vial"></i> Testing Tools</h3>
+                    
+                    <!-- Test Generator -->
+                    <div class="form-section mb-4">
+                        <h5>Test Generator</h5>
+                        <p class="text-muted">Generate unit tests for Python code</p>
+                        <form id="testGenForm" onsubmit="return generateTests(event)">
+                            <div class="mb-3">
+                                <label for="testGenFile" class="form-label">File Path</label>
+                                <input type="text" class="form-control" id="testGenFile" 
+                                       placeholder="path/to/module.py" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="testFramework" class="form-label">Test Framework</label>
+                                <select class="form-control" id="testFramework">
+                                    <option value="pytest">pytest</option>
+                                    <option value="unittest">unittest</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-magic"></i> Generate Tests
+                            </button>
+                        </form>
+                        <div id="testGenResults" class="results-section mt-3" style="display:none;">
+                            <h5>Generated Test</h5>
+                            <pre id="testGenContent" class="bg-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                    
+                    <!-- Test Runner -->
+                    <div class="form-section">
+                        <h5>Test Runner</h5>
+                        <p class="text-muted">Run tests and get comprehensive results</p>
+                        <form id="testRunForm" onsubmit="return runTests(event)">
+                            <div class="mb-3">
+                                <label for="testPath" class="form-label">Test Path</label>
+                                <input type="text" class="form-control" id="testPath" 
+                                       placeholder="tests/" value="tests/">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="testCoverage" checked>
+                                    <label class="form-check-label" for="testCoverage">
+                                        Include Coverage Report
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-play"></i> Run Tests
+                            </button>
+                        </form>
+                        <div id="testRunResults" class="results-section mt-3" style="display:none;">
+                            <h5>Test Results</h5>
+                            <pre id="testRunContent" class="bg-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Linting Section -->
+                <div id="linting" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-check-circle"></i> Code Linting</h3>
+                    <div class="form-section">
+                        <h5>Lint Python Codebase</h5>
+                        <p class="text-muted">Analyze and fix code quality issues</p>
+                        <form id="lintForm" onsubmit="return lintCode(event)">
+                            <div class="mb-3">
+                                <label for="lintPath" class="form-label">Path to Lint</label>
+                                <input type="text" class="form-control" id="lintPath" 
+                                       placeholder="." value=".">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="lintFix">
+                                    <label class="form-check-label" for="lintFix">
+                                        Auto-fix Issues
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="lintFiles" class="form-label">Specific Files (optional, comma-separated)</label>
+                                <input type="text" class="form-control" id="lintFiles" 
+                                       placeholder="file1.py, file2.py">
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-check"></i> Lint Code
+                            </button>
+                        </form>
+                        <div id="lintResults" class="results-section mt-3" style="display:none;">
+                            <h5>Linting Results</h5>
+                            <pre id="lintContent" class="bg-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentation Section -->
+                <div id="documentation" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-file-code"></i> Documentation Generator</h3>
+                    <div class="form-section">
+                        <h5>Generate Documentation</h5>
+                        <p class="text-muted">Automatically generate documentation from code</p>
+                        <form id="docGenForm" onsubmit="return generateDocs(event)">
+                            <div class="mb-3">
+                                <label for="docInputPath" class="form-label">Input Path</label>
+                                <input type="text" class="form-control" id="docInputPath" 
+                                       placeholder="src/" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="docOutputPath" class="form-label">Output Path</label>
+                                <input type="text" class="form-control" id="docOutputPath" 
+                                       placeholder="docs/" value="docs/">
+                            </div>
+                            <div class="mb-3">
+                                <label for="docFormat" class="form-label">Format</label>
+                                <select class="form-control" id="docFormat">
+                                    <option value="markdown">Markdown</option>
+                                    <option value="rst">ReStructuredText</option>
+                                    <option value="html">HTML</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-book"></i> Generate Documentation
+                            </button>
+                        </form>
+                        <div id="docGenResults" class="results-section mt-3" style="display:none;">
+                            <h5>Documentation Generated</h5>
+                            <pre id="docGenContent" class="bg-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Codebase Search Section -->
+                <div id="codebase" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-search"></i> Codebase Search</h3>
+                    <div class="form-section">
+                        <h5>Search Codebase</h5>
+                        <p class="text-muted">Find patterns, functions, and symbols in your code</p>
+                        <form id="searchForm" onsubmit="return searchCodebase(event)">
+                            <div class="mb-3">
+                                <label for="searchPattern" class="form-label">Search Pattern</label>
+                                <input type="text" class="form-control" id="searchPattern" 
+                                       placeholder="def my_function" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="searchPath" class="form-label">Search Path</label>
+                                <input type="text" class="form-control" id="searchPath" 
+                                       placeholder="." value=".">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="searchRegex">
+                                    <label class="form-check-label" for="searchRegex">
+                                        Use Regular Expression
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="searchCase">
+                                    <label class="form-check-label" for="searchCase">
+                                        Case Sensitive
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </form>
+                        <div id="searchResults" class="results-section mt-3" style="display:none;">
+                            <h5>Search Results</h5>
+                            <pre id="searchContent" class="bg-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PR Creation Section -->
+                <div id="pr-creation" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-code-branch"></i> AI Agent PR Creation</h3>
+                    <div class="form-section">
+                        <h5>Create Pull Request</h5>
+                        <p class="text-muted">Create GitHub PRs with AI agent attribution</p>
+                        <form id="prForm" onsubmit="return createPR(event)">
+                            <div class="mb-3">
+                                <label for="prOwner" class="form-label">Repository Owner</label>
+                                <input type="text" class="form-control" id="prOwner" 
+                                       placeholder="username or organization" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prRepo" class="form-label">Repository Name</label>
+                                <input type="text" class="form-control" id="prRepo" 
+                                       placeholder="repository" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prBranch" class="form-label">Branch Name</label>
+                                <input type="text" class="form-control" id="prBranch" 
+                                       placeholder="feature/branch-name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prTitle" class="form-label">PR Title</label>
+                                <input type="text" class="form-control" id="prTitle" 
+                                       placeholder="Add new feature" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="prDescription" rows="3" 
+                                          placeholder="Describe your changes" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prAgent" class="form-label">AI Agent</label>
+                                <select class="form-control" id="prAgent">
+                                    <option value="GitHub Copilot">GitHub Copilot</option>
+                                    <option value="Claude Code">Claude Code</option>
+                                    <option value="Gemini Code">Gemini Code</option>
+                                    <option value="Custom Agent">Custom Agent</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prDraft">
+                                    <label class="form-check-label" for="prDraft">
+                                        Create as Draft PR
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-code-branch"></i> Create PR
+                            </button>
+                        </form>
+                        <div id="prResults" class="results-section mt-3" style="display:none;">
+                            <h5>PR Created</h5>
+                            <pre id="prContent" class="bg-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLI Tools Section -->
+                <div id="cli-tools" class="content-section" style="display:none;">
+                    <h3 class="mb-4"><i class="fas fa-terminal"></i> CLI Tools</h3>
+                    
+                    <div class="row">
+                        <!-- GitHub CLI -->
+                        <div class="col-md-4 mb-4">
+                            <div class="tool-card">
+                                <h5><i class="fab fa-github"></i> GitHub CLI</h5>
+                                <p class="text-muted">Manage GitHub from command line</p>
+                                <button class="btn btn-sm btn-primary-custom" onclick="checkCLIStatus('github')">
+                                    <i class="fas fa-info-circle"></i> Check Status
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="installCLI('github')">
+                                    <i class="fas fa-download"></i> Install
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Claude CLI -->
+                        <div class="col-md-4 mb-4">
+                            <div class="tool-card">
+                                <h5><i class="fas fa-robot"></i> Claude CLI</h5>
+                                <p class="text-muted">Interact with Claude API</p>
+                                <button class="btn btn-sm btn-primary-custom" onclick="checkCLIStatus('claude')">
+                                    <i class="fas fa-info-circle"></i> Check Status
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="installCLI('claude')">
+                                    <i class="fas fa-download"></i> Install
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Gemini CLI -->
+                        <div class="col-md-4 mb-4">
+                            <div class="tool-card">
+                                <h5><i class="fas fa-gem"></i> Gemini CLI</h5>
+                                <p class="text-muted">Interact with Gemini API</p>
+                                <button class="btn btn-sm btn-primary-custom" onclick="checkCLIStatus('gemini')">
+                                    <i class="fas fa-info-circle"></i> Check Status
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="installCLI('gemini')">
+                                    <i class="fas fa-download"></i> Install
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- VSCode CLI -->
+                        <div class="col-md-4 mb-4">
+                            <div class="tool-card">
+                                <h5><i class="fas fa-code"></i> VSCode CLI</h5>
+                                <p class="text-muted">Manage VSCode from terminal</p>
+                                <button class="btn btn-sm btn-primary-custom" onclick="checkCLIStatus('vscode')">
+                                    <i class="fas fa-info-circle"></i> Check Status
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="installCLI('vscode')">
+                                    <i class="fas fa-download"></i> Install
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="cliResults" class="results-section mt-3" style="display:none;">
+                        <h5>CLI Tool Status</h5>
+                        <pre id="cliContent" class="bg-light p-3 rounded"></pre>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/mcp-sdk.js') }}"></script>
+    <script>
+        // Initialize MCP Client
+        const mcpClient = new MCPClient('/api/mcp');
+        
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(section).style.display = 'block';
+            
+            // Update active nav link
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        async function ingestRepository(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                repository_url: document.getElementById('repoUrl').value,
+                include_prs: document.getElementById('includePRs').checked,
+                include_issues: document.getElementById('includeIssues').checked,
+                include_workflows: document.getElementById('includeWorkflows').checked
+            };
+
+            document.getElementById('repoLoading').style.display = 'block';
+            document.getElementById('repoResults').style.display = 'none';
+
+            try {
+                // Use MCP SDK to execute tool
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'scrape_github_repository',
+                    data
+                );
+                
+                document.getElementById('repoLoading').style.display = 'none';
+                document.getElementById('repoResults').style.display = 'block';
+                document.getElementById('repoResultsContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('repoLoading').style.display = 'none';
+                alert('Error: ' + error.message);
+            }
+
+            return false;
+        }
+
+        async function analyzeCI(event) {
+            event.preventDefault();
+            const data = {
+                repository_url: document.getElementById('cicdRepoUrl').value
+            };
+
+            document.getElementById('cicdLoading').style.display = 'block';
+            document.getElementById('cicdResults').style.display = 'none';
+
+            try {
+                // Use MCP SDK to execute tool
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'analyze_github_actions',
+                    data
+                );
+                
+                document.getElementById('cicdLoading').style.display = 'none';
+                document.getElementById('cicdResults').style.display = 'block';
+                document.getElementById('cicdResultsContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('cicdLoading').style.display = 'none';
+                alert('Error: ' + error.message);
+            }
+
+            return false;
+        }
+
+        async function loadTheorems() {
+            try {
+                // Use MCP SDK to execute tool
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'list_software_theorems',
+                    {}
+                );
+                
+                document.getElementById('theoremsResults').style.display = 'block';
+                const content = document.getElementById('theoremsContent');
+                content.innerHTML = '';
+                
+                if (result.success) {
+                    const theorems = result.theorems;
+                    for (const [id, theorem] of Object.entries(theorems)) {
+                        const card = document.createElement('div');
+                        card.className = 'theorem-card';
+                        card.innerHTML = `
+                            <h6>${theorem.name}</h6>
+                            <p class="small mb-2">${theorem.description}</p>
+                            <p class="small mb-0"><strong>Formula:</strong> ${theorem.formula}</p>
+                            <p class="small mb-0"><strong>Domain:</strong> ${theorem.domain} | <strong>Severity:</strong> ${theorem.severity}</p>
+                        `;
+                        content.appendChild(card);
+                    }
+                } else {
+                    content.innerHTML = '<p class="text-danger">Error loading theorems: ' + result.error + '</p>';
+                }
+            } catch (error) {
+                alert('Error loading theorems: ' + error.message);
+            }
+        }
+
+        // Testing Tools Functions
+        async function generateTests(event) {
+            event.preventDefault();
+            const filePath = document.getElementById('testGenFile').value;
+            const framework = document.getElementById('testFramework').value;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    'test_generator',
+                    {file_path: filePath, test_framework: framework}
+                );
+                
+                document.getElementById('testGenResults').style.display = 'block';
+                document.getElementById('testGenContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+            return false;
+        }
+
+        async function runTests(event) {
+            event.preventDefault();
+            const path = document.getElementById('testPath').value;
+            const coverage = document.getElementById('testCoverage').checked;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    'run_comprehensive_tests',
+                    {path: path, generate_coverage: coverage}
+                );
+                
+                document.getElementById('testRunResults').style.display = 'block';
+                document.getElementById('testRunContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+            return false;
+        }
+
+        // Linting Functions
+        async function lintCode(event) {
+            event.preventDefault();
+            const path = document.getElementById('lintPath').value;
+            const fixIssues = document.getElementById('lintFix').checked;
+            const filesInput = document.getElementById('lintFiles').value;
+            const files = filesInput ? filesInput.split(',').map(f => f.trim()) : null;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    'lint_python_codebase',
+                    {path: path, fix_issues: fixIssues, files: files}
+                );
+                
+                document.getElementById('lintResults').style.display = 'block';
+                document.getElementById('lintContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+            return false;
+        }
+
+        // Documentation Functions
+        async function generateDocs(event) {
+            event.preventDefault();
+            const inputPath = document.getElementById('docInputPath').value;
+            const outputPath = document.getElementById('docOutputPath').value;
+            const format = document.getElementById('docFormat').value;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    'documentation_generator',
+                    {input_path: inputPath, output_path: outputPath, format: format}
+                );
+                
+                document.getElementById('docGenResults').style.display = 'block';
+                document.getElementById('docGenContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+            return false;
+        }
+
+        // Codebase Search Functions
+        async function searchCodebase(event) {
+            event.preventDefault();
+            const pattern = document.getElementById('searchPattern').value;
+            const path = document.getElementById('searchPath').value;
+            const useRegex = document.getElementById('searchRegex').checked;
+            const caseSensitive = document.getElementById('searchCase').checked;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    'codebase_search',
+                    {
+                        pattern: pattern,
+                        path: path,
+                        use_regex: useRegex,
+                        case_sensitive: caseSensitive
+                    }
+                );
+                
+                document.getElementById('searchResults').style.display = 'block';
+                document.getElementById('searchContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+            return false;
+        }
+
+        // PR Creation Functions
+        async function createPR(event) {
+            event.preventDefault();
+            const owner = document.getElementById('prOwner').value;
+            const repo = document.getElementById('prRepo').value;
+            const branch = document.getElementById('prBranch').value;
+            const title = document.getElementById('prTitle').value;
+            const description = document.getElementById('prDescription').value;
+            const agent = document.getElementById('prAgent').value;
+            const draft = document.getElementById('prDraft').checked;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'software_engineering_tools',
+                    'create_ai_agent_pr',
+                    {
+                        owner: owner,
+                        repo: repo,
+                        branch_name: branch,
+                        title: title,
+                        description: description,
+                        agent_name: agent,
+                        draft: draft,
+                        changes_summary: []
+                    }
+                );
+                
+                document.getElementById('prResults').style.display = 'block';
+                document.getElementById('prContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+            return false;
+        }
+
+        // CLI Tools Functions
+        async function checkCLIStatus(cli) {
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    `${cli}_cli_status`,
+                    {}
+                );
+                
+                document.getElementById('cliResults').style.display = 'block';
+                document.getElementById('cliContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function installCLI(cli) {
+            if (!confirm(`Install ${cli.toUpperCase()} CLI?`)) return;
+            
+            try {
+                const result = await mcpClient.executeTool(
+                    'development_tools',
+                    `${cli}_cli_install`,
+                    {force: false}
+                );
+                
+                document.getElementById('cliResults').style.display = 'block';
+                document.getElementById('cliContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

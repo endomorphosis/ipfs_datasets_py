@@ -516,6 +516,20 @@ try:
     from .mcp_server.tools.finance_data_tools import graphrag_news_analyzer
     from .mcp_server.tools.finance_data_tools import embedding_correlation
     
+    # Software Engineering Tools
+    from .mcp_server.tools.software_engineering_tools import (
+        github_repository_scraper,
+        github_actions_analyzer,
+        systemd_log_parser,
+        kubernetes_log_analyzer,
+        dependency_chain_analyzer,
+        dag_workflow_planner,
+        gpu_provisioning_predictor,
+        error_pattern_detector,
+        auto_healing_coordinator,
+        software_theorems
+    )
+    
     # Expose key classes
     StockDataScraper = stock_scrapers.StockDataScraper
     NewsScraperBase = news_scrapers.NewsScraperBase
@@ -528,6 +542,25 @@ try:
     fetch_financial_news = news_scrapers.fetch_financial_news
     list_financial_theorems = finance_theorems.list_financial_theorems
     analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
+    
+    # Software Engineering Tool Functions
+    scrape_github_repository = github_repository_scraper.scrape_github_repository
+    analyze_github_actions = github_actions_analyzer.analyze_github_actions
+    parse_systemd_logs = systemd_log_parser.parse_systemd_logs
+    parse_kubernetes_logs = kubernetes_log_analyzer.parse_kubernetes_logs
+    analyze_dependency_chain = dependency_chain_analyzer.analyze_dependency_chain
+    create_workflow_dag = dag_workflow_planner.create_workflow_dag
+    plan_speculative_execution = dag_workflow_planner.plan_speculative_execution
+    predict_gpu_needs = gpu_provisioning_predictor.predict_gpu_needs
+    detect_error_patterns = error_pattern_detector.detect_error_patterns
+    coordinate_auto_healing = auto_healing_coordinator.coordinate_auto_healing
+    list_software_theorems = software_theorems.list_software_theorems
+    validate_against_theorem = software_theorems.validate_against_theorem
+    
+    HAVE_SOFTWARE_ENGINEERING_TOOLS = True
+except ImportError as e:
+    HAVE_SOFTWARE_ENGINEERING_TOOLS = False
+    logger.warning(f"Software engineering tools not available: {e}")
     analyze_embedding_market_correlation = embedding_correlation.analyze_embedding_market_correlation
     
     HAVE_FINANCE_TOOLS = True
