@@ -1,0 +1,330 @@
+name: Documentation Maintenance
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        description: 'Perform full documentation scan'
+        required: false
+        default: 'true'
+        type: boolean
+      auto_fix:
+        description: 'Automatically fix simple issues'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  documentation-audit:
+    runs-on: ubuntu-latest
+    name: Audit Documentation Health
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML pathlib
+      
+      - name: Run documentation finder
+        id: find_docs
+        run: |
+          echo "🔍 Finding documentation files..."
+          python adhoc_tools/find_documentation.py \
+            --directory . \
+            --format json \
+            --output /tmp/documentation_report.json \
+            --verbose
+          
+          if [ -f /tmp/documentation_report.json ]; then
+            echo "✅ Documentation report generated"
+            cat /tmp/documentation_report.json
+          else
+            echo "❌ Failed to generate documentation report"
+            exit 1
+          fi
+      
+      - name: Run docstring audit
+        id: docstring_audit
+        run: |
+          echo "📝 Auditing docstrings..."
+          python adhoc_tools/docstring_audit.py \
+            --directory ipfs_datasets_py \
+            --output /tmp/docstring_report.json
+          
+          if [ -f /tmp/docstring_report.json ]; then
+            echo "✅ Docstring audit completed"
+          else
+            echo "⚠️ Docstring audit encountered issues"
+          fi
+        continue-on-error: true
+      
+      - name: Check for missing documentation files
+        id: missing_docs
+        run: |
+          echo "🔍 Checking for missing documentation files..."
+          
+          # Create report
+          cat > /tmp/missing_docs_report.md << 'EOF'
+          # Missing Documentation Report
+          
+          ## Directories Missing Documentation
+          
+          EOF
+          
+          # Find directories missing README.md, TODO.md, or CHANGELOG.md
+          find ipfs_datasets_py -type d -not -path "*/\.*" -not -path "*/__pycache__*" | while read dir; do
+            missing=""
+            if [ ! -f "$dir/README.md" ]; then
+              missing="${missing}README.md "
+            fi
+            if [ ! -f "$dir/TODO.md" ]; then
+              missing="${missing}TODO.md "
+            fi
+            if [ ! -f "$dir/CHANGELOG.md" ]; then
+              missing="${missing}CHANGELOG.md "
+            fi
+            
+            if [ ! -z "$missing" ]; then
+              echo "- \`$dir\`: Missing $missing" >> /tmp/missing_docs_report.md
+            fi
+          done
+          
+          echo "" >> /tmp/missing_docs_report.md
+          echo "---" >> /tmp/missing_docs_report.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> /tmp/missing_docs_report.md
+          
+          cat /tmp/missing_docs_report.md
+      
+      - name: Analyze documentation freshness
+        id: doc_freshness
+        run: |
+          echo "📅 Analyzing documentation freshness..."
+          
+          cat > /tmp/stale_docs_report.md << 'EOF'
+          # Stale Documentation Report
+          
+          ## Documentation Files Not Updated Recently
+          
+          Files not modified in the last 90 days:
+          
+          EOF
+          
+          # Find documentation files older than 90 days
+          find . -type f \( -name "README.md" -o -name "TODO.md" -o -name "CHANGELOG.md" \) \
+            -not -path "./.git/*" \
+            -mtime +90 \
+            -exec ls -lh {} \; | while read line; do
+            echo "- $line" >> /tmp/stale_docs_report.md
+          done
+          
+          echo "" >> /tmp/stale_docs_report.md
+          echo "---" >> /tmp/stale_docs_report.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> /tmp/stale_docs_report.md
+          
+          cat /tmp/stale_docs_report.md
+      
+      - name: Check documentation consistency
+        id: doc_consistency
+        run: |
+          echo "🔄 Checking documentation consistency..."
+          
+          cat > /tmp/consistency_report.md << 'EOF'
+          # Documentation Consistency Report
+          
+          ## Issues Found
+          
+          EOF
+          
+          # Check if main README mentions all subdirectories with their own READMEs
+          echo "### Main README Coverage" >> /tmp/consistency_report.md
+          echo "" >> /tmp/consistency_report.md
+          
+          find ipfs_datasets_py -maxdepth 2 -type f -name "README.md" | while read readme; do
+            dir=$(dirname "$readme")
+            basename=$(basename "$dir")
+            if ! grep -q "$basename" README.md 2>/dev/null; then
+              echo "- Main README does not mention \`$dir\`" >> /tmp/consistency_report.md
+            fi
+          done
+          
+          echo "" >> /tmp/consistency_report.md
+          echo "---" >> /tmp/consistency_report.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> /tmp/consistency_report.md
+          
+          cat /tmp/consistency_report.md
+      
+      - name: Generate comprehensive report
+        id: generate_report
+        run: |
+          echo "📊 Generating comprehensive documentation report..."
+          
+          cat > /tmp/documentation_health_report.md << 'EOF'
+          # Documentation Health Report
+          
+          **Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")  
+          **Repository:** ${{ github.repository }}  
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Summary
+          
+          This automated report analyzes the health and completeness of documentation
+          across the repository for both human users and AI programming agents.
+          
+          ---
+          
+          EOF
+          
+          # Append all reports
+          if [ -f /tmp/missing_docs_report.md ]; then
+            cat /tmp/missing_docs_report.md >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          if [ -f /tmp/stale_docs_report.md ]; then
+            cat /tmp/stale_docs_report.md >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          if [ -f /tmp/consistency_report.md ]; then
+            cat /tmp/consistency_report.md >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          # Add docstring quality section
+          if [ -f /tmp/docstring_report.json ]; then
+            echo "## Docstring Quality Analysis" >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+            echo "See attached docstring_report.json for detailed analysis." >> /tmp/documentation_health_report.md
+            echo "" >> /tmp/documentation_health_report.md
+          fi
+          
+          echo "## Recommendations" >> /tmp/documentation_health_report.md
+          echo "" >> /tmp/documentation_health_report.md
+          echo "1. **Missing Documentation**: Create README.md, TODO.md, and CHANGELOG.md files in directories that lack them" >> /tmp/documentation_health_report.md
+          echo "2. **Stale Documentation**: Review and update documentation files that haven't been modified recently" >> /tmp/documentation_health_report.md
+          echo "3. **Docstring Quality**: Enhance docstrings to include comprehensive descriptions, parameters, returns, and examples" >> /tmp/documentation_health_report.md
+          echo "4. **Consistency**: Ensure main README.md references all major subdirectories and their documentation" >> /tmp/documentation_health_report.md
+          echo "" >> /tmp/documentation_health_report.md
+          echo "---" >> /tmp/documentation_health_report.md
+          echo "*This report is generated weekly by the Documentation Maintenance workflow*" >> /tmp/documentation_health_report.md
+          
+          cat /tmp/documentation_health_report.md
+      
+      - name: Upload documentation reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-reports
+          path: |
+            /tmp/documentation_health_report.md
+            /tmp/documentation_report.json
+            /tmp/docstring_report.json
+            /tmp/missing_docs_report.md
+            /tmp/stale_docs_report.md
+            /tmp/consistency_report.md
+          retention-days: 30
+      
+      - name: Create or update documentation issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '/tmp/documentation_health_report.md';
+            
+            let reportContent = '';
+            try {
+              reportContent = fs.readFileSync(reportPath, 'utf8');
+            } catch (error) {
+              console.log('Could not read report file:', error);
+              reportContent = '# Documentation Health Report\n\nReport generation failed. Please check workflow logs.';
+            }
+            
+            // Check if there's already an open documentation issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Weekly Documentation Health Report')
+            );
+            
+            const issueTitle = `Weekly Documentation Health Report - ${new Date().toISOString().split('T')[0]}`;
+            const issueBody = `${reportContent}\n\n---\n\n**Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## Update: ${new Date().toISOString().split('T')[0]}\n\n${issueBody}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'automated', 'maintenance']
+              });
+              console.log(`Created new issue #${newIssue.data.number}`);
+            }
+      
+      - name: Add job summary
+        if: always()
+        run: |
+          echo "## 📊 Documentation Maintenance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f /tmp/documentation_health_report.md ]; then
+            cat /tmp/documentation_health_report.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Report generation incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation reports available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Retention: 30 days" >> $GITHUB_STEP_SUMMARY
+
+  notify-results:
+    runs-on: ubuntu-latest
+    needs: documentation-audit
+    if: always()
+    
+    steps:
+      - name: Workflow Status Summary
+        run: |
+          echo "## Documentation Maintenance Workflow Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ needs.documentation-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the [documentation-audit job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results." >> $GITHUB_STEP_SUMMARY
