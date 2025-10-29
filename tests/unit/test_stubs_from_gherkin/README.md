@@ -1,6 +1,16 @@
 # Test Stubs Generated from Gherkin Features
 
-This directory contains pytest test stubs automatically generated from the Gherkin feature files in `../gherkin_features/`.
+⚠️ **IMPORTANT: These are template files, NOT runnable tests!**
+
+This directory contains pytest test stubs automatically generated from the Gherkin feature files in `../gherkin_features/`. These files are **templates** for implementing actual tests and should not be run directly by pytest.
+
+## ⚠️ Not Runnable Tests
+
+**These files will not run as-is because:**
+- They only contain `pass` statements with TODO comments
+- They require `pytest-bdd` which is not in the project dependencies
+- They are meant to be copied and implemented, not run directly
+- Pytest is configured to skip this directory via `conftest.py` and `pytest.ini`
 
 ## Overview
 
