@@ -389,6 +389,9 @@ class IPFSDatasetsMCPServer:
         self._register_tools_from_subdir(tools_path / "storage_tools")
         self._register_tools_from_subdir(tools_path / "web_archive_tools")
         self._register_tools_from_subdir(tools_path / "ipfs_cluster_tools")
+        
+        # Register software engineering tools
+        self._register_tools_from_subdir(tools_path / "software_engineering_tools")
 
         # Register ipfs_embeddings_py tools (legacy integration)
         from .tools.ipfs_embeddings_integration import register_ipfs_embeddings_tools

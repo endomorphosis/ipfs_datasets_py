@@ -2069,10 +2069,12 @@ class MCPDashboard(AdminDashboard):
         def software_dashboard():
             """Render the software engineering dashboard."""
             try:
-                from .mcp_server.tools.software_engineering_tools.software_theorems import list_software_theorems
-                
-                # Get software engineering theorems
-                theorems_result = list_software_theorems()
+                # Get software engineering theorems via MCP tool system
+                theorems_result = self._execute_tool_sync(
+                    'software_engineering_tools',
+                    'list_software_theorems',
+                    {}
+                )
                 
                 dashboard_data = {
                     "system_status": {
@@ -2116,8 +2118,6 @@ class MCPDashboard(AdminDashboard):
         def api_ingest_repository():
             """Ingest a GitHub/GitLab repository."""
             try:
-                from .mcp_server.tools.software_engineering_tools.github_repository_scraper import scrape_github_repository
-                
                 data = request.json or {}
                 repository_url = data.get('repository_url', '')
                 include_prs = data.get('include_prs', True)
@@ -2128,12 +2128,17 @@ class MCPDashboard(AdminDashboard):
                 if not repository_url:
                     return jsonify({"success": False, "error": "Repository URL is required"}), 400
                 
-                result = scrape_github_repository(
-                    repository_url=repository_url,
-                    include_prs=include_prs,
-                    include_issues=include_issues,
-                    include_workflows=include_workflows,
-                    github_token=github_token
+                # Execute via MCP tool system
+                result = self._execute_tool_sync(
+                    'software_engineering_tools',
+                    'scrape_github_repository',
+                    {
+                        'repository_url': repository_url,
+                        'include_prs': include_prs,
+                        'include_issues': include_issues,
+                        'include_workflows': include_workflows,
+                        'github_token': github_token
+                    }
                 )
                 
                 return jsonify(result)
@@ -2154,18 +2159,24 @@ class MCPDashboard(AdminDashboard):
                     return jsonify({"success": False, "error": "Log content is required"}), 400
                 
                 if log_type == 'systemd':
-                    from .mcp_server.tools.software_engineering_tools.systemd_log_parser import parse_systemd_logs
-                    result = parse_systemd_logs(
-                        log_content=log_content,
-                        service_filter=data.get('service_filter'),
-                        priority_filter=data.get('priority_filter')
+                    result = self._execute_tool_sync(
+                        'software_engineering_tools',
+                        'parse_systemd_logs',
+                        {
+                            'log_content': log_content,
+                            'service_filter': data.get('service_filter'),
+                            'priority_filter': data.get('priority_filter')
+                        }
                     )
                 elif log_type == 'kubernetes':
-                    from .mcp_server.tools.software_engineering_tools.kubernetes_log_analyzer import parse_kubernetes_logs
-                    result = parse_kubernetes_logs(
-                        log_content=log_content,
-                        namespace_filter=data.get('namespace_filter'),
-                        pod_filter=data.get('pod_filter')
+                    result = self._execute_tool_sync(
+                        'software_engineering_tools',
+                        'parse_kubernetes_logs',
+                        {
+                            'log_content': log_content,
+                            'namespace_filter': data.get('namespace_filter'),
+                            'pod_filter': data.get('pod_filter')
+                        }
                     )
                 else:
                     return jsonify({"success": False, "error": f"Unknown log type: {log_type}"}), 400
@@ -2180,8 +2191,6 @@ class MCPDashboard(AdminDashboard):
         def api_workflow_actions():
             """Analyze GitHub Actions workflows."""
             try:
-                from .mcp_server.tools.software_engineering_tools.github_actions_analyzer import analyze_github_actions
-                
                 data = request.json or {}
                 repository_url = data.get('repository_url', '')
                 workflow_id = data.get('workflow_id')
@@ -2190,10 +2199,14 @@ class MCPDashboard(AdminDashboard):
                 if not repository_url:
                     return jsonify({"success": False, "error": "Repository URL is required"}), 400
                 
-                result = analyze_github_actions(
-                    repository_url=repository_url,
-                    workflow_id=workflow_id,
-                    github_token=github_token
+                result = self._execute_tool_sync(
+                    'software_engineering_tools',
+                    'analyze_github_actions',
+                    {
+                        'repository_url': repository_url,
+                        'workflow_id': workflow_id,
+                        'github_token': github_token
+                    }
                 )
                 
                 return jsonify(result)
@@ -2206,18 +2219,20 @@ class MCPDashboard(AdminDashboard):
         def api_dependency_graph():
             """Analyze dependency chains."""
             try:
-                from .mcp_server.tools.software_engineering_tools.dependency_chain_analyzer import analyze_dependency_chain
-                
                 data = request.json or {}
                 dependencies = data.get('dependencies', {})
                 
                 if not dependencies:
                     return jsonify({"success": False, "error": "Dependencies are required"}), 400
                 
-                result = analyze_dependency_chain(
-                    dependencies=dependencies,
-                    detect_cycles=data.get('detect_cycles', True),
-                    calculate_depth=data.get('calculate_depth', True)
+                result = self._execute_tool_sync(
+                    'software_engineering_tools',
+                    'analyze_dependency_chain',
+                    {
+                        'dependencies': dependencies,
+                        'detect_cycles': data.get('detect_cycles', True),
+                        'calculate_depth': data.get('calculate_depth', True)
+                    }
                 )
                 
                 return jsonify(result)
@@ -2230,16 +2245,18 @@ class MCPDashboard(AdminDashboard):
         def api_predict_resources():
             """Predict GPU and resource needs."""
             try:
-                from .mcp_server.tools.software_engineering_tools.gpu_provisioning_predictor import predict_gpu_needs
-                
                 data = request.json or {}
                 workflow_history = data.get('workflow_history', [])
                 current_call_stack = data.get('current_call_stack', [])
                 
-                result = predict_gpu_needs(
-                    workflow_history=workflow_history,
-                    current_call_stack=current_call_stack,
-                    look_ahead_steps=data.get('look_ahead_steps', 5)
+                result = self._execute_tool_sync(
+                    'software_engineering_tools',
+                    'predict_gpu_needs',
+                    {
+                        'workflow_history': workflow_history,
+                        'current_call_stack': current_call_stack,
+                        'look_ahead_steps': data.get('look_ahead_steps', 5)
+                    }
                 )
                 
                 return jsonify(result)
@@ -2252,17 +2269,19 @@ class MCPDashboard(AdminDashboard):
         def api_auto_heal():
             """Coordinate auto-healing workflows."""
             try:
-                from .mcp_server.tools.software_engineering_tools.auto_healing_coordinator import coordinate_auto_healing
-                
                 data = request.json or {}
                 error_report = data.get('error_report', {})
                 
                 if not error_report:
                     return jsonify({"success": False, "error": "Error report is required"}), 400
                 
-                result = coordinate_auto_healing(
-                    error_report=error_report,
-                    dry_run=data.get('dry_run', True)
+                result = self._execute_tool_sync(
+                    'software_engineering_tools',
+                    'coordinate_auto_healing',
+                    {
+                        'error_report': error_report,
+                        'dry_run': data.get('dry_run', True)
+                    }
                 )
                 
                 return jsonify(result)
@@ -2275,18 +2294,17 @@ class MCPDashboard(AdminDashboard):
         def api_query_theorems():
             """Query software engineering theorems."""
             try:
-                from .mcp_server.tools.software_engineering_tools.software_theorems import (
-                    list_software_theorems,
-                    validate_against_theorem
-                )
-                
                 data = request.json or {}
                 action = data.get('action', 'list')  # 'list' or 'validate'
                 
                 if action == 'list':
-                    result = list_software_theorems(
-                        domain_filter=data.get('domain_filter'),
-                        severity_filter=data.get('severity_filter')
+                    result = self._execute_tool_sync(
+                        'software_engineering_tools',
+                        'list_software_theorems',
+                        {
+                            'domain_filter': data.get('domain_filter'),
+                            'severity_filter': data.get('severity_filter')
+                        }
                     )
                 elif action == 'validate':
                     theorem_id = data.get('theorem_id')
@@ -2295,9 +2313,13 @@ class MCPDashboard(AdminDashboard):
                     if not theorem_id:
                         return jsonify({"success": False, "error": "Theorem ID is required for validation"}), 400
                     
-                    result = validate_against_theorem(
-                        theorem_id=theorem_id,
-                        context=context
+                    result = self._execute_tool_sync(
+                        'software_engineering_tools',
+                        'validate_against_theorem',
+                        {
+                            'theorem_id': theorem_id,
+                            'context': context
+                        }
                     )
                 else:
                     return jsonify({"success": False, "error": f"Unknown action: {action}"}), 400
