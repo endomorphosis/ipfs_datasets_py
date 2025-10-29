@@ -305,7 +305,7 @@ jobs:
           fi
           
           echo "CPU Performance:"
-                    time $PYTHON_CMD -c "
+          time $PYTHON_CMD -c "
           import time
           start = time.time()
           def fib(n):
