@@ -27,7 +27,8 @@ TOOL_CATEGORIES = [
     "news_scraping",
     "knowledge_graph",
     "temporal_reasoning",
-    "graphrag_analysis"
+    "graphrag_analysis",
+    "embedding_correlation"
 ]
 
 __all__ = [
