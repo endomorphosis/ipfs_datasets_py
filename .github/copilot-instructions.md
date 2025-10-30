@@ -89,7 +89,7 @@ pytest -n 5                  # Use 5 workers
 
 ### Test Structure
 
-Tests follow the **GIVEN-WHEN-THEN** format. See `tests/_example_test_format.py` for the standard template.
+Tests follow the **GIVEN-WHEN-THEN** format. See `docs/_example_test_format.md` for the standard template.
 
 ### Test Markers
 
@@ -131,7 +131,7 @@ pip install -e .
 ### Documentation
 
 - **All public classes, functions, and methods MUST have comprehensive docstrings**
-- See `_example_docstring_format.md` for the standard format
+- See `docs/_example_docstring_format.md` for the standard format
 - Include type hints for all function parameters and return values
 - Document exceptions that may be raised
 
