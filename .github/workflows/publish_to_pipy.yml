@@ -15,7 +15,10 @@ on:
 jobs:
   build:
     name: Build distribution 📦
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
 
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +43,10 @@ jobs:
     name: Publish Python 🐍 distribution 📦 to PyPI
     if: github.ref == 'refs/heads/main'  # only publish to PyPI on pushes to main branch
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     environment:
       name: pypi
       url: https://pypi.org/p/ipfs-datasets # Replace <package-name> with your PyPI project name

@@ -30,7 +30,10 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     strategy:
       matrix:
         dockerfile: [Dockerfile.test, Dockerfile.mcp-minimal]
@@ -132,7 +135,10 @@ jobs:
           cache-to: type=gha,mode=max
 
   test-docker-compose:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
       - name: Checkout repository
@@ -170,7 +176,10 @@ jobs:
         continue-on-error: true
 
   build-multi-arch:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     
     permissions:
@@ -210,7 +219,10 @@ jobs:
             FEATURES=minimal
 
   test-summary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: [build-and-test, test-docker-compose]
     if: always()
     

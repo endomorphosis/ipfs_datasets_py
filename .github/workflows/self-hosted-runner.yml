@@ -60,7 +60,10 @@ jobs:
           docker system prune -f || true
 
   test-github-hosted:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
       - name: System Information
@@ -97,7 +100,10 @@ jobs:
           echo "✅ Docker container test passed" >> $GITHUB_STEP_SUMMARY
 
   compare-runners:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: [test-self-hosted-x86, test-github-hosted]
     if: always()
     

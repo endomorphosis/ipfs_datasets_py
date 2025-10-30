@@ -31,7 +31,10 @@ env:
 jobs:
   # Test on GitHub-hosted runners (x86_64)
   test-github-x86:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
       - name: Checkout repository
@@ -195,7 +198,10 @@ jobs:
 
   # Multi-architecture build using buildx
   build-multi-arch:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     
     permissions:
@@ -256,7 +262,10 @@ jobs:
 
   # Summary job
   test-summary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: [test-github-x86, test-self-hosted-x86, test-self-hosted-arm64]
     if: always()
     

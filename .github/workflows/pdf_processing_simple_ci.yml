@@ -25,7 +25,10 @@ env:
 jobs:
   test:
     name: Test PDF Processing Pipeline
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
     - name: Checkout code
@@ -77,7 +80,10 @@ jobs:
 
   lint:
     name: Code Quality
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
     - name: Checkout code
@@ -113,7 +119,10 @@ jobs:
 
   security:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
     - name: Checkout code

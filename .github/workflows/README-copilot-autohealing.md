@@ -144,15 +144,22 @@ copilot:
 
 ### Automatic Mode (Default)
 
-The system runs automatically when any workflow fails:
+The system runs automatically when any monitored workflow fails:
 
 ```yaml
 on:
   workflow_run:
-    workflows: ["*"]
+    # Explicitly lists all monitored workflows
+    # (GitHub Actions doesn't support wildcards)
+    workflows:
+      - "Docker Build and Test"
+      - "PDF Processing Pipeline CI/CD"
+      # ... (see workflow file for complete list)
     types:
       - completed
 ```
+
+> **Note**: The workflow list must be explicitly maintained. See [MAINTENANCE.md](MAINTENANCE.md) for details on how to update it when adding new workflows.
 
 **Process:**
 1. Workflow fails

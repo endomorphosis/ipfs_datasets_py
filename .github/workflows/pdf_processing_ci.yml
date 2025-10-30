@@ -24,7 +24,10 @@ env:
 jobs:
   lint-and-format:
     name: Code Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
     steps:
     - uses: actions/checkout@v4
     
@@ -68,7 +71,10 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
     strategy:
       matrix:
         python-version: ['3.12']
@@ -152,7 +158,10 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
     needs: unit-tests
     
     steps:
@@ -194,7 +203,10 @@ jobs:
 
   mcp-server-tests:
     name: MCP Server Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
     needs: unit-tests
     
     steps:
@@ -228,7 +240,10 @@ jobs:
 
   performance-tests:
     name: Performance Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
     needs: integration-tests
     if: github.ref == 'refs/heads/main'
     
