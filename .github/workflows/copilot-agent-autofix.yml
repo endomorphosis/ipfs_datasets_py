@@ -2,7 +2,24 @@ name: Copilot Agent Auto-Healing
 
 on:
   workflow_run:
-    workflows: ["*"]
+    # NOTE: GitHub Actions does NOT support wildcards like ["*"] in workflow_run triggers.
+    # This list must be explicitly maintained. To update this list automatically, run:
+    # python3 .github/scripts/generate_workflow_list.py yaml
+    workflows:
+      - "ARM64 Self-Hosted Runner"
+      - "Docker Build and Test"
+      - "Docker Build and Test (Multi-Platform)"
+      - "Documentation Maintenance"
+      - "GPU-Enabled Tests"
+      - "GraphRAG Production CI/CD"
+      - "MCP Dashboard Automated Tests"
+      - "MCP Endpoints Integration Tests"
+      - "PDF Processing Pipeline CI/CD"
+      - "PDF Processing and MCP Tools CI"
+      - "Publish Python Package"
+      - "Self-Hosted Runner Test"
+      - "Self-Hosted Runner Validation"
+      - "Test Datasets ARM64 Runner"
     types:
       - completed
   workflow_dispatch:
