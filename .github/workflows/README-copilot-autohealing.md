@@ -433,7 +433,7 @@ python .github/scripts/analyze_autohealing_metrics.py
 
 ## Troubleshooting
 
-### GitHub CLI Authentication Failure (FIXED in v1.1.0)
+### GitHub CLI Authentication Failure (FIXED in v2.1.0)
 
 **Symptom:**
 - Auto-healing workflow completes in 1-2 seconds
@@ -444,7 +444,7 @@ python .github/scripts/analyze_autohealing_metrics.py
 **Root Cause:**
 The workflow was setting `GITHUB_TOKEN` environment variable, but GitHub CLI in Actions workflows requires `GH_TOKEN`.
 
-**Solution (Implemented in v1.1.0):**
+**Solution (Implemented in v2.1.0):**
 All steps that use `gh` CLI commands now correctly set `GH_TOKEN`:
 ```yaml
 env:
