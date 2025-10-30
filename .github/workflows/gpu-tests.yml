@@ -163,7 +163,10 @@ jobs:
 
   # CPU-only tests on GitHub-hosted runner (containerized)
   cpu-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
       - name: Checkout repository
@@ -241,7 +244,10 @@ jobs:
 
   # Test summary
   test-summary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: [gpu-tests, cpu-tests, gpu-docker-tests]
     if: always()
     

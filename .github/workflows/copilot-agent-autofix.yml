@@ -49,7 +49,10 @@ env:
 
 jobs:
   autofix-with-copilot-agent:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     # Only run if the triggering workflow failed and it's not another auto-fix workflow
     if: >
       github.event_name == 'workflow_dispatch' || 

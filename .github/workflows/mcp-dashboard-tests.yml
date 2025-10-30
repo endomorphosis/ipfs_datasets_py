@@ -35,7 +35,10 @@ env:
 jobs:
   # Basic smoke tests for all platforms (containerized)
   dashboard-smoke-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
@@ -96,7 +99,10 @@ jobs:
 
   # Comprehensive dashboard testing
   dashboard-comprehensive-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: dashboard-smoke-tests
     if: ${{ !cancelled() && (github.event.inputs.test_mode == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
     
@@ -152,7 +158,10 @@ jobs:
 
   # Endpoint and browser testing with live dashboard (containerized)
   dashboard-endpoint-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: dashboard-smoke-tests
     if: ${{ !cancelled() && (github.event.inputs.test_mode == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
     
@@ -305,7 +314,10 @@ jobs:
 
   # Generate comprehensive test report
   dashboard-test-summary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: [dashboard-smoke-tests, dashboard-comprehensive-tests, dashboard-self-hosted-tests]
     if: always()
     

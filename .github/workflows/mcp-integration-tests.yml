@@ -32,7 +32,10 @@ env:
 jobs:
   # Basic integration tests (containerized)
   basic-integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     
     steps:
       - name: Checkout repository
@@ -84,7 +87,10 @@ jobs:
 
   # Comprehensive integration tests (containerized)
   comprehensive-integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: basic-integration-tests
     if: ${{ !cancelled() && (github.event.inputs.test_scope == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
     
@@ -141,7 +147,10 @@ jobs:
 
   # Tools-specific tests (containerized)
   tools-integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: basic-integration-tests
     if: ${{ !cancelled() && (github.event.inputs.test_scope == 'tools-only' || github.event.inputs.test_scope == 'comprehensive') }}
     
@@ -195,7 +204,10 @@ jobs:
 
   # Performance tests (containerized)
   performance-integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: basic-integration-tests
     if: ${{ !cancelled() && (github.event.inputs.test_scope == 'performance' || github.event_name == 'schedule') }}
     
@@ -449,7 +461,10 @@ jobs:
 
   # Generate comprehensive test summary
   integration-test-summary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: [basic-integration-tests, comprehensive-integration-tests, tools-integration-tests, performance-integration-tests, multi-arch-integration-tests]
     if: always()
     

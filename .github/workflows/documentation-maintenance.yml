@@ -27,7 +27,10 @@ env:
 
 jobs:
   documentation-audit:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     name: Maintain Documentation Health
     
     steps:
@@ -483,7 +486,10 @@ jobs:
           echo "- Retention: 30 days" >> $GITHUB_STEP_SUMMARY
 
   notify-results:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.10-slim
+      options: --user root
     needs: documentation-audit
     if: always()
     
