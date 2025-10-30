@@ -235,6 +235,7 @@ To ensure the workflow list stays up to date, you can add a check to your CI:
    ```bash
    python3 .github/scripts/analyze_autohealing_metrics.py
    ```
+   This script analyzes system effectiveness including success rates, common failure types, and fix confidence scores.
 
 ### Success Indicators
 

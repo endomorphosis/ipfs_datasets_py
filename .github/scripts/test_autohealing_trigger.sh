@@ -25,15 +25,19 @@ echo ""
 # Get list of recent failed workflows
 echo "📊 Recent failed workflows:"
 echo "----------------------------"
+echo "Run ID          | Workflow Name                      | Created At"
+echo "----------------|------------------------------------|--------------------------"
 gh run list --status=failure --limit=5 --json workflowName,conclusion,createdAt,databaseId \
-    --jq '.[] | "\(.databaseId)\t\(.workflowName)\t\(.createdAt)"' 2>/dev/null || echo "No recent failures"
+    --jq '.[] | "\(.databaseId)\t| \(.workflowName)\t| \(.createdAt)"' 2>/dev/null || echo "No recent failures"
 echo ""
 
 # Check if auto-healing has run recently
 echo "🔍 Recent auto-healing runs:"
 echo "----------------------------"
+echo "Created At               | Status    | Trigger Type"
+echo "-------------------------|-----------|-------------"
 gh run list --workflow="Copilot Agent Auto-Healing" --limit=5 \
-    --json conclusion,createdAt,event --jq '.[] | "\(.createdAt)\t\(.conclusion)\t\(.event)"' 2>/dev/null || echo "No recent runs"
+    --json conclusion,createdAt,event --jq '.[] | "\(.createdAt)\t| \(.conclusion)\t| \(.event)"' 2>/dev/null || echo "No recent runs"
 echo ""
 
 # Show how to manually trigger
@@ -61,7 +65,12 @@ read -r response
 if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
     echo ""
     echo "📋 Available workflows to test with:"
-    python3 .github/scripts/generate_workflow_list.py list | nl
+    if python3 .github/scripts/generate_workflow_list.py list 2>/dev/null | nl; then
+        :  # Success
+    else
+        echo "❌ ERROR: Could not list workflows. Check if generate_workflow_list.py is working."
+        exit 1
+    fi
     echo ""
     echo "Enter a workflow name (or press Enter to skip):"
     read -r workflow_name
