@@ -1,0 +1,249 @@
+name: Comprehensive Scraper Validation with HuggingFace Schema Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: 'Domain to test (all, caselaw, finance, medicine, software)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - caselaw
+          - finance
+          - medicine
+          - software
+  schedule:
+    # Run weekly on Sundays at 3 AM UTC
+    - cron: '0 3 * * 0'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/tools/**/*scraper*.py'
+      - 'tests/scraper_tests/**'
+      - 'comprehensive_scraper_validation.py'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  comprehensive-validation:
+    name: Validate Scrapers on Self-Hosted Runner
+    runs-on: [self-hosted, linux, x64]
+    
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl
+          rm -rf /var/lib/apt/lists/*
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install Python dependencies
+        run: |
+          python --version
+          pip install --upgrade pip
+          pip install -r requirements.txt || echo "No requirements.txt, installing minimal deps"
+          pip install pytest pytest-asyncio pytest-timeout
+          pip install datasets  # HuggingFace datasets library
+      
+      - name: Run Comprehensive Validation
+        id: validation
+        run: |
+          echo "🧪 Running comprehensive scraper validation..."
+          echo "Validating: Execution, Schema, HuggingFace compatibility"
+          echo ""
+          
+          python comprehensive_scraper_validation.py > validation_output.txt 2>&1 || true
+          
+          cat validation_output.txt
+          
+          # Check if validation passed
+          if grep -q "ALL VALIDATIONS PASSED" validation_output.txt; then
+            echo "validation_status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "validation_status=failed" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Parse Results
+        if: always()
+        run: |
+          echo "## 📊 Comprehensive Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "validation_results/comprehensive_validation_report.json" ]; then
+            python3 << 'PYTHON'
+          import json
+          import sys
+          
+          with open('validation_results/comprehensive_validation_report.json') as f:
+              report = json.load(f)
+          
+          print(f"**Total Scrapers**: {report['total_scrapers']}")
+          print(f"**Passed**: ✅ {report['passed']}")
+          print(f"**Failed**: ❌ {report['failed']}")
+          print("")
+          print("### Detailed Results")
+          print("")
+          
+          for result in report['results']:
+              status = "✅" if (result['execution_success'] and result['schema_valid'] and result['hf_compatible'] and result['quality_score'] >= 50) else "❌"
+              print(f"{status} **{result['scraper_name']}** ({result['domain']})")
+              print(f"  - Records: {result['record_count']}")
+              print(f"  - Quality Score: {result['quality_score']:.1f}/100")
+              print(f"  - Execution: {'✅' if result['execution_success'] else '❌'}")
+              print(f"  - Schema Valid: {'✅' if result['schema_valid'] else '❌'}")
+              print(f"  - HF Compatible: {'✅' if result['hf_compatible'] else '❌'}")
+              
+              if result['schema_issues']:
+                  print(f"  - Schema Issues: {', '.join(result['schema_issues'])}")
+              if result['hf_issues']:
+                  print(f"  - HF Issues: {', '.join(result['hf_issues'])}")
+              if result['error']:
+                  print(f"  - Error: {result['error']}")
+              print("")
+          PYTHON
+          fi >> $GITHUB_STEP_SUMMARY
+      
+      - name: Test HuggingFace Dataset Creation
+        if: always()
+        run: |
+          echo "## 🤗 HuggingFace Dataset Compatibility Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          python3 << 'PYTHON'
+          import json
+          import sys
+          
+          try:
+              from datasets import Dataset
+              
+              # Try to load sample data and create dataset
+              with open('validation_results/comprehensive_validation_report.json') as f:
+                  report = json.load(f)
+              
+              for result in report['results']:
+                  if result['sample_records']:
+                      try:
+                          ds = Dataset.from_list(result['sample_records'])
+                          print(f"✅ {result['scraper_name']}: Created HF dataset with {len(ds)} records")
+                          print(f"   Schema: {ds.features}")
+                      except Exception as e:
+                          print(f"❌ {result['scraper_name']}: Failed to create HF dataset: {str(e)}")
+          except ImportError:
+              print("⚠️  HuggingFace datasets library not available")
+          except FileNotFoundError:
+              print("⚠️  No validation results found")
+          except Exception as e:
+              print(f"❌ Error: {str(e)}")
+          PYTHON
+          
+      - name: Upload Validation Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-validation-results
+          path: |
+            validation_results/
+            validation_output.txt
+          retention-days: 30
+      
+      - name: Create Issue on Failure
+        if: steps.validation.outputs.validation_status == 'failed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let issueBody = '## 🚨 Scraper Validation Failed\n\n';
+            issueBody += `**Workflow Run**: [${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n`;
+            
+            // Try to read summary
+            try {
+              const summary = fs.readFileSync('validation_results/validation_summary.txt', 'utf8');
+              issueBody += '### Summary\n\n```\n' + summary + '\n```\n\n';
+            } catch (e) {
+              issueBody += 'Could not load summary file.\n\n';
+            }
+            
+            issueBody += '### Action Required\n\n';
+            issueBody += '1. Review the validation report artifacts\n';
+            issueBody += '2. Fix scrapers that are failing validation\n';
+            issueBody += '3. Ensure data schemas match HuggingFace dataset requirements\n';
+            issueBody += '4. Re-run validation to confirm fixes\n\n';
+            issueBody += '### Related Files\n\n';
+            issueBody += '- `comprehensive_scraper_validation.py`: Validation script\n';
+            issueBody += '- `validation_results/`: Detailed results (download artifacts)\n';
+            
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'scraper-validation,automated'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Scraper Validation Failed')
+            );
+            
+            if (existingIssue) {
+              // Comment on existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 **New validation failure detected**\n\n${issueBody}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Scraper Validation Failed - Action Required',
+                body: issueBody,
+                labels: ['scraper-validation', 'automated', 'bug']
+              });
+              console.log(`Created new issue #${issue.data.number}`);
+            }
+      
+      - name: Final Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Validation Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ steps.validation.outputs.validation_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: Self-hosted runner with Docker" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container**: python:3.12-slim" >> $GITHUB_STEP_SUMMARY
+          echo "- **HuggingFace**: Datasets library used for validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.validation.outputs.validation_status }}" = "passed" ]; then
+            echo "✅ **All scrapers validated successfully**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Scrapers are:" >> $GITHUB_STEP_SUMMARY
+            echo "- Executing correctly" >> $GITHUB_STEP_SUMMARY
+            echo "- Producing valid data" >> $GITHUB_STEP_SUMMARY
+            echo "- Compatible with HuggingFace datasets" >> $GITHUB_STEP_SUMMARY
+            echo "- Meeting schema requirements" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some validations failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please review the artifacts and fix failing scrapers." >> $GITHUB_STEP_SUMMARY
+          fi
