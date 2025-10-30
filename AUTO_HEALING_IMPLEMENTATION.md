@@ -202,41 +202,57 @@ The auto-healing system for GitHub Actions workflows has been **successfully imp
 - Recommendation generation
 
 **Error Patterns Detected**:
+
+**Note on Confidence Scores**: Confidence percentages are based on:
+- Pattern specificity (specific error messages score higher)
+- Historical fix success rate (validated in testing)
+- Deterministic nature of the fix (adding dependencies is more deterministic than fixing tests)
+- Number of regex patterns matching the error (more patterns = higher confidence)
+
 1. **Dependency Errors** (90% confidence)
    - `ModuleNotFoundError`, `ImportError`
    - Missing packages in requirements
+   - **Why 90%**: Specific error messages, deterministic fix (add to requirements.txt)
 
 2. **Timeout Issues** (95% confidence)
    - Job/step timeouts
    - Deadline exceeded errors
+   - **Why 95%**: Very specific pattern, simple fix (increase timeout value)
 
 3. **Permission Errors** (80% confidence)
    - 403 Forbidden, 401 Unauthorized
    - Access denied errors
+   - **Why 80%**: Clear pattern but fix may vary (permissions, tokens, or access rights)
 
 4. **Network Errors** (75% confidence)
    - ConnectionError, network failures
    - Download/fetch issues
+   - **Why 75%**: Multiple causes possible (transient vs persistent)
 
 5. **Docker Errors** (85% confidence)
    - Docker daemon issues
    - Build failures
+   - **Why 85%**: Clear pattern, standard fix (setup Docker/Buildx)
 
 6. **Resource Exhaustion** (90% confidence)
    - Out of memory
    - Disk full
+   - **Why 90%**: Specific error, clear fix (upgrade runner or add cleanup)
 
 7. **Environment Variables** (95% confidence)
    - Missing required variables
    - KeyError on env access
+   - **Why 95%**: Very specific, simple fix (add env section)
 
 8. **Syntax Errors** (85% confidence)
    - SyntaxError, IndentationError
    - Code parsing issues
+   - **Why 85%**: Clear detection but requires manual code review
 
 9. **Test Failures** (70% confidence)
    - AssertionError, test failures
    - Test timeout issues
+   - **Why 70%**: Lower due to many possible causes (code logic, test data, environment)
 
 #### 3. Fix Generator
 **Location**: `.github/scripts/generate_workflow_fix.py`
@@ -294,14 +310,25 @@ permissions:
 File: `.github/workflows/workflow-auto-fix-config.yml`
 ```yaml
 enabled: true
-min_confidence: 70
+min_confidence: 70  # Only create PRs for fixes with ≥70% confidence
 excluded_workflows:
-  - "Deploy to Production"
+  - "Deploy to Production"  # Critical workflows to exclude from auto-healing
 copilot:
-  enabled: true
-  auto_mention: true
-  timeout_hours: 24
+  enabled: true           # Enable Copilot Agent integration
+  auto_mention: true      # Automatically mention @copilot in PR comments
+  timeout_hours: 24       # Max time to wait for Copilot response
+                          # If exceeded: PR remains open, manual review recommended
+                          # Note: Does not close PR automatically, just flags for review
 ```
+
+**Timeout Handling**:
+When `timeout_hours` is exceeded:
+1. PR remains open (not closed automatically)
+2. Issue comment added noting Copilot hasn't responded
+3. Label `needs-manual-review` added to PR
+4. Notification sent to repository maintainers
+5. Developer can implement fix manually or close PR
+6. System learns from timeout patterns to improve future proposals
 
 ## Validation Results
 
