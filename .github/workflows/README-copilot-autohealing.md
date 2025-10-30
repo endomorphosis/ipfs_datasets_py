@@ -433,6 +433,38 @@ python .github/scripts/analyze_autohealing_metrics.py
 
 ## Troubleshooting
 
+### Workflow Being Skipped (FIXED in latest version)
+
+**Symptom:**
+- Auto-healing workflow completes in 1-2 seconds
+- No analysis or PR creation occurs
+- Job appears to run but does nothing
+
+**Root Cause (Historical):**
+Prior to the fix, the workflow had an overly restrictive condition:
+```yaml
+github.event.workflow_run.event != 'workflow_run'
+```
+
+This prevented the auto-healing system from running when a failed workflow was itself triggered by a `workflow_run` event, which was too restrictive.
+
+**Solution (Implemented):**
+The condition has been updated to:
+```yaml
+!contains(github.event.workflow_run.name, 'Auto-Healing') &&
+!contains(github.event.workflow_run.name, 'Auto-Fix')
+```
+
+This allows auto-healing to run for ANY failed workflow, while still preventing infinite loops by checking the workflow name instead of the event type.
+
+**Verification:**
+Check the workflow run summary for debug information showing:
+- Event name and workflow details
+- All condition check results
+- Full event context in JSON format
+
+If the workflow is still being skipped, check the debug output to see which condition is failing.
+
 ### Copilot Doesn't Respond
 
 **Possible Causes:**
