@@ -1,11 +1,14 @@
 # Workflow Auto-Fix System Configuration
-
+# 
+# Updated 2025-10-30: Now properly triggers GitHub Copilot Coding Agent
+# by assigning issues to Copilot instead of manually creating PRs.
+#
 # This file contains configuration for the automated workflow fix system.
 # Modify these settings to customize the behavior.
 
 # General Settings
 enabled: true
-auto_create_pr: true
+auto_create_pr: false  # Copilot creates PRs automatically
 auto_comment_on_issue: true
 
 # Confidence Thresholds
@@ -154,16 +157,26 @@ debug:
   save_intermediate_files: true
 
 # GitHub Copilot Agent Integration (Auto-Healing)
+# UPDATED: Now properly triggers Copilot Coding Agent by assigning issues
 copilot:
   enabled: true
   use_agent_mode: true  # Use Copilot Agent for automatic implementation
-  auto_mention: true    # Automatically mention @copilot in PRs
-  create_task_file: true  # Create detailed task files for Copilot
+  trigger_method: "issue_assignment"  # Creates issue and assigns to 'Copilot' - this is the official GitHub method
+  auto_mention: false    # No longer needed - previously mentioned @copilot in comments, now assignment triggers the agent
+  create_task_file: false  # Issue body contains all needed information
   
   # Agent settings
   agent_timeout_hours: 24
   require_agent_completion: false  # Don't block if agent doesn't respond
-  fallback_to_manual: true  # Allow manual fixes if agent fails
+  fallback_to_manual: false  # Copilot handles everything
+  
+  # Issue assignment triggers the agent automatically
+  # The agent will:
+  #   1. Analyze the issue and repository
+  #   2. Create a branch for the fix
+  #   3. Implement the changes
+  #   4. Open a draft PR
+  #   5. Request review when ready
 
 # Advanced Settings
 advanced:
