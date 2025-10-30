@@ -78,60 +78,39 @@ jobs:
   # Test scrapers in Docker containers
   test-scrapers-docker:
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     strategy:
       matrix:
         domain: ${{ fromJson(needs.setup.outputs.domains) }}
       fail-fast: false
     
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
     steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl
+          rm -rf /var/lib/apt/lists/*
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: false
       
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Build Scraper Test Docker Image
+      - name: Install Python dependencies
         run: |
-          cat > Dockerfile.scraper-tests <<'EOF'
-          FROM python:3.12-slim
-          
-          WORKDIR /app
-          
-          # Install system dependencies
-          RUN apt-get update && apt-get install -y \
-              git \
-              curl \
-              && rm -rf /var/lib/apt/lists/*
-          
-          # Copy requirements and install Python dependencies
-          COPY requirements.txt .
-          RUN pip install --no-cache-dir -r requirements.txt
-          
-          # Install additional test dependencies
-          RUN pip install --no-cache-dir pytest pytest-asyncio pytest-timeout
-          
-          # Copy application code
-          COPY ipfs_datasets_py/ /app/ipfs_datasets_py/
-          COPY tests/ /app/tests/
-          
-          # Set Python path
-          ENV PYTHONPATH=/app
-          
-          # Create output directory
-          RUN mkdir -p /app/test_results
-          
-          WORKDIR /app
-          EOF
-          
-          docker build -f Dockerfile.scraper-tests -t scraper-tests:latest .
+          python --version
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-timeout
       
       - name: Run Scraper Tests - ${{ matrix.domain }}
         id: test
         run: |
-          echo "🧪 Testing ${{ matrix.domain }} scrapers..."
+          echo "🧪 Testing ${{ matrix.domain }} scrapers in Docker container..."
           mkdir -p test_results
           
           # Map domain to test file
@@ -150,18 +129,14 @@ jobs:
               ;;
           esac
           
-          # Run tests in Docker container
-          docker run --rm \
-            -v $(pwd)/test_results:/app/test_results \
-            -e PYTHONPATH=/app \
-            scraper-tests:latest \
-            pytest "$TEST_FILE" \
-              -v \
-              -s \
-              --timeout=300 \
-              --tb=short \
-              --junitxml=/app/test_results/${{ matrix.domain }}_results.xml \
-              || echo "test_status=failed" >> $GITHUB_OUTPUT
+          # Run tests directly (we're already in a container)
+          pytest "$TEST_FILE" \
+            -v \
+            -s \
+            --timeout=300 \
+            --tb=short \
+            --junitxml=test_results/${{ matrix.domain }}_results.xml \
+            || echo "test_status=failed" >> $GITHUB_OUTPUT
           
           # Check if tests passed
           if [ -f test_results/${{ matrix.domain }}_results.xml ]; then
@@ -297,8 +272,12 @@ jobs:
   # Generate consolidated report
   generate-report:
     needs: [test-scrapers-docker]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: always()
+    
+    container:
+      image: python:3.12-slim
+      options: --user root
     
     steps:
       - name: Checkout repository
@@ -359,8 +338,12 @@ jobs:
   # Notify on failure (optional)
   notify-on-failure:
     needs: [test-scrapers-docker]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: failure()
+    
+    container:
+      image: python:3.12-slim
+      options: --user root
     
     steps:
       - name: Failure notification
