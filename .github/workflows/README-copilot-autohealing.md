@@ -175,8 +175,8 @@ on:
 1. Workflow fails
 2. Auto-healing system detects failure
 3. Analysis and fix proposal generated
-4. **Issue created with failure details** ← NEW
-5. **Draft PR created linked to issue** ← Changed
+4. **Issue created with failure details**
+5. **Draft PR created linked to issue**
 6. @copilot mentioned in PR (both description and comment)
 7. Copilot Agent activates and implements fix
 8. Tests run to validate fix
