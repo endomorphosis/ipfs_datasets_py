@@ -59,11 +59,6 @@ jobs:
           echo "- **Name doesn't contain Auto-Fix**: ${{ !contains(github.event.workflow_run.name, 'Auto-Fix') }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Full Event Context (for debugging)" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          echo '${{ toJson(github.event) }}' >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
       
       - name: Checkout repository
         uses: actions/checkout@v4
