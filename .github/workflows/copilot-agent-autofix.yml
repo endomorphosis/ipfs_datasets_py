@@ -33,14 +33,38 @@ env:
 jobs:
   autofix-with-copilot-agent:
     runs-on: ubuntu-latest
-    # Only run if the triggering workflow failed
+    # Only run if the triggering workflow failed and it's not another auto-fix workflow
     if: >
       github.event_name == 'workflow_dispatch' || 
       (github.event.workflow_run.conclusion == 'failure' && 
-       github.event.workflow_run.event != 'workflow_run' &&
-       !contains(github.event.workflow_run.name, 'Auto-Healing'))
+       !contains(github.event.workflow_run.name, 'Auto-Healing') &&
+       !contains(github.event.workflow_run.name, 'Auto-Fix'))
     
     steps:
+      - name: Debug workflow trigger information
+        run: |
+          echo "## 🔍 Workflow Trigger Debug Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Event Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event Name**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Conclusion**: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Event**: ${{ github.event.workflow_run.event }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Name**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run ID**: ${{ github.event.workflow_run.id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Condition Checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is workflow_dispatch**: ${{ github.event_name == 'workflow_dispatch' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Conclusion is failure**: ${{ github.event.workflow_run.conclusion == 'failure' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name doesn't contain Auto-Healing**: ${{ !contains(github.event.workflow_run.name, 'Auto-Healing') }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name doesn't contain Auto-Fix**: ${{ !contains(github.event.workflow_run.name, 'Auto-Fix') }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Full Event Context (for debugging)" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo '${{ toJson(github.event) }}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
