@@ -11,20 +11,20 @@ on: []
 #    types:
 #      - completed
 #  workflow_dispatch:
-    inputs:
-      workflow_name:
-        description: 'Name of the failed workflow to analyze'
-        required: false
-        type: string
-      run_id:
-        description: 'Specific workflow run ID to analyze'
-        required: false
-        type: string
-      force_create_issue:
-        description: 'Force create issue even if one exists'
-        required: false
-        default: false
-        type: boolean
+#    inputs:
+#      workflow_name:
+#        description: 'Name of the failed workflow to analyze'
+#        required: false
+#        type: string
+#      run_id:
+#        description: 'Specific workflow run ID to analyze'
+#        required: false
+#        type: string
+#      force_create_issue:
+#        description: 'Force create issue even if one exists'
+#        required: false
+#        default: false
+#        type: boolean
 
 permissions:
   contents: write
