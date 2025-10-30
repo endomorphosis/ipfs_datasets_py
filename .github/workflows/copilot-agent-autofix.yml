@@ -79,7 +79,7 @@ jobs:
       - name: Get workflow run details
         id: get_run_details
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ -n "${{ github.event.inputs.run_id }}" ]; then
@@ -121,7 +121,7 @@ jobs:
         id: download_logs
         if: steps.get_run_details.outputs.run_id != ''
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
           
@@ -185,7 +185,7 @@ jobs:
         id: generate_fix
         if: steps.analyze_failure.outputs.analysis_available == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python .github/scripts/generate_workflow_fix.py \
             --analysis /tmp/failure_analysis.json \
@@ -275,7 +275,7 @@ jobs:
         id: create_pr
         if: steps.create_branch.outputs.has_changes == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.generate_fix.outputs.fix_branch }}"
           PR_TITLE="${{ steps.generate_fix.outputs.fix_title }}"
@@ -390,7 +390,7 @@ jobs:
       - name: Add issue comment with Copilot mention
         if: steps.create_pr.outputs.pr_url != ''
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER="${{ steps.create_pr.outputs.pr_number }}"
           

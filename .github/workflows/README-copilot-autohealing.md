@@ -433,6 +433,37 @@ python .github/scripts/analyze_autohealing_metrics.py
 
 ## Troubleshooting
 
+### GitHub CLI Authentication Failure (FIXED in v2.1.0)
+
+**Symptom:**
+- Auto-healing workflow completes in 1-2 seconds
+- Steps using `gh` commands fail silently
+- Error message: "To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable"
+- No workflow details retrieved, no logs downloaded, no PRs created
+
+**Root Cause:**
+The workflow was setting `GITHUB_TOKEN` environment variable, but GitHub CLI in Actions workflows requires `GH_TOKEN`.
+
+**Solution (Implemented in v2.1.0):**
+All steps that use `gh` CLI commands now correctly set `GH_TOKEN`:
+```yaml
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Changed from GITHUB_TOKEN
+```
+
+**Affected Steps:**
+- Get workflow run details (uses `gh run list`, `gh run view`)
+- Download workflow logs (uses `gh run view`)
+- Create Pull Request (uses `gh pr create`, `gh pr comment`)
+- Add issue comment (uses `gh issue list`, `gh issue create`, `gh issue comment`)
+
+**Verification:**
+Check workflow logs for successful `gh` command execution. You should see:
+- Workflow details being retrieved
+- Logs being downloaded from failed jobs
+- PRs being created successfully
+- Copilot mentions being added to PRs
+
 ### Workflow Being Skipped (FIXED in latest version)
 
 **Symptom:**
@@ -776,6 +807,24 @@ Contributions welcome! Areas to help:
 Same as parent repository.
 
 ## Changelog
+
+### Version 2.1.0 (2025-10-30)
+
+**CRITICAL FIX: GitHub CLI Authentication**
+- Fixed authentication issue causing auto-healing to fail silently
+- Changed `GITHUB_TOKEN` to `GH_TOKEN` in all steps using `gh` CLI commands
+- Resolves issue where workflow completed in 1-2 seconds without any actual work
+- Enables proper workflow failure detection and PR creation
+
+**Impact:**
+This fix enables the auto-healing system to:
+- Successfully authenticate with GitHub API
+- Retrieve workflow run details and logs
+- Create PRs for Copilot Agent to implement fixes
+- Properly mention @copilot in PRs and comments
+
+**Files Modified:**
+- `.github/workflows/copilot-agent-autofix.yml` - 5 instances fixed
 
 ### Version 2.0.0 (2025-10-29)
 
