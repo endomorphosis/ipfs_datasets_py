@@ -7,40 +7,69 @@ This directory contains all GitHub Actions workflows for the repository, includi
 ### What is it?
 
 The Auto-Healing System is an advanced workflow maintenance solution that:
-1. **Detects** workflow failures automatically
+1. **Detects** workflow failures automatically across **ALL 16 workflows**
 2. **Analyzes** the root cause using pattern matching
-3. **Proposes** fixes with confidence scores
-4. **Uses GitHub Copilot Agent** to implement fixes automatically
-5. **Creates PRs** ready for review and merge
+3. **Creates issues** with detailed failure logs and analysis
+4. **Creates draft PRs** linked to the issues
+5. **Uses GitHub Copilot Agent** to implement fixes automatically
+6. **Requires human review** only for final PR merge
 
-**Key Innovation**: No manual label required! Copilot Agent is automatically invoked to implement fixes.
+**Key Innovation**: Fully automated from detection to fix implementation! Human intervention only needed for review and merge.
+
+### How It Works
+
+```
+Workflow Fails → Issue Created → Draft PR Created → @copilot Implements Fix → Human Reviews & Merges
+```
+
+**100% Automated** until the review step!
 
 ### Quick Start
 
 The system is already configured and active. When a workflow fails:
-1. Auto-healing automatically detects it
-2. Analysis runs and identifies the issue
-3. A PR is created with the fix proposal
-4. GitHub Copilot Agent is mentioned and implements the fix
-5. Tests validate the fix
-6. You review and merge
+1. ✅ **Auto-healing automatically detects it** (within seconds)
+2. ✅ **Issue is created** with logs and analysis
+3. ✅ **Draft PR is created** with fix instructions
+4. ✅ **GitHub Copilot Agent implements the fix** (mentioned via @copilot)
+5. ✅ **Tests validate the fix** automatically
+6. 👤 **You review and merge** the PR
 
-**No manual intervention required!**
+**No manual intervention required until step 6!**
+
+### All Workflows Monitored (16 Total)
+
+The auto-healing system monitors **every workflow** in this repository:
+- ARM64 Self-Hosted Runner
+- Comprehensive Scraper Validation
+- Docker Build and Test (2 variants)
+- Documentation Maintenance
+- GPU-Enabled Tests
+- GraphRAG Production CI/CD
+- MCP Dashboard & Integration Tests (2 workflows)
+- PDF Processing (2 workflows)
+- Publish Python Package
+- Runner Validation (3 workflows)
+- Scraper Validation and Testing
+
+📝 **This list is automatically updated** when workflows are added/removed!
 
 ### Documentation
 
+- **[Complete Auto-Healing Guide](AUTO_HEALING_GUIDE.md)** - Full documentation ⭐
 - **[Quickstart Guide](QUICKSTART-copilot-autohealing.md)** - Get started in 5 minutes
-- **[Full Documentation](README-copilot-autohealing.md)** - Complete guide
+- **[Copilot Integration Docs](README-copilot-autohealing.md)** - How Copilot Agent works
 - **[Configuration](workflow-auto-fix-config.yml)** - Customize behavior
 
 ## Workflows Overview
 
 ### Auto-Healing Workflows
 
-| Workflow | Purpose | Trigger |
-|----------|---------|---------|
-| [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Auto-healing with Copilot Agent** | On workflow failure |
-| [workflow-auto-fix.yml](workflow-auto-fix.yml) | Manual auto-fix system | On workflow failure / manual |
+| Workflow | Purpose | Status | Trigger |
+|----------|---------|--------|---------|
+| [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Main auto-healing with Copilot Agent** | ✅ Active | On any workflow failure |
+| [update-autohealing-list.yml](update-autohealing-list.yml) | **Auto-update monitored workflows** | ✅ Active | On workflow file changes |
+| [enhanced-autohealing.yml](enhanced-autohealing.yml) | Enhanced auto-healing | ⛔ Disabled | Used unsupported wildcard |
+| [workflow-auto-fix.yml](workflow-auto-fix.yml) | Legacy auto-fix system | ⛔ Disabled | Superseded by copilot-agent |
 
 ### CI/CD Workflows
 

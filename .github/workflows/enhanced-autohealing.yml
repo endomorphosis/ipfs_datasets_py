@@ -1,25 +1,30 @@
 name: Enhanced Auto-Healing with GitHub Copilot
 
-on:
-  workflow_run:
-    workflows: ["*"]
-    types:
-      - completed
-  workflow_dispatch:
-    inputs:
-      workflow_name:
-        description: 'Name of the failed workflow to analyze'
-        required: false
-        type: string
-      run_id:
-        description: 'Specific workflow run ID to analyze'
-        required: false
-        type: string
-      force_create_issue:
-        description: 'Force create issue even if one exists'
-        required: false
-        default: false
-        type: boolean
+# DISABLED: This workflow is superseded by copilot-agent-autofix.yml
+# The workflow_run trigger with workflows: ["*"] is NOT supported by GitHub Actions
+# Use copilot-agent-autofix.yml instead which has an explicit workflow list
+on: []
+
+# Original triggers (disabled):
+#  workflow_run:
+#    workflows: ["*"]  # NOT SUPPORTED - GitHub Actions requires explicit list
+#    types:
+#      - completed
+#  workflow_dispatch:
+#    inputs:
+#      workflow_name:
+#        description: 'Name of the failed workflow to analyze'
+#        required: false
+#        type: string
+#      run_id:
+#        description: 'Specific workflow run ID to analyze'
+#        required: false
+#        type: string
+#      force_create_issue:
+#        description: 'Force create issue even if one exists'
+#        required: false
+#        default: false
+#        type: boolean
 
 permissions:
   contents: write
