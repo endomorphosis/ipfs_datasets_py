@@ -7,9 +7,10 @@ Get your repository healing itself in 5 minutes!
 Auto-Healing automatically fixes failed GitHub Actions workflows by:
 1. Detecting failures
 2. Analyzing root causes
-3. Proposing fixes
-4. Using GitHub Copilot Agent to implement fixes
-5. Creating PRs ready for review
+3. **Creating an issue with failure details**
+4. **Creating a draft PR linked to the issue**
+5. Using GitHub Copilot Agent to implement fixes (via @copilot mention)
+6. Marking PRs ready for review when complete
 
 **No manual intervention required!**
 
@@ -72,11 +73,14 @@ gh workflow run copilot-agent-autofix.yml \
 Just let workflows run normally:
 
 1. **Workflow fails** → Auto-healing detects it
-2. **Analysis runs** → Root cause identified  
-3. **PR created** → Fix proposed
-4. **Copilot implements** → Fix applied automatically
-5. **Tests run** → Validation happens
-6. **Review & merge** → You approve the fix
+2. **Analysis runs** → Root cause identified
+3. **Issue created** → Failure details documented
+4. **Draft PR created** → Fix proposed and linked to issue
+5. **Copilot activated** → @copilot mentioned in PR
+6. **Copilot implements** → Fix applied automatically
+7. **Tests run** → Validation happens
+8. **PR marked ready** → Copilot completes work
+9. **Review & merge** → You approve the fix
 
 ### Manual Trigger
 
@@ -115,43 +119,58 @@ gh workflow run copilot-agent-autofix.yml \
 
 ### 2. Fix Proposal (30 seconds)
 - Generates fix strategy
-- Creates detailed task for Copilot
-- Prepares branch and PR content
+- Prepares fix recommendations
+- Calculates confidence score
 
-### 3. PR Creation (10 seconds)
-- Creates branch with fix info
-- Opens PR with analysis
+### 3. Issue Creation (10 seconds)
+- Creates issue with failure details
+- Includes logs and analysis
+- Adds recommendations
+- Links to failed run
+
+### 4. PR Creation (10 seconds)
+- Creates branch
+- Opens draft PR linked to issue
+- Includes fix proposal
 - Mentions @copilot to trigger agent
 
-### 4. Copilot Implementation (1-10 minutes)
-- Copilot analyzes the failure
+### 5. Copilot Implementation (1-10 minutes)
+- Copilot reads issue for context
+- Analyzes fix proposal in PR
 - Implements suggested fixes
 - Commits changes to PR
-- Validates syntax
+- Marks PR as ready for review
 
-### 5. Testing (time varies)
+### 6. Testing (time varies)
 - CI/CD runs automatically
 - Tests validate the fix
 - Status reported on PR
 
-### 6. Your Turn
+### 7. Your Turn
 - Review Copilot's implementation
 - Check test results
 - Merge if all looks good!
+- Issue auto-closes when PR merges
 
 ## Monitor Activity
 
-### View Auto-Healing PRs
+### View Auto-Healing Activity
 
 ```bash
+# List all auto-healing issues
+gh issue list --label "auto-healing"
+
 # List all auto-healing PRs
 gh pr list --label "auto-healing"
 
+# View specific issue
+gh issue view 123
+
 # View specific PR
-gh pr view 123
+gh pr view 124
 
 # See what Copilot changed
-gh pr diff 123
+gh pr diff 124
 ```
 
 ### Check Workflow Runs
@@ -188,10 +207,12 @@ ModuleNotFoundError: No module named 'pytest-asyncio'
 
 **Auto-Healing:**
 1. Detects missing dependency (90% confidence)
-2. Creates PR adding package to requirements
-3. Copilot implements: adds `pytest-asyncio==0.21.0`
-4. Tests pass
-5. Ready to merge!
+2. **Creates issue #123** with failure details
+3. **Creates draft PR #124** linked to issue
+4. Copilot implements: adds `pytest-asyncio==0.21.0`
+5. Tests pass
+6. PR marked ready for review
+7. Ready to merge!
 
 **Time:** ~2-3 minutes
 
