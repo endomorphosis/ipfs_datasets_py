@@ -1,11 +1,16 @@
 name: Enhanced Auto-Healing with GitHub Copilot
 
-on:
-  workflow_run:
-    workflows: ["*"]
-    types:
-      - completed
-  workflow_dispatch:
+# DISABLED: This workflow is superseded by copilot-agent-autofix.yml
+# The workflow_run trigger with workflows: ["*"] is NOT supported by GitHub Actions
+# Use copilot-agent-autofix.yml instead which has an explicit workflow list
+on: []
+
+# Original triggers (disabled):
+#  workflow_run:
+#    workflows: ["*"]  # NOT SUPPORTED - GitHub Actions requires explicit list
+#    types:
+#      - completed
+#  workflow_dispatch:
     inputs:
       workflow_name:
         description: 'Name of the failed workflow to analyze'
