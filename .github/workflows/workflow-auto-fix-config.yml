@@ -161,8 +161,8 @@ debug:
 copilot:
   enabled: true
   use_agent_mode: true  # Use Copilot Agent for automatic implementation
-  trigger_method: "issue_assignment"  # Trigger by assigning issues to Copilot
-  auto_mention: false    # No longer needed - assignment triggers the agent
+  trigger_method: "issue_assignment"  # Creates issue and assigns to 'Copilot' - this is the official GitHub method
+  auto_mention: false    # No longer needed - previously mentioned @copilot in comments, now assignment triggers the agent
   create_task_file: false  # Issue body contains all needed information
   
   # Agent settings
