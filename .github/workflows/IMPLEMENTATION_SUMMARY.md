@@ -16,9 +16,11 @@ The user requested:
 ### Changes Made
 
 #### 1. Updated Workflow Monitoring (copilot-agent-autofix.yml)
-- **Before**: Monitored 14 out of 17 workflows
+- **Before**: Monitored 14 workflows (missing 2 from the available list)
 - **After**: Monitors all 16 production workflows
-- **Added**: Comprehensive Scraper Validation, Scraper Validation and Testing
+- **Added**: 
+  - Comprehensive Scraper Validation with HuggingFace Schema Check
+  - Scraper Validation and Testing
 
 #### 2. Fixed Enhanced Auto-Healing (enhanced-autohealing.yml)
 - **Issue**: Used unsupported `workflows: ["*"]` syntax
@@ -38,14 +40,36 @@ The user requested:
 
 ```
 Workflow Fails → Issue Created → Draft PR Created → @copilot Implements → Human Reviews & Merges
-    (Auto)          (Auto)            (Auto)              (Auto)              (Manual)
+    (Auto)          (Auto)            (Auto)              (Auto)              (Manual Only)
 ```
 
-**100% automated until review!**
+**Automated steps**: Failure detection, issue creation, PR creation, Copilot invocation
+**Manual step**: Final review and merge of PR
 
 ## Monitored Workflows (16)
 
-All production workflows are monitored. See AUTO_HEALING_GUIDE.md for complete list.
+The system monitors 16 production workflows (all workflows except maintenance/auto-healing workflows):
+
+1. ARM64 Self-Hosted Runner
+2. Comprehensive Scraper Validation with HuggingFace Schema Check
+3. Docker Build and Test
+4. Docker Build and Test (Multi-Platform)
+5. Documentation Maintenance
+6. GPU-Enabled Tests
+7. GraphRAG Production CI/CD
+8. MCP Dashboard Automated Tests
+9. MCP Endpoints Integration Tests
+10. PDF Processing Pipeline CI/CD
+11. PDF Processing and MCP Tools CI
+12. Publish Python Package
+13. Scraper Validation and Testing
+14. Self-Hosted Runner Test
+15. Self-Hosted Runner Validation
+16. Test Datasets ARM64 Runner
+
+**Excluded**: 5 workflows (auto-healing, legacy, config files)
+**Total workflows in repo**: 21 workflow files
+**Production workflows**: 16 monitored
 
 ## Files Modified
 - `.github/workflows/copilot-agent-autofix.yml`
