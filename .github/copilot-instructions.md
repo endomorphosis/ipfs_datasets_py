@@ -41,8 +41,9 @@ ipfs_datasets_py/
 ## 🔧 Development Setup
 
 ### Python Version
-- **Required:** Python 3.10+
+- **Required:** Python 3.12+
 - The project uses modern Python features and type hints
+- Some workflows may still reference 3.10 but the minimum supported version is 3.12
 
 ### Installation
 
@@ -67,6 +68,19 @@ pip install -e ".[test]" # Testing dependencies only
 
 ## 🧪 Testing
 
+The repository has a comprehensive testing framework ranging from unit tests to CI/CD integration tests:
+
+### Test Structure
+
+Tests are organized into multiple levels:
+- **Unit Tests** (`tests/unit/`, `tests/unit_tests/`) - Testing individual components and functions
+- **Integration Tests** (`tests/integration/`) - Testing component interactions (dashboard, geospatial, multimedia, GraphRAG)
+- **E2E Tests** (`tests/e2e/`) - End-to-end workflow validation
+- **Performance Tests** (`tests/performance/`) - Performance benchmarking
+- **MCP Tests** (`tests/mcp/`) - MCP server and tools testing
+- **Scraper Tests** (`tests/scraper_tests/`) - Legal and municipal scraper validation
+- **CI/CD Tests** - Automated via GitHub Actions workflows with self-hosted runners
+
 ### Running Tests
 
 ```bash
@@ -76,6 +90,8 @@ pytest
 # Run specific test categories
 pytest tests/unit/           # Unit tests
 pytest tests/integration/    # Integration tests
+pytest tests/e2e/            # End-to-end tests
+pytest tests/performance/    # Performance tests
 pytest -m "not slow"         # Exclude slow tests
 pytest -m gpu                # GPU tests only
 
@@ -153,22 +169,35 @@ pip install -e .
 
 ### GitHub Actions Workflows
 
-The repository has an **Auto-Healing System** for workflow failures:
+The repository has an **Auto-Healing System** that automatically turns workflow failures into issues and draft PRs:
 
-1. Workflow failures are automatically detected
-2. Root cause analysis runs
-3. Fixes are proposed with confidence scores
-4. PRs are created automatically
-5. Review and merge when ready
+**How it works:**
+1. **Workflow fails** - Any CI/CD workflow failure is automatically detected
+2. **Root cause analysis** - System analyzes logs and identifies the issue
+3. **Issue creation** - Failed workflow automatically creates a GitHub issue
+4. **Draft PR generation** - System creates a draft PR on a unique branch
+5. **@copilot invocation** - GitHub Copilot is automatically mentioned in the PR to implement fixes
+6. **Automated fixes** - Copilot analyzes the failure and proposes/implements fixes
+7. **Review and merge** - Human reviews the automated fix and merges when ready
+
+This system runs on **self-hosted GitHub Actions runners** with support for:
+- **x86_64 runners** - Standard Linux environments
+- **ARM64 runners** - ARM-based environments for multi-architecture support
+- **GPU runners** - CUDA-enabled runners for GPU-specific tests
 
 ### Key Workflows
 
+- **copilot-agent-autofix.yml** - Auto-healing with Copilot Agent (monitors 13+ workflows)
 - **docker-build-test.yml** - Docker image building and testing
 - **graphrag-production-ci.yml** - GraphRAG production tests
 - **mcp-integration-tests.yml** - MCP integration tests
+- **mcp-dashboard-tests.yml** - MCP dashboard automated tests
 - **pdf_processing_ci.yml** - PDF processing pipeline
 - **gpu-tests.yml** - GPU-specific tests
-- **copilot-agent-autofix.yml** - Auto-healing with Copilot Agent
+- **workflow-auto-fix.yml** - Manual auto-fix system
+- **self-hosted-runner.yml** - Self-hosted runner setup and validation
+- **arm64-runner.yml** - ARM64 runner configuration
+- **documentation-maintenance.yml** - Auto-update documentation
 
 See `.github/workflows/README.md` for complete documentation.
 
@@ -225,30 +254,138 @@ This repository uses `CLAUDE.md` for coordinating work across multiple AI agents
 - Validate all external inputs
 - Use the `gh-advisory-database` tool for dependency checking
 
-## 🎨 Special Features
+## 🎨 Developer Tools and Access Methods
 
-### MCP Server
+This repository provides three primary ways for developers to access functionality:
 
-The project includes a comprehensive Model Context Protocol server with 200+ tools:
+### 1. MCP Server Tools (200+ Tools in 49+ Categories)
 
+The Model Context Protocol (MCP) server exposes 321 tool files across 49+ categories for AI assistant integration:
+
+**Tool Categories Include:**
+- `admin_tools` - Administrative and system management
+- `analysis_tools` - Data analysis and processing
+- `audit_tools` - Security auditing and compliance
+- `auth_tools` - Authentication and authorization
+- `background_task_tools` - Async task management
+- `cache_tools` - Caching and performance optimization
+- `dataset_tools` - Dataset loading, processing, and management
+- `development_tools` - Development utilities and helpers
+- `embedding_tools` - Vector embeddings and similarity search
+- `geospatial_tools` - Geospatial data processing
+- `graph_tools` - Knowledge graph operations
+- `ipfs_tools` - IPFS operations (pin, add, get, cat)
+- `legal_dataset_tools` - Legal document scraping and processing
+- `media_tools` - FFmpeg, video processing, yt-dlp integration
+- `monitoring_tools` - System monitoring and metrics
+- `pdf_tools` - PDF processing, extraction, GraphRAG
+- `provenance_tools` - Data provenance tracking
+- `search_tools` - Search functionality and indexing
+- `security_tools` - Security scanning and validation
+- `storage_tools` - Storage management across backends
+- `vector_tools` - Vector store operations (FAISS, Qdrant, Elasticsearch)
+- `web_archive_tools` - Web archiving and Common Crawl
+- `workflow_tools` - Workflow orchestration
+- ...and 26+ more categories
+
+**Starting the MCP Server:**
 ```bash
-# Start MCP server
+# Simple server
 python -m ipfs_datasets_py.mcp_server
+
+# Standalone server
+python ipfs_datasets_py/mcp_server/standalone_server.py
+
+# With specific configuration
+python ipfs_datasets_py/mcp_server/server.py
 ```
 
-### CLI Tools
+**Tool Discovery:**
+- All tools are in `ipfs_datasets_py/mcp_server/tools/`
+- Each category has its own subdirectory with dedicated tool implementations
+- Tools are dynamically loaded and registered at server startup
 
-Multiple CLI interfaces available:
+### 2. CLI Tools (Multiple Command-Line Interfaces)
 
+Several CLI interfaces provide command-line access to functionality:
+
+**Basic CLI** (`ipfs-datasets` / `ipfs_datasets_cli.py`):
 ```bash
-# Basic CLI
-./ipfs-datasets info status
-./ipfs-datasets dataset load squad
-
-# Enhanced CLI (access to ALL 100+ tools)
-python enhanced_cli.py --list-categories
-python enhanced_cli.py dataset_tools load_dataset --source squad
+./ipfs-datasets info status                    # System status
+./ipfs-datasets dataset load squad             # Load datasets  
+./ipfs-datasets ipfs pin "data"               # IPFS operations
+./ipfs-datasets vector search "query"         # Vector search
 ```
+
+**Enhanced CLI** (`enhanced_cli.py`) - Access to ALL 100+ tools:
+```bash
+python enhanced_cli.py --list-categories       # See all 31+ categories
+python enhanced_cli.py dataset_tools load_dataset --source squad
+python enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
+python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
+python enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
+```
+
+**Specialized CLIs:**
+- `mcp_cli.py` - MCP-specific command interface
+- `integrated_cli.py` - Integrated functionality access
+- `comprehensive_distributed_cli.py` - Distributed operations
+- `demo_cli.py` - Demo and testing interface
+- VSCode CLI tools (`ipfs_datasets_py/mcp_tools/tools/vscode_cli_tools.py`)
+- Claude CLI tools (`ipfs_datasets_py/mcp_tools/tools/claude_cli_tools.py`)
+- Gemini CLI tools (`ipfs_datasets_py/mcp_tools/tools/gemini_cli_tools.py`)
+
+### 3. Python Package Imports
+
+Direct Python imports for programmatic access:
+
+**Core Modules:**
+```python
+# Dataset management
+from ipfs_datasets_py import DatasetManager
+
+# IPFS operations
+from ipfs_datasets_py.ipfs_embeddings_py import IPFSEmbeddings
+
+# Vector stores
+from ipfs_datasets_py.embeddings import FAISSVectorStore, QdrantStore
+
+# PDF processing and GraphRAG
+from ipfs_datasets_py.pdf_processing import PDFProcessor
+from ipfs_datasets_py.rag import GraphRAG
+
+# Multimedia processing
+from ipfs_datasets_py.multimedia import FFmpegVideoProcessor, MediaToolManager
+
+# Logic and theorem proving
+from ipfs_datasets_py.logic_integration import LogicProcessor, ReasoningCoordinator
+
+# Search functionality
+from ipfs_datasets_py.search import SearchEngine
+
+# Analytics and monitoring
+from ipfs_datasets_py.analytics import AnalyticsManager
+```
+
+**Installation Profiles for Different Use Cases:**
+```bash
+pip install -e ".[all]"          # All features
+pip install -e ".[test]"         # Testing dependencies
+pip install -e ".[web_archive]"  # Web archiving
+pip install -e ".[security]"     # Security features
+pip install -e ".[audit]"        # Audit capabilities
+pip install -e ".[provenance]"   # Data provenance
+pip install -e ".[legal]"        # Legal dataset tools
+```
+
+### Tool Development Guidelines
+
+When developing or using tools:
+1. **MCP Tools** are for AI assistant integration - expose functionality via MCP protocol
+2. **CLI Tools** are for human command-line usage - provide user-friendly interfaces
+3. **Python Imports** are for programmatic access - use in scripts and applications
+4. All three methods should access the same underlying functionality
+5. Keep tool interfaces consistent across access methods
 
 ### Theorem Proving
 
