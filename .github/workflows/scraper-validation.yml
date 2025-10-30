@@ -274,6 +274,8 @@ jobs:
     needs: [test-scrapers-docker]
     runs-on: [self-hosted, linux, x64]
     if: always()
+    permissions:
+      contents: read
     
     container:
       image: python:3.12-slim
