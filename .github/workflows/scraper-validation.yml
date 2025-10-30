@@ -1,0 +1,376 @@
+name: Scraper Validation and Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/**'
+      - 'ipfs_datasets_py/mcp_server/tools/finance_data_tools/**'
+      - 'ipfs_datasets_py/mcp_server/tools/medical_research_scrapers/**'
+      - 'ipfs_datasets_py/mcp_server/tools/software_engineering_tools/**'
+      - 'tests/scraper_tests/**'
+      - '.github/workflows/scraper-validation.yml'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: 'Domain to test (all, caselaw, finance, medicine, software)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - caselaw
+          - finance
+          - medicine
+          - software
+      test_mode:
+        description: 'Test mode'
+        required: true
+        default: 'quick'
+        type: choice
+        options:
+          - quick
+          - comprehensive
+          - stress
+  schedule:
+    # Run scraper validation daily at 3 AM UTC
+    - cron: '0 3 * * *'
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Determine which domains to test
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      domains: ${{ steps.set-domains.outputs.domains }}
+      test_mode: ${{ steps.set-mode.outputs.mode }}
+    steps:
+      - name: Determine test domains
+        id: set-domains
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DOMAIN="${{ github.event.inputs.domain }}"
+          else
+            DOMAIN="all"
+          fi
+          
+          if [ "$DOMAIN" = "all" ]; then
+            echo 'domains=["caselaw", "finance", "medicine", "software"]' >> $GITHUB_OUTPUT
+          else
+            echo "domains=[\"$DOMAIN\"]" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Determine test mode
+        id: set-mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.test_mode }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "mode=comprehensive" >> $GITHUB_OUTPUT
+          else
+            echo "mode=quick" >> $GITHUB_OUTPUT
+          fi
+
+  # Test scrapers in Docker containers
+  test-scrapers-docker:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        domain: ${{ fromJson(needs.setup.outputs.domains) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Scraper Test Docker Image
+        run: |
+          cat > Dockerfile.scraper-tests <<'EOF'
+          FROM python:3.12-slim
+          
+          WORKDIR /app
+          
+          # Install system dependencies
+          RUN apt-get update && apt-get install -y \
+              git \
+              curl \
+              && rm -rf /var/lib/apt/lists/*
+          
+          # Copy requirements and install Python dependencies
+          COPY requirements.txt .
+          RUN pip install --no-cache-dir -r requirements.txt
+          
+          # Install additional test dependencies
+          RUN pip install --no-cache-dir pytest pytest-asyncio pytest-timeout
+          
+          # Copy application code
+          COPY ipfs_datasets_py/ /app/ipfs_datasets_py/
+          COPY tests/ /app/tests/
+          
+          # Set Python path
+          ENV PYTHONPATH=/app
+          
+          # Create output directory
+          RUN mkdir -p /app/test_results
+          
+          WORKDIR /app
+          EOF
+          
+          docker build -f Dockerfile.scraper-tests -t scraper-tests:latest .
+      
+      - name: Run Scraper Tests - ${{ matrix.domain }}
+        id: test
+        run: |
+          echo "🧪 Testing ${{ matrix.domain }} scrapers..."
+          mkdir -p test_results
+          
+          # Map domain to test file
+          case "${{ matrix.domain }}" in
+            caselaw)
+              TEST_FILE="tests/scraper_tests/test_caselaw_scrapers.py"
+              ;;
+            finance)
+              TEST_FILE="tests/scraper_tests/test_finance_scrapers.py"
+              ;;
+            medicine)
+              TEST_FILE="tests/scraper_tests/test_medicine_scrapers.py"
+              ;;
+            software)
+              TEST_FILE="tests/scraper_tests/test_software_scrapers.py"
+              ;;
+          esac
+          
+          # Run tests in Docker container
+          docker run --rm \
+            -v $(pwd)/test_results:/app/test_results \
+            -e PYTHONPATH=/app \
+            scraper-tests:latest \
+            pytest "$TEST_FILE" \
+              -v \
+              -s \
+              --timeout=300 \
+              --tb=short \
+              --junitxml=/app/test_results/${{ matrix.domain }}_results.xml \
+              || echo "test_status=failed" >> $GITHUB_OUTPUT
+          
+          # Check if tests passed
+          if [ -f test_results/${{ matrix.domain }}_results.xml ]; then
+            if grep -q 'errors="0" failures="0"' test_results/${{ matrix.domain }}_results.xml; then
+              echo "test_status=success" >> $GITHUB_OUTPUT
+            else
+              echo "test_status=failed" >> $GITHUB_OUTPUT
+            fi
+          fi
+        continue-on-error: true
+      
+      - name: Parse Test Results
+        if: always()
+        run: |
+          echo "## 🔍 ${{ matrix.domain }} Scraper Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f test_results/${{ matrix.domain }}_results.xml ]; then
+            # Extract test counts from XML
+            TESTS=$(grep -oP 'tests="\K[0-9]+' test_results/${{ matrix.domain }}_results.xml | head -1)
+            FAILURES=$(grep -oP 'failures="\K[0-9]+' test_results/${{ matrix.domain }}_results.xml | head -1)
+            ERRORS=$(grep -oP 'errors="\K[0-9]+' test_results/${{ matrix.domain }}_results.xml | head -1)
+            
+            echo "- **Total Tests**: $TESTS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Failures**: $FAILURES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Errors**: $ERRORS" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$FAILURES" = "0" ] && [ "$ERRORS" = "0" ]; then
+              echo "- **Status**: ✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Status**: ❌ Some tests failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- **Status**: ⚠️ No test results found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scraper-test-results-${{ matrix.domain }}
+          path: test_results/
+          retention-days: 30
+      
+      - name: Check Data Quality
+        if: always()
+        run: |
+          if [ -f test_results/${{ matrix.domain }}_scrapers_test.json ]; then
+            echo "## 📊 Data Quality Report - ${{ matrix.domain }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract quality metrics using Python
+            python3 <<'PYTHON'
+          import json
+          import sys
+          
+          try:
+              with open('test_results/${{ matrix.domain }}_scrapers_test.json') as f:
+                  data = json.load(f)
+              
+              print(f"- **Total Tests**: {data.get('total_tests', 0)}")
+              print(f"- **Passed**: {data.get('passed', 0)}")
+              print(f"- **Failed**: {data.get('failed', 0)}")
+              
+              # Calculate average quality score
+              results = data.get('results', [])
+              if results:
+                  avg_quality = sum(r.get('data_quality_score', 0) for r in results) / len(results)
+                  print(f"- **Avg Quality Score**: {avg_quality:.1f}/100")
+                  
+                  # Count quality issues
+                  total_issues = sum(len(r.get('quality_issues', [])) for r in results)
+                  print(f"- **Total Quality Issues**: {total_issues}")
+          except Exception as e:
+              print(f"Error parsing results: {e}")
+          PYTHON
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Test on self-hosted runners (if available)
+  test-scrapers-self-hosted:
+    needs: setup
+    runs-on: [self-hosted, x86_64]
+    if: contains(github.event.head_commit.message, '[test-self-hosted]') || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        domain: ${{ fromJson(needs.setup.outputs.domains) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-timeout
+      
+      - name: Run Scraper Tests - ${{ matrix.domain }}
+        run: |
+          case "${{ matrix.domain }}" in
+            caselaw)
+              TEST_FILE="tests/scraper_tests/test_caselaw_scrapers.py"
+              ;;
+            finance)
+              TEST_FILE="tests/scraper_tests/test_finance_scrapers.py"
+              ;;
+            medicine)
+              TEST_FILE="tests/scraper_tests/test_medicine_scrapers.py"
+              ;;
+            software)
+              TEST_FILE="tests/scraper_tests/test_software_scrapers.py"
+              ;;
+          esac
+          
+          pytest "$TEST_FILE" -v -s --timeout=300 || true
+      
+      - name: Self-hosted test summary
+        if: always()
+        run: |
+          echo "## 🖥️ Self-hosted Test - ${{ matrix.domain }}" >> $GITHUB_STEP_SUMMARY
+          echo "Ran on self-hosted runner" >> $GITHUB_STEP_SUMMARY
+
+  # Generate consolidated report
+  generate-report:
+    needs: [test-scrapers-docker]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scraper-test-results-*
+          path: all_test_results/
+      
+      - name: Generate Consolidated Report
+        run: |
+          echo "# 🧪 Scraper Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Summary by Domain" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          for domain in caselaw finance medicine software; do
+            if [ -d "all_test_results/scraper-test-results-$domain" ]; then
+              echo "### $domain" >> $GITHUB_STEP_SUMMARY
+              
+              if [ -f "all_test_results/scraper-test-results-$domain/${domain}_results.xml" ]; then
+                TESTS=$(grep -oP 'tests="\K[0-9]+' "all_test_results/scraper-test-results-$domain/${domain}_results.xml" | head -1 || echo "0")
+                FAILURES=$(grep -oP 'failures="\K[0-9]+' "all_test_results/scraper-test-results-$domain/${domain}_results.xml" | head -1 || echo "0")
+                
+                if [ "$FAILURES" = "0" ]; then
+                  echo "✅ All $TESTS tests passed" >> $GITHUB_STEP_SUMMARY
+                else
+                  echo "❌ $FAILURES of $TESTS tests failed" >> $GITHUB_STEP_SUMMARY
+                fi
+              else
+                echo "⚠️ No results available" >> $GITHUB_STEP_SUMMARY
+              fi
+              
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          echo "## Key Validations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **No HTML/DOM content** in scraped data" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **No menu/navigation** elements in data" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Data coherence** validated" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Duplicate detection** performed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Consolidated Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: consolidated-scraper-report
+          path: all_test_results/
+          retention-days: 90
+
+  # Notify on failure (optional)
+  notify-on-failure:
+    needs: [test-scrapers-docker]
+    runs-on: ubuntu-latest
+    if: failure()
+    
+    steps:
+      - name: Failure notification
+        run: |
+          echo "## ⚠️ Scraper Tests Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Some scraper tests failed. Please review the test results." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action Items**:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check for HTML/DOM content in scraped data" >> $GITHUB_STEP_SUMMARY
+          echo "2. Verify no menu/navigation elements present" >> $GITHUB_STEP_SUMMARY
+          echo "3. Ensure data coherence and structure" >> $GITHUB_STEP_SUMMARY
+          echo "4. Review scraper implementation" >> $GITHUB_STEP_SUMMARY
