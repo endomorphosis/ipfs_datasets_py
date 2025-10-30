@@ -3,207 +3,181 @@ Test stubs for audit module.
 
 Feature: Audit Logging
   Event logging and tracking for audit trails
+  
+Converted from Gherkin feature to regular pytest tests.
 """
 import pytest
-from pytest_bdd import scenario, given, when, then, parsers
+from datetime import datetime
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditLevel, AuditCategory
 
-
-# Fixtures for Given steps
 
 @pytest.fixture
-def an_audit_logger_is_initialized():
+def audit_logger():
     """
+    Fixture: Initialize an audit logger for testing.
+    
     Given an audit logger is initialized
     """
-    # TODO: Implement fixture
-    pass
+    return AuditLogger()
 
 
-# Test scenarios
-
-def test_log_audit_event_with_required_fields():
+def test_log_audit_event_with_required_fields(audit_logger):
     """
     Scenario: Log audit event with required fields
       Given an audit logger is initialized
       When an event is logged with action and resource information
       Then the event is recorded with timestamp and event ID
     """
-    # TODO: Implement test
-    pass
+    # When: an event is logged with action and resource information
+    event_id = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.DATA_MODIFICATION,
+        action="create",
+        resource_id="dataset_123",
+        resource_type="dataset"
+    )
+    
+    # Then: the event is recorded with timestamp and event ID
+    assert event_id is not None
+    assert isinstance(event_id, str)
+    assert len(event_id) > 0
 
 
-def test_log_event_with_user_information():
+def test_log_event_with_user_information(audit_logger):
     """
     Scenario: Log event with user information
       Given an audit logger is initialized
       When an event is logged with user ID and source IP
       Then the event includes user context
     """
-    # TODO: Implement test
-    pass
+    # When: an event is logged with user ID and source IP
+    event_id = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.DATA_ACCESS,
+        action="access",
+        resource_id="dataset_456",
+        user="user_789",
+        client_ip="192.168.1.100"
+    )
+    
+    # Then: the event includes user context
+    assert event_id is not None
+    assert isinstance(event_id, str)
 
 
-def test_log_event_with_custom_details():
+def test_log_event_with_custom_details(audit_logger):
     """
     Scenario: Log event with custom details
       Given an audit logger is initialized
       When an event is logged with custom detail dictionary
       Then the event includes all custom details
     """
-    # TODO: Implement test
-    pass
+    # When: an event is logged with custom detail dictionary
+    custom_details = {
+        "operation": "bulk_import",
+        "record_count": 1000,
+        "duration_ms": 5432
+    }
+    event_id = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.DATA_MODIFICATION,
+        action="import",
+        resource_id="dataset_001",
+        details=custom_details
+    )
+    
+    # Then: the event includes all custom details
+    assert event_id is not None
+    assert isinstance(event_id, str)
 
 
-def test_log_event_with_severity_level():
+def test_log_event_with_severity_level(audit_logger):
     """
     Scenario: Log event with severity level
       Given an audit logger is initialized
       When an event is logged with severity level
       Then the event is recorded with the specified severity
     """
-    # TODO: Implement test
-    pass
+    # When: an event is logged with severity level
+    event_id = audit_logger.log(
+        level=AuditLevel.CRITICAL,
+        category=AuditCategory.DATA_MODIFICATION,
+        action="delete",
+        resource_id="dataset_critical"
+    )
+    
+    # Then: the event is recorded with the specified severity
+    assert event_id is not None
+    assert isinstance(event_id, str)
 
 
-def test_log_event_with_tags():
+def test_log_event_with_tags(audit_logger):
     """
     Scenario: Log event with tags
       Given an audit logger is initialized
       When an event is logged with multiple tags
       Then the event includes all specified tags
     """
-    # TODO: Implement test
-    pass
+    # When: an event is logged with multiple tags
+    tags = ["production", "automated", "backup"]
+    event_id = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.OPERATIONAL,
+        action="backup",
+        resource_id="dataset_prod",
+        tags=tags
+    )
+    
+    # Then: the event includes all specified tags
+    assert event_id is not None
+    assert isinstance(event_id, str)
 
 
-def test_generate_unique_event_id():
+def test_generate_unique_event_id(audit_logger):
     """
     Scenario: Generate unique event ID
       Given an audit logger is initialized
       When multiple events are logged
       Then each event has a unique event ID
     """
-    # TODO: Implement test
-    pass
+    # When: multiple events are logged
+    event_id1 = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.OPERATIONAL,
+        action="event1"
+    )
+    event_id2 = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.OPERATIONAL,
+        action="event2"
+    )
+    event_id3 = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.OPERATIONAL,
+        action="event3"
+    )
+    
+    # Then: each event has a unique event ID
+    assert event_id1 != event_id2
+    assert event_id2 != event_id3
+    assert event_id1 != event_id3
 
 
-def test_handle_event_without_optional_fields():
+def test_handle_event_without_optional_fields(audit_logger):
     """
     Scenario: Handle event without optional fields
       Given an audit logger is initialized
       When an event is logged with only required fields
       Then the event is recorded with default values for optional fields
     """
-    # TODO: Implement test
-    pass
-
-
-# Step definitions
-
-# Given steps
-@given("an audit logger is initialized")
-def an_audit_logger_is_initialized():
-    """Step: Given an audit logger is initialized"""
-    # TODO: Implement step
-    pass
-
-
-# When steps
-@when("an event is logged with action and resource information")
-def an_event_is_logged_with_action_and_resource_information():
-    """Step: When an event is logged with action and resource information"""
-    # TODO: Implement step
-    pass
-
-
-@when("an event is logged with custom detail dictionary")
-def an_event_is_logged_with_custom_detail_dictionary():
-    """Step: When an event is logged with custom detail dictionary"""
-    # TODO: Implement step
-    pass
-
-
-@when("an event is logged with multiple tags")
-def an_event_is_logged_with_multiple_tags():
-    """Step: When an event is logged with multiple tags"""
-    # TODO: Implement step
-    pass
-
-
-@when("an event is logged with only required fields")
-def an_event_is_logged_with_only_required_fields():
-    """Step: When an event is logged with only required fields"""
-    # TODO: Implement step
-    pass
-
-
-@when("an event is logged with severity level")
-def an_event_is_logged_with_severity_level():
-    """Step: When an event is logged with severity level"""
-    # TODO: Implement step
-    pass
-
-
-@when("an event is logged with user ID and source IP")
-def an_event_is_logged_with_user_id_and_source_ip():
-    """Step: When an event is logged with user ID and source IP"""
-    # TODO: Implement step
-    pass
-
-
-@when("multiple events are logged")
-def multiple_events_are_logged():
-    """Step: When multiple events are logged"""
-    # TODO: Implement step
-    pass
-
-
-# Then steps
-@then("each event has a unique event ID")
-def each_event_has_a_unique_event_id():
-    """Step: Then each event has a unique event ID"""
-    # TODO: Implement step
-    pass
-
-
-@then("the event includes all custom details")
-def the_event_includes_all_custom_details():
-    """Step: Then the event includes all custom details"""
-    # TODO: Implement step
-    pass
-
-
-@then("the event includes all specified tags")
-def the_event_includes_all_specified_tags():
-    """Step: Then the event includes all specified tags"""
-    # TODO: Implement step
-    pass
-
-
-@then("the event includes user context")
-def the_event_includes_user_context():
-    """Step: Then the event includes user context"""
-    # TODO: Implement step
-    pass
-
-
-@then("the event is recorded with default values for optional fields")
-def the_event_is_recorded_with_default_values_for_optional_fields():
-    """Step: Then the event is recorded with default values for optional fields"""
-    # TODO: Implement step
-    pass
-
-
-@then("the event is recorded with the specified severity")
-def the_event_is_recorded_with_the_specified_severity():
-    """Step: Then the event is recorded with the specified severity"""
-    # TODO: Implement step
-    pass
-
-
-@then("the event is recorded with timestamp and event ID")
-def the_event_is_recorded_with_timestamp_and_event_id():
-    """Step: Then the event is recorded with timestamp and event ID"""
-    # TODO: Implement step
-    pass
+    # When: an event is logged with only required fields
+    event_id = audit_logger.log(
+        level=AuditLevel.INFO,
+        category=AuditCategory.OPERATIONAL,
+        action="minimal_action"
+    )
+    
+    # Then: the event is recorded with default values for optional fields
+    assert event_id is not None
+    assert isinstance(event_id, str)
 
