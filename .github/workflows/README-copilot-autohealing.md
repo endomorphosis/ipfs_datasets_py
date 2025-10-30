@@ -43,21 +43,30 @@ The Auto-Healing System is an advanced workflow maintenance solution that automa
 └──────────┬──────────┘
            ↓
 ┌─────────────────────┐
-│  Create PR with     │
-│  Copilot Task       │
+│  Create Issue       │
+│  - Failure details  │
+│  - Logs & analysis  │
+│  - Recommendations  │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│  Create Draft PR    │
+│  - Linked to issue  │
+│  - Fix instructions │
 └──────────┬──────────┘
            ↓
 ┌─────────────────────┐
 │  @copilot Mentioned │
-│  in PR Comment      │
+│  in PR to Activate  │
 └──────────┬──────────┘
            ↓
 ┌─────────────────────┐
 │  Copilot Agent      │
-│  - Reads analysis   │
+│  - Reads issue      │
+│  - Reads PR         │
 │  - Implements fix   │
 │  - Commits changes  │
-│  - Runs tests       │
+│  - Marks PR ready   │
 └──────────┬──────────┘
            ↓
 ┌─────────────────────┐
@@ -85,10 +94,11 @@ The Auto-Healing System is an advanced workflow maintenance solution that automa
 - Context-aware fix proposals
 
 ### 📝 Detailed Task Instructions
-- Creates comprehensive task files for Copilot
-- Includes failure analysis, logs, and context
-- Provides step-by-step implementation guide
-- Specifies success criteria
+- Creates issues with failure details FIRST
+- Includes failure analysis, logs, and context  
+- Creates draft PRs linked to issues
+- Provides step-by-step fix instructions in PR
+- Mentions @copilot to activate the agent
 
 ### 🔄 Self-Improving
 - Learns from fix success/failure
@@ -165,11 +175,13 @@ on:
 1. Workflow fails
 2. Auto-healing system detects failure
 3. Analysis and fix proposal generated
-4. PR created with Copilot task
-5. Copilot Agent mentioned in PR comment
-6. Copilot implements fix automatically
-7. Tests run to validate fix
-8. PR ready for review and merge
+4. **Issue created with failure details** ← NEW
+5. **Draft PR created linked to issue** ← Changed
+6. @copilot mentioned in PR (both description and comment)
+7. Copilot Agent activates and implements fix
+8. Tests run to validate fix
+9. Copilot marks PR as ready for review
+10. PR ready for review and merge
 
 ### Manual Trigger
 
@@ -202,50 +214,42 @@ gh workflow run copilot-agent-autofix.yml \
 
 ### How Copilot is Invoked
 
-1. **PR Creation**: System creates a PR with detailed failure information
-2. **Task File**: Creates `.github/copilot-tasks/fix-workflow-failure.md` with instructions
-3. **@copilot Mention**: Comments on PR mentioning @copilot
-4. **Context Provision**: Provides analysis, logs, and fix proposal
-5. **Implementation Request**: Asks Copilot to implement the fix
+1. **Issue Creation**: System creates an issue with comprehensive failure information FIRST
+2. **PR Creation**: Creates a **draft PR** linked to the issue with `Fixes #<issue_number>`
+3. **@copilot Mention**: Mentions @copilot in both PR description and follow-up comment
+4. **Context Provision**: Issue contains full logs, analysis, and diagnostics; PR contains fix proposal
+5. **Implementation Request**: Asks Copilot to review issue and implement the fix
 
-### Task File Structure
+### Flow Structure
 
-Each PR includes a Copilot task file with:
+**Issue (Problem)**:
+- Comprehensive failure information
+- Full error logs and analysis
+- Root cause identification
+- Recommendations
 
-```markdown
-# Fix Workflow Failure
+**Draft PR (Solution)**:
+- Links to issue with `Fixes #<number>`
+- Fix proposal and instructions
+- @copilot mention to activate agent
+- Status: Draft until Copilot completes work
 
-## Problem Statement
-[Description of the failure]
-
-## Failure Analysis
-- Error Type
-- Root Cause
-- Confidence Score
-
-## Your Task
-[Step-by-step instructions for Copilot]
-
-## Fix Proposal
-[Detailed fix suggestions]
-
-## Expected Changes
-[List of files and changes]
-
-## Success Criteria
-[How to validate the fix works]
-```
+This follows the same pattern as VS Code's Copilot integration where:
+- Issue defines the problem
+- PR proposes the solution
+- @mention activates the agent
 
 ### Copilot's Responsibilities
 
 The Copilot Agent will:
 
-1. **Analyze** the failure using provided logs and analysis
-2. **Review** the fix proposal and validate approach
+1. **Read** the issue to understand the failure
+2. **Review** the PR description for fix proposal
 3. **Implement** the suggested fixes
 4. **Test** changes locally (syntax validation)
 5. **Commit** the implementation to the PR branch
-6. **Document** any changes or deviations from proposal
+6. **Mark PR ready** for review when complete
+7. **Document** any changes or deviations from proposal
 
 ## Supported Fix Types
 
@@ -855,6 +859,40 @@ Contributions welcome! Areas to help:
 Same as parent repository.
 
 ## Changelog
+
+### Version 3.0.0 (2025-10-30)
+
+**MAJOR CHANGE: Issue-First Workflow**
+- **Breaking Change**: Completely restructured the auto-healing flow to match VS Code Copilot integration pattern
+- Now creates **issue FIRST** with all failure information before creating any PR
+- Creates **draft PR** linked to issue with `Fixes #<issue_number>`
+- Removed `.github/copilot-tasks/` approach in favor of direct PR/issue integration
+- @copilot mentioned in both PR description and follow-up comment for reliable activation
+
+**Why This Change:**
+This aligns with how VS Code and GitHub's native Copilot integration works:
+1. Issue defines the problem (failure logs, analysis, recommendations)
+2. Draft PR proposes the solution (fix instructions, code changes)
+3. @mention activates Copilot agent to implement the fix
+
+**Impact:**
+- More reliable Copilot agent activation
+- Better organization of diagnostic vs. fix information
+- Clearer tracking with issue/PR relationship
+- Follows established GitHub/VS Code patterns
+- Easier to understand for developers
+
+**Changes Made:**
+- Reordered workflow steps to create issue before PR
+- Changed PR to draft status by default
+- Removed Copilot task file creation
+- Enhanced issue body with full failure details
+- Simplified PR body with fix instructions and issue link
+- Updated documentation to reflect new flow
+
+**Files Modified:**
+- `.github/workflows/copilot-agent-autofix.yml` - Major restructuring
+- `.github/workflows/README-copilot-autohealing.md` - Updated documentation
 
 ### Version 2.2.0 (2025-10-30)
 
