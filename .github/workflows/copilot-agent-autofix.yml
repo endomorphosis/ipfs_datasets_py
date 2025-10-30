@@ -76,18 +76,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install PyYAML requests
       
-      - name: Get workflow run details
-        id: get_run_details
+      - name: Check for duplicate processing
+        id: check_duplicate
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Get the run ID we're checking
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ -n "${{ github.event.inputs.run_id }}" ]; then
               RUN_ID="${{ github.event.inputs.run_id }}"
             else
-              # Get the latest failed run for the specified workflow
               WORKFLOW_NAME="${{ github.event.inputs.workflow_name }}"
-              echo "Getting latest failed run for workflow: $WORKFLOW_NAME"
               RUN_ID=$(gh run list --workflow="$WORKFLOW_NAME" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' || echo "")
             fi
           else
@@ -95,17 +94,46 @@ jobs:
           fi
           
           if [ -z "$RUN_ID" ]; then
-            echo "No workflow run ID found"
+            echo "❌ No workflow run ID found - skipping"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=no_run_id" >> $GITHUB_OUTPUT
             exit 0
           fi
           
+          # Check if we've already processed this run
+          # Look for existing PRs or issues that reference this run ID
+          EXISTING_PRS=$(gh pr list --search "Run ID: $RUN_ID in:body" --state all --json number --jq 'length')
+          
+          if [ "$EXISTING_PRS" -gt 0 ]; then
+            echo "⚠️  Run $RUN_ID already has $EXISTING_PRS fix PR(s) - skipping duplicate processing"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=already_processed" >> $GITHUB_OUTPUT
+            
+            echo "## ⏭️ Skipping Duplicate Processing" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This workflow run has already been analyzed and has existing fix PR(s)." >> $GITHUB_STEP_SUMMARY
+            echo "- **Run ID**: $RUN_ID" >> $GITHUB_STEP_SUMMARY
+            echo "- **Existing PRs**: $EXISTING_PRS" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "should_skip=false" >> $GITHUB_OUTPUT
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+      
+      - name: Get workflow run details
+        id: get_run_details
+        if: steps.check_duplicate.outputs.should_skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ steps.check_duplicate.outputs.run_id }}"
           
           # Get workflow details
           WORKFLOW_NAME=$(gh run view $RUN_ID --json workflowName --jq '.workflowName')
           HEAD_BRANCH=$(gh run view $RUN_ID --json headBranch --jq '.headBranch')
           HEAD_SHA=$(gh run view $RUN_ID --json headSha --jq '.headSha')
           
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
           echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
           echo "head_branch=$HEAD_BRANCH" >> $GITHUB_OUTPUT
           echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
@@ -117,9 +145,51 @@ jobs:
           echo "- **Branch**: $HEAD_BRANCH" >> $GITHUB_STEP_SUMMARY
           echo "- **SHA**: $HEAD_SHA" >> $GITHUB_STEP_SUMMARY
       
+      - name: Check workflow eligibility
+        id: check_eligibility
+        if: steps.check_duplicate.outputs.should_skip != 'true'
+        run: |
+          WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
+          
+          # Load configuration
+          CONFIG_FILE=".github/workflows/workflow-auto-fix-config.yml"
+          
+          # Check if workflow is in excluded list
+          if [ -f "$CONFIG_FILE" ]; then
+            # Extract excluded workflows (if any)
+            EXCLUDED=$(python3 -c "
+          import yaml
+          import sys
+          try:
+              with open('$CONFIG_FILE') as f:
+                  config = yaml.safe_load(f)
+                  excluded = config.get('excluded_workflows', [])
+                  if '$WORKFLOW_NAME' in excluded:
+                      print('excluded')
+                      sys.exit(0)
+                  print('eligible')
+          except Exception as e:
+              print('eligible')  # If config can't be read, allow processing
+          " 2>/dev/null)
+            
+            if [ "$EXCLUDED" = "excluded" ]; then
+              echo "⚠️  Workflow '$WORKFLOW_NAME' is in excluded list - skipping"
+              echo "should_process=false" >> $GITHUB_OUTPUT
+              
+              echo "## ⏭️ Workflow Excluded" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "The workflow '$WORKFLOW_NAME' is in the excluded workflows list." >> $GITHUB_STEP_SUMMARY
+              echo "To enable auto-fix for this workflow, remove it from \`excluded_workflows\` in $CONFIG_FILE" >> $GITHUB_STEP_SUMMARY
+              exit 0
+            fi
+          fi
+          
+          echo "should_process=true" >> $GITHUB_OUTPUT
+          echo "✅ Workflow '$WORKFLOW_NAME' is eligible for auto-fix" >> $GITHUB_STEP_SUMMARY
+      
       - name: Download workflow logs
         id: download_logs
-        if: steps.get_run_details.outputs.run_id != ''
+        if: steps.check_duplicate.outputs.should_skip != 'true' && steps.check_eligibility.outputs.should_process == 'true' && steps.get_run_details.outputs.run_id != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -447,10 +517,22 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Auto-Healing Status" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚙️ Run ID: ${{ steps.get_run_details.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 Analysis: ${{ steps.analyze_failure.outputs.analysis_available }}" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
-          echo "- 💾 Branch Created: ${{ steps.create_branch.outputs.has_changes }}" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔀 PR Created: ${{ steps.create_pr.outputs.pr_url != '' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- 🤖 Copilot Notified: ${{ steps.create_pr.outputs.pr_url != '' }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_duplicate.outputs.should_skip }}" = "true" ]; then
+            echo "### ⏭️ Workflow Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔍 Reason: ${{ steps.check_duplicate.outputs.skip_reason }}" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.check_duplicate.outputs.skip_reason }}" = "no_run_id" ]; then
+              echo "- ℹ️  No workflow run ID was found to analyze" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ steps.check_duplicate.outputs.skip_reason }}" = "already_processed" ]; then
+              echo "- ℹ️  This failure has already been analyzed and has fix PR(s)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "### Workflow Auto-Healing Status" >> $GITHUB_STEP_SUMMARY
+            echo "- ⚙️ Run ID: ${{ steps.get_run_details.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📊 Analysis: ${{ steps.analyze_failure.outputs.analysis_available }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 💾 Branch Created: ${{ steps.create_branch.outputs.has_changes }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔀 PR Created: ${{ steps.create_pr.outputs.pr_url != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🤖 Copilot Notified: ${{ steps.create_pr.outputs.pr_url != '' }}" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -464,7 +464,48 @@ Check workflow logs for successful `gh` command execution. You should see:
 - PRs being created successfully
 - Copilot mentions being added to PRs
 
-### Workflow Being Skipped (FIXED in latest version)
+### Workflow Being Skipped (FIXED in v2.2.0)
+
+**Symptom:**
+- Auto-healing workflow completes quickly (1-2 seconds)
+- Summary shows "⏭️ Skipping Duplicate Processing" or "⏭️ Workflow Excluded"
+- No analysis or PR creation occurs
+
+**Root Causes (Intentional Skips):**
+
+1. **Duplicate Processing (v2.2.0)**:
+   - System detects an existing PR for the same workflow run ID
+   - This is intentional to prevent duplicate fix attempts
+   - Check for existing PRs with `gh pr list --search "Run ID: <id> in:body"`
+
+2. **Excluded Workflow (v2.2.0)**:
+   - Workflow is in the `excluded_workflows` list in configuration
+   - Auto-fix workflows exclude themselves to prevent infinite loops
+   - Check `.github/workflows/workflow-auto-fix-config.yml`
+
+3. **No Run ID Found**:
+   - Workflow was triggered but no actual failure to analyze
+   - Can happen with manual triggers without parameters
+   - Provide `run_id` or `workflow_name` when manually triggering
+
+**Verification:**
+Check the workflow run summary for skip information:
+- Skip reason clearly stated in summary
+- Either "already_processed", "no_run_id", or excluded workflow message
+- Existing PRs or config shown as evidence
+
+**When This is a Problem:**
+- If you manually trigger and it skips unexpectedly
+- If a legitimate new failure is marked as duplicate
+- If a workflow should be processed but is excluded
+
+**Solutions:**
+1. For duplicates: This is working correctly, check existing PR
+2. For excluded workflows: Remove from `excluded_workflows` in config
+3. For missing run ID: Provide parameters when manually triggering
+4. For false positives: Check PR search logic isn't matching incorrectly
+
+### Workflow Being Skipped (FIXED in v2.1.0 - Historical)
 
 **Symptom:**
 - Auto-healing workflow completes in 1-2 seconds
@@ -807,6 +848,34 @@ Contributions welcome! Areas to help:
 Same as parent repository.
 
 ## Changelog
+
+### Version 2.2.0 (2025-10-30)
+
+**CRITICAL FIX: Duplicate Workflow Runs and Cascading Triggers**
+- Disabled deprecated `workflow-auto-fix.yml` to prevent duplicate processing
+- Added deduplication check to prevent multiple runs for same failure
+- Added workflow eligibility check to respect configuration exclusions
+- Updated configuration to exclude auto-fix workflows from triggering themselves
+- Improved status reporting to clearly show skip reasons
+
+**Impact:**
+This fix prevents the auto-healing system from:
+- Running multiple times for the same workflow failure
+- Triggering on itself or other auto-fix workflows
+- Creating duplicate PRs and issues
+- Appearing to complete in 1s when no work was needed
+
+**Changes Made:**
+- Deprecated `workflow-auto-fix.yml` (set `on: []`)
+- Added `check_duplicate` step to search for existing fix PRs
+- Added `check_eligibility` step to respect exclusion list
+- Updated `workflow-auto-fix-config.yml` to exclude both auto-fix workflows
+- Enhanced final status reporting with skip reasons
+
+**Files Modified:**
+- `.github/workflows/workflow-auto-fix.yml` - Disabled workflow
+- `.github/workflows/copilot-agent-autofix.yml` - Added deduplication and eligibility checks
+- `.github/workflows/workflow-auto-fix-config.yml` - Added exclusions
 
 ### Version 2.1.0 (2025-10-30)
 

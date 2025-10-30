@@ -1,25 +1,30 @@
 name: Workflow Auto-Fix System
 
-on:
-  workflow_run:
-    workflows: ["*"]
-    types:
-      - completed
-  workflow_dispatch:
-    inputs:
-      workflow_name:
-        description: 'Name of the failed workflow to analyze'
-        required: false
-        type: string
-      run_id:
-        description: 'Specific workflow run ID to analyze'
-        required: false
-        type: string
-      create_pr:
-        description: 'Create PR for the fix'
-        required: false
-        default: true
-        type: boolean
+# NOTE: This workflow is DEPRECATED in favor of copilot-agent-autofix.yml
+# It is disabled but kept for reference. To re-enable, change 'on: []' to 'on: workflow_dispatch'
+
+on: []  # Disabled - use copilot-agent-autofix.yml instead
+
+# Original triggers (disabled):
+#   workflow_run:
+#     workflows: ["*"]
+#     types:
+#       - completed
+#   workflow_dispatch:
+#     inputs:
+#       workflow_name:
+#         description: 'Name of the failed workflow to analyze'
+#         required: false
+#         type: string
+#       run_id:
+#         description: 'Specific workflow run ID to analyze'
+#         required: false
+#         type: string
+#       create_pr:
+#         description: 'Create PR for the fix'
+#         required: false
+#         default: true
+#         type: boolean
 
 permissions:
   contents: write
