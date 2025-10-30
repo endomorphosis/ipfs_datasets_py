@@ -41,3 +41,7 @@ coverage.xml
 pdf_processing_metrics.json
 .mypy_cache/
 _log_probs_test.py
+# Scraper test results
+test_results/
+*.pyc
+__pycache__/

@@ -558,16 +558,14 @@ try:
     validate_against_theorem = software_theorems.validate_against_theorem
     
     HAVE_SOFTWARE_ENGINEERING_TOOLS = True
-except ImportError as e:
-    HAVE_SOFTWARE_ENGINEERING_TOOLS = False
-    logger.warning(f"Software engineering tools not available: {e}")
-    analyze_embedding_market_correlation = embedding_correlation.analyze_embedding_market_correlation
-    
     HAVE_FINANCE_TOOLS = True
     if installer.verbose:
         print("✅ Finance dashboard tools successfully loaded")
 except ImportError as e:
+    HAVE_SOFTWARE_ENGINEERING_TOOLS = False
     HAVE_FINANCE_TOOLS = False
+    
+    # Set finance tools to None
     StockDataScraper = None
     NewsScraperBase = None
     FinancialTheoremLibrary = None
@@ -578,9 +576,24 @@ except ImportError as e:
     list_financial_theorems = None
     analyze_executive_performance = None
     analyze_embedding_market_correlation = None
+    
+    # Set software engineering tools to None
+    scrape_github_repository = None
+    analyze_github_actions = None
+    parse_systemd_logs = None
+    parse_kubernetes_logs = None
+    analyze_dependency_chain = None
+    create_workflow_dag = None
+    plan_speculative_execution = None
+    predict_gpu_needs = None
+    detect_error_patterns = None
+    coordinate_auto_healing = None
+    list_software_theorems = None
+    validate_against_theorem = None
+    
     if installer.verbose:
         import warnings
-        warnings.warn(f"Finance dashboard tools unavailable due to missing dependencies: {e}")
+        warnings.warn(f"Finance/Software engineering tools unavailable due to missing dependencies: {e}")
 
 except AttributeError:
     rag_query_optimizer = None
