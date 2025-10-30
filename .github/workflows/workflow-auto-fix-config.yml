@@ -20,7 +20,10 @@ monitored_workflows: []
   # - "PDF Processing Pipeline CI/CD"
 
 # Exclude specific workflows from auto-fix
-excluded_workflows: []
+excluded_workflows:
+  - "Workflow Auto-Fix System"
+  - "Copilot Agent Auto-Healing"
+  # Add other workflows that should not be auto-fixed
   # - "Deploy to Production"
   # - "Publish to PyPI"
 
