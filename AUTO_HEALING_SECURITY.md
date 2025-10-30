@@ -21,10 +21,11 @@ permissions:
 
 **GITHUB_TOKEN**:
 - Automatically provided by GitHub Actions
-- Scoped to the repository
+- Scoped to the repository only (cannot access other repos or org-level resources)
 - Expires at the end of the workflow run
-- Cannot access other repositories
+- Cannot access organization secrets or resources
 - Limited to the permissions explicitly declared
+- Does not have access to Personal Access Tokens or SSH keys
 
 **Best Practices**:
 ✅ Never log or expose GITHUB_TOKEN
@@ -113,8 +114,15 @@ Branch Protection Rules:
 ```yaml
 container:
   image: python:3.12-slim
-  options: --user root
+  options: --user root  # Required for apt-get operations in container setup
 ```
+
+**Note on Root Access**: The workflows run with root in containers for:
+- Installing system dependencies (apt-get) during setup
+- Ensuring git operations work correctly in containerized environment
+- Mitigated by: Container isolation, ephemeral nature (destroyed after run), no persistent storage
+
+**Alternative**: Consider using pre-built images with dependencies to avoid root requirement.
 
 - ✅ Runs in isolated Docker containers
 - ✅ No network access to internal systems
@@ -182,13 +190,14 @@ container:
 
 1. **Immediate Actions**
    ```bash
-   # Disable workflow
+   # Disable auto-healing workflows (adjust filenames as needed)
    gh workflow disable copilot-agent-autofix.yml
+   gh workflow disable comprehensive-scraper-validation.yml
    
-   # Close malicious PRs
+   # Close suspicious PRs
    gh pr close PR_NUMBER
    
-   # Delete malicious branches
+   # Delete suspicious branches
    git push origin --delete BRANCH_NAME
    ```
 
@@ -273,13 +282,19 @@ container:
 
 ### Alerting Configuration
 
-**Critical Alerts**:
-```yaml
-# Example alert conditions
-- Workflow permission denied
+**Critical Alert Conditions** (implement in your monitoring system):
+
+- Workflow permission denied or elevated
 - More than 10 PRs created in 1 hour
-- Security scan failure
+- Security scan failure on auto-generated code
 - Unexpected workflow modification
+- Repeated workflow failures (>5 in 24 hours)
+
+**Example Monitoring Integration**:
+```python
+# Pseudocode for monitoring integration
+if pr_creation_rate > threshold:
+    alert_team("Unusual auto-healing activity detected")
 ```
 
 ## References
@@ -300,7 +315,8 @@ This security documentation should be reviewed:
 - ✅ When modifying permissions
 - ✅ After security incidents
 - ✅ Quarterly as part of security review
+- ✅ When GitHub Actions updates security policies
 
-**Last Updated**: 2025-10-30
-**Next Review**: 2026-01-30
+**Version**: See git commit history for latest updates
 **Owner**: Repository Maintainers
+**Review Frequency**: Quarterly or on security-related changes
