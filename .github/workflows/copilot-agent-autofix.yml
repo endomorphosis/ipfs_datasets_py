@@ -300,14 +300,15 @@ jobs:
             echo "fix_available=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Create issue with failure details and assign to Copilot
-        id: create_issue
+      - name: Create issue and draft PR with Copilot assignment
+        id: create_issue_pr
         if: steps.generate_fix.outputs.fix_available == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
           RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
+          BRANCH_NAME="${{ steps.generate_fix.outputs.fix_branch }}"
           
           # Read analysis for issue body
           ANALYSIS=$(cat /tmp/failure_analysis.json | python -c "import sys, json; data=json.load(sys.stdin); print('**Error Type:** ' + data.get('error_type', 'Unknown') + '\n**Root Cause:** ' + data.get('root_cause', 'Not identified') + '\n**Fix Confidence:** ' + str(data.get('fix_confidence', 0)) + '%')")
@@ -353,7 +354,7 @@ jobs:
             head -50 "$FIRST_LOG" >> /tmp/issue_body.md
             echo "\`\`\`" >> /tmp/issue_body.md
             echo "" >> /tmp/issue_body.md
-            echo "*Full logs available in [workflow run](${{ steps.get_run_details.outputs.run_id }})*" >> /tmp/issue_body.md
+            echo "*Full logs available in [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ steps.get_run_details.outputs.run_id }})*" >> /tmp/issue_body.md
           fi
           
           cat >> /tmp/issue_body.md << 'ISSUE_EOF'
@@ -395,47 +396,182 @@ jobs:
           ---
           
           🤖 This issue was created by the Auto-Healing System.
-          GitHub Copilot has been assigned and will automatically create a pull request to fix this issue.
+          A draft PR will be created and GitHub Copilot will be assigned automatically.
           ISSUE_EOF
           
           # Create the issue
           ISSUE_URL=$(gh issue create \
             --title "Fix workflow failure: ${{ steps.get_run_details.outputs.workflow_name }} (Run ${{ steps.get_run_details.outputs.run_id }})" \
             --body-file /tmp/issue_body.md \
-            --label "automated,workflow-failure,auto-healing" \
-            --assignee "Copilot")
+            --label "automated,workflow-failure,auto-healing")
           
           ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oP '\d+$')
           
           echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
           echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
           
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📝 Issue Created and Assigned to Copilot" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **Issue URL**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
-          echo "🔢 **Issue Number**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
-          echo "🤖 **Assigned to**: Copilot (Coding Agent will start automatically)" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Wait for Copilot to create PR
-        if: steps.create_issue.outputs.issue_number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE_NUMBER="${{ steps.create_issue.outputs.issue_number }}"
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Create and checkout fix branch
+          git checkout -b "$BRANCH_NAME"
+          
+          # Create a placeholder file to enable PR creation
+          cat > AUTOFIX_README.md << 'README_EOF'
+          # Automated Workflow Fix
+          
+          This branch was created automatically to fix a workflow failure.
+          
+          ## Issue
+          
+          ISSUE_REF
+          
+          ## Workflow Details
+          
+          - **Workflow**: ${{ steps.get_run_details.outputs.workflow_name }}
+          - **Run ID**: ${{ steps.get_run_details.outputs.run_id }}
+          - **Error Type**: ERROR_TYPE
+          - **Fix Type**: FIX_TYPE
+          
+          ## Next Steps
+          
+          GitHub Copilot will automatically implement the necessary fixes.
+          README_EOF
+          
+          # Replace placeholders
+          sed -i "s|ISSUE_REF|#$ISSUE_NUMBER|g" AUTOFIX_README.md
+          sed -i "s|ERROR_TYPE|$(cat /tmp/failure_analysis.json | python -c "import sys, json; print(json.load(sys.stdin).get('error_type', 'Unknown'))")|g" AUTOFIX_README.md
+          sed -i "s|FIX_TYPE|$(cat /tmp/failure_analysis.json | python -c "import sys, json; print(json.load(sys.stdin).get('fix_type', 'manual'))")|g" AUTOFIX_README.md
+          
+          git add AUTOFIX_README.md
+          git commit -m "autofix: Initialize branch for workflow fix
+
+          This commit creates a branch for automated fixes to address workflow
+          failures in: ${{ steps.get_run_details.outputs.workflow_name }}
+          
+          Related Issue: #$ISSUE_NUMBER
+          Workflow Run: ${{ steps.get_run_details.outputs.run_id }}"
+          
+          git push origin "$BRANCH_NAME"
+          
+          # Create draft PR
+          cat > /tmp/pr_body.md << 'PR_EOF'
+          ## 🤖 Automated Workflow Fix
+          
+          This PR addresses the workflow failure identified in issue #ISSUE_NUMBER.
+          
+          ### Related Issue
+          
+          Fixes #ISSUE_NUMBER
+          
+          ### Failure Analysis
+          
+          PR_EOF
+          
+          echo "$ANALYSIS" >> /tmp/pr_body.md
+          
+          cat >> /tmp/pr_body.md << 'PR_EOF'
+          
+          ### Proposed Fixes
+          
+          PR_EOF
+          
+          # Add fix details
+          python -c "
+          import json
+          with open('/tmp/fix_proposal.json') as f:
+              data = json.load(f)
+              for fix in data.get('fixes', []):
+                  print(f\"- **{fix.get('description', 'Fix')}** in \\\`{fix.get('file', 'N/A')}\\\`\")
+          " >> /tmp/pr_body.md
+          
+          cat >> /tmp/pr_body.md << 'PR_EOF'
+          
+          ### What This PR Does
+          
+          This is a draft PR that will be automatically updated by GitHub Copilot to fix the workflow failure.
+          
+          @copilot Please review the workflow failure and implement the necessary fixes based on the analysis above.
+          
+          ### Next Steps
+          
+          - [ ] GitHub Copilot analyzes the failure
+          - [ ] Copilot implements the fixes
+          - [ ] Automated tests verify the fixes
+          - [ ] Manual review and approval
+          
+          ---
+          
+          🤖 **Auto-generated by**: Workflow Auto-Healing System
+          **Run**: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          PR_EOF
+          
+          # Replace ISSUE_NUMBER placeholder
+          sed -i "s/#ISSUE_NUMBER/#$ISSUE_NUMBER/g" /tmp/pr_body.md
+          
+          # Create draft PR
+          PR_URL=$(gh pr create \
+            --draft \
+            --title "${{ steps.generate_fix.outputs.fix_title }}" \
+            --body-file /tmp/pr_body.md \
+            --base ${{ steps.get_run_details.outputs.head_branch }} \
+            --head "$BRANCH_NAME" \
+            --label "automated-fix,workflow-fix,copilot-ready")
+          
+          PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          
+          # Add comment to trigger Copilot
+          gh pr comment "$PR_NUMBER" --body "@copilot /fix
+
+          Please implement the fixes for the workflow failure. Focus on:
+          
+          $(python -c "
+          import json
+          with open('/tmp/failure_analysis.json') as f:
+              data = json.load(f)
+              for rec in data.get('recommendations', []):
+                  print(f'- {rec}')
+          ")
+          
+          See the full analysis in issue #$ISSUE_NUMBER and the workflow run artifacts."
           
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ⏳ Waiting for GitHub Copilot Coding Agent" >> $GITHUB_STEP_SUMMARY
+          echo "## 📝 Issue and Draft PR Created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The GitHub Copilot Coding Agent has been triggered by assigning issue #${ISSUE_NUMBER}." >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Issue URL**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **PR URL**: $PR_URL" >> $GITHUB_STEP_SUMMARY
+          echo "🔢 **Issue Number**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 **Status**: GitHub Copilot has been notified and will implement fixes" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Summary of auto-healing actions
+        if: steps.create_issue_pr.outputs.pr_number != ''
+        run: |
+          PR_NUMBER="${{ steps.create_issue_pr.outputs.pr_number }}"
+          ISSUE_NUMBER="${{ steps.create_issue_pr.outputs.issue_number }}"
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Auto-Healing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The auto-healing system has successfully:" >> $GITHUB_STEP_SUMMARY
+          echo "1. 📝 Created issue #${ISSUE_NUMBER} with failure details" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🌿 Created branch \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. 📋 Created draft PR #${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🤖 Notified GitHub Copilot via @mention" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What happens next:" >> $GITHUB_STEP_SUMMARY
-          echo "1. 🤖 Copilot analyzes the issue and repository context" >> $GITHUB_STEP_SUMMARY
-          echo "2. 🔧 Creates a branch and implements the fix automatically" >> $GITHUB_STEP_SUMMARY
-          echo "3. 📝 Opens a draft PR with the changes" >> $GITHUB_STEP_SUMMARY
-          echo "4. 🔍 You review and approve the PR when ready" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🤖 GitHub Copilot analyzes the issue and workflow failure" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🔧 Copilot implements fixes automatically in the draft PR" >> $GITHUB_STEP_SUMMARY
+          echo "3. ✅ Automated tests verify the fixes" >> $GITHUB_STEP_SUMMARY
+          echo "4. 👀 You review and approve the PR when ready" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note**: The Copilot agent works asynchronously. Check issue #${ISSUE_NUMBER} for updates." >> $GITHUB_STEP_SUMMARY
+          echo "**Monitor Progress**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Issue: #${ISSUE_NUMBER}" >> $GITHUB_STEP_SUMMARY
+          echo "- Draft PR: #${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
       
       - name: Upload artifacts
         if: always()
@@ -447,6 +583,7 @@ jobs:
             /tmp/failure_analysis.json
             /tmp/fix_proposal.json
             /tmp/issue_body.md
+            /tmp/pr_body.md
           retention-days: 30
       
       - name: Report status
@@ -470,16 +607,18 @@ jobs:
             echo "- ⚙️ Run ID: ${{ steps.get_run_details.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
             echo "- 📊 Analysis: ${{ steps.analyze_failure.outputs.analysis_available }}" >> $GITHUB_STEP_SUMMARY
             echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 📝 Issue Created: ${{ steps.create_issue.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 🤖 Copilot Assigned: ${{ steps.create_issue.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 Issue Created: ${{ steps.create_issue_pr.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📋 Draft PR Created: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🤖 Copilot Notified: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
             
-            if [ "${{ steps.create_issue.outputs.issue_number }}" != "" ]; then
+            if [ "${{ steps.create_issue_pr.outputs.pr_number }}" != "" ]; then
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "#### ✅ Success!" >> $GITHUB_STEP_SUMMARY
-              echo "- Issue: #${{ steps.create_issue.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
-              echo "- Status: GitHub Copilot Coding Agent has been triggered" >> $GITHUB_STEP_SUMMARY
-              echo "- Copilot will automatically create a draft PR with the fix" >> $GITHUB_STEP_SUMMARY
+              echo "- Issue: #${{ steps.create_issue_pr.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Draft PR: #${{ steps.create_issue_pr.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Branch: \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
+              echo "- Status: GitHub Copilot has been notified via @mention in the PR" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Monitor**: Check issue #${{ steps.create_issue.outputs.issue_number }} for Copilot's progress" >> $GITHUB_STEP_SUMMARY
+              echo "**Monitor**: Check PR #${{ steps.create_issue_pr.outputs.pr_number }} for Copilot's progress" >> $GITHUB_STEP_SUMMARY
             fi
           fi
