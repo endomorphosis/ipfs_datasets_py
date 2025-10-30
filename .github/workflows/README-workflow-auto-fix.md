@@ -388,7 +388,7 @@ This allows auto-fix to run for ANY failed workflow, while still preventing infi
 **Verification:**
 Check the workflow run summary for debug information showing:
 - Event name and workflow details
-- All condition check results  
+- All condition check results
 - Full event context in JSON format
 
 If the workflow is still being skipped, check the debug output to see which condition is failing.
