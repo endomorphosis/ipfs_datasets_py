@@ -80,6 +80,7 @@ def main():
         'workflow-auto-fix.yml',
         'workflow-auto-fix-config.yml',
         'enhanced-autohealing.yml',  # Disabled - superseded by copilot-agent-autofix.yml
+        'update-autohealing-list.yml',  # Maintenance workflow - doesn't need auto-healing
     ]
     
     # Get workflow names
