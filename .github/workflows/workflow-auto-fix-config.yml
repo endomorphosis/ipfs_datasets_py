@@ -82,7 +82,7 @@ pr:
   labels:
     - "automated-fix"
     - "workflow-fix"
-    - "copilot-ready"
+    - "auto-healing"
   
   # Add these labels based on fix type
   type_specific_labels:
@@ -150,15 +150,17 @@ debug:
   dry_run: false
   save_intermediate_files: true
 
-# GitHub Copilot Integration
+# GitHub Copilot Agent Integration (Auto-Healing)
 copilot:
   enabled: true
-  auto_request_review: true
-  wait_for_review: false
+  use_agent_mode: true  # Use Copilot Agent for automatic implementation
+  auto_mention: true    # Automatically mention @copilot in PRs
+  create_task_file: true  # Create detailed task files for Copilot
   
-  # Review settings
-  review_timeout_hours: 24
-  require_copilot_approval: false
+  # Agent settings
+  agent_timeout_hours: 24
+  require_agent_completion: false  # Don't block if agent doesn't respond
+  fallback_to_manual: true  # Allow manual fixes if agent fails
 
 # Advanced Settings
 advanced:
