@@ -2,6 +2,28 @@
 
 This directory contains Python scripts used by the Workflow Auto-Fix System to automatically detect, analyze, and fix failed GitHub Actions workflows.
 
+## 🚀 How Auto-Healing Works (Updated 2025-10-30)
+
+The auto-healing workflow now properly integrates with **GitHub Copilot Coding Agent**:
+
+1. **Detection**: `copilot-agent-autofix.yml` is triggered when a workflow fails
+2. **Analysis**: Scripts analyze logs and identify the root cause
+3. **Issue Creation**: A detailed issue is created with:
+   - Error analysis
+   - Failure logs
+   - Fix recommendations
+   - Proposed changes
+4. **Copilot Assignment**: The issue is assigned to `Copilot`
+   - ⚡ **This triggers the GitHub Copilot Coding Agent automatically**
+5. **Automatic Fix**: Copilot Coding Agent (asynchronously):
+   - Analyzes the issue and repository context
+   - Creates a new branch
+   - Implements the fix
+   - Opens a draft PR for review
+
+### Key Change
+Previously, the workflow manually created PRs and mentioned `@copilot` in comments. Now it properly triggers the Copilot Coding Agent by **assigning the issue to Copilot**, which is the recommended method per GitHub's documentation.
+
 ## Scripts
 
 ### 1. `analyze_workflow_failure.py`
