@@ -361,6 +361,34 @@ gh run view [RUN_ID] --log
 
 ## Troubleshooting
 
+### GitHub CLI Authentication Failure (FIXED in v1.0.1)
+
+**Symptom:**
+- Auto-fix workflow completes in 1-2 seconds
+- Steps using `gh` commands fail silently
+- Error message: "To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable"
+- No workflow details retrieved, no logs downloaded
+
+**Root Cause:**
+The workflow was setting `GITHUB_TOKEN` environment variable, but GitHub CLI in Actions workflows requires `GH_TOKEN`.
+
+**Solution (Implemented in v1.0.1):**
+All steps that use `gh` CLI commands now correctly set `GH_TOKEN`:
+```yaml
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Changed from GITHUB_TOKEN
+```
+
+**Affected Steps:**
+- Get workflow run details
+- Download workflow logs
+- Generate fix proposal
+- Create Pull Request
+- Add issue comment
+
+**Verification:**
+Check workflow logs for successful `gh` command execution. You should see workflow details, logs being downloaded, and PRs being created.
+
 ### Workflow Being Skipped (FIXED in latest version)
 
 **Symptom:**
@@ -553,6 +581,18 @@ A: Yes, requires appropriate permissions and GitHub Copilot access.
 Same as parent repository.
 
 ## Changelog
+
+### Version 1.0.1 (2025-10-30)
+
+**CRITICAL FIX: GitHub CLI Authentication**
+- Fixed authentication issue causing workflows to fail silently
+- Changed `GITHUB_TOKEN` to `GH_TOKEN` in all steps using `gh` CLI commands
+- Affects both `workflow-auto-fix.yml` and `copilot-agent-autofix.yml`
+- Resolves issue where workflows completed in 1-2 seconds without doing any work
+
+**Files Modified:**
+- `.github/workflows/copilot-agent-autofix.yml` - 5 instances fixed
+- `.github/workflows/workflow-auto-fix.yml` - 5 instances fixed
 
 ### Version 1.0.0 (2025-10-29)
 
