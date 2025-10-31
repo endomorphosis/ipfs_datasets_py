@@ -87,19 +87,31 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update
-          apt-get install -y git curl jq
+          apt-get install -y git curl jq ca-certificates gnupg
           # Install GitHub CLI
           curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
           chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
           apt-get update
           apt-get install -y gh
+          # Configure git for container
+          git config --global --add safe.directory '*'
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Verify gh is authenticated
+          gh auth status || echo "GH_TOKEN is set but gh auth status failed"
+          gh auth setup-git
       
       - name: Set up Python environment
         run: |
@@ -112,19 +124,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -x  # Enable debug mode
+          
           # Get the run ID we're checking
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ -n "${{ github.event.inputs.run_id }}" ]; then
               RUN_ID="${{ github.event.inputs.run_id }}"
             else
               WORKFLOW_NAME="${{ github.event.inputs.workflow_name }}"
-              RUN_ID=$(gh run list --workflow="$WORKFLOW_NAME" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' || echo "")
+              RUN_ID=$(gh run list --workflow="$WORKFLOW_NAME" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' 2>&1 || echo "")
             fi
           else
             RUN_ID="${{ github.event.workflow_run.id }}"
           fi
           
-          if [ -z "$RUN_ID" ]; then
+          echo "Checking RUN_ID: $RUN_ID"
+          
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
             echo "❌ No workflow run ID found - skipping"
             echo "should_skip=true" >> $GITHUB_OUTPUT
             echo "skip_reason=no_run_id" >> $GITHUB_OUTPUT
@@ -133,7 +149,10 @@ jobs:
           
           # Check if we've already processed this run
           # Look for existing PRs or issues that reference this run ID
-          EXISTING_PRS=$(gh pr list --search "Run ID: $RUN_ID in:body" --state all --json number --jq 'length')
+          echo "Searching for existing PRs referencing Run ID: $RUN_ID"
+          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "Run ID: $RUN_ID in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          
+          echo "Found $EXISTING_PRS existing PRs"
           
           if [ "$EXISTING_PRS" -gt 0 ]; then
             echo "⚠️  Run $RUN_ID already has $EXISTING_PRS fix PR(s) - skipping duplicate processing"
