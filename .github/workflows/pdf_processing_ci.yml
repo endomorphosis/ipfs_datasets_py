@@ -102,12 +102,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
     
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
-        # Install other OCR dependencies as needed
-    
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip

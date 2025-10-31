@@ -19,6 +19,10 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
     
     steps:
+    - name: Configure git
+      run: |
+        git config --global --add safe.directory '*'
+    
     - uses: actions/checkout@v4
       with:
         submodules: false
@@ -92,6 +96,10 @@ jobs:
   security:
     runs-on: [self-hosted, linux, x64]
     steps:
+    - name: Configure git
+      run: |
+        git config --global --add safe.directory '*'
+    
     - uses: actions/checkout@v4
       with:
         submodules: false

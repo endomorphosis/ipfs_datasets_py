@@ -84,20 +84,17 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
       
-      - name: Install system dependencies
+      - name: Install GitHub CLI and configure git
         run: |
-          apt-get update
-          apt-get install -y git curl jq ca-certificates gnupg
-          # Install GitHub CLI
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-          chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
           apt-get update
           apt-get install -y gh
           # Configure git for container
           git config --global --add safe.directory '*'
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Fix git config file permissions
+          chmod -R a+r /etc 2>/dev/null || true
+          mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
       
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -108,6 +105,8 @@ jobs:
       - name: Configure GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Verify gh is authenticated
           gh auth status || echo "GH_TOKEN is set but gh auth status failed"
