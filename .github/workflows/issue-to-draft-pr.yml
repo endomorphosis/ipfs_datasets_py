@@ -309,19 +309,23 @@ jobs:
           DEFAULT_BRANCH="${{ steps.create_branch.outputs.default_branch }}"
           
           # Create PR body
-          cat > /tmp/pr_body.md << 'PR_EOF'
+          # Export outputs to environment variables
+          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
+          ISSUE_TITLE="${{ steps.get_issue.outputs.issue_title }}"
+          ISSUE_AUTHOR="${{ steps.get_issue.outputs.issue_author }}"
+          cat > /tmp/pr_body.md <<'PR_EOF'
           ## 🤖 Automated Issue Resolution
           
-          This PR addresses issue #${{ steps.get_issue.outputs.issue_number }}.
+          This PR addresses issue #$ISSUE_NUMBER.
           
           ### Related Issue
           
-          Fixes #${{ steps.get_issue.outputs.issue_number }}
+          Fixes #$ISSUE_NUMBER
           
           ### Issue Summary
           
-          **Title**: ${{ steps.get_issue.outputs.issue_title }}
-          **Author**: @${{ steps.get_issue.outputs.issue_author }}
+          **Title**: $ISSUE_TITLE
+          **Author**: @$ISSUE_AUTHOR
           
           ### Original Issue Description
           
