@@ -15,40 +15,44 @@ jobs:
   test:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:${{ matrix.python-version }}-slim
       options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     strategy:
       matrix:
-        python-version: [3.9, 3.10, 3.11]
+        python-version: ['3.10', '3.11', '3.12']
     
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
     steps:
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y git curl docker.io docker-compose
+    
     - uses: actions/checkout@v4
       with:
         submodules: false
+    
+    - name: Set up Python
+      run: |
+        python --version
+        pip install --upgrade pip
+    
+    - name: Start test services
+      run: |
+        # Start PostgreSQL and Redis in separate containers
+        docker run -d --name postgres-test \
+          -e POSTGRES_PASSWORD=test_password \
+          -e POSTGRES_DB=test_db \
+          -p 5432:5432 \
+          postgres:15
+        
+        docker run -d --name redis-test \
+          -p 6379:6379 \
+          redis:7
+        
+        # Wait for services to be ready
+        sleep 10
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -63,11 +67,17 @@ jobs:
         mkdir -p test-results
         docker run --rm \
           -v $(pwd)/test-results:/app/test-results \
-          -e POSTGRES_URL=postgresql://postgres:test_password@postgres:5432/test_db \
-          -e REDIS_URL=redis://redis:6379/0 \
+          -e POSTGRES_URL=postgresql://postgres:test_password@host.docker.internal:5432/test_db \
+          -e REDIS_URL=redis://host.docker.internal:6379/0 \
           -e TESTING=true \
-          --network host \
+          --add-host=host.docker.internal:host-gateway \
           ipfs-datasets-graphrag-tests:py${{ matrix.python-version }}
+    
+    - name: Cleanup test services
+      if: always()
+      run: |
+        docker stop postgres-test redis-test || true
+        docker rm postgres-test redis-test || true
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -79,9 +89,14 @@ jobs:
   security:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     steps:
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y git curl
+    
     - uses: actions/checkout@v4
       with:
         submodules: false

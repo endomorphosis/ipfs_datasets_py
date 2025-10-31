@@ -52,6 +52,11 @@ env:
 jobs:
   autofix-with-copilot-agent:
     runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     # Only run if the triggering workflow failed and it's not another auto-fix workflow
     if: >
       github.event_name == 'workflow_dispatch' || 
@@ -79,6 +84,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
       
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl jq
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -87,11 +97,9 @@ jobs:
       
       - name: Set up Python environment
         run: |
-          # Use system Python (already available on self-hosted runner)
-          python3 --version
-          which python3
-          python3 -m pip install --user --upgrade pip
-          python3 -m pip install --user PyYAML requests
+          python --version
+          python -m pip install --upgrade pip
+          pip install PyYAML requests
       
       - name: Check for duplicate processing
         id: check_duplicate
@@ -174,7 +182,7 @@ jobs:
           # Check if workflow is in excluded list
           if [ -f "$CONFIG_FILE" ]; then
             # Extract excluded workflows (if any)
-            EXCLUDED=$(python3 -c "
+            EXCLUDED=$(python -c "
           import yaml
           import sys
           try:
@@ -244,7 +252,7 @@ jobs:
         id: analyze_failure
         if: steps.download_logs.outputs.has_failures == 'true'
         run: |
-          python3 .github/scripts/analyze_workflow_failure.py \
+          python .github/scripts/analyze_workflow_failure.py \
             --run-id "${{ steps.get_run_details.outputs.run_id }}" \
             --workflow-name "${{ steps.get_run_details.outputs.workflow_name }}" \
             --logs-dir /tmp/workflow_logs \
@@ -256,7 +264,7 @@ jobs:
             # Extract key findings for summary
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## Failure Analysis" >> $GITHUB_STEP_SUMMARY
-            python3 -c "
+            python -c "
           import json
           with open('/tmp/failure_analysis.json') as f:
               data = json.load(f)
@@ -274,7 +282,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 .github/scripts/generate_workflow_fix.py \
+          python .github/scripts/generate_workflow_fix.py \
             --analysis /tmp/failure_analysis.json \
             --workflow-name "${{ steps.get_run_details.outputs.workflow_name }}" \
             --output /tmp/fix_proposal.json
@@ -283,8 +291,8 @@ jobs:
             echo "fix_available=true" >> $GITHUB_OUTPUT
             
             # Extract fix details
-            FIX_BRANCH=$(python3 -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['branch_name'])")
-            FIX_TITLE=$(python3 -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['pr_title'])")
+            FIX_BRANCH=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['branch_name'])")
+            FIX_TITLE=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['pr_title'])")
             
             echo "fix_branch=$FIX_BRANCH" >> $GITHUB_OUTPUT
             echo "fix_title=$FIX_TITLE" >> $GITHUB_OUTPUT
@@ -308,7 +316,7 @@ jobs:
           BRANCH_NAME="${{ steps.generate_fix.outputs.fix_branch }}"
           
           # Read analysis for issue body
-          ANALYSIS=$(cat /tmp/failure_analysis.json | python3 -c "import sys, json; data=json.load(sys.stdin); print('**Error Type:** ' + data.get('error_type', 'Unknown') + '\n**Root Cause:** ' + data.get('root_cause', 'Not identified') + '\n**Fix Confidence:** ' + str(data.get('fix_confidence', 0)) + '%')")
+          ANALYSIS=$(cat /tmp/failure_analysis.json | python -c "import sys, json; data=json.load(sys.stdin); print('**Error Type:** ' + data.get('error_type', 'Unknown') + '\n**Root Cause:** ' + data.get('root_cause', 'Not identified') + '\n**Fix Confidence:** ' + str(data.get('fix_confidence', 0)) + '%')")
           
           # Create comprehensive issue with logs
           cat > /tmp/issue_body.md << 'ISSUE_EOF'
@@ -361,7 +369,7 @@ jobs:
           ISSUE_EOF
           
           # Add recommendations from analysis
-          python3 -c "
+          python -c "
           import json
           with open('/tmp/failure_analysis.json') as f:
               data = json.load(f)
@@ -438,8 +446,8 @@ jobs:
           
           # Replace placeholders
           sed -i "s|ISSUE_REF|#$ISSUE_NUMBER|g" AUTOFIX_README.md
-          sed -i "s|ERROR_TYPE|$(cat /tmp/failure_analysis.json | python3 -c "import sys, json; print(json.load(sys.stdin).get('error_type', 'Unknown'))")|g" AUTOFIX_README.md
-          sed -i "s|FIX_TYPE|$(cat /tmp/failure_analysis.json | python3 -c "import sys, json; print(json.load(sys.stdin).get('fix_type', 'manual'))")|g" AUTOFIX_README.md
+          sed -i "s|ERROR_TYPE|$(cat /tmp/failure_analysis.json | python -c "import sys, json; print(json.load(sys.stdin).get('error_type', 'Unknown'))")|g" AUTOFIX_README.md
+          sed -i "s|FIX_TYPE|$(cat /tmp/failure_analysis.json | python -c "import sys, json; print(json.load(sys.stdin).get('fix_type', 'manual'))")|g" AUTOFIX_README.md
           
           git add AUTOFIX_README.md
           git commit -m "autofix: Initialize branch for workflow fix
@@ -475,7 +483,7 @@ jobs:
           PR_EOF
           
           # Add fix details
-          python3 -c "
+          python -c "
           import json
           with open('/tmp/fix_proposal.json') as f:
               data = json.load(f)
