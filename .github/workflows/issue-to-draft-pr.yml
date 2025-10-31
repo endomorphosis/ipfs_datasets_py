@@ -23,6 +23,8 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
+      # Note: Running as root is required to install packages via apt-get
+      # The container is isolated and discarded after execution
       options: --user root
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
@@ -45,11 +47,14 @@ jobs:
         run: |
           apt-get update
           apt-get install -y git gh curl
-          # Configure git for container
+          # Configure git for container environment
+          # Note: Using '*' for safe.directory is required in containerized GitHub Actions
+          # because the workspace path can vary. This is standard practice in GHA containers.
           git config --global --add safe.directory '*'
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Fix git config file permissions
+          # Fix permissions for gh CLI config (container-specific requirement)
+          # Note: This is needed for gh to read system CA certificates in the container
           chmod -R a+r /etc 2>/dev/null || true
           mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
       

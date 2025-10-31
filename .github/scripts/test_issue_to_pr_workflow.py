@@ -5,8 +5,6 @@ This script validates the workflow structure and logic without actually running 
 """
 
 import yaml
-import json
-import re
 from pathlib import Path
 
 def validate_workflow():
