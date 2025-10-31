@@ -466,6 +466,12 @@ jobs:
       
       - name: Summary
         if: always()
+        env:
+          SKIP_REASON: ${{ steps.check_existing.outputs.skip_reason }}
+          ISSUE_NUMBER: ${{ steps.get_issue.outputs.issue_number }}
+          BRANCH_CREATED: ${{ steps.create_branch.outputs.branch_created }}
+          PR_CREATED: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ steps.generate_details.outputs.branch_name }}
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
@@ -473,22 +479,26 @@ jobs:
           
           if [ "${{ steps.check_existing.outputs.should_skip }}" = "true" ]; then
             echo "### ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "- 🔍 Reason: ${{ steps.check_existing.outputs.skip_reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔍 Reason: $SKIP_REASON" >> $GITHUB_STEP_SUMMARY
           else
             echo "### 🤖 Issue-to-PR Conversion Status" >> $GITHUB_STEP_SUMMARY
-            echo "- 📝 Issue: #${{ steps.get_issue.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 🌿 Branch Created: ${{ steps.create_branch.outputs.branch_created }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 📋 PR Created: ${{ steps.create_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 Issue: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- 🌿 Branch Created: $BRANCH_CREATED" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$PR_CREATED" ]; then
+              echo "- 📋 PR Created: true" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- 📋 PR Created: false" >> $GITHUB_STEP_SUMMARY
+            fi
             
-            if [ "${{ steps.create_pr.outputs.pr_number }}" != "" ]; then
+            if [ -n "$PR_CREATED" ]; then
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "#### ✅ Success!" >> $GITHUB_STEP_SUMMARY
-              echo "- **Issue**: #${{ steps.get_issue.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
-              echo "- **Draft PR**: #${{ steps.create_pr.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
-              echo "- **Branch**: \`${{ steps.generate_details.outputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
+              echo "- **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+              echo "- **Draft PR**: #$PR_CREATED" >> $GITHUB_STEP_SUMMARY
+              echo "- **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
               echo "- **Status**: GitHub Copilot assigned via @mention" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Next**: Monitor PR #${{ steps.create_pr.outputs.pr_number }} for Copilot's implementation" >> $GITHUB_STEP_SUMMARY
+              echo "**Next**: Monitor PR #$PR_CREATED for Copilot's implementation" >> $GITHUB_STEP_SUMMARY
             fi
           fi
       
