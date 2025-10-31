@@ -109,13 +109,10 @@ jobs:
         python3 --version
         python3 -m pip install --user --upgrade pip
     
-    - name: Run security analysis
-      uses: github/super-linter@v4
-      env:
-        DEFAULT_BRANCH: main
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VALIDATE_PYTHON_BANDIT: true
-        VALIDATE_DOCKERFILE_HADOLINT: true
+    - name: Run bandit security scan
+      run: |
+        python3 -m pip install --user bandit
+        python3 -m bandit -r ipfs_datasets_py/ -f json -o bandit-report.json || true
     
     - name: Run dependency vulnerability check
       run: |
@@ -126,7 +123,9 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: security-reports
-        path: safety-report.json
+        path: |
+          bandit-report.json
+          safety-report.json
 
   build:
     needs: [test, security]

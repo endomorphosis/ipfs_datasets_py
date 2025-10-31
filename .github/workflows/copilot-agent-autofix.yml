@@ -85,9 +85,11 @@ jobs:
           echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
       
       - name: Install GitHub CLI and configure git
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           apt-get update
-          apt-get install -y gh
+          apt-get install -y git gh curl
           # Configure git for container
           git config --global --add safe.directory '*'
           git config --global user.name "github-actions[bot]"
