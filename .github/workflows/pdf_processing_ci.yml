@@ -82,12 +82,17 @@ jobs:
         test-group: ['pdf-processing', 'mcp-tools', 'utils']
     
     steps:
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y git curl tesseract-ocr tesseract-ocr-eng
+    
     - uses: actions/checkout@v4
     
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+    - name: Install Python dependencies
+      run: |
+        python --version
+        python -m pip install --upgrade pip
     
     - name: Cache dependencies
       uses: actions/cache@v3
@@ -168,10 +173,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Python dependencies
+
+    
+      run: |
+
+    
+        python --version
+
+    
+        python -m pip install --upgrade pip
     
     - name: Install system dependencies
       run: |
@@ -213,10 +224,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Python dependencies
+
+    
+      run: |
+
+    
+        python --version
+
+    
+        python -m pip install --upgrade pip
     
     - name: Install dependencies
       run: |
@@ -251,10 +268,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Python dependencies
+
+    
+      run: |
+
+    
+        python --version
+
+    
+        python -m pip install --upgrade pip
     
     - name: Install dependencies
       run: |
@@ -291,10 +314,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Python dependencies
+
+    
+      run: |
+
+    
+        python --version
+
+    
+        python -m pip install --upgrade pip
     
     - name: Install security scanning tools
       run: |
@@ -361,10 +390,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Python dependencies
+
+    
+      run: |
+
+    
+        python --version
+
+    
+        python -m pip install --upgrade pip
     
     - name: Test package installation
       run: |

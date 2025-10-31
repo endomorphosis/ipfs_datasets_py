@@ -23,29 +23,30 @@ permissions:
   issues: write
 
 env:
-  PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   documentation-audit:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     name: Maintain Documentation Health
     
     steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
+          python --version
           python -m pip install --upgrade pip
           pip install PyYAML pathlib
       
