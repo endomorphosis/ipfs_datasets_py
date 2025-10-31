@@ -144,10 +144,10 @@ jobs:
       - name: Generate branch name and PR details
         id: generate_details
         if: steps.check_existing.outputs.should_skip != 'true'
+        env:
+          ISSUE_NUMBER: ${{ steps.get_issue.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.get_issue.outputs.issue_title }}
         run: |
-          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
-          ISSUE_TITLE="${{ steps.get_issue.outputs.issue_title }}"
-          
           # Create a clean branch name from issue title
           BRANCH_NAME=$(echo "issue-${ISSUE_NUMBER}/$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | cut -c1-50 | sed 's/-$//')")
           
