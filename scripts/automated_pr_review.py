@@ -161,13 +161,33 @@ class AutomatedPRReviewer:
             return []
     
     def check_copilot_already_invoked(self, pr_details: Dict[str, Any]) -> bool:
-        """Check if Copilot has already been invoked on this PR."""
-        comments = pr_details.get('comments', [])
+        """
+        Check if Copilot agent has already been invoked on this PR.
         
-        for comment in comments:
-            body = comment.get('body', '').lower()
-            if '@copilot' in body or '@github-copilot' in body:
-                return True
+        Checks for existing agent tasks associated with the PR.
+        """
+        pr_number = pr_details['number']
+        
+        # Check for agent tasks associated with this PR
+        result = self.run_command([
+            'gh', 'agent-task', 'list', '--limit', '50'
+        ])
+        
+        if not result['success']:
+            # Fallback: check for @copilot mentions in comments
+            logger.debug("Could not check agent tasks, falling back to comment check")
+            comments = pr_details.get('comments', [])
+            for comment in comments:
+                body = comment.get('body', '').lower()
+                if '@copilot' in body or '@github-copilot' in body or 'agent task' in body:
+                    return True
+            return False
+        
+        # Parse agent task list output to see if any are for this PR
+        output = result['stdout']
+        if output and str(pr_number) in output:
+            logger.debug(f"Found existing agent task for PR #{pr_number}")
+            return True
         
         return False
     
@@ -296,68 +316,87 @@ class AutomatedPRReviewer:
             'criteria_scores': criteria_scores
         }
     
-    def create_copilot_comment(self, pr_details: Dict[str, Any], analysis: Dict[str, Any]) -> str:
-        """Create an appropriate comment to invoke Copilot."""
+    def create_agent_task_description(self, pr_details: Dict[str, Any], analysis: Dict[str, Any]) -> str:
+        """Create an appropriate task description for GitHub Copilot agent."""
         task_type = analysis['task_type']
         confidence = analysis['confidence']
         reasons = ', '.join(analysis['reasons'])
+        pr_number = pr_details['number']
+        pr_title = pr_details['title']
         
-        # Task-specific templates
+        # Task-specific templates for agent-task create
         if task_type == 'implement_fix':
-            return f"""@copilot Please implement the auto-fix described in this PR.
+            return f"""Implement the auto-fix described in PR #{pr_number}: {pr_title}
 
-**Context**: This PR was automatically flagged for Copilot assistance.
+**Context**: This PR was automatically flagged for Copilot agent assistance (Confidence: {confidence}%).
+
+**Analysis**: {reasons}
 
 **Task**:
-1. Analyze the failure or issue described in the PR description
-2. Review the proposed fix or solution
+1. Review the PR description and understand the failure or issue
+2. Examine the proposed fix or solution
 3. Implement the fix with minimal, surgical changes
 4. Ensure the fix follows repository patterns and best practices
 5. Run relevant tests to validate the fix
 
-**Confidence**: {confidence}%
-**Analysis**: {reasons}
+**Instructions**:
+- Make minimal changes to address the specific issue
+- Follow existing code patterns in the repository
+- Ensure all tests pass after your changes
+- Update documentation if directly related to the fix
 
-Please proceed with implementing this fix."""
+Please proceed with implementing this fix on PR #{pr_number}."""
 
         elif task_type == 'fix_workflow':
-            return f"""@copilot Please fix the workflow issue described in this PR.
+            return f"""Fix the workflow issue in PR #{pr_number}: {pr_title}
 
-**Context**: This PR addresses a GitHub Actions workflow failure.
+**Context**: This PR addresses a GitHub Actions workflow failure (Confidence: {confidence}%).
+
+**Analysis**: {reasons}
 
 **Task**:
-1. Review the workflow file and any error logs
+1. Review the workflow file and any error logs in the PR
 2. Identify the root cause of the failure
 3. Implement the fix following GitHub Actions best practices
 4. Ensure the fix doesn't break existing functionality
 5. Test the workflow configuration if possible
 
-**Confidence**: {confidence}%
-**Analysis**: {reasons}
+**Instructions**:
+- Focus on workflow files in .github/workflows/
+- Check for permission issues, missing dependencies, or syntax errors
+- Validate YAML syntax
+- Ensure backwards compatibility
 
-Please implement the necessary workflow fixes."""
+Please implement the necessary workflow fixes on PR #{pr_number}."""
 
         elif task_type == 'fix_permissions':
-            return f"""@copilot Please resolve the permission issues in this PR.
+            return f"""Resolve permission issues in PR #{pr_number}: {pr_title}
 
-**Context**: This PR addresses permission-related errors.
+**Context**: This PR addresses permission-related errors (Confidence: {confidence}%).
+
+**Analysis**: {reasons}
 
 **Task**:
-1. Identify the specific permission errors
+1. Identify the specific permission errors from the PR description
 2. Review required permissions for the failing operations
 3. Update permissions configuration appropriately
 4. Ensure security best practices are maintained
 5. Document any permission changes made
 
-**Confidence**: {confidence}%
-**Analysis**: {reasons}
+**Instructions**:
+- Check workflow permissions in .github/workflows/
+- Review GITHUB_TOKEN permissions
+- Ensure principle of least privilege
+- Add comments explaining permission requirements
 
-Please fix the permission issues."""
+Please fix the permission issues on PR #{pr_number}."""
 
         elif task_type == 'implement_draft':
-            return f"""@copilot Please help implement the changes described in this draft PR.
+            return f"""Implement the changes described in draft PR #{pr_number}: {pr_title}
 
-**Context**: This is a draft PR that has been flagged for implementation assistance.
+**Context**: This draft PR has been flagged for implementation assistance (Confidence: {confidence}%).
+
+**Analysis**: {reasons}
 
 **Task**:
 1. Review the PR description and understand requirements
@@ -366,29 +405,36 @@ Please fix the permission issues."""
 4. Add or update tests as appropriate
 5. Update documentation if directly related
 
-**Confidence**: {confidence}%
-**Analysis**: {reasons}
+**Instructions**:
+- Follow existing code patterns and conventions
+- Write tests for new functionality
+- Update relevant documentation
+- Ensure code quality and maintainability
 
-Please implement the proposed changes."""
+Please implement the proposed changes on PR #{pr_number}."""
 
         else:  # review
-            return f"""@copilot /review
+            return f"""Review pull request #{pr_number}: {pr_title}
 
-Please review this pull request and provide feedback.
+**Context**: This PR has been automatically flagged for Copilot agent review (Confidence: {confidence}%).
 
-**Context**: This PR has been automatically flagged for Copilot review.
+**Analysis**: {reasons}
 
-**Focus areas**:
+**Review Focus**:
 - Code quality and best practices
 - Test coverage and correctness
 - Documentation completeness
 - Potential issues or improvements
 - Security considerations
 
-**Confidence**: {confidence}%
-**Analysis**: {reasons}
+**Instructions**:
+- Provide constructive feedback
+- Identify any bugs or issues
+- Suggest improvements where appropriate
+- Check for proper error handling
+- Verify test coverage
 
-Please provide a comprehensive review."""
+Please provide a comprehensive review of PR #{pr_number}."""
     
     def invoke_copilot_on_pr(self, pr_number: int) -> Dict[str, Any]:
         """
@@ -441,14 +487,14 @@ Please provide a comprehensive review."""
                 'confidence': analysis['confidence']
             }
         
-        # Create comment
-        comment = self.create_copilot_comment(pr_details, analysis)
+        # Create agent task description
+        task_description = self.create_agent_task_description(pr_details, analysis)
         
         if self.dry_run:
             logger.info(f"\n{'─'*80}")
-            logger.info("🔍 DRY RUN - Would post comment:")
+            logger.info("🔍 DRY RUN - Would create agent task with description:")
             logger.info(f"{'─'*80}")
-            logger.info(comment)
+            logger.info(task_description)
             logger.info(f"{'─'*80}\n")
             return {
                 'success': True,
@@ -458,28 +504,55 @@ Please provide a comprehensive review."""
                 'task_type': analysis['task_type']
             }
         
-        # Post comment to invoke Copilot
-        result = self.run_command([
-            'gh', 'pr', 'comment', str(pr_number),
-            '--body', comment
+        # Create GitHub Copilot agent task using gh agent-task create
+        # First, checkout the PR branch to work on it
+        logger.info(f"🔄 Checking out PR #{pr_number}...")
+        checkout_result = self.run_command([
+            'gh', 'pr', 'checkout', str(pr_number)
         ])
         
+        if not checkout_result['success']:
+            logger.warning(f"⚠️  Could not checkout PR #{pr_number}, will create task anyway")
+        
+        # Create the agent task
+        logger.info(f"🤖 Creating GitHub Copilot agent task for PR #{pr_number}...")
+        result = self.run_command([
+            'gh', 'agent-task', 'create', task_description
+        ], timeout=60)
+        
         if result['success']:
-            logger.info(f"✅ Successfully invoked Copilot on PR #{pr_number}")
+            logger.info(f"✅ Successfully created Copilot agent task for PR #{pr_number}")
+            # Extract session ID from output if available
+            session_id = None
+            if result['stdout']:
+                # Look for session ID in output
+                for line in result['stdout'].split('\n'):
+                    if 'session' in line.lower() or 'task' in line.lower():
+                        logger.info(f"   {line.strip()}")
+                        # Try to extract session ID
+                        import re
+                        match = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', line)
+                        if match:
+                            session_id = match.group(1)
+            
             return {
                 'success': True,
                 'pr_number': pr_number,
                 'action': 'invoked',
                 'confidence': analysis['confidence'],
-                'task_type': analysis['task_type']
+                'task_type': analysis['task_type'],
+                'session_id': session_id,
+                'output': result['stdout']
             }
         else:
-            logger.error(f"❌ Failed to invoke Copilot: {result.get('error')}")
+            logger.error(f"❌ Failed to create Copilot agent task: {result.get('error')}")
+            logger.error(f"   stderr: {result.get('stderr', 'N/A')}")
             return {
                 'success': False,
                 'pr_number': pr_number,
                 'action': 'failed',
-                'error': result.get('error')
+                'error': result.get('error'),
+                'stderr': result.get('stderr')
             }
     
     def review_all_prs(self, limit: int = 100) -> Dict[str, Any]:

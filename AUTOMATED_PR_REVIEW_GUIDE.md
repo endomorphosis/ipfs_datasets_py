@@ -2,13 +2,14 @@
 
 ## Overview
 
-The Automated PR Review System intelligently examines all open pull requests in your repository and automatically decides whether to invoke GitHub Copilot coding agents to work on them. This system provides a sophisticated multi-criteria analysis to determine which PRs would benefit most from Copilot's assistance.
+The Automated PR Review System intelligently examines all open pull requests in your repository and automatically decides whether to invoke GitHub Copilot coding agents to work on them using the **`gh agent-task create`** command. This system provides a sophisticated multi-criteria analysis to determine which PRs would benefit most from Copilot's assistance.
 
 ## Features
 
 - **🤖 Intelligent PR Analysis**: Uses 12+ criteria to evaluate PRs
 - **📊 Confidence Scoring**: Assigns confidence scores (0-100) for decision-making
 - **🎯 Task Type Detection**: Automatically identifies the type of work needed (fix, workflow, review, etc.)
+- **🚀 Proper Agent Invocation**: Uses `gh agent-task create` to actually start Copilot agents
 - **🔍 Dry-Run Mode**: Test the system without actually invoking Copilot
 - **⚙️ Configurable Thresholds**: Customize minimum confidence levels
 - **📈 Detailed Statistics**: Get comprehensive reports on PR reviews
@@ -19,6 +20,18 @@ The Automated PR Review System intelligently examines all open pull requests in 
 - [Welcome Home, Agents (GitHub Blog)](https://github.blog/news-insights/company-news/welcome-home-agents/)
 - [GitHub Copilot Coding Agent Documentation](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)
 - [GitHub Copilot Code Review](https://docs.github.com/en/copilot/concepts/agents/code-review)
+
+## How It Works
+
+The system uses the **GitHub CLI (`gh`) agent-task commands** to properly invoke Copilot agents:
+
+1. **Analyze PR**: Evaluates PR using 12+ weighted criteria
+2. **Generate Task Description**: Creates detailed, task-specific instructions
+3. **Checkout PR**: Switches to the PR branch
+4. **Create Agent Task**: Runs `gh agent-task create` with the task description
+5. **Monitor**: Agent task ID is returned for tracking
+
+This is the **correct way** to invoke GitHub Copilot agents, not just posting `@copilot` comments.
 
 ## Decision Criteria
 

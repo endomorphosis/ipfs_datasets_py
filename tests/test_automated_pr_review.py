@@ -192,21 +192,27 @@ def test_analyze_pr_workflow_files():
 
 def test_check_copilot_already_invoked():
     """
-    GIVEN a PR with @copilot comment
+    GIVEN a PR with agent task
     WHEN checking if Copilot was invoked
     THEN it should return True
     """
     from automated_pr_review import AutomatedPRReviewer
     
     with patch('subprocess.run') as mock_run:
-        mock_run.return_value = Mock(returncode=0)
+        # Mock gh --version for init
+        def side_effect(*args, **kwargs):
+            cmd = args[0] if args else kwargs.get('args', [])
+            if 'agent-task' in cmd:
+                # Mock agent-task list showing PR 123
+                return Mock(returncode=0, stdout='PR #123: Some task\n', stderr='')
+            return Mock(returncode=0, stdout='gh version 2.40.0', stderr='')
+        
+        mock_run.side_effect = side_effect
         reviewer = AutomatedPRReviewer(dry_run=True)
         
         pr_details = {
-            'comments': [
-                {'body': '@copilot please help with this'},
-                {'body': 'Some other comment'}
-            ]
+            'number': 123,
+            'comments': []
         }
         
         result = reviewer.check_copilot_already_invoked(pr_details)
@@ -215,17 +221,26 @@ def test_check_copilot_already_invoked():
 
 def test_check_copilot_not_invoked():
     """
-    GIVEN a PR without @copilot comment
+    GIVEN a PR without agent task
     WHEN checking if Copilot was invoked
     THEN it should return False
     """
     from automated_pr_review import AutomatedPRReviewer
     
     with patch('subprocess.run') as mock_run:
-        mock_run.return_value = Mock(returncode=0)
+        # Mock gh --version for init
+        def side_effect(*args, **kwargs):
+            cmd = args[0] if args else kwargs.get('args', [])
+            if 'agent-task' in cmd:
+                # Mock agent-task list showing no PR 456
+                return Mock(returncode=0, stdout='PR #123: Some task\n', stderr='')
+            return Mock(returncode=0, stdout='gh version 2.40.0', stderr='')
+        
+        mock_run.side_effect = side_effect
         reviewer = AutomatedPRReviewer(dry_run=True)
         
         pr_details = {
+            'number': 456,
             'comments': [
                 {'body': 'Normal comment'},
                 {'body': 'Another comment'}
@@ -236,11 +251,11 @@ def test_check_copilot_not_invoked():
         assert result is False
 
 
-def test_create_copilot_comment_fix_task():
+def test_create_agent_task_description_fix_task():
     """
     GIVEN a PR analysis for fix task
-    WHEN creating Copilot comment
-    THEN it should generate appropriate fix comment
+    WHEN creating agent task description
+    THEN it should generate appropriate fix task description
     """
     from automated_pr_review import AutomatedPRReviewer
     
@@ -266,19 +281,19 @@ def test_create_copilot_comment_fix_task():
             'reasons': ['Auto-fix label', 'Has linked issue']
         }
         
-        comment = reviewer.create_copilot_comment(pr_details, analysis)
+        task_desc = reviewer.create_agent_task_description(pr_details, analysis)
         
-        assert '@copilot' in comment
-        assert 'implement the auto-fix' in comment.lower()
-        assert '85%' in comment
-        assert 'Auto-fix label' in comment
+        assert 'Implement the auto-fix' in task_desc
+        assert 'PR #127' in task_desc
+        assert '85%' in task_desc
+        assert 'Auto-fix label' in task_desc
 
 
-def test_create_copilot_comment_workflow_task():
+def test_create_agent_task_description_workflow_task():
     """
     GIVEN a PR analysis for workflow task
-    WHEN creating Copilot comment
-    THEN it should generate appropriate workflow fix comment
+    WHEN creating agent task description
+    THEN it should generate appropriate workflow fix task description
     """
     from automated_pr_review import AutomatedPRReviewer
     
@@ -304,18 +319,18 @@ def test_create_copilot_comment_workflow_task():
             'reasons': ['Workflow fix needed']
         }
         
-        comment = reviewer.create_copilot_comment(pr_details, analysis)
+        task_desc = reviewer.create_agent_task_description(pr_details, analysis)
         
-        assert '@copilot' in comment
-        assert 'workflow' in comment.lower()
-        assert '75%' in comment
+        assert 'Fix the workflow issue' in task_desc
+        assert 'PR #128' in task_desc
+        assert '75%' in task_desc
 
 
-def test_create_copilot_comment_review_task():
+def test_create_agent_task_description_review_task():
     """
     GIVEN a PR analysis for review task
-    WHEN creating Copilot comment
-    THEN it should generate appropriate review comment
+    WHEN creating agent task description
+    THEN it should generate appropriate review task description
     """
     from automated_pr_review import AutomatedPRReviewer
     
@@ -341,10 +356,11 @@ def test_create_copilot_comment_review_task():
             'reasons': ['Has description', 'Recent activity']
         }
         
-        comment = reviewer.create_copilot_comment(pr_details, analysis)
+        task_desc = reviewer.create_agent_task_description(pr_details, analysis)
         
-        assert '@copilot /review' in comment
-        assert '65%' in comment
+        assert 'Review pull request' in task_desc
+        assert 'PR #129' in task_desc
+        assert '65%' in task_desc
 
 
 def test_run_command_success():

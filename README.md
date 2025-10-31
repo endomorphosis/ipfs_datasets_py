@@ -710,7 +710,7 @@ python -m ipfs_datasets_py.mcp_server --port 8080
 
 ### 🚀 **Automated PR Review with GitHub Copilot Agents** ⭐ *NEW*
 
-Intelligently automate pull request reviews using GitHub Copilot coding agents:
+Intelligently automate pull request reviews using **proper GitHub Copilot agent invocation** via `gh agent-task create`:
 
 ```bash
 # Dry run to see what would be done
@@ -725,6 +725,11 @@ python scripts/automated_pr_review.py --min-confidence 70
 # Analyze specific PR
 python scripts/automated_pr_review.py --pr 123 --dry-run
 ```
+
+**Proper Agent Invocation**:
+- 🚀 **Uses `gh agent-task create`** - Actually starts Copilot coding agents (not just comments)
+- 🤖 **Creates agent tasks** with detailed, task-specific instructions
+- 📋 **Tracks agent sessions** for monitoring and debugging
 
 **Smart Decision Making**:
 - 📊 **12+ criteria evaluation** with weighted scoring (0-100)
