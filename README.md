@@ -708,6 +708,39 @@ python -m ipfs_datasets_py.mcp_server --port 8080
 - 📊 Performance profiling
 - 🔒 Security scanning
 
+### 🚀 **Automated PR Review with GitHub Copilot Agents** ⭐ *NEW*
+
+Intelligently automate pull request reviews using GitHub Copilot coding agents:
+
+```bash
+# Dry run to see what would be done
+python scripts/automated_pr_review.py --dry-run
+
+# Automatically review all open PRs
+python scripts/automated_pr_review.py
+
+# Custom confidence threshold
+python scripts/automated_pr_review.py --min-confidence 70
+
+# Analyze specific PR
+python scripts/automated_pr_review.py --pr 123 --dry-run
+```
+
+**Smart Decision Making**:
+- 📊 **12+ criteria evaluation** with weighted scoring (0-100)
+- 🎯 **Task type detection** (fix, workflow, review, permissions, draft)
+- 🤖 **Auto-invoke Copilot** on high-confidence PRs (configurable threshold)
+- 🔍 **Dry-run mode** for safe testing
+- 📈 **Detailed statistics** and reporting
+
+**Decision Criteria**:
+- ✅ Draft status, auto-fix labels, workflow issues (+30-50 pts)
+- ✅ Permission problems, linked issues, recent activity (+10-40 pts)
+- ⚠️ WIP labels, large file counts (reduces confidence)
+- 🚫 Do-not-merge labels (blocks completely)
+
+See [AUTOMATED_PR_REVIEW_GUIDE.md](AUTOMATED_PR_REVIEW_GUIDE.md) for complete documentation.
+
 ## 📖 Documentation & Learning
 
 ### 🎓 **Quick Learning Paths**
