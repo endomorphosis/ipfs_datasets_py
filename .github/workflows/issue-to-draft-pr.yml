@@ -302,6 +302,7 @@ jobs:
         if: steps.create_branch.outputs.branch_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_AUTHOR: ${{ steps.get_issue.outputs.issue_author }}
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
           BRANCH_NAME="${{ steps.generate_details.outputs.branch_name }}"
@@ -312,7 +313,7 @@ jobs:
           # Export outputs to environment variables
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
           ISSUE_TITLE="${{ steps.get_issue.outputs.issue_title }}"
-          ISSUE_AUTHOR="${{ steps.get_issue.outputs.issue_author }}"
+          # ISSUE_AUTHOR is available as $ISSUE_AUTHOR via env (see above)
           cat > /tmp/pr_body.md <<'PR_EOF'
           ## 🤖 Automated Issue Resolution
           
@@ -321,7 +322,6 @@ jobs:
           ### Related Issue
           
           Fixes #$ISSUE_NUMBER
-          
           ### Issue Summary
           
           **Title**: $ISSUE_TITLE
